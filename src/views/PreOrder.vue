@@ -7,7 +7,7 @@
     </ion-header>
 
     <ion-content :fullscreen="true">
-      <main class="content">
+      <main>
         <ion-card>
           <ion-card-header>
             <ion-card-title>{{ $t("Auto listing") }}</ion-card-title>
@@ -115,7 +115,7 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.content {
+main {
   max-width: 343px;
   margin-top: 20px;
   margin-right: auto;
