@@ -84,6 +84,7 @@ http://ionicframework.com/docs/theming/ */
   --spacer-xl: 2.5rem;   /* 40px */
   --spacer-2xl: 5rem;    /* 80px */
   --spacer-3xl: 10rem;   /* 160px */
+
 }
 
 @media (prefers-color-scheme: dark) {
@@ -243,13 +244,18 @@ http://ionicframework.com/docs/theming/ */
 
     --ion-card-background: #1e1e1e;
   }
-
-  .overline {
-    font-weight: 500 !important;
-    font-size: 10px !important;
-    line-height: 16px !important;
-    letter-spacing: 1.5px;
-    color: #666;
-    text-transform: uppercase !important;
-  }
 }
+
+.overline {
+  font-weight: 500 !important;
+  font-size: 10px !important;
+  line-height: 16px !important;
+  letter-spacing: 1.5px;
+  color: #666;
+  text-transform: uppercase !important;
+}
+
+ion-select {
+  max-width: 100%;
+}
+
