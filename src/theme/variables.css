@@ -84,7 +84,6 @@ http://ionicframework.com/docs/theming/ */
   --spacer-xl: 2.5rem;   /* 40px */
   --spacer-2xl: 5rem;    /* 80px */
   --spacer-3xl: 10rem;   /* 160px */
-
 }
 
 @media (prefers-color-scheme: dark) {
