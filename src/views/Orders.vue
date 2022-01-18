@@ -73,20 +73,20 @@
           <ion-item-divider>
             <ion-label>{{ $t("Batches") }}</ion-label>
             <ion-button fill="clear" slot="end">
-              Add
+              {{ $t("Add") }}
               <ion-icon :icon="addCircleOutline" slot="end" />
             </ion-button>
           </ion-item-divider>
           <ion-item detail>
-            <ion-label>{{ $t("Batch 1") }}</ion-label>
+            <ion-label>Batch 1</ion-label>
             <ion-note slot="end">9:30 am</ion-note>
           </ion-item>
           <ion-item detail>
-            <ion-label>{{ $t("Batch 2") }}</ion-label>
+            <ion-label>Batch 2</ion-label>
             <ion-note slot="end">12:00 pm</ion-note>
           </ion-item>
           <ion-item detail>
-            <ion-label>{{ $t("Batch 3") }}</ion-label>
+            <ion-label>Batch 3</ion-label>
             <ion-note slot="end">3:00 pm</ion-note>
           </ion-item>
         </ion-card>
@@ -103,21 +103,22 @@ import {
   IonCardTitle,
   IonContent,
   IonHeader,
+  IonIcon,
   IonItem,
+  IonItemDivider,
   IonLabel,
+  IonNote,
   IonPage,
-  IonSelect,
   IonTitle,
+  IonToggle,
   IonToolbar,
-  popoverController,
-} from "@ionic/vue";
-import { defineComponent } from "vue";
-import Popover from "@/views/Orders.vue";
-import { addCircleOutline } from "ionicons/icons";
+} from '@ionic/vue';
+import { defineComponent } from 'vue';
+import { addCircleOutline } from 'ionicons/icons';
 import DurationPopover from '@/components/DurationPopover.vue'
 
 export default defineComponent({
-  name: "Orders",
+  name: 'Orders',
   components: {
     IonButton,
     IonCard,
@@ -125,23 +126,16 @@ export default defineComponent({
     IonCardTitle,
     IonContent,
     IonHeader,
+    IonIcon,
     IonItem,
+    IonItemDivider,
     IonLabel,
+    IonNote,
     IonPage,
     IonTitle,
+    IonToggle,
     IonToolbar,
     DurationPopover
-  },
-  methods: {
-    async openPopover(ev: Event) {
-      const popover = await popoverController.create({
-        component: Popover,
-        event: ev,
-        translucent: true,
-        showBackdrop: false,
-      });
-      return popover.present();
-    },
   },
   setup() {
     return {
