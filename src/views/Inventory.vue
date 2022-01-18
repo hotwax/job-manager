@@ -113,11 +113,11 @@ import {
   IonTitle,
   IonToggle,
   IonToolbar,
-} from "@ionic/vue";
-import { defineComponent } from "vue";
+} from '@ionic/vue';
+import { defineComponent } from 'vue';
 
 export default defineComponent({
-  name: "Inventory",
+  name: 'Inventory',
   components: {
     IonCard,
     IonContent,
