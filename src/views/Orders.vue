@@ -81,7 +81,7 @@
             <ion-label>Batch 1</ion-label>
             <ion-note slot="end">9:30 am</ion-note>
           </ion-item>
-          <ion-item detail>
+          <ion-item @click="editBatch()" detail>
             <ion-label>Batch 2</ion-label>
             <ion-note slot="end">12:00 pm</ion-note>
           </ion-item>
@@ -112,10 +112,12 @@ import {
   IonTitle,
   IonToggle,
   IonToolbar,
+  modalController
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { addCircleOutline } from 'ionicons/icons';
 import DurationPopover from '@/components/DurationPopover.vue'
+import BatchModal from '@/components/BatchModal.vue';
 
 export default defineComponent({
   name: 'Orders',
@@ -136,6 +138,14 @@ export default defineComponent({
     IonToggle,
     IonToolbar,
     DurationPopover
+  },
+  methods: {
+     async editBatch() {
+      const batchmodal = await modalController.create({
+        component: BatchModal
+      });
+      return batchmodal.present();
+    },
   },
   setup() {
     return {
