@@ -1,10 +1,10 @@
 <template>
   <ion-select :interface-options="customPopoverOptions" interface="popover">
-    <ion-select-option value="brown">Every 5 minutes</ion-select-option>
-    <ion-select-option value="blonde">Every 15 minutes</ion-select-option>
-    <ion-select-option value="black">Hourly</ion-select-option>
-    <ion-select-option value="red">Daily</ion-select-option>
-    <ion-select-option value="red">Disabled</ion-select-option>
+    <ion-select-option value="a">Every 5 minutes</ion-select-option>
+    <ion-select-option value="b">Every 15 minutes</ion-select-option>
+    <ion-select-option value="c">Hourly</ion-select-option>
+    <ion-select-option value="d">Daily</ion-select-option>
+    <ion-select-option value="e">Disabled</ion-select-option>
   </ion-select>
 </template>
 
@@ -20,7 +20,7 @@ export default defineComponent({
   },
  setup(){
     const customPopoverOptions: any = {
-      header: 'Title',
+      header: 'Import new orders',
       showBackdrop: false
     };
     return {
@@ -29,6 +29,3 @@ export default defineComponent({
  }
 });
 </script>
-<style scoped>
-
-</style>

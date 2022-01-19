@@ -17,7 +17,7 @@
     </ion-item>
     <ion-item>
       <ion-label position="fixed">{{ $t("Schedule") }}</ion-label>
-      <ion-input type="date" />
+      <ion-datetime display-format="MM/DD/YYYY" placeholder="date picker"></ion-datetime>
     </ion-item>    
 
     <ion-fab vertical="bottom" horizontal="end" slot="fixed">
