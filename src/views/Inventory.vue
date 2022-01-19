@@ -135,7 +135,7 @@ export default defineComponent({
   },
   setup() {
     const customPopoverOptions: any = {
-    header: 'Title',
+    header: 'Schedule inventory hard sync',
     showBackdrop: false
     }
     return {
@@ -149,7 +149,7 @@ export default defineComponent({
 main {
   display: flex;  
   align-items: flex-start;
-  max-width: 742px;
+  justify-content: center;
   margin-top: 20px;
   margin-right: auto;
   margin-left: auto;
