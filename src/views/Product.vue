@@ -14,19 +14,11 @@
           </ion-card-header>
           <ion-item>
             <ion-label>{{ $t("Sync products") }}</ion-label>
-            <ion-select :interface-options="customPopoverOptions" interface="popover">
-              <ion-select-option>Hourly</ion-select-option>
-              <ion-select-option>Every 6 hours</ion-select-option>
-              <ion-select-option>Daily</ion-select-option>
-            </ion-select>
+            <ProductDurationPopover />
           </ion-item>
            <ion-item>
             <ion-label>{{ $t("Sync collections") }}</ion-label>
-            <ion-select :interface-options="customPopoverOptions" interface="popover">
-              <ion-select-option>Hourly</ion-select-option>
-              <ion-select-option>Every 6 hours</ion-select-option>
-              <ion-select-option>Daily</ion-select-option>
-            </ion-select>
+            <ProductDurationPopover />
           </ion-item>
           <ion-item lines="none">
             <ion-label class="ion-text-wrap"><p>{{ $t("Sync products and category structures from Shopify into HotWax Commerce and keep them up to date.") }}</p></ion-label>
@@ -47,12 +39,11 @@ import {
   IonItem,
   IonLabel,
   IonPage,
-  IonSelect,
-  IonSelectOption,
   IonTitle,
   IonToolbar
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
+import ProductDurationPopover from '@/components/ProductDurationPopover.vue'
 
 export default defineComponent({
   name: 'Product',
@@ -65,14 +56,13 @@ export default defineComponent({
     IonItem,
     IonLabel,
     IonPage,
-    IonSelect,
-    IonSelectOption,
     IonTitle,
-    IonToolbar
+    IonToolbar,
+    ProductDurationPopover
   },
   setup() {
     const customPopoverOptions: any = {
-    header: 'Title',
+    header: 'Schedule product sync',
     showBackdrop: false
     }
     return {
