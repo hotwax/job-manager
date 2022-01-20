@@ -81,7 +81,7 @@ export default defineComponent({
     const selectedIndex = ref(0);
     const appPages = [
       {
-        title: "Dashoard",
+        title: "Dashboard",
         url: "/dashboard",
         iosIcon: barChartOutline,
         mdIcon: barChartOutline,
