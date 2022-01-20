@@ -106,7 +106,7 @@ export default defineComponent({
       },
       {
         title: "Products",
-        url: "/products",
+        url: "/product",
         iosIcon: shirtOutline,
         mdIcon: shirtOutline,
       },
