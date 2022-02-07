@@ -14,7 +14,7 @@
           </ion-card-header>
           <ion-item>
             <ion-label>{{ $t("Automatically list pre-order") }}</ion-label>
-            <ion-toggle color="secondary" slot="end" />
+            <ion-toggle :checked="automaticallyListPreOrder"  color="secondary" slot="end" @ionChange="updateJob($event, this.jobEnums['LIST_PRE_ORDER'])" />
           </ion-item>
           <ion-item lines="none">
             <ion-label class="ion-text-wrap"><p>{{ $t("This will automatically list items from purchase orders for preorder when stock runs out.") }}</p></ion-label>
@@ -93,6 +93,8 @@ import {
   IonToolbar
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
+import { useStore } from "@/store";
+import { mapGetters } from "vuex";
 
 export default defineComponent({
   name: 'PreOrder',
@@ -110,6 +112,43 @@ export default defineComponent({
     IonTitle,
     IonToggle,
     IonToolbar
+  },
+  computed: {
+    ...mapGetters({
+      getJobStatus: 'job/getJobStatus'
+    }),
+    automaticallyListPreOrder(): boolean {
+      const status = this.getJobStatus(this.jobEnums["LIST_PRE_ORDER"]);
+      return status && status !== "SERVICE_DRAFT";
+    }
+  },
+  data() {
+    return {
+      jobEnums: JSON.parse(process.env?.VUE_APP_PRODR_JOB_ENUMS as string) as any,
+    }
+  },
+  methods: {
+    async updateJob(status: string, id: string) {
+      const payload = {
+        id,
+        status: status ? "SERVICE_PENDING" : "SERVICE_DRAFT"
+      }
+      this.store.dispatch('job/updateJob', payload);
+    },
+  },
+  mounted () {
+    this.store.dispatch("job/fetchJobs", {
+      "inputFields":{
+        "jobId": Object.values(this.jobEnums),
+        "jobId_op": "in"
+      }
+    });
+  },
+  setup() {
+    const store = useStore();
+    return {
+      store
+    };
   },
 });
 </script>

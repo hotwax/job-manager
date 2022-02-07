@@ -29,3 +29,9 @@ npm-debug.log*
 /platforms
 /plugins
 /www
+
+.env
+.env.*
+!.env.example
+.history
+.firebase
