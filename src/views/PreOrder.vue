@@ -14,7 +14,7 @@
           </ion-card-header>
           <ion-item>
             <ion-label>{{ $t("Automatically list pre-order") }}</ion-label>
-            <ion-toggle :checked="automaticallyListPreOrder"  color="secondary" slot="end" @ionChange="updateJob($event, this.jobEnums['LIST_PRE_ORDER'])" />
+            <ion-toggle :checked="automaticallyListPreOrder"  color="secondary" slot="end" @ionChange="updateJob($event, 'LIST_PRE_ORDER')" />
           </ion-item>
           <ion-item lines="none">
             <ion-label class="ion-text-wrap"><p>{{ $t("This will automatically list items from purchase orders for preorder when stock runs out.") }}</p></ion-label>
@@ -118,7 +118,7 @@ export default defineComponent({
       getJobStatus: 'job/getJobStatus'
     }),
     automaticallyListPreOrder(): boolean {
-      const status = this.getJobStatus(this.jobEnums["LIST_PRE_ORDER"]);
+      const status = this.getJobStatus("LIST_PRE_ORDER");
       return status && status !== "SERVICE_DRAFT";
     }
   },
@@ -128,9 +128,9 @@ export default defineComponent({
     }
   },
   methods: {
-    async updateJob(status: string, id: string) {
+    async updateJob(status: string, enumId: string) {
       const payload = {
-        id,
+        systemJobEnumId: enumId,
         status: status ? "SERVICE_PENDING" : "SERVICE_DRAFT"
       }
       this.store.dispatch('job/updateJob', payload);
@@ -139,8 +139,8 @@ export default defineComponent({
   mounted () {
     this.store.dispatch("job/fetchJobs", {
       "inputFields":{
-        "jobId": Object.values(this.jobEnums),
-        "jobId_op": "in"
+        "systemJobEnumId": Object.keys(this.jobEnums),
+        "systemJobEnumId_op": "in"
       }
     });
   },
