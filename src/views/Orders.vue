@@ -5,7 +5,8 @@
         <ion-title>{{ $t("Orders") }}</ion-title>
       </ion-toolbar>
     </ion-header>
-    <ion-content :fullscreen="true">
+
+    <ion-content>
       <main>
         <ion-card>
           <ion-card-header>
