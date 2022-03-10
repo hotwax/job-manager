@@ -14,11 +14,11 @@
           </ion-card-header>
           <ion-item>
             <ion-label>{{ $t("Sync products") }}</ion-label>
-            <ProductDurationPopover />
+            <ProductDurationPopover :id="jobEnums['SYNC_PRODUCTS']"/>
           </ion-item>
            <ion-item>
             <ion-label>{{ $t("Sync collections") }}</ion-label>
-            <ProductDurationPopover />
+            <ProductDurationPopover :id="jobEnums['SYNC_COLLECTIONS']"/>
           </ion-item>
           <ion-item lines="none">
             <ion-label class="ion-text-wrap"><p>{{ $t("Sync products and category structures from Shopify into HotWax Commerce and keep them up to date.") }}</p></ion-label>
@@ -59,6 +59,11 @@ export default defineComponent({
     IonTitle,
     IonToolbar,
     ProductDurationPopover
+  },
+  data() {
+    return {
+      jobEnums: JSON.parse(process.env?.VUE_APP_PRD_JOB_ENUMS as string) as any,
+    }
   },
   setup() {
     const customPopoverOptions: any = {
