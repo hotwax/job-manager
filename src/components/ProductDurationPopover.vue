@@ -1,8 +1,9 @@
 <template>
-  <ion-select :interface-options="customPopoverOptions" interface="popover" :value="getJobStatus(id)" @ionChange="updateJob($event)">
+  <ion-select :interface-options="customPopoverOptions" interface="popover" :value="getJobStatus(id) ? getJobStatus(id) : 'SERVICE_DRAFT'" @ionChange="updateJob($event)">
     <ion-select-option value="HOURLY">Hourly</ion-select-option>
     <ion-select-option value="EVERY_6_HOURS">Every 6 Hours</ion-select-option>
     <ion-select-option value="DAILY">Daily</ion-select-option>
+    <ion-select-option value="SERVICE_DRAFT">Disabled</ion-select-option>
   </ion-select>
 </template>
 
