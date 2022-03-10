@@ -44,6 +44,7 @@ import {
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import ProductDurationPopover from '@/components/ProductDurationPopover.vue'
+import { useStore } from 'vuex';
 
 export default defineComponent({
   name: 'Product',
@@ -65,13 +66,23 @@ export default defineComponent({
       jobEnums: JSON.parse(process.env?.VUE_APP_PRD_JOB_ENUMS as string) as any,
     }
   },
+  mounted () {
+    this.store.dispatch("job/fetchJobs", {
+      "inputFields":{
+        "systemJobEnumId": Object.values(this.jobEnums),
+        "systemJobEnumId_op": "in"
+      }
+    });
+  },
   setup() {
     const customPopoverOptions: any = {
     header: 'Schedule product sync',
     showBackdrop: false
     }
+    const store = useStore();
     return {
-      customPopoverOptions  
+      customPopoverOptions,
+      store
     }
   }
 });
