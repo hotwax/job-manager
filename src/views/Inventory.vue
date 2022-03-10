@@ -9,12 +9,6 @@
     <ion-content>
       <main>
         <ion-card>
-          <ion-radio-group>
-            <ion-item lines="none">
-              <ion-label>{{ $t("Shopify source") }}</ion-label>
-              <ion-radio slot="start"></ion-radio>
-            </ion-item>
-          </ion-radio-group>
           <ion-item>
             <ion-label>{{ $t("Realtime webhooks") }}</ion-label>
             <ion-toggle color="secondary" slot="end" checked />
@@ -45,15 +39,9 @@
         </ion-card>
 
         <ion-card>
-          <ion-radio-group>
-            <ion-item lines="none">
-              <ion-label>{{ $t("HotWax source") }}</ion-label>
-              <ion-radio slot="start"></ion-radio>
-            </ion-item>
-          </ion-radio-group>
           <ion-item>
             <ion-label>{{ $t("Realtime adjustments") }}</ion-label>
-            <ion-toggle disabled color="secondary" slot="end" checked />
+            <ion-toggle color="secondary" slot="end" checked />
           </ion-item>
           <ion-item lines="none">
             <ion-label class="ion-text-wrap">
@@ -76,11 +64,11 @@
           </ion-item>
            <ion-item>
             <ion-label>{{ $t("Realtime POS sales") }}</ion-label>
-            <ion-toggle disabled color="secondary" slot="end" checked />
+            <ion-toggle color="secondary" slot="end" checked />
           </ion-item>
            <ion-item>
             <ion-label>{{ $t("Reserve for completed orders") }}</ion-label>
-            <ion-toggle disabled color="secondary" slot="end" checked />
+            <ion-toggle color="secondary" slot="end" checked />
           </ion-item>
           <ion-item lines="none">
             <ion-label class="ion-text-wrap">
@@ -106,8 +94,6 @@ import {
   IonItem,
   IonLabel,
   IonPage,
-  IonRadioGroup,
-  IonRadio,
   IonSelect,
   IonSelectOption,
   IonTitle,
@@ -125,8 +111,6 @@ export default defineComponent({
     IonItem,
     IonLabel,
     IonPage,
-    IonRadioGroup,
-    IonRadio,
     IonSelect,
     IonSelectOption,
     IonTitle,
