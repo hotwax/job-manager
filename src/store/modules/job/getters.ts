@@ -10,10 +10,10 @@ const getters: GetterTree <JobState, RootState> = {
         return state.order;
     },
     // TODO Check if make is common
-    getJobStatus: (state) => (enumId: string): any  => {
-        console.log("id", enumId);
-        console.log("state.cached[enumId]", state.cached[enumId]);
-        return state.cached[enumId] && (state.cached[enumId].status === "SERVICE_DRAFT" ? state.cached[enumId].status : state.cached[enumId].frequency);
+    getJobStatus: (state) => (id: string): any  => {
+        console.log("id", id);
+        console.log("state.cached[id]", state.cached[id]);
+        return state.cached[id] && (state.cached[id].status === "SERVICE_DRAFT" ? state.cached[id].status : state.cached[id].frequency);
     },
     
 }
