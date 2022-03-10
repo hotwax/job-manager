@@ -19,6 +19,13 @@ const mutations: MutationTree <JobState> = {
             payload
         }
     },
+    [types.JOB_PENDING_UPDATED](state, payload){
+        console.log("mutation", payload)
+        state.pending = payload;
+    },
+    [types.JOB_TEMPORAL_EXPRESSION_UPDATED](state, payload){
+        state.temporalExp = payload;
+    }
     
 }
 export default mutations;

@@ -12,7 +12,9 @@ const jobModule: Module<JobState, RootState> = {
       order: {},
       inventory: {},
       product: {},
-      cached: {}
+      cached: {},
+      pending: {},
+      temporalExp: []
     },
     getters,
     actions,

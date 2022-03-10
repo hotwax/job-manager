@@ -4,4 +4,6 @@ export default interface JobState {
     inventory: any;
     product: any;
     cached: any;
+    pending: any;
+    temporalExp: any;
 }
