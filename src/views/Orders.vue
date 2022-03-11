@@ -21,6 +21,10 @@
             <DurationPopover :id="jobEnums['IMP_CANCELLED_ORDERS']" />
           </ion-item>
           <ion-item>
+            <ion-label>{{ $t("Cancelled items") }}</ion-label>
+            <DurationPopover :id="jobEnums['IMP_CANCELLED_ITEMS']" />
+          </ion-item>
+          <ion-item>
             <ion-label>{{ $t("Payment status") }}</ion-label>
             <DurationPopover :id="jobEnums['IMP_PAYMENT_STATUS']" />
           </ion-item>
