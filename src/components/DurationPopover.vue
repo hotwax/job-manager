@@ -34,6 +34,13 @@ export default defineComponent({
   methods: {
     async updateJob(status: string, id: string) {
       const job = this.getJob(id);
+
+      // TODO: added this condition to not call the api when the value of the select automatically changes
+      // need to handle this properly
+      if (status === job.tempExprId) {
+        return;
+      }
+
       const payload = {
         ...job,
         'systemJobEnumId': id,
