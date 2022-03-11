@@ -13,8 +13,12 @@
             <ion-card-title>{{ $t("Sync") }}</ion-card-title>
           </ion-card-header>
           <ion-item>
+            <ion-label>{{ $t("Import products") }}</ion-label>
+            <ProductDurationPopover :id="jobEnums['IMP_PRDTS']"/>
+          </ion-item>
+          <ion-item>
             <ion-label>{{ $t("Sync products") }}</ion-label>
-            <ProductDurationPopover :id="jobEnums['SYNC_PRODUCTS']"/>
+            <ProductDurationPopover :id="jobEnums['SYNC_PRDTS']"/>
           </ion-item>
            <ion-item>
             <ion-label>{{ $t("Sync collections") }}</ion-label>

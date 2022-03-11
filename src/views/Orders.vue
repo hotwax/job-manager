@@ -21,6 +21,10 @@
             <DurationPopover :id="jobEnums['IMP_CANCELLED_ORDERS']" />
           </ion-item>
           <ion-item>
+            <ion-label>{{ $t("Cancelled items") }}</ion-label>
+            <DurationPopover :id="jobEnums['IMP_CANCELLED_ITEMS']" />
+          </ion-item>
+          <ion-item>
             <ion-label>{{ $t("Payment status") }}</ion-label>
             <DurationPopover :id="jobEnums['IMP_PAYMENT_STATUS']" />
           </ion-item>
@@ -44,7 +48,7 @@
           </ion-item>
           <ion-item>
             <ion-label>{{ $t("Refunds") }}</ion-label>
-           <DurationPopover :id="jobEnums['UPLD_REFUNDS']" />
+            <DurationPopover :id="jobEnums['UPLD_REFUNDS']" />
           </ion-item>
         </ion-card>
 
@@ -66,6 +70,13 @@
           <ion-card-header>
             <ion-card-title>{{ $t("Routing") }}</ion-card-title>
           </ion-card-header>
+          <ion-item>
+            <ion-label>{{ $t("Unfillable orders") }}</ion-label>
+            <DurationPopover :id="jobEnums['UNFIL_ORDERS']" />
+          </ion-item>
+          <ion-item>
+            <ion-button fill="outline" color="warning">{{ $t("Route unfillable orders now") }}</ion-button>
+          </ion-item>
           <ion-item>
             <ion-label>{{ $t("Batch broker orders") }}</ion-label>
             <ion-toggle color="secondary" />
@@ -149,7 +160,8 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       order: 'job/getOrderInformation',
-      getJobStatus: 'job/getJobStatus'
+      getJobStatus: 'job/getJobStatus',
+      getJob: 'job/getJob'
     })
   },
   methods: {
@@ -159,12 +171,32 @@ export default defineComponent({
       });
       return batchmodal.present();
     },
+    async updateJob(status: string, id: string) {
+      const job = this.getJob(id);
+      // TODO: check for parentJobId and jobEnum and handle this values properly
+      const payload = {
+        ...job,
+        'systemJobEnumId': id,
+        'statusId': status ? "SERVICE_PENDING" : "SERVICE_DRAFT"
+      } as any
+      if (job?.status === 'SERVICE_DRAFT') {
+        payload['SERVICE_FREQUENCY'] = 'HOURLY'
+        payload['SERVICE_NAME'] = job.serviceName
+        payload['count'] = -1
+        payload['runAsSystem'] = true
+      } else if (job?.status === 'SERVICE_PENDING') {
+        payload['tempExprId'] = 'HOURLY'
+        payload['jobId'] = job.id
+      }
+
+      job?.status === 'SERVICE_PENDING' ? this.store.dispatch('job/updateJob', payload) : this.store.dispatch('job/scheduleService', payload);
+    }
   },
   mounted () { 
     this.store.dispatch("job/fetchJobs", {
       "inputFields":{
-        "jobId": Object.values(this.jobEnums),
-        "jobId_op": "in"
+        "systemJobEnumId": Object.values(this.jobEnums),
+        "systemJobEnumId_op": "in"
       }
     });
   },

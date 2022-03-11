@@ -1,6 +1,6 @@
 <template>
   <!-- TODO Make values dynamic and internationalise text  -->
-  <ion-select :interface-options="customPopoverOptions" interface="popover" :value="getJobStatus(id) ? getJobStatus(id) : 'SERVICE_DRAFT'" @ionChange="updateJob($event)" >
+  <ion-select :interface-options="customPopoverOptions" interface="popover" :value="getJobStatus(id)" @ionChange="updateJob($event['detail'].value, id)" >
     <ion-select-option value="HOURLY">Hourly</ion-select-option>
     <ion-select-option value="EVERY_6_HOURS">Every 6 hours</ion-select-option>
     <ion-select-option value="NIGHTLY">Nightly</ion-select-option>
@@ -12,6 +12,7 @@ import { IonSelect, IonSelectOption } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { useStore } from "@/store";
 import { mapGetters } from "vuex";
+import { translate } from '@/i18n';
 
 export default defineComponent({
   name: 'InventoryPopover',
@@ -24,28 +25,41 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
-      getJobStatus: 'job/getJobStatus'
+      getJobStatus: 'job/getJobStatus',
+      getJob: 'job/getJob'
     })
   },
   methods: {
-     async updateJob(status: string) {
+    async updateJob(status: string, id: string) {
+      const job = this.getJob(id);
+
+      // TODO: added this condition to not call the api when the value of the select automatically changes
+      // need to handle this properly
+      if (status === job.tempExprId) {
+        return;
+      }
+
       const payload = {
-        id: this.id,
-        status: '',
-        frequency: undefined as string | undefined
+        ...job,
+        'systemJobEnumId': id,
+        'statusId': status === "SERVICE_DRAFT" ? "SERVICE_DRAFT" : "SERVICE_PENDING"
+      } as any
+      if (job?.status === 'SERVICE_DRAFT') {
+        payload['SERVICE_FREQUENCY'] = status
+        payload['SERVICE_NAME'] = job.serviceName
+        payload['count'] = -1
+        payload['runAsSystem'] = true
+      } else if (job?.status === 'SERVICE_PENDING') {
+        payload['tempExprId'] = status === 'SERVICE_DRAFT' ? job.tempExprId : status
+        payload['jobId'] = job.id
       }
-      if ( status === "SERVICE_DRAFT") {
-        payload.status = status;
-      } else {
-        payload.status = "SERVICE_PENDING";
-        payload.frequency = status;
-      }
-      this.store.dispatch('job/updateJob', payload);
-    },
+
+      job?.status === 'SERVICE_PENDING' ? this.store.dispatch('job/updateJob', payload) : this.store.dispatch('job/scheduleService', payload);
+    }
   },
   setup() {
     const customPopoverOptions: any = {
-      header: 'Schedule inventory hard sync',
+      header: translate('Schedule inventory hard sync'),
       showBackdrop: false
     }
     const store = useStore();

@@ -14,7 +14,7 @@
           </ion-card-header>
           <ion-item>
             <ion-label>{{ $t("Automatically list pre-order") }}</ion-label>
-            <ion-toggle :checked="automaticallyListPreOrder"  color="secondary" slot="end" @ionChange="updateJob($event, this.jobEnums['LIST_PRE_ORDER'])" />
+            <ion-toggle :checked="automaticallyListPreOrder" color="secondary" slot="end" @click="updateJob($event['detail'].checked, jobEnums['LIST_PRE_ORDER'])" />
           </ion-item>
           <ion-item lines="none">
             <ion-label class="ion-text-wrap"><p>{{ $t("This will automatically list items from purchase orders for preorder when stock runs out.") }}</p></ion-label>
@@ -115,7 +115,8 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
-      getJobStatus: 'job/getJobStatus'
+      getJobStatus: 'job/getJobStatus',
+      getJob: 'job/getJob'
     }),
     automaticallyListPreOrder(): boolean {
       const status = this.getJobStatus(this.jobEnums["LIST_PRE_ORDER"]);
@@ -129,18 +130,31 @@ export default defineComponent({
   },
   methods: {
     async updateJob(status: string, id: string) {
+      const job = this.getJob(id);
+      // TODO: check for parentJobId and jobEnum and handle this values properly
       const payload = {
-        id,
-        status: status ? "SERVICE_PENDING" : "SERVICE_DRAFT"
+        ...job,
+        'systemJobEnumId': id,
+        'statusId': status ? "SERVICE_PENDING" : "SERVICE_DRAFT"
+      } as any
+      if (job?.status === 'SERVICE_DRAFT') {
+        payload['SERVICE_FREQUENCY'] = 'HOURLY'
+        payload['SERVICE_NAME'] = job.serviceName
+        payload['count'] = -1
+        payload['runAsSystem'] = true
+      } else if (job?.status === 'SERVICE_PENDING') {
+        payload['tempExprId'] = 'HOURLY'
+        payload['jobId'] = job.id
       }
-      this.store.dispatch('job/updateJob', payload);
-    },
+
+      job?.status === 'SERVICE_PENDING' ? this.store.dispatch('job/updateJob', payload) : this.store.dispatch('job/scheduleService', payload);
+    }
   },
   mounted () {
     this.store.dispatch("job/fetchJobs", {
       "inputFields":{
-        "jobId": Object.values(this.jobEnums),
-        "jobId_op": "in"
+        "systemJobEnumId": Object.values(this.jobEnums),
+        "systemJobEnumId_op": "in"
       }
     });
   },
