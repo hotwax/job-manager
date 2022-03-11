@@ -32,9 +32,18 @@ const setUserTimeZone = async (payload: any): Promise <any>  => {
   });
 }
 
+const getShopifyConfig = async (payload: any): Promise <any>  => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  });
+}
+
 export const UserService = {
     login,
     getAvailableTimeZones,
     getProfile,
+    getShopifyConfig,
     setUserTimeZone,
 }

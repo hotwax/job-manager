@@ -12,6 +12,7 @@ const userModule: Module<UserState, RootState> = {
       current: null,
       currentFacility: {},
       instanceUrl: '',
+      shopifyConfig: {}
     },
     getters,
     actions,

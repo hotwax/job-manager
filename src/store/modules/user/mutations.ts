@@ -19,6 +19,9 @@ const mutations: MutationTree <UserState> = {
     },
     [types.USER_INSTANCE_URL_UPDATED] (state, payload) {
         state.instanceUrl = payload;
+    },
+    [types.USER_SHOPIFY_CONFIG_UPDATED] (state, payload) {
+        state.shopifyConfig = payload;
     }
 }
 export default mutations;

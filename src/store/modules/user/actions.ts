@@ -21,6 +21,7 @@ const actions: ActionTree<UserState, RootState> = {
         if (resp.data.token) {
             commit(types.USER_TOKEN_CHANGED, { newToken: resp.data.token })
             dispatch('getProfile')
+            dispatch('getShopifyConfig')
             return resp.data;
         } else if (hasError(resp)) {
           showToast(translate('Sorry, your username or password is incorrect. Please try again.'));
@@ -88,6 +89,17 @@ const actions: ActionTree<UserState, RootState> = {
    */
   setUserInstanceUrl ({ state, commit }, payload){
     commit(types.USER_INSTANCE_URL_UPDATED, payload)
+  },
+
+  async getShopifyConfig({ commit }) {
+    const resp = await UserService.getShopifyConfig({
+      "entityName": "ShopifyConfig",
+      "noConditionFind": "Y"
+    })
+
+    if (resp.status === 200 && !hasError(resp)) {
+      commit(types.USER_SHOPIFY_CONFIG_UPDATED, resp.data.docs[0].shopifyConfigId);
+    }
   }
 }
 
