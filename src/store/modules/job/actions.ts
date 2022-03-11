@@ -83,7 +83,6 @@ const actions: ActionTree<JobState, RootState> = {
         commit(types.JOB_UPDATED, {
           job: payload
          });
-        
       }
     }
     return resp;

@@ -16,16 +16,8 @@ const updateJob = async (payload: any): Promise <any>  => {
   });
 }
 
-const updatePendingJob = async (payload: any): Promise <any> => {
-  return api({
-    url: "service/updateJobSandbox",
-    method: "post",
-    data: payload
-  })
-}
 
 export const JobService = {
     fetchJobInformation,
-    updateJob,
-    updatePendingJob
+    updateJob
 }
