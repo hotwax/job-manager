@@ -20,23 +20,23 @@ const actions: ActionTree<JobState, RootState> = {
     if (resp.status === 200 && !hasError(resp) && resp.data.docs) {
       const cached = JSON.parse(JSON.stringify(state.cached));
 
-      resp.data.docs.filter((job: any) => job.statusId === 'SERVICE_PENDING').map((item: any) => {
-        return cached[item.systemJobEnumId] = {
-          ...item,
-          id: item.jobId,
-          frequency: item.tempExprId,
-          enumId: item.systemJobEnumId,
-          status: item.statusId
+      resp.data.docs.filter((job: any) => job.statusId === 'SERVICE_PENDING').map((job: any) => {
+        return cached[job.systemJobEnumId] = {
+          ...job,
+          id: job.jobId,
+          frequency: job.tempExprId,
+          enumId: job.systemJobEnumId,
+          status: job.statusId
         }
       })  
 
-      resp.data.docs.filter((job: any) => job.statusId === 'SERVICE_DRAFT').map((item: any) => {
-        return cached[item.systemJobEnumId] = cached[item.systemJobEnumId] ? cached[item.systemJobEnumId] : {
-          ...item,
-          id: item.jobId,
-          frequency: item.tempExprId,
-          enumId: item.systemJobEnumId,
-          status: item.statusId
+      resp.data.docs.filter((job: any) => job.statusId === 'SERVICE_DRAFT').map((job: any) => {
+        return cached[job.systemJobEnumId] = cached[job.systemJobEnumId] ? cached[job.systemJobEnumId] : {
+          ...job,
+          id: job.jobId,
+          frequency: job.tempExprId,
+          enumId: job.systemJobEnumId,
+          status: job.statusId
         }
       })
 
