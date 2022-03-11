@@ -9,35 +9,36 @@
     <ion-content>
       <main>
         <ion-card v-for="job in pendingJobs" :key="job">
-            <ion-card-header>
-              <ion-note>{{ job.parentJobId }}</ion-note>
-              <ion-item lines="none">
-                <ion-label>{{ job.systemJobEnumId }}</ion-label>
-                <ion-badge  color="dark">{{ timeTillJob(job.runTime) }}</ion-badge>
-              </ion-item>
-            </ion-card-header>
-            <!-- <ion-item lines="none">
-              service description
-            </ion-item> -->
-            <ion-item>
-              <ion-icon slot="start" :icon="timeOutline" />
-              <ion-label>{{getTime(job.runTime)  }}</ion-label>
-            </ion-item>
-            <ion-item>
-              <ion-icon slot="start" :icon="timerOutline" />
-              <ion-label>{{ temporalExpr(job.tempExprId) }}</ion-label>
-            </ion-item>
-            <ion-item lines="full">
-              <ion-icon slot="start" :icon="codeWorkingOutline" />
-              <ion-label>{{ job.serviceName }}</ion-label>
-            </ion-item>
-            <ion-item>
-              <ion-buttons>
-                <ion-button color="primary">{{ $t("Skip") }}</ion-button>
-                <ion-button color="danger">{{ $t("Cancel") }}</ion-button>
-              </ion-buttons>
-            </ion-item>
-          </ion-card>
+          <ion-item lines="none">
+            <ion-label>
+              <p class="overline">{{ job.parentJobId }}</p>
+              {{ job.systemJobEnumId }}
+            </ion-label>
+            <ion-badge color="dark" slot="end">{{ timeTillJob(job.runTime) }}</ion-badge>
+          </ion-item>
+
+          <!-- <ion-item lines="none">
+            service description
+          </ion-item> -->
+
+          <ion-item>
+            <ion-icon slot="start" :icon="timeOutline" />
+            <ion-label>{{ getTime(job.runTime) }}</ion-label>
+          </ion-item>
+
+          <ion-item>
+            <ion-icon slot="start" :icon="timerOutline" />
+            <ion-label>{{ temporalExpr(job.tempExprId) }}</ion-label>
+          </ion-item>
+
+          <ion-item lines="full">
+            <ion-icon slot="start" :icon="codeWorkingOutline" />
+            <ion-label>{{ job.serviceName }}</ion-label>
+          </ion-item>
+
+          <ion-button fill="clear">{{ $t("Skip") }}</ion-button>
+          <ion-button color="danger" fill="clear">{{ $t("Cancel") }}</ion-button>
+        </ion-card>
       </main>
     </ion-content>
   </ion-page>
@@ -46,25 +47,35 @@
 import { DateTime } from 'luxon';
 import { mapGetters, useStore } from 'vuex'
 import { defineComponent } from 'vue'
-import { IonContent, IonCard, IonNote, IonItem, IonLabel, IonIcon, IonBadge, IonButtons, IonButton, IonCardHeader, IonMenuButton, IonPage, IonHeader, IonToolbar, IonTitle } from "@ionic/vue";
-import { timeOutline, timerOutline, codeWorkingOutline } from "ionicons/icons";
+import {
+  IonBadge,
+  IonButton,
+  IonContent,
+  IonCard,
+  IonHeader,
+  IonIcon,
+  IonItem,
+  IonLabel,
+  IonMenuButton,
+  IonPage,
+  IonToolbar,
+  IonTitle
+} from "@ionic/vue";
+import { codeWorkingOutline, timeOutline, timerOutline } from "ionicons/icons";
 
 export default defineComponent({
   name: "Pipeline",
-  components:{
+  components: {
+    IonBadge,
+    IonButton,
     IonContent,
     IonCard,
-    IonNote,
+    IonHeader,
+    IonIcon,
     IonItem,
     IonLabel,
-    IonIcon,
-    IonBadge,
-    IonButtons,
-    IonButton,
-    IonCardHeader,
     IonMenuButton,
     IonPage,
-    IonHeader,
     IonToolbar,
     IonTitle
   },
@@ -92,18 +103,16 @@ export default defineComponent({
 
     return {
       store,
+      codeWorkingOutline,
       timeOutline,
-      timerOutline,
-      codeWorkingOutline
-    }
-  },
-})
+      timerOutline
+    };
+  }
+});
 </script>
 <style scoped>
 main {
   max-width: 343px;
-  margin-top: 20px;
-  margin-right: auto;
-  margin-left: auto;
+  margin: var(--spacer-base) auto 0;
 }
 </style>
