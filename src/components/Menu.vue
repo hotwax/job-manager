@@ -81,8 +81,8 @@ export default defineComponent({
     const selectedIndex = ref(0);
     const appPages = [
       {
-        title: "Dashboard",
-        url: "/dashboard",
+        title: "Pipeline",
+        url: "/pipeline",
         iosIcon: barChartOutline,
         mdIcon: barChartOutline,
       },

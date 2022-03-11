@@ -30,10 +30,9 @@ npm-debug.log*
 /plugins
 /www
 
-.firebase
 .env
 .env.*
 !.env.example
 .history
-
+.firebase
 .gradle

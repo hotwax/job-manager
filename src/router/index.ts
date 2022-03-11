@@ -3,6 +3,7 @@ import { RouteRecordRaw } from 'vue-router';
 import Home from '@/views/Home.vue'
 import Inventory from '@/views/Inventory.vue'
 import Product from '@/views/Product.vue'
+import Pipeline from '@/views/Pipeline.vue'
 import PreOrder from '@/views/PreOrder.vue'
 import Orders from '@/views/Orders.vue'
 import Login from '@/views/Login.vue'
@@ -28,12 +29,18 @@ const loginGuard = (to: any, from: any, next: any) => {
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
-    redirect: '/inventory'
+    redirect: '/pipeline'
   },
   {
     path: '/home',
     name: 'Home',
     component: Home,
+    beforeEnter: authGuard
+  },
+  {
+    path: '/pipeline',
+    name: 'Pipeline',
+    component: Pipeline,
     beforeEnter: authGuard
   },
   {
