@@ -35,7 +35,7 @@ export default defineComponent({
 
       // TODO: added this condition to not call the api when the value of the select automatically changes
       // need to handle this properly
-      if (status === job.tempExprId) {
+      if (status === job?.tempExprId) {
         return;
       }
 
