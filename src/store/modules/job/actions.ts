@@ -82,7 +82,7 @@ const actions: ActionTree<JobState, RootState> = {
       const cached = JSON.parse(JSON.stringify(state.cached));
 
       resp.data.docs.filter((job: any) => job.statusId === 'SERVICE_PENDING').map((job: any) => {
-        return cached[job.systemJobEnumId] = {
+        return cached[job.serviceName] = {
           ...job,
           id: job.jobId,
           frequency: job.tempExprId,
@@ -92,7 +92,7 @@ const actions: ActionTree<JobState, RootState> = {
       })  
 
       resp.data.docs.filter((job: any) => job.statusId === 'SERVICE_DRAFT').map((job: any) => {
-        return cached[job.systemJobEnumId] = cached[job.systemJobEnumId] ? cached[job.systemJobEnumId] : {
+        return cached[job.serviceName] = cached[job.serviceName] ? cached[job.serviceName] : {
           ...job,
           id: job.jobId,
           frequency: job.tempExprId,
