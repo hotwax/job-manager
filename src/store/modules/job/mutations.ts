@@ -5,7 +5,6 @@ import * as types from './mutation-types'
 const mutations: MutationTree <JobState> = {
     [types.JOB_UPDATED_BULK] (state, payload) {
         state.cached = payload
-        console.log(state.cached)
     },
     [types.JOB_UPDATED] (state, payload) {
         state.cached[payload.jobId] = {

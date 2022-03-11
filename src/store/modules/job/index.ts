@@ -8,10 +8,6 @@ import RootState from '../../RootState'
 const jobModule: Module<JobState, RootState> = {
     namespaced: true,
     state: {
-      preorder: {},
-      order: {},
-      inventory: {},
-      product: {},
       cached: {}
     },
     getters,

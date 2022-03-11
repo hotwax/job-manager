@@ -45,20 +45,19 @@ const actions: ActionTree<JobState, RootState> = {
     return resp;
   },
   async updateJob ({ commit }, payload) {
-    // const resp = await JobService.updateJob(payload)
-    // if (resp.status === 200 && !hasError(resp) && resp.data.docs) {
-    //   commit(types.JOB_UPDATED, { job: payload});
-    // }
-    // return resp;
-    console.log('job updated', payload)
+    const resp = await JobService.updateJob(payload)
+    if (resp.status === 200 && !hasError(resp) && resp.data.docs) {
+      commit(types.JOB_UPDATED, { job: payload});
+    }
+    return resp;
   },
 
   async scheduleService({ commit }, payload) {
-    // const resp = await JobService.scheduleJob(payload);
-    // if (resp.status == 200 && !hasError(resp) && resp.data.docs) {
-    //   commit(types.JOB_UPDATED, { job: payload })
-    // }
-    console.log('job scheduled', payload)
+    const resp = await JobService.scheduleJob(payload);
+    if (resp.status == 200 && !hasError(resp) && resp.data.docs) {
+      commit(types.JOB_UPDATED, { job: payload })
+    }
+    return resp;
   }
 
 }
