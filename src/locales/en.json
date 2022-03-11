@@ -34,6 +34,7 @@
   "Performing a hard sync from Shopify to HotWax Commerce is useful for eliminating any discrepencies that may build up from unreliable webhooks.": "Performing a hard sync from Shopify to HotWax Commerce is useful for eliminating any discrepencies that may build up from unreliable webhooks.",
   "Payment status": "Payment status",
   "Pre-order": "Pre-order",
+  "Pipeline": "Pipeline",
   "Product": "Product",
   "Products": "Products",
   "Promise date changes": "Promise date changes",
