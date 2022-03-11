@@ -53,14 +53,30 @@ const actions: ActionTree<UserState, RootState> = {
   /**
    * Get User profile
    */
-  async getProfile ( { commit }) {
+  async getProfile ({ commit, dispatch }) {
     const resp = await UserService.getProfile()
     if (resp.status === 200) {
       const localTimeZone = moment.tz.guess();
       if (resp.data.userTimeZone !== localTimeZone) {
         emitter.emit('timeZoneDifferent', { profileTimeZone: resp.data.userTimeZone, localTimeZone});
       }
+
+      const payload = {
+        "fieldList": ["productStoreId" ],
+        "entityName": "ProductStoreAndFacility",
+        "noConditionFind": "Y"
+      }
+
+      await dispatch('getEComStores', payload).then((stores: any) => {
+        resp.data.stores = stores
+      })
+
+      await dispatch('getEComStores', payload).then((stores: any) => {
+        resp.data.stores = stores
+      })
+
       commit(types.USER_INFO_UPDATED, resp.data);
+      commit(types.USER_CURRENT_ECOM_STORE_UPDATED, resp.data.stores?.length > 0 ? resp.data.stores[0] : {});
     }
   },
 
@@ -98,8 +114,30 @@ const actions: ActionTree<UserState, RootState> = {
     })
 
     if (resp.status === 200 && !hasError(resp)) {
-      commit(types.USER_SHOPIFY_CONFIG_UPDATED, resp.data.docs[0].shopifyConfigId);
+      commit(types.USER_SHOPIFY_CONFIG_UPDATED, resp.data.docs?.length > 0 ? resp.data.docs[0].shopifyConfigId : {});
     }
+  },
+
+  async getEComStores({ commit }, payload) {
+    let resp;
+
+    try{
+      resp = await UserService.getEComStores(payload);
+      if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
+        const stores = resp.data.docs
+        stores.map((store: any) => {
+          store.reserveInventory = store.reserveInventory !== "N";
+        })
+
+        return stores
+      }
+    } catch(err) {
+      console.error(err)
+    }
+  },
+
+  async setEComStore({ commit, dispatch }, payload) {
+    commit(types.USER_CURRENT_ECOM_STORE_UPDATED, payload.store);
   }
 }
 
