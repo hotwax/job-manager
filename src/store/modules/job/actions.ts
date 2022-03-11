@@ -31,30 +31,41 @@ const actions: ActionTree<JobState, RootState> = {
       console.error(err);
     })
   },
-  async fetchTemporalExpression({ state, commit }, payload){
+  async fetchTemporalExpression({ state, commit }, tempExprIds){
+    const tempIds = [] as any;
     const cashedTempExprId = Object.keys(state.temporalExp);
-    payload.map(async (tempExprId: any) => {
-      if(!cashedTempExprId.includes(tempExprId)){
-        const resp = await JobService.fetchJobInformation({
-          "inputFields": {
-            "tempExprId": [...payload],
-          },
-          "fieldList": [ "tempExprId", "description" ],
-          "entityName": "TemporalExpression",
-          "noConditionFind": "Y",
-        })
-        if (resp.status === 200 && !hasError(resp)) {
-          const tempExpr = {} as any;
-           resp.data.docs.map((item: any) => {
-             tempExpr[item.tempExprId] = item.description;
-           })
-          if (resp.data.docs) {
-            commit(types.JOB_TEMPORAL_EXPRESSION_UPDATED, tempExpr);
-          }
-        }
-        return resp;
+    const tempExprFiltered = tempExprIds.reduce((filter: string, id: any) => {
+      if(cashedTempExprId.includes(id)){
+        return filter;
       }
+      else{
+        if (filter !== '') filter += ' OR '
+        tempIds.push(id);
+        return filter += id;
+      }
+    }, "");
+    if(tempExprFiltered === '') return tempExprIds.map((id: any) => state.temporalExp[id]);
+    const cachedTempExpr = tempExprIds.map((id: any) => state.temporalExp[id]);
+    const resp = await JobService.fetchJobInformation({
+        "inputFields": {
+        "tempExprId": [...tempIds],
+        "temoExprId_op": "in"
+      },
+      "fieldList": [ "tempExprId", "description" ],
+      "entityName": "TemporalExpression",
+      "noConditionFind": "Y",
     })
+    if (resp.status === 200 && !hasError(resp)) {
+      const tempExpr = {} as any;
+      resp.data.docs.map((item: any) => {
+        tempExpr[item.tempExprId] = item.description;
+      })
+      if (resp.data.docs) {
+        commit(types.JOB_TEMPORAL_EXPRESSION_UPDATED, tempExpr);
+      }
+      return [...cachedTempExpr, ...resp.data.docs]
+    }
+    return resp;
   },
   async fetchJobs ( { commit }, payload) {
     const resp = await JobService.fetchJobInformation({
