@@ -48,7 +48,7 @@
           </ion-item>
           <ion-item>
             <ion-label>{{ $t("Refunds") }}</ion-label>
-           <DurationPopover :id="jobEnums['UPLD_REFUNDS']" />
+            <DurationPopover :id="jobEnums['UPLD_REFUNDS']" />
           </ion-item>
         </ion-card>
 
@@ -160,7 +160,8 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       order: 'job/getOrderInformation',
-      getJobStatus: 'job/getJobStatus'
+      getJobStatus: 'job/getJobStatus',
+      getJob: 'job/getJob'
     })
   },
   methods: {
@@ -170,6 +171,23 @@ export default defineComponent({
       });
       return batchmodal.present();
     },
+    async updateJob(status: string, id: string) {
+      const job = this.getJob(id);
+      // TODO: check for parentJobId and jobEnum and handle this values properly
+      const payload = {
+        ...job,
+        'systemJobEnumId': id,
+        'statusId': status ? "SERVICE_PENDING" : "SERVICE_DRAFT"
+      } as any
+      if (job?.status === 'SERVICE_DRAFT') {
+        payload['tempExprId'] = 'HOURLY'
+      } else if (job?.status === 'SERVICE_PENDING') {
+        payload['tempExprId'] = 'HOURLY'
+        payload['jobId'] = job.id
+      }
+
+      job?.status === 'SERVICE_PENDING' ? this.store.dispatch('job/updateJob', payload) : this.store.dispatch('job/scheduleService', payload);
+    }
   },
   mounted () { 
     this.store.dispatch("job/fetchJobs", {
