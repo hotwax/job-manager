@@ -53,6 +53,7 @@
   "Reroutes": "Reroutes",
   "Returns": "Returns",
   "Routing": "Routing",
+  "Route unfillable orders now": "Route unfillable orders now",
   "Run daily": "Run daily",
   "Run reallocation": "Run reallocation",
   "Run sync now": "Run sync now",
@@ -73,6 +74,7 @@
   "UI Components": "UI Components",
   "Upload": "Upload",
   "Username": "Username",
+  "Unfillable orders": "Unfillable orders",
   "When importing historical completed orders, reservation should be turned off.": "When importing historical completed orders, reservation should be turned off.",
   "When using HotWax BOPIS, Shopify isn't aware of the actual inventory consumed. HotWax will automatically restore inventory automatically reduced by Shopify and deduct inventory from the correct store to maintain inventory accuracy.": "When using HotWax BOPIS, Shopify isn't aware of the actual inventory consumed. HotWax will automatically restore inventory automatically reduced by Shopify and deduct inventory from the correct store to maintain inventory accuracy."
 }

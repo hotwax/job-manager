@@ -71,6 +71,13 @@
             <ion-card-title>{{ $t("Routing") }}</ion-card-title>
           </ion-card-header>
           <ion-item>
+            <ion-label>{{ $t("Unfillable orders") }}</ion-label>
+            <DurationPopover :id="jobEnums['UNFIL_ORDERS']" />
+          </ion-item>
+          <ion-item>
+            <ion-button fill="outline" color="warning">{{ $t("Route unfillable orders now") }}</ion-button>
+          </ion-item>
+          <ion-item>
             <ion-label>{{ $t("Batch broker orders") }}</ion-label>
             <ion-toggle color="secondary" />
           </ion-item>
