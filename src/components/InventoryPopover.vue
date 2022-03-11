@@ -40,7 +40,7 @@ export default defineComponent({
         payload.status = "SERVICE_PENDING";
         payload.frequency = status;
       }
-      this.store.dispatch('job/updateJob', payload);
+      // this.store.dispatch('job/updateJob', payload);
     },
   },
   setup() {

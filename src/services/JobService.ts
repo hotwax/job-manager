@@ -10,13 +10,22 @@ const fetchJobInformation = async (payload: any): Promise <any>  => {
 
 const updateJob = async (payload: any): Promise <any>  => {
   return api({
-    url: "updateJob",
+    url: "service/updateJobSandbox",
     method: "post",
     data: payload
   });
 }
 
+const scheduleJob = async (payload: any): Promise <any>  => {
+  return api({
+    url: "scheduleService",
+    method: "GET",
+    params: payload
+  });
+}
+
 export const JobService = {
-    fetchJobInformation,
-    updateJob
+  fetchJobInformation,
+  updateJob,
+  scheduleJob
 }
