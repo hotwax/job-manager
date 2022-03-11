@@ -1,6 +1,6 @@
 <template>
   <!-- TODO Make values dynamic and internationalise text  -->
-  <ion-select :interface-options="customPopoverOptions" interface="popover" :value="getJobStatus(id)" @ionChange="updateJob(id)" >
+  <ion-select :interface-options="customPopoverOptions" interface="popover" :value="getJobStatus(id)" @ionChange="updateJob($event['detail'].value, id)" >
     <ion-select-option value="HOURLY">Hourly</ion-select-option>
     <ion-select-option value="EVERY_6_HOURS">Every 6 hours</ion-select-option>
     <ion-select-option value="NIGHTLY">Nightly</ion-select-option>
@@ -30,17 +30,17 @@ export default defineComponent({
     })
   },
   methods: {
-    async updateJob(id: string) {
+    async updateJob(status: string, id: string) {
       const job = this.getJob(id);
       const payload = {
         ...job,
         'systemJobEnumId': id,
-        'statusId' : "SERVICE_PENDING"
+        'statusId': status === "SERVICE_DRAFT" ? "SERVICE_DRAFT" : "SERVICE_PENDING"
       } as any
       if (job?.status === 'SERVICE_DRAFT') {
-        payload['SERVICE_FREQUENCY'] = 'EVERY_15_MIN'
+        payload['SERVICE_FREQUENCY'] = status
       } else if (job?.status === 'SERVICE_PENDING') {
-        payload['tempExprId'] = 'EVERY_15_MIN'
+        payload['tempExprId'] = status === 'SERVICE_DRAFT' ? job.tempExprId : status
         payload['jobId'] = job.id
       }
 
