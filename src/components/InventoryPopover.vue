@@ -12,6 +12,7 @@ import { IonSelect, IonSelectOption } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { useStore } from "@/store";
 import { mapGetters } from "vuex";
+import { translate } from '@/i18n';
 
 export default defineComponent({
   name: 'InventoryPopover',
@@ -48,7 +49,7 @@ export default defineComponent({
   },
   setup() {
     const customPopoverOptions: any = {
-      header: 'Schedule inventory hard sync',
+      header: translate('Schedule inventory hard sync'),
       showBackdrop: false
     }
     const store = useStore();

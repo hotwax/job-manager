@@ -13,6 +13,7 @@ import { IonSelect, IonSelectOption } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { useStore } from "@/store";
 import { mapGetters } from "vuex";
+import { translate } from '@/i18n';
 
 export default defineComponent({
   name: 'DurationPopover',
@@ -50,7 +51,7 @@ export default defineComponent({
   },
  setup(){
     const customPopoverOptions: any = {
-      header: 'Import new orders',
+      header: translate('Import new orders'),
       showBackdrop: false
     };
     const store = useStore();

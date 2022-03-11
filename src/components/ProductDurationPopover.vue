@@ -8,6 +8,7 @@
 </template>
 
 <script lang="ts">
+import { translate } from '@/i18n';
 import { IonSelect, IonSelectOption } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
@@ -46,7 +47,7 @@ export default defineComponent({
   },
   setup() {
     const customPopoverOptions: any = {
-      header: "Schedule product sync",
+      header: translate("Schedule product sync"),
       showBackdrop: false,
     };
     const store = useStore();
