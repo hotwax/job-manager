@@ -6,12 +6,12 @@
             <ion-note>{{ job.parentJobId }}</ion-note>
             <ion-item lines="none">
               <ion-label>{{ job.systemJobEnumId }}</ion-label>
-              <ion-badge  color="dark">{{ getDiff(job.runTime) }}</ion-badge>
+              <ion-badge  color="dark">{{ timeTillJob(job.runTime) }}</ion-badge>
             </ion-item>
           </ion-card-header>
-          <ion-item lines="none">
+          <!-- <ion-item lines="none">
             service description
-          </ion-item>
+          </ion-item> -->
           <ion-item>
             <ion-icon slot="start" :icon="timeOutline" />
             <ion-label>{{getTime(job.runTime)  }}</ion-label>
@@ -61,12 +61,13 @@ export default defineComponent({
       temporalExpr: 'job/getTemporalExpr'
     })
   },
-  methods:{
+  methods: {
     getTime (time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.TIME_SIMPLE);
     },
-    getDiff (time: any) {
-      return DateTime.local().plus(time).toRelative();
+    timeTillJob (time: any) {
+      const time1 = DateTime.fromMillis(time).diff(DateTime.local());
+      return DateTime.local().plus(time1.milliseconds).toRelative();
     }
   },
   created() {
