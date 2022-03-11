@@ -33,9 +33,9 @@ const actions: ActionTree<JobState, RootState> = {
   },
   async fetchTemporalExpression({ state, commit }, tempExprIds){
     const tempIds = [] as any;
-    const cashedTempExprId = Object.keys(state.temporalExp);
+    const cachedTempExprId = Object.keys(state.temporalExp);
     const tempExprFiltered = tempExprIds.reduce((filter: string, id: any) => {
-      if(cashedTempExprId.includes(id)){
+      if(cachedTempExprId.includes(id)){
         return filter;
       }
       else{
