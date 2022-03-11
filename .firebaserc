@@ -1,0 +1,22 @@
+{
+  "projects": {
+    "default": "hotwax-digital-commerce",
+    "production": "digital-commerce-71eb8"
+  },
+  "targets": {
+    "digital-commerce-71eb8": {
+      "hosting": {
+        "hotwax-job-manager": [
+          "hotwax-job-manager"
+        ]
+      }
+    },
+    "hotwax-digital-commerce": {
+      "hosting": {
+        "job-manager-dev": [
+          "job-manager-dev"
+        ]
+      }
+    }
+  }
+}

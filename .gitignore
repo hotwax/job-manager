@@ -35,3 +35,4 @@ npm-debug.log*
 !.env.example
 .history
 .firebase
+.gradle
