@@ -2,11 +2,12 @@
   <ion-page>
     <ion-header :translucent="true">
       <ion-toolbar>
+        <ion-menu-button slot="start" />
         <ion-title>{{ $t("Pre-order") }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
-    <ion-content :fullscreen="true">
+    <ion-content>
       <main>
         <ion-card>
           <ion-card-header>
@@ -87,6 +88,7 @@ import {
   IonHeader,
   IonItem,
   IonLabel,
+  IonMenuButton,
   IonPage,
   IonTitle,
   IonToggle,
@@ -106,6 +108,7 @@ export default defineComponent({
     IonHeader,
     IonItem,
     IonLabel,
+    IonMenuButton,
     IonPage,
     IonTitle,
     IonToggle,

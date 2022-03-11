@@ -2,11 +2,12 @@
   <ion-page>
     <ion-header :translucent="true">
       <ion-toolbar>
+        <ion-menu-button slot="start" />
         <ion-title>{{ $t("Inventory") }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
-    <ion-content :fullscreen="true">
+    <ion-content>
       <main>
         <ion-card>
           <ion-radio-group>
@@ -105,6 +106,7 @@ import {
   IonHeader,
   IonItem,
   IonLabel,
+  IonMenuButton,
   IonPage,
   IonRadioGroup,
   IonRadio,
@@ -124,6 +126,7 @@ export default defineComponent({
     IonHeader,
     IonItem,
     IonLabel,
+    IonMenuButton,
     IonPage,
     IonRadioGroup,
     IonRadio,
