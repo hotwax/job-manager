@@ -31,7 +31,7 @@ export default defineComponent({
     })
   },
   methods: {
-     async updateJob(id: string) {
+    async updateJob(id: string) {
       const job = this.getJob(id);
       const payload = {
         ...job,

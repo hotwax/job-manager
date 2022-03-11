@@ -1,6 +1,6 @@
 <template>
   <!-- TODO Make values dynamic and internationalise text  -->
-  <ion-select :interface-options="customPopoverOptions" interface="popover" :value="getJobStatus(id) ? getJobStatus(id) : 'SERVICE_DRAFT'" @ionChange="updateJob($event)" >
+  <ion-select :interface-options="customPopoverOptions" interface="popover" :value="getJobStatus(id) ? getJobStatus(id) : 'SERVICE_DRAFT'" @ionChange="updateJob(id)" >
     <ion-select-option value="HOURLY">Hourly</ion-select-option>
     <ion-select-option value="EVERY_6_HOURS">Every 6 hours</ion-select-option>
     <ion-select-option value="NIGHTLY">Nightly</ion-select-option>
@@ -24,24 +24,27 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
-      getJobStatus: 'job/getJobStatus'
+      getJobStatus: 'job/getJobStatus',
+      getJob: 'job/getJob'
     })
   },
   methods: {
-     async updateJob(status: string) {
+    async updateJob(id: string) {
+      const job = this.getJob(id);
       const payload = {
-        id: this.id,
-        status: '',
-        frequency: undefined as string | undefined
+        ...job,
+        'systemJobEnumId': id,
+        'statusId' : "SERVICE_PENDING"
+      } as any
+      if (job?.status === 'SERVICE_DRAFT') {
+        payload['SERVICE_FREQUENCY'] = 'EVERY_15_MIN'
+      } else if (job?.status === 'SERVICE_PENDING') {
+        payload['tempExprId'] = 'EVERY_15_MIN'
+        payload['jobId'] = job.id
       }
-      if ( status === "SERVICE_DRAFT") {
-        payload.status = status;
-      } else {
-        payload.status = "SERVICE_PENDING";
-        payload.frequency = status;
-      }
-      // this.store.dispatch('job/updateJob', payload);
-    },
+
+      job?.status === 'SERVICE_PENDING' ? this.store.dispatch('job/updateJob', payload) : this.store.dispatch('job/scheduleService', payload);
+    }
   },
   setup() {
     const customPopoverOptions: any = {

@@ -24,7 +24,7 @@
           </ion-item>
           <ion-item>
             <ion-label>{{ $t("BOPIS corrections") }}</ion-label>
-            <ion-toggle :checked="bopisCorrections" color="secondary" slot="end" @click="updateJob($event, this.jobEnums['BOPIS_CORRECTION'])" />
+            <ion-toggle :checked="bopisCorrections" color="secondary" slot="end" @click="updateJob(this.jobEnums['BOPIS_CORRECTION'])" />
           </ion-item>
           <ion-item lines="none">
             <ion-label class="ion-text-wrap">
@@ -36,7 +36,7 @@
         <ion-card>
           <ion-item>
             <ion-label>{{ $t("Realtime adjustments") }}</ion-label>
-            <ion-toggle :checked="realtimeAdjustments" color="secondary" slot="end" @click="updateJob($event, this.jobEnums['REALTIME_ADJUSTMENTS'])" />
+            <ion-toggle :checked="realtimeAdjustments" color="secondary" slot="end" @click="updateJob(this.jobEnums['REALTIME_ADJUSTMENTS'])" />
           </ion-item>
           <ion-item lines="none">
             <ion-label class="ion-text-wrap">
@@ -54,11 +54,11 @@
           </ion-item>
            <ion-item>
             <ion-label>{{ $t("Realtime POS sales") }}</ion-label>
-            <ion-toggle :checked="realtimePOSSales" color="secondary" slot="end" @click="updateJob($event, this.jobEnums['REAL_TIME_POS_SALES'])" />
+            <ion-toggle :checked="realtimePOSSales" color="secondary" slot="end" @click="updateJob(this.jobEnums['REAL_TIME_POS_SALES'])" />
           </ion-item>
            <ion-item>
             <ion-label>{{ $t("Reserve for completed orders") }}</ion-label>
-            <ion-toggle :checked="reserveForCompletedOrders" color="secondary" slot="end" @click="updateJob($event, this.jobEnums['RSV_CMPLT_ORDRS'])" />
+            <ion-toggle :checked="reserveForCompletedOrders" color="secondary" slot="end" @click="updateJob(this.jobEnums['RSV_CMPLT_ORDRS'])" />
           </ion-item>
           <ion-item lines="none">
             <ion-label class="ion-text-wrap">
@@ -146,14 +146,14 @@ export default defineComponent({
         'systemJobEnumId': id,
         'statusId' : "SERVICE_PENDING"
       } as any
-      if (job.status === 'SERVICE_DRAFT') {
+      if (job?.status === 'SERVICE_DRAFT') {
         payload['SERVICE_FREQUENCY'] = 'EVERY_15_MIN'
-      } else if (job.status === 'SERVICE_PENDING') {
+      } else if (job?.status === 'SERVICE_PENDING') {
         payload['tempExprId'] = 'EVERY_15_MIN'
         payload['jobId'] = job.id
       }
 
-      job.status === 'SERVICE_PENDING' ? this.store.dispatch('job/updateJob', payload) : this.store.dispatch('job/scheduleService', payload);
+      job?.status === 'SERVICE_PENDING' ? this.store.dispatch('job/updateJob', payload) : this.store.dispatch('job/scheduleService', payload);
     }
   },
   mounted () {
