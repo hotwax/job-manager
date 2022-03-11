@@ -13,7 +13,7 @@
               <ion-note>{{ job.parentJobId }}</ion-note>
               <ion-item lines="none">
                 <ion-label>{{ job.systemJobEnumId }}</ion-label>
-                <ion-badge  color="dark">{{ timeTillJob(job.runTime) }}</ion-badge>
+                <ion-badge color="dark">{{ timeTillJob(job.runTime) }}</ion-badge>
               </ion-item>
             </ion-card-header>
             <!-- <ion-item lines="none">
@@ -21,7 +21,7 @@
             </ion-item> -->
             <ion-item>
               <ion-icon slot="start" :icon="timeOutline" />
-              <ion-label>{{getTime(job.runTime)  }}</ion-label>
+              <ion-label>{{ getTime(job.runTime) }}</ion-label>
             </ion-item>
             <ion-item>
               <ion-icon slot="start" :icon="timerOutline" />
@@ -79,13 +79,12 @@ export default defineComponent({
       return DateTime.fromMillis(time).toLocaleString(DateTime.TIME_SIMPLE);
     },
     timeTillJob (time: any) {
-      const time1 = DateTime.fromMillis(time).diff(DateTime.local());
-      return DateTime.local().plus(time1.milliseconds).toRelative();
+      const timeDiff = DateTime.fromMillis(time).diff(DateTime.local());
+      return DateTime.local().plus(timeDiff).toRelative();
     }
   },
   created() {
     this.store.dispatch('job/fetchPendingJobs');
-    this.store.dispatch('job/fetchTemporalExpression');
   },
   setup() {
     const store = useStore();

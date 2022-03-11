@@ -19,33 +19,42 @@ const actions: ActionTree<JobState, RootState> = {
       if (resp.status === 200 && !hasError(resp)) {
         if (resp.data.docs) {
           commit(types.JOB_PENDING_UPDATED,  resp.data.docs);
+          const tempExprList = [] as any;
+          resp.data.docs.map((item: any) => {
+            tempExprList.push(item.tempExprId);
+          })
+          const payload = [...new Set(tempExprList)];
+          dispatch('fetchTemporalExpression', payload);
         }
-        dispatch('fetchTemporalExpression');
       }
     }).catch((err) => {
       console.error(err);
     })
-    
   },
-  async fetchTemporalExpression({ commit }){
-    const resp = await JobService.fetchJobInformation({
-      "inputFields": {
-        "tempExprId": ['DAILY_3AM_ET', 'EVERY_6_HOUR', 'HOURLY', 'CANCEL_HOURLY', 'EVERY_5_MIN', 'EVERY_15_MIN', "DAILY_8_30PM", "DAILY_9_PM", "MIDNIGHT_DAILY", "EVERY_6_HOUR", "EVERY_30_MIN", "DAILY_9_15PM"],
-      },
-      "fieldList": [ "tempExprId", "description" ],
-      "entityName": "TemporalExpression",
-      "noConditionFind": "Y",
-    })
-    if (resp.status === 200 && !hasError(resp)) {
-      const tempExprList = {} as any;
-       resp.data.docs.map((item: any) => {
-         tempExprList[item.tempExprId] = item.description;
-       })
-      if (resp.data.docs) {
-        commit(types.JOB_TEMPORAL_EXPRESSION_UPDATED, tempExprList);
+  async fetchTemporalExpression({ state, commit }, payload){
+    const cashedTempExprId = Object.keys(state.temporalExp);
+    payload.map(async (tempExprId: any) => {
+      if(!cashedTempExprId.includes(tempExprId)){
+        const resp = await JobService.fetchJobInformation({
+          "inputFields": {
+            "tempExprId": [...payload],
+          },
+          "fieldList": [ "tempExprId", "description" ],
+          "entityName": "TemporalExpression",
+          "noConditionFind": "Y",
+        })
+        if (resp.status === 200 && !hasError(resp)) {
+          const tempExpr = {} as any;
+           resp.data.docs.map((item: any) => {
+             tempExpr[item.tempExprId] = item.description;
+           })
+          if (resp.data.docs) {
+            commit(types.JOB_TEMPORAL_EXPRESSION_UPDATED, tempExpr);
+          }
+        }
+        return resp;
       }
-    }
-    return resp;
+    })
   },
   async fetchJobs ( { commit }, payload) {
     const resp = await JobService.fetchJobInformation({
@@ -74,13 +83,10 @@ const actions: ActionTree<JobState, RootState> = {
         commit(types.JOB_UPDATED, {
           job: payload
          });
-
+        
       }
     }
     return resp;
   },
-
-
-
 }
 export default actions;
