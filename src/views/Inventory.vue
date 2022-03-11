@@ -12,7 +12,7 @@
         <ion-card>
           <ion-item>
             <ion-label>{{ $t("Realtime webhooks") }}</ion-label>
-            <ion-toggle :checked="realTimeWebhooks" color="secondary" slot="end" @click="updateJob($event['detail'].value, this.jobEnums[''])"/>
+            <ion-toggle :checked="realTimeWebhooks" color="secondary" slot="end" @click="updateJob($event['detail'].value, this.jobEnums['REAL_WBHKS'])"/>
           </ion-item>
           <ion-item>
             <ion-label>{{ $t("Hard sync") }}</ion-label>
