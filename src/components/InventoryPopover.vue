@@ -39,6 +39,9 @@ export default defineComponent({
       } as any
       if (job?.status === 'SERVICE_DRAFT') {
         payload['SERVICE_FREQUENCY'] = status
+        payload['SERVICE_NAME'] = job.serviceName
+        payload['count'] = -1
+        payload['runAsSystem'] = true
       } else if (job?.status === 'SERVICE_PENDING') {
         payload['tempExprId'] = status === 'SERVICE_DRAFT' ? job.tempExprId : status
         payload['jobId'] = job.id

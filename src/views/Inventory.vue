@@ -11,7 +11,7 @@
         <ion-card>
           <ion-item>
             <ion-label>{{ $t("Realtime webhooks") }}</ion-label>
-            <ion-toggle :checked="realTimeWebhooks" color="secondary" slot="end" @click="updateJob($event['detail'].value, this.jobEnums['TEST_JOB'])"/>
+            <ion-toggle :checked="realTimeWebhooks" color="secondary" slot="end" @click="updateJob($event['detail'].value, this.jobEnums[''])"/>
           </ion-item>
           <ion-item>
             <ion-label>{{ $t("Hard sync") }}</ion-label>
@@ -141,6 +141,7 @@ export default defineComponent({
   methods: {
     async updateJob(status: string, id: string) {
       const job = this.getJob(id);
+
       // TODO: check for parentJobId and jobEnum and handle this values properly
       const payload = {
         ...job,
@@ -148,7 +149,10 @@ export default defineComponent({
         'statusId': status ? "SERVICE_PENDING" : "SERVICE_DRAFT"
       } as any
       if (job?.status === 'SERVICE_DRAFT') {
-        payload['tempExprId'] = 'HOURLY'
+        payload['SERVICE_FREQUENCY'] = 'HOURLY'
+        payload['SERVICE_NAME'] = job.serviceName
+        payload['count'] = -1
+        payload['runAsSystem'] = true
       } else if (job?.status === 'SERVICE_PENDING') {
         payload['tempExprId'] = 'HOURLY'
         payload['jobId'] = job.id
