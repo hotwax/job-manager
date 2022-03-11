@@ -161,7 +161,9 @@ export default defineComponent({
     ...mapGetters({
       order: 'job/getOrderInformation',
       getJobStatus: 'job/getJobStatus',
-      getJob: 'job/getJob'
+      getJob: 'job/getJob',
+      getShopifyConfigId: 'user/getShopifyConfigId',
+      getCurrentEComStore: 'user/getCurrentEComStore'
     })
   },
   methods: {
@@ -184,6 +186,8 @@ export default defineComponent({
         payload['SERVICE_NAME'] = job.serviceName
         payload['count'] = -1
         payload['runAsSystem'] = true
+        payload['shopifyConfigId'] = this.getShopifyConfigId
+        payload['productStoreId'] = this.getCurrentEComStore.productStoreId
       } else if (job?.status === 'SERVICE_PENDING') {
         payload['tempExprId'] = 'HOURLY'
         payload['jobId'] = job.id

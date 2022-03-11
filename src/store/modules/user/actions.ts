@@ -124,9 +124,6 @@ const actions: ActionTree<UserState, RootState> = {
       resp = await UserService.getEComStores(payload);
       if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
         const stores = resp.data.docs
-        stores.map((store: any) => {
-          store.reserveInventory = store.reserveInventory !== "N";
-        })
 
         return stores
       }
