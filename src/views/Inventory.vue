@@ -16,7 +16,7 @@
           </ion-item>
           <ion-item>
             <ion-label>{{ $t("Hard sync") }}</ion-label>
-            <InventoryPopover :id="jobEnums['TEST_JOB']"/>
+            <InventoryPopover :id="jobEnums['REAL_WBHKS']"/>
           </ion-item>
           <ion-item lines="none">
             <ion-label class="ion-text-wrap">
@@ -144,33 +144,37 @@ export default defineComponent({
     }
   },
   methods: {
-    async updateJob(status: string, id: string) {
+    async updateJob(checked: boolean, id: string) {
       const job = this.getJob(id);
+
+      // TODO: added this condition to not call the api when the value of the select automatically changes
+      // need to handle this properly
+      if (checked && job?.status === 'SERVICE_PENDING') {
+        return;
+      }
 
       // TODO: check for parentJobId and jobEnum and handle this values properly
       const payload = {
         ...job,
         'systemJobEnumId': id,
-        'statusId': status ? "SERVICE_PENDING" : "SERVICE_DRAFT"
+        'statusId': checked ? "SERVICE_PENDING" : "SERVICE_CANCELLED"
       } as any
-      if (job?.status === 'SERVICE_DRAFT') {
+      if (!checked) {
+        this.store.dispatch('job/updateJob', payload)
+      } else if (job?.status === 'SERVICE_DRAFT') {
         payload['SERVICE_FREQUENCY'] = 'HOURLY'
         payload['SERVICE_NAME'] = job.serviceName
         payload['count'] = -1
         payload['runAsSystem'] = true
         payload['shopifyConfigId'] = this.getShopifyConfigId
         payload['productStoreId'] = this.getCurrentEComStore.productStoreId
+
+        this.store.dispatch('job/scheduleService', payload)
       } else if (job?.status === 'SERVICE_PENDING') {
         payload['tempExprId'] = 'HOURLY'
         payload['jobId'] = job.id
-      }
 
-      if (job?.status === 'SERVICE_PENDING') {
         this.store.dispatch('job/updateJob', payload)
-      }
-
-      if (job?.status === 'SERVICE_DRAFT') {
-        this.store.dispatch('job/scheduleService', payload)
       }
     }
   },
