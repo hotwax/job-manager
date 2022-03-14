@@ -53,17 +53,13 @@ export default defineComponent({
         payload['runAsSystem'] = true
         payload['shopifyConfigId'] = this.getShopifyConfigId
         payload['productStoreId'] = this.getCurrentEComStore.productStoreId
+
+        this.store.dispatch('job/scheduleService', payload)
       } else if (job?.status === 'SERVICE_PENDING') {
         payload['tempExprId'] = status === 'SERVICE_DRAFT' ? job.tempExprId : status
         payload['jobId'] = job.id
-      }
 
-      if (job?.status === 'SERVICE_PENDING') {
         this.store.dispatch('job/updateJob', payload)
-      }
-
-      if (job?.status === 'SERVICE_DRAFT') {
-        this.store.dispatch('job/scheduleService', payload)
       }
     }
   },
