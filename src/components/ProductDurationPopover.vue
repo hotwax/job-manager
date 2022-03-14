@@ -1,7 +1,7 @@
 <template>
   <ion-select :interface-options="customPopoverOptions" interface="popover" :value="getJobStatus(id)" @ionChange="updateJob($event['detail'].value, id)">
     <ion-select-option value="HOURLY">Hourly</ion-select-option>
-    <ion-select-option value="EVERY_6_HOURS">Every 6 Hours</ion-select-option>
+    <ion-select-option value="EVERY_6_HOUR">Every 6 Hour</ion-select-option>
     <ion-select-option value="DAILY">Daily</ion-select-option>
     <ion-select-option value="SERVICE_DRAFT">Disabled</ion-select-option>
   </ion-select>
@@ -42,9 +42,11 @@ export default defineComponent({
       const payload = {
         ...job,
         'systemJobEnumId': id,
-        'statusId': status === "SERVICE_DRAFT" ? "SERVICE_DRAFT" : "SERVICE_PENDING"
+        'statusId': status === "SERVICE_DRAFT" ? "SERVICE_CANCELLED" : "SERVICE_PENDING"
       } as any
-      if (job?.status === 'SERVICE_DRAFT') {
+      if (status === 'SERVICE_DRAFT') {
+        this.store.dispatch('job/updateJob', payload)
+      } else if (job?.status === 'SERVICE_DRAFT') {
         payload['SERVICE_FREQUENCY'] = status
         payload['SERVICE_NAME'] = job.serviceName
         payload['count'] = -1
@@ -56,7 +58,13 @@ export default defineComponent({
         payload['jobId'] = job.id
       }
 
-      job?.status === 'SERVICE_PENDING' ? this.store.dispatch('job/updateJob', payload) : this.store.dispatch('job/scheduleService', payload);
+      if (job?.status === 'SERVICE_PENDING') {
+        this.store.dispatch('job/updateJob', payload)
+      }
+
+      if (job?.status === 'SERVICE_DRAFT') {
+        this.store.dispatch('job/scheduleService', payload)
+      }
     }
   },
   setup() {

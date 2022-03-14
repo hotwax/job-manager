@@ -12,7 +12,7 @@
         <ion-card>
           <ion-item>
             <ion-label>{{ $t("Realtime webhooks") }}</ion-label>
-            <ion-toggle :checked="realTimeWebhooks" color="secondary" slot="end" @click="updateJob($event['detail'].value, this.jobEnums['REAL_WBHKS'])"/>
+            <ion-toggle :checked="realTimeWebhooks" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, this.jobEnums['REAL_WBHKS'])"/>
           </ion-item>
           <ion-item>
             <ion-label>{{ $t("Hard sync") }}</ion-label>
@@ -25,7 +25,7 @@
           </ion-item>
           <ion-item>
             <ion-label>{{ $t("BOPIS corrections") }}</ion-label>
-            <ion-toggle :checked="bopisCorrections" color="secondary" slot="end" @click="updateJob($event['detail'].value, this.jobEnums['BOPIS_CORRECTION'])" />
+            <ion-toggle :checked="bopisCorrections" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, this.jobEnums['BOPIS_CORRECTION'])" />
           </ion-item>
           <ion-item lines="none">
             <ion-label class="ion-text-wrap">
@@ -37,7 +37,7 @@
         <ion-card>
           <ion-item>
             <ion-label>{{ $t("Realtime adjustments") }}</ion-label>
-            <ion-toggle :checked="realtimeAdjustments" color="secondary" slot="end" @click="updateJob($event['detail'].value, this.jobEnums['REALTIME_ADJUSTMENTS'])" />
+            <ion-toggle :checked="realtimeAdjustments" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, this.jobEnums['REALTIME_ADJUSTMENTS'])" />
           </ion-item>
           <ion-item lines="none">
             <ion-label class="ion-text-wrap">
@@ -55,11 +55,11 @@
           </ion-item>
            <ion-item>
             <ion-label>{{ $t("Realtime POS sales") }}</ion-label>
-            <ion-toggle :checked="realtimePOSSales" color="secondary" slot="end" @click="updateJob($event['detail'].value, this.jobEnums['REAL_TIME_POS_SALES'])" />
+            <ion-toggle :checked="realtimePOSSales" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, this.jobEnums['REAL_TIME_POS_SALES'])" />
           </ion-item>
            <ion-item>
             <ion-label>{{ $t("Reserve for completed orders") }}</ion-label>
-            <ion-toggle :checked="reserveForCompletedOrders" color="secondary" slot="end" @click="updateJob($event['detail'].value, this.jobEnums['RSV_CMPLT_ORDRS'])" />
+            <ion-toggle :checked="reserveForCompletedOrders" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, this.jobEnums['RSV_CMPLT_ORDRS'])" />
           </ion-item>
           <ion-item lines="none">
             <ion-label class="ion-text-wrap">
@@ -123,7 +123,7 @@ export default defineComponent({
       getCurrentEComStore: 'user/getCurrentEComStore'
     }),
     realTimeWebhooks(): boolean {
-      const status = this.getJobStatus(this.jobEnums["TEST_JOB"]);
+      const status = this.getJobStatus(this.jobEnums["REAL_WBHKS"]);
       return status && status !== "SERVICE_DRAFT";
     },
     bopisCorrections(): boolean {
@@ -165,7 +165,13 @@ export default defineComponent({
         payload['jobId'] = job.id
       }
 
-      job?.status === 'SERVICE_PENDING' ? this.store.dispatch('job/updateJob', payload) : this.store.dispatch('job/scheduleService', payload);
+      if (job?.status === 'SERVICE_PENDING') {
+        this.store.dispatch('job/updateJob', payload)
+      }
+
+      if (job?.status === 'SERVICE_DRAFT') {
+        this.store.dispatch('job/scheduleService', payload)
+      }
     }
   },
   mounted () {

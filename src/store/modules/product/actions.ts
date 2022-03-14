@@ -40,7 +40,7 @@ const actions: ActionTree<ProductState, RootState> = {
       // Remove added loader only when new query and not the infinite scroll
       if (payload.viewIndex === 0) emitter.emit("dismissLoader");
     } catch(error){
-      console.log(error)
+      console.error(error)
       showToast(translate("Something went wrong"));
     }
     // TODO Handle specific error
