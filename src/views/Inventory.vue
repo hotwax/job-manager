@@ -16,7 +16,7 @@
           </ion-item>
           <ion-item>
             <ion-label>{{ $t("Hard sync") }}</ion-label>
-            <InventoryPopover :id="jobEnums['REAL_WBHKS']"/>
+            <InventoryPopover :id="jobEnums['HARD_SYNC']"/>
           </ion-item>
           <ion-item lines="none">
             <ion-label class="ion-text-wrap">
