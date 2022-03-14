@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { RouteRecordRaw } from 'vue-router';
-import Home from '@/views/Home.vue'
 import Inventory from '@/views/Inventory.vue'
 import Product from '@/views/Product.vue'
 import PreOrder from '@/views/PreOrder.vue'
@@ -30,12 +29,12 @@ const routes: Array<RouteRecordRaw> = [
     path: '/',
     redirect: '/inventory'
   },
-  {
-    path: '/home',
-    name: 'Home',
-    component: Home,
-    beforeEnter: authGuard
-  },
+  //{
+    //path: '/home',
+    //name: 'Home',
+    //component: Home,
+    //beforeEnter: authGuard
+  //},
   {
     path: '/inventory',
     name: 'Inventory',
