@@ -2,7 +2,7 @@
 
 1. Fork the repository and clone it locally from the `main` branch. Before starting your work make sure it's up to date with current `main` branch.
 2. Pick an issue from [here](https://github.com/hotwax/ionic-sdk/issues). Write in the issue comment that you want to pick it, if you can't assign yourself. **Please stay assigned to one issue at a time to not block others**.
-3. Create a branch for your edits. Use the following branch naming conventions: **ionicsdk/issue-number**.
+3. Create a branch for your edits. Use the following branch naming conventions: **job-manager/issue-number**.
 4. Please add issue number to your commit message.
 5. Propose a Pull Request to `main` branch containing issue number and issue title.
 6. Use [Pull Request template](https://github.com/hotwax/ionic-sdk/blob/main/.github/PULL_REQUEST_TEMPLATE.md) (it's automatically added to each PR) and fill as much fields as possible to describe your solution.

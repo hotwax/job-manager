@@ -2,6 +2,7 @@
   <ion-page>
     <ion-header :translucent="true">
       <ion-toolbar>
+        <ion-menu-button slot="start" />
         <ion-title>{{ $t("Inventory") }}</ion-title>
       </ion-toolbar>
     </ion-header>
@@ -9,24 +10,13 @@
     <ion-content>
       <main>
         <ion-card>
-          <ion-radio-group>
-            <ion-item lines="none">
-              <ion-label>{{ $t("Shopify source") }}</ion-label>
-              <ion-radio slot="start"></ion-radio>
-            </ion-item>
-          </ion-radio-group>
           <ion-item>
             <ion-label>{{ $t("Realtime webhooks") }}</ion-label>
-            <ion-toggle color="secondary" slot="end" checked />
+            <ion-toggle :checked="realTimeWebhooks" color="secondary" slot="end" @click="updateJob($event['detail'].value, this.jobEnums['REAL_WBHKS'])"/>
           </ion-item>
           <ion-item>
             <ion-label>{{ $t("Hard sync") }}</ion-label>
-            <ion-select :interface-options="customPopoverOptions" interface="popover">
-              <ion-select-option>Hourly</ion-select-option>
-              <ion-select-option>Every 6 hours</ion-select-option>
-              <ion-select-option>Nightly</ion-select-option>
-              <ion-select-option>Daily</ion-select-option>
-            </ion-select>
+            <InventoryPopover :id="jobEnums['TEST_JOB']"/>
           </ion-item>
           <ion-item lines="none">
             <ion-label class="ion-text-wrap">
@@ -35,7 +25,7 @@
           </ion-item>
           <ion-item>
             <ion-label>{{ $t("BOPIS corrections") }}</ion-label>
-            <ion-toggle color="secondary" slot="end" checked />
+            <ion-toggle :checked="bopisCorrections" color="secondary" slot="end" @click="updateJob($event['detail'].value, this.jobEnums['BOPIS_CORRECTION'])" />
           </ion-item>
           <ion-item lines="none">
             <ion-label class="ion-text-wrap">
@@ -45,15 +35,9 @@
         </ion-card>
 
         <ion-card>
-          <ion-radio-group>
-            <ion-item lines="none">
-              <ion-label>{{ $t("HotWax source") }}</ion-label>
-              <ion-radio slot="start"></ion-radio>
-            </ion-item>
-          </ion-radio-group>
           <ion-item>
             <ion-label>{{ $t("Realtime adjustments") }}</ion-label>
-            <ion-toggle disabled color="secondary" slot="end" checked />
+            <ion-toggle :checked="realtimeAdjustments" color="secondary" slot="end" @click="updateJob($event['detail'].value, this.jobEnums['REALTIME_ADJUSTMENTS'])" />
           </ion-item>
           <ion-item lines="none">
             <ion-label class="ion-text-wrap">
@@ -62,12 +46,7 @@
           </ion-item>
           <ion-item>
             <ion-label>{{ $t("Hard sync") }}</ion-label>
-            <ion-select :interface-options="customPopoverOptions" interface="popover">
-              <ion-select-option>Hourly</ion-select-option>
-              <ion-select-option>Every 6 hours</ion-select-option>
-              <ion-select-option>Nightly</ion-select-option>
-              <ion-select-option>Daily</ion-select-option>
-            </ion-select>
+            <InventoryPopover :id="jobEnums['HRD_SYC']"/>
           </ion-item>
           <ion-item lines="none">
             <ion-label class="ion-text-wrap">
@@ -76,11 +55,11 @@
           </ion-item>
            <ion-item>
             <ion-label>{{ $t("Realtime POS sales") }}</ion-label>
-            <ion-toggle disabled color="secondary" slot="end" checked />
+            <ion-toggle :checked="realtimePOSSales" color="secondary" slot="end" @click="updateJob($event['detail'].value, this.jobEnums['REAL_TIME_POS_SALES'])" />
           </ion-item>
            <ion-item>
             <ion-label>{{ $t("Reserve for completed orders") }}</ion-label>
-            <ion-toggle disabled color="secondary" slot="end" checked />
+            <ion-toggle :checked="reserveForCompletedOrders" color="secondary" slot="end" @click="updateJob($event['detail'].value, this.jobEnums['RSV_CMPLT_ORDRS'])" />
           </ion-item>
           <ion-item lines="none">
             <ion-label class="ion-text-wrap">
@@ -105,41 +84,102 @@ import {
   IonHeader,
   IonItem,
   IonLabel,
+  IonMenuButton,
   IonPage,
-  IonRadioGroup,
-  IonRadio,
-  IonSelect,
-  IonSelectOption,
   IonTitle,
   IonToggle,
   IonToolbar,
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
+import { mapGetters, useStore } from 'vuex';
+import InventoryPopover from '@/components/InventoryPopover.vue'
 
 export default defineComponent({
   name: 'Inventory',
   components: {
+    InventoryPopover,
     IonCard,
     IonContent,
     IonHeader,
     IonItem,
     IonLabel,
+    IonMenuButton,
     IonPage,
-    IonRadioGroup,
-    IonRadio,
-    IonSelect,
-    IonSelectOption,
     IonTitle,
     IonToggle,
     IonToolbar,
   },
-  setup() {
-    const customPopoverOptions: any = {
-    header: 'Schedule inventory hard sync',
-    showBackdrop: false
-    }
+  data() {
     return {
-      customPopoverOptions  
+      jobEnums: JSON.parse(process.env?.VUE_APP_INV_JOB_ENUMS as string) as any,
+    }
+  },
+  computed: {
+    ...mapGetters({
+      order: 'job/getOrderInformation',
+      getJobStatus: 'job/getJobStatus',
+      getJob: 'job/getJob',
+      getShopifyConfigId: 'user/getShopifyConfigId',
+      getCurrentEComStore: 'user/getCurrentEComStore'
+    }),
+    realTimeWebhooks(): boolean {
+      const status = this.getJobStatus(this.jobEnums["TEST_JOB"]);
+      return status && status !== "SERVICE_DRAFT";
+    },
+    bopisCorrections(): boolean {
+      const status = this.getJobStatus(this.jobEnums["BOPIS_CORRECTION"]);
+      return status && status !== "SERVICE_DRAFT";
+    },
+    realtimeAdjustments(): boolean {
+      const status = this.getJobStatus(this.jobEnums["REALTIME_ADJUSTMENTS"]);
+      return status && status !== "SERVICE_DRAFT";
+    },
+    realtimePOSSales(): boolean {
+      const status = this.getJobStatus(this.jobEnums["REAL_TIME_POS_SALES"]);
+      return status && status !== "SERVICE_DRAFT";
+    },
+    reserveForCompletedOrders(): boolean {
+      const status = this.getJobStatus(this.jobEnums["RSV_CMPLT_ORDRS"]);
+      return status && status !== "SERVICE_DRAFT";
+    }
+  },
+  methods: {
+    async updateJob(status: string, id: string) {
+      const job = this.getJob(id);
+
+      // TODO: check for parentJobId and jobEnum and handle this values properly
+      const payload = {
+        ...job,
+        'systemJobEnumId': id,
+        'statusId': status ? "SERVICE_PENDING" : "SERVICE_DRAFT"
+      } as any
+      if (job?.status === 'SERVICE_DRAFT') {
+        payload['SERVICE_FREQUENCY'] = 'HOURLY'
+        payload['SERVICE_NAME'] = job.serviceName
+        payload['count'] = -1
+        payload['runAsSystem'] = true
+        payload['shopifyConfigId'] = this.getShopifyConfigId
+        payload['productStoreId'] = this.getCurrentEComStore.productStoreId
+      } else if (job?.status === 'SERVICE_PENDING') {
+        payload['tempExprId'] = 'HOURLY'
+        payload['jobId'] = job.id
+      }
+
+      job?.status === 'SERVICE_PENDING' ? this.store.dispatch('job/updateJob', payload) : this.store.dispatch('job/scheduleService', payload);
+    }
+  },
+  mounted () {
+    this.store.dispatch("job/fetchJobs", {
+      "inputFields":{
+        "serviceName": Object.values(this.jobEnums),
+        "serviceName_op": "in"
+      }
+    });
+  },
+  setup() {
+    const store = useStore();
+    return {
+      store
     }  
   }
 });

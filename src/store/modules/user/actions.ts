@@ -5,9 +5,8 @@ import UserState from './UserState'
 import * as types from './mutation-types'
 import { hasError, showToast } from '@/utils'
 import { translate } from '@/i18n'
-import moment from 'moment';
+import { DateTime } from 'luxon';
 import emitter from '@/event-bus'
-import "moment-timezone";
 
 const actions: ActionTree<UserState, RootState> = {
 
@@ -21,6 +20,7 @@ const actions: ActionTree<UserState, RootState> = {
         if (resp.data.token) {
             commit(types.USER_TOKEN_CHANGED, { newToken: resp.data.token })
             dispatch('getProfile')
+            dispatch('getShopifyConfig')
             return resp.data;
         } else if (hasError(resp)) {
           showToast(translate('Sorry, your username or password is incorrect. Please try again.'));
@@ -52,14 +52,31 @@ const actions: ActionTree<UserState, RootState> = {
   /**
    * Get User profile
    */
-  async getProfile ( { commit }) {
+  async getProfile ({ commit, dispatch }) {
     const resp = await UserService.getProfile()
     if (resp.status === 200) {
-      const localTimeZone = moment.tz.guess();
+      const localTimeZone = DateTime.local().zoneName;
       if (resp.data.userTimeZone !== localTimeZone) {
         emitter.emit('timeZoneDifferent', { profileTimeZone: resp.data.userTimeZone, localTimeZone});
       }
+
+      const payload = {
+        "fieldList": ["productStoreId" ],
+        "entityName": "ProductStoreAndFacility",
+        "noConditionFind": "Y"
+      }
+
+      await dispatch('getEComStores', payload).then((stores: any) => {
+        resp.data.stores = stores
+      })
+
+      await dispatch('getEComStores', payload).then((stores: any) => {
+        resp.data.stores = stores
+      })
+
       commit(types.USER_INFO_UPDATED, resp.data);
+      commit(types.USER_CURRENT_ECOM_STORE_UPDATED, resp.data.stores?.length > 0 ? resp.data.stores[0] : {});
+      commit(types.USER_CURRENT_FACILITY_UPDATED, resp.data.facilities.length > 0 ? resp.data.facilities[0] : {});
     }
   },
 
@@ -88,6 +105,36 @@ const actions: ActionTree<UserState, RootState> = {
    */
   setUserInstanceUrl ({ state, commit }, payload){
     commit(types.USER_INSTANCE_URL_UPDATED, payload)
+  },
+
+  async getShopifyConfig({ commit }) {
+    const resp = await UserService.getShopifyConfig({
+      "entityName": "ShopifyConfig",
+      "noConditionFind": "Y"
+    })
+
+    if (resp.status === 200 && !hasError(resp)) {
+      commit(types.USER_SHOPIFY_CONFIG_UPDATED, resp.data.docs?.length > 0 ? resp.data.docs[0].shopifyConfigId : {});
+    }
+  },
+
+  async getEComStores({ commit }, payload) {
+    let resp;
+
+    try{
+      resp = await UserService.getEComStores(payload);
+      if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
+        const stores = resp.data.docs
+
+        return stores
+      }
+    } catch(err) {
+      console.error(err)
+    }
+  },
+
+  async setEComStore({ commit, dispatch }, payload) {
+    commit(types.USER_CURRENT_ECOM_STORE_UPDATED, payload.store);
   }
 }
 

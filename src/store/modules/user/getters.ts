@@ -20,6 +20,12 @@ const getters: GetterTree <UserState, RootState> = {
     },
     getInstanceUrl (state) {
         return state.instanceUrl;
-    }
+    },
+    getShopifyConfigId (state) {
+        return state.shopifyConfig;
+    },
+    getCurrentEComStore(state) {
+        return state.currentEComStore
+    },
 }
 export default getters;

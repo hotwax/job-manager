@@ -2,6 +2,7 @@
   <ion-page>
     <ion-header :translucent="true">
       <ion-toolbar>
+        <ion-menu-button slot="start" />
         <ion-title>{{ $t("Pre-order") }}</ion-title>
       </ion-toolbar>
     </ion-header>
@@ -14,7 +15,7 @@
           </ion-card-header>
           <ion-item>
             <ion-label>{{ $t("Automatically list pre-order") }}</ion-label>
-            <ion-toggle color="secondary" slot="end" />
+            <ion-toggle :checked="automaticallyListPreOrder" color="secondary" slot="end" @click="updateJob($event['detail'].checked, jobEnums['LIST_PRE_ORDER'])" />
           </ion-item>
           <ion-item lines="none">
             <ion-label class="ion-text-wrap"><p>{{ $t("This will automatically list items from purchase orders for preorder when stock runs out.") }}</p></ion-label>
@@ -87,12 +88,15 @@ import {
   IonHeader,
   IonItem,
   IonLabel,
+  IonMenuButton,
   IonPage,
   IonTitle,
   IonToggle,
   IonToolbar
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
+import { useStore } from "@/store";
+import { mapGetters } from "vuex";
 
 export default defineComponent({
   name: 'PreOrder',
@@ -106,10 +110,66 @@ export default defineComponent({
     IonHeader,
     IonItem,
     IonLabel,
+    IonMenuButton,
     IonPage,
     IonTitle,
     IonToggle,
     IonToolbar
+  },
+  computed: {
+    ...mapGetters({
+      getJobStatus: 'job/getJobStatus',
+      getJob: 'job/getJob',
+      getShopifyConfigId: 'user/getShopifyConfigId',
+      getCurrentEComStore: 'user/getCurrentEComStore'
+    }),
+    automaticallyListPreOrder(): boolean {
+      const status = this.getJobStatus(this.jobEnums["LIST_PRE_ORDER"]);
+      return status && status !== "SERVICE_DRAFT";
+    }
+  },
+  data() {
+    return {
+      jobEnums: JSON.parse(process.env?.VUE_APP_PRODR_JOB_ENUMS as string) as any,
+    }
+  },
+  methods: {
+    async updateJob(status: string, id: string) {
+      const job = this.getJob(id);
+      // TODO: check for parentJobId and jobEnum and handle this values properly
+      const payload = {
+        ...job,
+        'systemJobEnumId': id,
+        'statusId': status ? "SERVICE_PENDING" : "SERVICE_DRAFT"
+      } as any
+      if (job?.status === 'SERVICE_DRAFT') {
+        payload['SERVICE_FREQUENCY'] = 'HOURLY'
+        payload['SERVICE_NAME'] = job.serviceName
+        payload['count'] = -1
+        payload['runAsSystem'] = true
+        payload['shopifyConfigId'] = this.getShopifyConfigId
+        payload['productStoreId'] = this.getCurrentEComStore.productStoreId
+      } else if (job?.status === 'SERVICE_PENDING') {
+        payload['tempExprId'] = 'HOURLY'
+        payload['jobId'] = job.id
+      }
+
+      job?.status === 'SERVICE_PENDING' ? this.store.dispatch('job/updateJob', payload) : this.store.dispatch('job/scheduleService', payload);
+    }
+  },
+  mounted () {
+    this.store.dispatch("job/fetchJobs", {
+      "inputFields":{
+        "serviceName": Object.values(this.jobEnums),
+        "serviceName_op": "in"
+      }
+    });
+  },
+  setup() {
+    const store = useStore();
+    return {
+      store
+    };
   },
 });
 </script>
