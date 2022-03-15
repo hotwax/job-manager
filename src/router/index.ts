@@ -31,12 +31,6 @@ const routes: Array<RouteRecordRaw> = [
     redirect: '/pipeline'
   },
   {
-    path: '/home',
-    name: 'Home',
-    component: Home,
-    beforeEnter: authGuard
-  },
-  {
     path: '/pipeline',
     name: 'Pipeline',
     component: Pipeline,
