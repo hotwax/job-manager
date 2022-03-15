@@ -1,6 +1,6 @@
 {
-    "name": "HotWax Commerce Job-Manager Count App",
-    "short_name": "job-manager-count",
+    "name": "HotWax Commerce Job-Manager",
+    "short_name": "job-manager",
     "theme_color": "#FFFFFF",
     "icons": [{
             "src": "public/img/icons/favicon-16x16.png",
