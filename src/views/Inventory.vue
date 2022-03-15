@@ -12,11 +12,11 @@
         <ion-card>
           <ion-item>
             <ion-label>{{ $t("Realtime webhooks") }}</ion-label>
-            <ion-toggle :checked="realTimeWebhooks" color="secondary" slot="end" @click="updateJob($event['detail'].value, this.jobEnums['REAL_WBHKS'])"/>
+            <ion-toggle :checked="realTimeWebhooks" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, this.jobEnums['REAL_WBHKS'])"/>
           </ion-item>
           <ion-item>
             <ion-label>{{ $t("Hard sync") }}</ion-label>
-            <InventoryPopover :id="jobEnums['TEST_JOB']"/>
+            <InventoryPopover :id="jobEnums['HARD_SYNC']"/>
           </ion-item>
           <ion-item lines="none">
             <ion-label class="ion-text-wrap">
@@ -25,7 +25,7 @@
           </ion-item>
           <ion-item>
             <ion-label>{{ $t("BOPIS corrections") }}</ion-label>
-            <ion-toggle :checked="bopisCorrections" color="secondary" slot="end" @click="updateJob($event['detail'].value, this.jobEnums['BOPIS_CORRECTION'])" />
+            <ion-toggle :checked="bopisCorrections" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, this.jobEnums['BOPIS_CORRECTION'])" />
           </ion-item>
           <ion-item lines="none">
             <ion-label class="ion-text-wrap">
@@ -37,7 +37,7 @@
         <ion-card>
           <ion-item>
             <ion-label>{{ $t("Realtime adjustments") }}</ion-label>
-            <ion-toggle :checked="realtimeAdjustments" color="secondary" slot="end" @click="updateJob($event['detail'].value, this.jobEnums['REALTIME_ADJUSTMENTS'])" />
+            <ion-toggle :checked="realtimeAdjustments" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, this.jobEnums['REALTIME_ADJUSTMENTS'])" />
           </ion-item>
           <ion-item lines="none">
             <ion-label class="ion-text-wrap">
@@ -55,11 +55,11 @@
           </ion-item>
            <ion-item>
             <ion-label>{{ $t("Realtime POS sales") }}</ion-label>
-            <ion-toggle :checked="realtimePOSSales" color="secondary" slot="end" @click="updateJob($event['detail'].value, this.jobEnums['REAL_TIME_POS_SALES'])" />
+            <ion-toggle :checked="realtimePOSSales" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, this.jobEnums['REAL_TIME_POS_SALES'])" />
           </ion-item>
            <ion-item>
             <ion-label>{{ $t("Reserve for completed orders") }}</ion-label>
-            <ion-toggle :checked="reserveForCompletedOrders" color="secondary" slot="end" @click="updateJob($event['detail'].value, this.jobEnums['RSV_CMPLT_ORDRS'])" />
+            <ion-toggle :checked="reserveForCompletedOrders" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, this.jobEnums['RSV_CMPLT_ORDRS'])" />
           </ion-item>
           <ion-item lines="none">
             <ion-label class="ion-text-wrap">
@@ -123,7 +123,7 @@ export default defineComponent({
       getCurrentEComStore: 'user/getCurrentEComStore'
     }),
     realTimeWebhooks(): boolean {
-      const status = this.getJobStatus(this.jobEnums["TEST_JOB"]);
+      const status = this.getJobStatus(this.jobEnums["REAL_WBHKS"]);
       return status && status !== "SERVICE_DRAFT";
     },
     bopisCorrections(): boolean {
@@ -144,28 +144,38 @@ export default defineComponent({
     }
   },
   methods: {
-    async updateJob(status: string, id: string) {
+    async updateJob(checked: boolean, id: string) {
       const job = this.getJob(id);
+
+      // TODO: added this condition to not call the api when the value of the select automatically changes
+      // need to handle this properly
+      if (checked && job?.status === 'SERVICE_PENDING') {
+        return;
+      }
 
       // TODO: check for parentJobId and jobEnum and handle this values properly
       const payload = {
         ...job,
         'systemJobEnumId': id,
-        'statusId': status ? "SERVICE_PENDING" : "SERVICE_DRAFT"
+        'statusId': checked ? "SERVICE_PENDING" : "SERVICE_CANCELLED"
       } as any
-      if (job?.status === 'SERVICE_DRAFT') {
+      if (!checked) {
+        this.store.dispatch('job/updateJob', payload)
+      } else if (job?.status === 'SERVICE_DRAFT') {
         payload['SERVICE_FREQUENCY'] = 'HOURLY'
         payload['SERVICE_NAME'] = job.serviceName
         payload['count'] = -1
         payload['runAsSystem'] = true
         payload['shopifyConfigId'] = this.getShopifyConfigId
         payload['productStoreId'] = this.getCurrentEComStore.productStoreId
+
+        this.store.dispatch('job/scheduleService', payload)
       } else if (job?.status === 'SERVICE_PENDING') {
         payload['tempExprId'] = 'HOURLY'
         payload['jobId'] = job.id
-      }
 
-      job?.status === 'SERVICE_PENDING' ? this.store.dispatch('job/updateJob', payload) : this.store.dispatch('job/scheduleService', payload);
+        this.store.dispatch('job/updateJob', payload)
+      }
     }
   },
   mounted () {

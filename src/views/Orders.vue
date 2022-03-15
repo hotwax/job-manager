@@ -59,11 +59,11 @@
           </ion-card-header>
           <ion-item>
             <ion-label>{{ $t("Promise date changes") }}</ion-label>
-            <ion-toggle color="secondary" />
+            <ion-toggle :checked="automaticallyListPreOrder" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['NTS_PRMS_DT_CHNG'])" />
           </ion-item>
           <ion-item>
             <ion-label>{{ $t("Reroutes") }}</ion-label>
-            <ion-toggle color="secondary" />
+            <ion-toggle :checked="automaticallyListPreOrder" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['NTS_REROUTES'])" />
           </ion-item>
         </ion-card>
 
@@ -76,11 +76,15 @@
             <DurationPopover :id="jobEnums['UNFIL_ORDERS']" />
           </ion-item>
           <ion-item>
+            <ion-label>{{ $t("Rebrokered orders") }}</ion-label>
+            <DurationPopover :id="jobEnums['REBRKR_ORDR']" />
+          </ion-item>
+          <ion-item>
             <ion-button fill="outline" color="warning">{{ $t("Route unfillable orders now") }}</ion-button>
           </ion-item>
           <ion-item>
             <ion-label>{{ $t("Batch broker orders") }}</ion-label>
-            <ion-toggle color="secondary" />
+            <ion-toggle :checked="automaticallyListPreOrder" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['RTG_BTCH_BRKR_ORDR'])" />
           </ion-item>
           <ion-item-divider>
             <ion-label>{{ $t("Batches") }}</ion-label>
@@ -176,27 +180,38 @@ export default defineComponent({
       });
       return batchmodal.present();
     },
-    async updateJob(status: string, id: string) {
+    async updateJob(checked: boolean, id: string) {
       const job = this.getJob(id);
+
+      // TODO: added this condition to not call the api when the value of the select automatically changes
+      // need to handle this properly
+      if (checked && job?.status === 'SERVICE_PENDING') {
+        return;
+      }
+
       // TODO: check for parentJobId and jobEnum and handle this values properly
       const payload = {
         ...job,
         'systemJobEnumId': id,
-        'statusId': status ? "SERVICE_PENDING" : "SERVICE_DRAFT"
+        'statusId': checked ? "SERVICE_PENDING" : "SERVICE_CANCELLED"
       } as any
-      if (job?.status === 'SERVICE_DRAFT') {
+      if (!checked) {
+        this.store.dispatch('job/updateJob', payload)
+      } else if (job?.status === 'SERVICE_DRAFT') {
         payload['SERVICE_FREQUENCY'] = 'HOURLY'
         payload['SERVICE_NAME'] = job.serviceName
         payload['count'] = -1
         payload['runAsSystem'] = true
         payload['shopifyConfigId'] = this.getShopifyConfigId
         payload['productStoreId'] = this.getCurrentEComStore.productStoreId
+
+        this.store.dispatch('job/scheduleService', payload)
       } else if (job?.status === 'SERVICE_PENDING') {
         payload['tempExprId'] = 'HOURLY'
         payload['jobId'] = job.id
-      }
 
-      job?.status === 'SERVICE_PENDING' ? this.store.dispatch('job/updateJob', payload) : this.store.dispatch('job/scheduleService', payload);
+        this.store.dispatch('job/updateJob', payload)
+      }
     }
   },
   mounted () { 
