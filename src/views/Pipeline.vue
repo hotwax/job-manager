@@ -36,8 +36,8 @@
             <ion-label>{{ job.serviceName }}</ion-label>
           </ion-item>
 
-          <ion-button fill="clear">{{ $t("Skip") }}</ion-button>
-          <ion-button color="danger" fill="clear">{{ $t("Cancel") }}</ion-button>
+          <!-- <ion-button fill="clear">{{ $t("Skip") }}</ion-button> -->
+          <ion-button color="danger" fill="clear" @click="cancelJob(job.jobId)">{{ $t("Cancel") }}</ion-button>
         </ion-card>
       </main>
     </ion-content>
@@ -92,6 +92,10 @@ export default defineComponent({
     timeTillJob (time: any) {
       const timeDiff = DateTime.fromMillis(time).diff(DateTime.local());
       return DateTime.local().plus(timeDiff).toRelative();
+    },
+    cancelJob(jobId: any){
+      this.store.dispatch('job/updateJob', {jobId, statusId: "SERVICE_CANCELLED"});
+      this.store.dispatch('job/fetchPendingJobs');
     }
   },
   created() {
