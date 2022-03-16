@@ -2,21 +2,23 @@ import { ActionTree } from 'vuex'
 import RootState from '@/store/RootState'
 import JobState from './JobState'
 import * as types from './mutation-types'
-import { hasError } from '@/utils'
+import { hasError, showToast } from '@/utils'
 import { JobService } from '@/services/JobService'
+import { translate } from '@/i18n'
 
 const actions: ActionTree<JobState, RootState> = {
 
-  async fetchPendingJobs({ commit, dispatch }){
+  async fetchPendingJobs({ commit, dispatch }, payload){
     await JobService.fetchJobInformation({
       "inputFields": {
+        "productStoreId": payload.eComStoreId,
         "statusId": "SERVICE_PENDING"
       },
       "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId" ],
       "entityName": "JobSandbox",
       "noConditionFind": "Y",
     }).then((resp) => {
-      if (resp.status === 200 && !hasError(resp)) {
+      if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
         if (resp.data.docs) {
           commit(types.JOB_PENDING_UPDATED,  resp.data.docs);
           const tempExprList = [] as any;
@@ -26,9 +28,12 @@ const actions: ActionTree<JobState, RootState> = {
           const payload = [...new Set(tempExprList)];
           dispatch('fetchTemporalExpression', payload);
         }
+      } else {
+        showToast(translate("Something went wrong"));
       }
     }).catch((err) => {
       console.error(err);
+      showToast(translate("Something went wrong"));
     })
   },
   async fetchTemporalExpression({ state, commit }, tempExprIds){
@@ -119,6 +124,10 @@ const actions: ActionTree<JobState, RootState> = {
       commit(types.JOB_UPDATED, { job: payload })
     }
     return resp;
+  },
+
+  clearPendingJobs({commit}) {
+    commit(types.JOB_PENDING_UPDATED, { });
   }
 
 }
