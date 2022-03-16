@@ -17,6 +17,9 @@ const mutations: MutationTree <JobState> = {
     },
     [types.JOB_TEMPORAL_EXPRESSION_UPDATED] (state, payload) {
         state.temporalExp = payload;
+    },
+    [types.JOB_DESCRIPTION_UPDATED] (state, payload) {
+        state.enumIds = payload;
     }
     
 }

@@ -12,14 +12,14 @@
           <ion-item lines="none">
             <ion-label>
               <p class="overline">{{ job.parentJobId }}</p>
-              {{ job.systemJobEnumId }}
+              {{ job.jobName }}
             </ion-label>
             <ion-badge color="dark" slot="end">{{ timeTillJob(job.runTime) }}</ion-badge>
           </ion-item>
 
-          <!-- <ion-item lines="none">
-            service description
-          </ion-item> -->
+          <ion-item lines="none">
+            {{ getDescription(job.syestemJobEnumId) }}
+          </ion-item>
 
           <ion-item>
             <ion-icon slot="start" :icon="timeOutline" />
@@ -82,7 +82,8 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       pendingJobs: 'job/getPendingJobs',
-      temporalExpr: 'job/getTemporalExpr'
+      temporalExpr: 'job/getTemporalExpr',
+      getDescription: 'job/getDescription'
     })
   },
   methods: {
