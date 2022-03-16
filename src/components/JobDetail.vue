@@ -96,8 +96,6 @@ export default defineComponent({
 section {
   overflow: hidden;
   width: 547px;
-  position: sticky;
-  top: var(--spacer-lg);
   border: 1px solid var(--ion-color-medium);
   border-radius: 16px;
 }

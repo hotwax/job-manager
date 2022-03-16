@@ -281,6 +281,11 @@ main > section {
   max-width: 343px;
 }
 
+aside {
+  position: sticky;
+  top: var(--spacer-lg);
+}
+
 @media (prefers-color-scheme: dark) {
   ion-chip > ion-icon {
     color: var(--ion-color-dark);
