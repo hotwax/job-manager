@@ -17,6 +17,10 @@
             <ion-label>{{ $t("Automatically list pre-order") }}</ion-label>
             <ion-toggle :checked="automaticallyListPreOrder" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['LIST_PRE_ORDER'])" />
           </ion-item>
+          <ion-item>
+            <ion-label>{{ $t("Automatically list back-order") }}</ion-label>
+            <ion-toggle :checked="automaticallyListBackOrder" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['LIST_BACK_ORDER'])" />
+          </ion-item>
           <ion-item lines="none">
             <ion-label class="ion-text-wrap"><p>{{ $t("This will automatically list items from purchase orders for preorder when stock runs out.") }}</p></ion-label>
           </ion-item>
@@ -125,6 +129,10 @@ export default defineComponent({
     }),
     automaticallyListPreOrder(): boolean {
       const status = this.getJobStatus(this.jobEnums["LIST_PRE_ORDER"]);
+      return status && status !== "SERVICE_DRAFT";
+    },
+    automaticallyListBackOrder(): boolean {
+      const status = this.getJobStatus(this.jobEnums["LIST_BACK_ORDER"]);
       return status && status !== "SERVICE_DRAFT";
     }
   },
