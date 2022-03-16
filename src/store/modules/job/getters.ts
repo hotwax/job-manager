@@ -6,7 +6,7 @@ import { State } from '@ionic/core/dist/types/stencil-public-runtime';
 
 const getters: GetterTree <JobState, RootState> = {
     getJobStatus: (state) => (id: string): any  => {
-        return state.cached[id] ? (state.cached[id].status === "SERVICE_DRAFT" ? state.cached[id].status : state.cached[id].frequency) : 'SERVICE_DRAFT';
+      return state.cached[id] ? (state.cached[id].status === "SERVICE_DRAFT" ? state.cached[id].status : state.cached[id].frequency) : 'SERVICE_DRAFT';
     },
     getPendingJobs (state){
       return state.pending;
@@ -15,7 +15,7 @@ const getters: GetterTree <JobState, RootState> = {
       return state.temporalExp[id];
     },
     getJob: (state) => (id: string): any => {
-        return state.cached[id]
+      return state.cached[id]
     }
 }
 export default getters;

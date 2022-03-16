@@ -15,7 +15,7 @@
           </ion-card-header>
           <ion-item>
             <ion-label>{{ $t("Automatically list pre-order") }}</ion-label>
-            <ion-toggle :checked="automaticallyListPreOrder" color="secondary" slot="end" @click="updateJob($event['detail'].checked, jobEnums['LIST_PRE_ORDER'])" />
+            <ion-toggle :checked="automaticallyListPreOrder" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['LIST_PRE_ORDER'])" />
           </ion-item>
           <ion-item lines="none">
             <ion-label class="ion-text-wrap"><p>{{ $t("This will automatically list items from purchase orders for preorder when stock runs out.") }}</p></ion-label>
@@ -134,27 +134,38 @@ export default defineComponent({
     }
   },
   methods: {
-    async updateJob(status: string, id: string) {
+    async updateJob(checked: boolean, id: string) {
       const job = this.getJob(id);
+
+      // TODO: added this condition to not call the api when the value of the select automatically changes
+      // need to handle this properly
+      if (checked && job?.status === 'SERVICE_PENDING') {
+        return;
+      }
+
       // TODO: check for parentJobId and jobEnum and handle this values properly
       const payload = {
         ...job,
         'systemJobEnumId': id,
-        'statusId': status ? "SERVICE_PENDING" : "SERVICE_DRAFT"
+        'statusId': checked ? "SERVICE_PENDING" : "SERVICE_CANCELLED"
       } as any
-      if (job?.status === 'SERVICE_DRAFT') {
+      if (!checked) {
+        this.store.dispatch('job/updateJob', payload)
+      } else if (job?.status === 'SERVICE_DRAFT') {
         payload['SERVICE_FREQUENCY'] = 'HOURLY'
         payload['SERVICE_NAME'] = job.serviceName
         payload['count'] = -1
         payload['runAsSystem'] = true
         payload['shopifyConfigId'] = this.getShopifyConfigId
         payload['productStoreId'] = this.getCurrentEComStore.productStoreId
+
+        this.store.dispatch('job/scheduleService', payload)
       } else if (job?.status === 'SERVICE_PENDING') {
         payload['tempExprId'] = 'HOURLY'
         payload['jobId'] = job.id
-      }
 
-      job?.status === 'SERVICE_PENDING' ? this.store.dispatch('job/updateJob', payload) : this.store.dispatch('job/scheduleService', payload);
+        this.store.dispatch('job/updateJob', payload)
+      }
     }
   },
   mounted () {

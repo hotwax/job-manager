@@ -12,7 +12,7 @@ const actions: ActionTree<JobState, RootState> = {
       "inputFields": {
         "statusId": "SERVICE_PENDING"
       },
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName" ],
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId" ],
       "entityName": "JobSandbox",
       "noConditionFind": "Y",
     }).then((resp) => {
