@@ -62,7 +62,7 @@ const actions: ActionTree<UserState, RootState> = {
 
       const payload = {
         "fieldList": ["productStoreId", "storeName"],
-        "entityName": "ProductStoreAndFacility",
+        "entityName": "ProductStore",
         "distinct": "Y",
         "noConditionFind": "Y"
       }
