@@ -8,13 +8,42 @@ import { translate } from '@/i18n'
 
 const actions: ActionTree<JobState, RootState> = {
 
+  async fetchJobDescription({ commit, state }, payload){
+    const enumIds = [] as any;
+    const cachedEnumIds = Object.keys(state.enumIds);
+    payload.map((id: any) => {
+      if(!cachedEnumIds.includes(id) && id){
+        enumIds.push(id);
+      }
+    });
+    if(enumIds.length <= 0) return enumIds.map((id: any) => state.enumIds[id]);
+    const cachedEnum = payload.map((id: any) => state.enumIds[id]);
+    const resp = await JobService.fetchJobInformation({
+      "inputFields": {
+        "enumId": enumIds,
+        "enumId_op": "in"
+      },
+      "fieldList": ['enumId', 'description'],
+      "entityName": "Enumeration",
+      "noConditionFind": "Y",
+      "viewSize": payload.length
+    })
+    if (resp.status === 200 && resp.data?.count > 0 && !hasError(resp)) {
+      const enumDesc = resp.data.docs;
+      if (resp.data.docs) {
+        commit(types.JOB_DESCRIPTION_UPDATED, enumDesc);
+      }
+    }
+    return resp;
+  },
+
   async fetchPendingJobs({ commit, dispatch }, payload){
     await JobService.fetchJobInformation({
       "inputFields": {
         "productStoreId": payload.eComStoreId,
         "statusId": "SERVICE_PENDING"
       },
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId" ],
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName" ],
       "entityName": "JobSandbox",
       "noConditionFind": "Y",
     }).then((resp) => {
@@ -22,11 +51,14 @@ const actions: ActionTree<JobState, RootState> = {
         if (resp.data.docs) {
           commit(types.JOB_PENDING_UPDATED,  resp.data.docs);
           const tempExprList = [] as any;
+          const enumIds = [] as any;
           resp.data.docs.map((item: any) => {
+            enumIds.push(item.systemJobEnumId);
             tempExprList.push(item.tempExprId);
           })
           const payload = [...new Set(tempExprList)];
           dispatch('fetchTemporalExpression', payload);
+          dispatch('fetchJobDescription', enumIds);
         }
       } else {
         showToast(translate("Something went wrong"));
@@ -43,7 +75,7 @@ const actions: ActionTree<JobState, RootState> = {
       if(cachedTempExprId.includes(id)){
         return filter;
       }
-      else{
+      else {
         if (filter !== '') filter += ' OR '
         tempIds.push(id);
         return filter += id;
