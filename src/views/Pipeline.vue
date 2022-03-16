@@ -18,7 +18,7 @@
           </ion-item>
 
           <ion-item lines="none">
-            {{ getDescription(job.syestemJobEnumId) }}
+            {{ getDescription(job.systemJobEnumId) }}
           </ion-item>
 
           <ion-item>
