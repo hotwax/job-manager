@@ -61,9 +61,11 @@ const actions: ActionTree<JobState, RootState> = {
           dispatch('fetchJobDescription', enumIds);
         }
       } else {
+        commit(types.JOB_PENDING_UPDATED,  []);
         showToast(translate("Something went wrong"));
       }
     }).catch((err) => {
+      commit(types.JOB_PENDING_UPDATED,  []);
       console.error(err);
       showToast(translate("Something went wrong"));
     })
