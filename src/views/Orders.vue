@@ -9,103 +9,109 @@
 
     <ion-content>
       <main>
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>{{ $t("Import") }}</ion-card-title>
-          </ion-card-header>
-          <ion-item>
-            <ion-label>{{ $t("New orders") }}</ion-label>
-            <DurationPopover :id="jobEnums['IMP_NEW_ORDERS']" />
-          </ion-item>
-          <ion-item>
-            <ion-label>{{ $t("Cancelled orders") }}</ion-label>
-            <DurationPopover :id="jobEnums['IMP_CANCELLED_ORDERS']" />
-          </ion-item>
-          <ion-item>
-            <ion-label>{{ $t("Cancelled items") }}</ion-label>
-            <DurationPopover :id="jobEnums['IMP_CANCELLED_ITEMS']" />
-          </ion-item>
-          <ion-item>
-            <ion-label>{{ $t("Payment status") }}</ion-label>
-            <DurationPopover :id="jobEnums['IMP_PAYMENT_STATUS']" />
-          </ion-item>
-          <ion-item>
-            <ion-label>{{ $t("Returns") }}</ion-label>
-            <DurationPopover :id="jobEnums['IMP_RETURNS']" />
-          </ion-item>
-        </ion-card>
+        <section>
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>{{ $t("Import") }}</ion-card-title>
+            </ion-card-header>
+            <ion-item>
+              <ion-label>{{ $t("New orders") }}</ion-label>
+              <DurationPopover :id="jobEnums['IMP_NEW_ORDERS']" />
+            </ion-item>
+            <ion-item>
+              <ion-label>{{ $t("Cancelled orders") }}</ion-label>
+              <DurationPopover :id="jobEnums['IMP_CANCELLED_ORDERS']" />
+            </ion-item>
+            <ion-item>
+              <ion-label>{{ $t("Cancelled items") }}</ion-label>
+              <DurationPopover :id="jobEnums['IMP_CANCELLED_ITEMS']" />
+            </ion-item>
+            <ion-item>
+              <ion-label>{{ $t("Payment status") }}</ion-label>
+              <DurationPopover :id="jobEnums['IMP_PAYMENT_STATUS']" />
+            </ion-item>
+            <ion-item>
+              <ion-label>{{ $t("Returns") }}</ion-label>
+              <DurationPopover :id="jobEnums['IMP_RETURNS']" />
+            </ion-item>
+          </ion-card>
 
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>{{ $t("Upload") }}</ion-card-title>
-          </ion-card-header>
-          <ion-item>
-            <ion-label>{{ $t("Completed orders") }}</ion-label>
-            <DurationPopover :id="jobEnums['UPLD_CMPLT_ORDRS']" />
-          </ion-item>
-          <ion-item>
-            <ion-label>{{ $t("Cancelled orders") }}</ion-label>
-            <DurationPopover :id="jobEnums['UPLD_CNCLD_ORDRS']" />
-          </ion-item>
-          <ion-item>
-            <ion-label>{{ $t("Refunds") }}</ion-label>
-            <DurationPopover :id="jobEnums['UPLD_REFUNDS']" />
-          </ion-item>
-        </ion-card>
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>{{ $t("Upload") }}</ion-card-title>
+            </ion-card-header>
+            <ion-item>
+              <ion-label>{{ $t("Completed orders") }}</ion-label>
+              <DurationPopover :id="jobEnums['UPLD_CMPLT_ORDRS']" />
+            </ion-item>
+            <ion-item>
+              <ion-label>{{ $t("Cancelled orders") }}</ion-label>
+              <DurationPopover :id="jobEnums['UPLD_CNCLD_ORDRS']" />
+            </ion-item>
+            <ion-item>
+              <ion-label>{{ $t("Refunds") }}</ion-label>
+              <DurationPopover :id="jobEnums['UPLD_REFUNDS']" />
+            </ion-item>
+          </ion-card>
 
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>{{ $t("Notes") }}</ion-card-title>
-          </ion-card-header>
-          <ion-item>
-            <ion-label>{{ $t("Promise date changes") }}</ion-label>
-            <ion-toggle :checked="automaticallyListPreOrder" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['NTS_PRMS_DT_CHNG'])" />
-          </ion-item>
-          <ion-item>
-            <ion-label>{{ $t("Reroutes") }}</ion-label>
-            <ion-toggle :checked="automaticallyListPreOrder" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['NTS_REROUTES'])" />
-          </ion-item>
-        </ion-card>
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>{{ $t("Notes") }}</ion-card-title>
+            </ion-card-header>
+            <ion-item>
+              <ion-label>{{ $t("Promise date changes") }}</ion-label>
+              <ion-toggle :checked="automaticallyListPreOrder" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['NTS_PRMS_DT_CHNG'])" />
+            </ion-item>
+            <ion-item>
+              <ion-label>{{ $t("Reroutes") }}</ion-label>
+              <ion-toggle :checked="automaticallyListPreOrder" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['NTS_REROUTES'])" />
+            </ion-item>
+          </ion-card>
 
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>{{ $t("Routing") }}</ion-card-title>
-          </ion-card-header>
-          <ion-item>
-            <ion-label>{{ $t("Unfillable orders") }}</ion-label>
-            <DurationPopover :id="jobEnums['UNFIL_ORDERS']" />
-          </ion-item>
-          <ion-item>
-            <ion-label>{{ $t("Rebrokered orders") }}</ion-label>
-            <DurationPopover :id="jobEnums['REBRKR_ORDR']" />
-          </ion-item>
-          <ion-item>
-            <ion-button fill="outline" color="warning">{{ $t("Route unfillable orders now") }}</ion-button>
-          </ion-item>
-          <ion-item>
-            <ion-label>{{ $t("Batch broker orders") }}</ion-label>
-            <ion-toggle :checked="automaticallyListPreOrder" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['RTG_BTCH_BRKR_ORDR'])" />
-          </ion-item>
-          <ion-item-divider>
-            <ion-label>{{ $t("Batches") }}</ion-label>
-            <ion-button fill="clear" slot="end">
-              {{ $t("Add") }}
-              <ion-icon :icon="addCircleOutline" slot="end" />
-            </ion-button>
-          </ion-item-divider>
-          <ion-item detail>
-            <ion-label>Batch 1</ion-label>
-            <ion-note slot="end">9:30 am</ion-note>
-          </ion-item>
-          <ion-item @click="editBatch()" detail>
-            <ion-label>Batch 2</ion-label>
-            <ion-note slot="end">12:00 pm</ion-note>
-          </ion-item>
-          <ion-item detail>
-            <ion-label>Batch 3</ion-label>
-            <ion-note slot="end">3:00 pm</ion-note>
-          </ion-item>
-        </ion-card>
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>{{ $t("Routing") }}</ion-card-title>
+            </ion-card-header>
+            <ion-item>
+              <ion-label>{{ $t("Unfillable orders") }}</ion-label>
+              <DurationPopover :id="jobEnums['UNFIL_ORDERS']" />
+            </ion-item>
+            <ion-item>
+              <ion-label>{{ $t("Rebrokered orders") }}</ion-label>
+              <DurationPopover :id="jobEnums['REBRKR_ORDR']" />
+            </ion-item>
+            <ion-item>
+              <ion-button fill="outline" color="warning">{{ $t("Route unfillable orders now") }}</ion-button>
+            </ion-item>
+            <ion-item>
+              <ion-label>{{ $t("Batch broker orders") }}</ion-label>
+              <ion-toggle :checked="automaticallyListPreOrder" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['RTG_BTCH_BRKR_ORDR'])" />
+            </ion-item>
+            <ion-item-divider>
+              <ion-label>{{ $t("Batches") }}</ion-label>
+              <ion-button fill="clear" slot="end">
+                {{ $t("Add") }}
+                <ion-icon :icon="addCircleOutline" slot="end" />
+              </ion-button>
+            </ion-item-divider>
+            <ion-item detail>
+              <ion-label>Batch 1</ion-label>
+              <ion-note slot="end">9:30 am</ion-note>
+            </ion-item>
+            <ion-item @click="editBatch()" detail>
+              <ion-label>Batch 2</ion-label>
+              <ion-note slot="end">12:00 pm</ion-note>
+            </ion-item>
+            <ion-item detail>
+              <ion-label>Batch 3</ion-label>
+              <ion-note slot="end">3:00 pm</ion-note>
+            </ion-item>
+          </ion-card>
+        </section>
+
+        <aside>
+          <JobDetail />
+        </aside>
       </main>
     </ion-content>
   </ion-page>
@@ -137,6 +143,7 @@ import DurationPopover from '@/components/DurationPopover.vue'
 import BatchModal from '@/components/BatchModal.vue';
 import { useStore } from "@/store";
 import { mapGetters } from "vuex";
+import JobDetail from '@/components/JobDetail.vue';
 
 export default defineComponent({
   name: 'Orders',
@@ -157,7 +164,8 @@ export default defineComponent({
     IonTitle,
     IonToggle,
     IonToolbar,
-    DurationPopover
+    DurationPopover,
+    JobDetail
   },
   data() {
     return {
@@ -231,12 +239,3 @@ export default defineComponent({
   },
 });
 </script>
-
-<style scoped>
-main {
-  max-width: 343px;
-  margin-top: 20px;
-  margin-right: auto;
-  margin-left: auto;
-}
-</style>

@@ -269,6 +269,18 @@ ion-select {
   max-width: 100%;
 }
 
+main {
+  display: flex;
+  align-items: start;
+  gap: var(--spacer-2xl);
+  max-width: 900px;
+  margin: var(--spacer-base) auto 0;
+}
+
+main > section {
+  max-width: 343px;
+}
+
 @media (prefers-color-scheme: dark) {
   ion-chip > ion-icon {
     color: var(--ion-color-dark);
@@ -282,4 +294,3 @@ ion-select {
     --border-color: var(--ion-color-medium)
   }
 }
-
