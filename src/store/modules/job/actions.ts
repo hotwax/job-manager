@@ -29,14 +29,10 @@ const actions: ActionTree<JobState, RootState> = {
       "viewSize": payload.length
     })
     if (resp.status === 200 && resp.data?.count > 0 && !hasError(resp)) {
-      const enumDesc = {} as any;
-      resp.data.docs.map((item: any) => {
-        enumDesc[item.enumId] = item.description;
-      })  
+      const enumDesc = resp.data.docs;
       if (resp.data.docs) {
         commit(types.JOB_DESCRIPTION_UPDATED, enumDesc);
       }
-      return [...cachedEnum, ...resp.data.docs]
     }
     return resp;
   },

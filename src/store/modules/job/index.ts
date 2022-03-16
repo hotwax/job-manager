@@ -11,7 +11,7 @@ const jobModule: Module<JobState, RootState> = {
       cached: {},
       pending: {},
       temporalExp: [],
-      enumIds: []
+      enumIds: {}
     },
     getters,
     actions,

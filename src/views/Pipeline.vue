@@ -83,7 +83,8 @@ export default defineComponent({
     ...mapGetters({
       pendingJobs: 'job/getPendingJobs',
       temporalExpr: 'job/getTemporalExpr',
-      getDescription: 'job/getDescription'
+      getDescription: 'job/getDescription',
+      getCurrentEComStore:'user/getCurrentEComStore'
     })
   },
   methods: {
@@ -96,11 +97,11 @@ export default defineComponent({
     },
     cancelJob(jobId: any){
       this.store.dispatch('job/updateJob', {jobId, statusId: "SERVICE_CANCELLED"});
-      this.store.dispatch('job/fetchPendingJobs');
+      this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId});
     }
   },
   created() {
-    this.store.dispatch('job/fetchPendingJobs');
+    this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId});
   },
   setup() {
     const store = useStore();
