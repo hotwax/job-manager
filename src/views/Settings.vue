@@ -72,6 +72,13 @@ export default defineComponent({
     })
   },
   methods: {
+    setEComStore(store: any) {
+      if(this.userProfile) {
+        this.store.dispatch('user/setEcomStore', {
+          'eComStore': this.userProfile.stores.find((str: any) => str.productStoreId == store['detail'].value)
+        })
+      }
+    },
     setFacility (facility: any) {
       if (this.userProfile){
         this.store.dispatch('user/setFacility', {
