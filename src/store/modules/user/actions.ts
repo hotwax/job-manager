@@ -60,22 +60,11 @@ const actions: ActionTree<UserState, RootState> = {
         emitter.emit('timeZoneDifferent', { profileTimeZone: resp.data.userTimeZone, localTimeZone});
       }
 
-      const payload = {
-        "fieldList": ["productStoreId" ],
-        "entityName": "ProductStoreAndFacility",
-        "noConditionFind": "Y"
-      }
-
-      await dispatch('getEComStores', payload).then((stores: any) => {
-        resp.data.stores = stores
-      })
-
-      await dispatch('getEComStores', payload).then((stores: any) => {
-        resp.data.stores = stores
+      await dispatch('getEComStores', { facilityId: resp.data.facilities[0].facilityId }).then((stores: any) => {
+        if(stores) resp.data.stores = stores;
       })
 
       commit(types.USER_INFO_UPDATED, resp.data);
-      commit(types.USER_CURRENT_ECOM_STORE_UPDATED, resp.data.stores?.length > 0 ? resp.data.stores[0] : {});
       commit(types.USER_CURRENT_FACILITY_UPDATED, resp.data.facilities.length > 0 ? resp.data.facilities[0] : {});
     }
   },
@@ -83,7 +72,15 @@ const actions: ActionTree<UserState, RootState> = {
   /**
    * update current facility information
    */
-  async setFacility ({ commit }, payload) {
+  async setFacility ({ commit, state, dispatch }, payload) {
+    dispatch("getEComStores", { facilityId: payload.facility.facilityId }).then((stores: any) => {
+      if(stores) {
+        const user = state.current as any;
+        user.stores = stores;
+
+        commit(types.USER_INFO_UPDATED, user);
+      }
+    })
     commit(types.USER_CURRENT_FACILITY_UPDATED, payload.facility);
   },
   
@@ -121,11 +118,22 @@ const actions: ActionTree<UserState, RootState> = {
   async getEComStores({ commit }, payload) {
     let resp;
 
+    const params = {
+      "inputFields": {
+        "facilityId": payload.facilityId
+      },
+      "fieldList": ["productStoreId", "storeName"],
+      "entityName": "ProductStoreAndFacility",
+      "distinct": "Y",
+      "noConditionFind": "Y"
+    }
+
     try{
-      resp = await UserService.getEComStores(payload);
+      resp = await UserService.getEComStores(params);
       if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
         const stores = resp.data.docs
 
+        commit(types.USER_CURRENT_ECOM_STORE_UPDATED, stores?.length > 0 ? stores[0] : {})
         return stores
       }
     } catch(err) {
