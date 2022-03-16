@@ -59,11 +59,11 @@
           </ion-card-header>
           <ion-item>
             <ion-label>{{ $t("Promise date changes") }}</ion-label>
-            <ion-toggle :checked="automaticallyListPreOrder" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['NTS_PRMS_DT_CHNG'])" />
+            <ion-toggle color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['NTS_PRMS_DT_CHNG'])" />
           </ion-item>
           <ion-item>
             <ion-label>{{ $t("Reroutes") }}</ion-label>
-            <ion-toggle :checked="automaticallyListPreOrder" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['NTS_REROUTES'])" />
+            <ion-toggle color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['NTS_REROUTES'])" />
           </ion-item>
         </ion-card>
 
@@ -84,7 +84,7 @@
           </ion-item>
           <ion-item>
             <ion-label>{{ $t("Batch broker orders") }}</ion-label>
-            <ion-toggle :checked="automaticallyListPreOrder" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['RTG_BTCH_BRKR_ORDR'])" />
+            <ion-toggle color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['RTG_BTCH_BRKR_ORDR'])" />
           </ion-item>
           <ion-item-divider>
             <ion-label>{{ $t("Batches") }}</ion-label>
