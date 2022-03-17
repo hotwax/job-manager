@@ -30,7 +30,7 @@
 
             <ion-item>
               <ion-icon slot="start" :icon="timerOutline" />
-              <ion-label>{{ temporalExpr(job.tempExprId) }}</ion-label>
+              <ion-label>{{ job.tempExprId ? temporalExpr(job.tempExprId) : "🙃"  }}</ion-label>
             </ion-item>
 
             <ion-item lines="full">
