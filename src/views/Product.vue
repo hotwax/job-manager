@@ -21,10 +21,6 @@
             <ion-label>{{ $t("Sync products") }}</ion-label>
             <ProductDurationPopover :id="jobEnums['SYNC_PRDTS']"/>
           </ion-item>
-           <ion-item>
-            <ion-label>{{ $t("Sync collections") }}</ion-label>
-            <ProductDurationPopover :id="jobEnums['SYNC_COLLECTIONS']"/>
-          </ion-item>
           <ion-item lines="none">
             <ion-label class="ion-text-wrap"><p>{{ $t("Sync products and category structures from Shopify into HotWax Commerce and keep them up to date.") }}</p></ion-label>
           </ion-item>
