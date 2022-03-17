@@ -10,16 +10,17 @@
       <main>
         <ion-card v-for="job in pendingJobs" :key="job">
           <ion-item lines="none">
-            <ion-label>
+            <ion-label class="ion-text-wrap">
               <p class="overline">{{ job.parentJobId }}</p>
               {{ job.jobName }}
             </ion-label>
             <ion-badge v-if="job.runTime" color="dark" slot="end">{{ timeTillJob(job.runTime)}}</ion-badge>
           </ion-item>
 
-          <ion-item lines="none">
+          <!-- Will remove it from comment when description is avaiable -->
+          <!-- <ion-item lines="none">
             {{ getDescription(job.systemJobEnumId) }}
-          </ion-item>
+          </ion-item> -->
 
           <ion-item>
             <ion-icon slot="start" :icon="timeOutline" />
