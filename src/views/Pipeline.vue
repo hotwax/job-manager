@@ -12,18 +12,18 @@
           <ion-item lines="none">
             <ion-label>
               <p class="overline">{{ job.parentJobId }}</p>
-              {{ job.systemJobEnumId }}
+              {{ job.jobName }}
             </ion-label>
-            <ion-badge color="dark" slot="end">{{ timeTillJob(job.runTime) }}</ion-badge>
+            <ion-badge v-if="job.runTime" color="dark" slot="end">{{ timeTillJob(job.runTime)}}</ion-badge>
           </ion-item>
 
-          <!-- <ion-item lines="none">
-            service description
-          </ion-item> -->
+          <ion-item lines="none">
+            {{ getDescription(job.systemJobEnumId) }}
+          </ion-item>
 
           <ion-item>
             <ion-icon slot="start" :icon="timeOutline" />
-            <ion-label>{{ getTime(job.runTime) }}</ion-label>
+            <ion-label>{{ job.runTime ? getTime(job.runTime) : "-"  }}</ion-label>
           </ion-item>
 
           <ion-item>
@@ -82,7 +82,9 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       pendingJobs: 'job/getPendingJobs',
-      temporalExpr: 'job/getTemporalExpr'
+      temporalExpr: 'job/getTemporalExpr',
+      getDescription: 'job/getDescription',
+      getCurrentEComStore:'user/getCurrentEComStore'
     })
   },
   methods: {
@@ -95,11 +97,11 @@ export default defineComponent({
     },
     cancelJob(jobId: any){
       this.store.dispatch('job/updateJob', {jobId, statusId: "SERVICE_CANCELLED"});
-      this.store.dispatch('job/fetchPendingJobs');
+      this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId});
     }
   },
   created() {
-    this.store.dispatch('job/fetchPendingJobs');
+    this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId});
   },
   setup() {
     const store = useStore();
