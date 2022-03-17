@@ -10,8 +10,7 @@ const jobModule: Module<JobState, RootState> = {
     state: {
       cached: {},
       pending: {},
-      temporalExp: [],
-      enumIds: {}
+      temporalExp: []
     },
     getters,
     actions,

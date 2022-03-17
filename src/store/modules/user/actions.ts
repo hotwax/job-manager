@@ -61,19 +61,21 @@ const actions: ActionTree<UserState, RootState> = {
       }
 
       const payload = {
-        "fieldList": ["productStoreId", "storeName"],
-        "entityName": "ProductStore",
-        "distinct": "Y",
+        "fieldList": ["productStoreId" ],
+        "entityName": "ProductStoreAndFacility",
         "noConditionFind": "Y"
       }
 
-      await dispatch('getEComStores', payload).then((stores: any) => { resp.data.stores = [{
-          productStoreId: "",
-          storeName: "None"
-        }, ...(stores ? stores : [])]
+      await dispatch('getEComStores', payload).then((stores: any) => {
+        resp.data.stores = stores
+      })
+
+      await dispatch('getEComStores', payload).then((stores: any) => {
+        resp.data.stores = stores
       })
 
       commit(types.USER_INFO_UPDATED, resp.data);
+      commit(types.USER_CURRENT_ECOM_STORE_UPDATED, resp.data.stores?.length > 0 ? resp.data.stores[0] : {});
       commit(types.USER_CURRENT_FACILITY_UPDATED, resp.data.facilities.length > 0 ? resp.data.facilities[0] : {});
     }
   },
@@ -84,13 +86,7 @@ const actions: ActionTree<UserState, RootState> = {
   async setFacility ({ commit }, payload) {
     commit(types.USER_CURRENT_FACILITY_UPDATED, payload.facility);
   },
-  /**
-   * update current eComStore information
-   */
-  async setEcomStore({ commit, dispatch }, payload) {
-    dispatch("job/clearPendingJobs", null, { root: true })
-    commit(types.USER_CURRENT_ECOM_STORE_UPDATED, payload.eComStore);
-  },
+  
   /**
    * Update user timeZone
    */

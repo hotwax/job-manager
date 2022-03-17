@@ -13,10 +13,7 @@ const userModule: Module<UserState, RootState> = {
       currentFacility: {},
       instanceUrl: '',
       shopifyConfig: {},
-      currentEComStore: {
-        productStoreId: "",
-        storeName: "None"
-      },
+      currentEComStore: {},
     },
     getters,
     actions,
