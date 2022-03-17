@@ -26,7 +26,7 @@ import { defineComponent } from 'vue';
 import JobConfiguration from '@/components/JobConfiguration.vue';
 
 export default defineComponent({
-  name: 'JobDetail',
+  name: 'JobDetails',
   components: {
     IonBackButton,
     IonContent,

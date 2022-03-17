@@ -5,7 +5,7 @@ import Product from '@/views/Product.vue'
 import Pipeline from '@/views/Pipeline.vue'
 import PreOrder from '@/views/PreOrder.vue'
 import Orders from '@/views/Orders.vue'
-import JobDetail from '@/views/JobDetail.vue'
+import JobDetails from '@/views/JobDetails.vue'
 import Login from '@/views/Login.vue'
 import Settings from "@/views/Settings.vue"
 import store from '@/store'
@@ -63,8 +63,8 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: '/job-details',
-    name: 'JobDetail',
-    component: JobDetail,
+    name: 'JobDetails',
+    component: JobDetails,
     beforeEnter: authGuard
   },
   {

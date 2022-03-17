@@ -143,7 +143,7 @@ ion-list {
   margin: var(--spacer-base) 0;
 }
 
-.mobile-only > ion-button {
+.actions > ion-button {
   margin: var(--spacer-sm);
 }
 
