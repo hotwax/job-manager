@@ -269,21 +269,39 @@ ion-select {
   max-width: 100%;
 }
 
-main {
-  display: flex;
-  align-items: start;
-  gap: var(--spacer-2xl);
-  max-width: 900px;
-  margin: var(--spacer-base) auto 0;
-}
-
-main > section {
-  max-width: 343px;
-}
-
 aside {
   position: sticky;
   top: var(--spacer-lg);
+}
+
+.desktop-only {
+  display: none;
+}
+
+.mobile-only {
+  display: unset;
+}
+
+@media (min-width: 991px) {
+  main {
+    display: flex;
+    align-items: start;
+    gap: var(--spacer-2xl);
+    max-width: 900px;
+    margin: var(--spacer-base) auto 0;
+  }
+
+  main > section {
+    max-width: 343px;
+  }
+
+  .desktop-only {
+    display: unset;
+  }
+
+  .mobile-only {
+    display: none;
+  }  
 }
 
 @media (prefers-color-scheme: dark) {
@@ -299,3 +317,4 @@ aside {
     --border-color: var(--ion-color-medium)
   }
 }
+

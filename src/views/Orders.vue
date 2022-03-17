@@ -109,8 +109,8 @@
           </ion-card>
         </section>
 
-        <aside>
-          <JobDetail />
+        <aside class="desktop-only">
+          <JobDetail  />
         </aside>
       </main>
     </ion-content>

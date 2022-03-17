@@ -38,11 +38,11 @@
 
     <div class="actions">
       <div>
-        <ion-button size="small" fill="outline" color="medium">{{ $t("Skip once") }}</ion-button>
-        <ion-button size="small" fill="outline" color="danger">{{ $t("Disable") }}</ion-button>
+        <ion-button size="small" fill="outline" color="medium" @click="skipJob">{{ $t("Skip once") }}</ion-button>
+        <ion-button size="small" fill="outline" color="danger" @click="cancelJob">{{ $t("Disable") }}</ion-button>
       </div>
       <div>
-        <ion-button size="small" fill="outline">{{ $t("Save changes") }}</ion-button>
+        <ion-button size="small" fill="outline" @click="saveChanges">{{ $t("Save changes") }}</ion-button>
       </div>
     </div>
   </section>
@@ -57,7 +57,8 @@ import {
   IonIcon,
   IonInput,
   IonItem,
-  IonLabel
+  IonLabel,
+  alertController
 } from "@ionic/vue";
 import DurationPopover from "@/components/DurationPopover.vue";
 import {
@@ -80,6 +81,44 @@ export default defineComponent({
     IonLabel,
     DurationPopover
   },
+  methods: {
+    async skipJob() {
+      const alert = await alertController
+        .create({
+          header: this.$t('Skip job'),
+          message: this.$t('Skipping will run this job at the next occurance based on the temporal expression.'),
+          buttons: [this.$t('Dont skip'), this.$t('Skip')],
+        });
+      return alert.present();
+    },
+    async cancelJob() {
+      const alert = await alertController
+        .create({
+          header: this.$t('Cancel job'),
+          message: this.$t('Canceling this job will cancel this occurance and all following occurances. This job will have to be re-enabled manually to run it again.'),
+          buttons: [this.$t('Dont cancel'), this.$t('Cancel')],
+        });
+      return alert.present();
+    },
+    async saveChanges() {
+      const alert = await alertController
+        .create({
+          header: this.$t('Save changes'),
+          message: this.$t('Are you sure you want to save these changes?'),
+          buttons: [this.$t('Cancel'), this.$t('Save')],
+        });
+      return alert.present();
+    },
+    async discardChanges() {
+      const alert = await alertController
+        .create({
+          header: this.$t('Discard changes'),
+          message: this.$t('All unsaved changes will be lost. Are you sure you want to leave this page.'),
+          buttons: [this.$t('Cancel'), this.$t('Save')],
+        });
+      return alert.present();
+    },
+  },
   setup() {
     return {
       calendarClearOutline,
@@ -95,7 +134,7 @@ export default defineComponent({
 <style scoped>
 section {
   overflow: hidden;
-  width: 547px;
+  flex: 1 355px;
   border: 1px solid var(--ion-color-medium);
   border-radius: 16px;
 }
