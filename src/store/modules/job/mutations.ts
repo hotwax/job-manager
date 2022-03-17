@@ -13,17 +13,22 @@ const mutations: MutationTree <JobState> = {
         }
     },
     [types.JOB_PENDING_UPDATED] (state, payload) {
-        state.pending = payload;
+        state.pending = payload.jobs;
+        state.total = payload.total;
     },
-    [types.JOB_TEMPORAL_EXPRESSION_UPDATED] (state, payload) {
-        state.temporalExp = payload;
+    [types.JOB_TEMPORAL_EXPRESSION_UPDATED] (state, temporalExpressions) {
+        if(temporalExpressions){
+            temporalExpressions.forEach((temporalExpression: any) => {
+              state.temporalExp[temporalExpression.tempExprId] = temporalExpression.description;
+            })
+        }
     },
     [types.JOB_DESCRIPTION_UPDATED] (state, enums) {
         if (enums) {
             enums.forEach((enumId: any) => {
               state.enumIds[enumId.enumId] = enumId.description
             });
-          }
+        }
     }
 }
 export default mutations;

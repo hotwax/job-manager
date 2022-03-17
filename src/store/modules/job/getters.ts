@@ -21,7 +21,7 @@ const getters: GetterTree <JobState, RootState> = {
       return state.enumIds[id];
     },
     isScrollable: (state) => {
-      return !(!state.pending)
+      return state.pending.length > 0 && state.pending.length < state.total
     },
 }
 export default getters;
