@@ -53,7 +53,7 @@ const actions: ActionTree<JobState, RootState> = {
       if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
         if (resp.data.docs) {
           const total = resp.data.count;
-          const jobs = state.pending.concat(resp.data.docs);
+          const jobs = state.pending.list.concat(resp.data.docs);
           commit(types.JOB_PENDING_UPDATED, { jobs, total });
           const tempExprList = [] as any;
           const enumIds = [] as any;

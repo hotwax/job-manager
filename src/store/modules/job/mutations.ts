@@ -13,8 +13,8 @@ const mutations: MutationTree <JobState> = {
         }
     },
     [types.JOB_PENDING_UPDATED] (state, payload) {
-        state.pending = payload.jobs;
-        state.total = payload.total;
+        state.pending.list = payload.jobs;
+        state.pending.total = payload.total;
     },
     [types.JOB_TEMPORAL_EXPRESSION_UPDATED] (state, temporalExpressions) {
         if(temporalExpressions){

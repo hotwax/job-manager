@@ -1,6 +1,9 @@
 export default interface JobState {
     cached: any;
-    pending: any;
+    pending: {
+      list: any,
+      total: 0
+    }
     temporalExp: any;
     total: number;
     enumIds: any;

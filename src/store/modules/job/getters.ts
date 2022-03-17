@@ -9,7 +9,7 @@ const getters: GetterTree <JobState, RootState> = {
       return state.cached[id] ? (state.cached[id].status === "SERVICE_DRAFT" ? state.cached[id].status : state.cached[id].frequency) : 'SERVICE_DRAFT';
     },
     getPendingJobs (state){
-      return state.pending;
+      return state.pending.list;
     },
     getTemporalExpr: (state) => (id: string): any  => {
       return state.temporalExp[id];
@@ -21,7 +21,8 @@ const getters: GetterTree <JobState, RootState> = {
       return state.enumIds[id];
     },
     isScrollable: (state) => {
-      return state.pending.length > 0 && state.pending.length < state.total
-    },
-}
-export default getters;
+      return state.pending.list.length > 0 && state.pending.list.length < state.pending.total
+    }  
+  }
+
+  export default getters;
