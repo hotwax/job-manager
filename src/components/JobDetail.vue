@@ -2,47 +2,47 @@
   <section>
     <ion-item lines="none">
       <h1>New orders</h1>
-      <ion-badge slot="end" color="dark">running in 3 minutes</ion-badge>
+      <ion-badge slot="end" color="dark">{{ $t("running in") }} 3 minutes</ion-badge>
     </ion-item>
 
     <ion-list>
       <ion-item>
         <ion-icon slot="start" :icon="calendarClearOutline" />
-        <ion-label>Last run</ion-label>
+        <ion-label>{{ $t("Last run") }}</ion-label>
         <ion-label slot="end">2:00 PM EST</ion-label>
       </ion-item>
 
       <ion-item>
         <ion-icon slot="start" :icon="timeOutline" />
-        <ion-label>Run time</ion-label>
+        <ion-label>{{ $t("Run time") }}</ion-label>
         <ion-label slot="end">3:00 PM EST</ion-label>
       </ion-item>
 
       <ion-item>
         <ion-icon slot="start" :icon="timerOutline" />
-        <ion-label>Schedule</ion-label>
+        <ion-label>{{ $t("Schedule") }}</ion-label>
         <DurationPopover />
       </ion-item>
 
       <ion-item>
         <ion-icon slot="start" :icon="syncOutline" />
-        <ion-label>Repeat untill disabled</ion-label>
+        <ion-label>{{ $t("Repeat untill disabled") }}</ion-label>
         <ion-checkbox slot="end"></ion-checkbox>
       </ion-item>
 
       <ion-item>
-        <ion-label> Auto disable after</ion-label>
-        <ion-input placeholder="occurances" />
+        <ion-label>{{ $t("Auto disable after") }}</ion-label>
+        <ion-input :placeholder="$t('occurances')" />
       </ion-item>
     </ion-list>
 
     <div class="actions">
       <div>
-        <ion-button size="small" fill="outline" color="medium">Skip once</ion-button>
-        <ion-button size="small" fill="outline" color="danger">Disable</ion-button>
+        <ion-button size="small" fill="outline" color="medium">{{ $t("Skip once") }}</ion-button>
+        <ion-button size="small" fill="outline" color="danger">{{ $t("Disable") }}</ion-button>
       </div>
       <div>
-        <ion-button size="small" fill="outline">Save changes</ion-button>
+        <ion-button size="small" fill="outline">{{ $t("Save changes") }}</ion-button>
       </div>
     </div>
   </section>
