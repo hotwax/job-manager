@@ -67,10 +67,13 @@ const actions: ActionTree<UserState, RootState> = {
         "noConditionFind": "Y"
       }
 
-      await dispatch('getEComStores', payload).then((stores: any) => { resp.data.stores = stores ? stores : [] })
+      await dispatch('getEComStores', payload).then((stores: any) => { resp.data.stores = [{
+          productStoreId: "",
+          storeName: "None"
+        }, ...(stores ? stores : [])]
+      })
 
       commit(types.USER_INFO_UPDATED, resp.data);
-      commit(types.USER_CURRENT_ECOM_STORE_UPDATED, resp.data.stores?.length > 0 ? resp.data.stores[0] : {});
       commit(types.USER_CURRENT_FACILITY_UPDATED, resp.data.facilities.length > 0 ? resp.data.facilities[0] : {});
     }
   },
