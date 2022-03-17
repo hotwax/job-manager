@@ -284,7 +284,11 @@ aside {
 }
 
 main {
-  max-width: 343px;
+  display: flex;
+  justify-content: center;
+  align-items: start;
+  gap: var(--spacer-2xl);
+  max-width: 900px;
   margin: var(--spacer-base) auto 0;
 }
 
@@ -293,13 +297,6 @@ main > section {
 }
 
 @media (min-width: 991px) {
-  main {
-    display: flex;
-    align-items: start;
-    gap: var(--spacer-2xl);
-    max-width: 900px;
-  }
-
   .desktop-only {
     display: unset;
   }
