@@ -37,19 +37,22 @@ const actions: ActionTree<JobState, RootState> = {
     return resp;
   },
 
-  async fetchPendingJobs({ commit, dispatch }, payload){
+  async fetchPendingJobs({ commit, dispatch, state }, payload){
     await JobService.fetchJobInformation({
       "inputFields": {
         "productStoreId": payload.eComStoreId,
-        "statusId": "SERVICE_PENDING"
+        "statusId": "SERVICE_PENDING",
       },
       "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName" ],
       "entityName": "JobSandbox",
       "noConditionFind": "Y",
+      "viewSize": payload.viewSize,
+      "viewIndex": payload.viewIndex
     }).then((resp) => {
       if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
         if (resp.data.docs) {
-          commit(types.JOB_PENDING_UPDATED,  resp.data.docs);
+          const jobs = state.pending.concat(resp.data.docs);
+          commit(types.JOB_PENDING_UPDATED,  jobs);
           const tempExprList = [] as any;
           const enumIds = [] as any;
           resp.data.docs.map((item: any) => {

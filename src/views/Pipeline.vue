@@ -39,6 +39,9 @@
           <!-- <ion-button fill="clear">{{ $t("Skip") }}</ion-button> -->
           <ion-button color="danger" fill="clear" @click="cancelJob(job.jobId)">{{ $t("Cancel") }}</ion-button>
         </ion-card>
+        <ion-infinite-scroll @ionInfinite="loadMoreJobs($event)" threshold="100px" :disabled="!isScrollable">
+          <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="$t('Loading')"/>
+        </ion-infinite-scroll>
       </main>
     </ion-content>
   </ion-page>
@@ -59,7 +62,9 @@ import {
   IonMenuButton,
   IonPage,
   IonToolbar,
-  IonTitle
+  IonTitle,
+  IonInfiniteScroll,
+  IonInfiniteScrollContent
 } from "@ionic/vue";
 import { codeWorkingOutline, timeOutline, timerOutline } from "ionicons/icons";
 
@@ -77,14 +82,17 @@ export default defineComponent({
     IonMenuButton,
     IonPage,
     IonToolbar,
-    IonTitle
+    IonTitle,
+    IonInfiniteScroll,
+    IonInfiniteScrollContent
   },
   computed: {
     ...mapGetters({
       pendingJobs: 'job/getPendingJobs',
       temporalExpr: 'job/getTemporalExpr',
       getDescription: 'job/getDescription',
-      getCurrentEComStore:'user/getCurrentEComStore'
+      getCurrentEComStore:'user/getCurrentEComStore',
+      isScrollable: 'job/isScrollable'
     })
   },
   methods: {
@@ -98,10 +106,23 @@ export default defineComponent({
     cancelJob(jobId: any){
       this.store.dispatch('job/updateJob', {jobId, statusId: "SERVICE_CANCELLED"});
       this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId});
+    },
+    async loadMoreJobs (event: any) {
+      this.getJobs(
+        undefined,
+        Math.ceil(this.pendingJobs.length / (process.env.VUE_APP_VIEW_SIZE as any)).toString()
+      ).then(() => {
+        event.target.complete();
+      })
+    },
+    async getJobs(vSize: any, vIndex: any) {
+      const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
+      const viewIndex = vIndex ? vIndex : 0;
+        await  this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex});
     }
   },
   created() {
-    this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId});
+    this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0});
   },
   setup() {
     const store = useStore();
