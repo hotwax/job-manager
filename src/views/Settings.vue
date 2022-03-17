@@ -16,14 +16,6 @@
           <ion-select-option v-for="store in (userProfile ? userProfile.stores : [])" :key="store.productStoreId" :value="store.productStoreId" >{{ store.storeName }}</ion-select-option>
         </ion-select>
       </ion-item>
-      <!-- Select store -->
-      <ion-item>
-        <ion-icon :icon="storefrontOutline" slot="start" />
-        <ion-label>{{ $t("Store") }}</ion-label>
-        <ion-select interface="popover" :value="currentFacility.facilityId" @ionChange="setFacility($event)">
-          <ion-select-option v-for="facility in ( userProfile && userProfile.facilities ? userProfile.facilities : [] )" :key="facility.facilityId" :value="facility.facilityId" >{{ facility.name }}</ion-select-option>
-        </ion-select>
-      </ion-item>
       <!-- OMS information -->
       <ion-item>
         <ion-icon :icon="codeWorkingOutline" slot="start"/>
@@ -66,7 +58,6 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       userProfile: 'user/getUserProfile',
-      currentFacility: 'user/getCurrentFacility',
       currentEComStore: 'user/getCurrentEComStore',
       instanceUrl: 'user/getInstanceUrl'
     })
@@ -77,13 +68,6 @@ export default defineComponent({
         this.store.dispatch('user/setEcomStore', {
           'eComStore': this.userProfile.stores.find((str: any) => str.productStoreId == store['detail'].value)
         })
-      }
-    },
-    setFacility (facility: any) {
-      if (this.userProfile){
-        this.store.dispatch('user/setFacility', {
-          'facility': this.userProfile.facilities.find((fac: any) => fac.facilityId == facility['detail'].value)
-        });
       }
     },
     logout () {

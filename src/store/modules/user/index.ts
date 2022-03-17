@@ -10,7 +10,6 @@ const userModule: Module<UserState, RootState> = {
     state: {
       token: '',
       current: null,
-      currentFacility: {},
       instanceUrl: '',
       shopifyConfig: {},
       currentEComStore: {

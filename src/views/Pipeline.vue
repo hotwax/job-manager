@@ -30,7 +30,7 @@
 
             <ion-item>
               <ion-icon slot="start" :icon="timerOutline" />
-              <ion-label>{{ temporalExpr(job.tempExprId) }}</ion-label>
+              <ion-label>{{ job.tempExprId ? temporalExpr(job.tempExprId) : "🙃"  }}</ion-label>
             </ion-item>
 
             <ion-item lines="full">
@@ -70,6 +70,7 @@ import {
   IonTitle,
   IonInfiniteScroll,
   IonInfiniteScrollContent
+  alertController
 } from "@ionic/vue";
 import { codeWorkingOutline, timeOutline, timerOutline } from "ionicons/icons";
 
@@ -108,10 +109,6 @@ export default defineComponent({
       const timeDiff = DateTime.fromMillis(time).diff(DateTime.local());
       return DateTime.local().plus(timeDiff).toRelative();
     },
-    cancelJob(jobId: any){
-      this.store.dispatch('job/updateJob', {jobId, statusId: "SERVICE_CANCELLED"});
-      this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId});
-    },
     async loadMoreJobs (event: any) {
       this.getJobs(
         undefined,
@@ -124,6 +121,28 @@ export default defineComponent({
       const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
       const viewIndex = vIndex ? vIndex : 0;
         await  this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex});
+    },
+    async cancelJob(jobId: any){
+      const alert = await alertController
+        .create({
+          header: this.$t('Cancel job'),
+          message: this.$t('Canceling this job will cancel this occurance and all following occurances. This job will have to be re-enabled manually to run it again.'),
+          buttons: [
+            {
+              text: this.$t("DON'T CANCEL"),
+              role: 'cancel',
+            },
+            {
+              text: this.$t("CANCEL"),
+              handler: () => {
+                this.store.dispatch('job/updateJob', {jobId, statusId: "SERVICE_CANCELLED"});
+                this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId});
+              },
+            }
+          ],
+        });
+
+       return alert.present();
     }
   },
   created() {
