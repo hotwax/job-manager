@@ -9,9 +9,13 @@ const jobModule: Module<JobState, RootState> = {
     namespaced: true,
     state: {
       cached: {},
-      pending: {},
+      pending: {
+        list: [],
+        total: 0
+      },
       temporalExp: [],
-      enumIds: {}
+      enumIds: {},
+      total: 0
     },
     getters,
     actions,
