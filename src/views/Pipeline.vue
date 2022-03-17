@@ -8,37 +8,40 @@
     </ion-header>
     <ion-content>
       <main>
-        <ion-card v-for="job in pendingJobs" :key="job">
-          <ion-item lines="none">
-            <ion-label>
-              <p class="overline">{{ job.parentJobId }}</p>
-              {{ job.systemJobEnumId }}
-            </ion-label>
-            <ion-badge color="dark" slot="end">{{ timeTillJob(job.runTime) }}</ion-badge>
-          </ion-item>
+        <section>
+          <ion-card v-for="job in pendingJobs" :key="job">
+            <ion-item lines="none">
+              <ion-label class="ion-text-wrap">
+                <p class="overline">{{ job.parentJobId }}</p>
+                {{ job.jobName }}
+              </ion-label>
+              <ion-badge v-if="job.runTime" color="dark" slot="end">{{ timeTillJob(job.runTime)}}</ion-badge>
+            </ion-item>
 
-          <!-- <ion-item lines="none">
-            service description
-          </ion-item> -->
+            <!-- Will remove it from comment when description is avaiable -->
+            <!-- <ion-item lines="none">
+              {{ getDescription(job.systemJobEnumId) }}
+            </ion-item> -->
 
-          <ion-item>
-            <ion-icon slot="start" :icon="timeOutline" />
-            <ion-label>{{ getTime(job.runTime) }}</ion-label>
-          </ion-item>
+            <ion-item>
+              <ion-icon slot="start" :icon="timeOutline" />
+              <ion-label>{{ job.runTime ? getTime(job.runTime) : "-"  }}</ion-label>
+            </ion-item>
 
-          <ion-item>
-            <ion-icon slot="start" :icon="timerOutline" />
-            <ion-label>{{ temporalExpr(job.tempExprId) }}</ion-label>
-          </ion-item>
+            <ion-item>
+              <ion-icon slot="start" :icon="timerOutline" />
+              <ion-label>{{ temporalExpr(job.tempExprId) }}</ion-label>
+            </ion-item>
 
-          <ion-item lines="full">
-            <ion-icon slot="start" :icon="codeWorkingOutline" />
-            <ion-label>{{ job.serviceName }}</ion-label>
-          </ion-item>
+            <ion-item lines="full">
+              <ion-icon slot="start" :icon="codeWorkingOutline" />
+              <ion-label>{{ job.serviceName }}</ion-label>
+            </ion-item>
 
-          <ion-button fill="clear">{{ $t("Skip") }}</ion-button>
-          <ion-button color="danger" fill="clear">{{ $t("Cancel") }}</ion-button>
-        </ion-card>
+            <!-- <ion-button fill="clear">{{ $t("Skip") }}</ion-button> -->
+            <ion-button color="danger" fill="clear" @click="cancelJob(job.jobId)">{{ $t("Cancel") }}</ion-button>
+          </ion-card>
+        </section>
       </main>
     </ion-content>
   </ion-page>
@@ -82,7 +85,9 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       pendingJobs: 'job/getPendingJobs',
-      temporalExpr: 'job/getTemporalExpr'
+      temporalExpr: 'job/getTemporalExpr',
+      getDescription: 'job/getDescription',
+      getCurrentEComStore:'user/getCurrentEComStore'
     })
   },
   methods: {
@@ -92,10 +97,14 @@ export default defineComponent({
     timeTillJob (time: any) {
       const timeDiff = DateTime.fromMillis(time).diff(DateTime.local());
       return DateTime.local().plus(timeDiff).toRelative();
+    },
+    cancelJob(jobId: any){
+      this.store.dispatch('job/updateJob', {jobId, statusId: "SERVICE_CANCELLED"});
+      this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId});
     }
   },
   created() {
-    this.store.dispatch('job/fetchPendingJobs');
+    this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId});
   },
   setup() {
     const store = useStore();
@@ -109,9 +118,3 @@ export default defineComponent({
   }
 });
 </script>
-<style scoped>
-main {
-  max-width: 343px;
-  margin: var(--spacer-base) auto 0;
-}
-</style>
