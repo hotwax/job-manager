@@ -11,17 +11,16 @@
       <main>
         <section>
           <ion-card>
+            <ion-card-header>
+              <ion-card-title>{{ $t("Adjustments") }}</ion-card-title>
+            </ion-card-header>
             <ion-item>
-              <ion-label>{{ $t("Realtime webhooks") }}</ion-label>
-              <ion-toggle :checked="realTimeWebhooks" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, this.jobEnums['REAL_WBHKS'])"/>
-            </ion-item>
-            <ion-item>
-              <ion-label>{{ $t("Hard sync") }}</ion-label>
-              <InventoryPopover :id="jobEnums['HARD_SYNC']"/>
+              <ion-label>{{ $t("Dynamic inventory") }}</ion-label>
+              <ion-toggle :checked="realTimeWebhooks" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, this.jobEnums['DYN_INV'])"/>
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
-                <p>{{ $t("Performing a hard sync from Shopify to HotWax Commerce is useful for eliminating any discrepencies that may build up from unreliable webhooks.") }}</p>
+                <p>{{ $t("Realtime adjustments allow HotWax Commerce to push new inventory to Shopify in realtime. These events include receiving , cycle counts, variances, and return.") }}</p>
               </ion-label>
             </ion-item>
             <ion-item>
@@ -33,31 +32,21 @@
                 <p>{{ $t("When using HotWax BOPIS, Shopify isn't aware of the actual inventory consumed. HotWax will automatically restore inventory automatically reduced by Shopify and deduct inventory from the correct store to maintain inventory accuracy.") }}</p>
               </ion-label>
             </ion-item>
+            <ion-item>
+              <ion-label>{{ $t("Hard sync") }}</ion-label>
+              <InventoryPopover :id="jobEnums['HARD_SYNC']"/>
+            </ion-item>
+            <ion-item lines="none">
+              <ion-label class="ion-text-wrap">
+                <p>{{ $t("Performing a hard sync from HotWax Commerce to Shopify is useful for eliminating any discrepencies.") }}</p>
+              </ion-label>
+            </ion-item>
           </ion-card>
 
           <ion-card>
-            <ion-item>
-              <ion-label>{{ $t("Realtime adjustments") }}</ion-label>
-              <ion-toggle :checked="realtimeAdjustments" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, this.jobEnums['REALTIME_ADJUSTMENTS'])" />
-            </ion-item>
-            <ion-item lines="none">
-              <ion-label class="ion-text-wrap">
-                <p>{{ $t("Realtime adjustments allow HotWax Commerce to push new inventory to Shopify in realtime. These events include receiving , cycle counts, variances, and return.") }}</p>
-              </ion-label>
-            </ion-item>
-            <ion-item>
-              <ion-label>{{ $t("Hard sync") }}</ion-label>
-              <InventoryPopover :id="jobEnums['HRD_SYC']"/>
-            </ion-item>
-            <ion-item lines="none">
-              <ion-label class="ion-text-wrap">
-                <p>{{ $t("Performing a hard sync from Shopify to HotWax Commerce is useful for eliminating any discrepencies.") }}</p>
-              </ion-label>
-            </ion-item>
-            <ion-item>
-              <ion-label>{{ $t("Realtime POS sales") }}</ion-label>
-              <ion-toggle :checked="realtimePOSSales" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, this.jobEnums['REAL_TIME_POS_SALES'])" />
-            </ion-item>
+            <ion-card-header>
+              <ion-card-title>{{ $t("Completed orders") }}</ion-card-title>
+            </ion-card-header>
             <ion-item>
               <ion-label>{{ $t("Reserve for completed orders") }}</ion-label>
               <ion-toggle :checked="reserveForCompletedOrders" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, this.jobEnums['RSV_CMPLT_ORDRS'])" />
@@ -69,7 +58,7 @@
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
-                <p>{{ $t("When importing historical completed orders, reservation should be turned off.") }}</p>
+                <p>{{ $t("When importing historical completed orders, this should be turned off.") }}</p>
               </ion-label>
             </ion-item>
           </ion-card>
@@ -82,6 +71,8 @@
 <script lang="ts">
 import {
   IonCard,
+  IonCardHeader,
+  IonCardTitle,
   IonContent,
   IonHeader,
   IonItem,
@@ -101,6 +92,8 @@ export default defineComponent({
   components: {
     InventoryPopover,
     IonCard,
+    IonCardHeader,
+    IonCardTitle,
     IonContent,
     IonHeader,
     IonItem,

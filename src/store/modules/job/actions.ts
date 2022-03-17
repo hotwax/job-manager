@@ -40,7 +40,7 @@ const actions: ActionTree<JobState, RootState> = {
   async fetchPendingJobs({ commit, dispatch }, payload){
     await JobService.fetchJobInformation({
       "inputFields": {
-        "productStoreId": payload.eComStoreId,
+        // "productStoreId": payload.eComStoreId,
         "statusId": "SERVICE_PENDING"
       },
       "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName" ],

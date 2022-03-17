@@ -3,6 +3,7 @@
   "Auto add pre-order tag in Shopify": "Auto add pre-order tag in Shopify",
   "Auto remove tags in Shopify": "Auto remove tags in Shopify",
   "Add shipping dates in Shopify": "Add shipping dates in Shopify",
+  "Adjustments": "Adjustments",
   "Allocation": "Allocation",
   "Auto cancelations": "Auto cancelations",
   "All unsaved changes will be lost. Are you sure you want to leave this page.": "All unsaved changes will be lost. Are you sure you want to leave this page.",
@@ -30,6 +31,7 @@
   "Discard changes": "Discard changes",
   "Dont cancel": "Dont cancel",
   "Dont skip": "Dont skip",
+  "Dynamic inventory": "Dynamic inventory",
   "eCom Store": "eCom Store",
   "Hard sync": "Hard sync",
   "HotWax source": "HotWax source",
@@ -49,8 +51,7 @@
   "OMS": "OMS",
   "Orders": "Orders",
   "Password":  "Password",
-  "Performing a hard sync from Shopify to HotWax Commerce is useful for eliminating any discrepencies.": "Performing a hard sync from Shopify to HotWax Commerce is useful for eliminating any discrepencies.",
-  "Performing a hard sync from Shopify to HotWax Commerce is useful for eliminating any discrepencies that may build up from unreliable webhooks.": "Performing a hard sync from Shopify to HotWax Commerce is useful for eliminating any discrepencies that may build up from unreliable webhooks.",
+  "Performing a hard sync from HotWax Commerce to Shopify is useful for eliminating any discrepencies.": "Performing a hard sync from HotWax Commerce to Shopify is useful for eliminating any discrepencies.",
   "Payment status": "Payment status",
   "Pre-order": "Pre-order",
   "Pipeline": "Pipeline",
@@ -108,6 +109,6 @@
   "Username": "Username",
   "Unfillable orders": "Unfillable orders",
   "Unfulfilled orders that pass their auto cancelation date will be canceled automatically in HotWax Commerce. They will also be canceled in Shopify if upload for canceled orders is enabled.": "Unfulfilled orders that pass their auto cancelation date will be canceled automatically in HotWax Commerce. They will also be canceled in Shopify if upload for canceled orders is enabled.",
-  "When importing historical completed orders, reservation should be turned off.": "When importing historical completed orders, reservation should be turned off.",
+  "When importing historical completed orders, this should be turned off.": "When importing historical completed orders, this should be turned off.",
   "When using HotWax BOPIS, Shopify isn't aware of the actual inventory consumed. HotWax will automatically restore inventory automatically reduced by Shopify and deduct inventory from the correct store to maintain inventory accuracy.": "When using HotWax BOPIS, Shopify isn't aware of the actual inventory consumed. HotWax will automatically restore inventory automatically reduced by Shopify and deduct inventory from the correct store to maintain inventory accuracy."
 }
