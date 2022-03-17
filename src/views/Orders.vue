@@ -110,7 +110,7 @@
         </section>
 
         <aside class="desktop-only">
-          <JobDetail />
+          <JobConfiguration />
         </aside>
       </main>
     </ion-content>
@@ -143,7 +143,7 @@ import DurationPopover from '@/components/DurationPopover.vue'
 import BatchModal from '@/components/BatchModal.vue';
 import { useStore } from "@/store";
 import { mapGetters } from "vuex";
-import JobDetail from '@/components/JobDetail.vue';
+import JobConfiguration from '@/components/JobConfiguration.vue';
 
 export default defineComponent({
   name: 'Orders',
@@ -165,7 +165,7 @@ export default defineComponent({
     IonToggle,
     IonToolbar,
     DurationPopover,
-    JobDetail
+    JobConfiguration
   },
   data() {
     return {

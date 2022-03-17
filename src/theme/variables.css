@@ -270,6 +270,7 @@ ion-select {
 }
 
 aside {
+  flex: 1 0 355px;
   position: sticky;
   top: var(--spacer-lg);
 }
@@ -282,17 +283,21 @@ aside {
   display: unset;
 }
 
+main {
+  max-width: 343px;
+  margin: var(--spacer-base) auto 0;
+}
+
+main > section {
+  max-width: 343px;
+}
+
 @media (min-width: 991px) {
   main {
     display: flex;
     align-items: start;
     gap: var(--spacer-2xl);
     max-width: 900px;
-    margin: var(--spacer-base) auto 0;
-  }
-
-  main > section {
-    max-width: 343px;
   }
 
   .desktop-only {

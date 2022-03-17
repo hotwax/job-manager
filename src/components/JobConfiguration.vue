@@ -36,7 +36,7 @@
       </ion-item>
     </ion-list>
 
-    <div class="actions">
+    <div class="actions desktop-only">
       <div>
         <ion-button size="small" fill="outline" color="medium" @click="skipJob">{{ $t("Skip once") }}</ion-button>
         <ion-button size="small" fill="outline" color="danger" @click="cancelJob">{{ $t("Disable") }}</ion-button>
@@ -44,6 +44,12 @@
       <div>
         <ion-button size="small" fill="outline" @click="saveChanges">{{ $t("Save changes") }}</ion-button>
       </div>
+    </div>
+
+    <div class="mobile-only">
+      <ion-button expand="block" fill="outline" color="medium" @click="skipJob">{{ $t("Skip once") }}</ion-button>
+      <ion-button expand="block" fill="outline" color="danger" @click="cancelJob">{{ $t("Disable") }}</ion-button>
+      <ion-button expand="block" fill="outline" @click="saveChanges">{{ $t("Save changes") }}</ion-button>
     </div>
   </section>
 </template>
@@ -58,6 +64,7 @@ import {
   IonInput,
   IonItem,
   IonLabel,
+  IonList,
   alertController
 } from "@ionic/vue";
 import DurationPopover from "@/components/DurationPopover.vue";
@@ -69,7 +76,7 @@ import {
   personCircleOutline
 } from "ionicons/icons";
 export default defineComponent({
-  name: "JobDetail",
+  name: "JobConfiguration",
   components: {
     IonBadge,
     IonButton,
@@ -78,6 +85,7 @@ export default defineComponent({
     IonInput,
     IonItem,
     IonLabel,
+    IonList,
     DurationPopover
   },
   methods: {
@@ -131,18 +139,25 @@ export default defineComponent({
 </script>
 
 <style scoped>
-section {
-  overflow: hidden;
-  flex: 1 355px;
-  border: 1px solid var(--ion-color-medium);
-  border-radius: 16px;
-}
 ion-list {
-  margin-top: var(--spacer-xs);
+  margin: var(--spacer-base) 0;
 }
-.actions {
-  display: flex;
-  justify-content: space-between;
-  margin: var(--spacer-base) var(--spacer-sm) var(--spacer-base);
+
+.mobile-only > ion-button {
+  margin: var(--spacer-sm);
+}
+
+@media (min-width: 991px) {
+  section {
+    overflow: hidden;
+    border: 1px solid var(--ion-color-medium);
+    border-radius: 16px;
+  }
+
+  .actions {
+    display: flex;
+    justify-content: space-between;
+    margin: var(--spacer-base) var(--spacer-sm) var(--spacer-base);
+  }
 }
 </style>
