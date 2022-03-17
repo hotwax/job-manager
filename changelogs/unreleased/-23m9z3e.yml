@@ -2,6 +2,6 @@
 title: Created job-detail component, improved pipeline icon and managed styling of
   all pages in global css file
 ticket_id: "#23m9z3e"
-merge_request: 28
+merge_request: 33
 author: Azkya Khan
 type: changed
