@@ -14,6 +14,11 @@
             <ion-card-header>
               <ion-card-title>{{ $t("Import") }}</ion-card-title>
             </ion-card-header>
+            <!-- TODO: env file entry: REAL_WBHKS -->
+            <ion-item>
+              <ion-label>{{ $t("Realtime webhook") }}</ion-label>
+              <ion-toggle color="secondary" slot="end" />
+            </ion-item>
             <ion-item>
               <ion-label>{{ $t("New orders") }}</ion-label>
               <DurationPopover :id="jobEnums['IMP_NEW_ORDERS']" />
@@ -56,15 +61,33 @@
 
           <ion-card>
             <ion-card-header>
+              <ion-card-title>{{ $t("Auto cancelations") }}</ion-card-title>
+            </ion-card-header>
+            <ion-item>
+              <ion-label>{{ $t("Days") }}</ion-label>
+              <ion-input :placeholder="$t('before auto cancelation')" />
+            </ion-item>
+            <!-- TODO: run at 12 am daily -->
+            <ion-item>
+              <ion-label>{{ $t("Check daily") }}</ion-label>
+              <ion-toggle color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['AUTO_CNCL_DAL'])" />
+            </ion-item>
+            <ion-item lines="none">
+              <ion-label class="ion-text-wrap"><p>{{ $t("Unfulfilled orders that pass their auto cancelation date will be canceled automatically in HotWax Commerce. They will also be canceled in Shopify if upload for canceled orders is enabled.") }}</p></ion-label>
+            </ion-item>
+          </ion-card>
+
+          <ion-card>
+            <ion-card-header>
               <ion-card-title>{{ $t("Notes") }}</ion-card-title>
             </ion-card-header>
             <ion-item>
               <ion-label>{{ $t("Promise date changes") }}</ion-label>
-              <ion-toggle :checked="automaticallyListPreOrder" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['NTS_PRMS_DT_CHNG'])" />
+              <ion-toggle color="secondary" />
             </ion-item>
             <ion-item>
               <ion-label>{{ $t("Reroutes") }}</ion-label>
-              <ion-toggle :checked="automaticallyListPreOrder" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['NTS_REROUTES'])" />
+              <ion-toggle color="secondary" />
             </ion-item>
           </ion-card>
 
@@ -73,19 +96,20 @@
               <ion-card-title>{{ $t("Routing") }}</ion-card-title>
             </ion-card-header>
             <ion-item>
+              <ion-label>{{ $t("Rejected orders") }}</ion-label>
+              <DurationPopover :id="jobEnums['REJ_ORDR']" />
+            </ion-item>
+            <ion-item>
               <ion-label>{{ $t("Unfillable orders") }}</ion-label>
               <DurationPopover :id="jobEnums['UNFIL_ORDERS']" />
             </ion-item>
-            <ion-item>
-              <ion-label>{{ $t("Rebrokered orders") }}</ion-label>
-              <DurationPopover :id="jobEnums['REBRKR_ORDR']" />
-            </ion-item>
+            <!-- TODO: env file entry UNFIL_ORDERS, run now as user with count 1-->
             <ion-item>
               <ion-button fill="outline" color="warning">{{ $t("Route unfillable orders now") }}</ion-button>
             </ion-item>
             <ion-item>
               <ion-label>{{ $t("Batch broker orders") }}</ion-label>
-              <ion-toggle :checked="automaticallyListPreOrder" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['RTG_BTCH_BRKR_ORDR'])" />
+              <ion-toggle color="secondary" />
             </ion-item>
             <ion-item-divider>
               <ion-label>{{ $t("Batches") }}</ion-label>
@@ -126,6 +150,7 @@ import {
   IonContent,
   IonHeader,
   IonIcon,
+  IonInput,
   IonItem,
   IonItemDivider,
   IonLabel,
@@ -155,6 +180,7 @@ export default defineComponent({
     IonContent,
     IonHeader,
     IonIcon,
+    IonInput,
     IonItem,
     IonItemDivider,
     IonLabel,
