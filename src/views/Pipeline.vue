@@ -130,21 +130,20 @@ export default defineComponent({
             {
               text: this.$t('Skip'),
               handler: () => {
+                let skipTime = {};
                 if(this.temporalExpr(job.tempExprId).integer1 === 12){
-                  const time =  DateTime.fromMillis(job.runTime).diff(DateTime.local()).plus({minutes: this.temporalExpr(job.tempExprId).integer2});
-                  const timeDiff = job.runTime - DateTime.local().toMillis()
-                  job.runTime = job.runTime + time - timeDiff
+                  skipTime = {minutes: this.temporalExpr(job.tempExprId).integer2}
                 }
                 else if (this.temporalExpr(job.tempExprId).integer1 === 10){
-                  const time =  DateTime.fromMillis(job.runTime).diff(DateTime.local()).plus({hours: this.temporalExpr(job.tempExprId).integer2});
-                  const timeDiff = job.runTime - DateTime.local().toMillis()
-                  job.runTime = job.runTime + time - timeDiff
+                  skipTime = {hours: this.temporalExpr(job.tempExprId).integer2}
                 }
                 else if (this.temporalExpr(job.tempExprId).integer1 === 5){
-                  const time =  DateTime.fromMillis(job.runTime).diff(DateTime.local()).plus({days: this.temporalExpr(job.tempExprId).integer2});  
-                  const timeDiff = job.runTime - DateTime.local().toMillis()
-                  job.runTime = job.runTime + time - timeDiff
+                  skipTime = {days: this.temporalExpr(job.tempExprId).integer2} 
                 }
+                console.log(skipTime)
+                const time =  DateTime.fromMillis(job.runTime).diff(DateTime.local()).plus(skipTime);  
+                const timeDiff = job.runTime - DateTime.local().toMillis()
+                job.runTime = job.runTime + time - timeDiff
                 const payload = {
                   ...job,
                   'systemJobEnumId': job.systemJobEnumId,
