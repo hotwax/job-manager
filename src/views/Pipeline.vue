@@ -124,39 +124,40 @@ export default defineComponent({
           message: this.$t('Skipping will run this job at the next occurance based on the temporal expression.'),
           buttons: [
             {
-              text: this.$t('Dont skip'),
+              text: this.$t("Don't skip"),
               role: 'cancel',
             },
             {
               text: this.$t('Skip'),
-              handler: () => {
+              handler: async () => {
                 let skipTime = {};
-                if(this.temporalExpr(job.tempExprId).integer1 === 12){
-                  skipTime = {minutes: this.temporalExpr(job.tempExprId).integer2}
+                const integer1 = this.temporalExpr(job.tempExprId).integer1;
+                const integer2 = this.temporalExpr(job.tempExprId).integer2
+                if(integer1 === 12) {
+                  skipTime = { minutes: integer2 }
                 }
-                else if (this.temporalExpr(job.tempExprId).integer1 === 10){
-                  skipTime = {hours: this.temporalExpr(job.tempExprId).integer2}
+                else if (integer1 === 10) {
+                  skipTime = { hours: integer2 }
                 }
-                else if (this.temporalExpr(job.tempExprId).integer1 === 5){
-                  skipTime = {days: this.temporalExpr(job.tempExprId).integer2} 
+                else if (integer1 === 5) {
+                  skipTime = { days: integer2 }
                 }
-                console.log(skipTime)
                 const time =  DateTime.fromMillis(job.runTime).diff(DateTime.local()).plus(skipTime);  
                 const timeDiff = job.runTime - DateTime.local().toMillis()
-                job.runTime = job.runTime + time - timeDiff
+                const updatedRunTime = job.runTime + time - timeDiff
                 const payload = {
-                  ...job,
+                  'jobId': job.jobId,
+                  'runTime': updatedRunTime,
                   'systemJobEnumId': job.systemJobEnumId,
                   'statusId': "SERVICE_PENDING"
                 } as any
-               
                 this.store.dispatch('job/updateJob', payload);
-                this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId});
+                await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId});
               },
             }
           ]
         });
-      return alert.present(); 
+      return alert.present();
     },
     async getJobs(vSize: any, vIndex: any) {
       const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
