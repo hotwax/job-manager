@@ -2,26 +2,31 @@
   <section>
     <ion-item lines="none">
       <h1>New orders</h1>
-      <ion-badge slot="end" color="dark">{{ $t("running in") }} 3 minutes</ion-badge>
+      <ion-badge slot="end" color="dark" v-if="job?.runTime">{{ $t("running") }} {{ timeTillJob(job.runTime) }}</ion-badge>
     </ion-item>
 
     <ion-list>
       <ion-item>
         <ion-icon slot="start" :icon="calendarClearOutline" />
         <ion-label>{{ $t("Last run") }}</ion-label>
-        <ion-label slot="end">2:00 PM EST</ion-label>
+        <ion-label slot="end">{{ job?.lastUpdatedStamp ? getTime(job.lastUpdatedStamp) : '-' }}</ion-label>
       </ion-item>
 
       <ion-item>
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label>{{ $t("Run time") }}</ion-label>
-        <ion-label slot="end">3:00 PM EST</ion-label>
+        <ion-label slot="end">{{ job?.runTime ? getTime(job.runTime) : '-' }}</ion-label>
       </ion-item>
 
       <ion-item>
         <ion-icon slot="start" :icon="timerOutline" />
         <ion-label>{{ $t("Schedule") }}</ion-label>
-        <DurationPopover />
+        <ion-select :interface-options="customPopoverOptions" interface="popover" :value="jobStatus" >
+          <ion-select-option value="HOURLY">Hourly</ion-select-option>
+          <ion-select-option value="EVERY_6_HOUR">Every 6 hours</ion-select-option>
+          <ion-select-option value="NIGHTLY">Nightly</ion-select-option>
+          <ion-select-option value="SERVICE_DRAFT">Disabled</ion-select-option>
+        </ion-select>
       </ion-item>
 
       <ion-item>
@@ -58,9 +63,11 @@ import {
   IonInput,
   IonItem,
   IonLabel,
+  IonList,
+  IonSelect,
+  IonSelectOption,
   alertController
 } from "@ionic/vue";
-import DurationPopover from "@/components/DurationPopover.vue";
 import {
   calendarClearOutline,
   timeOutline,
@@ -68,6 +75,10 @@ import {
   syncOutline,
   personCircleOutline
 } from "ionicons/icons";
+import { mapGetters, useStore } from "vuex";
+import { translate } from "@/i18n";
+import { DateTime } from 'luxon';
+
 export default defineComponent({
   name: "JobDetail",
   components: {
@@ -78,7 +89,27 @@ export default defineComponent({
     IonInput,
     IonItem,
     IonLabel,
-    DurationPopover
+    IonList,
+    IonSelect,
+    IonSelectOption
+  },
+  data() {
+    return {
+      job: {},
+      jobStatus: ''
+    }
+  },
+  async mounted() {
+    this.job = await this.getJob('ping')
+    this.jobStatus = await this.getJobStatus('ping')
+  },
+  computed: {
+    ...mapGetters({
+      getJobStatus: 'job/getJobStatus',
+      getJob: 'job/getJob',
+      getShopifyConfigId: 'user/getShopifyConfigId',
+      getCurrentEComStore: 'user/getCurrentEComStore'
+    })
   },
   methods: {
     async skipJob() {
@@ -117,12 +148,58 @@ export default defineComponent({
         });
       return alert.present();
     },
+    async updateJob(status: string, id: string) {
+      const job = this.getJob(id);
+
+      // TODO: added this condition to not call the api when the value of the select automatically changes
+      // need to handle this properly
+      if (status === job?.tempExprId) {
+        return;
+      }
+
+      const payload = {
+        ...job,
+        'systemJobEnumId': id,
+        'statusId': status === "SERVICE_DRAFT" ? "SERVICE_CANCELLED" : "SERVICE_PENDING"
+      } as any
+      if (status === 'SERVICE_DRAFT') {
+        this.store.dispatch('job/updateJob', payload)
+      } else if (job?.status === 'SERVICE_DRAFT') {
+        payload['SERVICE_FREQUENCY'] = status
+        payload['SERVICE_NAME'] = job.serviceName
+        payload['count'] = -1
+        payload['runAsSystem'] = true
+        payload['shopifyConfigId'] = this.getShopifyConfigId
+        payload['productStoreId'] = this.getCurrentEComStore.productStoreId
+
+        this.store.dispatch('job/scheduleService', payload)
+      } else if (job?.status === 'SERVICE_PENDING') {
+        payload['tempExprId'] = status === 'SERVICE_DRAFT' ? job.tempExprId : status
+        payload['jobId'] = job.id
+
+        this.store.dispatch('job/updateJob', payload)
+      }
+    },
+    getTime (time: any) {
+      return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
+    },
+    timeTillJob (time: any) {
+      const timeDiff = DateTime.fromMillis(time).diff(DateTime.local());
+      return DateTime.local().plus(timeDiff).toRelative();
+    },
   },
   setup() {
+    const customPopoverOptions: any = {
+      header: translate('Schedule inventory hard sync'),
+      showBackdrop: false
+    }
+    const store = useStore();
     return {
       calendarClearOutline,
+      customPopoverOptions,
       timeOutline,
       timerOutline,
+      store,
       syncOutline,
       personCircleOutline
     };
