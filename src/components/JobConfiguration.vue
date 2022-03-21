@@ -46,7 +46,7 @@
       </div>
     </div>
 
-    <div class="mobile-only">
+    <div class=" actions mobile-only">
       <ion-button expand="block" fill="outline" color="medium" @click="skipJob">{{ $t("Skip once") }}</ion-button>
       <ion-button expand="block" fill="outline" color="danger" @click="cancelJob">{{ $t("Disable") }}</ion-button>
       <ion-button expand="block" fill="outline" @click="saveChanges">{{ $t("Save changes") }}</ion-button>
@@ -143,7 +143,7 @@ ion-list {
   margin: var(--spacer-base) 0;
 }
 
-.mobile-only > ion-button {
+.actions > ion-button {
   margin: var(--spacer-sm);
 }
 
@@ -159,5 +159,9 @@ ion-list {
     justify-content: space-between;
     margin: var(--spacer-base) var(--spacer-sm) var(--spacer-base);
   }
+
+  .mobile-only {
+    display: none;
+  }  
 }
 </style>
