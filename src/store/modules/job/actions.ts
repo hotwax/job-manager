@@ -90,7 +90,7 @@ const actions: ActionTree<JobState, RootState> = {
         "tempExprId": tempIds,
         "temoExprId_op": "in"
       },
-      "fieldList": [ "tempExprId", "description" ],
+      "fieldList": [ "tempExprId", "description","integer1", "integer2" ],
       "entityName": "TemporalExpression",
       "noConditionFind": "Y",
     })

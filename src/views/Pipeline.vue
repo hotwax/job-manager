@@ -22,7 +22,6 @@
             <!-- <ion-item lines="none">
               {{ getDescription(job.systemJobEnumId) }}
             </ion-item> -->
-
             <ion-item>
               <ion-icon slot="start" :icon="timeOutline" />
               <ion-label>{{ job.runTime ? getTime(job.runTime) : "-"  }}</ion-label>
@@ -30,7 +29,8 @@
 
             <ion-item>
               <ion-icon slot="start" :icon="timerOutline" />
-              <ion-label>{{ job.tempExprId ? temporalExpr(job.tempExprId) : "🙃"  }}</ion-label>
+              <!-- {{temporalExpr(job.tempExprId)}} -->
+              <ion-label>{{ job.tempExprId ? temporalExpr(job.tempExprId)?.description : "🙃"  }}</ion-label>
             </ion-item>
 
             <ion-item lines="full">
@@ -38,7 +38,7 @@
               <ion-label>{{ job.serviceName }}</ion-label>
             </ion-item>
 
-            <!-- <ion-button fill="clear">{{ $t("Skip") }}</ion-button> -->
+            <ion-button fill="clear" @click="skipJob(job)">{{ $t("Skip") }}</ion-button>
             <ion-button color="danger" fill="clear" @click="cancelJob(job.jobId)">{{ $t("Cancel") }}</ion-button>
           </ion-card>
 
@@ -116,6 +116,48 @@ export default defineComponent({
       ).then(() => {
         event.target.complete();
       })
+    },
+    async skipJob (job: any) {
+      const alert = await alertController
+        .create({
+          header: this.$t('Skip job'),
+          message: this.$t('Skipping will run this job at the next occurance based on the temporal expression.'),
+          buttons: [
+            {
+              text: this.$t('Dont skip'),
+              role: 'cancel',
+            },
+            {
+              text: this.$t('Skip'),
+              handler: () => {
+                if(this.temporalExpr(job.tempExprId).integer1 === 12){
+                  const time =  DateTime.fromMillis(job.runTime).diff(DateTime.local()).plus({minutes: this.temporalExpr(job.tempExprId).integer2});
+                  const timeDiff = job.runTime - DateTime.local().toMillis()
+                  job.runTime = job.runTime + time - timeDiff
+                }
+                else if (this.temporalExpr(job.tempExprId).integer1 === 10){
+                  const time =  DateTime.fromMillis(job.runTime).diff(DateTime.local()).plus({hours: this.temporalExpr(job.tempExprId).integer2});
+                  const timeDiff = job.runTime - DateTime.local().toMillis()
+                  job.runTime = job.runTime + time - timeDiff
+                }
+                else if (this.temporalExpr(job.tempExprId).integer1 === 5){
+                  const time =  DateTime.fromMillis(job.runTime).diff(DateTime.local()).plus({days: this.temporalExpr(job.tempExprId).integer2});  
+                  const timeDiff = job.runTime - DateTime.local().toMillis()
+                  job.runTime = job.runTime + time - timeDiff
+                }
+                const payload = {
+                  ...job,
+                  'systemJobEnumId': job.systemJobEnumId,
+                  'statusId': "SERVICE_PENDING"
+                } as any
+               
+                this.store.dispatch('job/updateJob', payload);
+                this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId});
+              },
+            }
+          ]
+        });
+      return alert.present(); 
     },
     async getJobs(vSize: any, vIndex: any) {
       const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
