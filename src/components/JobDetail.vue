@@ -135,7 +135,15 @@ export default defineComponent({
         .create({
           header: this.$t('Save changes'),
           message: this.$t('Are you sure you want to save these changes?'),
-          buttons: [this.$t('Cancel'), this.$t('Save')],
+          buttons: [{
+            text: this.$t('Cancel'),
+            role: 'cancel'
+          }, {
+            text: this.$t('Save'),
+            handler: () => {
+              this.updateJob();
+            }
+          }]
         });
       return alert.present();
     },
@@ -148,24 +156,24 @@ export default defineComponent({
         });
       return alert.present();
     },
-    async updateJob(status: string, id: string) {
+    async updateJob(id: string = 'ping') {
       const job = this.getJob(id);
 
       // TODO: added this condition to not call the api when the value of the select automatically changes
       // need to handle this properly
-      if (status === job?.tempExprId) {
+      if (this.jobStatus === job?.tempExprId) {
         return;
       }
 
       const payload = {
         ...job,
         'systemJobEnumId': id,
-        'statusId': status === "SERVICE_DRAFT" ? "SERVICE_CANCELLED" : "SERVICE_PENDING"
+        'statusId': this.jobStatus === "SERVICE_DRAFT" ? "SERVICE_CANCELLED" : "SERVICE_PENDING"
       } as any
-      if (status === 'SERVICE_DRAFT') {
+      if (this.jobStatus === 'SERVICE_DRAFT') {
         this.store.dispatch('job/updateJob', payload)
       } else if (job?.status === 'SERVICE_DRAFT') {
-        payload['SERVICE_FREQUENCY'] = status
+        payload['SERVICE_FREQUENCY'] = this.jobStatus
         payload['SERVICE_NAME'] = job.serviceName
         payload['count'] = -1
         payload['runAsSystem'] = true
@@ -174,7 +182,7 @@ export default defineComponent({
 
         this.store.dispatch('job/scheduleService', payload)
       } else if (job?.status === 'SERVICE_PENDING') {
-        payload['tempExprId'] = status === 'SERVICE_DRAFT' ? job.tempExprId : status
+        payload['tempExprId'] = this.jobStatus === 'SERVICE_DRAFT' ? job.tempExprId : this.jobStatus
         payload['jobId'] = job.id
 
         this.store.dispatch('job/updateJob', payload)
