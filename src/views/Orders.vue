@@ -16,7 +16,8 @@
             </ion-card-header>
             <ion-item>
               <ion-label>{{ $t("New orders") }}</ion-label>
-              <DurationPopover :id="jobEnums['IMP_NEW_ORDERS']" />
+              <ion-button color="medium" fill="clear" @click="view($event)">View</ion-button>
+              <!-- <DurationPopover  /> -->
             </ion-item>
             <ion-item>
               <ion-label>{{ $t("Cancelled orders") }}</ion-label>
@@ -119,6 +120,7 @@
 
 <script lang="ts">
 import {
+  createAnimation,
   IonButton,
   IonCard,
   IonCardHeader,
@@ -181,8 +183,8 @@ export default defineComponent({
       getCurrentEComStore: 'user/getCurrentEComStore'
     })
   },
-  methods: {
-     async editBatch() {
+  methods: {  
+    async editBatch() {
       const batchmodal = await modalController.create({
         component: BatchModal
       });
@@ -220,6 +222,26 @@ export default defineComponent({
 
         this.store.dispatch('job/updateJob', payload)
       }
+    },
+
+    async view(event: any, element: any) {
+      const asideAnimation = createAnimation()
+        .addElement(document.querySelector('aside') as Element)
+        .duration(1500)
+        .easing('ease')
+         .keyframes([
+          { offset: 0, flex: '0', opacity: '0' },
+          { offset: 0.5, flex: '1', opacity: '0' },
+          { offset: 1, flex: '1', opacity: '1' }
+        ])         
+
+      const mainAnimation = createAnimation()
+        .addElement(document.querySelector('main') as Element)
+        .duration(500)
+        .fromTo('gap', '0', 'var(--spacer-2xl)');
+
+        mainAnimation.play();  
+        asideAnimation.play();
     }
   },
   mounted () { 
@@ -231,7 +253,7 @@ export default defineComponent({
     });
   },
   setup() {
-    const store = useStore();
+    const store = useStore();     
     return {
       addCircleOutline,
       store
@@ -239,3 +261,10 @@ export default defineComponent({
   },
 });
 </script>
+
+<style scoped>
+aside {
+  width: 0px;
+  opacity: 0;
+}
+</style>
