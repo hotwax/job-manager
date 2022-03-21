@@ -37,19 +37,24 @@ const actions: ActionTree<JobState, RootState> = {
     return resp;
   },
 
-  async fetchPendingJobs({ commit, dispatch }, payload){
+  async fetchPendingJobs({ commit, dispatch, state }, payload){
     await JobService.fetchJobInformation({
       "inputFields": {
         "productStoreId": payload.eComStoreId,
-        "statusId": "SERVICE_PENDING"
+        "statusId": "SERVICE_PENDING",
       },
       "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName" ],
       "entityName": "JobSandbox",
       "noConditionFind": "Y",
+      "viewSize": payload.viewSize,
+      "viewIndex": payload.viewIndex,
+      "orderBy": "runTime ASC"
     }).then((resp) => {
       if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
         if (resp.data.docs) {
-          commit(types.JOB_PENDING_UPDATED,  resp.data.docs);
+          const total = resp.data.count;
+          const jobs = state.pending.list.concat(resp.data.docs);
+          commit(types.JOB_PENDING_UPDATED, { jobs, total });
           const tempExprList = [] as any;
           const enumIds = [] as any;
           resp.data.docs.map((item: any) => {
@@ -73,21 +78,16 @@ const actions: ActionTree<JobState, RootState> = {
   async fetchTemporalExpression({ state, commit }, tempExprIds){
     const tempIds = [] as any;
     const cachedTempExprId = Object.keys(state.temporalExp);
-    const tempExprFiltered = tempExprIds.reduce((filter: string, id: any) => {
-      if(cachedTempExprId.includes(id)){
-        return filter;
-      }
-      else {
-        if (filter !== '') filter += ' OR '
+    tempExprIds.map((id: any) => {
+      if(!cachedTempExprId.includes(id) && id){
         tempIds.push(id);
-        return filter += id;
       }
-    }, "");
-    if(tempExprFiltered === '') return tempExprIds.map((id: any) => state.temporalExp[id]);
+    });
+    if(tempIds.length <= 0) return tempExprIds.map((id: any) => state.temporalExp[id]);
     const cachedTempExpr = tempExprIds.map((id: any) => state.temporalExp[id]);
     const resp = await JobService.fetchJobInformation({
         "inputFields": {
-        "tempExprId": [...tempIds],
+        "tempExprId": tempIds,
         "temoExprId_op": "in"
       },
       "fieldList": [ "tempExprId", "description" ],
@@ -95,14 +95,7 @@ const actions: ActionTree<JobState, RootState> = {
       "noConditionFind": "Y",
     })
     if (resp.status === 200 && !hasError(resp)) {
-      const tempExpr = {} as any;
-      resp.data.docs.map((item: any) => {
-        tempExpr[item.tempExprId] = item.description;
-      })
-      if (resp.data.docs) {
-        commit(types.JOB_TEMPORAL_EXPRESSION_UPDATED, tempExpr);
-      }
-      return [...cachedTempExpr, ...resp.data.docs]
+      commit(types.JOB_TEMPORAL_EXPRESSION_UPDATED, resp.data.docs);
     }
     return resp;
   },

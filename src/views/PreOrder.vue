@@ -9,73 +9,86 @@
 
     <ion-content>
       <main>
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>{{ $t("Auto listing") }}</ion-card-title>
-          </ion-card-header>
-          <ion-item>
-            <ion-label>{{ $t("Automatically list pre-order") }}</ion-label>
-            <ion-toggle :checked="automaticallyListPreOrder" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['LIST_PRE_ORDER'])" />
-          </ion-item>
-          <ion-item>
-            <ion-label>{{ $t("Automatically list back-order") }}</ion-label>
-            <ion-toggle :checked="automaticallyListBackOrder" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['LIST_BACK_ORDER'])" />
-          </ion-item>
-          <ion-item lines="none">
-            <ion-label class="ion-text-wrap"><p>{{ $t("This will automatically list items from purchase orders for preorder when stock runs out.") }}</p></ion-label>
-          </ion-item>
-        </ion-card>
+        <section>
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>{{ $t("Auto listing") }}</ion-card-title>
+            </ion-card-header>
+            <ion-item>
+              <ion-label>{{ $t("Automatically list pre-order") }}</ion-label>
+              <ion-toggle :checked="automaticallyListPreOrder" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['LIST_PRE_ORDER'])" />
+            </ion-item>
+            <ion-item>
+              <ion-label>{{ $t("Automatically list back-order") }}</ion-label>
+              <ion-toggle :checked="automaticallyListBackOrder" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['LIST_BACK_ORDER'])" />
+            </ion-item>
+            <ion-item lines="none">
+              <ion-label class="ion-text-wrap"><p>{{ $t("This will automatically list items from purchase orders for preorder when stock runs out.") }}</p></ion-label>
+            </ion-item>
+          </ion-card>
 
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>{{ $t("Re-allocate pre-orders") }}</ion-card-title>
-          </ion-card-header>
-          <ion-item>
-            <ion-label>{{ $t("Allocation") }}</ion-label>
-            <ion-button fill="outline" color="danger" slot="end">{{ $t("Run reallocation") }}</ion-button>
-          </ion-item>
-          <ion-item lines="none">
-            <ion-label class="ion-text-wrap"><p>{{ $t("Re-allocation will re-allocate promise dates on all pre-orders based on upcoming inventory from purchase orders. Promise dates that were manually adjusted will be overriden.") }}</p></ion-label>
-          </ion-item>
-        </ion-card>
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>{{ $t("Re-allocate pre-orders") }}</ion-card-title>
+            </ion-card-header>
+            <ion-item>
+              <ion-label>{{ $t("Allocation") }}</ion-label>
+              <!-- TODO: env file entry = REALLOC_PRODR -->
+              <ion-button fill="outline" color="danger" slot="end">{{ $t("Run reallocation") }}</ion-button>
+            </ion-item>
+            <ion-item lines="none">
+              <ion-label class="ion-text-wrap"><p>{{ $t("Re-allocation will re-allocate promise dates on all pre-orders based on upcoming inventory from purchase orders. Promise dates that were manually adjusted will be overriden.") }}</p></ion-label>
+            </ion-item>
+          </ion-card>
 
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>{{ $t("Auto releasing") }}</ion-card-title>
-          </ion-card-header>
-          <ion-item>
-            <ion-label>{{ $t("Run daily") }}</ion-label>
-            <ion-checkbox slot="end" />
-          </ion-item>
-          <ion-item>
-            <ion-label>{{ $t("Release preorders")}}</ion-label>
-            <ion-button fill="outline">{{ $t("Release") }}</ion-button>
-          </ion-item>
-          <ion-item lines="none">
-            <ion-label class="ion-text-wrap"><p>{{ $t("Auto releasing pre-orders will find pre-orders that have promise dates that have passed and release them from fulfillment.") }}</p></ion-label>
-          </ion-item>
-        </ion-card>
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>{{ $t("Auto releasing") }}</ion-card-title>
+            </ion-card-header>
+            <!-- TODO: env file entry = AUTO_RELSE_DAILY, run time 12 am daily-->
+            <ion-item>
+              <ion-label>{{ $t("Run daily") }}</ion-label>
+              <ion-checkbox slot="end" />
+            </ion-item>
+            <!-- TODO: env file entry = AUTO_RELSE_DAILY, run now, run as user, count: 1-->
+            <ion-item>
+              <ion-label>{{ $t("Release preorders")}}</ion-label>
+              <ion-button fill="outline">{{ $t("Release") }}</ion-button>
+            </ion-item>
+            <ion-item lines="none">
+              <ion-label class="ion-text-wrap"><p>{{ $t("Auto releasing pre-orders will find pre-orders that have promise dates that have passed and release them from fulfillment.") }}</p></ion-label>
+            </ion-item>
+          </ion-card>
 
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>{{ $t("Sync") }}</ion-card-title>
-          </ion-card-header>
-          <ion-item>
-            <ion-label>{{ $t("Add pre-order tag in Shopify") }}</ion-label>
-            <ion-checkbox slot="end" />
-          </ion-item>
-          <ion-item>
-            <ion-label>{{ $t("Add shipping dates in Shopify") }}</ion-label>
-            <ion-checkbox slot="end" />
-          </ion-item>
-          <ion-item>
-            <ion-label>{{ $t("Manual update") }}</ion-label>
-            <ion-button fill="outline">{{ $t("Run sync now") }}</ion-button>
-          </ion-item>
-          <ion-item lines="none">
-            <ion-label class="ion-text-wrap"><p>{{ $t("Transfer pre-order related information to Shopify as tags and meta fields.") }}</p></ion-label>
-          </ion-item>
-        </ion-card>
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>{{ $t("Sync") }}</ion-card-title>
+            </ion-card-header>
+            <!-- TODO: env file entry = ADD_PRODR_TG_SHPFY -->
+            <ion-item>
+              <ion-label>{{ $t("Auto add pre-order tag in Shopify") }}</ion-label>
+              <ion-checkbox slot="end" />
+            </ion-item>
+            <!-- TODO: env file entry = REMV_ODR_TG_SHPFY -->
+            <ion-item>
+              <ion-label>{{ $t("Auto remove tags in Shopify") }}</ion-label>
+              <ion-checkbox slot="end" />
+            </ion-item>
+            <!-- TODO: env file entry = ADD_SHPG_DTE_SHPFY -->
+            <ion-item>
+              <ion-label>{{ $t("Add shipping dates in Shopify") }}</ion-label>
+              <ion-checkbox slot="end" />
+            </ion-item>
+            <!-- TODO: run all sync jobs with time diff of 2 mins and run now and count: 1 -->
+            <ion-item>
+              <ion-label>{{ $t("Manual update") }}</ion-label>
+              <ion-button fill="outline">{{ $t("Run sync now") }}</ion-button>
+            </ion-item>
+            <ion-item lines="none">
+              <ion-label class="ion-text-wrap"><p>{{ $t("Transfer pre-order related information to Shopify as tags and meta fields.") }}</p></ion-label>
+            </ion-item>
+          </ion-card>
+        </section>
       </main>
     </ion-content>
   </ion-page>
@@ -192,12 +205,3 @@ export default defineComponent({
   },
 });
 </script>
-
-<style scoped>
-main {
-  max-width: 343px;
-  margin-top: 20px;
-  margin-right: auto;
-  margin-left: auto;
-}
-</style>

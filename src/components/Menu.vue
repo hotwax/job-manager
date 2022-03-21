@@ -40,7 +40,7 @@ import {
 } from "@ionic/vue";
 import { defineComponent, ref } from "vue";
 import { mapGetters } from "vuex";
-import { barChartOutline, calendarNumberOutline, ticketOutline, albumsOutline, shirtOutline, settings } from "ionicons/icons";
+import { pulseOutline, calendarNumberOutline, ticketOutline, albumsOutline, shirtOutline, settings } from "ionicons/icons";
 import { useStore } from "@/store";
 export default defineComponent({
   name: "Menu",
@@ -83,8 +83,8 @@ export default defineComponent({
       {
         title: "Pipeline",
         url: "/pipeline",
-        iosIcon: barChartOutline,
-        mdIcon: barChartOutline,
+        iosIcon: pulseOutline,
+        mdIcon: pulseOutline,
       },
       // {
       //   title: "Pre-order",
@@ -120,7 +120,7 @@ export default defineComponent({
     return {
       selectedIndex,
       appPages,
-      barChartOutline, 
+      pulseOutline, 
       calendarNumberOutline, 
       ticketOutline, 
       albumsOutline, 
