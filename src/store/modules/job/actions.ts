@@ -49,7 +49,7 @@ const actions: ActionTree<JobState, RootState> = {
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
-      "orderBy": "runTime ASC"
+      "orderBy": "runTime DESC"
     }).then((resp) => {
       if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
         if (resp.data.docs) {

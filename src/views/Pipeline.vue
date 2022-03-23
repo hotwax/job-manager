@@ -241,7 +241,7 @@ export default defineComponent({
       const alert = await alertController
         .create({
           header: this.$t('Cancel job'),
-          message: this.$t('Canceling this job will cancel this occurance and all following occurances. This job will have to be re-enabled manually to run it again.'),
+          message: this.$t('Canceling this job will cancel this occurrence and all following occurrences. This job will have to be re-enabled manually to run it again.'),
           buttons: [
             {
               text: this.$t("DON'T CANCEL"),
