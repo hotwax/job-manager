@@ -168,7 +168,7 @@ export default defineComponent({
     async loadMoreJobHistory(event: any){
       this.getJobHistory(
         undefined,
-        Math.ceil(this.pendingJobs.length / (process.env.VUE_APP_VIEW_SIZE as any)).toString()
+        Math.ceil(this.jobHistory.length / (process.env.VUE_APP_VIEW_SIZE as any)).toString()
       ).then(() => {
         event.target.complete();
       })
