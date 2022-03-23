@@ -35,7 +35,6 @@
             <!-- <ion-item lines="none">
               {{ getDescription(job.systemJobEnumId) }}
             </ion-item> -->
-
             <ion-item>
               <ion-icon slot="start" :icon="timeOutline" />
               <ion-label>{{ job.runTime ? getTime(job.runTime) : "-"  }}</ion-label>
@@ -43,7 +42,7 @@
 
             <ion-item>
               <ion-icon slot="start" :icon="timerOutline" />
-              <ion-label>{{ job.tempExprId ? temporalExpr(job.tempExprId) : "🙃"  }}</ion-label>
+              <ion-label>{{ job.tempExprId ? temporalExpr(job.tempExprId)?.description : "🙃"  }}</ion-label>
             </ion-item>
 
             <ion-item lines="full">
@@ -51,7 +50,7 @@
               <ion-label>{{ job.serviceName }}</ion-label>
             </ion-item>
 
-            <!-- <ion-button fill="clear">{{ $t("Skip") }}</ion-button> -->
+            <ion-button fill="clear" @click="skipJob(job)">{{ $t("Skip") }}</ion-button>
             <ion-button color="danger" fill="clear" @click="cancelJob(job.jobId)">{{ $t("Cancel") }}</ion-button>
           </ion-card>
 
@@ -190,7 +189,7 @@ export default defineComponent({
       const alert = await alertController
         .create({
           header: this.$t('Skip job'),
-          message: this.$t('Skipping will run this job at the next occurence based on the temporal expression.'),
+          message: this.$t('Skipping will run this job at the next occurrence based on the temporal expression.'),
           buttons: [
             {
               text: this.$t("Don't skip"),
@@ -252,7 +251,7 @@ export default defineComponent({
               text: this.$t("CANCEL"),
               handler: () => {
                 this.store.dispatch('job/updateJob', {jobId, statusId: "SERVICE_CANCELLED"});
-                this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId});
+                this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewIndex: 0});
               },
             }
           ],

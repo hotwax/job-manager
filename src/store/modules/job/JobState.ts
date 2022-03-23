@@ -9,6 +9,5 @@ export default interface JobState {
       total: 0
     }
     temporalExp: any;
-    total: number;
     enumIds: any;
 }

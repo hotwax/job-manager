@@ -1,6 +1,6 @@
 {
-    "name": "HotWax Commerce Job-Manager",
-    "short_name": "job-manager",
+    "name": "HotWax Commerce Job Manager",
+    "short_name": "Job Manager",
     "theme_color": "#FFFFFF",
     "icons": [{
             "src": "public/img/icons/favicon-16x16.png",
