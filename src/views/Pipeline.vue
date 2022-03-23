@@ -9,7 +9,7 @@
     <ion-content>
       <main>
         <section>
-          <ion-card v-for="job in pendingJobs" :key="job">
+          <ion-card v-for="job in pendingJobs" :key="job.jobId">
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
                 <p class="overline">{{ job.parentJobId }}</p>
@@ -22,7 +22,6 @@
             <!-- <ion-item lines="none">
               {{ getDescription(job.systemJobEnumId) }}
             </ion-item> -->
-
             <ion-item>
               <ion-icon slot="start" :icon="timeOutline" />
               <ion-label>{{ job.runTime ? getTime(job.runTime) : "-"  }}</ion-label>
@@ -30,7 +29,7 @@
 
             <ion-item>
               <ion-icon slot="start" :icon="timerOutline" />
-              <ion-label>{{ job.tempExprId ? temporalExpr(job.tempExprId) : "🙃"  }}</ion-label>
+              <ion-label>{{ job.tempExprId ? temporalExpr(job.tempExprId)?.description : "🙃"  }}</ion-label>
             </ion-item>
 
             <ion-item lines="full">
@@ -38,7 +37,7 @@
               <ion-label>{{ job.serviceName }}</ion-label>
             </ion-item>
 
-            <!-- <ion-button fill="clear">{{ $t("Skip") }}</ion-button> -->
+            <ion-button fill="clear" @click="skipJob(job)">{{ $t("Skip") }}</ion-button>
             <ion-button color="danger" fill="clear" @click="cancelJob(job.jobId)">{{ $t("Cancel") }}</ion-button>
           </ion-card>
 
@@ -55,6 +54,8 @@
 import { DateTime } from 'luxon';
 import { mapGetters, useStore } from 'vuex'
 import { defineComponent } from 'vue'
+import { showToast } from '@/utils'
+import { translate } from '@/i18n'
 import {
   IonBadge,
   IonButton,
@@ -117,6 +118,48 @@ export default defineComponent({
         event.target.complete();
       })
     },
+    async skipJob (job: any) {
+      const alert = await alertController
+        .create({
+          header: this.$t('Skip job'),
+          message: this.$t('Skipping will run this job at the next occurrence based on the temporal expression.'),
+          buttons: [
+            {
+              text: this.$t("Don't skip"),
+              role: 'cancel',
+            },
+            {
+              text: this.$t('Skip'),
+              handler: async () => {
+                let skipTime = {};
+                const integer1 = this.temporalExpr(job.tempExprId).integer1;
+                const integer2 = this.temporalExpr(job.tempExprId).integer2
+                if(integer1 === 12) {
+                  skipTime = { minutes: integer2 }
+                } else if (integer1 === 10) {
+                  skipTime = { hours: integer2 }
+                } else if (integer1 === 5) {
+                  skipTime = { days: integer2 }
+                } else {
+                  showToast(translate("This job schedule cannot be skipped"));
+                  return ;
+                }
+                const time =  DateTime.fromMillis(job.runTime).diff(DateTime.local()).plus(skipTime);  
+                const updatedRunTime = time.toMillis() + DateTime.local().toMillis()
+                const payload = {
+                  'jobId': job.jobId,
+                  'runTime': updatedRunTime,
+                  'systemJobEnumId': job.systemJobEnumId,
+                  'statusId': "SERVICE_PENDING"
+                } as any
+                await this.store.dispatch('job/updateJob', payload);
+                await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewIndex: 0})
+              },
+            }
+          ]
+        });
+      return alert.present();
+    },
     async getJobs(vSize: any, vIndex: any) {
       const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
       const viewIndex = vIndex ? vIndex : 0;
@@ -136,7 +179,7 @@ export default defineComponent({
               text: this.$t("CANCEL"),
               handler: () => {
                 this.store.dispatch('job/updateJob', {jobId, statusId: "SERVICE_CANCELLED"});
-                this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId});
+                this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewIndex: 0});
               },
             }
           ],
