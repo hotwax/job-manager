@@ -2,7 +2,7 @@ import api from '@/api'
 
 const fetchJobInformation = async (payload: any): Promise <any>  => {
   return api({
-    url: "performFind",
+    url: "/findJobs",
     method: "post",
     data: payload
   });
@@ -19,7 +19,7 @@ const updateJob = async (payload: any): Promise <any>  => {
 const scheduleJob = async (payload: any): Promise <any>  => {
   return api({
     url: "scheduleService",
-    method: "GET",
+    method: "post",
     params: payload
   });
 }

@@ -55,7 +55,7 @@
         <ion-button size="small" fill="outline" color="danger" @click="cancelJob(job.jobId)">{{ $t("Disable") }}</ion-button>
       </div>
       <div>
-        <ion-button size="small" fill="outline" @click="saveChanges">{{ $t("Save changes") }}</ion-button>
+        <ion-button size="small" fill="outline" @click="saveChanges()">{{ $t("Save changes") }}</ion-button>
       </div>
     </div>
   </section>
@@ -180,29 +180,33 @@ export default defineComponent({
     async updateJob(id = 'ping') {
       const job = this.getJob(id);
 
-      // TODO: added this condition to not call the api when the value of the select automatically changes
-      // need to handle this properly
-      if (this.jobStatus === job?.tempExprId) {
-        return;
-      }
-
       const payload = {
-        ...job,
+        ...job.runtimeData,
         'systemJobEnumId': id,
         'statusId': "SERVICE_PENDING"
       } as any
       if (job?.status === 'SERVICE_DRAFT') {
+        payload['JOB_NAME'] = job.jobName
         payload['SERVICE_FREQUENCY'] = this.jobStatus
         payload['SERVICE_NAME'] = job.serviceName
-        payload['count'] = -1
-        payload['runAsSystem'] = true
+        payload['SERVICE_TIME'] = job.runTime
+        payload['SERVICE_COUNT'] = 0
+        payload['jobFields'] = {
+          'productStoreId': '',
+          'systemJobEnumId': '',
+          'tempExprId': '',
+          'maxRecurrenceCount': -1,
+          'parentJobId': job.parentJobId,
+          'runAsUser': 'system', // default, but empty in run now
+          'recurrenceTimeZone': ''
+        }
         payload['shopifyConfigId'] = this.getShopifyConfigId
-        payload['productStoreId'] = this.getCurrentEComStore.productStoreId
 
         this.store.dispatch('job/scheduleService', payload)
       } else if (job?.status === 'SERVICE_PENDING') {
         payload['tempExprId'] = this.jobStatus
         payload['jobId'] = job.id
+        payload['runTime'] = job.runTime
 
         this.store.dispatch('job/updateJob', payload)
       }
