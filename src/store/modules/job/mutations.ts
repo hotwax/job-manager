@@ -7,8 +7,8 @@ const mutations: MutationTree <JobState> = {
         state.cached = payload
     },
     [types.JOB_UPDATED] (state, payload) {
-        state.cached[payload.jobId] = {
-            ...state.cached[payload.jobId],
+        state.cached[payload.systemJobEnumId] = {
+            ...state.cached[payload.systemJobEnumId],
             payload
         }
     },

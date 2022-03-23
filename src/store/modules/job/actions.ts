@@ -90,7 +90,7 @@ const actions: ActionTree<JobState, RootState> = {
     });
     if(tempIds.length <= 0) return tempExprIds.map((id: any) => state.temporalExp[id]);
     const cachedTempExpr = tempExprIds.map((id: any) => state.temporalExp[id]);
-    const resp = await JobService.fetchJobInformation({
+    const resp = await JobService.fetchTemporalExpression({
         "inputFields": {
         "tempExprId": tempIds,
         "temoExprId_op": "in"
@@ -105,7 +105,7 @@ const actions: ActionTree<JobState, RootState> = {
     return resp;
   },
   
-  async fetchJobs ({ state, commit }, payload) {
+  async fetchJobs ({ state, commit, dispatch }, payload) {
     const resp = await JobService.fetchJobInformation({
       "inputFields":{
         "statusId": ['SERVICE_DRAFT', 'SERVICE_PENDING'],
@@ -138,6 +138,10 @@ const actions: ActionTree<JobState, RootState> = {
         }
       });
 
+      // fetching temp expressions
+      const tempExpr = Object.values(cached).map((job: any) => job.tempExprId)
+      await dispatch('fetchTemporalExpression', tempExpr)
+
       commit(types.JOB_UPDATED_BULK, cached);
     }
     return resp;
@@ -164,8 +168,8 @@ const actions: ActionTree<JobState, RootState> = {
 
   async skipJob({ commit, getters }, job) {
     let skipTime = {};
-    const integer1 = getters.temporalExpr(job.tempExprId).integer1;
-    const integer2 = getters.temporalExpr(job.tempExprId).integer2
+    const integer1 = getters['getTemporalExpr'](job.tempExprId).integer1;
+    const integer2 = getters['getTemporalExpr'](job.tempExprId).integer2
     if(integer1 === 12) {
       skipTime = { minutes: integer2 }
     } else if (integer1 === 10) {
