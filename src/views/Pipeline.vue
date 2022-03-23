@@ -183,7 +183,7 @@ export default defineComponent({
     },
     segmentChanged (e: CustomEvent) {
       this.segmentSelected = e.detail.value
-      this.segmentSelected === 'pending'
+      this.segmentSelected === 'pending' ? this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}) : this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0});
     },
     async skipJob (job: any) {
       const alert = await alertController
@@ -262,7 +262,6 @@ export default defineComponent({
   },
   created() {
     this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0});
-    this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0});
   },
   setup() {
     const store = useStore();
