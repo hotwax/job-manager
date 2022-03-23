@@ -15,8 +15,8 @@
       <ion-item>
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label>{{ $t("Run time") }}</ion-label>
-        <ion-label id="open-run-time-modal" slot="end" v-show="job?.runTime">{{ getTime(job.runTime) }}</ion-label>
-        <ion-button size="small" fill="outline" color="medium" @click="skipJob">{{ $t("Skip once") }}</ion-button>
+        <ion-label id="open-run-time-modal" slot="end" v-show="job?.runTime">{{ job?.runTime && getTime(job.runTime) }}</ion-label>
+        <!-- <ion-button id="open-run-time-modal" size="small" fill="outline" color="medium" v-show="!job?.runTime">{{ $t("Skip once") }}</ion-button> -->
         <ion-modal trigger="open-run-time-modal">
           <ion-content force-overscroll="false">
             <ion-datetime
@@ -45,13 +45,13 @@
       <ion-item v-show="!repeat">
         <ion-label>{{ $t("Auto disable after") }}</ion-label>
         <ion-input :placeholder="$t('occurances')" v-model="count"/>
-      </ion-item>
-    </ion-list> -->
+      </ion-item> -->
+    </ion-list>
 
     <div class="actions">
       <div>
         <ion-button size="small" fill="outline" color="medium" @click="skipJob">{{ $t("Skip once") }}</ion-button>
-        <ion-button size="small" fill="outline" color="danger" @click="cancelJob">{{ $t("Disable") }}</ion-button>
+        <ion-button size="small" fill="outline" color="danger" @click="cancelJob(job.jobId)">{{ $t("Disable") }}</ion-button>
       </div>
       <div>
         <ion-button size="small" fill="outline" @click="saveChanges">{{ $t("Save changes") }}</ion-button>
@@ -65,11 +65,9 @@ import { defineComponent } from "vue";
 import {
   IonBadge,
   IonButton,
-  IonCheckbox,
   IonContent,
   IonDatetime,
   IonIcon,
-  IonInput,
   IonItem,
   IonLabel,
   IonList,
@@ -94,11 +92,9 @@ export default defineComponent({
   components: {
     IonBadge,
     IonButton,
-    IonCheckbox,
     IonContent,
     IonDatetime,
     IonIcon,
-    IonInput,
     IonItem,
     IonLabel,
     IonList,
@@ -134,12 +130,20 @@ export default defineComponent({
         });
       return alert.present();
     },
-    async cancelJob() {
+    async cancelJob(jobId: string) {
       const alert = await alertController
         .create({
           header: this.$t('Cancel job'),
           message: this.$t('Canceling this job will cancel this occurance and all following occurances. This job will have to be re-enabled manually to run it again.'),
-          buttons: [this.$t('Dont cancel'), this.$t('Cancel')],
+          buttons: [{
+            text: this.$t("Don't Cancel"),
+            role: 'cancel'
+          }, {
+            text: this.$t('Cancel'),
+            handler: () => {
+              this.store.dispatch('job/updateJob', {jobId, statusId: "SERVICE_CANCELLED"});
+            }
+          }],
         });
       return alert.present();
     },
