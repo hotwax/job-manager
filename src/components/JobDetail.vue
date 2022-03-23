@@ -9,37 +9,44 @@
       <ion-item>
         <ion-icon slot="start" :icon="calendarClearOutline" />
         <ion-label>{{ $t("Last run") }}</ion-label>
-        <ion-label slot="end">{{ job?.lastUpdatedStamp ? getTime(job.lastUpdatedStamp) : '-' }}</ion-label>
+        <ion-label slot="end">{{ job?.lastUpdatedStamp ? getTime(job.lastUpdatedStamp) : 'No previous occurrence' }}</ion-label>
       </ion-item>
 
       <ion-item>
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label>{{ $t("Run time") }}</ion-label>
-        <ion-label slot="end">{{ job?.runTime ? getTime(job.runTime) : '-' }}</ion-label>
+        <ion-label id="open-run-time-modal" slot="end" v-show="job?.runTime">{{ getTime(job.runTime) }}</ion-label>
+        <ion-button size="small" fill="outline" color="medium" @click="skipJob">{{ $t("Skip once") }}</ion-button>
+        <ion-modal trigger="open-run-time-modal">
+          <ion-content force-overscroll="false">
+            <ion-datetime
+              :value="job?.runTime ? $filters.formatDate(getTime(job.runTime)) : ''"
+            />
+          </ion-content>
+        </ion-modal>
       </ion-item>
 
       <ion-item>
         <ion-icon slot="start" :icon="timerOutline" />
         <ion-label>{{ $t("Schedule") }}</ion-label>
-        <ion-select :interface-options="customPopoverOptions" interface="popover" :value="jobStatus" >
+        <ion-select :interface-options="customPopoverOptions" interface="popover" :value="jobStatus" placeholder="Disabled">
           <ion-select-option value="HOURLY">Hourly</ion-select-option>
           <ion-select-option value="EVERY_6_HOUR">Every 6 hours</ion-select-option>
           <ion-select-option value="NIGHTLY">Nightly</ion-select-option>
-          <ion-select-option value="SERVICE_DRAFT">Disabled</ion-select-option>
         </ion-select>
       </ion-item>
 
-      <ion-item>
+      <!-- <ion-item>
         <ion-icon slot="start" :icon="syncOutline" />
         <ion-label>{{ $t("Repeat untill disabled") }}</ion-label>
-        <ion-checkbox slot="end"></ion-checkbox>
+        <ion-checkbox slot="end" :checked="repeat" @ionChange="repeatUntillDisabled($event['detail'].checked)"/>
       </ion-item>
 
-      <ion-item>
+      <ion-item v-show="!repeat">
         <ion-label>{{ $t("Auto disable after") }}</ion-label>
-        <ion-input :placeholder="$t('occurances')" />
+        <ion-input :placeholder="$t('occurances')" v-model="count"/>
       </ion-item>
-    </ion-list>
+    </ion-list> -->
 
     <div class="actions">
       <div>
@@ -59,11 +66,14 @@ import {
   IonBadge,
   IonButton,
   IonCheckbox,
+  IonContent,
+  IonDatetime,
   IonIcon,
   IonInput,
   IonItem,
   IonLabel,
   IonList,
+  IonModal,
   IonSelect,
   IonSelectOption,
   alertController
@@ -85,11 +95,14 @@ export default defineComponent({
     IonBadge,
     IonButton,
     IonCheckbox,
+    IonContent,
+    IonDatetime,
     IonIcon,
     IonInput,
     IonItem,
     IonLabel,
     IonList,
+    IonModal,
     IonSelect,
     IonSelectOption
   },
@@ -156,7 +169,7 @@ export default defineComponent({
         });
       return alert.present();
     },
-    async updateJob(id: string = 'ping') {
+    async updateJob(id = 'ping') {
       const job = this.getJob(id);
 
       // TODO: added this condition to not call the api when the value of the select automatically changes
@@ -168,11 +181,9 @@ export default defineComponent({
       const payload = {
         ...job,
         'systemJobEnumId': id,
-        'statusId': this.jobStatus === "SERVICE_DRAFT" ? "SERVICE_CANCELLED" : "SERVICE_PENDING"
+        'statusId': "SERVICE_PENDING"
       } as any
-      if (this.jobStatus === 'SERVICE_DRAFT') {
-        this.store.dispatch('job/updateJob', payload)
-      } else if (job?.status === 'SERVICE_DRAFT') {
+      if (job?.status === 'SERVICE_DRAFT') {
         payload['SERVICE_FREQUENCY'] = this.jobStatus
         payload['SERVICE_NAME'] = job.serviceName
         payload['count'] = -1
@@ -182,7 +193,7 @@ export default defineComponent({
 
         this.store.dispatch('job/scheduleService', payload)
       } else if (job?.status === 'SERVICE_PENDING') {
-        payload['tempExprId'] = this.jobStatus === 'SERVICE_DRAFT' ? job.tempExprId : this.jobStatus
+        payload['tempExprId'] = this.jobStatus
         payload['jobId'] = job.id
 
         this.store.dispatch('job/updateJob', payload)
@@ -229,5 +240,11 @@ ion-list {
   display: flex;
   justify-content: space-between;
   margin: var(--spacer-base) var(--spacer-sm) var(--spacer-base);
+}
+
+ion-modal {
+  --width: 290px;
+  --height: 382px;
+  --border-radius: 8px;
 }
 </style>
