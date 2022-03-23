@@ -32,7 +32,7 @@
 
       <ion-item>
         <ion-label>{{ $t("Auto disable after") }}</ion-label>
-        <ion-input :placeholder="$t('occurances')" />
+        <ion-input :placeholder="$t('occurrences')" />
       </ion-item>
     </ion-list>
 
@@ -85,7 +85,7 @@ export default defineComponent({
       const alert = await alertController
         .create({
           header: this.$t('Skip job'),
-          message: this.$t('Skipping will run this job at the next occurance based on the temporal expression.'),
+          message: this.$t('Skipping will run this job at the next occurrence based on the temporal expression.'),
           buttons: [this.$t('Dont skip'), this.$t('Skip')],
         });
       return alert.present();
@@ -94,7 +94,7 @@ export default defineComponent({
       const alert = await alertController
         .create({
           header: this.$t('Cancel job'),
-          message: this.$t('Canceling this job will cancel this occurance and all following occurances. This job will have to be re-enabled manually to run it again.'),
+          message: this.$t('Canceling this job will cancel this occurrence and all following occurrences. This job will have to be re-enabled manually to run it again.'),
           buttons: [this.$t('Dont cancel'), this.$t('Cancel')],
         });
       return alert.present();
