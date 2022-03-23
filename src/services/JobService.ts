@@ -20,7 +20,7 @@ const scheduleJob = async (payload: any): Promise <any>  => {
   return api({
     url: "scheduleService",
     method: "post",
-    params: payload
+    data: payload
   });
 }
 
