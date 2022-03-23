@@ -16,17 +16,25 @@
             </ion-card-header>
             <ion-item>
               <ion-label>{{ $t("Import products") }}</ion-label>
-              <ProductDurationPopover :id="jobEnums['IMP_PRDTS']"/>
+              <ion-item detail @click="openJobConfiguration('IMP_PRDTS', 'Import products')">
+                <ion-label>{{ getJobStatus('IMP_PRDTS') }} </ion-label>
+              </ion-item>
             </ion-item>
             <ion-item>
               <ion-label>{{ $t("Sync products") }}</ion-label>
-              <ProductDurationPopover :id="jobEnums['SYNC_PRDTS']"/>
+              <ion-item detail @click="openJobConfiguration('SYNC_PRDTS', 'Sync products')">
+                <ion-label>{{ getJobStatus('SYNC_PRDTS') }} </ion-label>
+              </ion-item>
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap"><p>{{ $t("Sync products and category structures from Shopify into HotWax Commerce and keep them up to date.") }}</p></ion-label>
             </ion-item>
           </ion-card>
         </section>
+
+        <aside class="desktop-only" v-show="currentJobEnum">
+          <JobDetail :title="title" :jobEnum="currentJobEnum" :key="currentJobEnum"/>
+        </aside>
       </main>
     </ion-content>
   </ion-page>
@@ -47,8 +55,8 @@ import {
   IonToolbar
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
-import ProductDurationPopover from '@/components/ProductDurationPopover.vue'
-import { useStore } from 'vuex';
+import { mapGetters, useStore } from 'vuex';
+import JobDetail from '@/components/JobDetail.vue'
 
 export default defineComponent({
   name: 'Product',
@@ -64,11 +72,18 @@ export default defineComponent({
     IonPage,
     IonTitle,
     IonToolbar,
-    ProductDurationPopover
+    JobDetail
+  },
+  computed: {
+    ...mapGetters({
+      getJobStatus: 'job/getJobStatus'
+    }),
   },
   data() {
     return {
       jobEnums: JSON.parse(process.env?.VUE_APP_PRD_JOB_ENUMS as string) as any,
+      currentJobEnum: 'IMP_PRDTS',
+      title: 'Import products'
     }
   },
   mounted () {
@@ -79,10 +94,16 @@ export default defineComponent({
       }
     });
   },
+  methods: {
+    openJobConfiguration(enumId: string, title: string) {
+      this.currentJobEnum = enumId
+      this.title = title
+    }
+  },
   setup() {
     const customPopoverOptions: any = {
-    header: 'Schedule product sync',
-    showBackdrop: false
+      header: 'Schedule product sync',
+      showBackdrop: false
     }
     const store = useStore();
     return {
