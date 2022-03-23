@@ -19,7 +19,7 @@ const mutations: MutationTree <JobState> = {
     [types.JOB_TEMPORAL_EXPRESSION_UPDATED] (state, temporalExpressions) {
         if(temporalExpressions){
             temporalExpressions.forEach((temporalExpression: any) => {
-              state.temporalExp[temporalExpression.tempExprId] = temporalExpression.description;
+              state.temporalExp[temporalExpression.tempExprId] = temporalExpression;
             })
         }
     },
