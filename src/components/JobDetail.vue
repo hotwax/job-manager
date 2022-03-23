@@ -30,7 +30,7 @@
       <ion-item>
         <ion-icon slot="start" :icon="timerOutline" />
         <ion-label>{{ $t("Schedule") }}</ion-label>
-        <ion-select :interface-options="customPopoverOptions" interface="popover" :value="jobStatus" placeholder="Disabled" @ionChange="($event) => jobStatus = $event['detail'].value">
+        <ion-select :interface-options="customPopoverOptions" interface="popover" :value="jobStatus" :placeholder="$t('Disabled')" @ionChange="($event) => jobStatus = $event['detail'].value">
           <ion-select-option value="HOURLY">Hourly</ion-select-option>
           <ion-select-option value="EVERY_6_HOUR">Every 6 hours</ion-select-option>
           <ion-select-option value="NIGHTLY">Nightly</ion-select-option>
@@ -127,7 +127,7 @@ export default defineComponent({
           header: this.$t('Skip job'),
           message: this.$t('Skipping will run this job at the next occurance based on the temporal expression.'),
           buttons: [{
-            text: this.$t('Dont skip'),
+            text: this.$t("Don't skip"),
             role: 'cancel'
           }, {
             text: this.$t('Skip'),
@@ -186,6 +186,7 @@ export default defineComponent({
     async updateJob() {
       const job = this.job;
 
+      // TODO: pass user time zone in the payload
       const payload = {
         'systemJobEnumId': job.systemJobEnumId,
         'statusId': "SERVICE_PENDING",
