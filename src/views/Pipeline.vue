@@ -122,7 +122,7 @@ export default defineComponent({
       const alert = await alertController
         .create({
           header: this.$t('Skip job'),
-          message: this.$t('Skipping will run this job at the next occurence based on the temporal expression.'),
+          message: this.$t('Skipping will run this job at the next occurrence based on the temporal expression.'),
           buttons: [
             {
               text: this.$t("Don't skip"),
