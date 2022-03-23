@@ -20,7 +20,8 @@
         <ion-modal trigger="open-run-time-modal">
           <ion-content force-overscroll="false">
             <ion-datetime
-              :value="job?.runTime ? $filters.formatDate(getTime(job.runTime)) : ''"
+              :value="job?.runTime ? getDateTime(job.runTime) : ''"
+              @ionChange="runTimeUpdated($event, job)"
             />
           </ion-content>
         </ion-modal>
@@ -121,6 +122,9 @@ export default defineComponent({
     })
   },
   methods: {
+    getDateTime(time: any) {
+      return DateTime.fromMillis(time)
+    },
     async skipJob() {
       const alert = await alertController
         .create({
@@ -210,6 +214,9 @@ export default defineComponent({
       const timeDiff = DateTime.fromMillis(time).diff(DateTime.local());
       return DateTime.local().plus(timeDiff).toRelative();
     },
+    runTimeUpdated(ev: CustomEvent, job: any) {
+      job.runTime = DateTime.fromISO(ev['detail'].value).toMillis()
+    }
   },
   setup() {
     const customPopoverOptions: any = {
