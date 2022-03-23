@@ -22,24 +22,32 @@
             <ion-item>
               <ion-label>{{ $t("New orders") }}</ion-label>
               <ion-item detail @click="openJobConfiguration(jobEnums['IMP_NEW_ORDERS'], 'New orders', getJobStatus(this.jobEnums['IMP_NEW_ORDERS']))">
-                <ion-label>{{ getTemporalExpr(getJobStatus(this.jobEnums['IMP_NEW_ORDERS']))?.description }} </ion-label>
+                <ion-label>{{ getTemporalExpression('IMP_NEW_ORDERS') }} </ion-label>
               </ion-item>
             </ion-item>
             <ion-item>
               <ion-label>{{ $t("Cancelled orders") }}</ion-label>
-              <DurationPopover :id="jobEnums['IMP_CANCELLED_ORDERS']" />
+              <ion-item detail @click="openJobConfiguration(jobEnums['IMP_CANCELLED_ORDERS'], 'Cancelled orders', getJobStatus(this.jobEnums['IMP_CANCELLED_ORDERS']))">
+                <ion-label>{{ getTemporalExpression('IMP_CANCELLED_ORDERS') }} </ion-label>
+              </ion-item>
             </ion-item>
             <ion-item>
               <ion-label>{{ $t("Cancelled items") }}</ion-label>
-              <DurationPopover :id="jobEnums['IMP_CANCELLED_ITEMS']" />
+              <ion-item detail @click="openJobConfiguration(jobEnums['IMP_CANCELLED_ITEMS'], 'Cancelled items', getJobStatus(this.jobEnums['IMP_CANCELLED_ITEMS']))">
+                <ion-label>{{ getTemporalExpression('IMP_CANCELLED_ITEMS') }} </ion-label>
+              </ion-item>
             </ion-item>
             <ion-item>
               <ion-label>{{ $t("Payment status") }}</ion-label>
-              <DurationPopover :id="jobEnums['IMP_PAYMENT_STATUS']" />
+              <ion-item detail @click="openJobConfiguration(jobEnums['IMP_PAYMENT_STATUS'], 'Payment status', getJobStatus(this.jobEnums['IMP_PAYMENT_STATUS']))">
+                <ion-label>{{ getTemporalExpression('IMP_PAYMENT_STATUS') }} </ion-label>
+              </ion-item>
             </ion-item>
             <ion-item>
               <ion-label>{{ $t("Returns") }}</ion-label>
-              <DurationPopover :id="jobEnums['IMP_RETURNS']" />
+              <ion-item detail @click="openJobConfiguration(jobEnums['IMP_RETURNS'], 'Returns', getJobStatus(this.jobEnums['IMP_RETURNS']))">
+                <ion-label>{{ getTemporalExpression('IMP_RETURNS') }} </ion-label>
+              </ion-item>
             </ion-item>
           </ion-card>
 
@@ -49,15 +57,21 @@
             </ion-card-header>
             <ion-item>
               <ion-label>{{ $t("Completed orders") }}</ion-label>
-              <DurationPopover :id="jobEnums['UPLD_CMPLT_ORDRS']" />
+              <ion-item detail @click="openJobConfiguration(jobEnums['UPLD_CMPLT_ORDRS'], 'Returns', getJobStatus(this.jobEnums['UPLD_CMPLT_ORDRS']))">
+                <ion-label>{{ getTemporalExpression('UPLD_CMPLT_ORDRS') }} </ion-label>
+              </ion-item>
             </ion-item>
             <ion-item>
               <ion-label>{{ $t("Cancelled orders") }}</ion-label>
-              <DurationPopover :id="jobEnums['UPLD_CNCLD_ORDRS']" />
+              <ion-item detail @click="openJobConfiguration(jobEnums['UPLD_CNCLD_ORDRS'], 'Returns', getJobStatus(this.jobEnums['UPLD_CNCLD_ORDRS']))">
+                <ion-label>{{ getTemporalExpression('UPLD_CNCLD_ORDRS') }} </ion-label>
+              </ion-item>
             </ion-item>
             <ion-item>
               <ion-label>{{ $t("Refunds") }}</ion-label>
-              <DurationPopover :id="jobEnums['UPLD_REFUNDS']" />
+              <ion-item detail @click="openJobConfiguration(jobEnums['UPLD_REFUNDS'], 'Returns', getJobStatus(this.jobEnums['UPLD_REFUNDS']))">
+                <ion-label>{{ getTemporalExpression('UPLD_REFUNDS') }} </ion-label>
+              </ion-item>
             </ion-item>
           </ion-card>
 
@@ -99,11 +113,15 @@
             </ion-card-header>
             <ion-item>
               <ion-label>{{ $t("Rejected orders") }}</ion-label>
-              <DurationPopover :id="jobEnums['REJ_ORDR']" />
+              <ion-item detail @click="openJobConfiguration(jobEnums['REJ_ORDR'], 'Returns', getJobStatus(this.jobEnums['REJ_ORDR']))">
+                <ion-label>{{ getTemporalExpression('REJ_ORDR') }} </ion-label>
+              </ion-item>
             </ion-item>
             <ion-item>
               <ion-label>{{ $t("Unfillable orders") }}</ion-label>
-              <DurationPopover :id="jobEnums['UNFIL_ORDERS']" />
+              <ion-item detail @click="openJobConfiguration(jobEnums['UNFIL_ORDERS'], 'Returns', getJobStatus(this.jobEnums['UNFIL_ORDERS']))">
+                <ion-label>{{ getTemporalExpression('UNFIL_ORDERS') }} </ion-label>
+              </ion-item>
             </ion-item>
             <!-- TODO: env file entry UNFIL_ORDERS, run now as user with count 1-->
             <ion-item>
@@ -166,7 +184,6 @@ import {
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { addCircleOutline } from 'ionicons/icons';
-import DurationPopover from '@/components/DurationPopover.vue'
 import BatchModal from '@/components/BatchModal.vue';
 import { useStore } from "@/store";
 import { mapGetters } from "vuex";
@@ -192,7 +209,6 @@ export default defineComponent({
     IonTitle,
     IonToggle,
     IonToolbar,
-    DurationPopover,
     JobDetail
   },
   data() {
@@ -257,6 +273,11 @@ export default defineComponent({
       this.currentJob = this.getJob(enumId)
       this.title = title
       this.currentJobStatus = status
+    },
+    getTemporalExpression(enumId: string) {
+      return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
+        this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
+        this.$t('Disabled')
     }
   },
   mounted () {
