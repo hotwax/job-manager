@@ -5,6 +5,7 @@ import * as types from './mutation-types'
 import { hasError, showToast } from '@/utils'
 import { JobService } from '@/services/JobService'
 import { translate } from '@/i18n'
+import { DateTime } from 'luxon';
 
 const actions: ActionTree<JobState, RootState> = {
 
@@ -159,7 +160,36 @@ const actions: ActionTree<JobState, RootState> = {
 
   clearPendingJobs({commit}) {
     commit(types.JOB_PENDING_UPDATED, { });
-  }
+  },
 
+  async skipJob({ commit, getters }, job) {
+    let skipTime = {};
+    const integer1 = getters.temporalExpr(job.tempExprId).integer1;
+    const integer2 = getters.temporalExpr(job.tempExprId).integer2
+    if(integer1 === 12) {
+      skipTime = { minutes: integer2 }
+    } else if (integer1 === 10) {
+      skipTime = { hours: integer2 }
+    } else if (integer1 === 5) {
+      skipTime = { days: integer2 }
+    } else {
+      showToast(translate("This job schedule cannot be skipped"));
+      return;
+    }
+    const time = DateTime.fromMillis(job.runTime).diff(DateTime.local()).plus(skipTime);
+    const updatedRunTime = time.toMillis() + DateTime.local().toMillis()
+    const payload = {
+      'jobId': job.jobId,
+      'runTime': updatedRunTime,
+      'systemJobEnumId': job.systemJobEnumId,
+      'statusId': "SERVICE_PENDING"
+    } as any
+
+    const resp = await JobService.updateJob(payload)
+    if (resp.status === 200 && !hasError(resp) && resp.data.docs) {
+      commit(types.JOB_UPDATED, { job });
+    }
+    return resp;
+  }
 }
 export default actions;
