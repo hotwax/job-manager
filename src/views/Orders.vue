@@ -21,7 +21,9 @@
             </ion-item>
             <ion-item>
               <ion-label>{{ $t("New orders") }}</ion-label>
-              <DurationPopover :id="jobEnums['IMP_NEW_ORDERS']" />
+              <ion-item detail @click="openJobConfiguration(jobEnums['IMP_NEW_ORDERS'], 'New orders')">
+                <ion-label>{{ getJobStatus(this.jobEnums['IMP_NEW_ORDERS']) }} </ion-label>
+              </ion-item>
             </ion-item>
             <ion-item>
               <ion-label>{{ $t("Cancelled orders") }}</ion-label>
@@ -133,8 +135,8 @@
           </ion-card>
         </section>
 
-        <aside class="desktop-only">
-          <JobDetail />
+        <aside class="desktop-only" v-show="currentJob">
+          <JobDetail :title="title" :job="currentJob" :key="currentJob"/>
         </aside>
       </main>
     </ion-content>
@@ -196,6 +198,8 @@ export default defineComponent({
   data() {
     return {
       jobEnums: JSON.parse(process.env?.VUE_APP_ODR_JOB_ENUMS as string) as any,
+      currentJob: '',
+      title: 'New orders'
     }
   },
   computed: {
@@ -246,9 +250,13 @@ export default defineComponent({
 
         this.store.dispatch('job/updateJob', payload)
       }
+    },
+    openJobConfiguration(enumId: string, title: string) {
+      this.currentJob = this.getJob(enumId)
+      this.title = title
     }
   },
-  mounted () { 
+  mounted () {
     this.store.dispatch("job/fetchJobs", {
       "inputFields":{
         "systemJobEnumId": Object.values(this.jobEnums),
