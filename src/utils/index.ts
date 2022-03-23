@@ -14,7 +14,7 @@ const showToast = async (message: string) => {
     .create({
       message,
       duration: 3000,
-      position: 'top',
+      position: 'bottom',
     })
   return toast.present();
 }
