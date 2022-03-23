@@ -105,10 +105,10 @@ export default defineComponent({
   },
   data() {
     return {
-      jobStatus: this.job?.jobStatus
+      jobStatus: this.status
     }
   },
-  props: ["job", "title"],
+  props: ["job", "title", "status"],
   computed: {
     ...mapGetters({
       getJobStatus: 'job/getJobStatus',
@@ -187,9 +187,9 @@ export default defineComponent({
       const job = this.job;
 
       const payload = {
-        ...job.runtimeData,
         'systemJobEnumId': job.systemJobEnumId,
-        'statusId': "SERVICE_PENDING"
+        'statusId': "SERVICE_PENDING",
+        'timeZone': DateTime.now().zoneName
       } as any
       if (job?.status === 'SERVICE_DRAFT') {
         payload['JOB_NAME'] = job.jobName
