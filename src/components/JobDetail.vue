@@ -1,7 +1,7 @@
 <template>
   <section>
     <ion-item lines="none">
-      <h1>New orders</h1>
+      <h1>{{ $t(title) }}</h1>
       <ion-badge slot="end" color="dark" v-if="job?.runTime">{{ $t("running") }} {{ timeTillJob(job.runTime) }}</ion-badge>
     </ion-item>
 
@@ -15,8 +15,8 @@
       <ion-item>
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label>{{ $t("Run time") }}</ion-label>
-        <ion-label id="open-run-time-modal" slot="end" v-show="job?.runTime">{{ job?.runTime && getTime(job.runTime) }}</ion-label>
-        <!-- <ion-button id="open-run-time-modal" size="small" fill="outline" color="medium" v-show="!job?.runTime">{{ $t("Skip once") }}</ion-button> -->
+        <ion-label id="open-run-time-modal" slot="end">{{ job?.runTime ? getTime(job.runTime) : 'Select run time' }}</ion-label>
+        <!-- <ion-button id="open-run-time-modal" size="small" fill="outline" color="medium" v-show="!job?.runTime">{{ $t("Select run time") }}</ion-button> -->
         <ion-modal trigger="open-run-time-modal">
           <ion-content force-overscroll="false">
             <ion-datetime
@@ -109,9 +109,10 @@ export default defineComponent({
       jobStatus: ''
     }
   },
+  props: ["jobEnum", "title"],
   async mounted() {
-    this.job = await this.getJob('ping')
-    this.jobStatus = await this.getJobStatus('ping')
+    this.job = await this.getJob(this.jobEnum)
+    this.jobStatus = await this.getJobStatus(this.jobEnum)
   },
   computed: {
     ...mapGetters({
@@ -187,17 +188,16 @@ export default defineComponent({
       } as any
       if (job?.status === 'SERVICE_DRAFT') {
         payload['JOB_NAME'] = job.jobName
-        payload['SERVICE_FREQUENCY'] = this.jobStatus
         payload['SERVICE_NAME'] = job.serviceName
         payload['SERVICE_TIME'] = job.runTime
         payload['SERVICE_COUNT'] = 0
         payload['jobFields'] = {
-          'productStoreId': '',
-          'systemJobEnumId': '',
-          'tempExprId': '',
+          'productStoreId': this.getCurrentEComStore,
+          'systemJobEnumId': id,
+          'tempExprId': this.jobStatus,
           'maxRecurrenceCount': -1,
           'parentJobId': job.parentJobId,
-          'runAsUser': 'system', // default, but empty in run now
+          'runAsUser': 'system', // default system, but empty in run now
           'recurrenceTimeZone': ''
         }
         payload['shopifyConfigId'] = this.getShopifyConfigId
@@ -219,7 +219,9 @@ export default defineComponent({
       return DateTime.local().plus(timeDiff).toRelative();
     },
     runTimeUpdated(ev: CustomEvent, job: any) {
-      job.runTime = DateTime.fromISO(ev['detail'].value).toMillis()
+      if (job) {
+        job.runTime = DateTime.fromISO(ev['detail'].value).toMillis()
+      }
     }
   },
   setup() {
