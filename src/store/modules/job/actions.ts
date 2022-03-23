@@ -42,6 +42,7 @@ const actions: ActionTree<JobState, RootState> = {
       "inputFields": {
         "productStoreId": payload.eComStoreId,
         "statusId": ["SERVICE_CANCELLED", "SERVICE_CRASHED", "SERVICE_FAILED", "SERVICE_FINISHED"],
+        "statusId_op": "in"
       },
       "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName" ],
       "entityName": "JobSandbox",
