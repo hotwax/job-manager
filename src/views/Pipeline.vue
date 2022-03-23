@@ -9,7 +9,7 @@
     <ion-content>
       <main>
         <section>
-          <ion-card v-for="job in pendingJobs" :key="job">
+          <ion-card v-for="job in pendingJobs" :key="job.jobId">
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
                 <p class="overline">{{ job.parentJobId }}</p>
@@ -29,7 +29,6 @@
 
             <ion-item>
               <ion-icon slot="start" :icon="timerOutline" />
-              <!-- {{temporalExpr(job.tempExprId)}} -->
               <ion-label>{{ job.tempExprId ? temporalExpr(job.tempExprId)?.description : "🙃"  }}</ion-label>
             </ion-item>
 
@@ -55,6 +54,8 @@
 import { DateTime } from 'luxon';
 import { mapGetters, useStore } from 'vuex'
 import { defineComponent } from 'vue'
+import { showToast } from '@/utils'
+import { translate } from '@/i18n'
 import {
   IonBadge,
   IonButton,
@@ -121,7 +122,7 @@ export default defineComponent({
       const alert = await alertController
         .create({
           header: this.$t('Skip job'),
-          message: this.$t('Skipping will run this job at the next occurance based on the temporal expression.'),
+          message: this.$t('Skipping will run this job at the next occurence based on the temporal expression.'),
           buttons: [
             {
               text: this.$t("Don't skip"),
@@ -135,24 +136,24 @@ export default defineComponent({
                 const integer2 = this.temporalExpr(job.tempExprId).integer2
                 if(integer1 === 12) {
                   skipTime = { minutes: integer2 }
-                }
-                else if (integer1 === 10) {
+                } else if (integer1 === 10) {
                   skipTime = { hours: integer2 }
-                }
-                else if (integer1 === 5) {
+                } else if (integer1 === 5) {
                   skipTime = { days: integer2 }
+                } else {
+                  showToast(translate("This job schedule cannot be skipped"));
+                  return ;
                 }
                 const time =  DateTime.fromMillis(job.runTime).diff(DateTime.local()).plus(skipTime);  
-                const timeDiff = job.runTime - DateTime.local().toMillis()
-                const updatedRunTime = job.runTime + time - timeDiff
+                const updatedRunTime = time.toMillis() + DateTime.local().toMillis()
                 const payload = {
                   'jobId': job.jobId,
                   'runTime': updatedRunTime,
                   'systemJobEnumId': job.systemJobEnumId,
                   'statusId': "SERVICE_PENDING"
                 } as any
-                this.store.dispatch('job/updateJob', payload);
-                await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId});
+                await this.store.dispatch('job/updateJob', payload);
+                await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewIndex: 0})
               },
             }
           ]
@@ -178,7 +179,7 @@ export default defineComponent({
               text: this.$t("CANCEL"),
               handler: () => {
                 this.store.dispatch('job/updateJob', {jobId, statusId: "SERVICE_CANCELLED"});
-                this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId});
+                this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewIndex: 0});
               },
             }
           ],

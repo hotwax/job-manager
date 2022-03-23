@@ -40,7 +40,7 @@ const actions: ActionTree<JobState, RootState> = {
   async fetchPendingJobs({ commit, dispatch, state }, payload){
     await JobService.fetchJobInformation({
       "inputFields": {
-        "productStoreId": payload.eComStoreId,
+        // "productStoreId": payload.eComStoreId,
         "statusId": "SERVICE_PENDING",
       },
       "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName" ],
@@ -53,7 +53,11 @@ const actions: ActionTree<JobState, RootState> = {
       if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
         if (resp.data.docs) {
           const total = resp.data.count;
-          const jobs = state.pending.list.concat(resp.data.docs);
+          let jobs = resp.data.docs;
+          if(payload.viewIndex && payload.viewIndex > 0){
+            jobs = state.pending.list.concat(resp.data.docs);
+          }
+          
           commit(types.JOB_PENDING_UPDATED, { jobs, total });
           const tempExprList = [] as any;
           const enumIds = [] as any;
@@ -61,8 +65,8 @@ const actions: ActionTree<JobState, RootState> = {
             enumIds.push(item.systemJobEnumId);
             tempExprList.push(item.tempExprId);
           })
-          const payload = [...new Set(tempExprList)];
-          dispatch('fetchTemporalExpression', payload);
+          const tempExpr = [...new Set(tempExprList)];
+          dispatch('fetchTemporalExpression', tempExpr);
           dispatch('fetchJobDescription', enumIds);
         }
       } else {
