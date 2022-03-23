@@ -21,8 +21,8 @@
             </ion-item>
             <ion-item>
               <ion-label>{{ $t("New orders") }}</ion-label>
-              <ion-item detail @click="openJobConfiguration(jobEnums['IMP_NEW_ORDERS'], 'New orders')">
-                <ion-label>{{ getJobStatus(this.jobEnums['IMP_NEW_ORDERS']) }} </ion-label>
+              <ion-item detail @click="openJobConfiguration(jobEnums['IMP_NEW_ORDERS'], 'New orders', getJobStatus(this.jobEnums['IMP_NEW_ORDERS']))">
+                <ion-label>{{ getTemporalExpr(getJobStatus(this.jobEnums['IMP_NEW_ORDERS']))?.description }} </ion-label>
               </ion-item>
             </ion-item>
             <ion-item>
@@ -136,7 +136,7 @@
         </section>
 
         <aside class="desktop-only" v-show="currentJob">
-          <JobDetail :title="title" :job="currentJob" :key="currentJob"/>
+          <JobDetail :title="title" :job="currentJob" :status="currentJobStatus" :key="currentJob"/>
         </aside>
       </main>
     </ion-content>
@@ -199,7 +199,8 @@ export default defineComponent({
     return {
       jobEnums: JSON.parse(process.env?.VUE_APP_ODR_JOB_ENUMS as string) as any,
       currentJob: '',
-      title: 'New orders'
+      title: 'New orders',
+      currentJobStatus: ''
     }
   },
   computed: {
@@ -208,7 +209,8 @@ export default defineComponent({
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
       getShopifyConfigId: 'user/getShopifyConfigId',
-      getCurrentEComStore: 'user/getCurrentEComStore'
+      getCurrentEComStore: 'user/getCurrentEComStore',
+      getTemporalExpr: 'job/getTemporalExpr'
     })
   },
   methods: {
@@ -251,9 +253,10 @@ export default defineComponent({
         this.store.dispatch('job/updateJob', payload)
       }
     },
-    openJobConfiguration(enumId: string, title: string) {
+    openJobConfiguration(enumId: string, title: string, status: string) {
       this.currentJob = this.getJob(enumId)
       this.title = title
+      this.currentJobStatus = status
     }
   },
   mounted () {
