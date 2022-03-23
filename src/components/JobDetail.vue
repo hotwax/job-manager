@@ -30,7 +30,7 @@
       <ion-item>
         <ion-icon slot="start" :icon="timerOutline" />
         <ion-label>{{ $t("Schedule") }}</ion-label>
-        <ion-select :interface-options="customPopoverOptions" interface="popover" :value="jobStatus" placeholder="Disabled">
+        <ion-select :interface-options="customPopoverOptions" interface="popover" :value="jobStatus" placeholder="Disabled" @ionChange="($event) => jobStatus = $event['detail'].value">
           <ion-select-option value="HOURLY">Hourly</ion-select-option>
           <ion-select-option value="EVERY_6_HOUR">Every 6 hours</ion-select-option>
           <ion-select-option value="NIGHTLY">Nightly</ion-select-option>
@@ -51,7 +51,7 @@
 
     <div class="actions">
       <div>
-        <ion-button size="small" fill="outline" color="medium" @click="skipJob">{{ $t("Skip once") }}</ion-button>
+        <ion-button size="small" fill="outline" color="medium" @click="skipJob(job)">{{ $t("Skip once") }}</ion-button>
         <ion-button size="small" fill="outline" color="danger" @click="cancelJob(job.jobId)">{{ $t("Disable") }}</ion-button>
       </div>
       <div>
@@ -105,15 +105,10 @@ export default defineComponent({
   },
   data() {
     return {
-      job: {},
-      jobStatus: ''
+      jobStatus: this.job?.jobStatus
     }
   },
-  props: ["jobEnum", "title"],
-  async mounted() {
-    this.job = await this.getJob(this.jobEnum)
-    this.jobStatus = await this.getJobStatus(this.jobEnum)
-  },
+  props: ["job", "title"],
   computed: {
     ...mapGetters({
       getJobStatus: 'job/getJobStatus',
@@ -126,12 +121,22 @@ export default defineComponent({
     getDateTime(time: any) {
       return DateTime.fromMillis(time)
     },
-    async skipJob() {
+    async skipJob(job: any) {
       const alert = await alertController
         .create({
           header: this.$t('Skip job'),
           message: this.$t('Skipping will run this job at the next occurance based on the temporal expression.'),
-          buttons: [this.$t('Dont skip'), this.$t('Skip')],
+          buttons: [{
+            text: this.$t('Dont skip'),
+            role: 'cancel'
+          }, {
+            text: this.$t('Skip'),
+            handler: () => {
+              if (job) {
+                this.store.dispatch('job/skipJob', job)
+              }
+            }
+          }],
         });
       return alert.present();
     },
@@ -178,24 +183,24 @@ export default defineComponent({
         });
       return alert.present();
     },
-    async updateJob(id = 'ping') {
-      const job = this.getJob(id);
+    async updateJob() {
+      const job = this.job;
 
       const payload = {
         ...job.runtimeData,
-        'systemJobEnumId': id,
+        'systemJobEnumId': job.systemJobEnumId,
         'statusId': "SERVICE_PENDING"
       } as any
       if (job?.status === 'SERVICE_DRAFT') {
         payload['JOB_NAME'] = job.jobName
         payload['SERVICE_NAME'] = job.serviceName
-        payload['SERVICE_TIME'] = job.runTime
-        payload['SERVICE_COUNT'] = 0
+        payload['SERVICE_TIME'] = job.runTime.toString()
+        payload['SERVICE_COUNT'] = '0'
         payload['jobFields'] = {
-          'productStoreId': this.getCurrentEComStore,
-          'systemJobEnumId': id,
+          'productStoreId': this.getCurrentEComStore.productStoreId,
+          'systemJobEnumId': job.systemJobEnumId,
           'tempExprId': this.jobStatus,
-          'maxRecurrenceCount': -1,
+          'maxRecurrenceCount': '-1',
           'parentJobId': job.parentJobId,
           'runAsUser': 'system', // default system, but empty in run now
           'recurrenceTimeZone': ''
