@@ -25,7 +25,7 @@
           <ion-content force-overscroll="false">
             <ion-datetime
               :value="job?.runTime ? getDateTime(job.runTime) : ''"
-              @ionChange="runTimeUpdated($event, job)"
+              @ionChange="updateRunTime($event, job)"
             />
           </ion-content>
         </ion-modal>
@@ -117,8 +117,8 @@ export default defineComponent({
     ...mapGetters({
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
-      getShopifyConfigId: 'user/getShopifyConfigId',
-      getCurrentEComStore: 'user/getCurrentEComStore'
+      shopifyConfigId: 'user/getShopifyConfigId',
+      currentEComStore: 'user/getCurrentEComStore'
     })
   },
   methods: {
@@ -202,7 +202,7 @@ export default defineComponent({
         payload['SERVICE_TIME'] = job.runTime.toString()
         payload['SERVICE_COUNT'] = '0'
         payload['jobFields'] = {
-          'productStoreId': this.getCurrentEComStore.productStoreId,
+          'productStoreId': this.currentEComStore.productStoreId,
           'systemJobEnumId': job.systemJobEnumId,
           'tempExprId': this.jobStatus,
           'maxRecurrenceCount': '-1',
@@ -210,7 +210,7 @@ export default defineComponent({
           'runAsUser': 'system', // default system, but empty in run now
           'recurrenceTimeZone': ''
         }
-        payload['shopifyConfigId'] = this.getShopifyConfigId
+        payload['shopifyConfigId'] = this.shopifyConfigId
 
         this.store.dispatch('job/scheduleService', payload)
       } else if (job?.status === 'SERVICE_PENDING') {
@@ -228,7 +228,7 @@ export default defineComponent({
       const timeDiff = DateTime.fromMillis(time).diff(DateTime.local());
       return DateTime.local().plus(timeDiff).toRelative();
     },
-    runTimeUpdated(ev: CustomEvent, job: any) {
+    updateRunTime(ev: CustomEvent, job: any) {
       if (job) {
         job.runTime = DateTime.fromISO(ev['detail'].value).toMillis()
       }
