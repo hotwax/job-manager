@@ -19,35 +19,25 @@
               <ion-label>{{ $t("Realtime webhook") }}</ion-label>
               <ion-toggle color="secondary" slot="end" />
             </ion-item>
-            <ion-item>
+            <ion-item @click="viewJobConfiguration(jobEnums['IMP_NEW_ORDERS'], 'New orders', getJobStatus(this.jobEnums['IMP_NEW_ORDERS']))" detail button>
               <ion-label>{{ $t("New orders") }}</ion-label>
-              <ion-item detail @click="viewJobConfiguration(jobEnums['IMP_NEW_ORDERS'], 'New orders', getJobStatus(this.jobEnums['IMP_NEW_ORDERS']))">
-                <ion-label>{{ getTemporalExpression('IMP_NEW_ORDERS') }} </ion-label>
-              </ion-item>
+              <ion-label slot="end">{{ getTemporalExpression('IMP_NEW_ORDERS') }}</ion-label>
             </ion-item>
-            <ion-item>
+            <ion-item @click="viewJobConfiguration(jobEnums['IMP_CANCELLED_ORDERS'], 'Cancelled orders', getJobStatus(this.jobEnums['IMP_CANCELLED_ORDERS']))" detail button>
               <ion-label>{{ $t("Cancelled orders") }}</ion-label>
-              <ion-item detail @click="viewJobConfiguration(jobEnums['IMP_CANCELLED_ORDERS'], 'Cancelled orders', getJobStatus(this.jobEnums['IMP_CANCELLED_ORDERS']))">
-                <ion-label>{{ getTemporalExpression('IMP_CANCELLED_ORDERS') }} </ion-label>
-              </ion-item>
+              <ion-label slot="end">{{ getTemporalExpression('IMP_CANCELLED_ORDERS') }}</ion-label>
             </ion-item>
-            <ion-item>
+            <ion-item @click="viewJobConfiguration(jobEnums['IMP_CANCELLED_ITEMS'], 'Cancelled items', getJobStatus(this.jobEnums['IMP_CANCELLED_ITEMS']))" detail button>
               <ion-label>{{ $t("Cancelled items") }}</ion-label>
-              <ion-item detail @click="viewJobConfiguration(jobEnums['IMP_CANCELLED_ITEMS'], 'Cancelled items', getJobStatus(this.jobEnums['IMP_CANCELLED_ITEMS']))">
-                <ion-label>{{ getTemporalExpression('IMP_CANCELLED_ITEMS') }} </ion-label>
-              </ion-item>
+              <ion-label slot="end">{{ getTemporalExpression('IMP_CANCELLED_ITEMS') }}</ion-label>
             </ion-item>
-            <ion-item>
+            <ion-item @click="viewJobConfiguration(jobEnums['IMP_PAYMENT_STATUS'], 'Payment status', getJobStatus(this.jobEnums['IMP_PAYMENT_STATUS']))" detail button>
               <ion-label>{{ $t("Payment status") }}</ion-label>
-              <ion-item detail @click="viewJobConfiguration(jobEnums['IMP_PAYMENT_STATUS'], 'Payment status', getJobStatus(this.jobEnums['IMP_PAYMENT_STATUS']))">
-                <ion-label>{{ getTemporalExpression('IMP_PAYMENT_STATUS') }} </ion-label>
-              </ion-item>
+              <ion-label slot="end">{{ getTemporalExpression('IMP_PAYMENT_STATUS') }}</ion-label>
             </ion-item>
-            <ion-item>
+            <ion-item @click="viewJobConfiguration(jobEnums['IMP_RETURNS'], 'Returns', getJobStatus(this.jobEnums['IMP_RETURNS']))" detail button>
               <ion-label>{{ $t("Returns") }}</ion-label>
-              <ion-item detail @click="viewJobConfiguration(jobEnums['IMP_RETURNS'], 'Returns', getJobStatus(this.jobEnums['IMP_RETURNS']))">
-                <ion-label>{{ getTemporalExpression('IMP_RETURNS') }} </ion-label>
-              </ion-item>
+              <ion-label slot="end">{{ getTemporalExpression('IMP_RETURNS') }}</ion-label>
             </ion-item>
           </ion-card>
 
@@ -55,23 +45,17 @@
             <ion-card-header>
               <ion-card-title>{{ $t("Upload") }}</ion-card-title>
             </ion-card-header>
-            <ion-item>
+            <ion-item @click="viewJobConfiguration(jobEnums['UPLD_CMPLT_ORDRS'], 'Returns', getJobStatus(this.jobEnums['UPLD_CMPLT_ORDRS']))" detail button>
               <ion-label>{{ $t("Completed orders") }}</ion-label>
-              <ion-item detail @click="viewJobConfiguration(jobEnums['UPLD_CMPLT_ORDRS'], 'Returns', getJobStatus(this.jobEnums['UPLD_CMPLT_ORDRS']))">
-                <ion-label>{{ getTemporalExpression('UPLD_CMPLT_ORDRS') }} </ion-label>
-              </ion-item>
+              <ion-label slot="end">{{ getTemporalExpression('UPLD_CMPLT_ORDRS') }}</ion-label>
             </ion-item>
-            <ion-item>
+            <ion-item @click="viewJobConfiguration(jobEnums['UPLD_CNCLD_ORDRS'], 'Returns', getJobStatus(this.jobEnums['UPLD_CNCLD_ORDRS']))" detail button>
               <ion-label>{{ $t("Cancelled orders") }}</ion-label>
-              <ion-item detail @click="viewJobConfiguration(jobEnums['UPLD_CNCLD_ORDRS'], 'Returns', getJobStatus(this.jobEnums['UPLD_CNCLD_ORDRS']))">
-                <ion-label>{{ getTemporalExpression('UPLD_CNCLD_ORDRS') }} </ion-label>
-              </ion-item>
+              <ion-label slot="end">{{ getTemporalExpression('UPLD_CNCLD_ORDRS') }}</ion-label>
             </ion-item>
-            <ion-item>
+            <ion-item @click="viewJobConfiguration(jobEnums['UPLD_REFUNDS'], 'Returns', getJobStatus(this.jobEnums['UPLD_REFUNDS']))" detail button>
               <ion-label>{{ $t("Refunds") }}</ion-label>
-              <ion-item detail @click="viewJobConfiguration(jobEnums['UPLD_REFUNDS'], 'Returns', getJobStatus(this.jobEnums['UPLD_REFUNDS']))">
-                <ion-label>{{ getTemporalExpression('UPLD_REFUNDS') }} </ion-label>
-              </ion-item>
+              <ion-label slot="end">{{ getTemporalExpression('UPLD_REFUNDS') }}</ion-label>
             </ion-item>
           </ion-card>
 
@@ -111,17 +95,13 @@
             <ion-card-header>
               <ion-card-title>{{ $t("Routing") }}</ion-card-title>
             </ion-card-header>
-            <ion-item>
+            <ion-item @click="viewJobConfiguration(jobEnums['REJ_ORDR'], 'Returns', getJobStatus(this.jobEnums['REJ_ORDR']))" detail button>
               <ion-label>{{ $t("Rejected orders") }}</ion-label>
-              <ion-item detail @click="viewJobConfiguration(jobEnums['REJ_ORDR'], 'Returns', getJobStatus(this.jobEnums['REJ_ORDR']))">
-                <ion-label>{{ getTemporalExpression('REJ_ORDR') }} </ion-label>
-              </ion-item>
+              <ion-label slot="end">{{ getTemporalExpression('REJ_ORDR') }}</ion-label>
             </ion-item>
-            <ion-item>
+            <ion-item @click="viewJobConfiguration(jobEnums['UNFIL_ORDERS'], 'Returns', getJobStatus(this.jobEnums['UNFIL_ORDERS']))" detail button>
               <ion-label>{{ $t("Unfillable orders") }}</ion-label>
-              <ion-item detail @click="viewJobConfiguration(jobEnums['UNFIL_ORDERS'], 'Returns', getJobStatus(this.jobEnums['UNFIL_ORDERS']))">
-                <ion-label>{{ getTemporalExpression('UNFIL_ORDERS') }} </ion-label>
-              </ion-item>
+              <ion-label slot="end">{{ getTemporalExpression('UNFIL_ORDERS') }} </ion-label>
             </ion-item>
             <!-- TODO: env file entry UNFIL_ORDERS, run now as user with count 1-->
             <ion-item>
