@@ -14,17 +14,13 @@
             <ion-card-header>
               <ion-card-title>{{ $t("Sync") }}</ion-card-title>
             </ion-card-header>
-            <ion-item>
+            <ion-item button @click="viewJobConfiguration(jobEnums['IMP_PRDTS'], 'Import products', getJobStatus(this.jobEnums['IMP_PRDTS']))" detail>
               <ion-label>{{ $t("Import products") }}</ion-label>
-              <ion-item detail @click="openJobConfiguration('IMP_PRDTS', 'Import products')">
-                <ion-label>{{ getJobStatus('IMP_PRDTS') }} </ion-label>
-              </ion-item>
+              <ion-label slot="end">{{ getTemporalExpression('IMP_PRDTS') }}</ion-label>
             </ion-item>
-            <ion-item>
+            <ion-item button @click="viewJobConfiguration(jobEnums['SYNC_PRDTS'], 'Sync products', getJobStatus(this.jobEnums['SYNC_PRDTS']))" detail>
               <ion-label>{{ $t("Sync products") }}</ion-label>
-              <ion-item detail @click="openJobConfiguration('SYNC_PRDTS', 'Sync products')">
-                <ion-label>{{ getJobStatus('SYNC_PRDTS') }} </ion-label>
-              </ion-item>
+              <ion-label slot="end">{{ getTemporalExpression('SYNC_PRDTS') }} </ion-label>
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap"><p>{{ $t("Sync products and category structures from Shopify into HotWax Commerce and keep them up to date.") }}</p></ion-label>
@@ -32,8 +28,8 @@
           </ion-card>
         </section>
 
-        <aside class="desktop-only" v-show="currentJobEnum">
-          <JobDetail :title="title" :jobEnum="currentJobEnum" :key="currentJobEnum"/>
+        <aside class="desktop-only" v-show="currentJob">
+          <JobDetail :title="title" :job="currentJob" :status="currentJobStatus" :key="currentJob"/>
         </aside>
       </main>
     </ion-content>
@@ -76,14 +72,17 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
-      getJobStatus: 'job/getJobStatus'
+      getJobStatus: 'job/getJobStatus',
+      getTemporalExpr: 'job/getTemporalExpr',
+      getJob: 'job/getJob'
     }),
   },
   data() {
     return {
       jobEnums: JSON.parse(process.env?.VUE_APP_PRD_JOB_ENUMS as string) as any,
-      currentJobEnum: 'IMP_PRDTS',
-      title: 'Import products'
+      currentJob: '',
+      title: 'Import products',
+      currentJobStatus: ''
     }
   },
   mounted () {
@@ -95,9 +94,15 @@ export default defineComponent({
     });
   },
   methods: {
-    openJobConfiguration(enumId: string, title: string) {
-      this.currentJobEnum = enumId
+    viewJobConfiguration(enumId: string, title: string, status: string) {
+      this.currentJob = this.getJob(enumId)
       this.title = title
+      this.currentJobStatus = status
+    },
+    getTemporalExpression(enumId: string) {
+      return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
+        this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
+        this.$t('Disabled')
     }
   },
   setup() {
