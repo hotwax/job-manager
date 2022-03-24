@@ -35,9 +35,7 @@
         <ion-icon slot="start" :icon="timerOutline" />
         <ion-label>{{ $t("Schedule") }}</ion-label>
         <ion-select :interface-options="customPopoverOptions" interface="popover" :value="jobStatus" :placeholder="$t('Disabled')" @ionChange="($event) => jobStatus = $event['detail'].value">
-          <ion-select-option value="HOURLY">Hourly</ion-select-option>
-          <ion-select-option value="EVERY_6_HOUR">Every 6 hours</ion-select-option>
-          <ion-select-option value="NIGHTLY">Nightly</ion-select-option>
+          <ion-select-option v-for="freq in generateFrequencyOptions" :key="freq.value" :value="freq.value">{{ $t(freq.label) }}</ion-select-option>
         </ion-select>
       </ion-item>
 
@@ -113,14 +111,43 @@ export default defineComponent({
       jobStatus: this.status
     }
   },
-  props: ["job", "title", "status"],
+  props: ["job", "title", "status", "type"],
   computed: {
     ...mapGetters({
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
       shopifyConfigId: 'user/getShopifyConfigId',
       currentEComStore: 'user/getCurrentEComStore'
-    })
+    }),
+    generateFrequencyOptions(): any {
+      const optionDefault = [{
+          "value": "EVERY_5_MIN",
+          "label": "Every 5 minutes"
+        },{
+          "value": "EVERY_15_MIN",
+          "label": "Every 15 minutes"
+        },{
+          "value": "HOURLY",
+          "label": "Hourly"
+        },{
+          "value": "DAILY",
+          "label": "Daily"
+        }
+      ]
+
+      const slow = [{
+          "value": "HOURLY",
+          "label": "Hourly"
+        },{
+          "value": "EVERY_6_HOUR",
+          "label": "Every 6 hours"
+        },{
+          "value": "DAILY",
+          "label": "Daily"
+        }
+      ]
+      return (this as any).type === 'slow' ? slow : optionDefault;
+    }
   },
   methods: {
     getDateTime(time: any) {

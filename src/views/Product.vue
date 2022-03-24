@@ -29,7 +29,7 @@
         </section>
 
         <aside class="desktop-only" v-show="currentJob">
-          <JobDetail :title="title" :job="currentJob" :status="currentJobStatus" :key="currentJob"/>
+          <JobDetail :title="title" :job="currentJob" :status="currentJobStatus" type="slow" :key="currentJob"/>
         </aside>
       </main>
     </ion-content>
