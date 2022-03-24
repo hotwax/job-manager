@@ -7,18 +7,17 @@
       </ion-toolbar>
 
       <ion-toolbar>
-        <div>
-          <ion-segment v-model="segmentSelected" @ionChange="segmentChanged">
-            <ion-segment-button value="pending">
-              <ion-label>{{ $t("Pending") }}</ion-label>
-            </ion-segment-button>
-            <ion-segment-button value="history">
-              <ion-label>{{ $t("History") }}</ion-label>
-            </ion-segment-button>
-          </ion-segment>
-        </div>
+        <ion-segment v-model="segmentSelected" @ionChange="segmentChanged">
+          <ion-segment-button value="pending">
+            <ion-label>{{ $t("Pending") }}</ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="history">
+            <ion-label>{{ $t("History") }}</ion-label>
+          </ion-segment-button>
+        </ion-segment>
       </ion-toolbar>
     </ion-header>
+
     <ion-content>
       <main>
         <section v-if="segmentSelected === 'pending'">
@@ -256,3 +255,11 @@ export default defineComponent({
   }
 });
 </script>
+
+<style scoped>
+@media (min-width: 991px) {
+  ion-header{
+    display: flex;
+  }
+}
+</style>
