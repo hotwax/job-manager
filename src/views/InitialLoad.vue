@@ -187,7 +187,6 @@ ion-card > ion-button {
 
 aside > section {
   overflow: hidden;
-  flex: 1 355px;
   margin-bottom: var(--spacer-base);
   border: 1px solid var(--ion-color-medium);
   border-radius: 16px;
