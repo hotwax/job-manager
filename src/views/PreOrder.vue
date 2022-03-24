@@ -201,10 +201,10 @@ export default defineComponent({
         }
         payload['shopifyConfigId'] = this.shopifyConfigId
 
-        // checking if the runTimeData has productStoreId, and if present then adding it on root level
-        job?.runTimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.currentEComStore.productStoreId)
+        // checking if the runtimeData has productStoreId, and if present then adding it on root level
+        job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.currentEComStore.productStoreId)
 
-        this.store.dispatch('job/scheduleService', {...job.runTimeData, ...payload})
+        this.store.dispatch('job/scheduleService', {...job.runtimeData, ...payload})
       } else if (job?.status === 'SERVICE_PENDING') {
         payload['tempExprId'] = 'EVERY_15_MIN'
         payload['jobId'] = job.id
