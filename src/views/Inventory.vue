@@ -32,9 +32,9 @@
                 <p>{{ $t("When using HotWax BOPIS, Shopify isn't aware of the actual inventory consumed. HotWax will automatically restore inventory automatically reduced by Shopify and deduct inventory from the correct store to maintain inventory accuracy.") }}</p>
               </ion-label>
             </ion-item>
-            <ion-item>
+            <ion-item button @click="viewJobConfiguration(jobEnums['HARD_SYNC'], 'Hard sync', getJobStatus(this.jobEnums['HARD_SYNC']))" detail>
               <ion-label>{{ $t("Hard sync") }}</ion-label>
-              <InventoryPopover :id="jobEnums['HARD_SYNC']"/>
+              <ion-label slot="end">{{ getTemporalExpression('HARD_SYNC') }}</ion-label>
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
@@ -42,27 +42,11 @@
               </ion-label>
             </ion-item>
           </ion-card>
-
-          <ion-card>
-            <ion-card-header>
-              <ion-card-title>{{ $t("Completed orders") }}</ion-card-title>
-            </ion-card-header>
-            <ion-item>
-              <ion-label>{{ $t("Reserve for completed orders") }}</ion-label>
-              <ion-toggle :checked="reserveForCompletedOrders" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, this.jobEnums['RSV_CMPLT_ORDRS'])" />
-            </ion-item>
-            <ion-item lines="none">
-              <ion-label class="ion-text-wrap">
-                <p>{{ $t("Reserving inventory for completed orders allows POS sales to accurately deduct inventory in HotWax Commerce.") }}</p>
-              </ion-label>
-            </ion-item>
-            <ion-item lines="none">
-              <ion-label class="ion-text-wrap">
-                <p>{{ $t("When importing historical completed orders, this should be turned off.") }}</p>
-              </ion-label>
-            </ion-item>
-          </ion-card>
         </section>
+
+        <aside class="desktop-only" v-show="currentJob">
+          <JobDetail :title="title" :job="currentJob" :status="currentJobStatus" :key="currentJob"/>
+        </aside>
       </main>
     </ion-content>
   </ion-page>
@@ -85,12 +69,11 @@ import {
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
-import InventoryPopover from '@/components/InventoryPopover.vue'
+import JobDetail from '@/components/JobDetail.vue'
 
 export default defineComponent({
   name: 'Inventory',
   components: {
-    InventoryPopover,
     IonCard,
     IonCardHeader,
     IonCardTitle,
@@ -103,19 +86,23 @@ export default defineComponent({
     IonTitle,
     IonToggle,
     IonToolbar,
+    JobDetail
   },
   data() {
     return {
       jobEnums: JSON.parse(process.env?.VUE_APP_INV_JOB_ENUMS as string) as any,
+      currentJob: '',
+      title: '',
+      currentJobStatus: ''
     }
   },
   computed: {
     ...mapGetters({
-      order: 'job/getOrderInformation',
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
-      getShopifyConfigId: 'user/getShopifyConfigId',
-      getCurrentEComStore: 'user/getCurrentEComStore'
+      shopifyConfigId: 'user/getShopifyConfigId',
+      currentEComStore: 'user/getCurrentEComStore',
+      getTemporalExpr: 'job/getTemporalExpr'
     }),
     realTimeWebhooks(): boolean {
       const status = this.getJobStatus(this.jobEnums["REAL_WBHKS"]);
@@ -150,27 +137,45 @@ export default defineComponent({
 
       // TODO: check for parentJobId and jobEnum and handle this values properly
       const payload = {
-        ...job,
+        'jobId': job.jobId,
         'systemJobEnumId': id,
         'statusId': checked ? "SERVICE_PENDING" : "SERVICE_CANCELLED"
       } as any
       if (!checked) {
         this.store.dispatch('job/updateJob', payload)
       } else if (job?.status === 'SERVICE_DRAFT') {
-        payload['SERVICE_FREQUENCY'] = 'HOURLY'
+        payload['JOB_NAME'] = job.jobName
         payload['SERVICE_NAME'] = job.serviceName
-        payload['count'] = -1
-        payload['runAsSystem'] = true
-        payload['shopifyConfigId'] = this.getShopifyConfigId
-        payload['productStoreId'] = this.getCurrentEComStore.productStoreId
+        payload['SERVICE_TIME'] = job.runTime.toString()
+        payload['SERVICE_COUNT'] = '0'
+        payload['jobFields'] = {
+          'productStoreId': this.currentEComStore.productStoreId,
+          'systemJobEnumId': job.systemJobEnumId,
+          'tempExprId': 'DAILY',
+          'maxRecurrenceCount': '-1',
+          'parentJobId': job.parentJobId,
+          'runAsUser': 'system', // default system, but empty in run now
+          'recurrenceTimeZone': ''
+        }
+        payload['shopifyConfigId'] = this.shopifyConfigId
 
         this.store.dispatch('job/scheduleService', payload)
       } else if (job?.status === 'SERVICE_PENDING') {
-        payload['tempExprId'] = 'HOURLY'
+        payload['tempExprId'] = 'DAILY'
         payload['jobId'] = job.id
 
         this.store.dispatch('job/updateJob', payload)
       }
+    },
+    viewJobConfiguration(enumId: string, title: string, status: string) {
+      this.currentJob = this.getJob(enumId)
+      this.title = title
+      this.currentJobStatus = status
+    },
+    getTemporalExpression(enumId: string) {
+      return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
+        this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
+        this.$t('Disabled')
     }
   },
   mounted () {
