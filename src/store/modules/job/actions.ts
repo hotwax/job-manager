@@ -37,6 +37,50 @@ const actions: ActionTree<JobState, RootState> = {
     return resp;
   },
 
+  async fetchJobHistory({ commit, dispatch, state }, payload){
+    await JobService.fetchJobInformation({
+      "inputFields": {
+        "productStoreId": payload.eComStoreId,
+        "statusId": ["SERVICE_CANCELLED", "SERVICE_CRASHED", "SERVICE_FAILED", "SERVICE_FINISHED"],
+        "statusId_op": "in"
+      },
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName" ],
+      "entityName": "JobSandbox",
+      "noConditionFind": "Y",
+      "viewSize": payload.viewSize,
+      "viewIndex": payload.viewIndex,
+      "orderBy": "runTime DESC"
+    }).then((resp) => {
+      if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
+        if (resp.data.docs) {
+          const total = resp.data.count;
+          let jobs = resp.data.docs;
+          if(payload.viewIndex && payload.viewIndex > 0){
+            jobs = state.history.list.concat(resp.data.docs);
+          }
+          
+          commit(types.JOB_HISTORY_UPDATED, { jobs, total });
+          const tempExprList = [] as any;
+          const enumIds = [] as any;
+          resp.data.docs.map((item: any) => {
+            enumIds.push(item.systemJobEnumId);
+            tempExprList.push(item.tempExprId);
+          })
+          const tempExpr = [...new Set(tempExprList)];
+          dispatch('fetchTemporalExpression', tempExpr);
+          dispatch('fetchJobDescription', enumIds);
+        }
+      } else {
+        commit(types.JOB_HISTORY_UPDATED,  []);
+        showToast(translate("Something went wrong"));
+      }
+    }).catch((err) => {
+      commit(types.JOB_HISTORY_UPDATED,  []);
+      console.error(err);
+      showToast(translate("Something went wrong"));
+    }) 
+  },
+
   async fetchPendingJobs({ commit, dispatch, state }, payload){
     await JobService.fetchJobInformation({
       "inputFields": {
@@ -53,7 +97,11 @@ const actions: ActionTree<JobState, RootState> = {
       if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
         if (resp.data.docs) {
           const total = resp.data.count;
-          const jobs = state.pending.list.concat(resp.data.docs);
+          let jobs = resp.data.docs;
+          if(payload.viewIndex && payload.viewIndex > 0){
+            jobs = state.pending.list.concat(resp.data.docs);
+          }
+          
           commit(types.JOB_PENDING_UPDATED, { jobs, total });
           const tempExprList = [] as any;
           const enumIds = [] as any;
@@ -61,8 +109,8 @@ const actions: ActionTree<JobState, RootState> = {
             enumIds.push(item.systemJobEnumId);
             tempExprList.push(item.tempExprId);
           })
-          const payload = [...new Set(tempExprList)];
-          dispatch('fetchTemporalExpression', payload);
+          const tempExpr = [...new Set(tempExprList)];
+          dispatch('fetchTemporalExpression', tempExpr);
           dispatch('fetchJobDescription', enumIds);
         }
       } else {
@@ -90,7 +138,7 @@ const actions: ActionTree<JobState, RootState> = {
         "tempExprId": tempIds,
         "temoExprId_op": "in"
       },
-      "fieldList": [ "tempExprId", "description" ],
+      "fieldList": [ "tempExprId", "description","integer1", "integer2" ],
       "entityName": "TemporalExpression",
       "noConditionFind": "Y",
     })

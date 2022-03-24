@@ -4,7 +4,10 @@ export default interface JobState {
       list: any,
       total: 0
     }
+    history: {
+      list: any,
+      total: 0
+    }
     temporalExp: any;
-    total: number;
     enumIds: any;
 }

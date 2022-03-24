@@ -285,14 +285,17 @@ aside {
 @media (min-width: 991px) {
   main {
     display: flex;
+    justify-content: center;
     align-items: start;
     justify-content: center;
     max-width: 900px;
     margin: var(--spacer-base) auto 0;
   }
 
-  main > section {
+  main > section > *{
     max-width: 343px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .desktop-only {

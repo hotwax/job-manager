@@ -29,6 +29,7 @@
             </ion-card-header>
             <ion-item>
               <ion-label>{{ $t("Allocation") }}</ion-label>
+              <!-- TODO: env file entry = REALLOC_PRODR -->
               <ion-button fill="outline" color="danger" slot="end">{{ $t("Run reallocation") }}</ion-button>
             </ion-item>
             <ion-item lines="none">
@@ -40,10 +41,12 @@
             <ion-card-header>
               <ion-card-title>{{ $t("Auto releasing") }}</ion-card-title>
             </ion-card-header>
+            <!-- TODO: env file entry = AUTO_RELSE_DAILY, run time 12 am daily-->
             <ion-item>
               <ion-label>{{ $t("Run daily") }}</ion-label>
               <ion-checkbox slot="end" />
             </ion-item>
+            <!-- TODO: env file entry = AUTO_RELSE_DAILY, run now, run as user, count: 1-->
             <ion-item>
               <ion-label>{{ $t("Release preorders")}}</ion-label>
               <ion-button fill="outline">{{ $t("Release") }}</ion-button>
@@ -57,14 +60,22 @@
             <ion-card-header>
               <ion-card-title>{{ $t("Sync") }}</ion-card-title>
             </ion-card-header>
+            <!-- TODO: env file entry = ADD_PRODR_TG_SHPFY -->
             <ion-item>
-              <ion-label>{{ $t("Add pre-order tag in Shopify") }}</ion-label>
+              <ion-label>{{ $t("Auto add pre-order tag in Shopify") }}</ion-label>
               <ion-checkbox slot="end" />
             </ion-item>
+            <!-- TODO: env file entry = REMV_ODR_TG_SHPFY -->
+            <ion-item>
+              <ion-label>{{ $t("Auto remove tags in Shopify") }}</ion-label>
+              <ion-checkbox slot="end" />
+            </ion-item>
+            <!-- TODO: env file entry = ADD_SHPG_DTE_SHPFY -->
             <ion-item>
               <ion-label>{{ $t("Add shipping dates in Shopify") }}</ion-label>
               <ion-checkbox slot="end" />
             </ion-item>
+            <!-- TODO: run all sync jobs with time diff of 2 mins and run now and count: 1 -->
             <ion-item>
               <ion-label>{{ $t("Manual update") }}</ion-label>
               <ion-button fill="outline">{{ $t("Run sync now") }}</ion-button>
