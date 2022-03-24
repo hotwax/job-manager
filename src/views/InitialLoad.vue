@@ -17,7 +17,7 @@
             <ion-button expand="block" fill="outline" @click="viewJobConfiguration('products', jobEnums['IMP_PRDTS_BLK'])">{{ $t("Import products in bulk") }}</ion-button>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
-                <p>{{ $t("All products from Shopify. Make sure you run this before importing orders in bulk during intial setup.") }}</p>
+                <p>{{ $t("Import all products from Shopify. Make sure you run this before importing orders in bulk during intial setup.") }}</p>
               </ion-label>
             </ion-item>
           </ion-card>
