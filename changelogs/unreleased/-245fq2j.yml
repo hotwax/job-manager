@@ -1,0 +1,6 @@
+---
+title: 'Improved: action call to pass null and root property to clear jobs'
+ticket_id: "#245fq2j"
+merge_request: 52
+author: Yash Maheshwari
+type: fixed

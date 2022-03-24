@@ -45,10 +45,8 @@ const actions: ActionTree<UserState, RootState> = {
    */
   async logout ({ commit, dispatch }) {
     // TODO add any other tasks if need
-    dispatch('job/clearPendingJobs');
+    dispatch('job/clearPendingJobs', null, { root: true });
     commit(types.USER_END_SESSION)
-
-    
   },
 
   /**
