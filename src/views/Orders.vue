@@ -21,7 +21,7 @@
             </ion-item>
             <ion-item>
               <ion-label>{{ $t("New orders") }}</ion-label>
-              <ion-button color="medium" fill="clear" @click="view($event)">View</ion-button>
+              <ion-button color="medium" fill="clear" @click="view()">View</ion-button>
               <!-- <DurationPopover :id="jobEnums['IMP_NEW_ORDERS']" /> -->
             </ion-item>
             <ion-item>
@@ -250,7 +250,7 @@ export default defineComponent({
       }
     },
 
-    async view(event: any, element: any) {
+    async view() {
       const asideAnimation = createAnimation()
         .addElement(document.querySelector('aside') as Element)
         .duration(1500)
