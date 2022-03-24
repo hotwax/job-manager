@@ -84,9 +84,9 @@
                 <ion-icon slot="start" :icon="timeOutline" />
                 <ion-label>{{ $t("Order status") }}</ion-label>
                 <ion-select value="open" :interface-options="customOrderOptions" interface="popover">
-                  <ion-select-option value="open">Open</ion-select-option>
-                  <ion-select-option value="archived">Archived</ion-select-option>
-                  <ion-select-option value="canceled">Canceled</ion-select-option>
+                  <ion-select-option value="open">{{ $t("Open") }}</ion-select-option>
+                  <ion-select-option value="archived">{{ $t("Archived") }}</ion-select-option>
+                  <ion-select-option value="canceled">{{ $t("Canceled") }}</ion-select-option>
                 </ion-select>
               </ion-item>
 
@@ -94,10 +94,10 @@
                 <ion-icon slot="start" :icon="timeOutline" />
                 <ion-label>{{ $t("Fulfillment status") }}</ion-label>
                 <ion-select value="fulfilled" :interface-options="customFulfillmentOptions" interface="popover">
-                  <ion-select-option value="unfulfilled">Unfulfilled</ion-select-option>
-                  <ion-select-option value="partially-fulfilled">Partally fulfilled</ion-select-option>
-                  <ion-select-option value="on-hold">On hold</ion-select-option>
-                  <ion-select-option value="fulfilled">Fulfilled</ion-select-option>
+                  <ion-select-option value="unfulfilled">{{ $t("Unfulfilled") }}</ion-select-option>
+                  <ion-select-option value="partially-fulfilled">{{ $t("Partally fulfilled") }}</ion-select-option>
+                  <ion-select-option value="on-hold">{{ $t("On hold") }}</ion-select-option>
+                  <ion-select-option value="fulfilled">{{ $t("Fulfilled") }}</ion-select-option>
                 </ion-select>
               </ion-item>
 
@@ -141,6 +141,7 @@ import {
   calendarClearOutline,
   timeOutline,
 } from "ionicons/icons";
+import { translate } from '@/i18n';
 
 export default defineComponent({
   name: 'InitialLoad',
@@ -166,10 +167,10 @@ export default defineComponent({
   },
   setup() {
     const customOrderOptions: any = {
-      header: 'Order status',
+      header: translate('Order status'),
     };
     const customFulfillmentOptions: any = {
-      header: 'Fulfillment status',
+      header: translate('Fulfillment status'),
     };
     return {
       calendarClearOutline,
@@ -180,6 +181,7 @@ export default defineComponent({
   }
 });
 </script>
+
 <style scoped>
 ion-card > ion-button {
   margin: var(--spacer-sm);
@@ -196,6 +198,6 @@ aside > section > ion-list {
 }
 
 aside > section > ion-button {
-  margin: var(--spacer-base) var(--spacer-sm) var(--spacer-base);
+  margin: var(--spacer-base) var(--spacer-sm);
 }
 </style>
