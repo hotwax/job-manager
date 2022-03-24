@@ -222,7 +222,7 @@ export default defineComponent({
       const payload = {
         'systemJobEnumId': job.systemJobEnumId,
         'statusId': "SERVICE_PENDING",
-        'timeZone': DateTime.now().zoneName
+        'recurrenceTimeZone': DateTime.now().zoneName
       } as any
       if (job?.status === 'SERVICE_DRAFT') {
         payload['JOB_NAME'] = job.jobName
@@ -236,7 +236,7 @@ export default defineComponent({
           'maxRecurrenceCount': '-1',
           'parentJobId': job.parentJobId,
           'runAsUser': 'system', // default system, but empty in run now
-          'recurrenceTimeZone': ''
+          'recurrenceTimeZone': DateTime.now().zoneName
         }
         payload['shopifyConfigId'] = this.shopifyConfigId
 
