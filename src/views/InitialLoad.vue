@@ -14,7 +14,7 @@
             <ion-card-header>
               <ion-card-title>{{ $t("Products") }}</ion-card-title>
             </ion-card-header>
-            <ion-button expand="block" fill="outline" @click="viewJobConfiguration('products', 'IMP_PRDTS_BLK')">{{ $t("Import products in bulk") }}</ion-button>
+            <ion-button expand="block" fill="outline" @click="viewJobConfiguration('products', jobEnums['IMP_PRDTS_BLK'])">{{ $t("Import products in bulk") }}</ion-button>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
                 <p>{{ $t("All products from Shopify. Make sure you run this before importing orders in bulk during intial setup.") }}</p>
@@ -26,7 +26,7 @@
             <ion-card-header>
               <ion-card-title>{{ $t("Orders") }}</ion-card-title>
             </ion-card-header>
-            <ion-button expand="block" fill="outline" @click="viewJobConfiguration('orders', 'IMP_ORDERS_BLK')">{{ $t("Import orders in bulk") }}</ion-button>
+            <ion-button expand="block" fill="outline" @click="viewJobConfiguration('orders', jobEnums['IMP_ORDERS_BLK'])">{{ $t("Import orders in bulk") }}</ion-button>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
                 <p>{{ $t("Before importing historical orders in bulk, make sure all products are set up or else order import will not run correctly.") }}</p>
@@ -196,7 +196,7 @@ export default defineComponent({
     return {
       jobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
       currentSelectedJobModal: '',
-      job: '',
+      job: {} as any,
       lastShopifyOrderId: ''
     }
   },
@@ -220,6 +220,9 @@ export default defineComponent({
     viewJobConfiguration(label: string, id: string) {
       this.currentSelectedJobModal = label;
       this.job = this.getJob(id);
+      if(this.job?.runtimeData?.sinceId.length >= 0) {
+        this.lastShopifyOrderId = this.job.runtimeData.sinceId
+      }
     },
     async runJob(header: string, id: string) {
       const alert = await alertController
@@ -260,17 +263,16 @@ export default defineComponent({
           'productStoreId': this.currentEComStore.productStoreId,
           'systemJobEnumId': job.systemJobEnumId,
           'tempExprId': job.tempExprId,
-          'maxRecurrenceCount': '0',
           'parentJobId': job.parentJobId,
           'runAsUser': '', // default system, but empty in run now
           'recurrenceTimeZone': DateTime.now().zoneName
         }
         payload['shopifyConfigId'] = this.shopifyConfigId
+        payload['sinceId'] = this.lastShopifyOrderId
 
-        // checking if the runTimeData has productStoreId, and if present then adding it on root level
-        job?.runTimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.currentEComStore.productStoreId)
-
-        this.store.dispatch('job/scheduleService', {...job.runTimeData, ...payload})
+        // checking if the runtimeData has productStoreId, and if present then adding it on root level
+        job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.currentEComStore.productStoreId)
+        this.store.dispatch('job/scheduleService', {...job.runtimeData, ...payload})
       } else if (job?.status === 'SERVICE_PENDING') {
         payload['tempExprId'] = job.tempExprId
         payload['jobId'] = job.id
