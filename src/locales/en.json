@@ -128,6 +128,7 @@
   "Sync": "Sync",
   "Sync products": "Sync products",
   "Sync products and category structures from Shopify into HotWax Commerce and keep them up to date.": "Sync products and category structures from Shopify into HotWax Commerce and keep them up to date.",
+  "This job may take several minutes to run. Wait till the job has moved to the pipeline history before checking results.": "This job may take several minutes to run.{ space } Wait till the job has moved to the pipeline history before checking results.",
   "This job schedule cannot be skipped": "This job schedule cannot be skipped",
   "This will automatically list items from purchase orders for preorder when stock runs out.": "This will automatically list items from purchase orders for preorder when stock runs out.",
   "Time zone updated successfully": "Time zone updated successfully",
