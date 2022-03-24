@@ -22,7 +22,7 @@
             <ion-item>
               <ion-label>{{ $t("New orders") }}</ion-label>
               <ion-button color="medium" fill="clear" @click="view($event)">View</ion-button>
-              <!-- <DurationPopover  /> -->
+              <!-- <DurationPopover :id="jobEnums['IMP_NEW_ORDERS']" /> -->
             </ion-item>
             <ion-item>
               <ion-label>{{ $t("Cancelled orders") }}</ion-label>
