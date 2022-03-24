@@ -287,7 +287,6 @@ aside {
     display: flex;
     justify-content: center;
     align-items: start;
-    justify-content: center;
     max-width: 900px;
     margin: var(--spacer-base) auto 0;
   }
