@@ -34,7 +34,7 @@
             <ion-item>
               <ion-label>{{ $t("Allocation") }}</ion-label>
               <!-- TODO: env file entry = REALLOC_PRODR -->
-              <ion-button fill="outline" color="danger" slot="end">{{ $t("Run reallocation") }}</ion-button>
+              <ion-button fill="outline" color="danger" slot="end" @click="runJob('Allocation')">{{ $t("Run reallocation") }}</ion-button>
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap"><p>{{ $t("Re-allocation will re-allocate promise dates on all pre-orders based on upcoming inventory from purchase orders. Promise dates that were manually adjusted will be overriden.") }}</p></ion-label>
@@ -53,7 +53,7 @@
             <!-- TODO: env file entry = AUTO_RELSE_DAILY, run now, run as user, count: 1-->
             <ion-item>
               <ion-label>{{ $t("Release preorders")}}</ion-label>
-              <ion-button fill="outline">{{ $t("Release") }}</ion-button>
+              <ion-button fill="outline" @click="runJob('Release preorders')">{{ $t("Release") }}</ion-button>
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap"><p>{{ $t("Auto releasing pre-orders will find pre-orders that have promise dates that have passed and release them from fulfillment.") }}</p></ion-label>
@@ -79,7 +79,7 @@
             <!-- TODO: run all sync jobs with time diff of 2 mins and run now and count: 1 -->
             <ion-item>
               <ion-label>{{ $t("Manual update") }}</ion-label>
-              <ion-button fill="outline">{{ $t("Run sync now") }}</ion-button>
+              <ion-button fill="outline" @click="runJob('Manual update')">{{ $t("Run sync now") }}</ion-button>
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap"><p>{{ $t("Transfer pre-order related information to Shopify as tags and meta fields.") }}</p></ion-label>
@@ -112,6 +112,8 @@ import { defineComponent } from 'vue';
 import { useStore } from "@/store";
 import { mapGetters } from "vuex";
 import { DateTime } from 'luxon';
+import { alertController } from '@ionic/vue';
+import { translate } from '@/i18n';
 
 export default defineComponent({
   name: 'PreOrder',
@@ -209,6 +211,24 @@ export default defineComponent({
 
         this.store.dispatch('job/updateJob', payload)
       }
+    },
+    async runJob(header: string) {
+      const jobAlert = await alertController
+        .create({
+          header,
+          message: this.$t('This job will be scheduled to run as soon as possible. There may not be enough time to revert this action.', {space: '<br/><br/>'}),
+          buttons: [
+            {
+              text: this.$t("Cancel"),
+              role: 'cancel',
+            },
+            {
+              text: this.$t('Run now')
+            }
+          ]
+        });
+
+      return jobAlert.present();
     }
   },
   mounted () {
