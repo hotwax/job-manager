@@ -81,7 +81,7 @@
               </ion-item>
 
               <ion-item>
-                <ion-icon slot="start" :icon="timeOutline" />
+                <ion-icon slot="start" :icon="flagOutline" />
                 <ion-label>{{ $t("Order status") }}</ion-label>
                 <ion-select value="open" :interface-options="customOrderOptions" interface="popover">
                   <ion-select-option value="open">{{ $t("Open") }}</ion-select-option>
@@ -91,7 +91,7 @@
               </ion-item>
 
               <ion-item>
-                <ion-icon slot="start" :icon="timeOutline" />
+                <ion-icon slot="start" :icon="sendOutline" />
                 <ion-label>{{ $t("Fulfillment status") }}</ion-label>
                 <ion-select value="fulfilled" :interface-options="customFulfillmentOptions" interface="popover">
                   <ion-select-option value="unfulfilled">{{ $t("Unfulfilled") }}</ion-select-option>
@@ -139,6 +139,8 @@ import {
 import { defineComponent } from 'vue';
 import {
   calendarClearOutline,
+  flagOutline,
+  sendOutline,
   timeOutline,
 } from "ionicons/icons";
 import { translate } from '@/i18n';
@@ -174,6 +176,8 @@ export default defineComponent({
     };
     return {
       calendarClearOutline,
+      flagOutline,
+      sendOutline,
       timeOutline,
       customOrderOptions,
       customFulfillmentOptions
