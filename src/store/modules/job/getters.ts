@@ -22,7 +22,10 @@ const getters: GetterTree <JobState, RootState> = {
     },
     isScrollable: (state) => {
       return state.pending.list.length > 0 && state.pending.list.length < state.pending.total
-    }  
+    },
+    getJobHistory (state){
+      return state.history.list;
+    },
   }
 
   export default getters;

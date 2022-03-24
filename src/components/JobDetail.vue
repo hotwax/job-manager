@@ -41,6 +41,7 @@
         </ion-select>
       </ion-item>
 
+      <!-- TODO: enable this feature of passing count when supported on backend -->
       <!-- <ion-item>
         <ion-icon slot="start" :icon="syncOutline" />
         <ion-label>{{ $t("Repeat untill disabled") }}</ion-label>
@@ -49,7 +50,7 @@
 
       <ion-item v-show="!repeat">
         <ion-label>{{ $t("Auto disable after") }}</ion-label>
-        <ion-input :placeholder="$t('occurances')" v-model="count"/>
+        <ion-input :placeholder="$t('occurrences')" v-model="count"/>
       </ion-item> -->
     </ion-list>
 
@@ -129,7 +130,7 @@ export default defineComponent({
       const alert = await alertController
         .create({
           header: this.$t('Skip job'),
-          message: this.$t('Skipping will run this job at the next occurance based on the temporal expression.'),
+          message: this.$t('Skipping will run this job at the next occurrence based on the temporal expression.'),
           buttons: [{
             text: this.$t("Don't skip"),
             role: 'cancel'
@@ -148,7 +149,7 @@ export default defineComponent({
       const alert = await alertController
         .create({
           header: this.$t('Cancel job'),
-          message: this.$t('Canceling this job will cancel this occurance and all following occurances. This job will have to be re-enabled manually to run it again.'),
+          message: this.$t('Canceling this job will cancel this occurance and all following occurrences. This job will have to be re-enabled manually to run it again.'),
           buttons: [{
             text: this.$t("Don't Cancel"),
             role: 'cancel'
