@@ -52,7 +52,9 @@
             <ion-button fill="clear" @click="skipJob(job)">{{ $t("Skip") }}</ion-button>
             <ion-button color="danger" fill="clear" @click="cancelJob(job.jobId)">{{ $t("Cancel") }}</ion-button>
           </ion-card>
-
+          <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
+            <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
+          </ion-refresher>
           <ion-infinite-scroll @ionInfinite="loadMorePendingJobs($event)" threshold="100px" :disabled="!isScrollable">
             <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="$t('Loading')"/>
           </ion-infinite-scroll>
@@ -90,6 +92,9 @@
 
           </ion-card>
 
+          <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
+            <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
+          </ion-refresher>
           <ion-infinite-scroll @ionInfinite="loadMoreJobHistory($event)" threshold="100px" :disabled="!isScrollable">
             <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="$t('Loading')"/>
           </ion-infinite-scroll>
@@ -116,6 +121,8 @@ import {
   IonLabel,
   IonMenuButton,
   IonPage,
+  IonRefresher,
+  IonRefresherContent,
   IonToolbar,
   IonTitle,
   IonInfiniteScroll,
@@ -139,6 +146,8 @@ export default defineComponent({
     IonLabel,
     IonMenuButton,
     IonPage,
+    IonRefresher,
+    IonRefresherContent,
     IonToolbar,
     IonTitle,
     IonInfiniteScroll,
@@ -179,6 +188,13 @@ export default defineComponent({
       ).then(() => {
         event.target.complete();
       })
+    },
+    async refreshJobs(event: any) {
+      if(this.segmentSelected === 'pending') {
+        this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => { event.target.complete() });
+      } else {
+        this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => { event.target.complete() });
+      }
     },
     segmentChanged (e: CustomEvent) {
       this.segmentSelected = e.detail.value

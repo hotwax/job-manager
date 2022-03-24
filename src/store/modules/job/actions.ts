@@ -19,7 +19,7 @@ const actions: ActionTree<JobState, RootState> = {
     });
     if(enumIds.length <= 0) return enumIds.map((id: any) => state.enumIds[id]);
     const cachedEnum = payload.map((id: any) => state.enumIds[id]);
-    const resp = await JobService.fetchJobInformation({
+    const resp = await JobService.fetchJobDescription({
       "inputFields": {
         "enumId": enumIds,
         "enumId_op": "in"
