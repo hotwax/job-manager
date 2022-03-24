@@ -110,12 +110,12 @@
               <ion-item>
                 <ion-icon slot="start" :icon="sendOutline" />
                 <ion-label>{{ $t("Fulfillment status") }}</ion-label>
-                <ion-select value="fulfilled" :interface-options="customFulfillmentOptions" interface="popover">
+                <ion-select value="unshipped" :interface-options="customFulfillmentOptions" interface="popover">
                   <!-- TODO: commenting options for now, enable it once having support -->
-                  <!-- <ion-select-option value="unfulfilled">{{ $t("Unfulfilled") }}</ion-select-option>
-                  <ion-select-option value="partially-fulfilled">{{ $t("Partally fulfilled") }}</ion-select-option>
-                  <ion-select-option value="on-hold">{{ $t("On hold") }}</ion-select-option> -->
-                  <ion-select-option value="fulfilled">{{ $t("Fulfilled") }}</ion-select-option>
+                  <ion-select-option value="unshipped">{{ $t("Unfulfilled") }}</ion-select-option>
+                  <!-- <ion-select-option value="partially-fulfilled">{{ $t("Partally fulfilled") }}</ion-select-option>
+                  <ion-select-option value="on-hold">{{ $t("On hold") }}</ion-select-option>
+                  <ion-select-option value="fulfilled">{{ $t("Fulfilled") }}</ion-select-option> -->
                 </ion-select>
               </ion-item>
 
