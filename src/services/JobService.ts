@@ -7,6 +7,13 @@ const fetchJobInformation = async (payload: any): Promise <any>  => {
     data: payload
   });
 }
+const fetchJobDescription = async (payload: any): Promise <any>  => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  });
+}
 
 const updateJob = async (payload: any): Promise <any>  => {
   return api({
@@ -34,6 +41,7 @@ const fetchTemporalExpression = async (payload: any): Promise <any>  => {
 
 
 export const JobService = {
+  fetchJobDescription,
   fetchJobInformation,
   fetchTemporalExpression,
   updateJob,
