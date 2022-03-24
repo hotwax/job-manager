@@ -111,6 +111,7 @@ import {
 import { defineComponent } from 'vue';
 import { useStore } from "@/store";
 import { mapGetters } from "vuex";
+import { DateTime } from 'luxon';
 
 export default defineComponent({
   name: 'PreOrder',
@@ -177,7 +178,8 @@ export default defineComponent({
       const payload = {
         'jobId': job.jobId,
         'systemJobEnumId': id,
-        'statusId': checked ? "SERVICE_PENDING" : "SERVICE_CANCELLED"
+        'statusId': checked ? "SERVICE_PENDING" : "SERVICE_CANCELLED",
+        'timeZone': DateTime.now().zoneName
       } as any
       if (!checked) {
         this.store.dispatch('job/updateJob', payload)
@@ -198,7 +200,7 @@ export default defineComponent({
         payload['shopifyConfigId'] = this.shopifyConfigId
 
         // checking if the runTimeData has productStoreId, and if present then adding it on root level
-        job.runTimeData['productStoreId']?.length >= 0 && (payload['productStoreId'] = this.currentEComStore.productStoreId)
+        job?.runTimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.currentEComStore.productStoreId)
 
         this.store.dispatch('job/scheduleService', {...job.runTimeData, ...payload})
       } else if (job?.status === 'SERVICE_PENDING') {

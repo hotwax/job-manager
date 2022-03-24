@@ -70,6 +70,7 @@ import {
 import { defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
 import JobDetail from '@/components/JobDetail.vue'
+import { DateTime } from 'luxon';
 
 export default defineComponent({
   name: 'Inventory',
@@ -139,7 +140,8 @@ export default defineComponent({
       const payload = {
         'jobId': job.jobId,
         'systemJobEnumId': id,
-        'statusId': checked ? "SERVICE_PENDING" : "SERVICE_CANCELLED"
+        'statusId': checked ? "SERVICE_PENDING" : "SERVICE_CANCELLED",
+        'timeZone': DateTime.now().zoneName
       } as any
       if (!checked) {
         this.store.dispatch('job/updateJob', payload)
@@ -159,7 +161,10 @@ export default defineComponent({
         }
         payload['shopifyConfigId'] = this.shopifyConfigId
 
-        this.store.dispatch('job/scheduleService', payload)
+        // checking if the runTimeData has productStoreId, and if present then adding it on root level
+        job?.runTimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.currentEComStore.productStoreId)
+
+        this.store.dispatch('job/scheduleService', {...job.runTimeData, ...payload})
       } else if (job?.status === 'SERVICE_PENDING') {
         payload['tempExprId'] = 'DAILY'
         payload['jobId'] = job.id
