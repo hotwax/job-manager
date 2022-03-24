@@ -220,7 +220,7 @@ export default defineComponent({
     viewJobConfiguration(label: string, id: string) {
       this.currentSelectedJobModal = label;
       this.job = this.getJob(id);
-      if(this.job?.runtimeData?.sinceId.length >= 0) {
+      if(this.job?.runtimeData?.sinceId?.length >= 0) {
         this.lastShopifyOrderId = this.job.runtimeData.sinceId
       }
     },
@@ -264,11 +264,10 @@ export default defineComponent({
           'systemJobEnumId': job.systemJobEnumId,
           'tempExprId': job.tempExprId,
           'parentJobId': job.parentJobId,
-          'runAsUser': '', // default system, but empty in run now
           'recurrenceTimeZone': DateTime.now().zoneName
         }
         payload['shopifyConfigId'] = this.shopifyConfigId
-        payload['sinceId'] = this.lastShopifyOrderId
+        this.lastShopifyOrderId && (payload['sinceId'] = this.lastShopifyOrderId)
 
         // checking if the runtimeData has productStoreId, and if present then adding it on root level
         job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.currentEComStore.productStoreId)
@@ -277,6 +276,7 @@ export default defineComponent({
         payload['tempExprId'] = job.tempExprId
         payload['jobId'] = job.id
         payload['runTime'] = job.runTime
+        this.lastShopifyOrderId && (payload['sinceId'] = this.lastShopifyOrderId)
 
         this.store.dispatch('job/updateJob', payload)
       }
