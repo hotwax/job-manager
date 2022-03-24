@@ -9,13 +9,17 @@
       <ion-item>
         <ion-icon slot="start" :icon="calendarClearOutline" />
         <ion-label>{{ $t("Last run") }}</ion-label>
-        <ion-label slot="end">{{ job?.lastUpdatedStamp ? getTime(job.lastUpdatedStamp) : 'No previous occurrence' }}</ion-label>
+        <ion-label slot="end">{{ job?.lastUpdatedStamp ? getTime(job.lastUpdatedStamp) : $t('No previous occurrence') }}</ion-label>
       </ion-item>
 
       <ion-item>
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label>{{ $t("Run time") }}</ion-label>
-        <ion-label id="open-run-time-modal" slot="end">{{ job?.runTime ? getTime(job.runTime) : 'Select run time' }}</ion-label>
+        <ion-label id="open-run-time-modal" slot="end">{{ job?.runTime ? getTime(job.runTime) : $t('Select run time') }}</ion-label>
+        <!-- TODO: display a button when we are not having a runtime and open the datetime component
+        on click of that button
+        Currently, when mapping the same datetime component for label and button so it's not working so for
+        now commented the button and added a fallback string -->
         <!-- <ion-button id="open-run-time-modal" size="small" fill="outline" color="medium" v-show="!job?.runTime">{{ $t("Select run time") }}</ion-button> -->
         <ion-modal trigger="open-run-time-modal">
           <ion-content force-overscroll="false">
