@@ -19,25 +19,25 @@
               <ion-label>{{ $t("Realtime webhook") }}</ion-label>
               <ion-toggle color="secondary" slot="end" />
             </ion-item>
-            <ion-item>
+            <ion-item @click="viewJobConfiguration(jobEnums['IMP_NEW_ORDERS'], 'New orders', getJobStatus(this.jobEnums['IMP_NEW_ORDERS']))" detail button>
               <ion-label>{{ $t("New orders") }}</ion-label>
-              <DurationPopover :id="jobEnums['IMP_NEW_ORDERS']" />
+              <ion-label slot="end">{{ getTemporalExpression('IMP_NEW_ORDERS') }}</ion-label>
             </ion-item>
-            <ion-item>
+            <ion-item @click="viewJobConfiguration(jobEnums['IMP_CANCELLED_ORDERS'], 'Cancelled orders', getJobStatus(this.jobEnums['IMP_CANCELLED_ORDERS']))" detail button>
               <ion-label>{{ $t("Cancelled orders") }}</ion-label>
-              <DurationPopover :id="jobEnums['IMP_CANCELLED_ORDERS']" />
+              <ion-label slot="end">{{ getTemporalExpression('IMP_CANCELLED_ORDERS') }}</ion-label>
             </ion-item>
-            <ion-item>
+            <ion-item @click="viewJobConfiguration(jobEnums['IMP_CANCELLED_ITEMS'], 'Cancelled items', getJobStatus(this.jobEnums['IMP_CANCELLED_ITEMS']))" detail button>
               <ion-label>{{ $t("Cancelled items") }}</ion-label>
-              <DurationPopover :id="jobEnums['IMP_CANCELLED_ITEMS']" />
+              <ion-label slot="end">{{ getTemporalExpression('IMP_CANCELLED_ITEMS') }}</ion-label>
             </ion-item>
-            <ion-item>
+            <ion-item @click="viewJobConfiguration(jobEnums['IMP_PAYMENT_STATUS'], 'Payment status', getJobStatus(this.jobEnums['IMP_PAYMENT_STATUS']))" detail button>
               <ion-label>{{ $t("Payment status") }}</ion-label>
-              <DurationPopover :id="jobEnums['IMP_PAYMENT_STATUS']" />
+              <ion-label slot="end">{{ getTemporalExpression('IMP_PAYMENT_STATUS') }}</ion-label>
             </ion-item>
-            <ion-item>
+            <ion-item @click="viewJobConfiguration(jobEnums['IMP_RETURNS'], 'Returns', getJobStatus(this.jobEnums['IMP_RETURNS']))" detail button>
               <ion-label>{{ $t("Returns") }}</ion-label>
-              <DurationPopover :id="jobEnums['IMP_RETURNS']" />
+              <ion-label slot="end">{{ getTemporalExpression('IMP_RETURNS') }}</ion-label>
             </ion-item>
           </ion-card>
 
@@ -45,17 +45,17 @@
             <ion-card-header>
               <ion-card-title>{{ $t("Upload") }}</ion-card-title>
             </ion-card-header>
-            <ion-item>
+            <ion-item @click="viewJobConfiguration(jobEnums['UPLD_CMPLT_ORDRS'], 'Returns', getJobStatus(this.jobEnums['UPLD_CMPLT_ORDRS']))" detail button>
               <ion-label>{{ $t("Completed orders") }}</ion-label>
-              <DurationPopover :id="jobEnums['UPLD_CMPLT_ORDRS']" />
+              <ion-label slot="end">{{ getTemporalExpression('UPLD_CMPLT_ORDRS') }}</ion-label>
             </ion-item>
-            <ion-item>
+            <ion-item @click="viewJobConfiguration(jobEnums['UPLD_CNCLD_ORDRS'], 'Returns', getJobStatus(this.jobEnums['UPLD_CNCLD_ORDRS']))" detail button>
               <ion-label>{{ $t("Cancelled orders") }}</ion-label>
-              <DurationPopover :id="jobEnums['UPLD_CNCLD_ORDRS']" />
+              <ion-label slot="end">{{ getTemporalExpression('UPLD_CNCLD_ORDRS') }}</ion-label>
             </ion-item>
-            <ion-item>
+            <ion-item @click="viewJobConfiguration(jobEnums['UPLD_REFUNDS'], 'Returns', getJobStatus(this.jobEnums['UPLD_REFUNDS']))" detail button>
               <ion-label>{{ $t("Refunds") }}</ion-label>
-              <DurationPopover :id="jobEnums['UPLD_REFUNDS']" />
+              <ion-label slot="end">{{ getTemporalExpression('UPLD_REFUNDS') }}</ion-label>
             </ion-item>
           </ion-card>
 
@@ -95,13 +95,13 @@
             <ion-card-header>
               <ion-card-title>{{ $t("Routing") }}</ion-card-title>
             </ion-card-header>
-            <ion-item>
+            <ion-item @click="viewJobConfiguration(jobEnums['REJ_ORDR'], 'Returns', getJobStatus(this.jobEnums['REJ_ORDR']))" detail button>
               <ion-label>{{ $t("Rejected orders") }}</ion-label>
-              <DurationPopover :id="jobEnums['REJ_ORDR']" />
+              <ion-label slot="end">{{ getTemporalExpression('REJ_ORDR') }}</ion-label>
             </ion-item>
-            <ion-item>
+            <ion-item @click="viewJobConfiguration(jobEnums['UNFIL_ORDERS'], 'Returns', getJobStatus(this.jobEnums['UNFIL_ORDERS']))" detail button>
               <ion-label>{{ $t("Unfillable orders") }}</ion-label>
-              <DurationPopover :id="jobEnums['UNFIL_ORDERS']" />
+              <ion-label slot="end">{{ getTemporalExpression('UNFIL_ORDERS') }} </ion-label>
             </ion-item>
             <!-- TODO: env file entry UNFIL_ORDERS, run now as user with count 1-->
             <ion-item>
@@ -133,8 +133,8 @@
           </ion-card>
         </section>
 
-        <aside class="desktop-only">
-          <JobDetail />
+        <aside class="desktop-only" v-show="currentJob">
+          <JobDetail :title="title" :job="currentJob" :status="currentJobStatus" :key="currentJob"/>
         </aside>
       </main>
     </ion-content>
@@ -164,11 +164,11 @@ import {
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { addCircleOutline } from 'ionicons/icons';
-import DurationPopover from '@/components/DurationPopover.vue'
 import BatchModal from '@/components/BatchModal.vue';
 import { useStore } from "@/store";
 import { mapGetters } from "vuex";
 import JobDetail from '@/components/JobDetail.vue';
+import { DateTime } from 'luxon';
 
 export default defineComponent({
   name: 'Orders',
@@ -190,21 +190,23 @@ export default defineComponent({
     IonTitle,
     IonToggle,
     IonToolbar,
-    DurationPopover,
     JobDetail
   },
   data() {
     return {
       jobEnums: JSON.parse(process.env?.VUE_APP_ODR_JOB_ENUMS as string) as any,
+      currentJob: '',
+      title: 'New orders',
+      currentJobStatus: ''
     }
   },
   computed: {
     ...mapGetters({
-      order: 'job/getOrderInformation',
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
-      getShopifyConfigId: 'user/getShopifyConfigId',
-      getCurrentEComStore: 'user/getCurrentEComStore'
+      shopifyConfigId: 'user/getShopifyConfigId',
+      currentEComStore: 'user/getCurrentEComStore',
+      getTemporalExpr: 'job/getTemporalExpr'
     })
   },
   methods: {
@@ -225,34 +227,56 @@ export default defineComponent({
 
       // TODO: check for parentJobId and jobEnum and handle this values properly
       const payload = {
-        ...job,
+        'jobId': job.jobId,
         'systemJobEnumId': id,
-        'statusId': checked ? "SERVICE_PENDING" : "SERVICE_CANCELLED"
+        'statusId': checked ? "SERVICE_PENDING" : "SERVICE_CANCELLED",
+        'timeZone': DateTime.now().zoneName
       } as any
       if (!checked) {
         this.store.dispatch('job/updateJob', payload)
       } else if (job?.status === 'SERVICE_DRAFT') {
-        payload['SERVICE_FREQUENCY'] = 'HOURLY'
+        payload['JOB_NAME'] = job.jobName
         payload['SERVICE_NAME'] = job.serviceName
-        payload['count'] = -1
-        payload['runAsSystem'] = true
-        payload['shopifyConfigId'] = this.getShopifyConfigId
-        payload['productStoreId'] = this.getCurrentEComStore.productStoreId
+        payload['SERVICE_TIME'] = job.runTime.toString()
+        payload['SERVICE_COUNT'] = '0'
+        payload['jobFields'] = {
+          'productStoreId': this.currentEComStore.productStoreId,
+          'systemJobEnumId': job.systemJobEnumId,
+          'tempExprId': 'DAILY',
+          'maxRecurrenceCount': '-1',
+          'parentJobId': job.parentJobId,
+          'runAsUser': 'system', // default system, but empty in run now
+          'recurrenceTimeZone': ''
+        }
+        payload['shopifyConfigId'] = this.shopifyConfigId
 
-        this.store.dispatch('job/scheduleService', payload)
+        // checking if the runTimeData has productStoreId, and if present then adding it on root level
+        job?.runTimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.currentEComStore.productStoreId)
+
+        this.store.dispatch('job/scheduleService', {...job.runTimeData, ...payload})
       } else if (job?.status === 'SERVICE_PENDING') {
-        payload['tempExprId'] = 'HOURLY'
+        payload['tempExprId'] = 'DAILY'
         payload['jobId'] = job.id
 
         this.store.dispatch('job/updateJob', payload)
       }
+    },
+    viewJobConfiguration(enumId: string, title: string, status: string) {
+      this.currentJob = this.getJob(enumId)
+      this.title = title
+      this.currentJobStatus = status
+    },
+    getTemporalExpression(enumId: string) {
+      return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
+        this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
+        this.$t('Disabled')
     }
   },
-  mounted () { 
+  mounted () {
     this.store.dispatch("job/fetchJobs", {
       "inputFields":{
-        "serviceName": Object.values(this.jobEnums),
-        "serviceName_op": "in"
+        "systemJobEnumId": Object.values(this.jobEnums),
+        "systemJobEnumId_op": "in"
       }
     });
   },

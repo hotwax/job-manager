@@ -14,19 +14,23 @@
             <ion-card-header>
               <ion-card-title>{{ $t("Sync") }}</ion-card-title>
             </ion-card-header>
-            <ion-item>
+            <ion-item button @click="viewJobConfiguration(jobEnums['IMP_PRDTS'], 'Import products', getJobStatus(this.jobEnums['IMP_PRDTS']))" detail>
               <ion-label>{{ $t("Import products") }}</ion-label>
-              <ProductDurationPopover :id="jobEnums['IMP_PRDTS']"/>
+              <ion-label slot="end">{{ getTemporalExpression('IMP_PRDTS') }}</ion-label>
             </ion-item>
-            <ion-item>
+            <ion-item button @click="viewJobConfiguration(jobEnums['SYNC_PRDTS'], 'Sync products', getJobStatus(this.jobEnums['SYNC_PRDTS']))" detail>
               <ion-label>{{ $t("Sync products") }}</ion-label>
-              <ProductDurationPopover :id="jobEnums['SYNC_PRDTS']"/>
+              <ion-label slot="end">{{ getTemporalExpression('SYNC_PRDTS') }} </ion-label>
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap"><p>{{ $t("Sync products and category structures from Shopify into HotWax Commerce and keep them up to date.") }}</p></ion-label>
             </ion-item>
           </ion-card>
         </section>
+
+        <aside class="desktop-only" v-show="currentJob">
+          <JobDetail :title="title" :job="currentJob" :status="currentJobStatus" type="slow" :key="currentJob"/>
+        </aside>
       </main>
     </ion-content>
   </ion-page>
@@ -47,8 +51,8 @@ import {
   IonToolbar
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
-import ProductDurationPopover from '@/components/ProductDurationPopover.vue'
-import { useStore } from 'vuex';
+import { mapGetters, useStore } from 'vuex';
+import JobDetail from '@/components/JobDetail.vue'
 
 export default defineComponent({
   name: 'Product',
@@ -64,25 +68,47 @@ export default defineComponent({
     IonPage,
     IonTitle,
     IonToolbar,
-    ProductDurationPopover
+    JobDetail
+  },
+  computed: {
+    ...mapGetters({
+      getJobStatus: 'job/getJobStatus',
+      getTemporalExpr: 'job/getTemporalExpr',
+      getJob: 'job/getJob'
+    }),
   },
   data() {
     return {
       jobEnums: JSON.parse(process.env?.VUE_APP_PRD_JOB_ENUMS as string) as any,
+      currentJob: '',
+      title: 'Import products',
+      currentJobStatus: ''
     }
   },
   mounted () {
     this.store.dispatch("job/fetchJobs", {
       "inputFields":{
-        "serviceName": Object.values(this.jobEnums),
-        "serviceName_op": "in"
+        "systemJobEnumId": Object.values(this.jobEnums),
+        "systemJobEnumId_op": "in"
       }
     });
   },
+  methods: {
+    viewJobConfiguration(enumId: string, title: string, status: string) {
+      this.currentJob = this.getJob(enumId)
+      this.title = title
+      this.currentJobStatus = status
+    },
+    getTemporalExpression(enumId: string) {
+      return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
+        this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
+        this.$t('Disabled')
+    }
+  },
   setup() {
     const customPopoverOptions: any = {
-    header: 'Schedule product sync',
-    showBackdrop: false
+      header: 'Schedule product sync',
+      showBackdrop: false
     }
     const store = useStore();
     return {

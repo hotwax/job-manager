@@ -18,6 +18,10 @@
               <ion-label>{{ $t("Automatically list pre-order") }}</ion-label>
               <ion-toggle :checked="automaticallyListPreOrder" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['LIST_PRE_ORDER'])" />
             </ion-item>
+            <ion-item>
+              <ion-label>{{ $t("Automatically list back-order") }}</ion-label>
+              <ion-toggle :checked="automaticallyListBackOrder" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['LIST_BACK_ORDER'])" />
+            </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap"><p>{{ $t("This will automatically list items from purchase orders for preorder when stock runs out.") }}</p></ion-label>
             </ion-item>
@@ -60,20 +64,17 @@
             <ion-card-header>
               <ion-card-title>{{ $t("Sync") }}</ion-card-title>
             </ion-card-header>
-            <!-- TODO: env file entry = ADD_PRODR_TG_SHPFY -->
             <ion-item>
               <ion-label>{{ $t("Auto add pre-order tag in Shopify") }}</ion-label>
-              <ion-checkbox slot="end" />
+              <ion-checkbox :checked="addPreOrderTagInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_PRODR_TG_SHPFY'])" />
             </ion-item>
-            <!-- TODO: env file entry = REMV_ODR_TG_SHPFY -->
             <ion-item>
               <ion-label>{{ $t("Auto remove tags in Shopify") }}</ion-label>
-              <ion-checkbox slot="end" />
+              <ion-checkbox :checked="removeTagInShopify" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['REMV_ODR_TG_SHPFY'])"/>
             </ion-item>
-            <!-- TODO: env file entry = ADD_SHPG_DTE_SHPFY -->
             <ion-item>
               <ion-label>{{ $t("Add shipping dates in Shopify") }}</ion-label>
-              <ion-checkbox slot="end" />
+              <ion-checkbox :checked="addShippingDateInShopify" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_SHPG_DTE_SHPFY'])"/>
             </ion-item>
             <!-- TODO: run all sync jobs with time diff of 2 mins and run now and count: 1 -->
             <ion-item>
@@ -110,6 +111,7 @@ import {
 import { defineComponent } from 'vue';
 import { useStore } from "@/store";
 import { mapGetters } from "vuex";
+import { DateTime } from 'luxon';
 
 export default defineComponent({
   name: 'PreOrder',
@@ -133,11 +135,27 @@ export default defineComponent({
     ...mapGetters({
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
-      getShopifyConfigId: 'user/getShopifyConfigId',
-      getCurrentEComStore: 'user/getCurrentEComStore'
+      shopifyConfigId: 'user/getShopifyConfigId',
+      currentEComStore: 'user/getCurrentEComStore'
     }),
     automaticallyListPreOrder(): boolean {
       const status = this.getJobStatus(this.jobEnums["LIST_PRE_ORDER"]);
+      return status && status !== "SERVICE_DRAFT";
+    },
+    automaticallyListBackOrder(): boolean {
+      const status = this.getJobStatus(this.jobEnums["LIST_BACK_ORDER"]);
+      return status && status !== "SERVICE_DRAFT";
+    },
+    addPreOrderTagInShopify(): boolean {
+      const status = this.getJobStatus(this.jobEnums["ADD_PRODR_TG_SHPFY"]);
+      return status && status !== "SERVICE_DRAFT";
+    },
+    removeTagInShopify(): boolean {
+      const status = this.getJobStatus(this.jobEnums["REMV_ODR_TG_SHPFY"]);
+      return status && status !== "SERVICE_DRAFT";
+    },
+    addShippingDateInShopify(): boolean {
+      const status = this.getJobStatus(this.jobEnums["ADD_SHPG_DTE_SHPFY"]);
       return status && status !== "SERVICE_DRAFT";
     }
   },
@@ -158,23 +176,35 @@ export default defineComponent({
 
       // TODO: check for parentJobId and jobEnum and handle this values properly
       const payload = {
-        ...job,
+        'jobId': job.jobId,
         'systemJobEnumId': id,
-        'statusId': checked ? "SERVICE_PENDING" : "SERVICE_CANCELLED"
+        'statusId': checked ? "SERVICE_PENDING" : "SERVICE_CANCELLED",
+        'timeZone': DateTime.now().zoneName
       } as any
       if (!checked) {
         this.store.dispatch('job/updateJob', payload)
       } else if (job?.status === 'SERVICE_DRAFT') {
-        payload['SERVICE_FREQUENCY'] = 'HOURLY'
+        payload['JOB_NAME'] = job.jobName
         payload['SERVICE_NAME'] = job.serviceName
-        payload['count'] = -1
-        payload['runAsSystem'] = true
-        payload['shopifyConfigId'] = this.getShopifyConfigId
-        payload['productStoreId'] = this.getCurrentEComStore.productStoreId
+        payload['SERVICE_TIME'] = job.runTime.toString()
+        payload['SERVICE_COUNT'] = '0'
+        payload['jobFields'] = {
+          'productStoreId': this.currentEComStore.productStoreId,
+          'systemJobEnumId': job.systemJobEnumId,
+          'tempExprId': 'EVERY_15_MIN',
+          'maxRecurrenceCount': '-1',
+          'parentJobId': job.parentJobId,
+          'runAsUser': 'system', // default system, but empty in run now
+          'recurrenceTimeZone': ''
+        }
+        payload['shopifyConfigId'] = this.shopifyConfigId
 
-        this.store.dispatch('job/scheduleService', payload)
+        // checking if the runTimeData has productStoreId, and if present then adding it on root level
+        job?.runTimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.currentEComStore.productStoreId)
+
+        this.store.dispatch('job/scheduleService', {...job.runTimeData, ...payload})
       } else if (job?.status === 'SERVICE_PENDING') {
-        payload['tempExprId'] = 'HOURLY'
+        payload['tempExprId'] = 'EVERY_15_MIN'
         payload['jobId'] = job.id
 
         this.store.dispatch('job/updateJob', payload)
@@ -184,8 +214,8 @@ export default defineComponent({
   mounted () {
     this.store.dispatch("job/fetchJobs", {
       "inputFields":{
-        "serviceName": Object.values(this.jobEnums),
-        "serviceName_op": "in"
+        "systemJobEnumId": Object.values(this.jobEnums),
+        "systemJobEnumId_op": "in"
       }
     });
   },

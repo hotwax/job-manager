@@ -5,6 +5,7 @@ import * as types from './mutation-types'
 import { hasError, showToast } from '@/utils'
 import { JobService } from '@/services/JobService'
 import { translate } from '@/i18n'
+import { DateTime } from 'luxon';
 
 const actions: ActionTree<JobState, RootState> = {
 
@@ -133,7 +134,7 @@ const actions: ActionTree<JobState, RootState> = {
     });
     if(tempIds.length <= 0) return tempExprIds.map((id: any) => state.temporalExp[id]);
     const cachedTempExpr = tempExprIds.map((id: any) => state.temporalExp[id]);
-    const resp = await JobService.fetchJobInformation({
+    const resp = await JobService.fetchTemporalExpression({
         "inputFields": {
         "tempExprId": tempIds,
         "temoExprId_op": "in"
@@ -148,7 +149,7 @@ const actions: ActionTree<JobState, RootState> = {
     return resp;
   },
   
-  async fetchJobs ({ state, commit }, payload) {
+  async fetchJobs ({ state, commit, dispatch }, payload) {
     const resp = await JobService.fetchJobInformation({
       "inputFields":{
         "statusId": ['SERVICE_DRAFT', 'SERVICE_PENDING'],
@@ -162,7 +163,7 @@ const actions: ActionTree<JobState, RootState> = {
       const cached = JSON.parse(JSON.stringify(state.cached));
 
       resp.data.docs.filter((job: any) => job.statusId === 'SERVICE_PENDING').map((job: any) => {
-        return cached[job.serviceName] = {
+        return cached[job.systemJobEnumId] = {
           ...job,
           id: job.jobId,
           frequency: job.tempExprId,
@@ -172,14 +173,18 @@ const actions: ActionTree<JobState, RootState> = {
       })  
 
       resp.data.docs.filter((job: any) => job.statusId === 'SERVICE_DRAFT').map((job: any) => {
-        return cached[job.serviceName] = cached[job.serviceName] ? cached[job.serviceName] : {
+        return cached[job.systemJobEnumId] = cached[job.systemJobEnumId] ? cached[job.systemJobEnumId] : {
           ...job,
           id: job.jobId,
           frequency: job.tempExprId,
           enumId: job.systemJobEnumId,
           status: job.statusId
         }
-      })
+      });
+
+      // fetching temp expressions
+      const tempExpr = Object.values(cached).map((job: any) => job.tempExprId)
+      await dispatch('fetchTemporalExpression', tempExpr)
 
       commit(types.JOB_UPDATED_BULK, cached);
     }
@@ -203,7 +208,36 @@ const actions: ActionTree<JobState, RootState> = {
 
   clearPendingJobs({commit}) {
     commit(types.JOB_PENDING_UPDATED, { });
-  }
+  },
 
+  async skipJob({ commit, getters }, job) {
+    let skipTime = {};
+    const integer1 = getters['getTemporalExpr'](job.tempExprId).integer1;
+    const integer2 = getters['getTemporalExpr'](job.tempExprId).integer2
+    if(integer1 === 12) {
+      skipTime = { minutes: integer2 }
+    } else if (integer1 === 10) {
+      skipTime = { hours: integer2 }
+    } else if (integer1 === 5) {
+      skipTime = { days: integer2 }
+    } else {
+      showToast(translate("This job schedule cannot be skipped"));
+      return;
+    }
+    const time = DateTime.fromMillis(job.runTime).diff(DateTime.local()).plus(skipTime);
+    const updatedRunTime = time.toMillis() + DateTime.local().toMillis()
+    const payload = {
+      'jobId': job.jobId,
+      'runTime': updatedRunTime,
+      'systemJobEnumId': job.systemJobEnumId,
+      'statusId': "SERVICE_PENDING"
+    } as any
+
+    const resp = await JobService.updateJob(payload)
+    if (resp.status === 200 && !hasError(resp) && resp.data.docs) {
+      commit(types.JOB_UPDATED, { job });
+    }
+    return resp;
+  }
 }
 export default actions;

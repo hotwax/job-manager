@@ -198,28 +198,7 @@ export default defineComponent({
             {
               text: this.$t('Skip'),
               handler: async () => {
-                let skipTime = {};
-                const integer1 = this.temporalExpr(job.tempExprId).integer1;
-                const integer2 = this.temporalExpr(job.tempExprId).integer2
-                if(integer1 === 12) {
-                  skipTime = { minutes: integer2 }
-                } else if (integer1 === 10) {
-                  skipTime = { hours: integer2 }
-                } else if (integer1 === 5) {
-                  skipTime = { days: integer2 }
-                } else {
-                  showToast(translate("This job schedule cannot be skipped"));
-                  return ;
-                }
-                const time =  DateTime.fromMillis(job.runTime).diff(DateTime.local()).plus(skipTime);  
-                const updatedRunTime = time.toMillis() + DateTime.local().toMillis()
-                const payload = {
-                  'jobId': job.jobId,
-                  'runTime': updatedRunTime,
-                  'systemJobEnumId': job.systemJobEnumId,
-                  'statusId': "SERVICE_PENDING"
-                } as any
-                await this.store.dispatch('job/updateJob', payload);
+                await this.store.dispatch('job/skipJob', job);
                 await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewIndex: 0})
               },
             }
