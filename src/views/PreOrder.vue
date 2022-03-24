@@ -64,20 +64,17 @@
             <ion-card-header>
               <ion-card-title>{{ $t("Sync") }}</ion-card-title>
             </ion-card-header>
-            <!-- TODO: env file entry = ADD_PRODR_TG_SHPFY -->
             <ion-item>
               <ion-label>{{ $t("Auto add pre-order tag in Shopify") }}</ion-label>
-              <ion-checkbox slot="end" />
+              <ion-checkbox :checked="addPreOrderTagInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_PRODR_TG_SHPFY'])" />
             </ion-item>
-            <!-- TODO: env file entry = REMV_ODR_TG_SHPFY -->
             <ion-item>
               <ion-label>{{ $t("Auto remove tags in Shopify") }}</ion-label>
-              <ion-checkbox slot="end" />
+              <ion-checkbox :checked="removeTagInShopify" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['REMV_ODR_TG_SHPFY'])"/>
             </ion-item>
-            <!-- TODO: env file entry = ADD_SHPG_DTE_SHPFY -->
             <ion-item>
               <ion-label>{{ $t("Add shipping dates in Shopify") }}</ion-label>
-              <ion-checkbox slot="end" />
+              <ion-checkbox :checked="addShippingDateInShopify" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_SHPG_DTE_SHPFY'])"/>
             </ion-item>
             <!-- TODO: run all sync jobs with time diff of 2 mins and run now and count: 1 -->
             <ion-item>
@@ -137,8 +134,8 @@ export default defineComponent({
     ...mapGetters({
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
-      getShopifyConfigId: 'user/getShopifyConfigId',
-      getCurrentEComStore: 'user/getCurrentEComStore'
+      shopifyConfigId: 'user/getShopifyConfigId',
+      currentEComStore: 'user/getCurrentEComStore'
     }),
     automaticallyListPreOrder(): boolean {
       const status = this.getJobStatus(this.jobEnums["LIST_PRE_ORDER"]);
@@ -146,6 +143,18 @@ export default defineComponent({
     },
     automaticallyListBackOrder(): boolean {
       const status = this.getJobStatus(this.jobEnums["LIST_BACK_ORDER"]);
+      return status && status !== "SERVICE_DRAFT";
+    },
+    addPreOrderTagInShopify(): boolean {
+      const status = this.getJobStatus(this.jobEnums["ADD_PRODR_TG_SHPFY"]);
+      return status && status !== "SERVICE_DRAFT";
+    },
+    removeTagInShopify(): boolean {
+      const status = this.getJobStatus(this.jobEnums["REMV_ODR_TG_SHPFY"]);
+      return status && status !== "SERVICE_DRAFT";
+    },
+    addShippingDateInShopify(): boolean {
+      const status = this.getJobStatus(this.jobEnums["ADD_SHPG_DTE_SHPFY"]);
       return status && status !== "SERVICE_DRAFT";
     }
   },
@@ -166,23 +175,31 @@ export default defineComponent({
 
       // TODO: check for parentJobId and jobEnum and handle this values properly
       const payload = {
-        ...job,
+        'jobId': job.jobId,
         'systemJobEnumId': id,
         'statusId': checked ? "SERVICE_PENDING" : "SERVICE_CANCELLED"
       } as any
       if (!checked) {
         this.store.dispatch('job/updateJob', payload)
       } else if (job?.status === 'SERVICE_DRAFT') {
-        payload['SERVICE_FREQUENCY'] = 'HOURLY'
+        payload['JOB_NAME'] = job.jobName
         payload['SERVICE_NAME'] = job.serviceName
-        payload['count'] = -1
-        payload['runAsSystem'] = true
-        payload['shopifyConfigId'] = this.getShopifyConfigId
-        payload['productStoreId'] = this.getCurrentEComStore.productStoreId
+        payload['SERVICE_TIME'] = job.runTime.toString()
+        payload['SERVICE_COUNT'] = '0'
+        payload['jobFields'] = {
+          'productStoreId': this.currentEComStore.productStoreId,
+          'systemJobEnumId': job.systemJobEnumId,
+          'tempExprId': 'EVERY_15_MIN',
+          'maxRecurrenceCount': '-1',
+          'parentJobId': job.parentJobId,
+          'runAsUser': 'system', // default system, but empty in run now
+          'recurrenceTimeZone': ''
+        }
+        payload['shopifyConfigId'] = this.shopifyConfigId
 
         this.store.dispatch('job/scheduleService', payload)
       } else if (job?.status === 'SERVICE_PENDING') {
-        payload['tempExprId'] = 'HOURLY'
+        payload['tempExprId'] = 'EVERY_15_MIN'
         payload['jobId'] = job.id
 
         this.store.dispatch('job/updateJob', payload)
