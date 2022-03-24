@@ -141,7 +141,7 @@ export default defineComponent({
         'jobId': job.jobId,
         'systemJobEnumId': id,
         'statusId': checked ? "SERVICE_PENDING" : "SERVICE_CANCELLED",
-        'timeZone': DateTime.now().zoneName
+        'recurrenceTimeZone': DateTime.now().zoneName
       } as any
       if (!checked) {
         this.store.dispatch('job/updateJob', payload)
@@ -157,7 +157,7 @@ export default defineComponent({
           'maxRecurrenceCount': '-1',
           'parentJobId': job.parentJobId,
           'runAsUser': 'system', // default system, but empty in run now
-          'recurrenceTimeZone': ''
+          'recurrenceTimeZone': DateTime.now().zoneName
         }
         payload['shopifyConfigId'] = this.shopifyConfigId
 
