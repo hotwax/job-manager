@@ -105,7 +105,7 @@
             </ion-item>
             <!-- TODO: env file entry UNFIL_ORDERS, run now as user with count 1-->
             <ion-item>
-              <ion-button fill="outline" color="warning">{{ $t("Route unfillable orders now") }}</ion-button>
+              <ion-button fill="outline" color="warning" @click="runJob('Route unfillable orders now')">{{ $t("Route unfillable orders now") }}</ion-button>
             </ion-item>
             <ion-item>
               <ion-label>{{ $t("Batch broker orders") }}</ion-label>
@@ -143,6 +143,7 @@
 
 <script lang="ts">
 import {
+  alertController,
   IonButton,
   IonCard,
   IonCardHeader,
@@ -270,6 +271,24 @@ export default defineComponent({
       return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
         this.$t('Disabled')
+    },
+    async runJob(header: string) {
+      const jobAlert = await alertController
+        .create({
+          header,
+          message: this.$t('This job will be scheduled to run as soon as possible. There may not be enough time to revert this action.', {space: '<br/><br/>'}),
+          buttons: [
+            {
+              text: this.$t("Cancel"),
+              role: 'cancel',
+            },
+            {
+              text: this.$t('Run now')
+            }
+          ]
+        });
+
+      return jobAlert.present();
     }
   },
   mounted () {
