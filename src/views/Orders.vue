@@ -249,8 +249,7 @@ export default defineComponent({
         this.store.dispatch('job/updateJob', payload)
       }
     },
-
-    async view() {
+    view() {
       const asideAnimation = createAnimation()
         .addElement(document.querySelector('aside') as Element)
         .duration(1500)
