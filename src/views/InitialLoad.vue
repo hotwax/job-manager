@@ -37,7 +37,7 @@
           </ion-card>
         </section>
 
-        <aside>
+        <aside v-show="currentSelectedJobModal">
           <section v-show="currentSelectedJobModal === 'products'">
             <ion-item lines="none">
               <h1>{{ $t("Products") }}</h1>
