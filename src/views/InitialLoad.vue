@@ -37,11 +37,12 @@
           </ion-card>
         </section>
 
-        <aside>
+        <aside v-show="currentSelectedJobModal">
           <section v-show="currentSelectedJobModal === 'products'">
             <ion-item lines="none">
               <h1>{{ $t("Products") }}</h1>
-              <ion-badge slot="end" color="warning">running</ion-badge>
+              <!-- TODO: make the badges dynamic on the basis of job status -->
+              <!-- <ion-badge slot="end" color="warning">running</ion-badge> -->
             </ion-item>
 
             <ion-list>
@@ -51,13 +52,14 @@
                 <ion-label slot="end">{{ job?.lastUpdatedStamp ? getTime(job.lastUpdatedStamp) : $t('No previous occurrence') }}</ion-label>
               </ion-item>
 
-              <ion-item>
+              <ion-item id="product-run-time-modal" button>
                 <ion-icon slot="start" :icon="timeOutline" />
                 <ion-label>{{ $t("Run time") }}</ion-label>
-                <ion-label id="open-product-run-time-modal" slot="end">{{ job?.runTime ? getTime(job.runTime) : $t('Select run time') }}</ion-label>
-                <ion-modal trigger="open-product-run-time-modal">
+                <ion-label slot="end">{{ job?.runTime ? getTime(job.runTime) : $t('Select run time') }}</ion-label>
+                <ion-modal trigger="product-run-time-modal">
                   <ion-content force-overscroll="false">
                     <ion-datetime
+                      :min="minDateTime"
                       :value="job?.runTime ? getDateTime(job.runTime) : ''"
                       @ionChange="updateRunTime($event, job)"
                     />
@@ -72,7 +74,8 @@
            <section v-show="currentSelectedJobModal === 'orders'">
             <ion-item lines="none">
               <h1>{{ $t("Orders") }}</h1>
-              <ion-badge slot="end" color="medium">pending</ion-badge>
+              <!-- TODO: make the badges dynamic on the basis of job status -->
+              <!-- <ion-badge slot="end" color="medium">pending</ion-badge> -->
             </ion-item>
 
             <ion-list>
@@ -82,13 +85,14 @@
                 <ion-label slot="end">{{ job?.lastUpdatedStamp ? getTime(job.lastUpdatedStamp) : $t('No previous occurrence') }}</ion-label>
               </ion-item>
 
-              <ion-item>
+              <ion-item id="order-run-time-modal" button>
                 <ion-icon slot="start" :icon="timeOutline" />
                 <ion-label>{{ $t("Run time") }}</ion-label>
-                <ion-label id="open-order-run-time-modal" slot="end">{{ job?.runTime ? getTime(job.runTime) : $t('Select run time') }}</ion-label>
-                <ion-modal trigger="open-order-run-time-modal">
+                <ion-label slot="end">{{ job?.runTime ? getTime(job.runTime) : $t('Select run time') }}</ion-label>
+                <ion-modal trigger="order-run-time-modal">
                   <ion-content force-overscroll="false">
                     <ion-datetime
+                      :min="minDateTime"
                       :value="job?.runTime ? getDateTime(job.runTime) : ''"
                       @ionChange="updateRunTime($event, job)"
                     />
@@ -136,7 +140,6 @@
 <script lang="ts">
 import {
   alertController,
-  IonBadge,
   IonButton,
   IonCard,
   IonCardHeader,
@@ -167,11 +170,11 @@ import {
 import { translate } from '@/i18n';
 import { DateTime } from 'luxon';
 import { mapGetters, useStore } from 'vuex';
+import { isValidDate } from '@/utils';
 
 export default defineComponent({
   name: 'InitialLoad',
   components: {
-    IonBadge,
     IonButton,
     IonCard,
     IonCardHeader,
@@ -197,7 +200,8 @@ export default defineComponent({
       jobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
       currentSelectedJobModal: '',
       job: {} as any,
-      lastShopifyOrderId: ''
+      lastShopifyOrderId: '',
+      minDateTime: DateTime.now().toISO()
     }
   },
   mounted () {
@@ -206,7 +210,7 @@ export default defineComponent({
         "systemJobEnumId": Object.values(this.jobEnums),
         "systemJobEnumId_op": "in"
       }
-    });
+    })
   },
   computed: {
     ...mapGetters({
@@ -221,7 +225,11 @@ export default defineComponent({
       this.currentSelectedJobModal = label;
       this.job = this.getJob(id);
       if(this.job?.runtimeData?.sinceId?.length >= 0) {
-        this.lastShopifyOrderId = this.job.runtimeData.sinceId
+        this.lastShopifyOrderId = this.job.runtimeData.sinceId !== 'null' ? this.job.runtimeData.sinceId : ''
+      }
+      // if job runTime is not a valid date then assigning current date to the runTime
+      if (this.job?.runTime && !isValidDate(this.job?.runTime)) {
+        this.job.runTime = DateTime.local().toMillis()
       }
     },
     async runJob(header: string, id: string) {
@@ -259,6 +267,7 @@ export default defineComponent({
         payload['SERVICE_NAME'] = job.serviceName
         payload['SERVICE_TIME'] = job.runTime.toString()
         payload['SERVICE_COUNT'] = '0'
+        payload['SERVICE_PRIORITY'] = job.priority.toString()
         payload['jobFields'] = {
           'productStoreId': this.currentEComStore.productStoreId,
           'systemJobEnumId': job.systemJobEnumId,
