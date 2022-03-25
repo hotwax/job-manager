@@ -228,7 +228,7 @@ export default defineComponent({
         this.lastShopifyOrderId = this.job.runtimeData.sinceId !== 'null' ? this.job.runtimeData.sinceId : ''
       }
       // if job runTime is not a valid date then assigning current date to the runTime
-      if (!isValidDate(this.job?.runTime)) {
+      if (this.job?.runTime && !isValidDate(this.job?.runTime)) {
         this.job.runTime = DateTime.local().toMillis()
       }
     },
@@ -267,7 +267,7 @@ export default defineComponent({
         payload['SERVICE_NAME'] = job.serviceName
         payload['SERVICE_TIME'] = job.runTime.toString()
         payload['SERVICE_COUNT'] = '0'
-        payload['SERVICE_PRIORITY'] = job.priority
+        payload['SERVICE_PRIORITY'] = job.priority.toString()
         payload['jobFields'] = {
           'productStoreId': this.currentEComStore.productStoreId,
           'systemJobEnumId': job.systemJobEnumId,
