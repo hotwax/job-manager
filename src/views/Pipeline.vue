@@ -55,7 +55,7 @@
           <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
             <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
           </ion-refresher>
-          <ion-infinite-scroll @ionInfinite="loadMorePendingJobs($event)" threshold="100px" :disabled="!isScrollable">
+          <ion-infinite-scroll @ionInfinite="loadMorePendingJobs($event)" threshold="100px" :disabled="!isPendingJobsScrollable">
             <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="$t('Loading')"/>
           </ion-infinite-scroll>
           
@@ -95,7 +95,7 @@
           <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
             <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
           </ion-refresher>
-          <ion-infinite-scroll @ionInfinite="loadMoreJobHistory($event)" threshold="100px" :disabled="!isScrollable">
+          <ion-infinite-scroll @ionInfinite="loadMoreJobHistory($event)" threshold="100px" :disabled="!isHistoryJobsScrollable">
             <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="$t('Loading')"/>
           </ion-infinite-scroll>
           
@@ -162,7 +162,8 @@ export default defineComponent({
       temporalExpr: 'job/getTemporalExpr',
       getDescription: 'job/getDescription',
       getCurrentEComStore:'user/getCurrentEComStore',
-      isScrollable: 'job/isScrollable'
+      isPendingJobsScrollable: 'job/isPendingJobsScrollable',
+      isHistoryJobsScrollable: 'job/isHistoryJobsScrollable'
     })
   },
   methods: {
