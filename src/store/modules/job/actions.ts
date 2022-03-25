@@ -196,7 +196,6 @@ const actions: ActionTree<JobState, RootState> = {
     try {
       resp = await JobService.updateJob(payload)
       if (resp.status === 200 && !hasError(resp) && resp.data.successMessage) {
-        commit(types.JOB_UPDATED, { job: payload});
         showToast(translate('Service updated successfully'))
         dispatch('fetchJobs', {
           inputFields: {
@@ -219,7 +218,6 @@ const actions: ActionTree<JobState, RootState> = {
     try {
       resp = await JobService.scheduleJob(payload);
       if (resp.status == 200 && !hasError(resp)) {
-        commit(types.JOB_UPDATED, { job: payload })
         showToast(translate('Service has been scheduled'))
         dispatch('fetchJobs', {
           inputFields: {
