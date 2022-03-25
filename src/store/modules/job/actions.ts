@@ -43,7 +43,8 @@ const actions: ActionTree<JobState, RootState> = {
       "inputFields": {
         "productStoreId": payload.eComStoreId,
         "statusId": ["SERVICE_CANCELLED", "SERVICE_CRASHED", "SERVICE_FAILED", "SERVICE_FINISHED"],
-        "statusId_op": "in"
+        "statusId_op": "in",
+        "systemJobEnumId_op": "not-empty"
       },
       "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName" ],
       "entityName": "JobSandbox",
@@ -87,6 +88,7 @@ const actions: ActionTree<JobState, RootState> = {
       "inputFields": {
         "productStoreId": payload.eComStoreId,
         "statusId": "SERVICE_PENDING",
+        "systemJobEnumId_op": "not-empty"
       },
       "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName" ],
       "entityName": "JobSandbox",
@@ -157,7 +159,8 @@ const actions: ActionTree<JobState, RootState> = {
         ...payload.inputFields
       },
       "entityName": "JobSandbox",
-      "noConditionFind": "Y"
+      "noConditionFind": "Y",
+      "viewSize": (payload.inputFields?.systemJobEnumId?.length * 2)
     })
     if (resp.status === 200 && !hasError(resp) && resp.data.docs) {
       const cached = JSON.parse(JSON.stringify(state.cached));
@@ -190,18 +193,46 @@ const actions: ActionTree<JobState, RootState> = {
     }
     return resp;
   },
-  async updateJob ({ commit }, payload) {
-    const resp = await JobService.updateJob(payload)
-    if (resp.status === 200 && !hasError(resp) && resp.data.docs) {
-      commit(types.JOB_UPDATED, { job: payload});
+  async updateJob ({ commit, dispatch }, payload) {
+    let resp;
+    try {
+      resp = await JobService.updateJob(payload)
+      if (resp.status === 200 && !hasError(resp) && resp.data.successMessage) {
+        showToast(translate('Service updated successfully'))
+        dispatch('fetchJobs', {
+          inputFields: {
+            'systemJobEnumId': payload.systemJobEnumId,
+            'systemJobEnumId_op': 'equals'
+          }
+        })
+      } else {
+        showToast(translate('Something went wrong'))
+      }
+    } catch (err) {
+      showToast(translate('Something went wrong'))
+      console.error(err)
     }
     return resp;
   },
 
-  async scheduleService({ commit }, payload) {
-    const resp = await JobService.scheduleJob(payload);
-    if (resp.status == 200 && !hasError(resp) && resp.data.docs) {
-      commit(types.JOB_UPDATED, { job: payload })
+  async scheduleService({ commit, dispatch }, payload) {
+    let resp;
+    try {
+      resp = await JobService.scheduleJob(payload);
+      if (resp.status == 200 && !hasError(resp)) {
+        showToast(translate('Service has been scheduled'))
+        dispatch('fetchJobs', {
+          inputFields: {
+            'systemJobEnumId': payload.systemJobEnumId,
+            'systemJobEnumId_op': 'equals'
+          }
+        })
+      } else {
+        showToast(translate('Something went wrong'))
+      }
+    } catch (err) {
+      showToast(translate('Something went wrong'))
+      console.error(err)
     }
     return resp;
   },
