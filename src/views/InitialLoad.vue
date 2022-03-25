@@ -52,11 +52,11 @@
                 <ion-label slot="end">{{ job?.lastUpdatedStamp ? getTime(job.lastUpdatedStamp) : $t('No previous occurrence') }}</ion-label>
               </ion-item>
 
-              <ion-item id="open-product-run-time-modal" button>
+              <ion-item id="product-run-time-modal" button>
                 <ion-icon slot="start" :icon="timeOutline" />
                 <ion-label>{{ $t("Run time") }}</ion-label>
                 <ion-label slot="end">{{ job?.runTime ? getTime(job.runTime) : $t('Select run time') }}</ion-label>
-                <ion-modal trigger="open-product-run-time-modal">
+                <ion-modal trigger="product-run-time-modal">
                   <ion-content force-overscroll="false">
                     <ion-datetime
                       :min="minDateTime"
@@ -85,11 +85,11 @@
                 <ion-label slot="end">{{ job?.lastUpdatedStamp ? getTime(job.lastUpdatedStamp) : $t('No previous occurrence') }}</ion-label>
               </ion-item>
 
-              <ion-item id="open-order-run-time-modal" button>
+              <ion-item id="order-run-time-modal" button>
                 <ion-icon slot="start" :icon="timeOutline" />
                 <ion-label>{{ $t("Run time") }}</ion-label>
                 <ion-label slot="end">{{ job?.runTime ? getTime(job.runTime) : $t('Select run time') }}</ion-label>
-                <ion-modal trigger="open-order-run-time-modal">
+                <ion-modal trigger="order-run-time-modal">
                   <ion-content force-overscroll="false">
                     <ion-datetime
                       :min="minDateTime"
