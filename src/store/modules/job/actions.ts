@@ -190,6 +190,7 @@ const actions: ActionTree<JobState, RootState> = {
       await dispatch('fetchTemporalExpression', tempExpr)
 
       commit(types.JOB_UPDATED_BULK, cached);
+      return cached;
     }
     return resp;
   },
@@ -199,12 +200,13 @@ const actions: ActionTree<JobState, RootState> = {
       resp = await JobService.updateJob(payload)
       if (resp.status === 200 && !hasError(resp) && resp.data.successMessage) {
         showToast(translate('Service updated successfully'))
-        dispatch('fetchJobs', {
+        const job = await dispatch('fetchJobs', {
           inputFields: {
             'systemJobEnumId': payload.systemJobEnumId,
             'systemJobEnumId_op': 'equals'
           }
         })
+        commit(types.JOB_CURRENT_UPDATED, job[payload.systemJobEnumId]);
       } else {
         showToast(translate('Something went wrong'))
       }
@@ -221,7 +223,7 @@ const actions: ActionTree<JobState, RootState> = {
       resp = await JobService.scheduleJob(payload);
       if (resp.status == 200 && !hasError(resp)) {
         showToast(translate('Service has been scheduled'))
-        dispatch('fetchJobs', {
+        await dispatch('fetchJobs', {
           inputFields: {
             'systemJobEnumId': payload.systemJobEnumId,
             'systemJobEnumId_op': 'equals'

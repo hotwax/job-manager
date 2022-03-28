@@ -134,7 +134,7 @@
         </section>
 
         <aside class="desktop-only" v-show="currentJob">
-          <JobDetail :title="title" :job="currentJob" :status="currentJobStatus" :key="currentJob"/>
+          <JobDetail :title="title" :status="currentJobStatus" :key="currentJob"/>
         </aside>
       </main>
     </ion-content>
@@ -266,6 +266,7 @@ export default defineComponent({
       this.currentJob = this.getJob(enumId)
       this.title = title
       this.currentJobStatus = status
+      this.store.dispatch('job/currentJobUpdated', this.currentJob)
     },
     getTemporalExpression(enumId: string) {
       return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
