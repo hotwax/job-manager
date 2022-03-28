@@ -269,6 +269,10 @@ const actions: ActionTree<JobState, RootState> = {
       commit(types.JOB_UPDATED, { job });
     }
     return resp;
+  },
+
+  async currentJobUpdated ({ commit }, payload) {
+    commit(types.JOB_CURRENT_UPDATED, payload)
   }
 }
 export default actions;

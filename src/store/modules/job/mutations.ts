@@ -33,6 +33,9 @@ const mutations: MutationTree <JobState> = {
               state.enumIds[enumId.enumId] = enumId.description
             });
         }
+    },
+    [types.JOB_CURRENT_UPDATED] (state, payload) {
+        state.current = payload;
     }
 }
 export default mutations;
