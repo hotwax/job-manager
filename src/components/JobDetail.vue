@@ -34,7 +34,7 @@
       <ion-item>
         <ion-icon slot="start" :icon="timerOutline" />
         <ion-label>{{ $t("Schedule") }}</ion-label>
-        <ion-select :interface-options="customPopoverOptions" interface="popover" :value="jobStatus" :placeholder="$t('Disabled')" @ionChange="($event) => jobStatus = $event['detail'].value">
+        <ion-select :interface-options="customPopoverOptions" interface="popover" :value="jobStatus" :placeholder="$t('Disabled')" @ionChange="($event) => {jobStatus = $event['detail'].value;   showAlert = true; }">
           <ion-select-option v-for="freq in generateFrequencyOptions" :key="freq.value" :value="freq.value">{{ $t(freq.label) }}</ion-select-option>
         </ion-select>
       </ion-item>
@@ -108,8 +108,34 @@ export default defineComponent({
   },
   data() {
     return {
-      jobStatus: this.status
+      jobStatus: this.status,
     }
+  },
+  watch:{
+   async $route(to, from, next){
+     if(this.showAlert) {
+        const alert = await alertController
+        .create({
+          header: this.$t('Discard changes'),
+          message: this.$t('All unsaved changes will be lost. Are you sure you want to leave this page.'),
+          buttons: [
+            {
+              text: this.$t("Cancel"),
+              role: 'cancel'
+            },
+            {
+              text: this.$t('Save'),
+              handler: async () => {
+                this.updateJob();
+                this.showAlert = false;
+                next(to);
+              },
+            }
+          ]
+        });
+      return alert.present();
+      }
+   }
   },
   props: ["job", "title", "status", "type"],
   computed: {
@@ -117,7 +143,8 @@ export default defineComponent({
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
       shopifyConfigId: 'user/getShopifyConfigId',
-      currentEComStore: 'user/getCurrentEComStore'
+      currentEComStore: 'user/getCurrentEComStore',
+      showAlert: 'job/getShowAlertBoolean'
     }),
     generateFrequencyOptions(): any {
       const optionDefault = [{
@@ -149,6 +176,7 @@ export default defineComponent({
       return (this as any).type === 'slow' ? slow : optionDefault;
     }
   },
+   
   methods: {
     getDateTime(time: any) {
       return DateTime.fromMillis(time)
@@ -166,6 +194,7 @@ export default defineComponent({
             handler: () => {
               if (job) {
                 this.store.dispatch('job/skipJob', job)
+                this.showAlert = false;
               }
             }
           }],
@@ -184,6 +213,7 @@ export default defineComponent({
             text: this.$t('Cancel'),
             handler: () => {
               this.store.dispatch('job/updateJob', {jobId, systemJobEnumId, statusId: "SERVICE_CANCELLED"});
+              this.showAlert = false;
             }
           }],
         });
@@ -201,6 +231,7 @@ export default defineComponent({
             text: this.$t('Save'),
             handler: () => {
               this.updateJob();
+              this.showAlert = false;
             }
           }]
         });
@@ -262,8 +293,10 @@ export default defineComponent({
     updateRunTime(ev: CustomEvent, job: any) {
       if (job) {
         job.runTime = DateTime.fromISO(ev['detail'].value).toMillis()
+        this.showAlert = true;
       }
-    }
+    },
+    
   },
   setup() {
     const customPopoverOptions: any = {

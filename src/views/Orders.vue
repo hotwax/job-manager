@@ -133,7 +133,7 @@
           </ion-card>
         </section>
 
-        <aside class="desktop-only" v-show="currentJob">
+        <aside class="desktop-only">
           <JobDetail :title="title" :job="currentJob" :status="currentJobStatus" :key="currentJob"/>
         </aside>
       </main>
@@ -201,13 +201,37 @@ export default defineComponent({
       currentJobStatus: ''
     }
   },
+  async beforeRouteLeave (to: any, from: any, next: any){
+      console.log(from, to)
+      if(this.showAlert) {
+        const alert = await alertController
+        .create({
+          header: this.$t('Discard changes'),
+          message: this.$t('All unsaved changes will be lost. Are you sure you want to leave this page.'),
+          buttons: [
+            {
+              text: this.$t("Cancel"),
+              handler: async () => {
+                this.$router.push(to)
+              }
+            },
+            {
+              text: this.$t('Save'),
+              role: 'cancel'
+            }
+          ]
+        });
+      return alert.present();
+      }
+    },
   computed: {
     ...mapGetters({
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
       shopifyConfigId: 'user/getShopifyConfigId',
       currentEComStore: 'user/getCurrentEComStore',
-      getTemporalExpr: 'job/getTemporalExpr'
+      getTemporalExpr: 'job/getTemporalExpr',
+      showAlert: 'job/getShowAlertBoolean'
     })
   },
   methods: {

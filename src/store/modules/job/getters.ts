@@ -29,6 +29,9 @@ const getters: GetterTree <JobState, RootState> = {
     getJobHistory (state){
       return state.history.list;
     },
+    getShowAlertBoolean (state) {
+      return state.showAlert
+    }
   }
 
   export default getters;
