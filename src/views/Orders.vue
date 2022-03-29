@@ -234,6 +234,7 @@ export default defineComponent({
         'recurrenceTimeZone': DateTime.now().zoneName
       } as any
       if (!checked) {
+        payload['cancelDateTime'] = DateTime.now().toMillis()
         this.store.dispatch('job/updateJob', payload)
       } else if (job?.status === 'SERVICE_DRAFT') {
         payload['JOB_NAME'] = job.jobName

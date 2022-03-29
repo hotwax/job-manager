@@ -183,7 +183,8 @@ export default defineComponent({
           }, {
             text: this.$t('Cancel'),
             handler: () => {
-              this.store.dispatch('job/updateJob', {jobId, systemJobEnumId, statusId: "SERVICE_CANCELLED"});
+              const cancelDateTime = DateTime.now().toMillis()
+              this.store.dispatch('job/updateJob', {jobId, systemJobEnumId, cancelDateTime, statusId: "SERVICE_CANCELLED"});
             }
           }],
         });

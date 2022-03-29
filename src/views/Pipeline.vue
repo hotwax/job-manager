@@ -245,7 +245,8 @@ export default defineComponent({
             {
               text: this.$t("CANCEL"),
               handler: async () => {
-                await this.store.dispatch('job/updateJob', {jobId, systemJobEnumId, statusId: "SERVICE_CANCELLED"});
+                const cancelDateTime = DateTime.now().toMillis()
+                await this.store.dispatch('job/updateJob', {jobId, systemJobEnumId, cancelDateTime, statusId: "SERVICE_CANCELLED"});
                 await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewIndex: 0});
               },
             }
