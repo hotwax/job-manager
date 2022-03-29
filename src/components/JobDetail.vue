@@ -2,20 +2,20 @@
   <section>
     <ion-item lines="none">
       <h1>{{ $t(title) }}</h1>
-      <ion-badge slot="end" color="dark" v-if="job?.runTime">{{ $t("running") }} {{ timeTillJob(job.runTime) }}</ion-badge>
+      <ion-badge slot="end" color="dark" v-if="getCurrent?.runTime">{{ $t("running") }} {{ timeTillJob(getCurrent.runTime) }}</ion-badge>
     </ion-item>
 
     <ion-list>
       <ion-item>
         <ion-icon slot="start" :icon="calendarClearOutline" />
         <ion-label>{{ $t("Last run") }}</ion-label>
-        <ion-label slot="end">{{ job?.lastUpdatedStamp ? getTime(job.lastUpdatedStamp) : $t('No previous occurrence') }}</ion-label>
+        <ion-label slot="end">{{ getCurrent?.lastUpdatedStamp ? getTime(getCurrent.lastUpdatedStamp) : $t('No previous occurrence') }}</ion-label>
       </ion-item>
 
       <ion-item>
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label>{{ $t("Run time") }}</ion-label>
-        <ion-label id="open-run-time-modal" slot="end">{{ job?.runTime ? getTime(job.runTime) : $t('Select run time') }}</ion-label>
+        <ion-label id="open-run-time-modal" slot="end">{{ getCurrent?.runTime ? getTime(getCurrent.runTime) : $t('Select run time') }}</ion-label>
         <!-- TODO: display a button when we are not having a runtime and open the datetime component
         on click of that button
         Currently, when mapping the same datetime component for label and button so it's not working so for
@@ -24,8 +24,8 @@
         <ion-modal trigger="open-run-time-modal">
           <ion-content force-overscroll="false">
             <ion-datetime
-              :value="job?.runTime ? getDateTime(job.runTime) : ''"
-              @ionChange="updateRunTime($event, job)"
+              :value="getCurrent?.runTime ? getDateTime(getCurrent.runTime) : ''"
+              @ionChange="updateRunTime($event, getCurrent)"
             />
           </ion-content>
         </ion-modal>
@@ -54,8 +54,8 @@
 
     <div class="actions">
       <div>
-        <ion-button size="small" fill="outline" color="medium" @click="skipJob(job)">{{ $t("Skip once") }}</ion-button>
-        <ion-button size="small" fill="outline" color="danger" @click="cancelJob(job.jobId, job.systemJobEnumId)">{{ $t("Disable") }}</ion-button>
+        <ion-button size="small" fill="outline" color="medium" @click="skipJob(getCurrent)">{{ $t("Skip once") }}</ion-button>
+        <ion-button size="small" fill="outline" color="danger" @click="cancelJob(getCurrent.jobId, getCurrent.systemJobEnumId)">{{ $t("Disable") }}</ion-button>
       </div>
       <div>
         <ion-button size="small" fill="outline" @click="saveChanges()">{{ $t("Save changes") }}</ion-button>
@@ -111,13 +111,14 @@ export default defineComponent({
       jobStatus: this.status
     }
   },
-  props: ["job", "title", "status", "type"],
+  props: ["title", "status", "type"],
   computed: {
     ...mapGetters({
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
       shopifyConfigId: 'user/getShopifyConfigId',
-      currentEComStore: 'user/getCurrentEComStore'
+      currentEComStore: 'user/getCurrentEComStore',
+      getCurrent: 'job/getCurrentJob'
     }),
     generateFrequencyOptions(): any {
       const optionDefault = [{
@@ -216,7 +217,7 @@ export default defineComponent({
       return alert.present();
     },
     async updateJob() {
-      const job = this.job;
+      const job = this.getCurrent;
 
       // TODO: pass user time zone in the payload
       const payload = {

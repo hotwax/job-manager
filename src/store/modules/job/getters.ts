@@ -29,6 +29,9 @@ const getters: GetterTree <JobState, RootState> = {
     getJobHistory (state){
       return state.history.list;
     },
+    getCurrentJob (state) {
+      return state.current;
+    }
   }
 
   export default getters;

@@ -1,0 +1,7 @@
+---
+title: Implemented state for storing current job information and use it on the detail
+  component
+ticket_id: "#24gu1ag"
+merge_request: 58
+author: Yash Maheshwari
+type: added
