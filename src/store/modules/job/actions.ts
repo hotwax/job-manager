@@ -215,10 +215,80 @@ const actions: ActionTree<JobState, RootState> = {
     return resp;
   },
 
-  async scheduleService({ commit, dispatch }, payload) {
+  async scheduleService({ dispatch }, job) {
     let resp;
+
+    const payload = {
+      'JOB_NAME': job.jobName,
+      'SERVICE_NAME': job.serviceName,
+      'SERVICE_COUNT': '0',
+      'jobFields': {
+        'productStoreId': this.state.user.currentEComStore.productStoreId,
+        'systemJobEnumId': job.systemJobEnumId,
+        'tempExprId': job.jobStatus,
+        'maxRecurrenceCount': '-1',
+        'parentJobId': job.parentJobId,
+        'runAsUser': 'system', // default system, but empty in run now
+        'recurrenceTimeZone': DateTime.now().zoneName
+      },
+      'shopifyConfigId': this.state.user.shopifyConfig,
+      'statusId': "SERVICE_PENDING",
+      'systemJobEnumId': job.systemJobEnumId
+    } as any
+
+    // checking if the runTimeData has productStoreId, and if present then adding it on root level
+    job?.runTimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.state.user.currentEComStore.productStoreId)
+    job?.priority && (payload['SERVICE_PRIORITY'] = job.priority.toString())
+    job?.runTime && (payload['SERVICE_TIME'] = job.runTime.toString())
+    job?.sinceId && (payload['sinceId'] = job.sinceId)
+
     try {
-      resp = await JobService.scheduleJob(payload);
+      resp = await JobService.scheduleJob({ ...job.runTimeData, ...payload });
+      if (resp.status == 200 && !hasError(resp)) {
+        showToast(translate('Service has been scheduled'))
+        dispatch('fetchJobs', {
+          inputFields: {
+            'systemJobEnumId': payload.systemJobEnumId,
+            'systemJobEnumId_op': 'equals'
+          }
+        })
+      } else {
+        showToast(translate('Something went wrong'))
+      }
+    } catch (err) {
+      showToast(translate('Something went wrong'))
+      console.error(err)
+    }
+    return resp;
+  },
+
+  async scheduleServiceNow({ dispatch }, job) {
+    let resp;
+
+    const payload = {
+      'JOB_NAME': job.jobName,
+      'SERVICE_NAME': job.serviceName,
+      'SERVICE_COUNT': '0',
+      'jobFields': {
+        'productStoreId': this.state.user.currentEComStore.productStoreId,
+        'systemJobEnumId': job.systemJobEnumId,
+        'tempExprId': job.jobStatus,
+        'parentJobId': job.parentJobId,
+        'recurrenceTimeZone': DateTime.now().zoneName
+      },
+      'shopifyConfigId': this.state.user.shopifyConfig,
+      'statusId': "SERVICE_PENDING",
+      'systemJobEnumId': job.systemJobEnumId
+    } as any
+
+    // checking if the runTimeData has productStoreId, and if present then adding it on root level
+    job?.runTimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.state.user.currentEComStore.productStoreId)
+    job?.priority && (payload['SERVICE_PRIORITY'] = job.priority.toString())
+    job?.runTime && (payload['SERVICE_TIME'] = job.runTime.toString())
+    job?.sinceId && (payload['sinceId'] = job.sinceId)
+
+    try {
+      resp = await JobService.scheduleJob({ ...job.runTimeData, ...payload });
       if (resp.status == 200 && !hasError(resp)) {
         showToast(translate('Service has been scheduled'))
         dispatch('fetchJobs', {
