@@ -262,7 +262,7 @@ const actions: ActionTree<JobState, RootState> = {
     return resp;
   },
 
-  async scheduleServiceNow({ dispatch }, job) {
+  async runServiceNow({ dispatch }, job) {
     let resp;
 
     const payload = {
@@ -284,13 +284,16 @@ const actions: ActionTree<JobState, RootState> = {
     // checking if the runTimeData has productStoreId, and if present then adding it on root level
     job?.runTimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.state.user.currentEComStore.productStoreId)
     job?.priority && (payload['SERVICE_PRIORITY'] = job.priority.toString())
-    job?.runTime && (payload['SERVICE_TIME'] = job.runTime.toString())
-    job?.sinceId && (payload['sinceId'] = job.sinceId)
 
     try {
       resp = await JobService.scheduleJob({ ...job.runTimeData, ...payload });
       if (resp.status == 200 && !hasError(resp)) {
         showToast(translate('Service has been scheduled'))
+        // TODO: need to check if we actually need to call fetchJobs when running a service now
+        // becuase when scheduling a service for run now, then the service goes in pending state for a small
+        // time and thus fetchJob api gets the info of that service as well, and when service is exceuted
+        // it is no more in pending state, but on app level we still have that service info with status
+        // pending
         dispatch('fetchJobs', {
           inputFields: {
             'systemJobEnumId': payload.systemJobEnumId,
