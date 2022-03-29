@@ -103,9 +103,8 @@
               <ion-label>{{ $t("Unfillable orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('UNFIL_ORDERS') }} </ion-label>
             </ion-item>
-            <!-- TODO: env file entry UNFIL_ORDERS, run now as user with count 1-->
             <ion-item>
-              <ion-button fill="outline" color="warning" @click="runJob('Route unfillable orders now')">{{ $t("Route unfillable orders now") }}</ion-button>
+              <ion-button fill="outline" color="warning" @click="runJob('Route unfillable orders now', jobEnums['UNFIL_ORDERS'])">{{ $t("Route unfillable orders now") }}</ion-button>
             </ion-item>
             <ion-item>
               <ion-label>{{ $t("Batch broker orders") }}</ion-label>
@@ -273,7 +272,8 @@ export default defineComponent({
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
         this.$t('Disabled')
     },
-    async runJob(header: string) {
+    async runJob(header: string, id: string) {
+      const job = this.getJob(id)
       const jobAlert = await alertController
         .create({
           header,
@@ -284,7 +284,12 @@ export default defineComponent({
               role: 'cancel',
             },
             {
-              text: this.$t('Run now')
+              text: this.$t('Run now'),
+              handler: () => {
+                if (job) {
+                  this.store.dispatch('job/runServiceNow', job)
+                }
+              }
             }
           ]
         });
