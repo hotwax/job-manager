@@ -55,7 +55,7 @@
     <div class="actions">
       <div>
         <ion-button size="small" fill="outline" color="medium" @click="skipJob(job)">{{ $t("Skip once") }}</ion-button>
-        <ion-button size="small" fill="outline" color="danger" @click="cancelJob(job.jobId, job.systemJobEnumId)">{{ $t("Disable") }}</ion-button>
+        <ion-button size="small" fill="outline" color="danger" @click="cancelJob(job)">{{ $t("Disable") }}</ion-button>
       </div>
       <div>
         <ion-button size="small" fill="outline" @click="saveChanges()">{{ $t("Save changes") }}</ion-button>
@@ -172,7 +172,7 @@ export default defineComponent({
         });
       return alert.present();
     },
-    async cancelJob(jobId: string, systemJobEnumId: string) {
+    async cancelJob(job: any) {
       const alert = await alertController
         .create({
           header: this.$t('Cancel job'),
@@ -183,8 +183,7 @@ export default defineComponent({
           }, {
             text: this.$t('Cancel'),
             handler: () => {
-              const cancelDateTime = DateTime.now().toMillis()
-              this.store.dispatch('job/updateJob', {jobId, systemJobEnumId, cancelDateTime, statusId: "SERVICE_CANCELLED"});
+              this.store.dispatch('job/updateJob', {job, statusId: "SERVICE_CANCELLED"});
             }
           }],
         });

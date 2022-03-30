@@ -255,6 +255,7 @@ export default defineComponent({
     },
     async updateJob(id: string) {
       const job = this.getJob(id);
+      job['sinceId'] = this.lastShopifyOrderId
 
       // TODO: pass user time zone in the payload
       const payload = {

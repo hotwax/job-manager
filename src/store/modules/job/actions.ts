@@ -193,8 +193,18 @@ const actions: ActionTree<JobState, RootState> = {
     }
     return resp;
   },
-  async updateJob ({ commit, dispatch }, payload) {
+  async updateJob ({ commit, dispatch }, job) {
     let resp;
+
+    const payload = {
+      'jobId': job.jobId,
+      'systemJobEnumId': job.systemJobEnumId,
+    } as any
+
+    if (statusId === 'SERVICE_CANCELLED') {
+      payload['cancelDateTime'] = DateTime.now().toMillis()
+    }
+
     try {
       resp = await JobService.updateJob(payload)
       if (resp.status === 200 && !hasError(resp) && resp.data.successMessage) {
@@ -240,7 +250,6 @@ const actions: ActionTree<JobState, RootState> = {
     job?.runTimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.state.user.currentEComStore.productStoreId)
     job?.priority && (payload['SERVICE_PRIORITY'] = job.priority.toString())
     job?.runTime && (payload['SERVICE_TIME'] = job.runTime.toString())
-    job?.sinceId && (payload['sinceId'] = job.sinceId)
 
     try {
       resp = await JobService.scheduleJob({ ...job.runTimeData, ...payload });
@@ -284,6 +293,7 @@ const actions: ActionTree<JobState, RootState> = {
     // checking if the runTimeData has productStoreId, and if present then adding it on root level
     job?.runTimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.state.user.currentEComStore.productStoreId)
     job?.priority && (payload['SERVICE_PRIORITY'] = job.priority.toString())
+    job?.sinceId && (payload['sinceId'] = job.sinceId)
 
     try {
       resp = await JobService.scheduleJob({ ...job.runTimeData, ...payload });
