@@ -25,15 +25,14 @@
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
                 <p class="overline">{{ job.parentJobId }}</p>
-                {{ job.jobName }}
+                {{ getEnumName(job.systemJobEnumId) }}
               </ion-label>
               <ion-badge v-if="job.runTime" color="dark" slot="end">{{ timeTillJob(job.runTime)}}</ion-badge>
             </ion-item>
 
-            <!-- Will remove it from comment when description is avaiable -->
-            <!-- <ion-item lines="none">
+            <ion-item lines="none">
               {{ getDescription(job.systemJobEnumId) }}
-            </ion-item> -->
+            </ion-item>
             <ion-item>
               <ion-icon slot="start" :icon="timeOutline" />
               <ion-label>{{ job.runTime ? getTime(job.runTime) : "-"  }}</ion-label>
@@ -66,15 +65,14 @@
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
                 <p class="overline">{{ job.parentJobId }}</p>
-                {{ job.jobName }}
+                {{ getEnumName(job.systemJobEnumId) }}
               </ion-label>
               <ion-badge v-if="job.runTime" color="dark" slot="end">{{ timeTillJob(job.runTime)}}</ion-badge>
             </ion-item>
 
-            <!-- Will remove it from comment when description is avaiable -->
-            <!-- <ion-item lines="none">
+            <ion-item lines="none">
               {{ getDescription(job.systemJobEnumId) }}
-            </ion-item> -->
+            </ion-item>
             <ion-item>
               <ion-icon slot="start" :icon="timeOutline" />
               <ion-label>{{ job.runTime ? getTime(job.runTime) : "-"  }}</ion-label>
@@ -161,6 +159,7 @@ export default defineComponent({
       pendingJobs: 'job/getPendingJobs',
       temporalExpr: 'job/getTemporalExpr',
       getDescription: 'job/getDescription',
+      getEnumName: 'job/getEnumName',
       getCurrentEComStore:'user/getCurrentEComStore',
       isPendingJobsScrollable: 'job/isPendingJobsScrollable',
       isHistoryJobsScrollable: 'job/isHistoryJobsScrollable'
