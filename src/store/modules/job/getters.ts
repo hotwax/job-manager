@@ -18,7 +18,6 @@ const getters: GetterTree <JobState, RootState> = {
       return state.cached[id]
     },
     getDescription: (state) => (id: string): any => {
-      console.log(state.enumIds[id])
       return state.enumIds[id]?.description;
     },
     getEnumName: (state) => (id: string): any => {
