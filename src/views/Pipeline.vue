@@ -31,7 +31,7 @@
             </ion-item>
 
             <ion-item lines="none">
-              {{ getDescription(job.systemJobEnumId) }}
+              <p>{{ getEnumDescription(job.systemJobEnumId) }}</p>
             </ion-item>
             <ion-item>
               <ion-icon slot="start" :icon="timeOutline" />
@@ -71,7 +71,7 @@
             </ion-item>
 
             <ion-item lines="none">
-              {{ getDescription(job.systemJobEnumId) }}
+              <p>{{ getEnumDescription(job.systemJobEnumId) }}</p>
             </ion-item>
             <ion-item>
               <ion-icon slot="start" :icon="timeOutline" />
@@ -158,7 +158,7 @@ export default defineComponent({
       jobHistory: 'job/getJobHistory',
       pendingJobs: 'job/getPendingJobs',
       temporalExpr: 'job/getTemporalExpr',
-      getDescription: 'job/getDescription',
+      getEnumDescription: 'job/getEnumDescription',
       getEnumName: 'job/getEnumName',
       getCurrentEComStore:'user/getCurrentEComStore',
       isPendingJobsScrollable: 'job/isPendingJobsScrollable',
