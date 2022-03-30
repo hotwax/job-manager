@@ -9,6 +9,7 @@ import InitialLoad from '@/views/InitialLoad.vue'
 import Login from '@/views/Login.vue'
 import Settings from "@/views/Settings.vue"
 import store from '@/store'
+import { alertController } from '@ionic/vue';
 
 const authGuard = (to: any, from: any, next: any) => {
   if (store.getters['user/isAuthenticated']) {
@@ -25,6 +26,37 @@ const loginGuard = (to: any, from: any, next: any) => {
     next("/")
   }
 };
+
+const before = async (to: any, from: any, next: any) => {
+  console.log(store.getters['job/getShowAlertBoolean']);
+  if(store.getters['job/getShowAlertBoolean']) {
+    const alert = await alertController
+    .create({
+      header: 'Discard changes',
+      message: 'All unsaved changes will be lost. Are you sure you want to leave this page.',
+      buttons: [
+        {
+          text: "Cancel",
+          role: "cancel",
+          handler: async () => {
+            store.dispatch('job/updateShowAlertCondition', false);
+          }
+        },
+        {
+          text: 'Save',
+          handler: async () => {
+            store.dispatch('job/updateShowAlertCondition', false);
+            next()
+          }  
+        }
+      ]
+    });
+    // next()
+    alert.present();
+  } else {
+    next()
+  }
+}
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -53,13 +85,13 @@ const routes: Array<RouteRecordRaw> = [
     path: '/pre-order',
     name: 'PreOrder',
     component: PreOrder,
-    beforeEnter: authGuard
+    beforeEnter: [authGuard, before]
   },
   {
     path: '/orders',
     name: 'Orders',
     component: Orders,
-    beforeEnter: authGuard
+    beforeEnter: authGuard,
   },
   {
     path: '/initial-load',

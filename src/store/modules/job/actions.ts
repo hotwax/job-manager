@@ -269,6 +269,9 @@ const actions: ActionTree<JobState, RootState> = {
       commit(types.JOB_UPDATED, { job });
     }
     return resp;
+  },
+  updateShowAlertCondition({ commit }, payload){
+    commit(types.SHOW_ALERT_CONDITION_UPDATED, payload);
   }
 }
 export default actions;

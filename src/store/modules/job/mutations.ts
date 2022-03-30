@@ -33,6 +33,9 @@ const mutations: MutationTree <JobState> = {
               state.enumIds[enumId.enumId] = enumId.description
             });
         }
+    },
+    [types.SHOW_ALERT_CONDITION_UPDATED] (state, bool) {
+        state.showAlert = bool;
     }
 }
 export default mutations;
