@@ -201,10 +201,6 @@ const actions: ActionTree<JobState, RootState> = {
       'systemJobEnumId': job.systemJobEnumId,
     } as any
 
-    if (statusId === 'SERVICE_CANCELLED') {
-      payload['cancelDateTime'] = DateTime.now().toMillis()
-    }
-
     try {
       resp = await JobService.updateJob(payload)
       if (resp.status === 200 && !hasError(resp) && resp.data.successMessage) {
