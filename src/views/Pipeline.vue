@@ -50,8 +50,8 @@
               <ion-label>{{ job.serviceName }}</ion-label>
             </ion-item>
 
-            <ion-button fill="clear" @click="skipJob(job)">{{ $t("Skip") }}</ion-button>
-            <ion-button color="danger" fill="clear" @click="cancelJob(job.jobId, job.systemJobEnumId)">{{ $t("Cancel") }}</ion-button>
+            <ion-button fill="clear" @click.stop="skipJob(job)">{{ $t("Skip") }}</ion-button>
+            <ion-button color="danger" fill="clear" @click.stop="cancelJob(job.jobId, job.systemJobEnumId)">{{ $t("Cancel") }}</ion-button>
           </ion-card>
           <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
             <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
@@ -101,7 +101,7 @@
         </section>
 
         <aside class="desktop-only" v-show="segmentSelected === 'pending' && currentJob">
-          <JobDetail :title="title" :job="currentJob" :status="currentJobStatus" type="slow" :key="currentJob"/>
+          <JobDetail :title="title" :job="currentJob" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
         </aside>
       </main>
     </ion-content>
