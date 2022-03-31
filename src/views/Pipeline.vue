@@ -31,7 +31,7 @@
             </ion-item>
 
             <ion-item lines="none">
-              <ion-label>
+              <ion-label class="ion-text-wrap">
                 <p>{{ getEnumDescription(job.systemJobEnumId) }}</p>
               </ion-label>
             </ion-item>
