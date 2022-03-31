@@ -25,15 +25,16 @@
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
                 <p class="overline">{{ job.parentJobId }}</p>
-                {{ job.jobName }}
+                {{ getEnumName(job.systemJobEnumId) }}
               </ion-label>
               <ion-badge v-if="job.runTime" color="dark" slot="end">{{ timeTillJob(job.runTime)}}</ion-badge>
             </ion-item>
 
-            <!-- Will remove it from comment when description is avaiable -->
-            <!-- <ion-item lines="none">
-              {{ getDescription(job.systemJobEnumId) }}
-            </ion-item> -->
+            <ion-item lines="none">
+              <ion-label class="ion-text-wrap">
+                <p>{{ getEnumDescription(job.systemJobEnumId) }}</p>
+              </ion-label>
+            </ion-item>
             <ion-item>
               <ion-icon slot="start" :icon="timeOutline" />
               <ion-label>{{ job.runTime ? getTime(job.runTime) : "-"  }}</ion-label>
@@ -66,15 +67,14 @@
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
                 <p class="overline">{{ job.parentJobId }}</p>
-                {{ job.jobName }}
+                {{ getEnumName(job.systemJobEnumId) }}
               </ion-label>
               <ion-badge v-if="job.runTime" color="dark" slot="end">{{ timeTillJob(job.runTime)}}</ion-badge>
             </ion-item>
 
-            <!-- Will remove it from comment when description is avaiable -->
-            <!-- <ion-item lines="none">
-              {{ getDescription(job.systemJobEnumId) }}
-            </ion-item> -->
+            <ion-item lines="none">
+              <p>{{ getEnumDescription(job.systemJobEnumId) }}</p>
+            </ion-item>
             <ion-item>
               <ion-icon slot="start" :icon="timeOutline" />
               <ion-label>{{ job.runTime ? getTime(job.runTime) : "-"  }}</ion-label>
@@ -160,7 +160,8 @@ export default defineComponent({
       jobHistory: 'job/getJobHistory',
       pendingJobs: 'job/getPendingJobs',
       temporalExpr: 'job/getTemporalExpr',
-      getDescription: 'job/getDescription',
+      getEnumDescription: 'job/getEnumDescription',
+      getEnumName: 'job/getEnumName',
       getCurrentEComStore:'user/getCurrentEComStore',
       isPendingJobsScrollable: 'job/isPendingJobsScrollable',
       isHistoryJobsScrollable: 'job/isHistoryJobsScrollable'
