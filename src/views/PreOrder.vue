@@ -14,13 +14,13 @@
             <ion-card-header>
               <ion-card-title>{{ $t("Auto listing") }}</ion-card-title>
             </ion-card-header>
-            <ion-item>
+            <ion-item button @click="viewJobConfiguration('LIST_PRE_ORDER', 'Automatically list pre-order', getJobStatus(this.jobEnums['LIST_PRE_ORDER']))" detail>
               <ion-label>{{ $t("Automatically list pre-order") }}</ion-label>
-              <ion-toggle :checked="automaticallyListPreOrder" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['LIST_PRE_ORDER'])" />
+              <ion-label slot="end">{{ getTemporalExpression('LIST_PRE_ORDER') }}</ion-label>
             </ion-item>
-            <ion-item>
+            <ion-item button @click="viewJobConfiguration('LIST_BACK_ORDER', 'Automatically list back-order', getJobStatus(this.jobEnums['LIST_BACK_ORDER']))" detail>
               <ion-label>{{ $t("Automatically list back-order") }}</ion-label>
-              <ion-toggle :checked="automaticallyListBackOrder" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['LIST_BACK_ORDER'])" />
+              <ion-label slot="end">{{ getTemporalExpression('LIST_BACK_ORDER') }}</ion-label>
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap"><p>{{ $t("This will automatically list items from purchase orders for preorder when stock runs out.") }}</p></ion-label>
@@ -86,6 +86,10 @@
             </ion-item>
           </ion-card>
         </section>
+
+        <aside class="desktop-only" v-show="currentJob">
+          <JobDetail :title="title" :job="currentJob" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
+        </aside>
       </main>
     </ion-content>
   </ion-page>
@@ -105,7 +109,6 @@ import {
   IonMenuButton,
   IonPage,
   IonTitle,
-  IonToggle,
   IonToolbar
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
@@ -113,7 +116,7 @@ import { useStore } from "@/store";
 import { mapGetters } from "vuex";
 import { DateTime } from 'luxon';
 import { alertController } from '@ionic/vue';
-import { translate } from '@/i18n';
+import JobDetail from '@/components/JobDetail.vue'
 
 export default defineComponent({
   name: 'PreOrder',
@@ -130,15 +133,16 @@ export default defineComponent({
     IonMenuButton,
     IonPage,
     IonTitle,
-    IonToggle,
-    IonToolbar
+    IonToolbar,
+    JobDetail
   },
   computed: {
     ...mapGetters({
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
       shopifyConfigId: 'user/getShopifyConfigId',
-      currentEComStore: 'user/getCurrentEComStore'
+      currentEComStore: 'user/getCurrentEComStore',
+      getTemporalExpr: 'job/getTemporalExpr'
     }),
     automaticallyListPreOrder(): boolean {
       const status = this.getJobStatus(this.jobEnums["LIST_PRE_ORDER"]);
@@ -164,6 +168,11 @@ export default defineComponent({
   data() {
     return {
       jobEnums: JSON.parse(process.env?.VUE_APP_PRODR_JOB_ENUMS as string) as any,
+      jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
+      currentJob: '',
+      title: '',
+      currentJobStatus: '',
+      freqType: ''
     }
   },
   methods: {
@@ -229,6 +238,17 @@ export default defineComponent({
         });
 
       return jobAlert.present();
+    },
+    viewJobConfiguration(id: string, title: string, status: string) {
+      this.currentJob = this.getJob(this.jobEnums[id])
+      this.title = title
+      this.currentJobStatus = status
+      this.freqType = this.jobFrequencyType[id]
+    },
+    getTemporalExpression(enumId: string) {
+      return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
+        this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
+        this.$t('Disabled')
     }
   },
   mounted () {

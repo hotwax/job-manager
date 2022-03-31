@@ -72,7 +72,9 @@
             </ion-item>
 
             <ion-item lines="none">
-              <p>{{ getEnumDescription(job.systemJobEnumId) }}</p>
+              <ion-label class="ion-text-wrap">
+                <p>{{ getEnumDescription(job.systemJobEnumId) }}</p>
+              </ion-label>
             </ion-item>
             <ion-item>
               <ion-icon slot="start" :icon="timeOutline" />
