@@ -32,7 +32,7 @@
                 <p>{{ $t("When using HotWax BOPIS, Shopify isn't aware of the actual inventory consumed. HotWax will automatically restore inventory automatically reduced by Shopify and deduct inventory from the correct store to maintain inventory accuracy.") }}</p>
               </ion-label>
             </ion-item>
-            <ion-item button @click="viewJobConfiguration(jobEnums['HARD_SYNC'], 'Hard sync', getJobStatus(this.jobEnums['HARD_SYNC']))" detail>
+            <ion-item button @click="viewJobConfiguration('HARD_SYNC', 'Hard sync', getJobStatus(this.jobEnums['HARD_SYNC']))" detail>
               <ion-label>{{ $t("Hard sync") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('HARD_SYNC') }}</ion-label>
             </ion-item>
@@ -45,7 +45,7 @@
         </section>
 
         <aside class="desktop-only" v-show="currentJob">
-          <JobDetail :title="title" :job="currentJob" :status="currentJobStatus" type="slow" :key="currentJob"/>
+          <JobDetail :title="title" :job="currentJob" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
         </aside>
       </main>
     </ion-content>
@@ -92,9 +92,11 @@ export default defineComponent({
   data() {
     return {
       jobEnums: JSON.parse(process.env?.VUE_APP_INV_JOB_ENUMS as string) as any,
+      jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
       currentJob: '',
       title: '',
-      currentJobStatus: ''
+      currentJobStatus: '',
+      freqType: ''
     }
   },
   computed: {
@@ -172,10 +174,11 @@ export default defineComponent({
         this.store.dispatch('job/updateJob', payload)
       }
     },
-    viewJobConfiguration(enumId: string, title: string, status: string) {
-      this.currentJob = this.getJob(enumId)
+    viewJobConfiguration(id: string, title: string, status: string) {
+      this.currentJob = this.getJob(this.jobEnums[id])
       this.title = title
       this.currentJobStatus = status
+      this.freqType = this.jobFrequencyType[id]
     },
     getTemporalExpression(enumId: string) {
       return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
