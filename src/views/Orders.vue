@@ -8,7 +8,7 @@
     </ion-header>
 
     <ion-content>
-      <main>
+      <main ref="main">
         <section>
           <ion-card>
             <ion-card-header>
@@ -21,7 +21,7 @@
             </ion-item>
             <ion-item>
               <ion-label>{{ $t("New orders") }}</ion-label>
-              <ion-button color="medium" fill="clear" @click="view()">View</ion-button>
+              <ion-button color="medium" fill="clear" @click="viewJobConfiguration()">View</ion-button>
               <!-- <DurationPopover :id="jobEnums['IMP_NEW_ORDERS']" /> -->
             </ion-item>
             <ion-item>
@@ -134,7 +134,7 @@
           </ion-card>
         </section>
 
-        <aside class="desktop-only">
+        <aside class="desktop-only" ref="aside">
           <JobDetail />
         </aside>
       </main>
@@ -164,7 +164,7 @@ import {
   IonToolbar,
   modalController
 } from '@ionic/vue';
-import { defineComponent } from 'vue';
+import { defineComponent, ref } from 'vue';
 import { addCircleOutline } from 'ionicons/icons';
 import DurationPopover from '@/components/DurationPopover.vue'
 import BatchModal from '@/components/BatchModal.vue';
@@ -249,24 +249,25 @@ export default defineComponent({
         this.store.dispatch('job/updateJob', payload)
       }
     },
-    view() {
+    viewJobConfiguration() {
       const asideAnimation = createAnimation()
-        .addElement(document.querySelector('aside') as Element)
+        .addElement(this.aside)
         .duration(1500)
         .easing('ease')
          .keyframes([
           { offset: 0, flex: '0', opacity: '0' },
           { offset: 0.5, flex: '1', opacity: '0' },
           { offset: 1, flex: '1', opacity: '1' }
-        ])         
+        ])
 
       const mainAnimation = createAnimation()
-        .addElement(document.querySelector('main') as Element)
+        .addElement(this.main)
         .duration(500)
         .fromTo('gap', '0', 'var(--spacer-2xl)');
 
-        mainAnimation.play();  
-        asideAnimation.play();
+      createAnimation()
+        .addAnimation([mainAnimation, asideAnimation])
+        .play();
     }
   },
   mounted () { 
@@ -278,9 +279,14 @@ export default defineComponent({
     });
   },
   setup() {
-    const store = useStore();     
+    const store = useStore();
+    const main = ref({} as Element)
+    const aside = ref({} as Element)
+
     return {
       addCircleOutline,
+      aside,
+      main,
       store
     };
   },
