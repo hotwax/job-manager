@@ -141,6 +141,7 @@ const actions: ActionTree<JobState, RootState> = {
         "tempExprId": tempIds,
         "temoExprId_op": "in"
       },
+      "viewSize": tempIds.length,
       "fieldList": [ "tempExprId", "description","integer1", "integer2" ],
       "entityName": "TemporalExpression",
       "noConditionFind": "Y",
