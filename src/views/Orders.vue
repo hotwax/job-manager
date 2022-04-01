@@ -70,7 +70,7 @@
             <!-- TODO: run at 12 am daily -->
             <ion-item>
               <ion-label>{{ $t("Check daily") }}</ion-label>
-              <ion-toggle color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['AUTO_CNCL_DAL'])" />
+              <ion-toggle :checked="autoCancelCheckDaily" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['AUTO_CNCL_DAL'])" />
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap"><p>{{ $t("Unfulfilled orders that pass their auto cancelation date will be canceled automatically in HotWax Commerce. They will also be canceled in Shopify if upload for canceled orders is enabled.") }}</p></ion-label>
@@ -83,11 +83,11 @@
             </ion-card-header>
             <ion-item>
               <ion-label>{{ $t("Promise date changes") }}</ion-label>
-              <ion-toggle color="secondary" />
+              <ion-toggle :checked="promiseDateChanges" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['NTS_PRMS_DT_CHNG'])"/>
             </ion-item>
             <ion-item>
               <ion-label>{{ $t("Reroutes") }}</ion-label>
-              <ion-toggle color="secondary" />
+              <ion-toggle :checked="reroutes" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['NTS_REROUTES'])"/>
             </ion-item>
           </ion-card>
 
@@ -211,7 +211,19 @@ export default defineComponent({
       shopifyConfigId: 'user/getShopifyConfigId',
       currentEComStore: 'user/getCurrentEComStore',
       getTemporalExpr: 'job/getTemporalExpr'
-    })
+    }),
+    promiseDateChanges(): boolean {
+      const status = this.getJobStatus(this.jobEnums['NTS_PRMS_DT_CHNG']);
+      return status && status !== "SERVICE_DRAFT";
+    },
+    reroutes(): boolean {
+      const status = this.getJobStatus(this.jobEnums['NTS_REROUTES']);
+      return status && status !== "SERVICE_DRAFT";
+    },
+    autoCancelCheckDaily(): boolean {
+      const status = this.getJobStatus(this.jobEnums["REAL_WBHKS"]);
+      return status && status !== "SERVICE_DRAFT";
+    },
   },
   methods: {
      async editBatch() {
@@ -225,8 +237,13 @@ export default defineComponent({
 
       // TODO: added this condition to not call the api when the value of the select automatically changes
       // need to handle this properly
-      if (checked && job?.status === 'SERVICE_PENDING') {
+      if (!job || checked && job?.status === 'SERVICE_PENDING') {
         return;
+      }
+
+      // if job runTime is not a valid date then making runTime as empty
+      if (job?.runTime && !isValidDate(job?.runTime)) {
+        job.runTime = ''
       }
 
       // TODO: check for parentJobId and jobEnum and handle this values properly
@@ -247,7 +264,7 @@ export default defineComponent({
         payload['jobFields'] = {
           'productStoreId': this.currentEComStore.productStoreId,
           'systemJobEnumId': job.systemJobEnumId,
-          'tempExprId': 'DAILY',
+          'tempExprId': 'MIDNIGHT_DAILY',
           'maxRecurrenceCount': '-1',
           'parentJobId': job.parentJobId,
           'runAsUser': 'system', // default system, but empty in run now
@@ -272,7 +289,7 @@ export default defineComponent({
       this.currentJobStatus = status
       this.freqType = this.jobFrequencyType[id]
 
-      // if job runTime is not a valid date then runTime to empty string
+      // if job runTime is not a valid date then making runTime as empty
       if (this.currentJob?.runTime && !isValidDate(this.currentJob?.runTime)) {
         this.currentJob.runTime = ''
       }
