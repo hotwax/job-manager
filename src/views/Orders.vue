@@ -14,7 +14,6 @@
             <ion-card-header>
               <ion-card-title>{{ $t("Import") }}</ion-card-title>
             </ion-card-header>
-            <!-- TODO: env file entry: REAL_WBHKS -->
             <ion-item @click="viewJobConfiguration('IMP_NEW_ORDERS', 'New orders', getJobStatus(this.jobEnums['IMP_NEW_ORDERS']))" detail button>
               <ion-label>{{ $t("New orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_NEW_ORDERS') }}</ion-label>
@@ -99,7 +98,6 @@
               <ion-label>{{ $t("Unfillable orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('UNFIL_ORDERS') }} </ion-label>
             </ion-item>
-            <!-- TODO: env file entry UNFIL_ORDERS, run now as user with count 1-->
             <ion-item-divider>
               <ion-label>{{ $t("Batches") }}</ion-label>
               <ion-button fill="clear" slot="end">
