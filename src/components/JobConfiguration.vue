@@ -292,6 +292,11 @@ export default defineComponent({
 </script>
 
 <style scoped>
+section {
+  overflow: hidden;
+  border: 1px solid var(--ion-color-medium);
+  border-radius: 16px;
+}
 ion-list {
   margin: var(--spacer-base) 0;
 }
