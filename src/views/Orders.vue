@@ -99,6 +99,7 @@
               <ion-label>{{ $t("Unfillable orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('UNFIL_ORDERS') }} </ion-label>
             </ion-item>
+            <!-- TODO: env file entry UNFIL_ORDERS, run now as user with count 1-->
             <ion-item-divider>
               <ion-label>{{ $t("Batches") }}</ion-label>
               <ion-button fill="clear" slot="end">
