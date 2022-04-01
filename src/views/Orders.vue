@@ -113,7 +113,7 @@
             </ion-item>
             <ion-item-divider>
               <ion-label>{{ $t("Batches") }}</ion-label>
-              <ion-button fill="clear" slot="end">
+              <ion-button fill="clear" @click="editBatch()" slot="end">
                 {{ $t("Add") }}
                 <ion-icon :icon="addCircleOutline" slot="end" />
               </ion-button>
@@ -122,7 +122,7 @@
               <ion-label>Batch 1</ion-label>
               <ion-note slot="end">9:30 am</ion-note>
             </ion-item>
-            <ion-item @click="editBatch()" detail>
+            <ion-item detail>
               <ion-label>Batch 2</ion-label>
               <ion-note slot="end">12:00 pm</ion-note>
             </ion-item>

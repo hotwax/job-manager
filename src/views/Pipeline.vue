@@ -21,14 +21,14 @@
     <ion-content>
       <main>
         <section v-if="segmentSelected === 'pending'">
-          <ion-card v-for="job in pendingJobs" :key="job.jobId" @click="viewJobConfiguration(job)">
-            <ion-item lines="none">
-              <ion-label class="ion-text-wrap">
-                <p class="overline">{{ job.parentJobId }}</p>
-                {{ getEnumName(job.systemJobEnumId) }}
-              </ion-label>
-              <ion-badge v-if="job.runTime" color="dark" slot="end">{{ timeTillJob(job.runTime)}}</ion-badge>
-            </ion-item>
+          <ion-card v-for="job in pendingJobs" :key="job.jobId" @click="viewJobConfiguration(job)" button>
+            <ion-card-header>
+                <div> 
+                  <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
+                  <ion-card-title>{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
+                </div>
+                <ion-badge v-if="job.runTime" color="dark" slot="end">{{ timeTillJob(job.runTime)}}</ion-badge>
+            </ion-card-header>
 
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
@@ -62,14 +62,14 @@
         </section>
 
         <section v-if="segmentSelected === 'history'">
-          <ion-card v-for="job in jobHistory" :key="job.jobId">
-            <ion-item lines="none">
-              <ion-label class="ion-text-wrap">
-                <p class="overline">{{ job.parentJobId }}</p>
-                {{ getEnumName(job.systemJobEnumId) }}
-              </ion-label>
-              <ion-badge v-if="job.runTime" color="dark" slot="end">{{ timeTillJob(job.runTime)}}</ion-badge>
-            </ion-item>
+          <ion-card v-for="job in jobHistory" :key="job.jobId" button>
+            <ion-card-header>
+              <div>
+                <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
+                <ion-card-title>{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
+              </div>
+              <ion-badge v-if="job.runTime" color="dark">{{ timeTillJob(job.runTime)}}</ion-badge>
+            </ion-card-header>
 
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
@@ -304,6 +304,13 @@ export default defineComponent({
 </script>
 
 <style scoped>
+ion-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0px;
+}
+
 @media (min-width: 991px) {
   ion-header{
     display: flex;
