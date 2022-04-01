@@ -41,7 +41,7 @@ const actions: ActionTree<JobState, RootState> = {
   async fetchJobHistory({ commit, dispatch, state }, payload){
     await JobService.fetchJobInformation({
       "inputFields": {
-        // "productStoreId": payload.eComStoreId,
+        "productStoreId": payload.eComStoreId,
         "statusId": ["SERVICE_CANCELLED", "SERVICE_CRASHED", "SERVICE_FAILED", "SERVICE_FINISHED"],
         "statusId_op": "in",
         "systemJobEnumId_op": "not-empty"
@@ -86,7 +86,7 @@ const actions: ActionTree<JobState, RootState> = {
   async fetchPendingJobs({ commit, dispatch, state }, payload){
     await JobService.fetchJobInformation({
       "inputFields": {
-        // "productStoreId": payload.eComStoreId,
+        "productStoreId": payload.eComStoreId,
         "statusId": "SERVICE_PENDING",
         "systemJobEnumId_op": "not-empty"
       },
