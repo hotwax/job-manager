@@ -48,13 +48,13 @@
             <ion-list>
               <ion-item>
                 <ion-icon slot="start" :icon="calendarClearOutline" />
-                <ion-label>{{ $t("Last run") }}</ion-label>
+                <ion-label class="ion-text-wrap">{{ $t("Last run") }}</ion-label>
                 <ion-label slot="end">{{ job?.lastUpdatedStamp ? getTime(job.lastUpdatedStamp) : $t('No previous occurrence') }}</ion-label>
               </ion-item>
 
               <ion-item id="product-run-time-modal" button>
                 <ion-icon slot="start" :icon="timeOutline" />
-                <ion-label>{{ $t("Run time") }}</ion-label>
+                <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
                 <ion-label slot="end">{{ job?.runTime ? getTime(job.runTime) : $t('Select run time') }}</ion-label>
                 <ion-modal trigger="product-run-time-modal">
                   <ion-content force-overscroll="false">
@@ -81,13 +81,13 @@
             <ion-list>
               <ion-item>
                 <ion-icon slot="start" :icon="calendarClearOutline" />
-                <ion-label>{{ $t("Last run") }}</ion-label>
+                <ion-label class="ion-text-wrap">{{ $t("Last run") }}</ion-label>
                 <ion-label slot="end">{{ job?.lastUpdatedStamp ? getTime(job.lastUpdatedStamp) : $t('No previous occurrence') }}</ion-label>
               </ion-item>
 
               <ion-item id="order-run-time-modal" button>
                 <ion-icon slot="start" :icon="timeOutline" />
-                <ion-label>{{ $t("Run time") }}</ion-label>
+                <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
                 <ion-label slot="end">{{ job?.runTime ? getTime(job.runTime) : $t('Select run time') }}</ion-label>
                 <ion-modal trigger="order-run-time-modal">
                   <ion-content force-overscroll="false">
@@ -102,7 +102,7 @@
 
               <ion-item>
                 <ion-icon slot="start" :icon="flagOutline" />
-                <ion-label>{{ $t("Order status") }}</ion-label>
+                <ion-label class="ion-text-wrap">{{ $t("Order status") }}</ion-label>
                 <ion-select value="open" :interface-options="customOrderOptions" interface="popover">
                   <ion-select-option value="open">{{ $t("Open") }}</ion-select-option>
                   <!-- TODO: commenting options for now, enable it once having support -->
@@ -113,7 +113,7 @@
 
               <ion-item>
                 <ion-icon slot="start" :icon="sendOutline" />
-                <ion-label>{{ $t("Fulfillment status") }}</ion-label>
+                <ion-label class="ion-text-wrap">{{ $t("Fulfillment status") }}</ion-label>
                 <ion-select value="unshipped" :interface-options="customFulfillmentOptions" interface="popover">
                   <!-- TODO: commenting options for now, enable it once having support -->
                   <ion-select-option value="unshipped">{{ $t("Unfulfilled") }}</ion-select-option>
@@ -124,7 +124,7 @@
               </ion-item>
 
               <ion-item>
-                <ion-label>{{ $t("Last Shopify Order ID") }}</ion-label>
+                <ion-label class="ion-text-wrap">{{ $t("Last Shopify Order ID") }}</ion-label>
                 <ion-input v-model="lastShopifyOrderId" :placeholder="$t('Internal Shopify Order ID')" />
               </ion-item>
             </ion-list>

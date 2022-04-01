@@ -15,11 +15,11 @@
               <ion-card-title>{{ $t("Auto listing") }}</ion-card-title>
             </ion-card-header>
             <ion-item button @click="viewJobConfiguration('LIST_PRE_ORDER', 'Automatically list pre-order', getJobStatus(this.jobEnums['LIST_PRE_ORDER']))" detail>
-              <ion-label>{{ $t("Automatically list pre-order") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("Automatically list pre-order") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('LIST_PRE_ORDER') }}</ion-label>
             </ion-item>
             <ion-item button @click="viewJobConfiguration('LIST_BACK_ORDER', 'Automatically list back-order', getJobStatus(this.jobEnums['LIST_BACK_ORDER']))" detail>
-              <ion-label>{{ $t("Automatically list back-order") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("Automatically list back-order") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('LIST_BACK_ORDER') }}</ion-label>
             </ion-item>
             <ion-item lines="none">
@@ -32,7 +32,7 @@
               <ion-card-title>{{ $t("Re-allocate pre-orders") }}</ion-card-title>
             </ion-card-header>
             <ion-item>
-              <ion-label>{{ $t("Allocation") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("Allocation") }}</ion-label>
               <!-- TODO: env file entry = REALLOC_PRODR -->
               <ion-button fill="outline" color="danger" slot="end" @click="runJob('Allocation')">{{ $t("Run reallocation") }}</ion-button>
             </ion-item>
@@ -47,12 +47,12 @@
             </ion-card-header>
             <!-- TODO: env file entry = AUTO_RELSE_DAILY, run time 12 am daily-->
             <ion-item>
-              <ion-label>{{ $t("Run daily") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("Run daily") }}</ion-label>
               <ion-checkbox slot="end" />
             </ion-item>
             <!-- TODO: env file entry = AUTO_RELSE_DAILY, run now, run as user, count: 1-->
             <ion-item>
-              <ion-label>{{ $t("Release preorders")}}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("Release preorders")}}</ion-label>
               <ion-button fill="outline" @click="runJob('Release preorders')">{{ $t("Release") }}</ion-button>
             </ion-item>
             <ion-item lines="none">
@@ -65,20 +65,20 @@
               <ion-card-title>{{ $t("Sync") }}</ion-card-title>
             </ion-card-header>
             <ion-item>
-              <ion-label>{{ $t("Auto add pre-order tag in Shopify") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("Auto add pre-order tag in Shopify") }}</ion-label>
               <ion-checkbox :checked="addPreOrderTagInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_PRODR_TG_SHPFY'])" />
             </ion-item>
             <ion-item>
-              <ion-label>{{ $t("Auto remove tags in Shopify") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("Auto remove tags in Shopify") }}</ion-label>
               <ion-checkbox :checked="removeTagInShopify" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['REMV_ODR_TG_SHPFY'])"/>
             </ion-item>
             <ion-item>
-              <ion-label>{{ $t("Add shipping dates in Shopify") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("Add shipping dates in Shopify") }}</ion-label>
               <ion-checkbox :checked="addShippingDateInShopify" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_SHPG_DTE_SHPFY'])"/>
             </ion-item>
             <!-- TODO: run all sync jobs with time diff of 2 mins and run now and count: 1 -->
             <ion-item>
-              <ion-label>{{ $t("Manual update") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("Manual update") }}</ion-label>
               <ion-button fill="outline" @click="runJob('Manual update')">{{ $t("Run sync now") }}</ion-button>
             </ion-item>
             <ion-item lines="none">

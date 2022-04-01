@@ -287,7 +287,7 @@ aside {
   main {
     display: flex;
     justify-content: center;
-    align-items: start;
+    align-items: flex-start;
     gap: var(--spacer-2xl);
     max-width: 900px;
     margin: var(--spacer-base) auto 0;

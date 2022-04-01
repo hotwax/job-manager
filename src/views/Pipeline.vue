@@ -37,17 +37,17 @@
             </ion-item>
             <ion-item>
               <ion-icon slot="start" :icon="timeOutline" />
-              <ion-label>{{ job.runTime ? getTime(job.runTime) : "-"  }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ job.runTime ? getTime(job.runTime) : "-"  }}</ion-label>
             </ion-item>
 
             <ion-item>
               <ion-icon slot="start" :icon="timerOutline" />
-              <ion-label>{{ job.tempExprId ? temporalExpr(job.tempExprId)?.description : "🙃"  }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ job.tempExprId ? temporalExpr(job.tempExprId)?.description : "🙃"  }}</ion-label>
             </ion-item>
 
             <ion-item lines="full">
               <ion-icon slot="start" :icon="codeWorkingOutline" />
-              <ion-label>{{ job.serviceName }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ job.serviceName }}</ion-label>
             </ion-item>
 
             <ion-button fill="clear" @click.stop="skipJob(job)">{{ $t("Skip") }}</ion-button>
@@ -78,17 +78,17 @@
             </ion-item>
             <ion-item>
               <ion-icon slot="start" :icon="timeOutline" />
-              <ion-label>{{ job.runTime ? getTime(job.runTime) : "-"  }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ job.runTime ? getTime(job.runTime) : "-"  }}</ion-label>
             </ion-item>
 
             <ion-item>
               <ion-icon slot="start" :icon="timerOutline" />
-              <ion-label>{{ job.tempExprId ? temporalExpr(job.tempExprId)?.description : "🙃"  }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ job.tempExprId ? temporalExpr(job.tempExprId)?.description : "🙃"  }}</ion-label>
             </ion-item>
 
             <ion-item lines="full">
               <ion-icon slot="start" :icon="codeWorkingOutline" />
-              <ion-label>{{ job.serviceName }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ job.serviceName }}</ion-label>
             </ion-item>
 
           </ion-card>
