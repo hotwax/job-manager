@@ -288,7 +288,8 @@ aside {
     display: flex;
     justify-content: center;
     align-items: start;
-    max-width: 900px;
+    gap: var(--spacer-2xl);
+    max-width: 990px;
     margin: var(--spacer-base) auto 0;
   }
 
