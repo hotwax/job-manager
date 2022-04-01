@@ -209,9 +209,38 @@ export default defineComponent({
       getJob: 'job/getJob',
       shopifyConfigId: 'user/getShopifyConfigId',
       currentEComStore: 'user/getCurrentEComStore',
-      getTemporalExpr: 'job/getTemporalExpr'
+      getTemporalExpr: 'job/getTemporalExpr',
+      showAlertBoolean: 'job/getShowAlertBoolean'
     })
   },
+
+  async ionViewWillLeave() {
+  if(this.showAlertBoolean) {
+    const alert = await alertController
+    .create({
+      header: 'Discard changes',
+      message: 'All unsaved changes will be lost. Are you sure you want to leave this page.',
+      buttons: [
+        {
+          text: "Cancel",
+          role: "cancel",
+          handler: async () => {
+            this.store.dispatch('job/updateShowAlertCondition', false);
+          }
+        },
+        {
+          text: 'Save',
+          handler: async () => {
+            this.store.dispatch('job/updateShowAlertCondition', false);
+          }  
+        }
+      ]
+    });
+    // next()
+    alert.present();
+  } 
+  },
+
   methods: {
      async editBatch() {
       const batchmodal = await modalController.create({
