@@ -7,34 +7,34 @@
       </ion-toolbar>
 
       <ion-toolbar>
-        <div>
-          <ion-segment v-model="segmentSelected" @ionChange="segmentChanged">
-            <ion-segment-button value="pending">
-              <ion-label>{{ $t("Pending") }}</ion-label>
-            </ion-segment-button>
-            <ion-segment-button value="history">
-              <ion-label>{{ $t("History") }}</ion-label>
-            </ion-segment-button>
-          </ion-segment>
-        </div>
+        <ion-segment v-model="segmentSelected" @ionChange="segmentChanged">
+          <ion-segment-button value="pending">
+            <ion-label>{{ $t("Pending") }}</ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="history">
+            <ion-label>{{ $t("History") }}</ion-label>
+          </ion-segment-button>
+        </ion-segment>
       </ion-toolbar>
     </ion-header>
+
     <ion-content>
       <main>
         <section v-if="segmentSelected === 'pending'">
-          <ion-card v-for="job in pendingJobs" :key="job.jobId">
+          <ion-card v-for="job in pendingJobs" :key="job.jobId" @click="viewJobConfiguration(job)">
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
                 <p class="overline">{{ job.parentJobId }}</p>
-                {{ job.jobName }}
+                {{ getEnumName(job.systemJobEnumId) }}
               </ion-label>
               <ion-badge v-if="job.runTime" color="dark" slot="end">{{ timeTillJob(job.runTime)}}</ion-badge>
             </ion-item>
 
-            <!-- Will remove it from comment when description is avaiable -->
-            <!-- <ion-item lines="none">
-              {{ getDescription(job.systemJobEnumId) }}
-            </ion-item> -->
+            <ion-item lines="none">
+              <ion-label class="ion-text-wrap">
+                <p>{{ getEnumDescription(job.systemJobEnumId) }}</p>
+              </ion-label>
+            </ion-item>
             <ion-item>
               <ion-icon slot="start" :icon="timeOutline" />
               <ion-label>{{ job.runTime ? getTime(job.runTime) : "-"  }}</ion-label>
@@ -50,14 +50,15 @@
               <ion-label>{{ job.serviceName }}</ion-label>
             </ion-item>
 
-            <ion-button fill="clear" @click="skipJob(job)">{{ $t("Skip") }}</ion-button>
-            <ion-button color="danger" fill="clear" @click="cancelJob(job.jobId)">{{ $t("Cancel") }}</ion-button>
+            <ion-button fill="clear" @click.stop="skipJob(job)">{{ $t("Skip") }}</ion-button>
+            <ion-button color="danger" fill="clear" @click.stop="cancelJob(job.jobId, job.systemJobEnumId)">{{ $t("Cancel") }}</ion-button>
           </ion-card>
-
-          <ion-infinite-scroll @ionInfinite="loadMorePendingJobs($event)" threshold="100px" :disabled="!isScrollable">
+          <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
+            <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
+          </ion-refresher>
+          <ion-infinite-scroll @ionInfinite="loadMorePendingJobs($event)" threshold="100px" :disabled="!isPendingJobsScrollable">
             <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="$t('Loading')"/>
           </ion-infinite-scroll>
-          
         </section>
 
         <section v-if="segmentSelected === 'history'">
@@ -65,15 +66,16 @@
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
                 <p class="overline">{{ job.parentJobId }}</p>
-                {{ job.jobName }}
+                {{ getEnumName(job.systemJobEnumId) }}
               </ion-label>
               <ion-badge v-if="job.runTime" color="dark" slot="end">{{ timeTillJob(job.runTime)}}</ion-badge>
             </ion-item>
 
-            <!-- Will remove it from comment when description is avaiable -->
-            <!-- <ion-item lines="none">
-              {{ getDescription(job.systemJobEnumId) }}
-            </ion-item> -->
+            <ion-item lines="none">
+              <ion-label class="ion-text-wrap">
+                <p>{{ getEnumDescription(job.systemJobEnumId) }}</p>
+              </ion-label>
+            </ion-item>
             <ion-item>
               <ion-icon slot="start" :icon="timeOutline" />
               <ion-label>{{ job.runTime ? getTime(job.runTime) : "-"  }}</ion-label>
@@ -91,11 +93,18 @@
 
           </ion-card>
 
-          <ion-infinite-scroll @ionInfinite="loadMoreJobHistory($event)" threshold="100px" :disabled="!isScrollable">
+          <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
+            <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
+          </ion-refresher>
+          <ion-infinite-scroll @ionInfinite="loadMoreJobHistory($event)" threshold="100px" :disabled="!isHistoryJobsScrollable">
             <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="$t('Loading')"/>
           </ion-infinite-scroll>
           
         </section>
+
+        <aside class="desktop-only" v-show="segmentSelected === 'pending' && currentJob">
+          <JobDetail :title="title" :job="currentJob" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
+        </aside>
       </main>
     </ion-content>
   </ion-page>
@@ -104,8 +113,6 @@
 import { DateTime } from 'luxon';
 import { mapGetters, useStore } from 'vuex'
 import { defineComponent, ref } from "vue";
-import { showToast } from '@/utils'
-import { translate } from '@/i18n'
 import {
   IonBadge,
   IonButton,
@@ -117,6 +124,8 @@ import {
   IonLabel,
   IonMenuButton,
   IonPage,
+  IonRefresher,
+  IonRefresherContent,
   IonToolbar,
   IonTitle,
   IonInfiniteScroll,
@@ -126,6 +135,7 @@ import {
   IonSegmentButton
 } from "@ionic/vue";
 import { codeWorkingOutline, timeOutline, timerOutline } from "ionicons/icons";
+import JobDetail from '@/components/JobDetail.vue'
 
 export default defineComponent({
   name: "Pipeline",
@@ -140,21 +150,42 @@ export default defineComponent({
     IonLabel,
     IonMenuButton,
     IonPage,
+    IonRefresher,
+    IonRefresherContent,
     IonToolbar,
     IonTitle,
     IonInfiniteScroll,
     IonInfiniteScrollContent,
     IonSegment,
-    IonSegmentButton
+    IonSegmentButton,
+    JobDetail
+  },
+  data() {
+    return {
+      jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
+      jobEnums: {
+        ...JSON.parse(process.env?.VUE_APP_ODR_JOB_ENUMS as string) as any,
+        ...JSON.parse(process.env?.VUE_APP_PRODR_JOB_ENUMS as string) as any,
+        ...JSON.parse(process.env?.VUE_APP_PRD_JOB_ENUMS as string) as any,
+        ...JSON.parse(process.env?.VUE_APP_INV_JOB_ENUMS as string) as any,
+        ...JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
+      },
+      currentJob: '' as any,
+      title: '',
+      currentJobStatus: '',
+      freqType: '' as any
+    }
   },
   computed: {
     ...mapGetters({
       jobHistory: 'job/getJobHistory',
       pendingJobs: 'job/getPendingJobs',
       temporalExpr: 'job/getTemporalExpr',
-      getDescription: 'job/getDescription',
+      getEnumDescription: 'job/getEnumDescription',
+      getEnumName: 'job/getEnumName',
       getCurrentEComStore:'user/getCurrentEComStore',
-      isScrollable: 'job/isScrollable'
+      isPendingJobsScrollable: 'job/isPendingJobsScrollable',
+      isHistoryJobsScrollable: 'job/isHistoryJobsScrollable'
     })
   },
   methods: {
@@ -181,6 +212,13 @@ export default defineComponent({
         event.target.complete();
       })
     },
+    async refreshJobs(event: any) {
+      if(this.segmentSelected === 'pending') {
+        this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => { event.target.complete() });
+      } else {
+        this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => { event.target.complete() });
+      }
+    },
     segmentChanged (e: CustomEvent) {
       this.segmentSelected = e.detail.value
       this.segmentSelected === 'pending' ? this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}) : this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0});
@@ -198,28 +236,7 @@ export default defineComponent({
             {
               text: this.$t('Skip'),
               handler: async () => {
-                let skipTime = {};
-                const integer1 = this.temporalExpr(job.tempExprId).integer1;
-                const integer2 = this.temporalExpr(job.tempExprId).integer2
-                if(integer1 === 12) {
-                  skipTime = { minutes: integer2 }
-                } else if (integer1 === 10) {
-                  skipTime = { hours: integer2 }
-                } else if (integer1 === 5) {
-                  skipTime = { days: integer2 }
-                } else {
-                  showToast(translate("This job schedule cannot be skipped"));
-                  return ;
-                }
-                const time =  DateTime.fromMillis(job.runTime).diff(DateTime.local()).plus(skipTime);  
-                const updatedRunTime = time.toMillis() + DateTime.local().toMillis()
-                const payload = {
-                  'jobId': job.jobId,
-                  'runTime': updatedRunTime,
-                  'systemJobEnumId': job.systemJobEnumId,
-                  'statusId': "SERVICE_PENDING"
-                } as any
-                await this.store.dispatch('job/updateJob', payload);
+                await this.store.dispatch('job/skipJob', job);
                 await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewIndex: 0})
               },
             }
@@ -230,14 +247,14 @@ export default defineComponent({
     async getPendingJobs(vSize: any, vIndex: any) {
       const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
       const viewIndex = vIndex ? vIndex : 0;
-        await  this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex});
+      await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex});
     },
     async getJobHistory(vSize: any, vIndex: any) {
       const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
       const viewIndex = vIndex ? vIndex : 0;
-        await  this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex});
+      await this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex});
     },
-    async cancelJob(jobId: any){
+    async cancelJob(jobId: any, systemJobEnumId: string){
       const alert = await alertController
         .create({
           header: this.$t('Cancel job'),
@@ -249,16 +266,24 @@ export default defineComponent({
             },
             {
               text: this.$t("CANCEL"),
-              handler: () => {
-                this.store.dispatch('job/updateJob', {jobId, statusId: "SERVICE_CANCELLED"});
-                this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewIndex: 0});
+              handler: async () => {
+                const cancelDateTime = DateTime.now().toMillis()
+                await this.store.dispatch('job/updateJob', {jobId, systemJobEnumId, cancelDateTime, statusId: "SERVICE_CANCELLED"});
+                await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewIndex: 0});
               },
             }
           ],
         });
 
        return alert.present();
-    }
+    },
+    viewJobConfiguration(job: any) {
+      this.currentJob = {id: job.jobId, ...job}
+      this.title = this.getEnumName(job.systemJobEnumId)
+      this.currentJobStatus = job.tempExprId
+      const id = Object.entries(this.jobEnums).find((enums) => enums[1] == job.systemJobEnumId) as any
+      this.freqType = (Object.entries(this.jobFrequencyType).find((freq) => freq[0] == id[0]) as any)[1]
+    },
   },
   created() {
     this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0});
@@ -277,3 +302,11 @@ export default defineComponent({
   }
 });
 </script>
+
+<style scoped>
+@media (min-width: 991px) {
+  ion-header{
+    display: flex;
+  }
+}
+</style>

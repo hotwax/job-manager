@@ -1,0 +1,6 @@
+---
+title: 'Improved: code to remove error related to infinite scroll when there are no record.'
+ticket_id: "#24w686f"
+merge_request: 67
+author: Aniket Kumar Pandey
+type: fixed

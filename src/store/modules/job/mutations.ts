@@ -7,8 +7,8 @@ const mutations: MutationTree <JobState> = {
         state.cached = payload
     },
     [types.JOB_UPDATED] (state, payload) {
-        state.cached[payload.jobId] = {
-            ...state.cached[payload.jobId],
+        state.cached[payload.systemJobEnumId] = {
+            ...state.cached[payload.systemJobEnumId],
             payload
         }
     },
@@ -29,8 +29,8 @@ const mutations: MutationTree <JobState> = {
     },
     [types.JOB_DESCRIPTION_UPDATED] (state, enums) {
         if (enums) {
-            enums.forEach((enumId: any) => {
-              state.enumIds[enumId.enumId] = enumId.description
+            enums.forEach((enumInfo: any) => {
+              state.enumIds[enumInfo.enumId] = enumInfo
             });
         }
     }

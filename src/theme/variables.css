@@ -272,6 +272,7 @@ ion-select {
 aside {
   position: sticky;
   top: var(--spacer-lg);
+  flex: 1;
 }
 
 .desktop-only {
