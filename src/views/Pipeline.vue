@@ -19,7 +19,7 @@
     </ion-header>
 
     <ion-content>
-      <main>
+      <main ref="main">
         <section v-if="segmentSelected === 'pending'">
           <ion-card v-for="job in pendingJobs" :key="job.jobId" @click="viewJobConfiguration(job)">
             <ion-item lines="none">
@@ -102,7 +102,7 @@
           
         </section>
 
-        <aside class="desktop-only" v-show="segmentSelected === 'pending' && currentJob">
+        <aside class="desktop-only" v-show="segmentSelected === 'pending' && currentJob" ref="aside">
           <JobDetail :title="title" :job="currentJob" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
         </aside>
       </main>
@@ -114,6 +114,7 @@ import { DateTime } from 'luxon';
 import { mapGetters, useStore } from 'vuex'
 import { defineComponent, ref } from "vue";
 import {
+  createAnimation,
   IonBadge,
   IonButton,
   IonContent,
@@ -173,7 +174,8 @@ export default defineComponent({
       currentJob: '' as any,
       title: '',
       currentJobStatus: '',
-      freqType: '' as any
+      freqType: '' as any,
+      isJobDetailAnimationCompleted: false
     }
   },
   computed: {
@@ -283,6 +285,29 @@ export default defineComponent({
       this.currentJobStatus = job.tempExprId
       const id = Object.entries(this.jobEnums).find((enums) => enums[1] == job.systemJobEnumId) as any
       this.freqType = (Object.entries(this.jobFrequencyType).find((freq) => freq[0] == id[0]) as any)[1]
+
+      if (this.currentJob && !this.isJobDetailAnimationCompleted) {
+        const revealAnimation = createAnimation()
+        .addElement(this.aside)
+        .duration(1500)
+        .easing('ease')
+         .keyframes([
+          { offset: 0, flex: '0', opacity: '0' },
+          { offset: 0.5, flex: '1', opacity: '0' },
+          { offset: 1, flex: '1', opacity: '1' }
+        ])
+
+        const gapAnimation = createAnimation()
+          .addElement(this.main)
+          .duration(500)
+          .fromTo('gap', '0', 'var(--spacer-2xl)');
+
+        createAnimation()
+          .addAnimation([gapAnimation, revealAnimation])
+          .play();
+
+        this.isJobDetailAnimationCompleted = true;
+      }
     },
   },
   created() {
@@ -291,8 +316,12 @@ export default defineComponent({
   setup() {
     const store = useStore();
     const segmentSelected = ref('pending');
+    const main = ref({} as Element)
+    const aside = ref({} as Element)
 
     return {
+      aside,
+      main,
       store,
       codeWorkingOutline,
       timeOutline,

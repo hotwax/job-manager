@@ -274,7 +274,7 @@ export default defineComponent({
       this.freqType = this.jobFrequencyType[id]
 
       if (this.currentJob && !this.isJobDetailAnimationCompleted) {
-        const asideAnimation = createAnimation()
+        const revealAnimation = createAnimation()
         .addElement(this.aside)
         .duration(1500)
         .easing('ease')
@@ -284,13 +284,13 @@ export default defineComponent({
           { offset: 1, flex: '1', opacity: '1' }
         ])
 
-        const mainAnimation = createAnimation()
+        const gapAnimation = createAnimation()
           .addElement(this.main)
           .duration(500)
           .fromTo('gap', '0', 'var(--spacer-2xl)');
 
         createAnimation()
-          .addAnimation([mainAnimation, asideAnimation])
+          .addAnimation([gapAnimation, revealAnimation])
           .play();
         this.isJobDetailAnimationCompleted = true;
       }

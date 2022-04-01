@@ -8,7 +8,7 @@
     </ion-header>
 
     <ion-content>
-      <main>
+      <main ref="main">
         <section>
           <ion-card>
             <ion-card-header>
@@ -37,7 +37,7 @@
           </ion-card>
         </section>
 
-        <aside v-show="currentSelectedJobModal">
+        <aside v-show="currentSelectedJobModal" ref="aside">
           <section v-show="currentSelectedJobModal === 'products'">
             <ion-item lines="none">
               <h1>{{ $t("Products") }}</h1>
@@ -140,6 +140,7 @@
 <script lang="ts">
 import {
   alertController,
+  createAnimation,
   IonButton,
   IonCard,
   IonCardHeader,
@@ -160,7 +161,7 @@ import {
   IonTitle,
   IonToolbar
 } from '@ionic/vue';
-import { defineComponent } from 'vue';
+import { defineComponent, ref } from 'vue';
 import {
   calendarClearOutline,
   flagOutline,
@@ -201,7 +202,8 @@ export default defineComponent({
       currentSelectedJobModal: '',
       job: {} as any,
       lastShopifyOrderId: '',
-      minDateTime: DateTime.now().toISO()
+      minDateTime: DateTime.now().toISO(),
+      isJobDetailAnimationCompleted: false
     }
   },
   mounted () {
@@ -230,6 +232,29 @@ export default defineComponent({
       // if job runTime is not a valid date then assigning current date to the runTime
       if (this.job?.runTime && !isValidDate(this.job?.runTime)) {
         this.job.runTime = DateTime.local().toMillis()
+      }
+
+      if (this.job && !this.isJobDetailAnimationCompleted) {
+        const revealAnimation = createAnimation()
+        .addElement(this.aside)
+        .duration(1500)
+        .easing('ease')
+         .keyframes([
+          { offset: 0, flex: '0', opacity: '0' },
+          { offset: 0.5, flex: '1', opacity: '0' },
+          { offset: 1, flex: '1', opacity: '1' }
+        ])
+
+        const gapAnimation = createAnimation()
+          .addElement(this.main)
+          .duration(500)
+          .fromTo('gap', '0', 'var(--spacer-2xl)');
+
+        createAnimation()
+          .addAnimation([gapAnimation, revealAnimation])
+          .play();
+
+        this.isJobDetailAnimationCompleted = true;
       }
     },
     async runJob(header: string, id: string) {
@@ -314,8 +339,12 @@ export default defineComponent({
       header: translate('Fulfillment status'),
     };
     const store = useStore();
+    const main = ref({} as Element)
+    const aside = ref({} as Element)
 
     return {
+      aside,
+      main,
       calendarClearOutline,
       flagOutline,
       sendOutline,
