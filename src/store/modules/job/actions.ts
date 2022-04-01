@@ -24,15 +24,15 @@ const actions: ActionTree<JobState, RootState> = {
         "enumId": enumIds,
         "enumId_op": "in"
       },
-      "fieldList": ['enumId', 'description'],
+      "fieldList": ['enumId', 'description', 'enumName'],
       "entityName": "Enumeration",
       "noConditionFind": "Y",
       "viewSize": payload.length
     })
     if (resp.status === 200 && resp.data?.count > 0 && !hasError(resp)) {
-      const enumDesc = resp.data.docs;
+      const enumInformation = resp.data.docs;
       if (resp.data.docs) {
-        commit(types.JOB_DESCRIPTION_UPDATED, enumDesc);
+        commit(types.JOB_DESCRIPTION_UPDATED, enumInformation);
       }
     }
     return resp;
@@ -73,11 +73,11 @@ const actions: ActionTree<JobState, RootState> = {
           dispatch('fetchJobDescription', enumIds);
         }
       } else {
-        commit(types.JOB_HISTORY_UPDATED,  []);
+        commit(types.JOB_HISTORY_UPDATED, { jobs: [], total: 0 });
         showToast(translate("Something went wrong"));
       }
     }).catch((err) => {
-      commit(types.JOB_HISTORY_UPDATED,  []);
+      commit(types.JOB_HISTORY_UPDATED, { jobs: [], total: 0 });
       console.error(err);
       showToast(translate("Something went wrong"));
     }) 
@@ -117,11 +117,11 @@ const actions: ActionTree<JobState, RootState> = {
           dispatch('fetchJobDescription', enumIds);
         }
       } else {
-        commit(types.JOB_PENDING_UPDATED,  []);
+        commit(types.JOB_PENDING_UPDATED, { jobs: [], total: 0 });
         showToast(translate("Something went wrong"));
       }
     }).catch((err) => {
-      commit(types.JOB_PENDING_UPDATED,  []);
+      commit(types.JOB_PENDING_UPDATED, { jobs: [], total: 0 });
       console.error(err);
       showToast(translate("Something went wrong"));
     })
