@@ -137,14 +137,6 @@ export default defineComponent({
       currentEComStore: 'user/getCurrentEComStore',
       getTemporalExpr: 'job/getTemporalExpr'
     }),
-    automaticallyListPreOrder(): boolean {
-      const status = this.getJobStatus(this.jobEnums["LIST_PRE_ORDER"]);
-      return status && status !== "SERVICE_DRAFT";
-    },
-    automaticallyListBackOrder(): boolean {
-      const status = this.getJobStatus(this.jobEnums["LIST_BACK_ORDER"]);
-      return status && status !== "SERVICE_DRAFT";
-    },
     addPreOrderTagInShopify(): boolean {
       const status = this.getJobStatus(this.jobEnums["ADD_PRODR_TG_SHPFY"]);
       return status && status !== "SERVICE_DRAFT";

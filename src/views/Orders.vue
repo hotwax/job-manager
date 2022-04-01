@@ -62,7 +62,6 @@
               <ion-label>{{ $t("Days") }}</ion-label>
               <ion-input :placeholder="$t('before auto cancelation')" />
             </ion-item>
-            <!-- TODO: run at 12 am daily -->
             <ion-item>
               <ion-label>{{ $t("Check daily") }}</ion-label>
               <ion-toggle :checked="autoCancelCheckDaily" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['AUTO_CNCL_DAL'])" />
