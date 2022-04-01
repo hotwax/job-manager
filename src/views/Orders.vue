@@ -341,10 +341,3 @@ export default defineComponent({
   },
 });
 </script>
-
-<style scoped>
-aside {
-  width: 0px;
-  opacity: 0;
-}
-</style>
