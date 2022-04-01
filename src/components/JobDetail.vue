@@ -266,9 +266,9 @@ export default defineComponent({
       }
     }
   },
-  setup() {
+  setup(props) {
     const customPopoverOptions: any = {
-      header: translate('Schedule inventory hard sync'),
+      header: props.title,
       showBackdrop: false
     }
     const store = useStore();
