@@ -1,5 +1,6 @@
 import { ActionTree } from 'vuex'
 import RootState from '@/store/RootState'
+import store from '@/store'
 import JobState from './JobState'
 import * as types from './mutation-types'
 import { hasError, showToast } from '@/utils'
@@ -56,7 +57,11 @@ const actions: ActionTree<JobState, RootState> = {
       if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
         if (resp.data.docs) {
           const total = resp.data.count;
-          let jobs = resp.data.docs;
+          let jobs = resp.data.docs.map((job: any) => {
+            const userTimeZone = store.getters['user/getUserProfile'].userTimeZone;
+            job.runTime = DateTime.fromMillis(job.runTime, {zone: "Europe/Paris"}).setZone(userTimeZone).toMillis();
+            return job;
+          });
           if(payload.viewIndex && payload.viewIndex > 0){
             jobs = state.history.list.concat(resp.data.docs);
           }
@@ -100,7 +105,11 @@ const actions: ActionTree<JobState, RootState> = {
       if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
         if (resp.data.docs) {
           const total = resp.data.count;
-          let jobs = resp.data.docs;
+          let jobs = resp.data.docs.map((job: any) => {
+            const userTimeZone = store.getters['user/getUserProfile'].userTimeZone;
+            job.runTime = DateTime.fromMillis(job.runTime, {zone: "Europe/Paris"}).setZone(userTimeZone).toMillis();
+            return job;
+          });
           if(payload.viewIndex && payload.viewIndex > 0){
             jobs = state.pending.list.concat(resp.data.docs);
           }
@@ -184,7 +193,13 @@ const actions: ActionTree<JobState, RootState> = {
           status: job.statusId
         }
       });
-
+      resp.data.docs = resp.data.docs.map((job: any) => {
+        if(job.runTime){
+          const userTimeZone = store.getters['user/getUserProfile'].userTimeZone;
+          job.runTime = DateTime.fromMillis(job.runTime, {zone: "Europe/Paris"}).setZone(userTimeZone).toMillis();
+        }
+        return job;
+      })
       // fetching temp expressions
       const tempExpr = Object.values(cached).map((job: any) => job.tempExprId)
       await dispatch('fetchTemporalExpression', tempExpr)

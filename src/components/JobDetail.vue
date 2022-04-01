@@ -117,7 +117,8 @@ export default defineComponent({
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
       shopifyConfigId: 'user/getShopifyConfigId',
-      currentEComStore: 'user/getCurrentEComStore'
+      currentEComStore: 'user/getCurrentEComStore',
+      userProfile: 'user/getUserProfile'
     }),
     generateFrequencyOptions(): any {
       const optionDefault = [{
@@ -219,11 +220,10 @@ export default defineComponent({
     async updateJob() {
       const job = this.job;
 
-      // TODO: pass user time zone in the payload
       const payload = {
         'systemJobEnumId': job.systemJobEnumId,
         'statusId': "SERVICE_PENDING",
-        'recurrenceTimeZone': DateTime.now().zoneName
+        'recurrenceTimeZone': this.userProfile.userTimeZone
       } as any
       if (job?.status === 'SERVICE_DRAFT') {
         payload['JOB_NAME'] = job.jobName
@@ -237,7 +237,7 @@ export default defineComponent({
           'maxRecurrenceCount': '-1',
           'parentJobId': job.parentJobId,
           'runAsUser': 'system', // default system, but empty in run now
-          'recurrenceTimeZone': DateTime.now().zoneName
+          'recurrenceTimeZone': this.userProfile.userTimeZone
         }
         payload['shopifyConfigId'] = this.shopifyConfigId
 

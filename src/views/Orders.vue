@@ -209,7 +209,8 @@ export default defineComponent({
       getJob: 'job/getJob',
       shopifyConfigId: 'user/getShopifyConfigId',
       currentEComStore: 'user/getCurrentEComStore',
-      getTemporalExpr: 'job/getTemporalExpr'
+      getTemporalExpr: 'job/getTemporalExpr',
+      userProfile: 'user/getUserProfile'
     })
   },
   methods: {
@@ -233,7 +234,7 @@ export default defineComponent({
         'jobId': job.jobId,
         'systemJobEnumId': id,
         'statusId': checked ? "SERVICE_PENDING" : "SERVICE_CANCELLED",
-        'recurrenceTimeZone': DateTime.now().zoneName
+        'recurrenceTimeZone': this.userProfile.userTimeZone
       } as any
       if (!checked) {
         payload['cancelDateTime'] = DateTime.now().toMillis()
@@ -250,7 +251,7 @@ export default defineComponent({
           'maxRecurrenceCount': '-1',
           'parentJobId': job.parentJobId,
           'runAsUser': 'system', // default system, but empty in run now
-          'recurrenceTimeZone': DateTime.now().zoneName
+          'recurrenceTimeZone': this.userProfile.userTimeZone
         }
         payload['shopifyConfigId'] = this.shopifyConfigId
 

@@ -217,7 +217,8 @@ export default defineComponent({
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
       shopifyConfigId: 'user/getShopifyConfigId',
-      currentEComStore: 'user/getCurrentEComStore'
+      currentEComStore: 'user/getCurrentEComStore',
+      userProfile: 'user/getUserProfile'
     })
   },
   methods: {
@@ -256,11 +257,10 @@ export default defineComponent({
     async updateJob(id: string) {
       const job = this.getJob(id);
 
-      // TODO: pass user time zone in the payload
       const payload = {
         'systemJobEnumId': job.systemJobEnumId,
         'statusId': "SERVICE_PENDING",
-        'recurrenceTimeZone': DateTime.now().zoneName
+        'recurrenceTimeZone': this.userProfile.userTimeZone
       } as any
       if (job?.status === 'SERVICE_DRAFT') {
         payload['JOB_NAME'] = job.jobName
@@ -273,7 +273,7 @@ export default defineComponent({
           'systemJobEnumId': job.systemJobEnumId,
           'tempExprId': job.tempExprId,
           'parentJobId': job.parentJobId,
-          'recurrenceTimeZone': DateTime.now().zoneName
+          'recurrenceTimeZone': this.userProfile.userTimeZone
         }
         payload['shopifyConfigId'] = this.shopifyConfigId
         this.lastShopifyOrderId && (payload['sinceId'] = this.lastShopifyOrderId)
