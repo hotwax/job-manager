@@ -80,10 +80,6 @@
               <ion-label>{{ $t("Promise date changes") }}</ion-label>
               <ion-toggle :checked="promiseDateChanges" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['NTS_PRMS_DT_CHNG'])"/>
             </ion-item>
-            <ion-item>
-              <ion-label>{{ $t("Reroutes") }}</ion-label>
-              <ion-toggle :checked="reroutes" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['NTS_REROUTES'])"/>
-            </ion-item>
           </ion-card>
 
           <ion-card>
@@ -201,10 +197,6 @@ export default defineComponent({
     }),
     promiseDateChanges(): boolean {
       const status = this.getJobStatus(this.jobEnums['NTS_PRMS_DT_CHNG']);
-      return status && status !== "SERVICE_DRAFT";
-    },
-    reroutes(): boolean {
-      const status = this.getJobStatus(this.jobEnums['NTS_REROUTES']);
       return status && status !== "SERVICE_DRAFT";
     },
     autoCancelCheckDaily(): boolean {

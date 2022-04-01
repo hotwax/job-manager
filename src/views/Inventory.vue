@@ -99,24 +99,8 @@ export default defineComponent({
       currentEComStore: 'user/getCurrentEComStore',
       getTemporalExpr: 'job/getTemporalExpr'
     }),
-    realTimeWebhooks(): boolean {
-      const status = this.getJobStatus(this.jobEnums["REAL_WBHKS"]);
-      return status && status !== "SERVICE_DRAFT";
-    },
     bopisCorrections(): boolean {
       const status = this.getJobStatus(this.jobEnums["BOPIS_CORRECTION"]);
-      return status && status !== "SERVICE_DRAFT";
-    },
-    realtimeAdjustments(): boolean {
-      const status = this.getJobStatus(this.jobEnums["REALTIME_ADJUSTMENTS"]);
-      return status && status !== "SERVICE_DRAFT";
-    },
-    realtimePOSSales(): boolean {
-      const status = this.getJobStatus(this.jobEnums["REAL_TIME_POS_SALES"]);
-      return status && status !== "SERVICE_DRAFT";
-    },
-    reserveForCompletedOrders(): boolean {
-      const status = this.getJobStatus(this.jobEnums["RSV_CMPLT_ORDRS"]);
       return status && status !== "SERVICE_DRAFT";
     }
   },
