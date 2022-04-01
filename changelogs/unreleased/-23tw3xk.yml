@@ -1,0 +1,6 @@
+---
+title: Displayed fallback string when no frequency found for a job on pipeline view
+ticket_id: "#23tw3xk"
+merge_request: 39
+author: Disha Talreja
+type: added

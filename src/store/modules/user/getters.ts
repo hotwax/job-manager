@@ -15,9 +15,6 @@ const getters: GetterTree <UserState, RootState> = {
     getUserProfile (state) {
         return state.current
     },
-    getCurrentFacility (state){
-        return state.currentFacility;
-    },
     getInstanceUrl (state) {
         return state.instanceUrl;
     },

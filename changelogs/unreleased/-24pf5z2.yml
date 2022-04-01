@@ -1,0 +1,6 @@
+---
+title: 'Improved: code to pass cancelDateTime when cancelling a job'
+ticket_id: "#24pf5z2"
+merge_request: 60
+author: Yash Maheshwari
+type: fixed

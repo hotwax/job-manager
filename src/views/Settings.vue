@@ -16,20 +16,18 @@
           <ion-select-option v-for="store in (userProfile ? userProfile.stores : [])" :key="store.productStoreId" :value="store.productStoreId" >{{ store.storeName }}</ion-select-option>
         </ion-select>
       </ion-item>
-      <!-- Select store -->
-      <ion-item>
-        <ion-icon :icon="storefrontOutline" slot="start" />
-        <ion-label>{{ $t("Store") }}</ion-label>
-        <ion-select interface="popover" :value="currentFacility.facilityId" @ionChange="setFacility($event)">
-          <ion-select-option v-for="facility in ( userProfile && userProfile.facilities ? userProfile.facilities : [] )" :key="facility.facilityId" :value="facility.facilityId" >{{ facility.name }}</ion-select-option>
-        </ion-select>
-      </ion-item>
       <!-- OMS information -->
       <ion-item>
         <ion-icon :icon="codeWorkingOutline" slot="start"/>
         <ion-label>{{ $t("OMS") }}</ion-label>
         <p slot="end">{{ instanceUrl }}</p>
       </ion-item>
+         
+      <ion-item>
+        <ion-label> {{ userProfile && userProfile.userTimeZone ? userProfile.userTimeZone : '-' }} </ion-label>
+        <ion-button @click="changeTimeZone()" slot="end" fill="outline" color="dark">{{ $t("Change") }}</ion-button>
+      </ion-item>
+
       <!-- Profile of user logged in -->
       <ion-item>
         <ion-icon :icon="personCircleOutline" slot="start" />
@@ -41,11 +39,12 @@
 </template>
 
 <script lang="ts">
-import { alertController, IonButton, IonContent, IonHeader,IonIcon, IonItem, IonLabel, IonMenuButton, IonPage, IonSelect, IonSelectOption, IonTitle, IonToolbar, popoverController } from '@ionic/vue';
+import { alertController, IonButton, IonContent, IonHeader,IonIcon, IonItem, IonLabel, IonMenuButton, IonPage, IonSelect, IonSelectOption, IonTitle, IonToolbar, popoverController, modalController } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { codeWorkingOutline, ellipsisVertical, globeOutline, personCircleOutline, storefrontOutline} from 'ionicons/icons'
 import { mapGetters, useStore } from 'vuex';
 import { useRouter } from 'vue-router';
+import TimeZoneModal from '@/views/TimezoneModal.vue';
 
 export default defineComponent({
   name: 'Settings',
@@ -66,7 +65,6 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       userProfile: 'user/getUserProfile',
-      currentFacility: 'user/getCurrentFacility',
       currentEComStore: 'user/getCurrentEComStore',
       instanceUrl: 'user/getInstanceUrl'
     })
@@ -79,12 +77,11 @@ export default defineComponent({
         })
       }
     },
-    setFacility (facility: any) {
-      if (this.userProfile){
-        this.store.dispatch('user/setFacility', {
-          'facility': this.userProfile.facilities.find((fac: any) => fac.facilityId == facility['detail'].value)
-        });
-      }
+    async changeTimeZone() {
+      const timeZoneModal = await modalController.create({
+        component: TimeZoneModal,
+      });
+      return timeZoneModal.present();
     },
     logout () {
       this.store.dispatch('user/logout').then(() => {

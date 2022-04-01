@@ -1,0 +1,7 @@
+---
+title: 'Updated: the service mapping with enumIds in the env file and used enumId
+  to fetch job information'
+ticket_id: "#23madwe"
+merge_request: 27
+author: Yash Maheshwari
+type: changed

@@ -1,6 +1,7 @@
 import saveAs from "file-saver";
 import { toastController } from '@ionic/vue';
 import Papa from 'papaparse'
+import { DateTime } from "luxon";
 
 // TODO Use separate files for specific utilities
 
@@ -14,7 +15,7 @@ const showToast = async (message: string) => {
     .create({
       message,
       duration: 3000,
-      position: 'top',
+      position: 'bottom',
     })
   return toast.present();
 }
@@ -117,4 +118,9 @@ const jsonToCsv = (file: any, options: JsonToCsvOption = {}) => {
   return blob; 
 }
 
-export { showToast, hasError , parseCsv , jsonToCsv, JsonToCsvOption }
+// returns false if the time passed is of past, otherwise true
+const isValidDate = (time: any) => {
+  return DateTime.fromMillis(time).diff(DateTime.local()).milliseconds > 0;
+}
+
+export { showToast, hasError , parseCsv , jsonToCsv, JsonToCsvOption, isValidDate }

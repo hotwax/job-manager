@@ -40,7 +40,7 @@ import {
 } from "@ionic/vue";
 import { defineComponent, ref } from "vue";
 import { mapGetters } from "vuex";
-import { pulseOutline, calendarNumberOutline, ticketOutline, albumsOutline, shirtOutline, settings } from "ionicons/icons";
+import { pulseOutline, calendarNumberOutline, ticketOutline, albumsOutline, shirtOutline, settings, iceCreamOutline } from "ionicons/icons";
 import { useStore } from "@/store";
 export default defineComponent({
   name: "Menu",
@@ -86,30 +86,36 @@ export default defineComponent({
         iosIcon: pulseOutline,
         mdIcon: pulseOutline,
       },
-      // {
-      //   title: "Pre-order",
-      //   url: "/pre-order",
-      //   iosIcon: calendarNumberOutline,
-      //   mdIcon: calendarNumberOutline,
-      // },
-      // {
-      //   title: "Orders",
-      //   url: "/orders",
-      //   iosIcon: ticketOutline,
-      //   mdIcon: ticketOutline,
-      // },
-      // {
-      //   title: "Inventory",
-      //   url: "/inventory",
-      //   iosIcon: albumsOutline,
-      //   mdIcon: albumsOutline,
-      // },
-      // {
-      //   title: "Products",
-      //   url: "/product",
-      //   iosIcon: shirtOutline,
-      //   mdIcon: shirtOutline,
-      // },
+      {
+        title: "Initial load",
+        url: "/initial-load",
+        iosIcon: iceCreamOutline,
+        mdIcon: iceCreamOutline,
+      },
+      {
+        title: "Pre-order",
+        url: "/pre-order",
+        iosIcon: calendarNumberOutline,
+        mdIcon: calendarNumberOutline,
+      },
+      {
+        title: "Orders",
+        url: "/orders",
+        iosIcon: ticketOutline,
+        mdIcon: ticketOutline,
+      },
+      {
+        title: "Inventory",
+        url: "/inventory",
+        iosIcon: albumsOutline,
+        mdIcon: albumsOutline,
+      },
+      {
+        title: "Products",
+        url: "/product",
+        iosIcon: shirtOutline,
+        mdIcon: shirtOutline,
+      },
       {
         title: "Settings",
         url: "/settings",
@@ -126,6 +132,7 @@ export default defineComponent({
       albumsOutline, 
       shirtOutline,
       settings,
+      iceCreamOutline,
       store
     };
   },

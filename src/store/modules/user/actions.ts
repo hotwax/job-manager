@@ -43,10 +43,10 @@ const actions: ActionTree<UserState, RootState> = {
   /**
    * Logout user
    */
-  async logout ({ commit }) {
+  async logout ({ commit, dispatch }) {
     // TODO add any other tasks if need
+    dispatch('job/clearPendingJobs', null, { root: true });
     commit(types.USER_END_SESSION)
-    
   },
 
   /**
@@ -74,16 +74,9 @@ const actions: ActionTree<UserState, RootState> = {
       })
 
       commit(types.USER_INFO_UPDATED, resp.data);
-      commit(types.USER_CURRENT_FACILITY_UPDATED, resp.data.facilities.length > 0 ? resp.data.facilities[0] : {});
     }
   },
 
-  /**
-   * update current facility information
-   */
-  async setFacility ({ commit }, payload) {
-    commit(types.USER_CURRENT_FACILITY_UPDATED, payload.facility);
-  },
   /**
    * update current eComStore information
    */
