@@ -171,6 +171,8 @@ import { mapGetters } from "vuex";
 import JobDetail from '@/components/JobDetail.vue';
 import { DateTime } from 'luxon';
 
+
+
 export default defineComponent({
   name: 'Orders',
   components: {
@@ -214,31 +216,18 @@ export default defineComponent({
     })
   },
 
-  async ionViewWillLeave() {
-  if(this.showAlertBoolean) {
-    const alert = await alertController
-    .create({
-      header: 'Discard changes',
-      message: 'All unsaved changes will be lost. Are you sure you want to leave this page.',
-      buttons: [
-        {
-          text: "Cancel",
-          role: "cancel",
-          handler: async () => {
-            this.store.dispatch('job/updateShowAlertCondition', false);
-          }
-        },
-        {
-          text: 'Save',
-          handler: async () => {
-            this.store.dispatch('job/updateShowAlertCondition', false);
-          }  
-        }
-      ]
-    });
-    // next()
-    alert.present();
-  } 
+  beforeRouteLeave(to, from, next) {
+    if(this.showAlertBoolean) {
+      const answer = window.confirm('Do you really want to leave? you have unsaved changes!')
+      if (answer) {
+        this.store.dispatch('job/updateShowAlertCondition', false);
+        next()
+      } else {
+        next(false);
+      }
+    } else {
+      next();
+    }
   },
 
   methods: {

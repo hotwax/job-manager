@@ -27,36 +27,6 @@ const loginGuard = (to: any, from: any, next: any) => {
   }
 };
 
-const before = async (to: any, from: any, next: any) => {
-  console.log(store.getters['job/getShowAlertBoolean']);
-  if(store.getters['job/getShowAlertBoolean']) {
-    const alert = await alertController
-    .create({
-      header: 'Discard changes',
-      message: 'All unsaved changes will be lost. Are you sure you want to leave this page.',
-      buttons: [
-        {
-          text: "Cancel",
-          role: "cancel",
-          handler: async () => {
-            store.dispatch('job/updateShowAlertCondition', false);
-          }
-        },
-        {
-          text: 'Save',
-          handler: async () => {
-            store.dispatch('job/updateShowAlertCondition', false);
-            next()
-          }  
-        }
-      ]
-    });
-    // next()
-    alert.present();
-  } else {
-    next()
-  }
-}
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -85,7 +55,7 @@ const routes: Array<RouteRecordRaw> = [
     path: '/pre-order',
     name: 'PreOrder',
     component: PreOrder,
-    beforeEnter: [authGuard, before]
+    beforeEnter: authGuard
   },
   {
     path: '/orders',
