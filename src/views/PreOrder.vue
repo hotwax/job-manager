@@ -76,11 +76,6 @@
               <ion-label>{{ $t("Add shipping dates in Shopify") }}</ion-label>
               <ion-checkbox :checked="addShippingDateInShopify" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_SHPG_DTE_SHPFY'])"/>
             </ion-item>
-            <!-- TODO: run all sync jobs with time diff of 2 mins and run now and count: 1 -->
-            <ion-item>
-              <ion-label>{{ $t("Manual update") }}</ion-label>
-              <ion-button fill="outline" @click="runJob('Manual update')">{{ $t("Run sync now") }}</ion-button>
-            </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap"><p>{{ $t("Transfer pre-order related information to Shopify as tags and meta fields.") }}</p></ion-label>
             </ion-item>
