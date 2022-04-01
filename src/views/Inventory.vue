@@ -135,8 +135,13 @@ export default defineComponent({
 
       // TODO: added this condition to not call the api when the value of the select automatically changes
       // need to handle this properly
-      if (checked && job?.status === 'SERVICE_PENDING') {
+      if (!job || checked && job?.status === 'SERVICE_PENDING') {
         return;
+      }
+
+      // if job runTime is not a valid date then making runTime as empty
+      if (job?.runTime && !isValidDate(job?.runTime)) {
+        job.runTime = ''
       }
 
       // TODO: check for parentJobId and jobEnum and handle this values properly
@@ -147,16 +152,18 @@ export default defineComponent({
         'recurrenceTimeZone': DateTime.now().zoneName
       } as any
       if (!checked) {
+        payload['cancelDateTime'] = DateTime.now().toMillis()
         this.store.dispatch('job/updateJob', payload)
       } else if (job?.status === 'SERVICE_DRAFT') {
         payload['JOB_NAME'] = job.jobName
         payload['SERVICE_NAME'] = job.serviceName
-        payload['SERVICE_TIME'] = job.runTime.toString()
+        payload['SERVICE_TIME'] = job.runTime ? job.runTime.toString() : ''
         payload['SERVICE_COUNT'] = '0'
+        payload['SERVICE_PRIORITY'] = job.priority ? job.priority.toString() : ''
         payload['jobFields'] = {
           'productStoreId': this.currentEComStore.productStoreId,
           'systemJobEnumId': job.systemJobEnumId,
-          'tempExprId': 'DAILY',
+          'tempExprId': 'MIDNIGHT_DAILY',
           'maxRecurrenceCount': '-1',
           'parentJobId': job.parentJobId,
           'runAsUser': 'system', // default system, but empty in run now
@@ -181,7 +188,7 @@ export default defineComponent({
       this.currentJobStatus = status
       this.freqType = this.jobFrequencyType[id]
 
-      // if job runTime is not a valid date then assigning current date to the runTime
+      // if job runTime is not a valid date then making runTime as empty
       if (this.currentJob?.runTime && !isValidDate(this.currentJob?.runTime)) {
         this.currentJob.runTime = ''
       }

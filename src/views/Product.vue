@@ -103,7 +103,7 @@ export default defineComponent({
       this.currentJobStatus = status
       this.freqType = this.jobFrequencyType[id]
 
-      // if job runTime is not a valid date then assigning current date to the runTime
+      // if job runTime is not a valid date then making runTime as empty
       if (this.currentJob?.runTime && !isValidDate(this.currentJob?.runTime)) {
         this.currentJob.runTime = ''
       }
