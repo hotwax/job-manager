@@ -14,11 +14,6 @@
             <ion-card-header>
               <ion-card-title>{{ $t("Import") }}</ion-card-title>
             </ion-card-header>
-            <!-- TODO: env file entry: REAL_WBHKS -->
-            <ion-item>
-              <ion-label class="ion-text-wrap">{{ $t("Realtime webhook") }}</ion-label>
-              <ion-toggle color="secondary" slot="end" />
-            </ion-item>
             <ion-item @click="viewJobConfiguration('IMP_NEW_ORDERS', 'New orders', getJobStatus(this.jobEnums['IMP_NEW_ORDERS']))" detail button>
               <ion-label class="ion-text-wrap">{{ $t("New orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_NEW_ORDERS') }}</ion-label>
@@ -102,14 +97,6 @@
             <ion-item @click="viewJobConfiguration('UNFIL_ORDERS', 'Unfillable orders', getJobStatus(this.jobEnums['UNFIL_ORDERS']))" detail button>
               <ion-label class="ion-text-wrap">{{ $t("Unfillable orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('UNFIL_ORDERS') }} </ion-label>
-            </ion-item>
-            <!-- TODO: env file entry UNFIL_ORDERS, run now as user with count 1-->
-            <ion-item>
-              <ion-button fill="outline" color="warning" @click="runJob('Route unfillable orders now')">{{ $t("Route unfillable orders now") }}</ion-button>
-            </ion-item>
-            <ion-item>
-              <ion-label class="ion-text-wrap">{{ $t("Batch broker orders") }}</ion-label>
-              <ion-toggle color="secondary" />
             </ion-item>
             <ion-item-divider>
               <ion-label class="ion-text-wrap">{{ $t("Batches") }}</ion-label>
