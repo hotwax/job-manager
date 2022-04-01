@@ -62,7 +62,7 @@
         </section>
 
         <section v-if="segmentSelected === 'history'">
-          <ion-card v-for="job in jobHistory" :key="job.jobId" button>
+          <ion-card v-for="job in jobHistory" :key="job.jobId">
             <ion-card-header>
               <div>
                 <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
