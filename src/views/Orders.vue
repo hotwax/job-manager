@@ -201,7 +201,8 @@ export default defineComponent({
       currentJob: '',
       title: 'New orders',
       currentJobStatus: '',
-      freqType: ''
+      freqType: '',
+      isJobDetailAnimationCompleted: false
     }
   },
   computed: {
@@ -267,7 +268,13 @@ export default defineComponent({
       }
     },
     viewJobConfiguration(id: string, title: string, status: string) {
-      const asideAnimation = createAnimation()
+      this.currentJob = this.getJob(this.jobEnums[id])
+      this.title = title
+      this.currentJobStatus = status
+      this.freqType = this.jobFrequencyType[id]
+
+      if (this.currentJob && !this.isJobDetailAnimationCompleted) {
+        const asideAnimation = createAnimation()
         .addElement(this.aside)
         .duration(1500)
         .easing('ease')
@@ -277,20 +284,15 @@ export default defineComponent({
           { offset: 1, flex: '1', opacity: '1' }
         ])
 
-      const mainAnimation = createAnimation()
-        .addElement(this.main)
-        .duration(500)
-        .fromTo('gap', '0', 'var(--spacer-2xl)');
+        const mainAnimation = createAnimation()
+          .addElement(this.main)
+          .duration(500)
+          .fromTo('gap', '0', 'var(--spacer-2xl)');
 
-      this.currentJob = this.getJob(this.jobEnums[id])
-      this.title = title
-      this.currentJobStatus = status
-      this.freqType = this.jobFrequencyType[id]
-
-      if (this.currentJob) {
         createAnimation()
           .addAnimation([mainAnimation, asideAnimation])
           .play();
+        this.isJobDetailAnimationCompleted = true;
       }
     },
     getTemporalExpression(enumId: string) {
