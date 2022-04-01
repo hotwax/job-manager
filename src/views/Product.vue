@@ -53,6 +53,7 @@ import {
 import { defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
 import JobDetail from '@/components/JobDetail.vue'
+import { isValidDate } from '@/utils';
 
 export default defineComponent({
   name: 'Product',
@@ -81,7 +82,7 @@ export default defineComponent({
     return {
       jobEnums: JSON.parse(process.env?.VUE_APP_PRD_JOB_ENUMS as string) as any,
       jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
-      currentJob: '',
+      currentJob: '' as any,
       title: 'Import products',
       currentJobStatus: '',
       freqType: ''
@@ -101,6 +102,11 @@ export default defineComponent({
       this.title = title
       this.currentJobStatus = status
       this.freqType = this.jobFrequencyType[id]
+
+      // if job runTime is not a valid date then assigning current date to the runTime
+      if (this.currentJob?.runTime && !isValidDate(this.currentJob?.runTime)) {
+        this.currentJob.runTime = ''
+      }
     },
     getTemporalExpression(enumId: string) {
       return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
