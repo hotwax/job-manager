@@ -8,7 +8,7 @@
     </ion-header>
 
     <ion-content>
-      <main ref="main">
+      <main>
         <section>
           <ion-card>
             <ion-card-header>
@@ -37,7 +37,7 @@
           </ion-card>
         </section>
 
-        <aside v-show="currentSelectedJobModal" ref="aside">
+        <aside class="desktop-only" v-show="currentSelectedJobModal">
           <section v-show="currentSelectedJobModal === 'products'">
             <ion-item lines="none">
               <h1>{{ $t("Products") }}</h1>
@@ -140,7 +140,6 @@
 <script lang="ts">
 import {
   alertController,
-  createAnimation,
   IonButton,
   IonCard,
   IonCardHeader,
@@ -161,7 +160,7 @@ import {
   IonTitle,
   IonToolbar
 } from '@ionic/vue';
-import { defineComponent, ref } from 'vue';
+import { defineComponent } from 'vue';
 import {
   calendarClearOutline,
   flagOutline,
@@ -172,6 +171,7 @@ import { translate } from '@/i18n';
 import { DateTime } from 'luxon';
 import { mapGetters, useStore } from 'vuex';
 import { isValidDate } from '@/utils';
+import emitter from '@/event-bus';
 
 export default defineComponent({
   name: 'InitialLoad',
@@ -235,25 +235,7 @@ export default defineComponent({
       }
 
       if (this.job && !this.isJobDetailAnimationCompleted) {
-        const revealAnimation = createAnimation()
-        .addElement(this.aside)
-        .duration(1500)
-        .easing('ease')
-         .keyframes([
-          { offset: 0, flex: '0', opacity: '0' },
-          { offset: 0.5, flex: '1', opacity: '0' },
-          { offset: 1, flex: '1', opacity: '1' }
-        ])
-
-        const gapAnimation = createAnimation()
-          .addElement(this.main)
-          .duration(500)
-          .fromTo('gap', '0', 'var(--spacer-2xl)');
-
-        createAnimation()
-          .addAnimation([gapAnimation, revealAnimation])
-          .play();
-
+        emitter.emit('playAnimation');
         this.isJobDetailAnimationCompleted = true;
       }
     },
@@ -339,12 +321,8 @@ export default defineComponent({
       header: translate('Fulfillment status'),
     };
     const store = useStore();
-    const main = ref({} as Element)
-    const aside = ref({} as Element)
 
     return {
-      aside,
-      main,
       calendarClearOutline,
       flagOutline,
       sendOutline,

@@ -8,7 +8,7 @@
     </ion-header>
 
     <ion-content>
-      <main ref="main">
+      <main>
         <section>
           <ion-card>
             <ion-card-header>
@@ -120,7 +120,7 @@
           </ion-card>
         </section>
 
-        <aside class="desktop-only" v-show="currentJob" ref="aside">
+        <aside class="desktop-only" v-show="currentJob">
           <JobDetail :title="title" :job="currentJob" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
         </aside>
       </main>
@@ -130,7 +130,6 @@
 
 <script lang="ts">
 import {
-  createAnimation,
   alertController,
   IonButton,
   IonCard,
@@ -151,13 +150,14 @@ import {
   IonToolbar,
   modalController
 } from '@ionic/vue';
-import { defineComponent, ref } from 'vue';
+import { defineComponent } from 'vue';
 import { addCircleOutline } from 'ionicons/icons';
 import BatchModal from '@/components/BatchModal.vue';
 import { useStore } from "@/store";
 import { mapGetters } from "vuex";
 import JobDetail from '@/components/JobDetail.vue';
 import { DateTime } from 'luxon';
+import emitter from '@/event-bus';
 
 export default defineComponent({
   name: 'Orders',
@@ -261,24 +261,7 @@ export default defineComponent({
       this.freqType = this.jobFrequencyType[id]
 
       if (this.currentJob && !this.isJobDetailAnimationCompleted) {
-        const revealAnimation = createAnimation()
-        .addElement(this.aside)
-        .duration(1500)
-        .easing('ease')
-         .keyframes([
-          { offset: 0, flex: '0', opacity: '0' },
-          { offset: 0.5, flex: '1', opacity: '0' },
-          { offset: 1, flex: '1', opacity: '1' }
-        ])
-
-        const gapAnimation = createAnimation()
-          .addElement(this.main)
-          .duration(500)
-          .fromTo('gap', '0', 'var(--spacer-2xl)');
-
-        createAnimation()
-          .addAnimation([gapAnimation, revealAnimation])
-          .play();
+        emitter.emit('playAnimation');
         this.isJobDetailAnimationCompleted = true;
       }
     },
@@ -316,13 +299,9 @@ export default defineComponent({
   },
   setup() {
     const store = useStore();
-    const main = ref({} as Element)
-    const aside = ref({} as Element)
 
     return {
       addCircleOutline,
-      aside,
-      main,
       store
     };
   },

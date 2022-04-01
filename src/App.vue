@@ -8,7 +8,7 @@
 </template>
 
 <script lang="ts">
-import { IonApp, IonRouterOutlet, IonSplitPane } from '@ionic/vue';
+import { createAnimation, IonApp, IonRouterOutlet, IonSplitPane } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import Menu from '@/components/Menu.vue';
 import { loadingController, alertController } from '@ionic/vue';
@@ -66,6 +66,26 @@ export default defineComponent({
         this.loader.dismiss();
         this.loader = null as any;
       }
+    },
+    playAnimation() {
+      const revealAnimation = createAnimation()
+        .addElement(document.querySelector('aside') as Element)
+        .duration(1500)
+        .easing('ease')
+        .keyframes([
+          { offset: 0, flex: '0', opacity: '0' },
+          { offset: 0.5, flex: '1', opacity: '0' },
+          { offset: 1, flex: '1', opacity: '1' }
+        ])
+
+      const gapAnimation = createAnimation()
+        .addElement(document.querySelector('main') as Element)
+        .duration(500)
+        .fromTo('gap', '0', 'var(--spacer-2xl)');
+
+      createAnimation()
+        .addAnimation([gapAnimation, revealAnimation])
+        .play();
     }
   },
   async mounted() {
@@ -78,14 +98,17 @@ export default defineComponent({
     emitter.on('timeZoneDifferent', this.timeZoneDifferentAlert);
     emitter.on('presentLoader', this.presentLoader);
     emitter.on('dismissLoader', this.dismissLoader);
+    emitter.on('playAnimation', this.playAnimation);
   },
   unmounted() {
     emitter.off('timeZoneDifferent', this.timeZoneDifferentAlert);
     emitter.off('presentLoader', this.presentLoader);
     emitter.off('dismissLoader', this.dismissLoader);
+    emitter.on('playAnimation', this.playAnimation);
   },
   setup(){
     const store = useStore();
+
     return {
       store,
     }
