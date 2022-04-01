@@ -303,7 +303,12 @@ aside {
 
   .mobile-only {
     display: none;
-  }  
+  }
+
+  aside {
+    width: 0px;
+    opacity: 0;
+  }
 }
 
 @media (prefers-color-scheme: dark) {

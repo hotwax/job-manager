@@ -112,6 +112,7 @@ import { mapGetters } from "vuex";
 import { DateTime } from 'luxon';
 import { alertController } from '@ionic/vue';
 import JobDetail from '@/components/JobDetail.vue'
+import emitter from '@/event-bus';
 
 export default defineComponent({
   name: 'PreOrder',
@@ -167,7 +168,8 @@ export default defineComponent({
       currentJob: '',
       title: '',
       currentJobStatus: '',
-      freqType: ''
+      freqType: '',
+      isJobDetailAnimationCompleted: false
     }
   },
   methods: {
@@ -239,6 +241,11 @@ export default defineComponent({
       this.title = title
       this.currentJobStatus = status
       this.freqType = this.jobFrequencyType[id]
+
+      if (this.currentJob && !this.isJobDetailAnimationCompleted) {
+        emitter.emit('playAnimation');
+        this.isJobDetailAnimationCompleted = true;
+      }
     },
     getTemporalExpression(enumId: string) {
       return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
@@ -256,6 +263,7 @@ export default defineComponent({
   },
   setup() {
     const store = useStore();
+
     return {
       store
     };

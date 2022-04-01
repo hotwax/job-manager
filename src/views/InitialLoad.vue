@@ -37,7 +37,7 @@
           </ion-card>
         </section>
 
-        <aside v-show="currentSelectedJobModal">
+        <aside class="desktop-only" v-show="currentSelectedJobModal">
           <section v-show="currentSelectedJobModal === 'products'">
             <ion-item lines="none">
               <h1>{{ $t("Products") }}</h1>
@@ -171,6 +171,7 @@ import { translate } from '@/i18n';
 import { DateTime } from 'luxon';
 import { mapGetters, useStore } from 'vuex';
 import { isValidDate } from '@/utils';
+import emitter from '@/event-bus';
 
 export default defineComponent({
   name: 'InitialLoad',
@@ -201,7 +202,8 @@ export default defineComponent({
       currentSelectedJobModal: '',
       job: {} as any,
       lastShopifyOrderId: '',
-      minDateTime: DateTime.now().toISO()
+      minDateTime: DateTime.now().toISO(),
+      isJobDetailAnimationCompleted: false
     }
   },
   mounted () {
@@ -230,6 +232,11 @@ export default defineComponent({
       // if job runTime is not a valid date then assigning current date to the runTime
       if (this.job?.runTime && !isValidDate(this.job?.runTime)) {
         this.job.runTime = DateTime.local().toMillis()
+      }
+
+      if (this.job && !this.isJobDetailAnimationCompleted) {
+        emitter.emit('playAnimation');
+        this.isJobDetailAnimationCompleted = true;
       }
     },
     async runJob(header: string, id: string) {

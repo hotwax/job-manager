@@ -157,6 +157,7 @@ import { useStore } from "@/store";
 import { mapGetters } from "vuex";
 import JobDetail from '@/components/JobDetail.vue';
 import { DateTime } from 'luxon';
+import emitter from '@/event-bus';
 
 export default defineComponent({
   name: 'Orders',
@@ -187,7 +188,8 @@ export default defineComponent({
       currentJob: '',
       title: 'New orders',
       currentJobStatus: '',
-      freqType: ''
+      freqType: '',
+      isJobDetailAnimationCompleted: false
     }
   },
   computed: {
@@ -199,8 +201,8 @@ export default defineComponent({
       getTemporalExpr: 'job/getTemporalExpr'
     })
   },
-  methods: {
-     async editBatch() {
+  methods: {  
+    async editBatch() {
       const batchmodal = await modalController.create({
         component: BatchModal
       });
@@ -257,6 +259,11 @@ export default defineComponent({
       this.title = title
       this.currentJobStatus = status
       this.freqType = this.jobFrequencyType[id]
+
+      if (this.currentJob && !this.isJobDetailAnimationCompleted) {
+        emitter.emit('playAnimation');
+        this.isJobDetailAnimationCompleted = true;
+      }
     },
     getTemporalExpression(enumId: string) {
       return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
@@ -292,6 +299,7 @@ export default defineComponent({
   },
   setup() {
     const store = useStore();
+
     return {
       addCircleOutline,
       store

@@ -136,6 +136,7 @@ import {
 } from "@ionic/vue";
 import { codeWorkingOutline, timeOutline, timerOutline } from "ionicons/icons";
 import JobDetail from '@/components/JobDetail.vue'
+import emitter from '@/event-bus';
 
 export default defineComponent({
   name: "Pipeline",
@@ -173,7 +174,8 @@ export default defineComponent({
       currentJob: '' as any,
       title: '',
       currentJobStatus: '',
-      freqType: '' as any
+      freqType: '' as any,
+      isJobDetailAnimationCompleted: false
     }
   },
   computed: {
@@ -283,6 +285,11 @@ export default defineComponent({
       this.currentJobStatus = job.tempExprId
       const id = Object.entries(this.jobEnums).find((enums) => enums[1] == job.systemJobEnumId) as any
       this.freqType = (Object.entries(this.jobFrequencyType).find((freq) => freq[0] == id[0]) as any)[1]
+
+      if (this.currentJob && !this.isJobDetailAnimationCompleted) {
+        emitter.emit('playAnimation');
+        this.isJobDetailAnimationCompleted = true;
+      }
     },
   },
   created() {
