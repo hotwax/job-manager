@@ -116,6 +116,9 @@ import { defineComponent, ref } from "vue";
 import {
   IonBadge,
   IonButton,
+  IonCardHeader,
+  IonCardSubtitle,
+  IonCardTitle,
   IonContent,
   IonCard,
   IonHeader,
@@ -142,6 +145,9 @@ export default defineComponent({
   components: {
     IonBadge,
     IonButton,
+    IonCardHeader,
+    IonCardSubtitle,
+    IonCardTitle,
     IonContent,
     IonCard,
     IonHeader,
