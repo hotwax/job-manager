@@ -15,16 +15,7 @@
               <ion-card-title>{{ $t("Adjustments") }}</ion-card-title>
             </ion-card-header>
             <ion-item>
-              <ion-label>{{ $t("Dynamic inventory") }}</ion-label>
-              <ion-toggle :checked="realTimeWebhooks" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, this.jobEnums['DYN_INV'])"/>
-            </ion-item>
-            <ion-item lines="none">
-              <ion-label class="ion-text-wrap">
-                <p>{{ $t("Realtime adjustments allow HotWax Commerce to push new inventory to Shopify in realtime. These events include receiving , cycle counts, variances, and return.") }}</p>
-              </ion-label>
-            </ion-item>
-            <ion-item>
-              <ion-label>{{ $t("BOPIS corrections") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("BOPIS corrections") }}</ion-label>
               <ion-toggle :checked="bopisCorrections" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, this.jobEnums['BOPIS_CORRECTION'])" />
             </ion-item>
             <ion-item lines="none">
@@ -33,7 +24,7 @@
               </ion-label>
             </ion-item>
             <ion-item button @click="viewJobConfiguration('HARD_SYNC', 'Hard sync', getJobStatus(this.jobEnums['HARD_SYNC']))" detail>
-              <ion-label>{{ $t("Hard sync") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("Hard sync") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('HARD_SYNC') }}</ion-label>
             </ion-item>
             <ion-item lines="none">

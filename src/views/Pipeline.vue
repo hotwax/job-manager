@@ -21,14 +21,14 @@
     <ion-content>
       <main ref="main">
         <section v-if="segmentSelected === 'pending'">
-          <ion-card v-for="job in pendingJobs" :key="job.jobId" @click="viewJobConfiguration(job)">
-            <ion-item lines="none">
-              <ion-label class="ion-text-wrap">
-                <p class="overline">{{ job.parentJobId }}</p>
-                {{ getEnumName(job.systemJobEnumId) }}
-              </ion-label>
-              <ion-badge v-if="job.runTime" color="dark" slot="end">{{ timeTillJob(job.runTime)}}</ion-badge>
-            </ion-item>
+          <ion-card v-for="job in pendingJobs" :key="job.jobId" @click="viewJobConfiguration(job)" button>
+            <ion-card-header>
+                <div> 
+                  <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
+                  <ion-card-title>{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
+                </div>
+                <ion-badge v-if="job.runTime" color="dark" slot="end">{{ timeTillJob(job.runTime)}}</ion-badge>
+            </ion-card-header>
 
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
@@ -37,17 +37,17 @@
             </ion-item>
             <ion-item>
               <ion-icon slot="start" :icon="timeOutline" />
-              <ion-label>{{ job.runTime ? getTime(job.runTime) : "-"  }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ job.runTime ? getTime(job.runTime) : "-"  }}</ion-label>
             </ion-item>
 
             <ion-item>
               <ion-icon slot="start" :icon="timerOutline" />
-              <ion-label>{{ job.tempExprId ? temporalExpr(job.tempExprId)?.description : "🙃"  }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ job.tempExprId ? temporalExpr(job.tempExprId)?.description : "🙃"  }}</ion-label>
             </ion-item>
 
             <ion-item lines="full">
               <ion-icon slot="start" :icon="codeWorkingOutline" />
-              <ion-label>{{ job.serviceName }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ job.serviceName }}</ion-label>
             </ion-item>
 
             <ion-button fill="clear" @click.stop="skipJob(job)">{{ $t("Skip") }}</ion-button>
@@ -63,13 +63,13 @@
 
         <section v-if="segmentSelected === 'history'">
           <ion-card v-for="job in jobHistory" :key="job.jobId">
-            <ion-item lines="none">
-              <ion-label class="ion-text-wrap">
-                <p class="overline">{{ job.parentJobId }}</p>
-                {{ getEnumName(job.systemJobEnumId) }}
-              </ion-label>
-              <ion-badge v-if="job.runTime" color="dark" slot="end">{{ timeTillJob(job.runTime)}}</ion-badge>
-            </ion-item>
+            <ion-card-header>
+              <div>
+                <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
+                <ion-card-title>{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
+              </div>
+              <ion-badge v-if="job.runTime" color="dark">{{ timeTillJob(job.runTime)}}</ion-badge>
+            </ion-card-header>
 
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
@@ -78,17 +78,17 @@
             </ion-item>
             <ion-item>
               <ion-icon slot="start" :icon="timeOutline" />
-              <ion-label>{{ job.runTime ? getTime(job.runTime) : "-"  }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ job.runTime ? getTime(job.runTime) : "-"  }}</ion-label>
             </ion-item>
 
             <ion-item>
               <ion-icon slot="start" :icon="timerOutline" />
-              <ion-label>{{ job.tempExprId ? temporalExpr(job.tempExprId)?.description : "🙃"  }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ job.tempExprId ? temporalExpr(job.tempExprId)?.description : "🙃"  }}</ion-label>
             </ion-item>
 
             <ion-item lines="full">
               <ion-icon slot="start" :icon="codeWorkingOutline" />
-              <ion-label>{{ job.serviceName }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ job.serviceName }}</ion-label>
             </ion-item>
 
           </ion-card>
@@ -333,6 +333,13 @@ export default defineComponent({
 </script>
 
 <style scoped>
+ion-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0px;
+}
+
 @media (min-width: 991px) {
   ion-header{
     display: flex;
