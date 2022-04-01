@@ -61,7 +61,8 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
-      currentInstanceUrlSaved: 'user/getInstanceUrl'
+      currentInstanceUrlSaved: 'user/getInstanceUrl',
+      getCurrentEComStore:'user/getCurrentEComStore',
     })
   },
   mounted() {
@@ -76,6 +77,7 @@ export default defineComponent({
           this.username = ''
           this.password = ''
           this.$router.push('/')
+          this.store.dispatch('job/fetchDraftJobs', {eComStoreId: this.getCurrentEComStore.productStoreId})
         }
       })
     }

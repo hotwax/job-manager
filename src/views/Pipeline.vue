@@ -163,7 +163,8 @@ export default defineComponent({
       getDescription: 'job/getDescription',
       getCurrentEComStore:'user/getCurrentEComStore',
       isPendingJobsScrollable: 'job/isPendingJobsScrollable',
-      isHistoryJobsScrollable: 'job/isHistoryJobsScrollable'
+      isHistoryJobsScrollable: 'job/isHistoryJobsScrollable',
+      getDraftJobs: 'job/getDraftJobs'
     })
   },
   methods: {

@@ -8,6 +8,10 @@ export default interface JobState {
       list: any,
       total: 0
     }
+    draft: {
+      list: any,
+      total: 0
+    }
     temporalExp: any;
     enumIds: any;
 }

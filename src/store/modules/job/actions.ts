@@ -9,6 +9,42 @@ import { DateTime } from 'luxon';
 
 const actions: ActionTree<JobState, RootState> = {
 
+  async fetchDraftJobs({commit, dispatch, state}, payload){
+    await JobService.fetchJobInformation({
+      "inputFields": {
+        "productStoreId": payload.eComStoreId,
+        "statusId": ["SERVICE_DRAFT"],
+        "statusId_op": "in",
+        "systemJobEnumId_op": "not-empty"
+      },
+      "entityName": "JobSandbox",
+      "noConditionFind": "Y",
+      "viewSize": 100,
+      "viewIndex": payload.viewIndex,
+    }).then((resp) => {
+      if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
+        if (resp.data.docs) {
+          const total = resp.data.count;
+          const jobs = resp.data.docs;
+          commit(types.JOB_DRAFT_UPDATED, { jobs, total });
+          const tempExprList = [] as any;
+          resp.data.docs.map((item: any) => {
+            tempExprList.push(item.tempExprId);
+          })
+          const tempExpr = [...new Set(tempExprList)];
+          dispatch('fetchTemporalExpression', tempExpr);
+        }
+      } else {
+        commit(types.JOB_DRAFT_UPDATED,  { list: [], total: 0});
+        showToast(translate("Something went wrong"));
+      }
+    }).catch((err) => {
+      commit(types.JOB_DRAFT_UPDATED, { list: [], total: 0});
+      console.error(err);
+      showToast(translate("Something went wrong"));
+    }) 
+  },
+
   async fetchJobDescription({ commit, state }, payload){
     const enumIds = [] as any;
     const cachedEnumIds = Object.keys(state.enumIds);
@@ -239,6 +275,10 @@ const actions: ActionTree<JobState, RootState> = {
 
   clearPendingJobs({commit}) {
     commit(types.JOB_PENDING_UPDATED, { });
+  },
+
+  clearDraftJobs({ commit}) {
+   commit(types.JOB_DRAFT_UPDATED, {list: [], total: 0});
   },
 
   async skipJob({ commit, getters }, job) {

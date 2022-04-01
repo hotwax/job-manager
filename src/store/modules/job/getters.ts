@@ -20,6 +20,9 @@ const getters: GetterTree <JobState, RootState> = {
     getDescription: (state) => (id: string): any => {
       return state.enumIds[id];
     },
+    getDraftJobs (state) {
+      return state.draft;
+    },
     isPendingJobsScrollable: (state) => {
       return state.pending.list.length > 0 && state.pending.list.length < state.pending.total
     },

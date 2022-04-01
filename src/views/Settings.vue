@@ -72,6 +72,7 @@ export default defineComponent({
     },
     logout () {
       this.store.dispatch('user/logout').then(() => {
+        this.store.dispatch('job/clearDraftJobs');
         this.router.push('/login');
       })
     }

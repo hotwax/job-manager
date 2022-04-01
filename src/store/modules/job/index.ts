@@ -17,6 +17,10 @@ const jobModule: Module<JobState, RootState> = {
         list: [],
         total: 0
       },
+      draft: {
+        list: [],
+        total: 0
+      },
       temporalExp: [],
       enumIds: {}
     },
