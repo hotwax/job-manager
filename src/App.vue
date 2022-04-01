@@ -68,8 +68,11 @@ export default defineComponent({
       }
     },
     playAnimation() {
+      const aside = document.querySelector('aside') as Element
+      const main = document.querySelector('main') as Element
+
       const revealAnimation = createAnimation()
-        .addElement(document.querySelector('aside') as Element)
+        .addElement(aside)
         .duration(1500)
         .easing('ease')
         .keyframes([
@@ -79,7 +82,7 @@ export default defineComponent({
         ])
 
       const gapAnimation = createAnimation()
-        .addElement(document.querySelector('main') as Element)
+        .addElement(main)
         .duration(500)
         .fromTo('gap', '0', 'var(--spacer-2xl)');
 
