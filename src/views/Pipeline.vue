@@ -318,6 +318,10 @@ ion-card-header {
   padding-bottom: 0px;
 }
 
+ion-item {
+  --background: transparent;
+}
+
 @media (min-width: 991px) {
   ion-header{
     display: flex;
