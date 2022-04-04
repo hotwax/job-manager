@@ -15,11 +15,11 @@
               <ion-card-title>{{ $t("Sync") }}</ion-card-title>
             </ion-card-header>
             <ion-item button @click="viewJobConfiguration('IMP_PRDTS', 'Import products', getJobStatus(this.jobEnums['IMP_PRDTS']))" detail>
-              <ion-label>{{ $t("Import products") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("Import products") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_PRDTS') }}</ion-label>
             </ion-item>
             <ion-item button @click="viewJobConfiguration('SYNC_PRDTS', 'Sync products', getJobStatus(this.jobEnums['SYNC_PRDTS']))" detail>
-              <ion-label>{{ $t("Sync products") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("Sync products") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('SYNC_PRDTS') }} </ion-label>
             </ion-item>
             <ion-item lines="none">
@@ -54,6 +54,7 @@ import { defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
 import JobDetail from '@/components/JobDetail.vue'
 import { isValidDate } from '@/utils';
+import emitter from '@/event-bus';
 
 export default defineComponent({
   name: 'Product',
@@ -85,7 +86,8 @@ export default defineComponent({
       currentJob: '' as any,
       title: 'Import products',
       currentJobStatus: '',
-      freqType: ''
+      freqType: '',
+      isJobDetailAnimationCompleted: false
     }
   },
   mounted () {
@@ -106,6 +108,10 @@ export default defineComponent({
       // if job runTime is not a valid date then making runTime as empty
       if (this.currentJob?.runTime && !isValidDate(this.currentJob?.runTime)) {
         this.currentJob.runTime = ''
+      }
+      if (this.currentJob && !this.isJobDetailAnimationCompleted) {
+        emitter.emit('playAnimation');
+        this.isJobDetailAnimationCompleted = true;
       }
     },
     getTemporalExpression(enumId: string) {

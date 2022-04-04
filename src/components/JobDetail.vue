@@ -290,7 +290,6 @@ export default defineComponent({
 <style scoped>
 section {
   overflow: hidden;
-  flex: 1 355px;
   border: 1px solid var(--ion-color-medium);
   border-radius: 16px;
 }

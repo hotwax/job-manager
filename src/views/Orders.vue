@@ -15,23 +15,23 @@
               <ion-card-title>{{ $t("Import") }}</ion-card-title>
             </ion-card-header>
             <ion-item @click="viewJobConfiguration('IMP_NEW_ORDERS', 'New orders', getJobStatus(this.jobEnums['IMP_NEW_ORDERS']))" detail button>
-              <ion-label>{{ $t("New orders") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("New orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_NEW_ORDERS') }}</ion-label>
             </ion-item>
             <ion-item @click="viewJobConfiguration('IMP_CANCELLED_ORDERS', 'Cancelled orders', getJobStatus(this.jobEnums['IMP_CANCELLED_ORDERS']))" detail button>
-              <ion-label>{{ $t("Cancelled orders") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("Cancelled orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_CANCELLED_ORDERS') }}</ion-label>
             </ion-item>
             <ion-item @click="viewJobConfiguration('IMP_CANCELLED_ITEMS', 'Cancelled items', getJobStatus(this.jobEnums['IMP_CANCELLED_ITEMS']))" detail button>
-              <ion-label>{{ $t("Cancelled items") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("Cancelled items") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_CANCELLED_ITEMS') }}</ion-label>
             </ion-item>
             <ion-item @click="viewJobConfiguration('IMP_PAYMENT_STATUS', 'Payment status', getJobStatus(this.jobEnums['IMP_PAYMENT_STATUS']))" detail button>
-              <ion-label>{{ $t("Payment status") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("Payment status") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_PAYMENT_STATUS') }}</ion-label>
             </ion-item>
             <ion-item @click="viewJobConfiguration('IMP_RETURNS', 'Returns', getJobStatus(this.jobEnums['IMP_RETURNS']))" detail button>
-              <ion-label>{{ $t("Returns") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("Returns") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_RETURNS') }}</ion-label>
             </ion-item>
           </ion-card>
@@ -41,15 +41,15 @@
               <ion-card-title>{{ $t("Upload") }}</ion-card-title>
             </ion-card-header>
             <ion-item @click="viewJobConfiguration('UPLD_CMPLT_ORDRS', 'Completed orders', getJobStatus(this.jobEnums['UPLD_CMPLT_ORDRS']))" detail button>
-              <ion-label>{{ $t("Completed orders") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("Completed orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('UPLD_CMPLT_ORDRS') }}</ion-label>
             </ion-item>
             <ion-item @click="viewJobConfiguration('UPLD_CNCLD_ORDRS', 'Cancelled orders', getJobStatus(this.jobEnums['UPLD_CNCLD_ORDRS']))" detail button>
-              <ion-label>{{ $t("Cancelled orders") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("Cancelled orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('UPLD_CNCLD_ORDRS') }}</ion-label>
             </ion-item>
             <ion-item @click="viewJobConfiguration('UPLD_REFUNDS', 'Refunds', getJobStatus(this.jobEnums['UPLD_REFUNDS']))" detail button>
-              <ion-label>{{ $t("Refunds") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("Refunds") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('UPLD_REFUNDS') }}</ion-label>
             </ion-item>
           </ion-card>
@@ -59,11 +59,11 @@
               <ion-card-title>{{ $t("Auto cancelations") }}</ion-card-title>
             </ion-card-header>
             <ion-item>
-              <ion-label>{{ $t("Days") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("Days") }}</ion-label>
               <ion-input :placeholder="$t('before auto cancelation')" />
             </ion-item>
             <ion-item>
-              <ion-label>{{ $t("Check daily") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("Check daily") }}</ion-label>
               <ion-toggle :checked="autoCancelCheckDaily" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['AUTO_CNCL_DAL'])" />
             </ion-item>
             <ion-item lines="none">
@@ -76,7 +76,7 @@
               <ion-card-title>{{ $t("Notes") }}</ion-card-title>
             </ion-card-header>
             <ion-item>
-              <ion-label>{{ $t("Promise date changes") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("Promise date changes") }}</ion-label>
               <ion-toggle :checked="promiseDateChanges" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['NTS_PRMS_DT_CHNG'])"/>
             </ion-item>
           </ion-card>
@@ -86,30 +86,30 @@
               <ion-card-title>{{ $t("Routing") }}</ion-card-title>
             </ion-card-header>
             <ion-item @click="viewJobConfiguration('REJ_ORDR', 'Rejected orders', getJobStatus(this.jobEnums['REJ_ORDR']))" detail button>
-              <ion-label>{{ $t("Rejected orders") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("Rejected orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('REJ_ORDR') }}</ion-label>
             </ion-item>
             <ion-item @click="viewJobConfiguration('UNFIL_ORDERS', 'Unfillable orders', getJobStatus(this.jobEnums['UNFIL_ORDERS']))" detail button>
-              <ion-label>{{ $t("Unfillable orders") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("Unfillable orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('UNFIL_ORDERS') }} </ion-label>
             </ion-item>
             <ion-item-divider>
-              <ion-label>{{ $t("Batches") }}</ion-label>
-              <ion-button fill="clear" slot="end">
+              <ion-label class="ion-text-wrap">{{ $t("Batches") }}</ion-label>
+              <ion-button fill="clear" @click="editBatch()" slot="end">
                 {{ $t("Add") }}
                 <ion-icon :icon="addCircleOutline" slot="end" />
               </ion-button>
             </ion-item-divider>
             <ion-item detail>
-              <ion-label>Batch 1</ion-label>
+              <ion-label class="ion-text-wrap">Batch 1</ion-label>
               <ion-note slot="end">9:30 am</ion-note>
             </ion-item>
-            <ion-item @click="editBatch()" detail>
-              <ion-label>Batch 2</ion-label>
+            <ion-item detail>
+              <ion-label class="ion-text-wrap">Batch 2</ion-label>
               <ion-note slot="end">12:00 pm</ion-note>
             </ion-item>
             <ion-item detail>
-              <ion-label>Batch 3</ion-label>
+              <ion-label class="ion-text-wrap">Batch 3</ion-label>
               <ion-note slot="end">3:00 pm</ion-note>
             </ion-item>
           </ion-card>
@@ -153,6 +153,7 @@ import { mapGetters } from "vuex";
 import JobDetail from '@/components/JobDetail.vue';
 import { DateTime } from 'luxon';
 import { isValidDate } from '@/utils';
+import emitter from '@/event-bus';
 
 export default defineComponent({
   name: 'Orders',
@@ -183,7 +184,8 @@ export default defineComponent({
       currentJob: '' as any,
       title: 'New orders',
       currentJobStatus: '',
-      freqType: ''
+      freqType: '',
+      isJobDetailAnimationCompleted: false
     }
   },
   computed: {
@@ -203,8 +205,8 @@ export default defineComponent({
       return status && status !== "SERVICE_DRAFT";
     },
   },
-  methods: {
-     async editBatch() {
+  methods: {  
+    async editBatch() {
       const batchmodal = await modalController.create({
         component: BatchModal
       });
@@ -271,6 +273,10 @@ export default defineComponent({
       if (this.currentJob?.runTime && !isValidDate(this.currentJob?.runTime)) {
         this.currentJob.runTime = ''
       }
+      if (this.currentJob && !this.isJobDetailAnimationCompleted) {
+        emitter.emit('playAnimation');
+        this.isJobDetailAnimationCompleted = true;
+      }
     },
     getTemporalExpression(enumId: string) {
       return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
@@ -306,6 +312,7 @@ export default defineComponent({
   },
   setup() {
     const store = useStore();
+
     return {
       addCircleOutline,
       store

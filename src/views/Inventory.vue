@@ -15,7 +15,7 @@
               <ion-card-title>{{ $t("Adjustments") }}</ion-card-title>
             </ion-card-header>
             <ion-item>
-              <ion-label>{{ $t("BOPIS corrections") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("BOPIS corrections") }}</ion-label>
               <ion-toggle :checked="bopisCorrections" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, this.jobEnums['BOPIS_CORRECTION'])" />
             </ion-item>
             <ion-item lines="none">
@@ -24,7 +24,7 @@
               </ion-label>
             </ion-item>
             <ion-item button @click="viewJobConfiguration('HARD_SYNC', 'Hard sync', getJobStatus(this.jobEnums['HARD_SYNC']))" detail>
-              <ion-label>{{ $t("Hard sync") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("Hard sync") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('HARD_SYNC') }}</ion-label>
             </ion-item>
             <ion-item lines="none">
@@ -63,6 +63,7 @@ import { mapGetters, useStore } from 'vuex';
 import JobDetail from '@/components/JobDetail.vue'
 import { DateTime } from 'luxon';
 import { isValidDate } from '@/utils';
+import emitter from '@/event-bus';
 
 export default defineComponent({
   name: 'Inventory',
@@ -88,7 +89,8 @@ export default defineComponent({
       currentJob: '' as any,
       title: '',
       currentJobStatus: '',
-      freqType: ''
+      freqType: '',
+      isJobDetailAnimationCompleted: false
     }
   },
   computed: {
@@ -167,6 +169,10 @@ export default defineComponent({
       if (this.currentJob?.runTime && !isValidDate(this.currentJob?.runTime)) {
         this.currentJob.runTime = ''
       }
+      if (this.currentJob && !this.isJobDetailAnimationCompleted) {
+        emitter.emit('playAnimation');
+        this.isJobDetailAnimationCompleted = true;
+      }
     },
     getTemporalExpression(enumId: string) {
       return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
@@ -184,6 +190,7 @@ export default defineComponent({
   },
   setup() {
     const store = useStore();
+
     return {
       store
     }  
