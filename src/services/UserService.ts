@@ -52,7 +52,8 @@ const getServiceStatusDesc = async (payload: any): Promise<any> => {
   return api({
     url: "performFind",
     method: "post",
-    data: payload
+    data: payload,
+    cache: true
   });
 }
 

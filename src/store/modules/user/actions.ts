@@ -54,7 +54,7 @@ const actions: ActionTree<UserState, RootState> = {
       "noConditionFind": "Y",
       "viewSize": 20
     }) 
-    if (resp.status === 200) {
+    if (resp.status === 200 && !hasError(resp) && resp.data.count) {
       commit(types.USER_SERVICE_STATUS_DESC_UPDATED, resp.data.docs);
     }
   },
