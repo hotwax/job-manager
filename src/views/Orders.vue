@@ -100,22 +100,14 @@
             </ion-item>
             <ion-item-divider>
               <ion-label class="ion-text-wrap">{{ $t("Batches") }}</ion-label>
-              <ion-button fill="clear" @click="editBatch()" slot="end">
+              <ion-button fill="clear" @click="addBatch()" slot="end">
                 {{ $t("Add") }}
                 <ion-icon :icon="addCircleOutline" slot="end" />
               </ion-button>
             </ion-item-divider>
-            <ion-item detail>
-              <ion-label class="ion-text-wrap">Batch 1</ion-label>
-              <ion-note slot="end">9:30 am</ion-note>
-            </ion-item>
-            <ion-item detail>
-              <ion-label class="ion-text-wrap">Batch 2</ion-label>
-              <ion-note slot="end">12:00 pm</ion-note>
-            </ion-item>
-            <ion-item detail>
-              <ion-label class="ion-text-wrap">Batch 3</ion-label>
-              <ion-note slot="end">3:00 pm</ion-note>
+            <ion-item v-for="batch in getJob(jobEnums['BTCH_BRKR_ORD'])" :key="batch.id" button detail @click="editBatch(batch.id)" v-show="batch.status === 'SERVICE_PENDING'">
+              <ion-label class="ion-text-wrap">{{ batch.jobName }}</ion-label>
+              <ion-note slot="end">{{ batch?.runTime ? getTime(batch.runTime) : '' }}</ion-note>
             </ion-item>
           </ion-card>
         </section>
@@ -202,11 +194,21 @@ export default defineComponent({
     })
   },
   methods: {  
-    async editBatch() {
+    async addBatch() {
       const batchmodal = await modalController.create({
         component: BatchModal
       });
       return batchmodal.present();
+    },
+    async editBatch(id: string) {
+      const batchmodal = await modalController.create({
+        component: BatchModal,
+        componentProps: { id }
+      });
+      return batchmodal.present();
+    },
+    getTime (time: any) {
+      return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
     },
     async updateJob(checked: boolean, id: string) {
       const job = this.getJob(id);
