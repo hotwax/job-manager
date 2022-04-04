@@ -194,8 +194,9 @@ export default defineComponent({
       } else if (job?.status === 'SERVICE_DRAFT') {
         payload['JOB_NAME'] = job.jobName
         payload['SERVICE_NAME'] = job.serviceName
-        payload['SERVICE_TIME'] = job.runTime.toString()
+        payload['SERVICE_TIME'] = job.runTime ? job.runTime.toString() : ''
         payload['SERVICE_COUNT'] = '0'
+        payload['SERVICE_PRIORITY'] = job.priority ? job.priority.toString() : ''
         payload['jobFields'] = {
           'productStoreId': this.currentEComStore.productStoreId,
           'systemJobEnumId': job.systemJobEnumId,
