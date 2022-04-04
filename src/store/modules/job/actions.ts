@@ -169,9 +169,9 @@ const actions: ActionTree<JobState, RootState> = {
       // getting job with status Service draft as well, as this information will be needed when scheduling
       // a new batch
       // TODO: this needs to be updated when we will be storing the draft and pending jobs separately
-      const batchBrokeringService = [] as any
+      const batchBrokeringJobs = [] as any
       resp.data.docs.filter((job: any) => job.systemJobEnumId === 'ping').map((job: any) => {
-        batchBrokeringService.push({
+        batchBrokeringJobs.push({
           ...job,
           id: job.jobId,
           frequency: job.tempExprId,
@@ -183,7 +183,7 @@ const actions: ActionTree<JobState, RootState> = {
       resp.data.docs.filter((job: any) => job.statusId === 'SERVICE_PENDING').map((job: any) => {
         // added condition to store multiple pending jobs in the state for order batch jobs
         if (job.systemJobEnumId === (JSON.parse(process.env.VUE_APP_ODR_JOB_ENUMS as string) as any)['BTCH_BRKR_ORD']) {
-          return cached[job.systemJobEnumId] = batchBrokeringService
+          return cached[job.systemJobEnumId] = batchBrokeringJobs
         }
         return cached[job.systemJobEnumId] = {
           ...job,

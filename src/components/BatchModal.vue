@@ -81,10 +81,10 @@ export default defineComponent({
     })
   },
   mounted() {
-    this.getCurrentBatchInfo();
+    this.getCurrentBatch();
   },
   methods: {
-    getCurrentBatchInfo() {
+    getCurrentBatch() {
       this.currentBatch = this.getJob(this.enum)?.find((job: any) => job.id === this.id)
       this.jobName = this.currentBatch?.jobName
     },
@@ -127,14 +127,16 @@ export default defineComponent({
         // checking if the runTimeData has productStoreId, and if present then adding it on root level
         job?.runTimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.currentEComStore.productStoreId)
 
-        this.store.dispatch('job/scheduleService', {...job.runTimeData, ...payload})
+        await this.store.dispatch('job/scheduleService', {...job.runTimeData, ...payload})
+        this.closeModal()
       } else if (job?.status === 'SERVICE_PENDING') {
         payload['tempExprId'] = 'MIDNIGHT_DAILY'
         payload['jobId'] = job.id
         payload['runTime'] = job.runTime
         payload['jobName'] = this.jobName
 
-        this.store.dispatch('job/updateJob', payload)
+        await this.store.dispatch('job/updateJob', payload)
+        this.closeModal()
       }
     },
     updateRunTime(ev: CustomEvent, batch: any) {
