@@ -170,7 +170,8 @@ const actions: ActionTree<JobState, RootState> = {
       // a new batch
       // TODO: this needs to be updated when we will be storing the draft and pending jobs separately
       const batchBrokeringJobs = [] as any
-      resp.data.docs.filter((job: any) => job.systemJobEnumId === 'ping').map((job: any) => {
+      const batchBrokeringJobEnum = (JSON.parse(process.env.VUE_APP_ODR_JOB_ENUMS as string) as any)['BTCH_BRKR_ORD']
+      resp.data.docs.filter((job: any) => job.systemJobEnumId === batchBrokeringJobEnum).map((job: any) => {
         batchBrokeringJobs.push({
           ...job,
           id: job.jobId,
@@ -182,7 +183,7 @@ const actions: ActionTree<JobState, RootState> = {
 
       resp.data.docs.filter((job: any) => job.statusId === 'SERVICE_PENDING').map((job: any) => {
         // added condition to store multiple pending jobs in the state for order batch jobs
-        if (job.systemJobEnumId === (JSON.parse(process.env.VUE_APP_ODR_JOB_ENUMS as string) as any)['BTCH_BRKR_ORD']) {
+        if (job.systemJobEnumId === batchBrokeringJobEnum) {
           return cached[job.systemJobEnumId] = batchBrokeringJobs
         }
         return cached[job.systemJobEnumId] = {
