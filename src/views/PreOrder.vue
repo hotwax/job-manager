@@ -14,13 +14,13 @@
             <ion-card-header>
               <ion-card-title>{{ $t("Auto listing") }}</ion-card-title>
             </ion-card-header>
-            <ion-item>
-              <ion-label>{{ $t("Automatically list pre-order") }}</ion-label>
-              <ion-toggle :checked="automaticallyListPreOrder" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['LIST_PRE_ORDER'])" />
+            <ion-item button @click="viewJobConfiguration('LIST_PRE_ORDER', 'Automatically list pre-order', getJobStatus(this.jobEnums['LIST_PRE_ORDER']))" detail>
+              <ion-label class="ion-text-wrap">{{ $t("Automatically list pre-order") }}</ion-label>
+              <ion-label slot="end">{{ getTemporalExpression('LIST_PRE_ORDER') }}</ion-label>
             </ion-item>
-            <ion-item>
-              <ion-label>{{ $t("Automatically list back-order") }}</ion-label>
-              <ion-toggle :checked="automaticallyListBackOrder" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['LIST_BACK_ORDER'])" />
+            <ion-item button @click="viewJobConfiguration('LIST_BACK_ORDER', 'Automatically list back-order', getJobStatus(this.jobEnums['LIST_BACK_ORDER']))" detail>
+              <ion-label class="ion-text-wrap">{{ $t("Automatically list back-order") }}</ion-label>
+              <ion-label slot="end">{{ getTemporalExpression('LIST_BACK_ORDER') }}</ion-label>
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap"><p>{{ $t("This will automatically list items from purchase orders for preorder when stock runs out.") }}</p></ion-label>
@@ -32,7 +32,7 @@
               <ion-card-title>{{ $t("Re-allocate pre-orders") }}</ion-card-title>
             </ion-card-header>
             <ion-item>
-              <ion-label>{{ $t("Allocation") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("Allocation") }}</ion-label>
               <ion-button fill="outline" color="danger" slot="end" @click="runJob('Allocation', jobEnums['REALLOC_PRODR'])">{{ $t("Run reallocation") }}</ion-button>
             </ion-item>
             <ion-item lines="none">
@@ -46,11 +46,11 @@
             </ion-card-header>
             <!-- TODO: env file entry = AUTO_RELSE_DAILY, run time 12 am daily-->
             <ion-item>
-              <ion-label>{{ $t("Run daily") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("Run daily") }}</ion-label>
               <ion-checkbox slot="end" />
             </ion-item>
             <ion-item>
-              <ion-label>{{ $t("Release preorders")}}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("Release preorders")}}</ion-label>
               <ion-button fill="outline" @click="runJob('Release preorders', jobEnums['AUTO_RELSE_DAILY'])">{{ $t("Release") }}</ion-button>
             </ion-item>
             <ion-item lines="none">
@@ -63,27 +63,26 @@
               <ion-card-title>{{ $t("Sync") }}</ion-card-title>
             </ion-card-header>
             <ion-item>
-              <ion-label>{{ $t("Auto add pre-order tag in Shopify") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("Auto add pre-order tag in Shopify") }}</ion-label>
               <ion-checkbox :checked="addPreOrderTagInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_PRODR_TG_SHPFY'])" />
             </ion-item>
             <ion-item>
-              <ion-label>{{ $t("Auto remove tags in Shopify") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("Auto remove tags in Shopify") }}</ion-label>
               <ion-checkbox :checked="removeTagInShopify" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['REMV_ODR_TG_SHPFY'])"/>
             </ion-item>
             <ion-item>
-              <ion-label>{{ $t("Add shipping dates in Shopify") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("Add shipping dates in Shopify") }}</ion-label>
               <ion-checkbox :checked="addShippingDateInShopify" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_SHPG_DTE_SHPFY'])"/>
-            </ion-item>
-            <!-- TODO: run all sync jobs with time diff of 2 mins and run now and count: 1 -->
-            <ion-item>
-              <ion-label>{{ $t("Manual update") }}</ion-label>
-              <ion-button fill="outline" @click="runJob('Manual update')">{{ $t("Run sync now") }}</ion-button>
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap"><p>{{ $t("Transfer pre-order related information to Shopify as tags and meta fields.") }}</p></ion-label>
             </ion-item>
           </ion-card>
         </section>
+
+        <aside class="desktop-only" v-show="currentJob">
+          <JobDetail :title="title" :job="currentJob" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
+        </aside>
       </main>
     </ion-content>
   </ion-page>
@@ -103,7 +102,6 @@ import {
   IonMenuButton,
   IonPage,
   IonTitle,
-  IonToggle,
   IonToolbar
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
@@ -111,7 +109,8 @@ import { useStore } from "@/store";
 import { mapGetters } from "vuex";
 import { DateTime } from 'luxon';
 import { alertController } from '@ionic/vue';
-import { translate } from '@/i18n';
+import JobDetail from '@/components/JobDetail.vue'
+import emitter from '@/event-bus';
 
 export default defineComponent({
   name: 'PreOrder',
@@ -128,15 +127,16 @@ export default defineComponent({
     IonMenuButton,
     IonPage,
     IonTitle,
-    IonToggle,
-    IonToolbar
+    IonToolbar,
+    JobDetail
   },
   computed: {
     ...mapGetters({
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
       shopifyConfigId: 'user/getShopifyConfigId',
-      currentEComStore: 'user/getCurrentEComStore'
+      currentEComStore: 'user/getCurrentEComStore',
+      getTemporalExpr: 'job/getTemporalExpr'
     }),
     automaticallyListPreOrder(): boolean {
       const status = this.getJobStatus(this.jobEnums["LIST_PRE_ORDER"]);
@@ -162,6 +162,12 @@ export default defineComponent({
   data() {
     return {
       jobEnums: JSON.parse(process.env?.VUE_APP_PRODR_JOB_ENUMS as string) as any,
+      jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
+      currentJob: '',
+      title: '',
+      currentJobStatus: '',
+      freqType: '',
+      isJobDetailAnimationCompleted: false
     }
   },
   methods: {
@@ -233,6 +239,22 @@ export default defineComponent({
         });
 
       return jobAlert.present();
+    },
+    viewJobConfiguration(id: string, title: string, status: string) {
+      this.currentJob = this.getJob(this.jobEnums[id])
+      this.title = title
+      this.currentJobStatus = status
+      this.freqType = this.jobFrequencyType[id]
+
+      if (this.currentJob && !this.isJobDetailAnimationCompleted) {
+        emitter.emit('playAnimation');
+        this.isJobDetailAnimationCompleted = true;
+      }
+    },
+    getTemporalExpression(enumId: string) {
+      return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
+        this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
+        this.$t('Disabled')
     }
   },
   mounted () {
@@ -245,6 +267,7 @@ export default defineComponent({
   },
   setup() {
     const store = useStore();
+
     return {
       store
     };

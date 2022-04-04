@@ -73,11 +73,11 @@ const actions: ActionTree<JobState, RootState> = {
           dispatch('fetchJobDescription', enumIds);
         }
       } else {
-        commit(types.JOB_HISTORY_UPDATED,  []);
+        commit(types.JOB_HISTORY_UPDATED, { jobs: [], total: 0 });
         showToast(translate("Something went wrong"));
       }
     }).catch((err) => {
-      commit(types.JOB_HISTORY_UPDATED,  []);
+      commit(types.JOB_HISTORY_UPDATED, { jobs: [], total: 0 });
       console.error(err);
       showToast(translate("Something went wrong"));
     }) 
@@ -117,11 +117,11 @@ const actions: ActionTree<JobState, RootState> = {
           dispatch('fetchJobDescription', enumIds);
         }
       } else {
-        commit(types.JOB_PENDING_UPDATED,  []);
+        commit(types.JOB_PENDING_UPDATED, { jobs: [], total: 0 });
         showToast(translate("Something went wrong"));
       }
     }).catch((err) => {
-      commit(types.JOB_PENDING_UPDATED,  []);
+      commit(types.JOB_PENDING_UPDATED, { jobs: [], total: 0 });
       console.error(err);
       showToast(translate("Something went wrong"));
     })

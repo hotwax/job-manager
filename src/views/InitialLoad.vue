@@ -37,7 +37,7 @@
           </ion-card>
         </section>
 
-        <aside v-show="currentSelectedJobModal">
+        <aside class="desktop-only" v-show="currentSelectedJobModal">
           <section v-show="currentSelectedJobModal === 'products'">
             <ion-item lines="none">
               <h1>{{ $t("Products") }}</h1>
@@ -48,13 +48,13 @@
             <ion-list>
               <ion-item>
                 <ion-icon slot="start" :icon="calendarClearOutline" />
-                <ion-label>{{ $t("Last run") }}</ion-label>
+                <ion-label class="ion-text-wrap">{{ $t("Last run") }}</ion-label>
                 <ion-label slot="end">{{ job?.lastUpdatedStamp ? getTime(job.lastUpdatedStamp) : $t('No previous occurrence') }}</ion-label>
               </ion-item>
 
               <ion-item id="product-run-time-modal" button>
                 <ion-icon slot="start" :icon="timeOutline" />
-                <ion-label>{{ $t("Run time") }}</ion-label>
+                <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
                 <ion-label slot="end">{{ job?.runTime ? getTime(job.runTime) : $t('Select run time') }}</ion-label>
                 <ion-modal trigger="product-run-time-modal">
                   <ion-content force-overscroll="false">
@@ -81,13 +81,13 @@
             <ion-list>
               <ion-item>
                 <ion-icon slot="start" :icon="calendarClearOutline" />
-                <ion-label>{{ $t("Last run") }}</ion-label>
+                <ion-label class="ion-text-wrap">{{ $t("Last run") }}</ion-label>
                 <ion-label slot="end">{{ job?.lastUpdatedStamp ? getTime(job.lastUpdatedStamp) : $t('No previous occurrence') }}</ion-label>
               </ion-item>
 
               <ion-item id="order-run-time-modal" button>
                 <ion-icon slot="start" :icon="timeOutline" />
-                <ion-label>{{ $t("Run time") }}</ion-label>
+                <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
                 <ion-label slot="end">{{ job?.runTime ? getTime(job.runTime) : $t('Select run time') }}</ion-label>
                 <ion-modal trigger="order-run-time-modal">
                   <ion-content force-overscroll="false">
@@ -102,7 +102,7 @@
 
               <ion-item>
                 <ion-icon slot="start" :icon="flagOutline" />
-                <ion-label>{{ $t("Order status") }}</ion-label>
+                <ion-label class="ion-text-wrap">{{ $t("Order status") }}</ion-label>
                 <ion-select value="open" :interface-options="customOrderOptions" interface="popover">
                   <ion-select-option value="open">{{ $t("Open") }}</ion-select-option>
                   <!-- TODO: commenting options for now, enable it once having support -->
@@ -113,7 +113,7 @@
 
               <ion-item>
                 <ion-icon slot="start" :icon="sendOutline" />
-                <ion-label>{{ $t("Fulfillment status") }}</ion-label>
+                <ion-label class="ion-text-wrap">{{ $t("Fulfillment status") }}</ion-label>
                 <ion-select value="unshipped" :interface-options="customFulfillmentOptions" interface="popover">
                   <!-- TODO: commenting options for now, enable it once having support -->
                   <ion-select-option value="unshipped">{{ $t("Unfulfilled") }}</ion-select-option>
@@ -124,7 +124,7 @@
               </ion-item>
 
               <ion-item>
-                <ion-label>{{ $t("Last Shopify Order ID") }}</ion-label>
+                <ion-label class="ion-text-wrap">{{ $t("Last Shopify Order ID") }}</ion-label>
                 <ion-input v-model="lastShopifyOrderId" :placeholder="$t('Internal Shopify Order ID')" />
               </ion-item>
             </ion-list>
@@ -171,6 +171,7 @@ import { translate } from '@/i18n';
 import { DateTime } from 'luxon';
 import { mapGetters, useStore } from 'vuex';
 import { isValidDate } from '@/utils';
+import emitter from '@/event-bus';
 
 export default defineComponent({
   name: 'InitialLoad',
@@ -201,7 +202,8 @@ export default defineComponent({
       currentSelectedJobModal: '',
       job: {} as any,
       lastShopifyOrderId: '',
-      minDateTime: DateTime.now().toISO()
+      minDateTime: DateTime.now().toISO(),
+      isJobDetailAnimationCompleted: false
     }
   },
   mounted () {
@@ -230,6 +232,11 @@ export default defineComponent({
       // if job runTime is not a valid date then assigning current date to the runTime
       if (this.job?.runTime && !isValidDate(this.job?.runTime)) {
         this.job.runTime = DateTime.local().toMillis()
+      }
+
+      if (this.job && !this.isJobDetailAnimationCompleted) {
+        emitter.emit('playAnimation');
+        this.isJobDetailAnimationCompleted = true;
       }
     },
     async runJob(header: string, id: string) {
