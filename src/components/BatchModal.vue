@@ -13,7 +13,7 @@
   <ion-content>
     <ion-item>
       <ion-label position="fixed">{{ $t('Batch name') }}</ion-label>
-      <ion-input placeholder="Batch 2" v-model="jobName" />
+      <ion-input :placeholder="$t('New Batch')" v-model="jobName" />
     </ion-item>
     <ion-item>
       <ion-label position="fixed">{{ $t("Schedule") }}</ion-label>
