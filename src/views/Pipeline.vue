@@ -50,6 +50,11 @@
               <ion-label class="ion-text-wrap">{{ job.serviceName }}</ion-label>
             </ion-item>
 
+            <ion-item lines="full">
+              <ion-icon slot="start" />
+              <ion-label class="ion-text-wrap">{{ job.currentRetryCount }}</ion-label>
+            </ion-item>
+
             <ion-button fill="clear" @click.stop="skipJob(job)">{{ $t("Skip") }}</ion-button>
             <ion-button color="danger" fill="clear" @click.stop="cancelJob(job.jobId, job.systemJobEnumId)">{{ $t("Cancel") }}</ion-button>
           </ion-card>
