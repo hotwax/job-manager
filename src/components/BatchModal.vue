@@ -12,8 +12,8 @@
 
   <ion-content>
     <ion-item>
-      <ion-label position="fixed">Batch name</ion-label>
-      <ion-input placeholder="Batch 2" />
+      <ion-label position="fixed">{{ $t('Batch name') }}</ion-label>
+      <ion-input placeholder="Batch 2" v-model="jobName" />
     </ion-item>
     <ion-item>
       <ion-label position="fixed">{{ $t("Schedule") }}</ion-label>
@@ -69,7 +69,8 @@ export default defineComponent({
   props: ["id", "enum"],
   data() {
     return {
-      currentBatch: {} as any
+      currentBatch: {} as any,
+      jobName: '' as string
     }
   },
   computed: {
@@ -85,6 +86,7 @@ export default defineComponent({
   methods: {
     getCurrentBatchInfo() {
       this.currentBatch = this.getJob(this.enum)?.find((job: any) => job.id === this.id)
+      this.jobName = this.currentBatch?.jobName
     },
     getDateTime(time: any) {
       return DateTime.fromMillis(time)
@@ -106,7 +108,7 @@ export default defineComponent({
         'recurrenceTimeZone': DateTime.now().zoneName
       } as any
       if (job?.status === 'SERVICE_DRAFT') {
-        payload['JOB_NAME'] = job.jobName
+        payload['JOB_NAME'] = this.jobName
         payload['SERVICE_NAME'] = job.serviceName
         payload['SERVICE_TIME'] = job.runTime ? job.runTime.toString() : ''
         payload['SERVICE_PRIORITY'] = job.priority ? job.priority.toString() : ''
@@ -130,12 +132,15 @@ export default defineComponent({
         payload['tempExprId'] = 'MIDNIGHT_DAILY'
         payload['jobId'] = job.id
         payload['runTime'] = job.runTime
+        payload['jobName'] = this.jobName
 
         this.store.dispatch('job/updateJob', payload)
       }
     },
     updateRunTime(ev: CustomEvent, batch: any) {
-      batch['runTime'] = DateTime.fromISO(ev['detail'].value).toMillis()
+      if(batch) {
+        batch['runTime'] = DateTime.fromISO(ev['detail'].value).toMillis()
+      }
     }
   },
   setup() {
