@@ -66,7 +66,7 @@ export default defineComponent({
     IonTitle,
     IonToolbar,
   },
-  props: ["id"],
+  props: ["id", "enum"],
   data() {
     return {
       currentBatch: {} as any
@@ -84,7 +84,7 @@ export default defineComponent({
   },
   methods: {
     getCurrentBatchInfo() {
-      this.currentBatch = this.getJob('ping').find((job: any) => job.id === this.id)
+      this.currentBatch = this.getJob(this.enum)?.find((job: any) => job.id === this.id)
     },
     getDateTime(time: any) {
       return DateTime.fromMillis(time)
@@ -93,7 +93,11 @@ export default defineComponent({
       modalController.dismiss({ dismissed: true });
     },
     async updateJob() {
-      const job = this.currentBatch ? this.currentBatch : this.getJob('ping').find((job: any) => job.status === 'SERVICE_DRAFT');
+      const job = this.currentBatch ? this.currentBatch : this.getJob(this.enum)?.find((job: any) => job.status === 'SERVICE_DRAFT');
+
+      if (!job) {
+        return;
+      }
 
       // TODO: check for parentJobId and jobEnum and handle this values properly
       const payload = {

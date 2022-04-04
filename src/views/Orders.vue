@@ -196,14 +196,15 @@ export default defineComponent({
   methods: {  
     async addBatch() {
       const batchmodal = await modalController.create({
-        component: BatchModal
+        component: BatchModal,
+        componentProps: { enum: this.jobEnums['BTCH_BRKR_ORD'] }
       });
       return batchmodal.present();
     },
     async editBatch(id: string) {
       const batchmodal = await modalController.create({
         component: BatchModal,
-        componentProps: { id }
+        componentProps: { id, enum: this.jobEnums['BTCH_BRKR_ORD'] }
       });
       return batchmodal.present();
     },
