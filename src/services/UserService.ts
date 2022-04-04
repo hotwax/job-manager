@@ -48,6 +48,14 @@ const getEComStores = async (payload: any): Promise<any> => {
   });
 }
 
+const getServiceStatusDesc = async (payload: any): Promise<any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  });
+}
+
 export const UserService = {
     login,
     getAvailableTimeZones,
@@ -55,4 +63,5 @@ export const UserService = {
     getProfile,
     getShopifyConfig,
     setUserTimeZone,
+    getServiceStatusDesc
 }

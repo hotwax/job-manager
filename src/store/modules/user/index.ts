@@ -6,20 +6,21 @@ import UserState from './UserState'
 import RootState from '@/store/RootState'
 
 const userModule: Module<UserState, RootState> = {
-    namespaced: true,
-    state: {
-      token: '',
-      current: null,
-      instanceUrl: '',
-      shopifyConfig: {},
-      currentEComStore: {
-        productStoreId: "",
-        storeName: "None"
-      },
+  namespaced: true,
+  state: {
+    token: '',
+    current: null,
+    instanceUrl: '',
+    shopifyConfig: {},
+    statusDesc: {},
+    currentEComStore: {
+      productStoreId: "",
+      storeName: "None"
     },
-    getters,
-    actions,
-    mutations,
+  },
+  getters,
+  actions,
+  mutations,
 }
 
 // TODO

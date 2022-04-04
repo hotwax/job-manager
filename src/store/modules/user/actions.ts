@@ -41,6 +41,25 @@ const actions: ActionTree<UserState, RootState> = {
   },
 
   /**
+   * Status Description
+   */
+  async getServiceStatusDesc ({ commit }) {
+    const resp = await UserService.getServiceStatusDesc({
+      "inputFields": {
+        "statusTypeId": "SERVICE_STATUS",
+        "statusTypeId_op": "equals"
+      },
+      "entityName": "StatusItem",
+      "fieldList": ["statusId", "description"],
+      "noConditionFind": "Y",
+      "viewSize": 20
+    }) 
+    if (resp.status === 200) {
+      commit(types.USER_SERVICE_STATUS_DESC_UPDATED, resp.data.docs);
+    }
+  },
+
+  /**
    * Logout user
    */
   async logout ({ commit, dispatch }) {
@@ -72,6 +91,8 @@ const actions: ActionTree<UserState, RootState> = {
           storeName: "None"
         }, ...(stores ? stores : [])]
       })
+
+      dispatch('getServiceStatusDesc')
 
       commit(types.USER_INFO_UPDATED, resp.data);
     }

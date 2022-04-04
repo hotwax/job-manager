@@ -68,7 +68,10 @@
                 <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
                 <ion-card-title>{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
               </div>
-              <ion-badge v-if="job.runTime" color="dark">{{ timeTillJob(job.runTime)}}</ion-badge>
+              <div>
+                <ion-badge v-if="job.runTime" color="dark">{{ timeTillJob(job.runTime)}}</ion-badge>
+                <ion-badge :color="job.statusId === 'SERVICE_FINISHED' ? 'success' : 'danger'">{{ getStatusDesc(job.statusId) }}</ion-badge>
+              </div>
             </ion-card-header>
 
             <ion-item lines="none">
@@ -187,7 +190,8 @@ export default defineComponent({
       getEnumName: 'job/getEnumName',
       getCurrentEComStore:'user/getCurrentEComStore',
       isPendingJobsScrollable: 'job/isPendingJobsScrollable',
-      isHistoryJobsScrollable: 'job/isHistoryJobsScrollable'
+      isHistoryJobsScrollable: 'job/isHistoryJobsScrollable',
+      getStatusDesc: 'user/getStatusDesc'
     })
   },
   methods: {
@@ -316,6 +320,13 @@ ion-card-header {
   justify-content: space-between;
   align-items: center;
   padding-bottom: 0px;
+}
+
+ion-card-header :last-child {
+  display: flex;
+  flex-direction: column;
+  align-items: end;
+  row-gap: 4px;
 }
 
 ion-item {
