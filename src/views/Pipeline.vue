@@ -27,7 +27,7 @@
                   <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
                   <ion-card-title>{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
                 </div>
-                <ion-badge v-if="job.runTime" color="dark" slot="end">{{ timeTillJob(job.runTime)}}</ion-badge>
+                <ion-badge v-if="job.runTime" color="dark">{{ timeTillJob(job.runTime)}}</ion-badge>
             </ion-card-header>
 
             <ion-item lines="none">
@@ -118,6 +118,9 @@ import {
   IonButton,
   IonContent,
   IonCard,
+  IonCardHeader,
+  IonCardSubtitle,
+  IonCardTitle,
   IonHeader,
   IonIcon,
   IonItem,
@@ -145,6 +148,9 @@ export default defineComponent({
     IonButton,
     IonContent,
     IonCard,
+    IonCardHeader,
+    IonCardSubtitle,
+    IonCardTitle,
     IonHeader,
     IonIcon,
     IonItem,
