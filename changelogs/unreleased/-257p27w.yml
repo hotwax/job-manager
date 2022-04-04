@@ -1,0 +1,6 @@
+---
+title: 'Improved: code to add support to show currentRetryCount on pending Job page.'
+ticket_id: "#257p27w"
+merge_request: 81
+author: Aniket Kumar Pandey
+type: changed
