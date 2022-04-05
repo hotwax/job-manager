@@ -4,28 +4,28 @@ import RootState from '@/store/RootState'
 
 const getters: GetterTree <UserState, RootState> = {
     isAuthenticated (state) {
-      return !!state.token;
+        return !!state.token;
     },
     isUserAuthenticated(state) {
-      return state.token && state.current
+        return state.token && state.current
     },
     getUserToken (state) {
-      return state.token
+        return state.token
     },
     getUserProfile (state) {
-      return state.current
+        return state.current
     },
     getInstanceUrl (state) {
-      return state.instanceUrl;
+        return state.instanceUrl;
     },
     getShopifyConfigId (state) {
-      return state.shopifyConfig;
+        return state.shopifyConfig;
     },
     getCurrentEComStore(state) {
-      return state.currentEComStore
+        return state.currentEComStore
     },
     getStatusDesc: (state) => (id: string): any => {
-      return state.statusDesc[id];
+        return state.statusDesc[id];
     }
 }
 export default getters;
