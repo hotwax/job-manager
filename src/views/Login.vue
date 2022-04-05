@@ -76,6 +76,7 @@ export default defineComponent({
           this.username = ''
           this.password = ''
           this.$router.push('/')
+          this.store.dispatch('job/getServerTimezone');
         }
       })
     }

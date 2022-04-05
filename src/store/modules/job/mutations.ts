@@ -33,6 +33,9 @@ const mutations: MutationTree <JobState> = {
               state.enumIds[enumInfo.enumId] = enumInfo
             });
         }
+    },
+    [types.JOB_SERVER_TIMEZONE_UPDATED] (state, timezone) {
+        state.serverTimeZone = timezone;
     }
 }
 export default mutations;

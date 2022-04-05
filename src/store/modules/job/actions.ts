@@ -10,6 +10,15 @@ import { DateTime } from 'luxon';
 
 const actions: ActionTree<JobState, RootState> = {
 
+  async getServerTimezone({commit}) {
+    const resp = await JobService.getServerTimezone({
+      "fieldList": ['serverTimeZone']
+    });
+    if(resp){
+      commit(types.JOB_SERVER_TIMEZONE_UPDATED, resp)
+    }
+  },
+
   async fetchJobDescription({ commit, state }, payload){
     const enumIds = [] as any;
     const cachedEnumIds = Object.keys(state.enumIds);

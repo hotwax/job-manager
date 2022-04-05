@@ -10,4 +10,5 @@ export default interface JobState {
     }
     temporalExp: any;
     enumIds: any;
+    serverTimeZone: any;
 }

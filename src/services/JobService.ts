@@ -23,6 +23,14 @@ const updateJob = async (payload: any): Promise <any>  => {
   });
 }
 
+const getServerTimezone = async (payload: any): Promise <any>  => {
+  return api({
+    url: "service/getServerTimeZone",
+    method: "post",
+    data: payload
+  });
+}
+
 const scheduleJob = async (payload: any): Promise <any>  => {
   return api({
     url: "scheduleService",
@@ -45,5 +53,6 @@ export const JobService = {
   fetchJobInformation,
   fetchTemporalExpression,
   updateJob,
-  scheduleJob
+  scheduleJob,
+  getServerTimezone
 }
