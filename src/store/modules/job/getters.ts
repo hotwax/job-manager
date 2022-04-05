@@ -32,6 +32,9 @@ const getters: GetterTree <JobState, RootState> = {
     getJobHistory (state){
       return state.history.list;
     },
+    getServerTimeZone (state) {
+      return state.serverTimeZone;
+    }
   }
 
   export default getters;

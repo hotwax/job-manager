@@ -68,7 +68,8 @@ const actions: ActionTree<JobState, RootState> = {
           const total = resp.data.count;
           let jobs = resp.data.docs.map((job: any) => {
             const userTimeZone = store.getters['user/getUserProfile'].userTimeZone;
-            job.runTime = DateTime.fromMillis(job.runTime, {zone: "Europe/Paris"}).setZone(userTimeZone).toMillis();
+            const serverTimeZone = store.getters['job/getServerTimeZone'];
+            job.runTime = DateTime.fromMillis(job.runTime, {zone: serverTimeZone}).setZone(userTimeZone).toMillis();
             return job;
           });
           if(payload.viewIndex && payload.viewIndex > 0){
