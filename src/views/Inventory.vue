@@ -61,8 +61,6 @@ import {
 import { defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
 import JobDetail from '@/components/JobDetail.vue'
-import { DateTime } from 'luxon';
-import { isValidDate } from '@/utils';
 import emitter from '@/event-bus';
 import { isValidDate } from '@/utils';
 
