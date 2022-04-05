@@ -7,8 +7,8 @@ const mutations: MutationTree <UserState> = {
         state.token = payload.newToken
     },
     [types.USER_END_SESSION] (state) {
-        state.token = ''
-        state.current = null
+      state.token = ''
+      state.current = null
     },
     [types.USER_INFO_UPDATED] (state, payload) {
         state.current = payload
