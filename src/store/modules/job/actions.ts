@@ -210,7 +210,27 @@ const actions: ActionTree<JobState, RootState> = {
     if (resp.status === 200 && !hasError(resp) && resp.data.docs) {
       const cached = JSON.parse(JSON.stringify(state.cached));
 
+      // added condition to store multiple pending jobs in the state for order batch jobs,
+      // getting job with status Service draft as well, as this information will be needed when scheduling
+      // a new batch
+      // TODO: this needs to be updated when we will be storing the draft and pending jobs separately
+      const batchBrokeringJobs = [] as any
+      const batchBrokeringJobEnum = (JSON.parse(process.env.VUE_APP_ODR_JOB_ENUMS as string) as any)['BTCH_BRKR_ORD']
+      resp.data.docs.filter((job: any) => job.systemJobEnumId === batchBrokeringJobEnum).map((job: any) => {
+        batchBrokeringJobs.push({
+          ...job,
+          id: job.jobId,
+          frequency: job.tempExprId,
+          enumId: job.systemJobEnumId,
+          status: job.statusId
+        })
+      })
+
       resp.data.docs.filter((job: any) => job.statusId === 'SERVICE_PENDING').map((job: any) => {
+        // added condition to store multiple pending jobs in the state for order batch jobs
+        if (job.systemJobEnumId === batchBrokeringJobEnum) {
+          return cached[job.systemJobEnumId] = batchBrokeringJobs
+        }
         return cached[job.systemJobEnumId] = {
           ...job,
           id: job.jobId,

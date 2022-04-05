@@ -160,7 +160,7 @@ export default defineComponent({
       jobEnums: JSON.parse(process.env?.VUE_APP_PRODR_JOB_ENUMS as string) as any,
       jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
       currentJob: '' as any,
-      title: '',
+      title: 'Automatically list pre-order',
       currentJobStatus: '',
       freqType: '',
       isJobDetailAnimationCompleted: false
