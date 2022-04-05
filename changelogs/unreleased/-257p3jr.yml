@@ -1,0 +1,6 @@
+---
+title: 'Fixed: the issue of time badge not displayed on the pipeline page'
+ticket_id: "#257p3jr"
+merge_request: 82
+author: Yash Maheshwari
+type: fixed

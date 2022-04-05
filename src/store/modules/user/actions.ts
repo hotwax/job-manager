@@ -61,6 +61,9 @@ const actions: ActionTree<UserState, RootState> = {
       }
 
       const payload = {
+        "inputFields": {
+          "storeName_op": "not-empty"
+        },
         "fieldList": ["productStoreId", "storeName"],
         "entityName": "ProductStore",
         "distinct": "Y",
