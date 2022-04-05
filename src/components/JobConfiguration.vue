@@ -292,11 +292,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-section {
-  overflow: hidden;
-  border: 1px solid var(--ion-color-medium);
-  border-radius: 16px;
-}
 ion-list {
   margin: var(--spacer-base) 0;
 }
@@ -305,13 +300,12 @@ ion-list {
   margin: var(--spacer-sm);
 }
 
-@media (min-width: 991px) {
+@media (min-width: 991px) {  
   section {
     overflow: hidden;
-    border: 1px solid var(--ion-color-medium);
+    border: var(--border-medium);
     border-radius: 16px;
   }
-
   .actions {
     display: flex;
     justify-content: space-between;

@@ -254,6 +254,9 @@ body {
   --spacer-xl: 2.5rem;   /* 40px */
   --spacer-2xl: 5rem;    /* 80px */
   --spacer-3xl: 10rem;   /* 160px */
+
+  /** Border variable **/
+  --border-medium: 1px solid var(--ion-color-medium);
 }
 
 .overline {
