@@ -354,11 +354,17 @@ const actions: ActionTree<JobState, RootState> = {
     return resp;
   },
 
-  async cancelJob({ dispatch }, payload) {
+  async cancelJob({ dispatch }, job) {
     let resp;
 
     try {
-      resp = await JobService.updateJob(payload);
+      resp = await JobService.updateJob({
+        jobId: job.jobId,
+        systemJobEnumId: job.systemJobEnumId,
+        statusId: "SERVICE_CANCELLED",
+        recurrenceTimeZone: DateTime.now().zoneName,
+        cancelDateTime: DateTime.now().toMillis()
+      });
       if (resp.status == 200 && !hasError(resp)) {
         showToast(translate('Service updated successfully'))
       } else {

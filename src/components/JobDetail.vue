@@ -183,7 +183,7 @@ export default defineComponent({
           }, {
             text: this.$t('Cancel'),
             handler: () => {
-              this.store.dispatch('job/updateJob', {job, statusId: "SERVICE_CANCELLED"});
+              this.store.dispatch('job/cancelJob', job);
             }
           }],
         });

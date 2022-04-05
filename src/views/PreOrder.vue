@@ -182,9 +182,7 @@ export default defineComponent({
       }
 
       if (!checked) {
-        const cancelDateTime = DateTime.now().toMillis()
-        const recurrenceTimeZone = DateTime.now().zoneName
-        this.store.dispatch('job/cancelJob', {jobId: job.jobId, cancelDateTime, recurrenceTimeZone, statusId: "SERVICE_CANCELLED"})
+        this.store.dispatch('job/cancelJob', job)
       } else if (job?.status === 'SERVICE_DRAFT') {
         this.store.dispatch('job/scheduleService', job)
       } else if (job?.status === 'SERVICE_PENDING') {
