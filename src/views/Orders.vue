@@ -62,10 +62,9 @@
               <ion-label class="ion-text-wrap">{{ $t("Days") }}</ion-label>
               <ion-input :placeholder="$t('before auto cancelation')" />
             </ion-item>
-            <!-- TODO: run at 12 am daily -->
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Check daily") }}</ion-label>
-              <ion-toggle color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['AUTO_CNCL_DAL'])" />
+              <ion-toggle :checked="autoCancelCheckDaily" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['AUTO_CNCL_DAL'])" />
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap"><p>{{ $t("Unfulfilled orders that pass their auto cancelation date will be canceled automatically in HotWax Commerce. They will also be canceled in Shopify if upload for canceled orders is enabled.") }}</p></ion-label>
@@ -78,11 +77,7 @@
             </ion-card-header>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Promise date changes") }}</ion-label>
-              <ion-toggle color="secondary" />
-            </ion-item>
-            <ion-item>
-              <ion-label class="ion-text-wrap">{{ $t("Reroutes") }}</ion-label>
-              <ion-toggle color="secondary" />
+              <ion-toggle :checked="promiseDateChanges" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['NTS_PRMS_DT_CHNG'])"/>
             </ion-item>
           </ion-card>
 
@@ -157,6 +152,7 @@ import { useStore } from "@/store";
 import { mapGetters } from "vuex";
 import JobDetail from '@/components/JobDetail.vue';
 import { DateTime } from 'luxon';
+import { isValidDate } from '@/utils';
 import emitter from '@/event-bus';
 
 export default defineComponent({
@@ -185,7 +181,7 @@ export default defineComponent({
     return {
       jobEnums: JSON.parse(process.env?.VUE_APP_ODR_JOB_ENUMS as string) as any,
       jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
-      currentJob: '',
+      currentJob: '' as any,
       title: 'New orders',
       currentJobStatus: '',
       freqType: '',
@@ -199,7 +195,15 @@ export default defineComponent({
       shopifyConfigId: 'user/getShopifyConfigId',
       currentEComStore: 'user/getCurrentEComStore',
       getTemporalExpr: 'job/getTemporalExpr'
-    })
+    }),
+    promiseDateChanges(): boolean {
+      const status = this.getJobStatus(this.jobEnums['NTS_PRMS_DT_CHNG']);
+      return status && status !== "SERVICE_DRAFT";
+    },
+    autoCancelCheckDaily(): boolean {
+      const status = this.getJobStatus(this.jobEnums["REAL_WBHKS"]);
+      return status && status !== "SERVICE_DRAFT";
+    },
   },
   methods: {  
     async editBatch() {
@@ -213,8 +217,13 @@ export default defineComponent({
 
       // TODO: added this condition to not call the api when the value of the select automatically changes
       // need to handle this properly
-      if (checked && job?.status === 'SERVICE_PENDING') {
+      if (!job || checked && job?.status === 'SERVICE_PENDING') {
         return;
+      }
+
+      // if job runTime is not a valid date then making runTime as empty
+      if (job?.runTime && !isValidDate(job?.runTime)) {
+        job.runTime = ''
       }
 
       // TODO: check for parentJobId and jobEnum and handle this values properly
@@ -230,12 +239,13 @@ export default defineComponent({
       } else if (job?.status === 'SERVICE_DRAFT') {
         payload['JOB_NAME'] = job.jobName
         payload['SERVICE_NAME'] = job.serviceName
-        payload['SERVICE_TIME'] = job.runTime.toString()
+        payload['SERVICE_TIME'] = job.runTime ? job.runTime.toString() : ''
         payload['SERVICE_COUNT'] = '0'
+        payload['SERVICE_PRIORITY'] = job.priority ? job.priority.toString() : ''
         payload['jobFields'] = {
           'productStoreId': this.currentEComStore.productStoreId,
           'systemJobEnumId': job.systemJobEnumId,
-          'tempExprId': 'DAILY',
+          'tempExprId': 'MIDNIGHT_DAILY',
           'maxRecurrenceCount': '-1',
           'parentJobId': job.parentJobId,
           'runAsUser': 'system', // default system, but empty in run now
@@ -260,6 +270,10 @@ export default defineComponent({
       this.currentJobStatus = status
       this.freqType = this.jobFrequencyType[id]
 
+      // if job runTime is not a valid date then making runTime as empty
+      if (this.currentJob?.runTime && !isValidDate(this.currentJob?.runTime)) {
+        this.currentJob.runTime = ''
+      }
       if (this.currentJob && !this.isJobDetailAnimationCompleted) {
         emitter.emit('playAnimation');
         this.isJobDetailAnimationCompleted = true;
