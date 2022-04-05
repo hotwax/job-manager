@@ -193,13 +193,17 @@ const actions: ActionTree<JobState, RootState> = {
     }
     return resp;
   },
-  async updateJob ({ commit, dispatch }, job) {
+  async updateJob ({ dispatch }, job) {
     let resp;
 
     const payload = {
       'jobId': job.jobId,
       'systemJobEnumId': job.systemJobEnumId,
+      'recurrenceTimeZone': DateTime.now().zoneName,
+      'tempExprId': job.jobStatus
     } as any
+
+    job?.runTime && (payload['runTime'] = job.runTime)
 
     try {
       resp = await JobService.updateJob(payload)
@@ -348,6 +352,23 @@ const actions: ActionTree<JobState, RootState> = {
       commit(types.JOB_UPDATED, { job });
     }
     return resp;
-  }
+  },
+
+  async cancelJob({ dispatch }, payload) {
+    let resp;
+
+    try {
+      resp = await JobService.updateJob(payload);
+      if (resp.status == 200 && !hasError(resp)) {
+        showToast(translate('Service updated successfully'))
+      } else {
+        showToast(translate('Something went wrong'))
+      }
+    } catch (err) {
+      showToast(translate('Something went wrong'))
+      console.error(err)
+    }
+    return resp;
+  },
 }
 export default actions;
