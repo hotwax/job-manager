@@ -219,20 +219,10 @@ export default defineComponent({
       const job = this.job;
       job['jobStatus'] = this.jobStatus;
 
-      // TODO: pass user time zone in the payload
-      const payload = {
-        'systemJobEnumId': job.systemJobEnumId,
-        'statusId': "SERVICE_PENDING",
-        'recurrenceTimeZone': DateTime.now().zoneName
-      } as any
       if (job?.status === 'SERVICE_DRAFT') {
         this.store.dispatch('job/scheduleService', job)
       } else if (job?.status === 'SERVICE_PENDING') {
-        payload['tempExprId'] = this.jobStatus
-        payload['jobId'] = job.id
-        payload['runTime'] = job.runTime
-
-        this.store.dispatch('job/updateJob', payload)
+        this.store.dispatch('job/updateJob', job)
       }
     },
     getTime (time: any) {
