@@ -51,7 +51,7 @@
             </ion-item>
 
             <ion-item lines="full">
-              <ion-icon slot="start" />
+              <ion-icon slot="start" :icon="refreshOutline" />
               <ion-label class="ion-text-wrap">{{ job.currentRetryCount }}</ion-label>
             </ion-item>
 
@@ -139,7 +139,7 @@ import {
   IonSegment,
   IonSegmentButton
 } from "@ionic/vue";
-import { codeWorkingOutline, timeOutline, timerOutline } from "ionicons/icons";
+import { codeWorkingOutline, refreshOutline, timeOutline, timerOutline } from "ionicons/icons";
 import JobDetail from '@/components/JobDetail.vue'
 import emitter from '@/event-bus';
 
@@ -307,6 +307,7 @@ export default defineComponent({
     return {
       store,
       codeWorkingOutline,
+      refreshOutline,
       timeOutline,
       timerOutline,
       segmentSelected
