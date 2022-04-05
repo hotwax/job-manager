@@ -76,7 +76,7 @@
                 <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
                 <ion-card-title>{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
               </div>
-              <ion-badge color="dark">Running</ion-badge>
+              <ion-badge color="dark">{{ $t("Running") }}</ion-badge>
             </ion-card-header>
 
             <ion-item lines="none">
