@@ -83,6 +83,50 @@ const actions: ActionTree<JobState, RootState> = {
     }) 
   },
 
+  async fetchRunningJobs({ commit, dispatch, state }, payload){
+    await JobService.fetchJobInformation({
+      "inputFields": {
+        "productStoreId": payload.eComStoreId,
+        "statusId": "SERVICE_RUNNING",
+        "systemJobEnumId_op": "not-empty"
+      },
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName" ],
+      "entityName": "JobSandbox",
+      "noConditionFind": "Y",
+      "viewSize": payload.viewSize,
+      "viewIndex": payload.viewIndex,
+      "orderBy": "runTime DESC"
+    }).then((resp) => {
+      if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
+        if (resp.data.docs) {
+          const total = resp.data.count;
+          let jobs = resp.data.docs;
+          if(payload.viewIndex && payload.viewIndex > 0){
+            jobs = state.running.list.concat(resp.data.docs);
+          }
+          
+          commit(types.JOB_RUNNING_UPDATED, { jobs, total });
+          const tempExprList = [] as any;
+          const enumIds = [] as any;
+          resp.data.docs.map((item: any) => {
+            enumIds.push(item.systemJobEnumId);
+            tempExprList.push(item.tempExprId);
+          })
+          const tempExpr = [...new Set(tempExprList)];
+          dispatch('fetchTemporalExpression', tempExpr);
+          dispatch('fetchJobDescription', enumIds);
+        }
+      } else {
+        commit(types.JOB_RUNNING_UPDATED, { jobs: [], total: 0 });
+        showToast(translate("Something went wrong"));
+      }
+    }).catch((err) => {
+      commit(types.JOB_RUNNING_UPDATED, { jobs: [], total: 0 });
+      console.error(err);
+      showToast(translate("Something went wrong"));
+    }) 
+  },
+
   async fetchPendingJobs({ commit, dispatch, state }, payload){
     await JobService.fetchJobInformation({
       "inputFields": {

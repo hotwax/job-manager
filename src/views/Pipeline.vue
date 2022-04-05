@@ -11,6 +11,9 @@
           <ion-segment-button value="pending">
             <ion-label>{{ $t("Pending") }}</ion-label>
           </ion-segment-button>
+          <ion-segment-button value="running">
+            <ion-label>{{ $t("Running") }}</ion-label>
+          </ion-segment-button>
           <ion-segment-button value="history">
             <ion-label>{{ $t("History") }}</ion-label>
           </ion-segment-button>
@@ -62,6 +65,45 @@
             <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
           </ion-refresher>
           <ion-infinite-scroll @ionInfinite="loadMorePendingJobs($event)" threshold="100px" :disabled="!isPendingJobsScrollable">
+            <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="$t('Loading')"/>
+          </ion-infinite-scroll>
+        </section>
+
+        <section v-if="segmentSelected === 'running'">
+          <ion-card v-for="job in runningJobs" :key="job.jobId">
+            <ion-card-header>
+              <div>
+                <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
+                <ion-card-title>{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
+              </div>
+              <ion-badge color="dark">Running</ion-badge>
+            </ion-card-header>
+
+            <ion-item lines="none">
+              <ion-label class="ion-text-wrap">
+                <p>{{ getEnumDescription(job.systemJobEnumId) }}</p>
+              </ion-label>
+            </ion-item>
+            <ion-item>
+              <ion-icon slot="start" :icon="timeOutline" />
+              <ion-label class="ion-text-wrap">{{ job.runTime ? getTime(job.runTime) : "-"  }}</ion-label>
+            </ion-item>
+
+            <ion-item>
+              <ion-icon slot="start" :icon="timerOutline" />
+              <ion-label class="ion-text-wrap">{{ job.tempExprId ? temporalExpr(job.tempExprId)?.description : "🙃"  }}</ion-label>
+            </ion-item>
+
+            <ion-item lines="full">
+              <ion-icon slot="start" :icon="codeWorkingOutline" />
+              <ion-label class="ion-text-wrap">{{ job.serviceName }}</ion-label>
+            </ion-item>
+          </ion-card>
+
+          <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
+            <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
+          </ion-refresher>
+          <ion-infinite-scroll @ionInfinite="loadMoreRunningJobs($event)" threshold="100px" :disabled="!isRunningJobsScrollable">
             <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="$t('Loading')"/>
           </ion-infinite-scroll>
         </section>
@@ -199,11 +241,13 @@ export default defineComponent({
     ...mapGetters({
       jobHistory: 'job/getJobHistory',
       pendingJobs: 'job/getPendingJobs',
+      runningJobs: 'job/getRunningJobs',
       temporalExpr: 'job/getTemporalExpr',
       getEnumDescription: 'job/getEnumDescription',
       getEnumName: 'job/getEnumName',
       getCurrentEComStore:'user/getCurrentEComStore',
       isPendingJobsScrollable: 'job/isPendingJobsScrollable',
+      isRunningJobsScrollable: 'job/isRunningJobsScrollable',
       isHistoryJobsScrollable: 'job/isHistoryJobsScrollable'
     })
   },
@@ -223,6 +267,14 @@ export default defineComponent({
         event.target.complete();
       })
     },
+    async loadMoreRunningJobs(event: any){
+      this.getRunningJobs(
+        undefined,
+        Math.ceil(this.runningJobs.length / (process.env.VUE_APP_VIEW_SIZE as any)).toString()
+      ).then(() => {
+        event.target.complete();
+      })
+    },
     async loadMorePendingJobs (event: any) {
       this.getPendingJobs(
         undefined,
@@ -234,13 +286,17 @@ export default defineComponent({
     async refreshJobs(event: any) {
       if(this.segmentSelected === 'pending') {
         this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => { event.target.complete() });
+      } else if(this.segmentSelected === 'running') {
+        this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => { event.target.complete() });
       } else {
         this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => { event.target.complete() });
       }
     },
     segmentChanged (e: CustomEvent) {
       this.segmentSelected = e.detail.value
-      this.segmentSelected === 'pending' ? this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}) : this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0});
+      this.segmentSelected === 'pending' ? this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}) : 
+      this.segmentSelected === 'running' ? this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}) :
+      this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0});
     },
     async skipJob (job: any) {
       const alert = await alertController
@@ -267,6 +323,11 @@ export default defineComponent({
       const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
       const viewIndex = vIndex ? vIndex : 0;
       await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex});
+    },
+    async getRunningJobs(vSize: any, vIndex: any) {
+      const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
+      const viewIndex = vIndex ? vIndex : 0;
+      await this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex});
     },
     async getJobHistory(vSize: any, vIndex: any) {
       const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
