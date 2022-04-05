@@ -83,6 +83,50 @@ const actions: ActionTree<JobState, RootState> = {
     }) 
   },
 
+  async fetchRunningJobs({ commit, dispatch, state }, payload){
+    await JobService.fetchJobInformation({
+      "inputFields": {
+        "productStoreId": payload.eComStoreId,
+        "statusId": "SERVICE_RUNNING",
+        "systemJobEnumId_op": "not-empty"
+      },
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName" ],
+      "entityName": "JobSandbox",
+      "noConditionFind": "Y",
+      "viewSize": payload.viewSize,
+      "viewIndex": payload.viewIndex,
+      "orderBy": "runTime DESC"
+    }).then((resp) => {
+      if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
+        if (resp.data.docs) {
+          const total = resp.data.count;
+          let jobs = resp.data.docs;
+          if(payload.viewIndex && payload.viewIndex > 0){
+            jobs = state.running.list.concat(resp.data.docs);
+          }
+          
+          commit(types.JOB_RUNNING_UPDATED, { jobs, total });
+          const tempExprList = [] as any;
+          const enumIds = [] as any;
+          resp.data.docs.map((item: any) => {
+            enumIds.push(item.systemJobEnumId);
+            tempExprList.push(item.tempExprId);
+          })
+          const tempExpr = [...new Set(tempExprList)];
+          dispatch('fetchTemporalExpression', tempExpr);
+          dispatch('fetchJobDescription', enumIds);
+        }
+      } else {
+        commit(types.JOB_RUNNING_UPDATED, { jobs: [], total: 0 });
+        showToast(translate("Something went wrong"));
+      }
+    }).catch((err) => {
+      commit(types.JOB_RUNNING_UPDATED, { jobs: [], total: 0 });
+      console.error(err);
+      showToast(translate("Something went wrong"));
+    }) 
+  },
+
   async fetchPendingJobs({ commit, dispatch, state }, payload){
     await JobService.fetchJobInformation({
       "inputFields": {
@@ -90,7 +134,7 @@ const actions: ActionTree<JobState, RootState> = {
         "statusId": "SERVICE_PENDING",
         "systemJobEnumId_op": "not-empty"
       },
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName" ],
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount" ],
       "entityName": "JobSandbox",
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
@@ -141,6 +185,7 @@ const actions: ActionTree<JobState, RootState> = {
         "tempExprId": tempIds,
         "temoExprId_op": "in"
       },
+      "viewSize": tempIds.length,
       "fieldList": [ "tempExprId", "description","integer1", "integer2" ],
       "entityName": "TemporalExpression",
       "noConditionFind": "Y",
@@ -213,7 +258,7 @@ const actions: ActionTree<JobState, RootState> = {
     }
     return resp;
   },
-  async updateJob ({ commit, dispatch }, payload) {
+  async updateJob ({ dispatch }, payload) {
     let resp;
     try {
       resp = await JobService.updateJob(payload)
@@ -235,7 +280,7 @@ const actions: ActionTree<JobState, RootState> = {
     return resp;
   },
 
-  async scheduleService({ commit, dispatch }, payload) {
+  async scheduleService({ dispatch }, payload) {
     let resp;
     try {
       resp = await JobService.scheduleJob(payload);
@@ -287,6 +332,55 @@ const actions: ActionTree<JobState, RootState> = {
     const resp = await JobService.updateJob(payload)
     if (resp.status === 200 && !hasError(resp) && resp.data.docs) {
       commit(types.JOB_UPDATED, { job });
+    }
+    return resp;
+  },
+
+  async runServiceNow({ dispatch }, job) {
+    let resp;
+
+    const payload = {
+      'JOB_NAME': job.jobName,
+      'SERVICE_NAME': job.serviceName,
+      'SERVICE_COUNT': '0',
+      'jobFields': {
+        'productStoreId': this.state.user.currentEComStore.productStoreId,
+        'systemJobEnumId': job.systemJobEnumId,
+        'tempExprId': job.jobStatus,
+        'parentJobId': job.parentJobId,
+        'recurrenceTimeZone': DateTime.now().zoneName
+      },
+      'shopifyConfigId': this.state.user.shopifyConfig,
+      'statusId': "SERVICE_PENDING",
+      'systemJobEnumId': job.systemJobEnumId
+    } as any
+
+    // checking if the runTimeData has productStoreId, and if present then adding it on root level
+    job?.runTimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.state.user.currentEComStore.productStoreId)
+    job?.priority && (payload['SERVICE_PRIORITY'] = job.priority.toString())
+    job?.sinceId && (payload['sinceId'] = job.sinceId)
+
+    try {
+      resp = await JobService.scheduleJob({ ...job.runTimeData, ...payload });
+      if (resp.status == 200 && !hasError(resp)) {
+        showToast(translate('Service has been scheduled'))
+        // TODO: need to check if we actually need to call fetchJobs when running a service now
+        // becuase when scheduling a service for run now, then the service goes in pending state for a small
+        // time and thus fetchJob api gets the info of that service as well, and when service is exceuted
+        // it is no more in pending state, but on app level we still have that service info with status
+        // pending
+        dispatch('fetchJobs', {
+          inputFields: {
+            'systemJobEnumId': payload.systemJobEnumId,
+            'systemJobEnumId_op': 'equals'
+          }
+        })
+      } else {
+        showToast(translate('Something went wrong'))
+      }
+    } catch (err) {
+      showToast(translate('Something went wrong'))
+      console.error(err)
     }
     return resp;
   }

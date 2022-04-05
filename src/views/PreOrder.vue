@@ -33,8 +33,7 @@
             </ion-card-header>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Allocation") }}</ion-label>
-              <!-- TODO: env file entry = REALLOC_PRODR -->
-              <ion-button fill="outline" color="danger" slot="end" @click="runJob('Allocation')">{{ $t("Run reallocation") }}</ion-button>
+              <ion-button fill="outline" color="danger" slot="end" @click="runJob('Allocation', jobEnums['REALLOC_PRODR'])">{{ $t("Run reallocation") }}</ion-button>
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap"><p>{{ $t("Re-allocation will re-allocate promise dates on all pre-orders based on upcoming inventory from purchase orders. Promise dates that were manually adjusted will be overriden.") }}</p></ion-label>
@@ -45,15 +44,13 @@
             <ion-card-header>
               <ion-card-title>{{ $t("Auto releasing") }}</ion-card-title>
             </ion-card-header>
-            <!-- TODO: env file entry = AUTO_RELSE_DAILY, run time 12 am daily-->
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Run daily") }}</ion-label>
-              <ion-checkbox slot="end" />
+              <ion-checkbox :checked="autoReleaseRunDaily" @ionChange="updateJob($event['detail'].checked, jobEnums['AUTO_RELSE_DAILY'])" />
             </ion-item>
-            <!-- TODO: env file entry = AUTO_RELSE_DAILY, run now, run as user, count: 1-->
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Release preorders")}}</ion-label>
-              <ion-button fill="outline" @click="runJob('Release preorders')">{{ $t("Release") }}</ion-button>
+              <ion-button fill="outline" @click="runJob('Release preorders', jobEnums['AUTO_RELSE_DAILY'])">{{ $t("Release") }}</ion-button>
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap"><p>{{ $t("Auto releasing pre-orders will find pre-orders that have promise dates that have passed and release them from fulfillment.") }}</p></ion-label>
@@ -112,6 +109,7 @@ import { mapGetters } from "vuex";
 import { DateTime } from 'luxon';
 import { alertController } from '@ionic/vue';
 import JobDetail from '@/components/JobDetail.vue'
+import { isValidDate } from '@/utils';
 import emitter from '@/event-bus';
 
 export default defineComponent({
@@ -140,14 +138,6 @@ export default defineComponent({
       currentEComStore: 'user/getCurrentEComStore',
       getTemporalExpr: 'job/getTemporalExpr'
     }),
-    automaticallyListPreOrder(): boolean {
-      const status = this.getJobStatus(this.jobEnums["LIST_PRE_ORDER"]);
-      return status && status !== "SERVICE_DRAFT";
-    },
-    automaticallyListBackOrder(): boolean {
-      const status = this.getJobStatus(this.jobEnums["LIST_BACK_ORDER"]);
-      return status && status !== "SERVICE_DRAFT";
-    },
     addPreOrderTagInShopify(): boolean {
       const status = this.getJobStatus(this.jobEnums["ADD_PRODR_TG_SHPFY"]);
       return status && status !== "SERVICE_DRAFT";
@@ -159,13 +149,17 @@ export default defineComponent({
     addShippingDateInShopify(): boolean {
       const status = this.getJobStatus(this.jobEnums["ADD_SHPG_DTE_SHPFY"]);
       return status && status !== "SERVICE_DRAFT";
+    },
+    autoReleaseRunDaily(): boolean {
+      const status = this.getJobStatus(this.jobEnums["AUTO_RELSE_DAILY"]);
+      return status && status !== "SERVICE_DRAFT";
     }
   },
   data() {
     return {
       jobEnums: JSON.parse(process.env?.VUE_APP_PRODR_JOB_ENUMS as string) as any,
       jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
-      currentJob: '',
+      currentJob: '' as any,
       title: 'Automatically list pre-order',
       currentJobStatus: '',
       freqType: '',
@@ -178,8 +172,13 @@ export default defineComponent({
 
       // TODO: added this condition to not call the api when the value of the select automatically changes
       // need to handle this properly
-      if (checked && job?.status === 'SERVICE_PENDING') {
+      if (!job || checked && job?.status === 'SERVICE_PENDING') {
         return;
+      }
+
+      // if job runTime is not a valid date then making runTime as empty
+      if (job?.runTime && !isValidDate(job?.runTime)) {
+        job.runTime = ''
       }
 
       // TODO: check for parentJobId and jobEnum and handle this values properly
@@ -190,12 +189,14 @@ export default defineComponent({
         'recurrenceTimeZone': DateTime.now().zoneName
       } as any
       if (!checked) {
+        payload['cancelDateTime'] = DateTime.now().toMillis()
         this.store.dispatch('job/updateJob', payload)
       } else if (job?.status === 'SERVICE_DRAFT') {
         payload['JOB_NAME'] = job.jobName
         payload['SERVICE_NAME'] = job.serviceName
-        payload['SERVICE_TIME'] = job.runTime.toString()
+        payload['SERVICE_TIME'] = job.runTime ? job.runTime.toString() : ''
         payload['SERVICE_COUNT'] = '0'
+        payload['SERVICE_PRIORITY'] = job.priority ? job.priority.toString() : ''
         payload['jobFields'] = {
           'productStoreId': this.currentEComStore.productStoreId,
           'systemJobEnumId': job.systemJobEnumId,
@@ -218,7 +219,8 @@ export default defineComponent({
         this.store.dispatch('job/updateJob', payload)
       }
     },
-    async runJob(header: string) {
+    async runJob(header: string, id: string) {
+      const job = this.getJob(id)
       const jobAlert = await alertController
         .create({
           header,
@@ -229,7 +231,12 @@ export default defineComponent({
               role: 'cancel',
             },
             {
-              text: this.$t('Run now')
+              text: this.$t('Run now'),
+              handler: () => {
+                if (job) {
+                  this.store.dispatch('job/runServiceNow', job)
+                }
+              }
             }
           ]
         });
@@ -242,6 +249,10 @@ export default defineComponent({
       this.currentJobStatus = status
       this.freqType = this.jobFrequencyType[id]
 
+      // if job runTime is not a valid date then making runTime as empty
+      if (this.currentJob?.runTime && !isValidDate(this.currentJob?.runTime)) {
+        this.currentJob.runTime = ''
+      }
       if (this.currentJob && !this.isJobDetailAnimationCompleted) {
         emitter.emit('playAnimation');
         this.isJobDetailAnimationCompleted = true;

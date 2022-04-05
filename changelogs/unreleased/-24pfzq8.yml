@@ -1,0 +1,6 @@
+---
+title: 'Improved code to pass viewSize to all the list queries.'
+ticket_id: "#24pfzq8"
+merge_request: 68
+author: Aniket Kumar Pandey
+type: fixed

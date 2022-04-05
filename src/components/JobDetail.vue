@@ -24,6 +24,7 @@
         <ion-modal trigger="open-run-time-modal">
           <ion-content force-overscroll="false">
             <ion-datetime
+              :min="minDateTime"
               :value="job?.runTime ? getDateTime(job.runTime) : ''"
               @ionChange="updateRunTime($event, job)"
             />
@@ -54,8 +55,8 @@
 
     <div class="actions">
       <div>
-        <ion-button size="small" fill="outline" color="medium" @click="skipJob(job)">{{ $t("Skip once") }}</ion-button>
-        <ion-button size="small" fill="outline" color="danger" @click="cancelJob(job.jobId, job.systemJobEnumId)">{{ $t("Disable") }}</ion-button>
+        <ion-button size="small" fill="outline" color="medium" :disabled="status === 'SERVICE_DRAFT'" @click="skipJob(job)">{{ $t("Skip once") }}</ion-button>
+        <ion-button size="small" fill="outline" color="danger" :disabled="status === 'SERVICE_DRAFT'" @click="cancelJob(job.jobId, job.systemJobEnumId)">{{ $t("Disable") }}</ion-button>
       </div>
       <div>
         <ion-button size="small" fill="outline" @click="saveChanges()">{{ $t("Save changes") }}</ion-button>
@@ -108,7 +109,8 @@ export default defineComponent({
   },
   data() {
     return {
-      jobStatus: this.status
+      jobStatus: this.status,
+      minDateTime: DateTime.now().toISO()
     }
   },
   props: ["job", "title", "status", "type"],
