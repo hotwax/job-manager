@@ -1,0 +1,6 @@
+---
+title: 'Improved code to disable the skip and cancle button when job is not scheduled.'
+ticket_id: "#251xb93"
+merge_request: 73
+author: Aniket Kumar Pandey
+type: fixed
