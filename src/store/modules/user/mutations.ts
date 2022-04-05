@@ -4,28 +4,28 @@ import * as types from './mutation-types'
 
 const mutations: MutationTree <UserState> = {
     [types.USER_TOKEN_CHANGED] (state, payload) {
-      state.token = payload.newToken
+        state.token = payload.newToken
     },
     [types.USER_END_SESSION] (state) {
-      state.token = ''
-      state.current = null
+        state.token = ''
+        state.current = null
     },
     [types.USER_INFO_UPDATED] (state, payload) {
-      state.current = payload
+        state.current = payload
     },
     [types.USER_INSTANCE_URL_UPDATED] (state, payload) {
-      state.instanceUrl = payload;
+        state.instanceUrl = payload;
     },
     [types.USER_SHOPIFY_CONFIG_UPDATED] (state, payload) {
-      state.shopifyConfig = payload;
+        state.shopifyConfig = payload;
     },
     [types.USER_CURRENT_ECOM_STORE_UPDATED] (state, payload) {
-      state.currentEComStore = payload;
+        state.currentEComStore = payload;
     },
     [types.USER_SERVICE_STATUS_DESC_UPDATED] (state, payload) {
-      payload.map((status: any) => {
-        state.statusDesc[status.statusId] = status.description;
-      })
+        payload.map((status: any) => {
+          state.statusDesc[status.statusId] = status.description;
+        })
     }
 }
 export default mutations;
