@@ -64,15 +64,15 @@
             </ion-card-header>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Auto add pre-order tag in Shopify") }}</ion-label>
-              <ion-checkbox :checked="addPreOrderTagInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_PRODR_TG_SHPFY'])" />
+              <ion-checkbox :checked="addPreOrderTagInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_PRODR_TG_SHPFY'], 'EVERY_15_MIN')" />
             </ion-item>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Auto remove tags in Shopify") }}</ion-label>
-              <ion-checkbox :checked="removeTagInShopify" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['REMV_ODR_TG_SHPFY'])"/>
+              <ion-checkbox :checked="removeTagInShopify" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['REMV_ODR_TG_SHPFY'], 'EVERY_15_MIN')"/>
             </ion-item>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Add shipping dates in Shopify") }}</ion-label>
-              <ion-checkbox :checked="addShippingDateInShopify" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_SHPG_DTE_SHPFY'])"/>
+              <ion-checkbox :checked="addShippingDateInShopify" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_SHPG_DTE_SHPFY'], 'EVERY_15_MIN')"/>
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap"><p>{{ $t("Transfer pre-order related information to Shopify as tags and meta fields.") }}</p></ion-label>
@@ -171,8 +171,9 @@ export default defineComponent({
     }
   },
   methods: {
-    async updateJob(checked: boolean, id: string) {
+    async updateJob(checked: boolean, id: string, status = 'MIDNIGHT_DAILY') {
       const job = this.getJob(id);
+      job['jobStatus'] = status
 
       // TODO: added this condition to not call the api when the value of the select automatically changes
       // need to handle this properly
@@ -180,40 +181,14 @@ export default defineComponent({
         return;
       }
 
-      // TODO: check for parentJobId and jobEnum and handle this values properly
-      const payload = {
-        'jobId': job.jobId,
-        'systemJobEnumId': id,
-        'statusId': checked ? "SERVICE_PENDING" : "SERVICE_CANCELLED",
-        'recurrenceTimeZone': DateTime.now().zoneName
-      } as any
       if (!checked) {
-        this.store.dispatch('job/updateJob', payload)
+        const cancelDateTime = DateTime.now().toMillis()
+        const recurrenceTimeZone = DateTime.now().zoneName
+        this.store.dispatch('job/cancelJob', {jobId: job.jobId, cancelDateTime, recurrenceTimeZone, statusId: "SERVICE_CANCELLED"})
       } else if (job?.status === 'SERVICE_DRAFT') {
-        payload['JOB_NAME'] = job.jobName
-        payload['SERVICE_NAME'] = job.serviceName
-        payload['SERVICE_TIME'] = job.runTime.toString()
-        payload['SERVICE_COUNT'] = '0'
-        payload['jobFields'] = {
-          'productStoreId': this.currentEComStore.productStoreId,
-          'systemJobEnumId': job.systemJobEnumId,
-          'tempExprId': 'EVERY_15_MIN',
-          'maxRecurrenceCount': '-1',
-          'parentJobId': job.parentJobId,
-          'runAsUser': 'system', // default system, but empty in run now
-          'recurrenceTimeZone': DateTime.now().zoneName
-        }
-        payload['shopifyConfigId'] = this.shopifyConfigId
-
-        // checking if the runtimeData has productStoreId, and if present then adding it on root level
-        job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.currentEComStore.productStoreId)
-
-        this.store.dispatch('job/scheduleService', {...job.runtimeData, ...payload})
+        this.store.dispatch('job/scheduleService', job)
       } else if (job?.status === 'SERVICE_PENDING') {
-        payload['tempExprId'] = 'EVERY_15_MIN'
-        payload['jobId'] = job.id
-
-        this.store.dispatch('job/updateJob', payload)
+        this.store.dispatch('job/updateJob', job)
       }
     },
     async runJob(header: string, id: string) {
