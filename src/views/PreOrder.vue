@@ -44,10 +44,9 @@
             <ion-card-header>
               <ion-card-title>{{ $t("Auto releasing") }}</ion-card-title>
             </ion-card-header>
-            <!-- TODO: env file entry = AUTO_RELSE_DAILY, run time 12 am daily-->
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Run daily") }}</ion-label>
-              <ion-checkbox slot="end" />
+              <ion-checkbox :checked="autoReleaseRunDaily" @ionChange="updateJob($event['detail'].checked, jobEnums['AUTO_RELSE_DAILY'])" />
             </ion-item>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Release preorders")}}</ion-label>
@@ -110,6 +109,7 @@ import { mapGetters } from "vuex";
 import { DateTime } from 'luxon';
 import { alertController } from '@ionic/vue';
 import JobDetail from '@/components/JobDetail.vue'
+import { isValidDate } from '@/utils';
 import emitter from '@/event-bus';
 
 export default defineComponent({
@@ -138,14 +138,6 @@ export default defineComponent({
       currentEComStore: 'user/getCurrentEComStore',
       getTemporalExpr: 'job/getTemporalExpr'
     }),
-    automaticallyListPreOrder(): boolean {
-      const status = this.getJobStatus(this.jobEnums["LIST_PRE_ORDER"]);
-      return status && status !== "SERVICE_DRAFT";
-    },
-    automaticallyListBackOrder(): boolean {
-      const status = this.getJobStatus(this.jobEnums["LIST_BACK_ORDER"]);
-      return status && status !== "SERVICE_DRAFT";
-    },
     addPreOrderTagInShopify(): boolean {
       const status = this.getJobStatus(this.jobEnums["ADD_PRODR_TG_SHPFY"]);
       return status && status !== "SERVICE_DRAFT";
@@ -157,13 +149,17 @@ export default defineComponent({
     addShippingDateInShopify(): boolean {
       const status = this.getJobStatus(this.jobEnums["ADD_SHPG_DTE_SHPFY"]);
       return status && status !== "SERVICE_DRAFT";
+    },
+    autoReleaseRunDaily(): boolean {
+      const status = this.getJobStatus(this.jobEnums["AUTO_RELSE_DAILY"]);
+      return status && status !== "SERVICE_DRAFT";
     }
   },
   data() {
     return {
       jobEnums: JSON.parse(process.env?.VUE_APP_PRODR_JOB_ENUMS as string) as any,
       jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
-      currentJob: '',
+      currentJob: '' as any,
       title: '',
       currentJobStatus: '',
       freqType: '',
@@ -177,8 +173,13 @@ export default defineComponent({
 
       // TODO: added this condition to not call the api when the value of the select automatically changes
       // need to handle this properly
-      if ((checked && job?.status === 'SERVICE_PENDING') || (!checked && job?.status === 'SERVICE_DRAFT')) {
+      if (!job || (checked && job?.status === 'SERVICE_PENDING') || (!checked && job?.status === 'SERVICE_DRAFT')) {
         return;
+      }
+
+      // if job runTime is not a valid date then making runTime as empty
+      if (job?.runTime && !isValidDate(job?.runTime)) {
+        job.runTime = ''
       }
 
       if (!checked) {
@@ -219,6 +220,10 @@ export default defineComponent({
       this.currentJobStatus = status
       this.freqType = this.jobFrequencyType[id]
 
+      // if job runTime is not a valid date then making runTime as empty
+      if (this.currentJob?.runTime && !isValidDate(this.currentJob?.runTime)) {
+        this.currentJob.runTime = ''
+      }
       if (this.currentJob && !this.isJobDetailAnimationCompleted) {
         emitter.emit('playAnimation');
         this.isJobDetailAnimationCompleted = true;

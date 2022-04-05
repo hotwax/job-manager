@@ -62,6 +62,7 @@ import { defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
 import JobDetail from '@/components/JobDetail.vue'
 import { DateTime } from 'luxon';
+import { isValidDate } from '@/utils';
 import emitter from '@/event-bus';
 import { isValidDate } from '@/utils';
 
@@ -86,7 +87,7 @@ export default defineComponent({
     return {
       jobEnums: JSON.parse(process.env?.VUE_APP_INV_JOB_ENUMS as string) as any,
       jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
-      currentJob: '',
+      currentJob: '' as any,
       title: '',
       currentJobStatus: '',
       freqType: '',
@@ -101,24 +102,8 @@ export default defineComponent({
       currentEComStore: 'user/getCurrentEComStore',
       getTemporalExpr: 'job/getTemporalExpr'
     }),
-    realTimeWebhooks(): boolean {
-      const status = this.getJobStatus(this.jobEnums["REAL_WBHKS"]);
-      return status && status !== "SERVICE_DRAFT";
-    },
     bopisCorrections(): boolean {
       const status = this.getJobStatus(this.jobEnums["BOPIS_CORRECTION"]);
-      return status && status !== "SERVICE_DRAFT";
-    },
-    realtimeAdjustments(): boolean {
-      const status = this.getJobStatus(this.jobEnums["REALTIME_ADJUSTMENTS"]);
-      return status && status !== "SERVICE_DRAFT";
-    },
-    realtimePOSSales(): boolean {
-      const status = this.getJobStatus(this.jobEnums["REAL_TIME_POS_SALES"]);
-      return status && status !== "SERVICE_DRAFT";
-    },
-    reserveForCompletedOrders(): boolean {
-      const status = this.getJobStatus(this.jobEnums["RSV_CMPLT_ORDRS"]);
       return status && status !== "SERVICE_DRAFT";
     }
   },
@@ -152,6 +137,10 @@ export default defineComponent({
       this.currentJobStatus = status
       this.freqType = this.jobFrequencyType[id]
 
+      // if job runTime is not a valid date then making runTime as empty
+      if (this.currentJob?.runTime && !isValidDate(this.currentJob?.runTime)) {
+        this.currentJob.runTime = ''
+      }
       if (this.currentJob && !this.isJobDetailAnimationCompleted) {
         emitter.emit('playAnimation');
         this.isJobDetailAnimationCompleted = true;
