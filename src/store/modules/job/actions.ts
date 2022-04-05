@@ -11,11 +11,16 @@ import { DateTime } from 'luxon';
 const actions: ActionTree<JobState, RootState> = {
 
   async getServerTimezone({commit}) {
-    const resp = await JobService.getServerTimezone({
-      "fieldList": ['serverTimeZone']
-    });
-    if(resp){
-      commit(types.JOB_SERVER_TIMEZONE_UPDATED, resp)
+    let resp;
+    try {
+      resp = await JobService.getServerTimezone({
+        "fieldList": ['serverTimeZone']
+      });
+      if(resp.status === 200 && !hasError(resp)){
+        commit(types.JOB_SERVER_TIMEZONE_UPDATED, resp)
+      }
+    } catch (err) {
+      console.error(err);
     }
   },
 
