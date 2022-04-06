@@ -115,7 +115,10 @@
                 <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
                 <ion-card-title>{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
               </div>
-              <ion-badge v-if="job.runTime" color="dark">{{ timeTillJob(job.runTime)}}</ion-badge>
+              <div>
+                <ion-badge v-if="job.runTime" color="dark">{{ timeTillJob(job.runTime)}}</ion-badge>
+                <ion-badge v-if="job.statusId" :color="job.statusId === 'SERVICE_FINISHED' ? 'success' : 'danger'">{{ job.statusDesc }}</ion-badge>
+              </div>
             </ion-card-header>
 
             <ion-item lines="none">
@@ -388,6 +391,13 @@ ion-card-header {
   justify-content: space-between;
   align-items: center;
   padding-bottom: 0px;
+}
+
+ion-card-header :last-child {
+  display: flex;
+  flex-direction: column;
+  align-items: end;
+  row-gap: 4px;
 }
 
 ion-item {
