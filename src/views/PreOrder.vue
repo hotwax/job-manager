@@ -36,6 +36,7 @@
               </ion-label>
             </ion-item>
           </ion-card>
+
           <ion-card>
             <ion-card-header>
               <ion-card-title>{{ $t("Backorder") }}</ion-card-title>
@@ -80,7 +81,7 @@
             </ion-item>
           </ion-card>
 
-           <ion-card>
+          <ion-card>
             <ion-card-header>
               <ion-card-title>{{ $t("Re-allocate pre-orders") }}</ion-card-title>
             </ion-card-header>
