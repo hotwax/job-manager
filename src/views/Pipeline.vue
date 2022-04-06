@@ -48,7 +48,7 @@
               <ion-label class="ion-text-wrap">{{ job.tempExprId ? temporalExpr(job.tempExprId)?.description : "🙃"  }}</ion-label>
             </ion-item>
 
-            <ion-item lines="full">
+            <ion-item>
               <ion-icon slot="start" :icon="codeWorkingOutline" />
               <ion-label class="ion-text-wrap">{{ job.serviceName }}</ion-label>
             </ion-item>
