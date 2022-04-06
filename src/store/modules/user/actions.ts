@@ -41,29 +41,6 @@ const actions: ActionTree<UserState, RootState> = {
   },
 
   /**
-   * Status Description
-   */
-  async getServiceStatusDesc ({ commit }) {
-    try{
-      const resp = await UserService.getServiceStatusDesc({
-        "inputFields": {
-          "statusTypeId": "SERVICE_STATUS",
-          "statusTypeId_op": "equals"
-        },
-        "entityName": "StatusItem",
-        "fieldList": ["statusId", "description"],
-        "noConditionFind": "Y",
-        "viewSize": 20
-      }) 
-      if (resp.status === 200 && !hasError(resp) && resp.data.count) {
-        commit(types.USER_SERVICE_STATUS_DESC_UPDATED, resp.data.docs);
-      }
-    } catch(err) {
-      console.error(err)
-    }
-  },
-
-  /**
    * Logout user
    */
   async logout ({ commit, dispatch }) {
@@ -99,7 +76,7 @@ const actions: ActionTree<UserState, RootState> = {
         }, ...(stores ? stores : [])]
       })
 
-      dispatch('getServiceStatusDesc')
+      this.dispatch('util/getServiceStatusDesc')
 
       commit(types.USER_INFO_UPDATED, resp.data);
     }

@@ -38,7 +38,7 @@ const actions: ActionTree<JobState, RootState> = {
     return resp;
   },
 
-  async fetchJobHistory({ commit, dispatch, state }, payload){
+  async fetchJobHistory({ commit, dispatch, state }, payload){ 
     await JobService.fetchJobInformation({
       "inputFields": {
         "productStoreId": payload.eComStoreId,
@@ -60,7 +60,9 @@ const actions: ActionTree<JobState, RootState> = {
           if(payload.viewIndex && payload.viewIndex > 0){
             jobs = state.history.list.concat(resp.data.docs);
           }
-          
+          jobs.map((job: any) => {
+            job['statusDesc'] = this.state.util.statusDesc[job.statusId];
+          })          
           commit(types.JOB_HISTORY_UPDATED, { jobs, total });
           const tempExprList = [] as any;
           const enumIds = [] as any;
