@@ -169,13 +169,14 @@ export default defineComponent({
   methods: {
     async updateJob(checked: boolean, id: string, status = 'EVERY_15_MIN') {
       const job = this.getJob(id);
-      job['jobStatus'] = status
 
       // TODO: added this condition to not call the api when the value of the select automatically changes
       // need to handle this properly
       if (!job || (checked && job?.status === 'SERVICE_PENDING') || (!checked && job?.status === 'SERVICE_DRAFT')) {
         return;
       }
+
+      job['jobStatus'] = status
 
       // if job runTime is not a valid date then making runTime as empty
       if (job?.runTime && !isValidDate(job?.runTime)) {
