@@ -143,9 +143,9 @@ import BatchModal from '@/components/BatchModal.vue';
 import { useStore } from "@/store";
 import { mapGetters } from "vuex";
 import JobDetail from '@/components/JobDetail.vue';
-import emitter from '@/event-bus';
-import { isValidDate } from '@/utils';
 import { DateTime } from 'luxon';
+import { isValidDate } from '@/utils';
+import emitter from '@/event-bus';
 
 export default defineComponent({
   name: 'Orders',

@@ -61,8 +61,8 @@ import {
 import { defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
 import JobDetail from '@/components/JobDetail.vue'
-import emitter from '@/event-bus';
 import { isValidDate } from '@/utils';
+import emitter from '@/event-bus';
 
 export default defineComponent({
   name: 'Inventory',
