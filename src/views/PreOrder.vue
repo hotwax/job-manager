@@ -12,31 +12,55 @@
         <section>
           <ion-card>
             <ion-card-header>
-              <ion-card-title>{{ $t("Auto listing") }}</ion-card-title>
+              <ion-card-title>{{ $t("Pre-orders") }}</ion-card-title>
             </ion-card-header>
-            <ion-item button @click="viewJobConfiguration('LIST_PRE_ORDER', 'Automatically list pre-order', getJobStatus(this.jobEnums['LIST_PRE_ORDER']))" detail>
-              <ion-label class="ion-text-wrap">{{ $t("Automatically list pre-order") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('LIST_PRE_ORDER') }}</ion-label>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("Use POs to manage catalog") }}</ion-label>
+              <ion-checkbox slot="end" />
             </ion-item>
-            <ion-item button @click="viewJobConfiguration('LIST_BACK_ORDER', 'Automatically list back-order', getJobStatus(this.jobEnums['LIST_BACK_ORDER']))" detail>
-              <ion-label class="ion-text-wrap">{{ $t("Automatically list back-order") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('LIST_BACK_ORDER') }}</ion-label>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("Add tags in Shopify") }}</ion-label>
+              <ion-checkbox slot="end" />
+            </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("Remove tags in Shopify") }}</ion-label>
+              <ion-checkbox slot="end" />
+            </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("Add shipping dates in Shopify") }}</ion-label>
+              <ion-checkbox slot="end" />
             </ion-item>
             <ion-item lines="none">
-              <ion-label class="ion-text-wrap"><p>{{ $t("This will automatically list items from purchase orders for preorder when stock runs out.") }}</p></ion-label>
+              <ion-label>
+                <p class="ion-text-wrap">{{ $t("Transfer pre-order related information to Shopify as tags and meta fields.") }}</p>
+              </ion-label>
             </ion-item>
           </ion-card>
 
           <ion-card>
             <ion-card-header>
-              <ion-card-title>{{ $t("Re-allocate pre-orders") }}</ion-card-title>
+              <ion-card-title>{{ $t("Backorder") }}</ion-card-title>
             </ion-card-header>
             <ion-item>
-              <ion-label class="ion-text-wrap">{{ $t("Allocation") }}</ion-label>
-              <ion-button fill="outline" color="danger" slot="end" @click="runJob('Allocation', jobEnums['REALLOC_PRODR'])">{{ $t("Run reallocation") }}</ion-button>
+              <ion-label class="ion-text-wrap">{{ $t("Use POs to manage catalog") }}</ion-label>
+              <ion-checkbox slot="end" />
+            </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("Add tags in Shopify") }}</ion-label>
+              <ion-checkbox slot="end" />
+            </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("Remove tags in Shopify") }}</ion-label>
+              <ion-checkbox slot="end" />
+            </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("Add shipping dates in Shopify") }}</ion-label>
+              <ion-checkbox slot="end" />
             </ion-item>
             <ion-item lines="none">
-              <ion-label class="ion-text-wrap"><p>{{ $t("Re-allocation will re-allocate promise dates on all pre-orders based on upcoming inventory from purchase orders. Promise dates that were manually adjusted will be overriden.") }}</p></ion-label>
+              <ion-label>
+                <p class="ion-text-wrap">{{ $t("Transfer backorder related information to Shopify as tags and meta fields.") }}</p>
+              </ion-label>
             </ion-item>
           </ion-card>
 
@@ -59,24 +83,16 @@
 
           <ion-card>
             <ion-card-header>
-              <ion-card-title>{{ $t("Sync") }}</ion-card-title>
+              <ion-card-title>{{ $t("Re-allocate pre-orders") }}</ion-card-title>
             </ion-card-header>
             <ion-item>
-              <ion-label class="ion-text-wrap">{{ $t("Auto add pre-order tag in Shopify") }}</ion-label>
-              <ion-checkbox :checked="addPreOrderTagInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_PRODR_TG_SHPFY'])" />
-            </ion-item>
-            <ion-item>
-              <ion-label class="ion-text-wrap">{{ $t("Auto remove tags in Shopify") }}</ion-label>
-              <ion-checkbox :checked="removeTagInShopify" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['REMV_ODR_TG_SHPFY'])"/>
-            </ion-item>
-            <ion-item>
-              <ion-label class="ion-text-wrap">{{ $t("Add shipping dates in Shopify") }}</ion-label>
-              <ion-checkbox :checked="addShippingDateInShopify" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_SHPG_DTE_SHPFY'])"/>
+              <ion-label class="ion-text-wrap">{{ $t("Allocation") }}</ion-label>
+              <ion-button fill="outline" color="danger" slot="end" @click="runJob('Re-allocate pre-orders', jobEnums['REALLOC_PRODR'])">{{ $t("Run reallocation") }}</ion-button>
             </ion-item>
             <ion-item lines="none">
-              <ion-label class="ion-text-wrap"><p>{{ $t("Transfer pre-order related information to Shopify as tags and meta fields.") }}</p></ion-label>
+              <ion-label class="ion-text-wrap"><p>{{ $t("Re-allocation will re-calculate promise dates on all pre-orders based on upcoming inventory from purchase orders. Promise dates that were manually adjusted will be overriden.") }}</p></ion-label>
             </ion-item>
-          </ion-card>
+          </ion-card> 
         </section>
 
         <aside class="desktop-only" v-show="currentJob">
