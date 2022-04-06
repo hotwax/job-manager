@@ -362,6 +362,7 @@ const actions: ActionTree<JobState, RootState> = {
       'jobId': job.jobId,
       'runTime': updatedRunTime,
       'systemJobEnumId': job.systemJobEnumId,
+      'recurrenceTimeZone': DateTime.now().zoneName,
       'statusId': "SERVICE_PENDING"
     } as any
 
