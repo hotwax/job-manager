@@ -14,12 +14,12 @@
             <ion-card-header>
               <ion-card-title>{{ $t("Sync") }}</ion-card-title>
             </ion-card-header>
-            <ion-item button @click="viewJobConfiguration(jobEnums['IMP_PRDTS'], 'Import products', getJobStatus(this.jobEnums['IMP_PRDTS']))" detail>
-              <ion-label>{{ $t("Import products") }}</ion-label>
+            <ion-item button @click="viewJobConfiguration('IMP_PRDTS', 'Import products', getJobStatus(this.jobEnums['IMP_PRDTS']))" detail>
+              <ion-label class="ion-text-wrap">{{ $t("Import products") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_PRDTS') }}</ion-label>
             </ion-item>
-            <ion-item button @click="viewJobConfiguration(jobEnums['SYNC_PRDTS'], 'Sync products', getJobStatus(this.jobEnums['SYNC_PRDTS']))" detail>
-              <ion-label>{{ $t("Sync products") }}</ion-label>
+            <ion-item button @click="viewJobConfiguration('SYNC_PRDTS', 'Sync products', getJobStatus(this.jobEnums['SYNC_PRDTS']))" detail>
+              <ion-label class="ion-text-wrap">{{ $t("Sync products") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('SYNC_PRDTS') }} </ion-label>
             </ion-item>
             <ion-item lines="none">
@@ -29,7 +29,7 @@
         </section>
 
         <aside class="desktop-only" v-show="currentJob">
-          <JobDetail :title="title" :job="currentJob" :status="currentJobStatus" type="slow" :key="currentJob"/>
+          <JobDetail :title="title" :job="currentJob" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
         </aside>
       </main>
     </ion-content>
@@ -53,6 +53,8 @@ import {
 import { defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
 import JobDetail from '@/components/JobDetail.vue'
+import { isValidDate } from '@/utils';
+import emitter from '@/event-bus';
 
 export default defineComponent({
   name: 'Product',
@@ -80,9 +82,12 @@ export default defineComponent({
   data() {
     return {
       jobEnums: JSON.parse(process.env?.VUE_APP_PRD_JOB_ENUMS as string) as any,
-      currentJob: '',
+      jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
+      currentJob: '' as any,
       title: 'Import products',
-      currentJobStatus: ''
+      currentJobStatus: '',
+      freqType: '',
+      isJobDetailAnimationCompleted: false
     }
   },
   mounted () {
@@ -94,10 +99,20 @@ export default defineComponent({
     });
   },
   methods: {
-    viewJobConfiguration(enumId: string, title: string, status: string) {
-      this.currentJob = this.getJob(enumId)
+    viewJobConfiguration(id: string, title: string, status: string) {
+      this.currentJob = this.getJob(this.jobEnums[id])
       this.title = title
       this.currentJobStatus = status
+      this.freqType = id && this.jobFrequencyType[id]
+
+      // if job runTime is not a valid date then making runTime as empty
+      if (this.currentJob?.runTime && !isValidDate(this.currentJob?.runTime)) {
+        this.currentJob.runTime = ''
+      }
+      if (this.currentJob && !this.isJobDetailAnimationCompleted) {
+        emitter.emit('playAnimation');
+        this.isJobDetailAnimationCompleted = true;
+      }
     },
     getTemporalExpression(enumId: string) {
       return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?

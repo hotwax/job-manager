@@ -1,0 +1,6 @@
+---
+title: 'Improved: code to add support to don''t fetch empty product store values.'
+ticket_id: "#251xhvt"
+merge_request: 76
+author: Aniket Kumar Pandey
+type: fixed

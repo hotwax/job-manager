@@ -22,6 +22,12 @@
         <ion-label>{{ $t("OMS") }}</ion-label>
         <p slot="end">{{ instanceUrl }}</p>
       </ion-item>
+         
+      <ion-item>
+        <ion-label> {{ userProfile && userProfile.userTimeZone ? userProfile.userTimeZone : '-' }} </ion-label>
+        <ion-button @click="changeTimeZone()" slot="end" fill="outline" color="dark">{{ $t("Change") }}</ion-button>
+      </ion-item>
+
       <!-- Profile of user logged in -->
       <ion-item>
         <ion-icon :icon="personCircleOutline" slot="start" />
@@ -33,11 +39,12 @@
 </template>
 
 <script lang="ts">
-import { alertController, IonButton, IonContent, IonHeader,IonIcon, IonItem, IonLabel, IonMenuButton, IonPage, IonSelect, IonSelectOption, IonTitle, IonToolbar, popoverController } from '@ionic/vue';
+import { alertController, IonButton, IonContent, IonHeader,IonIcon, IonItem, IonLabel, IonMenuButton, IonPage, IonSelect, IonSelectOption, IonTitle, IonToolbar, popoverController, modalController } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { codeWorkingOutline, ellipsisVertical, globeOutline, personCircleOutline, storefrontOutline} from 'ionicons/icons'
 import { mapGetters, useStore } from 'vuex';
 import { useRouter } from 'vue-router';
+import TimeZoneModal from '@/views/TimezoneModal.vue';
 
 export default defineComponent({
   name: 'Settings',
@@ -69,6 +76,12 @@ export default defineComponent({
           'eComStore': this.userProfile.stores.find((str: any) => str.productStoreId == store['detail'].value)
         })
       }
+    },
+    async changeTimeZone() {
+      const timeZoneModal = await modalController.create({
+        component: TimeZoneModal,
+      });
+      return timeZoneModal.present();
     },
     logout () {
       this.store.dispatch('user/logout').then(() => {

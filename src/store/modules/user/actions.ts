@@ -61,6 +61,9 @@ const actions: ActionTree<UserState, RootState> = {
       }
 
       const payload = {
+        "inputFields": {
+          "storeName_op": "not-empty"
+        },
         "fieldList": ["productStoreId", "storeName"],
         "entityName": "ProductStore",
         "distinct": "Y",
@@ -72,6 +75,8 @@ const actions: ActionTree<UserState, RootState> = {
           storeName: "None"
         }, ...(stores ? stores : [])]
       })
+
+      this.dispatch('util/getServiceStatusDesc')
 
       commit(types.USER_INFO_UPDATED, resp.data);
     }

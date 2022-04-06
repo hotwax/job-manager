@@ -15,16 +15,7 @@
               <ion-card-title>{{ $t("Adjustments") }}</ion-card-title>
             </ion-card-header>
             <ion-item>
-              <ion-label>{{ $t("Dynamic inventory") }}</ion-label>
-              <ion-toggle :checked="realTimeWebhooks" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, this.jobEnums['DYN_INV'])"/>
-            </ion-item>
-            <ion-item lines="none">
-              <ion-label class="ion-text-wrap">
-                <p>{{ $t("Realtime adjustments allow HotWax Commerce to push new inventory to Shopify in realtime. These events include receiving , cycle counts, variances, and return.") }}</p>
-              </ion-label>
-            </ion-item>
-            <ion-item>
-              <ion-label>{{ $t("BOPIS corrections") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("BOPIS corrections") }}</ion-label>
               <ion-toggle :checked="bopisCorrections" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, this.jobEnums['BOPIS_CORRECTION'])" />
             </ion-item>
             <ion-item lines="none">
@@ -32,8 +23,8 @@
                 <p>{{ $t("When using HotWax BOPIS, Shopify isn't aware of the actual inventory consumed. HotWax will automatically restore inventory automatically reduced by Shopify and deduct inventory from the correct store to maintain inventory accuracy.") }}</p>
               </ion-label>
             </ion-item>
-            <ion-item button @click="viewJobConfiguration(jobEnums['HARD_SYNC'], 'Hard sync', getJobStatus(this.jobEnums['HARD_SYNC']))" detail>
-              <ion-label>{{ $t("Hard sync") }}</ion-label>
+            <ion-item button @click="viewJobConfiguration('HARD_SYNC', 'Hard sync', getJobStatus(this.jobEnums['HARD_SYNC']))" detail>
+              <ion-label class="ion-text-wrap">{{ $t("Hard sync") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('HARD_SYNC') }}</ion-label>
             </ion-item>
             <ion-item lines="none">
@@ -45,7 +36,7 @@
         </section>
 
         <aside class="desktop-only" v-show="currentJob">
-          <JobDetail :title="title" :job="currentJob" :status="currentJobStatus" type="slow" :key="currentJob"/>
+          <JobDetail :title="title" :job="currentJob" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
         </aside>
       </main>
     </ion-content>
@@ -70,7 +61,8 @@ import {
 import { defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
 import JobDetail from '@/components/JobDetail.vue'
-import { DateTime } from 'luxon';
+import { isValidDate } from '@/utils';
+import emitter from '@/event-bus';
 
 export default defineComponent({
   name: 'Inventory',
@@ -92,9 +84,12 @@ export default defineComponent({
   data() {
     return {
       jobEnums: JSON.parse(process.env?.VUE_APP_INV_JOB_ENUMS as string) as any,
-      currentJob: '',
-      title: '',
-      currentJobStatus: ''
+      jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
+      currentJob: '' as any,
+      title: 'Hard sync',
+      currentJobStatus: '',
+      freqType: '',
+      isJobDetailAnimationCompleted: false
     }
   },
   computed: {
@@ -105,77 +100,50 @@ export default defineComponent({
       currentEComStore: 'user/getCurrentEComStore',
       getTemporalExpr: 'job/getTemporalExpr'
     }),
-    realTimeWebhooks(): boolean {
-      const status = this.getJobStatus(this.jobEnums["REAL_WBHKS"]);
-      return status && status !== "SERVICE_DRAFT";
-    },
     bopisCorrections(): boolean {
       const status = this.getJobStatus(this.jobEnums["BOPIS_CORRECTION"]);
-      return status && status !== "SERVICE_DRAFT";
-    },
-    realtimeAdjustments(): boolean {
-      const status = this.getJobStatus(this.jobEnums["REALTIME_ADJUSTMENTS"]);
-      return status && status !== "SERVICE_DRAFT";
-    },
-    realtimePOSSales(): boolean {
-      const status = this.getJobStatus(this.jobEnums["REAL_TIME_POS_SALES"]);
-      return status && status !== "SERVICE_DRAFT";
-    },
-    reserveForCompletedOrders(): boolean {
-      const status = this.getJobStatus(this.jobEnums["RSV_CMPLT_ORDRS"]);
       return status && status !== "SERVICE_DRAFT";
     }
   },
   methods: {
-    async updateJob(checked: boolean, id: string) {
+    async updateJob(checked: boolean, id: string, status="EVERY_15_MIN") {
       const job = this.getJob(id);
 
       // TODO: added this condition to not call the api when the value of the select automatically changes
       // need to handle this properly
-      if (checked && job?.status === 'SERVICE_PENDING') {
+      if (!job || (checked && job?.status === 'SERVICE_PENDING') || (!checked && job?.status === 'SERVICE_DRAFT')) {
         return;
       }
 
-      // TODO: check for parentJobId and jobEnum and handle this values properly
-      const payload = {
-        'jobId': job.jobId,
-        'systemJobEnumId': id,
-        'statusId': checked ? "SERVICE_PENDING" : "SERVICE_CANCELLED",
-        'recurrenceTimeZone': DateTime.now().zoneName
-      } as any
+      job['jobStatus'] = status
+
+      // if job runTime is not a valid date then making runTime as empty
+      if (job?.runTime && !isValidDate(job?.runTime)) {
+        job.runTime = ''
+      }
+
       if (!checked) {
-        this.store.dispatch('job/updateJob', payload)
+        this.store.dispatch('job/cancelJob', job)
       } else if (job?.status === 'SERVICE_DRAFT') {
-        payload['JOB_NAME'] = job.jobName
-        payload['SERVICE_NAME'] = job.serviceName
-        payload['SERVICE_TIME'] = job.runTime.toString()
-        payload['SERVICE_COUNT'] = '0'
-        payload['jobFields'] = {
-          'productStoreId': this.currentEComStore.productStoreId,
-          'systemJobEnumId': job.systemJobEnumId,
-          'tempExprId': 'DAILY',
-          'maxRecurrenceCount': '-1',
-          'parentJobId': job.parentJobId,
-          'runAsUser': 'system', // default system, but empty in run now
-          'recurrenceTimeZone': DateTime.now().zoneName
-        }
-        payload['shopifyConfigId'] = this.shopifyConfigId
-
-        // checking if the runtimeData has productStoreId, and if present then adding it on root level
-        job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.currentEComStore.productStoreId)
-
-        this.store.dispatch('job/scheduleService', {...job.runtimeData, ...payload})
+        this.store.dispatch('job/scheduleService', job)
       } else if (job?.status === 'SERVICE_PENDING') {
-        payload['tempExprId'] = 'DAILY'
-        payload['jobId'] = job.id
-
-        this.store.dispatch('job/updateJob', payload)
+        this.store.dispatch('job/updateJob', job)
       }
     },
-    viewJobConfiguration(enumId: string, title: string, status: string) {
-      this.currentJob = this.getJob(enumId)
+    viewJobConfiguration(id: string, title: string, status: string) {
+      this.currentJob = this.getJob(this.jobEnums[id])
       this.title = title
       this.currentJobStatus = status
+      this.freqType = id && this.jobFrequencyType[id]
+
+      // if job runTime is not a valid date then making runTime as empty
+      if (this.currentJob?.runTime && !isValidDate(this.currentJob?.runTime)) {
+        this.currentJob.runTime = ''
+      }
+      if (this.currentJob && !this.isJobDetailAnimationCompleted) {
+        emitter.emit('playAnimation');
+        this.isJobDetailAnimationCompleted = true;
+      }
     },
     getTemporalExpression(enumId: string) {
       return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
@@ -193,6 +161,7 @@ export default defineComponent({
   },
   setup() {
     const store = useStore();
+
     return {
       store
     }  

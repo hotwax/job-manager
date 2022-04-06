@@ -16,6 +16,10 @@ const mutations: MutationTree <JobState> = {
         state.pending.list = payload.jobs;
         state.pending.total = payload.total;
     },
+    [types.JOB_RUNNING_UPDATED] (state, payload) {
+        state.running.list = payload.jobs;
+        state.running.total = payload.total;
+    },
     [types.JOB_HISTORY_UPDATED] (state, payload) {
         state.history.list = payload.jobs;
         state.history.total = payload.total;
@@ -33,8 +37,8 @@ const mutations: MutationTree <JobState> = {
     },
     [types.JOB_DESCRIPTION_UPDATED] (state, enums) {
         if (enums) {
-            enums.forEach((enumId: any) => {
-              state.enumIds[enumId.enumId] = enumId.description
+            enums.forEach((enumInfo: any) => {
+              state.enumIds[enumInfo.enumId] = enumInfo
             });
         }
     }

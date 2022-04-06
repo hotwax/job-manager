@@ -12,32 +12,63 @@
         <section>
           <ion-card>
             <ion-card-header>
-              <ion-card-title>{{ $t("Auto listing") }}</ion-card-title>
+              <ion-card-title>{{ $t("Pre-orders") }}</ion-card-title>
             </ion-card-header>
             <ion-item>
-              <ion-label>{{ $t("Automatically list pre-order") }}</ion-label>
-              <ion-toggle :checked="automaticallyListPreOrder" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['LIST_PRE_ORDER'])" />
+              <ion-label class="ion-text-wrap">{{ $t("Use POs to manage catalog") }}</ion-label>
+              <ion-checkbox slot="end" :checked="preOrderManageCatalog" @ionChange="updateJob($event['detail'].checked, jobEnums['PRE_ORDER_CTLG'])"/>
             </ion-item>
             <ion-item>
-              <ion-label>{{ $t("Automatically list back-order") }}</ion-label>
-              <ion-toggle :checked="automaticallyListBackOrder" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['LIST_BACK_ORDER'])" />
+              <ion-label class="ion-text-wrap">{{ $t("Add tags in Shopify") }}</ion-label>
+              <ion-checkbox slot="end" :checked="addPreOrderTagInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_PRODR_TG_SHPFY'])"/>
+            </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("Remove tags in Shopify") }}</ion-label>
+              <ion-checkbox slot="end" :checked="removePreOrderTagInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['REMV_PRODR_TG_SHPFY'])"/>
+            </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("Add shipping dates in Shopify") }}</ion-label>
+              <ion-checkbox slot="end" :checked="addPreOrderShippingDateInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_PRODR_SHPG_DTE_SHPFY'])"/>
+            </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("Remove shipping dates in Shopify") }}</ion-label>
+              <ion-checkbox slot="end" :checked="removePreOrderShippingDateInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['REMV_PRODR_SHPG_DTE_SHPFY'])"/>
             </ion-item>
             <ion-item lines="none">
-              <ion-label class="ion-text-wrap"><p>{{ $t("This will automatically list items from purchase orders for preorder when stock runs out.") }}</p></ion-label>
+              <ion-label>
+                <p class="ion-text-wrap">{{ $t("Transfer pre-order related information to Shopify as tags and meta fields.") }}</p>
+              </ion-label>
             </ion-item>
           </ion-card>
 
           <ion-card>
             <ion-card-header>
-              <ion-card-title>{{ $t("Re-allocate pre-orders") }}</ion-card-title>
+              <ion-card-title>{{ $t("Backorder") }}</ion-card-title>
             </ion-card-header>
             <ion-item>
-              <ion-label>{{ $t("Allocation") }}</ion-label>
-              <!-- TODO: env file entry = REALLOC_PRODR -->
-              <ion-button fill="outline" color="danger" slot="end" @click="runJob('Allocation')">{{ $t("Run reallocation") }}</ion-button>
+              <ion-label class="ion-text-wrap">{{ $t("Use POs to manage catalog") }}</ion-label>
+              <ion-checkbox slot="end" :checked="backOrderManageCatalog" @ionChange="updateJob($event['detail'].checked, jobEnums['BACK_ORDER_CTLG'])"/>
+            </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("Add tags in Shopify") }}</ion-label>
+              <ion-checkbox slot="end" :checked="addBackOrderTagInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_BACKODR_TG_SHPFY'])"/>
+            </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("Remove tags in Shopify") }}</ion-label>
+              <ion-checkbox slot="end" :checked="removeBackOrderTagInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['REMV_BACKODR_TG_SHPFY'])"/>
+            </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("Add shipping dates in Shopify") }}</ion-label>
+              <ion-checkbox slot="end" :checked="addBackOrderShippingDateInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_BACKODR_SHPG_DTE_SHPFY'])"/>
+            </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("Remove shipping dates in Shopify") }}</ion-label>
+              <ion-checkbox slot="end" :checked="removeBackOrderShippingDateInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['REMV_BACKODR_SHPG_DTE_SHPFY'])"/>
             </ion-item>
             <ion-item lines="none">
-              <ion-label class="ion-text-wrap"><p>{{ $t("Re-allocation will re-allocate promise dates on all pre-orders based on upcoming inventory from purchase orders. Promise dates that were manually adjusted will be overriden.") }}</p></ion-label>
+              <ion-label>
+                <p class="ion-text-wrap">{{ $t("Transfer backorder related information to Shopify as tags and meta fields.") }}</p>
+              </ion-label>
             </ion-item>
           </ion-card>
 
@@ -45,15 +76,13 @@
             <ion-card-header>
               <ion-card-title>{{ $t("Auto releasing") }}</ion-card-title>
             </ion-card-header>
-            <!-- TODO: env file entry = AUTO_RELSE_DAILY, run time 12 am daily-->
             <ion-item>
-              <ion-label>{{ $t("Run daily") }}</ion-label>
-              <ion-checkbox slot="end" />
+              <ion-label class="ion-text-wrap">{{ $t("Run daily") }}</ion-label>
+              <ion-checkbox :checked="autoReleaseRunDaily" @ionChange="updateJob($event['detail'].checked, jobEnums['AUTO_RELSE_DAILY'], 'MIDNIGHT_DAILY')" />
             </ion-item>
-            <!-- TODO: env file entry = AUTO_RELSE_DAILY, run now, run as user, count: 1-->
             <ion-item>
-              <ion-label>{{ $t("Release preorders")}}</ion-label>
-              <ion-button fill="outline" @click="runJob('Release preorders')">{{ $t("Release") }}</ion-button>
+              <ion-label class="ion-text-wrap">{{ $t("Release preorders")}}</ion-label>
+              <ion-button fill="outline" @click="runJob('Release preorders', jobEnums['AUTO_RELSE_DAILY'])">{{ $t("Release") }}</ion-button>
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap"><p>{{ $t("Auto releasing pre-orders will find pre-orders that have promise dates that have passed and release them from fulfillment.") }}</p></ion-label>
@@ -62,30 +91,21 @@
 
           <ion-card>
             <ion-card-header>
-              <ion-card-title>{{ $t("Sync") }}</ion-card-title>
+              <ion-card-title>{{ $t("Re-allocate pre-orders") }}</ion-card-title>
             </ion-card-header>
             <ion-item>
-              <ion-label>{{ $t("Auto add pre-order tag in Shopify") }}</ion-label>
-              <ion-checkbox :checked="addPreOrderTagInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_PRODR_TG_SHPFY'])" />
-            </ion-item>
-            <ion-item>
-              <ion-label>{{ $t("Auto remove tags in Shopify") }}</ion-label>
-              <ion-checkbox :checked="removeTagInShopify" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['REMV_ODR_TG_SHPFY'])"/>
-            </ion-item>
-            <ion-item>
-              <ion-label>{{ $t("Add shipping dates in Shopify") }}</ion-label>
-              <ion-checkbox :checked="addShippingDateInShopify" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_SHPG_DTE_SHPFY'])"/>
-            </ion-item>
-            <!-- TODO: run all sync jobs with time diff of 2 mins and run now and count: 1 -->
-            <ion-item>
-              <ion-label>{{ $t("Manual update") }}</ion-label>
-              <ion-button fill="outline" @click="runJob('Manual update')">{{ $t("Run sync now") }}</ion-button>
+              <ion-label class="ion-text-wrap">{{ $t("Allocation") }}</ion-label>
+              <ion-button fill="outline" color="danger" slot="end" @click="runJob('Re-allocate pre-orders', jobEnums['REALLOC_PRODR'])">{{ $t("Run reallocation") }}</ion-button>
             </ion-item>
             <ion-item lines="none">
-              <ion-label class="ion-text-wrap"><p>{{ $t("Transfer pre-order related information to Shopify as tags and meta fields.") }}</p></ion-label>
+              <ion-label class="ion-text-wrap"><p>{{ $t("Re-allocation will re-calculate promise dates on all pre-orders based on upcoming inventory from purchase orders. Promise dates that were manually adjusted will be overriden.") }}</p></ion-label>
             </ion-item>
-          </ion-card>
+          </ion-card> 
         </section>
+
+        <aside class="desktop-only" v-show="currentJob">
+          <JobDetail :title="title" :job="currentJob" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
+        </aside>
       </main>
     </ion-content>
   </ion-page>
@@ -105,7 +125,6 @@ import {
   IonMenuButton,
   IonPage,
   IonTitle,
-  IonToggle,
   IonToolbar
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
@@ -113,7 +132,9 @@ import { useStore } from "@/store";
 import { mapGetters } from "vuex";
 import { DateTime } from 'luxon';
 import { alertController } from '@ionic/vue';
-import { translate } from '@/i18n';
+import JobDetail from '@/components/JobDetail.vue'
+import { isValidDate } from '@/utils';
+import emitter from '@/event-bus';
 
 export default defineComponent({
   name: 'PreOrder',
@@ -130,89 +151,100 @@ export default defineComponent({
     IonMenuButton,
     IonPage,
     IonTitle,
-    IonToggle,
-    IonToolbar
+    IonToolbar,
+    JobDetail
   },
   computed: {
     ...mapGetters({
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
       shopifyConfigId: 'user/getShopifyConfigId',
-      currentEComStore: 'user/getCurrentEComStore'
+      currentEComStore: 'user/getCurrentEComStore',
+      getTemporalExpr: 'job/getTemporalExpr'
     }),
-    automaticallyListPreOrder(): boolean {
-      const status = this.getJobStatus(this.jobEnums["LIST_PRE_ORDER"]);
-      return status && status !== "SERVICE_DRAFT";
-    },
-    automaticallyListBackOrder(): boolean {
-      const status = this.getJobStatus(this.jobEnums["LIST_BACK_ORDER"]);
+    preOrderManageCatalog(): boolean {
+      const status = this.getJobStatus(this.jobEnums["PRE_ORDER_CTLG"]);
       return status && status !== "SERVICE_DRAFT";
     },
     addPreOrderTagInShopify(): boolean {
       const status = this.getJobStatus(this.jobEnums["ADD_PRODR_TG_SHPFY"]);
       return status && status !== "SERVICE_DRAFT";
     },
-    removeTagInShopify(): boolean {
-      const status = this.getJobStatus(this.jobEnums["REMV_ODR_TG_SHPFY"]);
+    removePreOrderTagInShopify(): boolean {
+      const status = this.getJobStatus(this.jobEnums["REMV_PRODR_TG_SHPFY"]);
       return status && status !== "SERVICE_DRAFT";
     },
-    addShippingDateInShopify(): boolean {
-      const status = this.getJobStatus(this.jobEnums["ADD_SHPG_DTE_SHPFY"]);
+    addPreOrderShippingDateInShopify(): boolean {
+      const status = this.getJobStatus(this.jobEnums["ADD_PRODR_SHPG_DTE_SHPFY"]);
+      return status && status !== "SERVICE_DRAFT";
+    },
+    removePreOrderShippingDateInShopify(): boolean {
+      const status = this.getJobStatus(this.jobEnums["REMV_PRODR_SHPG_DTE_SHPFY"]);
+      return status && status !== "SERVICE_DRAFT";
+    },
+    backOrderManageCatalog(): boolean {
+      const status = this.getJobStatus(this.jobEnums["BACK_ORDER_CTLG"]);
+      return status && status !== "SERVICE_DRAFT";
+    },
+    addBackOrderTagInShopify(): boolean {
+      const status = this.getJobStatus(this.jobEnums["ADD_BACKODR_TG_SHPFY"]);
+      return status && status !== "SERVICE_DRAFT";
+    },
+    removeBackOrderTagInShopify(): boolean {
+      const status = this.getJobStatus(this.jobEnums["REMV_BACKODR_TG_SHPFY"]);
+      return status && status !== "SERVICE_DRAFT";
+    },
+    addBackOrderShippingDateInShopify(): boolean {
+      const status = this.getJobStatus(this.jobEnums["ADD_BACKODR_SHPG_DTE_SHPFY"]);
+      return status && status !== "SERVICE_DRAFT";
+    },
+    removeBackOrderShippingDateInShopify(): boolean {
+      const status = this.getJobStatus(this.jobEnums["REMV_BACKODR_SHPG_DTE_SHPFY"]);
+      return status && status !== "SERVICE_DRAFT";
+    },
+    autoReleaseRunDaily(): boolean {
+      const status = this.getJobStatus(this.jobEnums["AUTO_RELSE_DAILY"]);
       return status && status !== "SERVICE_DRAFT";
     }
   },
   data() {
     return {
       jobEnums: JSON.parse(process.env?.VUE_APP_PRODR_JOB_ENUMS as string) as any,
+      jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
+      currentJob: '' as any,
+      title: 'Automatically list pre-order',
+      currentJobStatus: '',
+      freqType: '',
+      isJobDetailAnimationCompleted: false
     }
   },
   methods: {
-    async updateJob(checked: boolean, id: string) {
+    async updateJob(checked: boolean, id: string, status = 'EVERY_15_MIN') {
       const job = this.getJob(id);
 
       // TODO: added this condition to not call the api when the value of the select automatically changes
       // need to handle this properly
-      if (checked && job?.status === 'SERVICE_PENDING') {
+      if (!job || (checked && job?.status === 'SERVICE_PENDING') || (!checked && job?.status === 'SERVICE_DRAFT')) {
         return;
       }
 
-      // TODO: check for parentJobId and jobEnum and handle this values properly
-      const payload = {
-        'jobId': job.jobId,
-        'systemJobEnumId': id,
-        'statusId': checked ? "SERVICE_PENDING" : "SERVICE_CANCELLED",
-        'recurrenceTimeZone': DateTime.now().zoneName
-      } as any
+      job['jobStatus'] = status
+
+      // if job runTime is not a valid date then making runTime as empty
+      if (job?.runTime && !isValidDate(job?.runTime)) {
+        job.runTime = ''
+      }
+
       if (!checked) {
-        this.store.dispatch('job/updateJob', payload)
+        this.store.dispatch('job/cancelJob', job)
       } else if (job?.status === 'SERVICE_DRAFT') {
-        payload['JOB_NAME'] = job.jobName
-        payload['SERVICE_NAME'] = job.serviceName
-        payload['SERVICE_TIME'] = job.runTime.toString()
-        payload['SERVICE_COUNT'] = '0'
-        payload['jobFields'] = {
-          'productStoreId': this.currentEComStore.productStoreId,
-          'systemJobEnumId': job.systemJobEnumId,
-          'tempExprId': 'EVERY_15_MIN',
-          'maxRecurrenceCount': '-1',
-          'parentJobId': job.parentJobId,
-          'runAsUser': 'system', // default system, but empty in run now
-          'recurrenceTimeZone': DateTime.now().zoneName
-        }
-        payload['shopifyConfigId'] = this.shopifyConfigId
-
-        // checking if the runtimeData has productStoreId, and if present then adding it on root level
-        job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.currentEComStore.productStoreId)
-
-        this.store.dispatch('job/scheduleService', {...job.runtimeData, ...payload})
+        this.store.dispatch('job/scheduleService', job)
       } else if (job?.status === 'SERVICE_PENDING') {
-        payload['tempExprId'] = 'EVERY_15_MIN'
-        payload['jobId'] = job.id
-
-        this.store.dispatch('job/updateJob', payload)
+        this.store.dispatch('job/updateJob', job)
       }
     },
-    async runJob(header: string) {
+    async runJob(header: string, id: string) {
+      const job = this.getJob(id)
       const jobAlert = await alertController
         .create({
           header,
@@ -223,12 +255,37 @@ export default defineComponent({
               role: 'cancel',
             },
             {
-              text: this.$t('Run now')
+              text: this.$t('Run now'),
+              handler: () => {
+                if (job) {
+                  this.store.dispatch('job/runServiceNow', job)
+                }
+              }
             }
           ]
         });
 
       return jobAlert.present();
+    },
+    viewJobConfiguration(id: string, title: string, status: string) {
+      this.currentJob = this.getJob(this.jobEnums[id])
+      this.title = title
+      this.currentJobStatus = status
+      this.freqType = id && this.jobFrequencyType[id]
+
+      // if job runTime is not a valid date then making runTime as empty
+      if (this.currentJob?.runTime && !isValidDate(this.currentJob?.runTime)) {
+        this.currentJob.runTime = ''
+      }
+      if (this.currentJob && !this.isJobDetailAnimationCompleted) {
+        emitter.emit('playAnimation');
+        this.isJobDetailAnimationCompleted = true;
+      }
+    },
+    getTemporalExpression(enumId: string) {
+      return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
+        this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
+        this.$t('Disabled')
     }
   },
   mounted () {
@@ -241,6 +298,7 @@ export default defineComponent({
   },
   setup() {
     const store = useStore();
+
     return {
       store
     };
