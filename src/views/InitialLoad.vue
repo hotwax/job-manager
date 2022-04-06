@@ -231,7 +231,7 @@ export default defineComponent({
       }
       // if job runTime is not a valid date then assigning current date to the runTime
       if (this.job?.runTime && !isValidDate(this.job?.runTime)) {
-        this.job.runTime = DateTime.local().toMillis()
+        this.job.runTime = ''
       }
 
       if (this.job && !this.isJobDetailAnimationCompleted) {
@@ -267,38 +267,18 @@ export default defineComponent({
         return;
       }
 
-      // TODO: pass user time zone in the payload
-      const payload = {
-        'systemJobEnumId': job.systemJobEnumId,
-        'statusId': "SERVICE_PENDING",
-        'recurrenceTimeZone': DateTime.now().zoneName
-      } as any
+      job['sinceId'] = this.lastShopifyOrderId
+      job['jobStatus'] = job.tempExprId
+
+      // if job runTime is not a valid date then making runTime as empty
+      if (job?.runTime && !isValidDate(job?.runTime)) {
+        job.runTime = ''
+      }
+
       if (job?.status === 'SERVICE_DRAFT') {
-        payload['JOB_NAME'] = job.jobName
-        payload['SERVICE_NAME'] = job.serviceName
-        payload['SERVICE_TIME'] = job.runTime ? job.runTime.toString() : ''
-        payload['SERVICE_COUNT'] = '0'
-        payload['SERVICE_PRIORITY'] = job.priority ? job.priority.toString() : ""
-        payload['jobFields'] = {
-          'productStoreId': this.currentEComStore.productStoreId,
-          'systemJobEnumId': job.systemJobEnumId,
-          'tempExprId': job.tempExprId,
-          'parentJobId': job.parentJobId,
-          'recurrenceTimeZone': DateTime.now().zoneName
-        }
-        payload['shopifyConfigId'] = this.shopifyConfigId
-        this.lastShopifyOrderId && (payload['sinceId'] = this.lastShopifyOrderId)
-
-        // checking if the runtimeData has productStoreId, and if present then adding it on root level
-        job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.currentEComStore.productStoreId)
-        this.store.dispatch('job/scheduleService', {...job.runtimeData, ...payload})
+        this.store.dispatch('job/runServiceNow', job)
       } else if (job?.status === 'SERVICE_PENDING') {
-        payload['tempExprId'] = job.tempExprId
-        payload['jobId'] = job.id
-        payload['runTime'] = job.runTime
-        this.lastShopifyOrderId && (payload['sinceId'] = this.lastShopifyOrderId)
-
-        this.store.dispatch('job/updateJob', payload)
+        this.store.dispatch('job/updateJob', job)
       }
     },
     getDateTime(time: any) {
