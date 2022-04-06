@@ -54,5 +54,5 @@ export const UserService = {
     getEComStores,
     getProfile,
     getShopifyConfig,
-    setUserTimeZone
+    setUserTimeZone,
 }
