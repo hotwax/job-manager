@@ -24,6 +24,7 @@
         <ion-modal trigger="open-run-time-modal">
           <ion-content force-overscroll="false">
             <ion-datetime
+              :min="minDateTime"
               :value="job?.runTime ? getDateTime(job.runTime) : ''"
               @ionChange="updateRunTime($event, job)"
             />
@@ -114,7 +115,8 @@ export default defineComponent({
   },
   data() {
     return {
-      jobStatus: this.status
+      jobStatus: this.status,
+      minDateTime: DateTime.now().toISO()
     }
   },
   props: ["job", "title", "status", "type"],

@@ -53,6 +53,7 @@ import {
 import { defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
 import JobConfiguration from '@/components/JobConfiguration.vue'
+import { isValidDate } from '@/utils';
 import emitter from '@/event-bus';
 
 export default defineComponent({
@@ -82,7 +83,7 @@ export default defineComponent({
     return {
       jobEnums: JSON.parse(process.env?.VUE_APP_PRD_JOB_ENUMS as string) as any,
       jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
-      currentJob: '',
+      currentJob: '' as any,
       title: 'Import products',
       currentJobStatus: '',
       freqType: '',
@@ -104,6 +105,10 @@ export default defineComponent({
       this.currentJobStatus = status
       this.freqType = this.jobFrequencyType[id]
 
+      // if job runTime is not a valid date then making runTime as empty
+      if (this.currentJob?.runTime && !isValidDate(this.currentJob?.runTime)) {
+        this.currentJob.runTime = ''
+      }
       if (this.currentJob && !this.isJobDetailAnimationCompleted) {
         emitter.emit('playAnimation');
         this.isJobDetailAnimationCompleted = true;

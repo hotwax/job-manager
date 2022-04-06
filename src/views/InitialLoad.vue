@@ -263,6 +263,10 @@ export default defineComponent({
     async updateJob(id: string) {
       const job = this.getJob(id);
 
+      if(!job) {
+        return;
+      }
+
       // TODO: pass user time zone in the payload
       const payload = {
         'systemJobEnumId': job.systemJobEnumId,
@@ -272,7 +276,7 @@ export default defineComponent({
       if (job?.status === 'SERVICE_DRAFT') {
         payload['JOB_NAME'] = job.jobName
         payload['SERVICE_NAME'] = job.serviceName
-        payload['SERVICE_TIME'] = job.runTime.toString()
+        payload['SERVICE_TIME'] = job.runTime ? job.runTime.toString() : ''
         payload['SERVICE_COUNT'] = '0'
         payload['SERVICE_PRIORITY'] = job.priority ? job.priority.toString() : ""
         payload['jobFields'] = {
