@@ -265,10 +265,12 @@ const actions: ActionTree<JobState, RootState> = {
       'jobId': job.jobId,
       'systemJobEnumId': job.systemJobEnumId,
       'recurrenceTimeZone': DateTime.now().zoneName,
-      'tempExprId': job.jobStatus
+      'tempExprId': job.jobStatus,
+      'statusId': "SERVICE_PENDING"
     } as any
 
     job?.runTime && (payload['runTime'] = job.runTime)
+    job?.sinceId && (payload['sinceId'] = job.sinceId)
 
     try {
       resp = await JobService.updateJob(payload)
@@ -393,6 +395,7 @@ const actions: ActionTree<JobState, RootState> = {
     job?.runTimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.state.user.currentEComStore.productStoreId)
     job?.priority && (payload['SERVICE_PRIORITY'] = job.priority.toString())
     job?.sinceId && (payload['sinceId'] = job.sinceId)
+    job?.runTime && (payload['SERVICE_TIME'] = job.runTime.toString())
 
     try {
       resp = await JobService.scheduleJob({ ...job.runTimeData, ...payload });
