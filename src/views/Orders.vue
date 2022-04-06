@@ -64,7 +64,7 @@
             </ion-item>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Check daily") }}</ion-label>
-              <ion-toggle :checked="autoCancelCheckDaily" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['AUTO_CNCL_DAL'])" />
+              <ion-toggle :checked="autoCancelCheckDaily" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['AUTO_CNCL_DAL'], 'MIDNIGHT_DAILY')" />
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap"><p>{{ $t("Unfulfilled orders that pass their auto cancelation date will be canceled automatically in HotWax Commerce. They will also be canceled in Shopify if upload for canceled orders is enabled.") }}</p></ion-label>
@@ -215,13 +215,13 @@ export default defineComponent({
     getTime (time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
     },
-    async updateJob(checked: boolean, id: string, status = 'MIDNIGHT_DAILY') {
+    async updateJob(checked: boolean, id: string, status = 'EVERY_15_MIN') {
       const job = this.getJob(id);
       job['jobStatus'] = status
 
       // TODO: added this condition to not call the api when the value of the select automatically changes
       // need to handle this properly
-      if (!job || checked && job?.status === 'SERVICE_PENDING') {
+      if (!job || (checked && job?.status === 'SERVICE_PENDING') || (!checked && job?.status === 'SERVICE_DRAFT')) {
         return;
       }
 
@@ -242,7 +242,7 @@ export default defineComponent({
       this.currentJob = this.getJob(this.jobEnums[id])
       this.title = title
       this.currentJobStatus = status
-      this.freqType = this.jobFrequencyType[id]
+      this.freqType = id && this.jobFrequencyType[id]
 
       // if job runTime is not a valid date then making runTime as empty
       if (this.currentJob?.runTime && !isValidDate(this.currentJob?.runTime)) {

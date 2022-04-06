@@ -46,7 +46,7 @@
             </ion-card-header>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Run daily") }}</ion-label>
-              <ion-checkbox :checked="autoReleaseRunDaily" @ionChange="updateJob($event['detail'].checked, jobEnums['AUTO_RELSE_DAILY'])" />
+              <ion-checkbox :checked="autoReleaseRunDaily" @ionChange="updateJob($event['detail'].checked, jobEnums['AUTO_RELSE_DAILY'], 'MIDNIGHT_DAILY')" />
             </ion-item>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Release preorders")}}</ion-label>
@@ -63,15 +63,15 @@
             </ion-card-header>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Auto add pre-order tag in Shopify") }}</ion-label>
-              <ion-checkbox :checked="addPreOrderTagInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_PRODR_TG_SHPFY'], 'EVERY_15_MIN')" />
+              <ion-checkbox :checked="addPreOrderTagInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_PRODR_TG_SHPFY'])" />
             </ion-item>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Auto remove tags in Shopify") }}</ion-label>
-              <ion-checkbox :checked="removeTagInShopify" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['REMV_ODR_TG_SHPFY'], 'EVERY_15_MIN')"/>
+              <ion-checkbox :checked="removeTagInShopify" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['REMV_ODR_TG_SHPFY'])"/>
             </ion-item>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Add shipping dates in Shopify") }}</ion-label>
-              <ion-checkbox :checked="addShippingDateInShopify" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_SHPG_DTE_SHPFY'], 'EVERY_15_MIN')"/>
+              <ion-checkbox :checked="addShippingDateInShopify" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_SHPG_DTE_SHPFY'])"/>
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap"><p>{{ $t("Transfer pre-order related information to Shopify as tags and meta fields.") }}</p></ion-label>
@@ -167,7 +167,7 @@ export default defineComponent({
     }
   },
   methods: {
-    async updateJob(checked: boolean, id: string, status = 'MIDNIGHT_DAILY') {
+    async updateJob(checked: boolean, id: string, status = 'EVERY_15_MIN') {
       const job = this.getJob(id);
       job['jobStatus'] = status
 
@@ -218,7 +218,7 @@ export default defineComponent({
       this.currentJob = this.getJob(this.jobEnums[id])
       this.title = title
       this.currentJobStatus = status
-      this.freqType = this.jobFrequencyType[id]
+      this.freqType = id && this.jobFrequencyType[id]
 
       // if job runTime is not a valid date then making runTime as empty
       if (this.currentJob?.runTime && !isValidDate(this.currentJob?.runTime)) {

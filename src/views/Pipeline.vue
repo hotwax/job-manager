@@ -355,7 +355,7 @@ export default defineComponent({
       this.title = this.getEnumName(job.systemJobEnumId)
       this.currentJobStatus = job.tempExprId
       const id = Object.entries(this.jobEnums).find((enums) => enums[1] == job.systemJobEnumId) as any
-      this.freqType = (Object.entries(this.jobFrequencyType).find((freq) => freq[0] == id[0]) as any)[1]
+      this.freqType = id && (Object.entries(this.jobFrequencyType).find((freq) => freq[0] == id[0]) as any)[1]
 
       if (this.currentJob && !this.isJobDetailAnimationCompleted) {
         emitter.emit('playAnimation');
