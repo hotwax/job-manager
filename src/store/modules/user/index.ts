@@ -12,7 +12,6 @@ const userModule: Module<UserState, RootState> = {
       current: null,
       instanceUrl: '',
       shopifyConfig: {},
-      statusDesc: {},
       currentEComStore: {
         productStoreId: "",
         storeName: "None"

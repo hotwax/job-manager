@@ -26,11 +26,6 @@ const mutations: MutationTree <UserState> = {
     },
     [types.USER_CURRENT_ECOM_STORE_UPDATED] (state, payload) {
         state.currentEComStore = payload;
-    },
-    [types.USER_SERVICE_STATUS_DESC_UPDATED] (state, payload) {
-        payload.map((status: any) => {
-          state.statusDesc[status.statusId] = status.description;
-        })
     }
 }
 export default mutations;
