@@ -1,0 +1,6 @@
+---
+title: 'Implemented: functionality to add preorder/backorder related jobs and added their mapping in env file'
+ticket_id: "#25deckz"
+merge_request: 88
+author: Yash Maheshwari
+type: other

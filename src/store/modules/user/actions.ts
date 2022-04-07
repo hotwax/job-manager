@@ -76,6 +76,8 @@ const actions: ActionTree<UserState, RootState> = {
         }, ...(stores ? stores : [])]
       })
 
+      this.dispatch('util/getServiceStatusDesc')
+
       commit(types.USER_INFO_UPDATED, resp.data);
     }
   },

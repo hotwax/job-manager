@@ -61,7 +61,6 @@ import {
 import { defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
 import JobDetail from '@/components/JobDetail.vue'
-import { DateTime } from 'luxon';
 import { isValidDate } from '@/utils';
 import emitter from '@/event-bus';
 
@@ -107,63 +106,35 @@ export default defineComponent({
     }
   },
   methods: {
-    async updateJob(checked: boolean, id: string) {
+    async updateJob(checked: boolean, id: string, status="EVERY_15_MIN") {
       const job = this.getJob(id);
 
       // TODO: added this condition to not call the api when the value of the select automatically changes
       // need to handle this properly
-      if (!job || checked && job?.status === 'SERVICE_PENDING') {
+      if (!job || (checked && job?.status === 'SERVICE_PENDING') || (!checked && job?.status === 'SERVICE_DRAFT')) {
         return;
       }
+
+      job['jobStatus'] = status
 
       // if job runTime is not a valid date then making runTime as empty
       if (job?.runTime && !isValidDate(job?.runTime)) {
         job.runTime = ''
       }
 
-      // TODO: check for parentJobId and jobEnum and handle this values properly
-      const payload = {
-        'jobId': job.jobId,
-        'systemJobEnumId': id,
-        'statusId': checked ? "SERVICE_PENDING" : "SERVICE_CANCELLED",
-        'recurrenceTimeZone': DateTime.now().zoneName
-      } as any
       if (!checked) {
-        payload['cancelDateTime'] = DateTime.now().toMillis()
-        this.store.dispatch('job/updateJob', payload)
+        this.store.dispatch('job/cancelJob', job)
       } else if (job?.status === 'SERVICE_DRAFT') {
-        payload['JOB_NAME'] = job.jobName
-        payload['SERVICE_NAME'] = job.serviceName
-        payload['SERVICE_TIME'] = job.runTime ? job.runTime.toString() : ''
-        payload['SERVICE_COUNT'] = '0'
-        payload['SERVICE_PRIORITY'] = job.priority ? job.priority.toString() : ''
-        payload['jobFields'] = {
-          'productStoreId': this.currentEComStore.productStoreId,
-          'systemJobEnumId': job.systemJobEnumId,
-          'tempExprId': 'MIDNIGHT_DAILY',
-          'maxRecurrenceCount': '-1',
-          'parentJobId': job.parentJobId,
-          'runAsUser': 'system', // default system, but empty in run now
-          'recurrenceTimeZone': DateTime.now().zoneName
-        }
-        payload['shopifyConfigId'] = this.shopifyConfigId
-
-        // checking if the runtimeData has productStoreId, and if present then adding it on root level
-        job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.currentEComStore.productStoreId)
-
-        this.store.dispatch('job/scheduleService', {...job.runtimeData, ...payload})
+        this.store.dispatch('job/scheduleService', job)
       } else if (job?.status === 'SERVICE_PENDING') {
-        payload['tempExprId'] = 'DAILY'
-        payload['jobId'] = job.id
-
-        this.store.dispatch('job/updateJob', payload)
+        this.store.dispatch('job/updateJob', job)
       }
     },
     viewJobConfiguration(id: string, title: string, status: string) {
       this.currentJob = this.getJob(this.jobEnums[id])
       this.title = title
       this.currentJobStatus = status
-      this.freqType = this.jobFrequencyType[id]
+      this.freqType = id && this.jobFrequencyType[id]
 
       // if job runTime is not a valid date then making runTime as empty
       if (this.currentJob?.runTime && !isValidDate(this.currentJob?.runTime)) {

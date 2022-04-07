@@ -54,10 +54,10 @@
                 <ion-label class="ion-text-wrap">{{ job.tempExprId ? temporalExpr(job.tempExprId)?.description : "🙃"  }}</ion-label>
               </ion-item>
 
-              <ion-item lines="full">
-                <ion-icon slot="start" :icon="codeWorkingOutline" />
-                <ion-label class="ion-text-wrap">{{ job.serviceName }}</ion-label>
-              </ion-item>
+            <ion-item>
+              <ion-icon slot="start" :icon="codeWorkingOutline" />
+              <ion-label class="ion-text-wrap">{{ job.serviceName }}</ion-label>
+            </ion-item>
 
               <ion-item lines="full">
                 <ion-icon slot="start" :icon="refreshOutline" />
@@ -129,7 +129,10 @@
                 <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
                 <ion-card-title>{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
               </div>
-              <ion-badge v-if="job.runTime" color="dark">{{ timeTillJob(job.runTime)}}</ion-badge>
+              <div>
+                <ion-badge v-if="job.runTime" color="dark">{{ timeTillJob(job.runTime)}}</ion-badge>
+                <ion-badge v-if="job.statusId" :color="job.statusId === 'SERVICE_FINISHED' ? 'success' : 'danger'">{{ job.statusDesc }}</ion-badge>
+              </div>
             </ion-card-header>
 
             <ion-item lines="none">
@@ -342,7 +345,7 @@ export default defineComponent({
       const viewIndex = vIndex ? vIndex : 0;
       await this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex});
     },
-    async cancelJob(jobId: any, systemJobEnumId: string){
+    async cancelJob(job: any){
       const alert = await alertController
         .create({
           header: this.$t('Cancel job'),
@@ -355,8 +358,7 @@ export default defineComponent({
             {
               text: this.$t("CANCEL"),
               handler: async () => {
-                const cancelDateTime = DateTime.now().toMillis()
-                await this.store.dispatch('job/updateJob', {jobId, systemJobEnumId, cancelDateTime, statusId: "SERVICE_CANCELLED"});
+                await this.store.dispatch('job/cancelJob', job);
                 await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewIndex: 0});
               },
             }
@@ -370,7 +372,7 @@ export default defineComponent({
       this.title = this.getEnumName(job.systemJobEnumId)
       this.currentJobStatus = job.tempExprId
       const id = Object.entries(this.jobEnums).find((enums) => enums[1] == job.systemJobEnumId) as any
-      this.freqType = (Object.entries(this.jobFrequencyType).find((freq) => freq[0] == id[0]) as any)[1]
+      this.freqType = id && (Object.entries(this.jobFrequencyType).find((freq) => freq[0] == id[0]) as any)[1]
 
       if (this.currentJob && !this.isJobDetailAnimationCompleted) {
         emitter.emit('playAnimation');
@@ -403,6 +405,13 @@ ion-card-header {
   justify-content: space-between;
   align-items: center;
   padding-bottom: 0px;
+}
+
+ion-card-header :last-child {
+  display: flex;
+  flex-direction: column;
+  align-items: end;
+  row-gap: 4px;
 }
 
 ion-item {

@@ -38,7 +38,7 @@ const actions: ActionTree<JobState, RootState> = {
     return resp;
   },
 
-  async fetchJobHistory({ commit, dispatch, state }, payload){
+  async fetchJobHistory({ commit, dispatch, state }, payload){ 
     await JobService.fetchJobInformation({
       "inputFields": {
         "productStoreId": payload.eComStoreId,
@@ -46,7 +46,7 @@ const actions: ActionTree<JobState, RootState> = {
         "statusId_op": "in",
         "systemJobEnumId_op": "not-empty"
       },
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName" ],
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId" ],
       "entityName": "JobSandbox",
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
@@ -60,7 +60,9 @@ const actions: ActionTree<JobState, RootState> = {
           if(payload.viewIndex && payload.viewIndex > 0){
             jobs = state.history.list.concat(resp.data.docs);
           }
-          
+          jobs.map((job: any) => {
+            job['statusDesc'] = this.state.util.statusDesc[job.statusId];
+          })          
           commit(types.JOB_HISTORY_UPDATED, { jobs, total });
           const tempExprList = [] as any;
           const enumIds = [] as any;
@@ -258,8 +260,20 @@ const actions: ActionTree<JobState, RootState> = {
     }
     return resp;
   },
-  async updateJob ({ dispatch }, payload) {
+  async updateJob ({ dispatch }, job) {
     let resp;
+
+    const payload = {
+      'jobId': job.jobId,
+      'systemJobEnumId': job.systemJobEnumId,
+      'recurrenceTimeZone': DateTime.now().zoneName,
+      'tempExprId': job.jobStatus,
+      'statusId': "SERVICE_PENDING"
+    } as any
+
+    job?.runTime && (payload['runTime'] = job.runTime)
+    job?.sinceId && (payload['sinceId'] = job.sinceId)
+
     try {
       resp = await JobService.updateJob(payload)
       if (resp.status === 200 && !hasError(resp) && resp.data.successMessage) {
@@ -280,10 +294,34 @@ const actions: ActionTree<JobState, RootState> = {
     return resp;
   },
 
-  async scheduleService({ dispatch }, payload) {
+  async scheduleService({ dispatch }, job) {
     let resp;
+
+    const payload = {
+      'JOB_NAME': job.jobName,
+      'SERVICE_NAME': job.serviceName,
+      'SERVICE_COUNT': '0',
+      'jobFields': {
+        'productStoreId': this.state.user.currentEComStore.productStoreId,
+        'systemJobEnumId': job.systemJobEnumId,
+        'tempExprId': job.jobStatus,
+        'maxRecurrenceCount': '-1',
+        'parentJobId': job.parentJobId,
+        'runAsUser': 'system', // default system, but empty in run now
+        'recurrenceTimeZone': DateTime.now().zoneName
+      },
+      'shopifyConfigId': this.state.user.shopifyConfig,
+      'statusId': "SERVICE_PENDING",
+      'systemJobEnumId': job.systemJobEnumId
+    } as any
+
+    // checking if the runTimeData has productStoreId, and if present then adding it on root level
+    job?.runTimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.state.user.currentEComStore.productStoreId)
+    job?.priority && (payload['SERVICE_PRIORITY'] = job.priority.toString())
+    job?.runTime && (payload['SERVICE_TIME'] = job.runTime.toString())
+
     try {
-      resp = await JobService.scheduleJob(payload);
+      resp = await JobService.scheduleJob({ ...job.runTimeData, ...payload });
       if (resp.status == 200 && !hasError(resp)) {
         showToast(translate('Service has been scheduled'))
         dispatch('fetchJobs', {
@@ -326,6 +364,7 @@ const actions: ActionTree<JobState, RootState> = {
       'jobId': job.jobId,
       'runTime': updatedRunTime,
       'systemJobEnumId': job.systemJobEnumId,
+      'recurrenceTimeZone': DateTime.now().zoneName,
       'statusId': "SERVICE_PENDING"
     } as any
 
@@ -359,6 +398,7 @@ const actions: ActionTree<JobState, RootState> = {
     job?.runTimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.state.user.currentEComStore.productStoreId)
     job?.priority && (payload['SERVICE_PRIORITY'] = job.priority.toString())
     job?.sinceId && (payload['sinceId'] = job.sinceId)
+    job?.runTime && (payload['SERVICE_TIME'] = job.runTime.toString())
 
     try {
       resp = await JobService.scheduleJob({ ...job.runTimeData, ...payload });
@@ -383,6 +423,29 @@ const actions: ActionTree<JobState, RootState> = {
       console.error(err)
     }
     return resp;
-  }
+  },
+
+  async cancelJob({ dispatch }, job) {
+    let resp;
+
+    try {
+      resp = await JobService.updateJob({
+        jobId: job.jobId,
+        systemJobEnumId: job.systemJobEnumId,
+        statusId: "SERVICE_CANCELLED",
+        recurrenceTimeZone: DateTime.now().zoneName,
+        cancelDateTime: DateTime.now().toMillis()
+      });
+      if (resp.status == 200 && !hasError(resp)) {
+        showToast(translate('Service updated successfully'))
+      } else {
+        showToast(translate('Something went wrong'))
+      }
+    } catch (err) {
+      showToast(translate('Something went wrong'))
+      console.error(err)
+    }
+    return resp;
+  },
 }
 export default actions;
