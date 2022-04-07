@@ -25,7 +25,7 @@
       <main>
         <section v-if="segmentSelected === 'pending'">
           <!-- Empty state -->
-          <div v-if="pendingJobs.length === 0">
+          <div v-if="pendingJobs?.length === 0">
             <p class="ion-text-center">{{ $t("There are no jobs pending right now")}}</p>
           </div>
 
@@ -78,7 +78,7 @@
 
         <section v-if="segmentSelected === 'running'">
           <!-- Empty state -->
-          <div v-if="runningJobs.length === 0">
+          <div v-if="runningJobs?.length === 0">
             <p class="ion-text-center">{{ $t("There are no jobs running right now")}}</p>
           </div>
 
