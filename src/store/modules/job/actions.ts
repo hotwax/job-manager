@@ -270,6 +270,7 @@ const actions: ActionTree<JobState, RootState> = {
 
     job?.runTime && (payload['runTime'] = job.runTime)
     job?.sinceId && (payload['sinceId'] = job.sinceId)
+    job?.jobName && (payload['jobName'] = job.jobName)
 
     try {
       resp = await JobService.updateJob(payload)

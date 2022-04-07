@@ -119,8 +119,8 @@ const jsonToCsv = (file: any, options: JsonToCsvOption = {}) => {
 }
 
 // returns false if the time passed is of past, otherwise true
-const isValidDate = (time: any) => {
+const isFutureDate = (time: any) => {
   return DateTime.fromMillis(time).diff(DateTime.local()).milliseconds > 0;
 }
 
-export { showToast, hasError , parseCsv , jsonToCsv, JsonToCsvOption, isValidDate }
+export { showToast, hasError , parseCsv , jsonToCsv, JsonToCsvOption, isFutureDate }

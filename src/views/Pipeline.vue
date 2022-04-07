@@ -30,7 +30,7 @@
           </div>
 
           <div v-else>
-            <ion-card v-for="job in pendingJobs" :key="job.jobId" @click="viewJobConfiguration(job)" button>
+            <ion-card v-for="job in pendingJobs" :key="job.jobId" @click="viewJobConfiguration(job)" :button="isDesktop">
               <ion-card-header>
                 <div> 
                   <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
@@ -205,7 +205,8 @@ import {
   IonInfiniteScrollContent,
   alertController,
   IonSegment,
-  IonSegmentButton
+  IonSegmentButton,
+  isPlatform
 } from "@ionic/vue";
 import JobConfiguration from '@/components/JobConfiguration.vue'
 import { codeWorkingOutline, refreshOutline, timeOutline, timerOutline } from "ionicons/icons";
@@ -251,7 +252,8 @@ export default defineComponent({
       title: '',
       currentJobStatus: '',
       freqType: '' as any,
-      isJobDetailAnimationCompleted: false
+      isJobDetailAnimationCompleted: false,
+      isDesktop: isPlatform('desktop')
     }
   },
   computed: {
@@ -374,6 +376,10 @@ export default defineComponent({
        return alert.present();
     },
     viewJobConfiguration(job: any) {
+      if(!this.isDesktop) {
+        return;
+      }
+
       this.currentJob = {id: job.jobId, ...job}
       this.title = this.getEnumName(job.systemJobEnumId)
       this.currentJobStatus = job.tempExprId
