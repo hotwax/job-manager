@@ -30,7 +30,7 @@
           </div>
 
           <div v-else>
-            <ion-card v-for="job in pendingJobs" :key="job.jobId" @click="viewJobConfiguration(job)" :button="isDesktop()">
+            <ion-card v-for="job in pendingJobs" :key="job.jobId" @click="viewJobConfiguration(job)" :button="isDesktop">
               <ion-card-header>
                 <div> 
                   <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
@@ -252,7 +252,8 @@ export default defineComponent({
       title: '',
       currentJobStatus: '',
       freqType: '' as any,
-      isJobDetailAnimationCompleted: false
+      isJobDetailAnimationCompleted: false,
+      isDesktop: isPlatform('desktop')
     }
   },
   computed: {
@@ -270,9 +271,6 @@ export default defineComponent({
     })
   },
   methods: {
-    isDesktop() {
-      return isPlatform('desktop')
-    },
     getTime (time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.TIME_SIMPLE);
     },
@@ -378,7 +376,7 @@ export default defineComponent({
        return alert.present();
     },
     viewJobConfiguration(job: any) {
-      if(!this.isDesktop()) {
+      if(!this.isDesktop) {
         return;
       }
 
