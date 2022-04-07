@@ -49,7 +49,7 @@ import { defineComponent } from 'vue';
 import { closeOutline, checkmarkDoneOutline } from 'ionicons/icons';
 import { mapGetters, useStore } from 'vuex';
 import { DateTime } from 'luxon';
-import { isValidDate } from '@/utils';
+import { isFutureDate } from '@/utils';
 export default defineComponent({
   name: 'BatchModal',
   components: {
@@ -106,7 +106,7 @@ export default defineComponent({
       job['jobName'] = this.jobName
 
       // if job runTime is not a valid date then making runTime as empty
-      if (job?.runTime && !isValidDate(job?.runTime)) {
+      if (job?.runTime && !isFutureDate(job?.runTime)) {
         job.runTime = ''
       }
       if (job?.status === 'SERVICE_DRAFT') {

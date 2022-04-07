@@ -144,7 +144,7 @@ import { useStore } from "@/store";
 import { mapGetters } from "vuex";
 import JobConfiguration from '@/components/JobConfiguration.vue';
 import { DateTime } from 'luxon';
-import { isValidDate } from '@/utils';
+import { isFutureDate } from '@/utils';
 import emitter from '@/event-bus';
 
 export default defineComponent({
@@ -227,7 +227,7 @@ export default defineComponent({
       job['jobStatus'] = status;
 
       // if job runTime is not a valid date then making runTime as empty
-      if (job?.runTime && !isValidDate(job?.runTime)) {
+      if (job?.runTime && !isFutureDate(job?.runTime)) {
         job.runTime = ''
       }
 
@@ -246,7 +246,7 @@ export default defineComponent({
       this.freqType = id && this.jobFrequencyType[id]
 
       // if job runTime is not a valid date then making runTime as empty
-      if (this.currentJob?.runTime && !isValidDate(this.currentJob?.runTime)) {
+      if (this.currentJob?.runTime && !isFutureDate(this.currentJob?.runTime)) {
         this.currentJob.runTime = ''
       }
       if (this.currentJob && !this.isJobDetailAnimationCompleted) {

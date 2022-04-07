@@ -170,7 +170,7 @@ import {
 import { translate } from '@/i18n';
 import { DateTime } from 'luxon';
 import { mapGetters, useStore } from 'vuex';
-import { isValidDate } from '@/utils';
+import { isFutureDate } from '@/utils';
 import emitter from '@/event-bus';
 
 export default defineComponent({
@@ -230,7 +230,7 @@ export default defineComponent({
         this.lastShopifyOrderId = this.job.runtimeData.sinceId !== 'null' ? this.job.runtimeData.sinceId : ''
       }
       // if job runTime is not a valid date then assigning current date to the runTime
-      if (this.job?.runTime && !isValidDate(this.job?.runTime)) {
+      if (this.job?.runTime && !isFutureDate(this.job?.runTime)) {
         this.job.runTime = ''
       }
 
@@ -271,7 +271,7 @@ export default defineComponent({
       job['jobStatus'] = job.tempExprId
 
       // if job runTime is not a valid date then making runTime as empty
-      if (job?.runTime && !isValidDate(job?.runTime)) {
+      if (job?.runTime && !isFutureDate(job?.runTime)) {
         job.runTime = ''
       }
 
