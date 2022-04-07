@@ -36,7 +36,7 @@
         </section>
 
         <aside class="desktop-only" v-show="currentJob">
-          <JobDetail :title="title" :job="currentJob" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
+          <JobConfiguration :title="title" :job="currentJob" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
         </aside>
       </main>
     </ion-content>
@@ -60,7 +60,7 @@ import {
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
-import JobDetail from '@/components/JobDetail.vue'
+import JobConfiguration from '@/components/JobConfiguration.vue'
 import { isValidDate } from '@/utils';
 import emitter from '@/event-bus';
 
@@ -79,7 +79,7 @@ export default defineComponent({
     IonTitle,
     IonToggle,
     IonToolbar,
-    JobDetail
+    JobConfiguration
   },
   data() {
     return {

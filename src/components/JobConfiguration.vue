@@ -53,7 +53,7 @@
       </ion-item> -->
     </ion-list>
 
-    <div class="actions">
+    <div class="actions desktop-only">
       <div>
         <ion-button size="small" fill="outline" color="medium" :disabled="status === 'SERVICE_DRAFT'" @click="skipJob(job)">{{ $t("Skip once") }}</ion-button>
         <ion-button size="small" fill="outline" color="danger" :disabled="status === 'SERVICE_DRAFT'" @click="cancelJob(job)">{{ $t("Disable") }}</ion-button>
@@ -61,6 +61,12 @@
       <div>
         <ion-button size="small" fill="outline" @click="saveChanges()">{{ $t("Save changes") }}</ion-button>
       </div>
+    </div>
+
+    <div class=" actions mobile-only">
+      <ion-button size="small" fill="outline" color="medium" :disabled="status === 'SERVICE_DRAFT'" @click="skipJob(job)">{{ $t("Skip once") }}</ion-button>
+      <ion-button size="small" fill="outline" color="danger" :disabled="status === 'SERVICE_DRAFT'" @click="cancelJob(job)">{{ $t("Disable") }}</ion-button>
+      <ion-button expand="block" fill="outline" @click="saveChanges()">{{ $t("Save changes") }}</ion-button>
     </div>
   </section>
 </template>
@@ -93,7 +99,7 @@ import { translate } from "@/i18n";
 import { DateTime } from 'luxon';
 
 export default defineComponent({
-  name: "JobDetail",
+  name: "JobConfiguration",
   components: {
     IonBadge,
     IonButton,
@@ -260,18 +266,29 @@ export default defineComponent({
 </script>
 
 <style scoped>
-section {
-  overflow: hidden;
-  border: 1px solid var(--ion-color-medium);
-  border-radius: 16px;
-}
 ion-list {
-  margin-top: var(--spacer-xs);
+  margin: var(--spacer-base) 0;
 }
-.actions {
-  display: flex;
-  justify-content: space-between;
-  margin: var(--spacer-base) var(--spacer-sm) var(--spacer-base);
+
+.actions > ion-button {
+  margin: var(--spacer-sm);
+}
+
+@media (min-width: 991px) {  
+  section {
+    overflow: hidden;
+    border: var(--border-medium);
+    border-radius: 16px;
+  }
+  .actions {
+    display: flex;
+    justify-content: space-between;
+    margin: var(--spacer-base) var(--spacer-sm) var(--spacer-base);
+  }
+
+  .mobile-only {
+    display: none;
+  }  
 }
 
 ion-modal {

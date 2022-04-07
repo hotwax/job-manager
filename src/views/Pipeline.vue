@@ -65,7 +65,7 @@
               </ion-item>
 
               <ion-button fill="clear" @click.stop="skipJob(job)">{{ $t("Skip") }}</ion-button>
-              <ion-button color="danger" fill="clear" @click.stop="cancelJob(job.jobId, job.systemJobEnumId)">{{ $t("Cancel") }}</ion-button>
+              <ion-button color="danger" fill="clear" @click.stop="cancelJob(job)">{{ $t("Cancel") }}</ion-button>
             </ion-card>
             <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
               <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
@@ -167,7 +167,7 @@
         </section>
 
         <aside class="desktop-only" v-show="segmentSelected === 'pending' && currentJob">
-          <JobDetail :title="title" :job="currentJob" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
+          <JobConfiguration :title="title" :job="currentJob" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
         </aside>
       </main>
     </ion-content>
@@ -201,8 +201,8 @@ import {
   IonSegment,
   IonSegmentButton
 } from "@ionic/vue";
+import JobConfiguration from '@/components/JobConfiguration.vue'
 import { codeWorkingOutline, refreshOutline, timeOutline, timerOutline } from "ionicons/icons";
-import JobDetail from '@/components/JobDetail.vue'
 import emitter from '@/event-bus';
 
 export default defineComponent({
@@ -229,7 +229,7 @@ export default defineComponent({
     IonInfiniteScrollContent,
     IonSegment,
     IonSegmentButton,
-    JobDetail
+    JobConfiguration
   },
   data() {
     return {

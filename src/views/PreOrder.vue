@@ -104,7 +104,7 @@
         </section>
 
         <aside class="desktop-only" v-show="currentJob">
-          <JobDetail :title="title" :job="currentJob" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
+          <JobConfiguration :title="title" :job="currentJob" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
         </aside>
       </main>
     </ion-content>
@@ -132,7 +132,7 @@ import { useStore } from "@/store";
 import { mapGetters } from "vuex";
 import { DateTime } from 'luxon';
 import { alertController } from '@ionic/vue';
-import JobDetail from '@/components/JobDetail.vue'
+import JobConfiguration from '@/components/JobConfiguration.vue'
 import { isValidDate } from '@/utils';
 import emitter from '@/event-bus';
 
@@ -152,7 +152,7 @@ export default defineComponent({
     IonPage,
     IonTitle,
     IonToolbar,
-    JobDetail
+    JobConfiguration
   },
   computed: {
     ...mapGetters({
