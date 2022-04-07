@@ -17,7 +17,7 @@
         </ion-select>
       </ion-item>
       <!-- OMS information -->
-      <ion-item>
+      <ion-item v-if="!baseURL">
         <ion-icon :icon="codeWorkingOutline" slot="start"/>
         <ion-label>{{ $t("OMS") }}</ion-label>
         <p slot="end">{{ instanceUrl }}</p>
@@ -61,6 +61,11 @@ export default defineComponent({
     IonSelectOption,
     IonTitle, 
     IonToolbar
+  },
+  data() {
+    return {
+      baseURL: process.env.VUE_APP_BASE_URL
+    };
   },
   computed: {
     ...mapGetters({
