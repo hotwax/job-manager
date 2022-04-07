@@ -64,9 +64,9 @@
     </div>
 
     <div class=" actions mobile-only">
-      <ion-button expand="block" fill="outline" color="medium" @click="skipJob">{{ $t("Skip once") }}</ion-button>
-      <ion-button expand="block" fill="outline" color="danger" @click="cancelJob">{{ $t("Disable") }}</ion-button>
-      <ion-button expand="block" fill="outline" @click="saveChanges">{{ $t("Save changes") }}</ion-button>
+      <ion-button size="small" fill="outline" color="medium" :disabled="status === 'SERVICE_DRAFT'" @click="skipJob(job)">{{ $t("Skip once") }}</ion-button>
+      <ion-button size="small" fill="outline" color="danger" :disabled="status === 'SERVICE_DRAFT'" @click="cancelJob(job)">{{ $t("Disable") }}</ion-button>
+      <ion-button expand="block" fill="outline" @click="saveChanges()">{{ $t("Save changes") }}</ion-button>
     </div>
   </section>
 </template>
