@@ -79,50 +79,60 @@ export default defineComponent({
   setup() {
     const store = useStore();
     const selectedIndex = ref(0);
-    const appPages = [
+    let appPages = [
       {
         title: "Pipeline",
         url: "/pipeline",
         iosIcon: pulseOutline,
         mdIcon: pulseOutline,
+        dependsOnBaseURL: true
       },
       {
         title: "Initial load",
         url: "/initial-load",
         iosIcon: iceCreamOutline,
         mdIcon: iceCreamOutline,
+        dependsOnBaseURL: false
       },
       {
         title: "Pre-order",
         url: "/pre-order",
         iosIcon: calendarNumberOutline,
         mdIcon: calendarNumberOutline,
+        dependsOnBaseURL: false
       },
       {
         title: "Orders",
         url: "/orders",
         iosIcon: ticketOutline,
         mdIcon: ticketOutline,
+        dependsOnBaseURL: false
       },
       {
         title: "Inventory",
         url: "/inventory",
         iosIcon: albumsOutline,
         mdIcon: albumsOutline,
+        dependsOnBaseURL: false
       },
       {
         title: "Products",
         url: "/product",
         iosIcon: shirtOutline,
         mdIcon: shirtOutline,
+        dependsOnBaseURL: false
       },
       {
         title: "Settings",
         url: "/settings",
         iosIcon: settings,
         mdIcon: settings,
+        dependsOnBaseURL: true
       },
     ];
+    if (process.env.VUE_APP_BASE_URL) {
+      appPages = appPages.filter((page) => page.dependsOnBaseURL);
+    }
     return {
       selectedIndex,
       appPages,
