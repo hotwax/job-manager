@@ -125,50 +125,50 @@
         <section v-if="segmentSelected === 'history'">
           <!-- Empty state -->
           <div v-if="jobHistory?.length === 0">
-            <p class="ion-text-center">{{ $t("There is no job history right now")}}</p>
+            <p class="ion-text-center">{{ $t("No jobs have run yet")}}</p>
           </div>
 
           <div v-else>
-            <ion-card v-for="job in jobHistory" :key="job.jobId">
-              <ion-card-header>
-                <div>
-                  <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
-                  <ion-card-title>{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
-                </div>
-                <div>
-                  <ion-badge v-if="job.runTime" color="dark">{{ timeTillJob(job.runTime)}}</ion-badge>
-                  <ion-badge v-if="job.statusId" :color="job.statusId === 'SERVICE_FINISHED' ? 'success' : 'danger'">{{ job.statusDesc }}</ion-badge>
-                </div>
-              </ion-card-header>
+          <ion-card v-for="job in jobHistory" :key="job.jobId">
+            <ion-card-header>
+              <div>
+                <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
+                <ion-card-title>{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
+              </div>
+              <div>
+                <ion-badge v-if="job.runTime" color="dark">{{ timeTillJob(job.runTime)}}</ion-badge>
+                <ion-badge v-if="job.statusId" :color="job.statusId === 'SERVICE_FINISHED' ? 'success' : 'danger'">{{ job.statusDesc }}</ion-badge>
+              </div>
+            </ion-card-header>
 
-              <ion-item lines="none">
-                <ion-label class="ion-text-wrap">
-                  <p>{{ getEnumDescription(job.systemJobEnumId) }}</p>
-                </ion-label>
-              </ion-item>
-              <ion-item>
-                <ion-icon slot="start" :icon="timeOutline" />
-                <ion-label class="ion-text-wrap">{{ job.runTime ? getTime(job.runTime) : "-"  }}</ion-label>
-              </ion-item>
+            <ion-item lines="none">
+              <ion-label class="ion-text-wrap">
+                <p>{{ getEnumDescription(job.systemJobEnumId) }}</p>
+              </ion-label>
+            </ion-item>
+            <ion-item>
+              <ion-icon slot="start" :icon="timeOutline" />
+              <ion-label class="ion-text-wrap">{{ job.runTime ? getTime(job.runTime) : "-"  }}</ion-label>
+            </ion-item>
 
-              <ion-item>
-                <ion-icon slot="start" :icon="timerOutline" />
-                <ion-label class="ion-text-wrap">{{ job.tempExprId ? temporalExpr(job.tempExprId)?.description : "🙃"  }}</ion-label>
-              </ion-item>
+            <ion-item>
+              <ion-icon slot="start" :icon="timerOutline" />
+              <ion-label class="ion-text-wrap">{{ job.tempExprId ? temporalExpr(job.tempExprId)?.description : "🙃"  }}</ion-label>
+            </ion-item>
 
-              <ion-item lines="full">
-                <ion-icon slot="start" :icon="codeWorkingOutline" />
-                <ion-label class="ion-text-wrap">{{ job.serviceName }}</ion-label>
-              </ion-item>
+            <ion-item lines="full">
+              <ion-icon slot="start" :icon="codeWorkingOutline" />
+              <ion-label class="ion-text-wrap">{{ job.serviceName }}</ion-label>
+            </ion-item>
 
-            </ion-card>
+          </ion-card>
 
-            <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
-              <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
-            </ion-refresher>
-            <ion-infinite-scroll @ionInfinite="loadMoreJobHistory($event)" threshold="100px" :disabled="!isHistoryJobsScrollable">
-              <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="$t('Loading')"/>
-            </ion-infinite-scroll>
+          <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
+            <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
+          </ion-refresher>
+          <ion-infinite-scroll @ionInfinite="loadMoreJobHistory($event)" threshold="100px" :disabled="!isHistoryJobsScrollable">
+            <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="$t('Loading')"/>
+          </ion-infinite-scroll>
           </div>          
         </section>
 
