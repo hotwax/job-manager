@@ -81,10 +81,10 @@ import {
   IonIcon,
   IonItem,
   IonLabel,
+  IonList,
   IonModal,
   IonSelect,
   IonSelectOption,
-  IonList,
   alertController
 } from "@ionic/vue";
 import {
