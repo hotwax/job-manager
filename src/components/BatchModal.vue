@@ -116,7 +116,7 @@ export default defineComponent({
         payload['jobFields'] = {
           'productStoreId': this.currentEComStore.productStoreId,
           'systemJobEnumId': job.systemJobEnumId,
-          'tempExprId': 'MIDNIGHT_DAILY',
+          'tempExprId': 'EVERYDAY',
           'maxRecurrenceCount': '-1',
           'parentJobId': job.parentJobId,
           'runAsUser': 'system', // default system, but empty in run now
@@ -130,7 +130,7 @@ export default defineComponent({
         await this.store.dispatch('job/scheduleService', {...job.runTimeData, ...payload})
         this.closeModal()
       } else if (job?.status === 'SERVICE_PENDING') {
-        payload['tempExprId'] = 'MIDNIGHT_DAILY'
+        payload['tempExprId'] = 'EVERYDAY'
         payload['jobId'] = job.id
         payload['runTime'] = job.runTime
         payload['jobName'] = this.jobName

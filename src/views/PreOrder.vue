@@ -78,7 +78,7 @@
             </ion-card-header>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Run daily") }}</ion-label>
-              <ion-checkbox :checked="autoReleaseRunDaily" @ionChange="updateJob($event['detail'].checked, jobEnums['AUTO_RELSE_DAILY'], 'MIDNIGHT_DAILY')" />
+              <ion-checkbox :checked="autoReleaseRunDaily" @ionChange="updateJob($event['detail'].checked, jobEnums['AUTO_RELSE_DAILY'], 'EVERYDAY')" />
             </ion-item>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Release preorders")}}</ion-label>

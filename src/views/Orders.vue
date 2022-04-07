@@ -64,7 +64,7 @@
             </ion-item>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Check daily") }}</ion-label>
-              <ion-toggle :checked="autoCancelCheckDaily" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['AUTO_CNCL_DAL'], 'MIDNIGHT_DAILY')" />
+              <ion-toggle :checked="autoCancelCheckDaily" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['AUTO_CNCL_DAL'], 'EVERYDAY')" />
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap"><p>{{ $t("Unfulfilled orders that pass their auto cancelation date will be canceled automatically in HotWax Commerce. They will also be canceled in Shopify if upload for canceled orders is enabled.") }}</p></ion-label>

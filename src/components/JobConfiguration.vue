@@ -135,11 +135,17 @@ export default defineComponent({
           "value": "EVERY_15_MIN",
           "label": "Every 15 minutes"
         },{
+          "value": "EVERY_30_MIN",
+          "label": "Every 30 minutes"
+        },{
           "value": "HOURLY",
           "label": "Hourly"
         },{
-          "value": "DAILY",
-          "label": "Daily"
+          "value": "EVERY_6_HOUR",
+          "label": "Every 6 hours"
+        },{
+          "value": "EVERYDAY",
+          "label": "Every day"
         }
       ]
 
@@ -150,8 +156,8 @@ export default defineComponent({
           "value": "EVERY_6_HOUR",
           "label": "Every 6 hours"
         },{
-          "value": "DAILY",
-          "label": "Daily"
+          "value": "EVERYDAY",
+          "label": "Every day"
         }
       ]
       return (this as any).type === 'slow' ? slow : optionDefault;
