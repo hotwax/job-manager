@@ -17,10 +17,10 @@
         </ion-select>
       </ion-item>
       <!-- OMS information -->
-      <ion-item v-if="!baseURL">
+      <ion-item>
         <ion-icon :icon="codeWorkingOutline" slot="start"/>
         <ion-label>{{ $t("OMS") }}</ion-label>
-        <p slot="end">{{ instanceUrl }}</p>
+        <p slot="end">{{ baseURL ? baseURL : instanceUrl }}</p>
       </ion-item>
          
       <ion-item>
