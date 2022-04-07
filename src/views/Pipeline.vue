@@ -205,7 +205,8 @@ import {
   IonInfiniteScrollContent,
   alertController,
   IonSegment,
-  IonSegmentButton
+  IonSegmentButton,
+  isPlatform
 } from "@ionic/vue";
 import JobConfiguration from '@/components/JobConfiguration.vue'
 import { codeWorkingOutline, refreshOutline, timeOutline, timerOutline } from "ionicons/icons";
@@ -374,6 +375,10 @@ export default defineComponent({
        return alert.present();
     },
     viewJobConfiguration(job: any) {
+      if(!isPlatform('desktop')) {
+        return;
+      }
+
       this.currentJob = {id: job.jobId, ...job}
       this.title = this.getEnumName(job.systemJobEnumId)
       this.currentJobStatus = job.tempExprId
