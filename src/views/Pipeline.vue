@@ -123,6 +123,12 @@
         </section>
 
         <section v-if="segmentSelected === 'history'">
+          <!-- Empty state -->
+          <div v-if="jobHistory?.length === 0">
+            <p class="ion-text-center">{{ $t("No jobs have run yet")}}</p>
+          </div>
+
+          <div v-else>
           <ion-card v-for="job in jobHistory" :key="job.jobId">
             <ion-card-header>
               <div>
@@ -163,7 +169,7 @@
           <ion-infinite-scroll @ionInfinite="loadMoreJobHistory($event)" threshold="100px" :disabled="!isHistoryJobsScrollable">
             <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="$t('Loading')"/>
           </ion-infinite-scroll>
-          
+          </div>          
         </section>
 
         <aside class="desktop-only" v-show="segmentSelected === 'pending' && currentJob">
