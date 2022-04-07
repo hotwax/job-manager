@@ -76,7 +76,6 @@ const actions: ActionTree<JobState, RootState> = {
         }
       } else {
         commit(types.JOB_HISTORY_UPDATED, { jobs: [], total: 0 });
-        showToast(translate("Something went wrong"));
       }
     }).catch((err) => {
       commit(types.JOB_HISTORY_UPDATED, { jobs: [], total: 0 });
@@ -120,7 +119,6 @@ const actions: ActionTree<JobState, RootState> = {
         }
       } else {
         commit(types.JOB_RUNNING_UPDATED, { jobs: [], total: 0 });
-        showToast(translate("Something went wrong"));
       }
     }).catch((err) => {
       commit(types.JOB_RUNNING_UPDATED, { jobs: [], total: 0 });
@@ -164,7 +162,6 @@ const actions: ActionTree<JobState, RootState> = {
         }
       } else {
         commit(types.JOB_PENDING_UPDATED, { jobs: [], total: 0 });
-        showToast(translate("Something went wrong"));
       }
     }).catch((err) => {
       commit(types.JOB_PENDING_UPDATED, { jobs: [], total: 0 });
