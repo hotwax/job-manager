@@ -49,6 +49,7 @@ import { defineComponent } from 'vue';
 import { closeOutline, checkmarkDoneOutline } from 'ionicons/icons';
 import { mapGetters, useStore } from 'vuex';
 import { DateTime } from 'luxon';
+import { isValidDate } from '@/utils';
 export default defineComponent({
   name: 'BatchModal',
   components: {
@@ -101,41 +102,18 @@ export default defineComponent({
         return;
       }
 
-      // TODO: check for parentJobId and jobEnum and handle this values properly
-      const payload = {
-        'systemJobEnumId': job.systemJobEnumId,
-        'statusId': "SERVICE_PENDING",
-        'recurrenceTimeZone': DateTime.now().zoneName
-      } as any
+      job['jobStatus'] = 'EVERYDAY';
+      job['jobName'] = this.jobName
+
+      // if job runTime is not a valid date then making runTime as empty
+      if (job?.runTime && !isValidDate(job?.runTime)) {
+        job.runTime = ''
+      }
       if (job?.status === 'SERVICE_DRAFT') {
-        payload['JOB_NAME'] = this.jobName
-        payload['SERVICE_NAME'] = job.serviceName
-        payload['SERVICE_TIME'] = job.runTime ? job.runTime.toString() : ''
-        payload['SERVICE_PRIORITY'] = job.priority ? job.priority.toString() : ''
-        payload['SERVICE_COUNT'] = '0'
-        payload['jobFields'] = {
-          'productStoreId': this.currentEComStore.productStoreId,
-          'systemJobEnumId': job.systemJobEnumId,
-          'tempExprId': 'EVERYDAY',
-          'maxRecurrenceCount': '-1',
-          'parentJobId': job.parentJobId,
-          'runAsUser': 'system', // default system, but empty in run now
-          'recurrenceTimeZone': DateTime.now().zoneName
-        }
-        payload['shopifyConfigId'] = this.shopifyConfigId
-
-        // checking if the runTimeData has productStoreId, and if present then adding it on root level
-        job?.runTimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.currentEComStore.productStoreId)
-
-        await this.store.dispatch('job/scheduleService', {...job.runTimeData, ...payload})
+        await this.store.dispatch('job/scheduleService', job)
         this.closeModal()
       } else if (job?.status === 'SERVICE_PENDING') {
-        payload['tempExprId'] = 'EVERYDAY'
-        payload['jobId'] = job.id
-        payload['runTime'] = job.runTime
-        payload['jobName'] = this.jobName
-
-        await this.store.dispatch('job/updateJob', payload)
+        await this.store.dispatch('job/updateJob', job)
         this.closeModal()
       }
     },
