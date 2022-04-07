@@ -103,7 +103,7 @@ export default defineComponent({
       this.currentJob = this.getJob(this.jobEnums[id])
       this.title = title
       this.currentJobStatus = status
-      this.freqType = this.jobFrequencyType[id]
+      this.freqType = id && this.jobFrequencyType[id]
 
       // if job runTime is not a valid date then making runTime as empty
       if (this.currentJob?.runTime && !isValidDate(this.currentJob?.runTime)) {
