@@ -138,6 +138,8 @@
   "store name": "store name",
   "Sync": "Sync",
   "Sync products": "Sync products",
+  "There are no jobs pending right now": "There are no jobs pending right now",
+  "There are no jobs running right now": "There are no jobs running right now",
   "Sync products and category structures from Shopify into HotWax Commerce and keep them up to date.": "Sync products and category structures from Shopify into HotWax Commerce and keep them up to date.",
   "This job may take several minutes to run. Wait till the job has moved to the pipeline history before checking results.": "This job may take several minutes to run.{ space } Wait till the job has moved to the pipeline history before checking results.",
   "This job schedule cannot be skipped": "This job schedule cannot be skipped",
