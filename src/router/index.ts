@@ -5,6 +5,7 @@ import Product from '@/views/Product.vue'
 import Pipeline from '@/views/Pipeline.vue'
 import PreOrder from '@/views/PreOrder.vue'
 import Orders from '@/views/Orders.vue'
+import JobDetails from '@/views/JobDetails.vue'
 import InitialLoad from '@/views/InitialLoad.vue'
 import Login from '@/views/Login.vue'
 import Settings from "@/views/Settings.vue"
@@ -62,6 +63,11 @@ const routes: Array<RouteRecordRaw> = [
     beforeEnter: authGuard
   },
   {
+    path: '/job-details',
+    name: 'JobDetails',
+    component: JobDetails,
+  },
+  {  
     path: '/initial-load',
     name: 'InitialLoad',
     component: InitialLoad,

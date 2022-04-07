@@ -326,7 +326,7 @@ ion-card > ion-button {
 
 aside > section {
   overflow: hidden;
-  border: 1px solid var(--ion-color-medium);
+  border: var(--border-medium);
   border-radius: 16px;
 }
 
