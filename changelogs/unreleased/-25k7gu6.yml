@@ -1,0 +1,6 @@
+---
+title: Improved code to wrap text of badge in minimum width of pipeline page
+ticket_id: "#25k7gu6"
+merge_request: 99
+author: Azkya Khan
+type: fixed
