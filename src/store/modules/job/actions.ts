@@ -313,13 +313,13 @@ const actions: ActionTree<JobState, RootState> = {
       'systemJobEnumId': job.systemJobEnumId
     } as any
 
-    // checking if the runTimeData has productStoreId, and if present then adding it on root level
-    job?.runTimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.state.user.currentEComStore.productStoreId)
+    // checking if the runtimeData has productStoreId, and if present then adding it on root level
+    job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.state.user.currentEComStore.productStoreId)
     job?.priority && (payload['SERVICE_PRIORITY'] = job.priority.toString())
     job?.runTime && (payload['SERVICE_TIME'] = job.runTime.toString())
 
     try {
-      resp = await JobService.scheduleJob({ ...job.runTimeData, ...payload });
+      resp = await JobService.scheduleJob({ ...job.runtimeData, ...payload });
       if (resp.status == 200 && !hasError(resp)) {
         showToast(translate('Service has been scheduled'))
         dispatch('fetchJobs', {
@@ -395,14 +395,14 @@ const actions: ActionTree<JobState, RootState> = {
       'systemJobEnumId': job.systemJobEnumId
     } as any
 
-    // checking if the runTimeData has productStoreId, and if present then adding it on root level
-    job?.runTimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.state.user.currentEComStore.productStoreId)
+    // checking if the runtimeData has productStoreId, and if present then adding it on root level
+    job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.state.user.currentEComStore.productStoreId)
     job?.priority && (payload['SERVICE_PRIORITY'] = job.priority.toString())
     job?.sinceId && (payload['sinceId'] = job.sinceId)
     job?.runTime && (payload['SERVICE_TIME'] = job.runTime.toString())
 
     try {
-      resp = await JobService.scheduleJob({ ...job.runTimeData, ...payload });
+      resp = await JobService.scheduleJob({ ...job.runtimeData, ...payload });
       if (resp.status == 200 && !hasError(resp)) {
         showToast(translate('Service has been scheduled'))
         // TODO: need to check if we actually need to call fetchJobs when running a service now
