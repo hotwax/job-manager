@@ -27,7 +27,7 @@
           <!-- Empty state -->
           <div v-if="pendingJobs?.length === 0">
             <p class="ion-text-center">{{ $t("There are no jobs pending right now")}}</p>
-            <ion-button fill="outline" @click="reFetchJobs()">{{ $t('retry') }}</ion-button>
+            <ion-button fill="outline" @click="refreshJobs()">{{ $t('retry') }}</ion-button>
           </div>
 
           <div v-else>
@@ -81,7 +81,7 @@
           <!-- Empty state -->
           <div v-if="runningJobs?.length === 0">
             <p class="ion-text-center">{{ $t("There are no jobs running right now")}}</p>
-            <ion-button fill="outline" @click="reFetchJobs()">{{ $t('retry') }}</ion-button>
+            <ion-button fill="outline" @click="refreshJobs()">{{ $t('retry') }}</ion-button>
           </div>
 
           <div v-else>
@@ -128,7 +128,7 @@
           <!-- Empty state -->
           <div v-if="jobHistory?.length === 0">
             <p class="ion-text-center">{{ $t("No jobs have run yet")}}</p>
-            <ion-button fill="outline" @click="reFetchJobs()">{{ $t('retry') }}</ion-button>
+            <ion-button fill="outline" @click="refreshJobs()">{{ $t('retry') }}</ion-button>
           </div>
 
           <div v-else>
@@ -179,7 +179,6 @@
           <JobConfiguration :title="title" :job="currentJob" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
         </aside>
       </main>
-      <ion-loading v-if="isLoading" show-backdrop="true" spinner="crescent" />
     </ion-content>
   </ion-page>
 </template>
@@ -199,7 +198,6 @@ import {
   IonIcon,
   IonItem,
   IonLabel,
-  IonLoading,
   IonMenuButton,
   IonPage,
   IonRefresher,
@@ -231,7 +229,6 @@ export default defineComponent({
     IonIcon,
     IonItem,
     IonLabel,
-    IonLoading,
     IonMenuButton,
     IonPage,
     IonRefresher,
@@ -310,24 +307,22 @@ export default defineComponent({
       })
     },
     async refreshJobs(event: any) {
+      emitter.emit("presentLoader");
       if(this.segmentSelected === 'pending') {
-        this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => { event.target.complete() });
+        this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => {
+          if(event) event.target.complete();
+          emitter.emit("dismissLoader");
+        });
       } else if(this.segmentSelected === 'running') {
-        this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => { event.target.complete() });
+        this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => {
+          if(event) event.target.complete();
+          emitter.emit("dismissLoader");
+        });
       } else {
-        this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => { event.target.complete() });
-      }
-    },
-    async reFetchJobs() {
-      if(this.segmentSelected === 'pending') {
-        this.isLoading = true;
-        this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => { this.isLoading = false });
-      } else if(this.segmentSelected === 'running') {
-        this.isLoading = true;
-        this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => { this.isLoading = false });
-      } else {
-        this.isLoading = true;
-        this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => { this.isLoading = false });
+        this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => {
+          if(event) event.target.complete();
+          emitter.emit("dismissLoader");
+        });
       }
     },
     segmentChanged (e: CustomEvent) {
