@@ -256,8 +256,7 @@ export default defineComponent({
       currentJobStatus: '',
       freqType: '' as any,
       isJobDetailAnimationCompleted: false,
-      isDesktop: isPlatform('desktop'),
-      isLoading: false
+      isDesktop: isPlatform('desktop')
     }
   },
   computed: {
