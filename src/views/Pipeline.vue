@@ -27,6 +27,7 @@
           <!-- Empty state -->
           <div v-if="pendingJobs?.length === 0">
             <p class="ion-text-center">{{ $t("There are no jobs pending right now")}}</p>
+            <ion-button fill="outline" @click="reFetchJobs()">{{ $t('retry') }}</ion-button>
           </div>
 
           <div v-else>
@@ -80,6 +81,7 @@
           <!-- Empty state -->
           <div v-if="runningJobs?.length === 0">
             <p class="ion-text-center">{{ $t("There are no jobs running right now")}}</p>
+            <ion-button fill="outline" @click="reFetchJobs()">{{ $t('retry') }}</ion-button>
           </div>
 
           <div v-else>
@@ -126,6 +128,7 @@
           <!-- Empty state -->
           <div v-if="jobHistory?.length === 0">
             <p class="ion-text-center">{{ $t("No jobs have run yet")}}</p>
+            <ion-button fill="outline" @click="reFetchJobs()">{{ $t('retry') }}</ion-button>
           </div>
 
           <div v-else>
@@ -176,6 +179,7 @@
           <JobConfiguration :title="title" :job="currentJob" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
         </aside>
       </main>
+      <ion-loading v-if="isLoading" show-backdrop="true" spinner="crescent" />
     </ion-content>
   </ion-page>
 </template>
@@ -195,6 +199,7 @@ import {
   IonIcon,
   IonItem,
   IonLabel,
+  IonLoading,
   IonMenuButton,
   IonPage,
   IonRefresher,
@@ -226,6 +231,7 @@ export default defineComponent({
     IonIcon,
     IonItem,
     IonLabel,
+    IonLoading,
     IonMenuButton,
     IonPage,
     IonRefresher,
@@ -253,7 +259,8 @@ export default defineComponent({
       currentJobStatus: '',
       freqType: '' as any,
       isJobDetailAnimationCompleted: false,
-      isDesktop: isPlatform('desktop')
+      isDesktop: isPlatform('desktop'),
+      isLoading: false
     }
   },
   computed: {
@@ -309,6 +316,18 @@ export default defineComponent({
         this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => { event.target.complete() });
       } else {
         this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => { event.target.complete() });
+      }
+    },
+    async reFetchJobs() {
+      if(this.segmentSelected === 'pending') {
+        this.isLoading = true;
+        this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => { this.isLoading = false });
+      } else if(this.segmentSelected === 'running') {
+        this.isLoading = true;
+        this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => { this.isLoading = false });
+      } else {
+        this.isLoading = true;
+        this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => { this.isLoading = false });
       }
     },
     segmentChanged (e: CustomEvent) {
