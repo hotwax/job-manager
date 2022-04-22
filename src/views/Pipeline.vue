@@ -64,13 +64,15 @@
                 <ion-label class="ion-text-wrap">{{ job.currentRetryCount }}</ion-label>
               </ion-item>
 
-              <ion-item lines="none">
-                <ion-button fill="clear" @click.stop="skipJob(job)">{{ $t("Skip") }}</ion-button>
-                <ion-button color="danger" fill="clear" @click.stop="cancelJob(job)">{{ $t("Cancel") }}</ion-button>
-                <ion-button fill="clear" color="medium" slot="end" @click.stop="batchDetail()">
+              <div class="actions">
+                <div>
+                  <ion-button fill="clear" @click.stop="skipJob(job)">{{ $t("Skip") }}</ion-button>
+                  <ion-button color="danger" fill="clear" @click.stop="cancelJob(job)">{{ $t("Cancel") }}</ion-button>
+                </div>
+                <ion-button fill="clear" color="medium" slot="end" @click.stop="viewJobHistory()">
                   <ion-icon slot="icon-only" :icon="timeOutline" />
                 </ion-button>
-              </ion-item> 
+              </div> 
             </ion-card>
             <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
               <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
@@ -217,7 +219,7 @@ import {
 import JobConfiguration from '@/components/JobConfiguration.vue'
 import { codeWorkingOutline, refreshOutline, timeOutline, timerOutline } from "ionicons/icons";
 import emitter from '@/event-bus';
-import BatchDetailModal from '@/components/BatchDetailModal.vue';
+import JobHistoryModal from '@/components/JobHistoryModal.vue';
 
 export default defineComponent({
   name: "Pipeline",
@@ -278,11 +280,11 @@ export default defineComponent({
     })
   },
   methods: {
-    async batchDetail() {
-      const batchDetailModal = await modalController.create({
-        component: BatchDetailModal
+    async viewJobHistory() {
+      const jobHistoryModal = await modalController.create({
+        component: JobHistoryModal
       });
-      return batchDetailModal.present();
+      return jobHistoryModal.present();
     },
     getTime (time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.TIME_SIMPLE);
@@ -441,6 +443,11 @@ ion-card-header :last-child {
 
 ion-item {
   --background: transparent;
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
 }
 
 @media (min-width: 991px) {
