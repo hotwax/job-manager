@@ -36,7 +36,7 @@ import { defineComponent } from 'vue';
 import { closeOutline } from 'ionicons/icons';
 
 export default defineComponent({
-  name: 'BatchModal',
+  name: 'JobHistoryModal',
   components: {
     IonButtons,
     IonButton,
