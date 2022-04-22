@@ -64,8 +64,13 @@
                 <ion-label class="ion-text-wrap">{{ job.currentRetryCount }}</ion-label>
               </ion-item>
 
-              <ion-button fill="clear" @click.stop="skipJob(job)">{{ $t("Skip") }}</ion-button>
-              <ion-button color="danger" fill="clear" @click.stop="cancelJob(job)">{{ $t("Cancel") }}</ion-button>
+              <ion-item lines="none">
+                <ion-button fill="clear" @click.stop="skipJob(job)">{{ $t("Skip") }}</ion-button>
+                <ion-button color="danger" fill="clear" @click.stop="cancelJob(job)">{{ $t("Cancel") }}</ion-button>
+                <ion-button fill="clear" color="medium" slot="end" @click.stop="batchDetail()">
+                  <ion-icon slot="icon-only" :icon="timeOutline" />
+                </ion-button>
+              </ion-item> 
             </ion-card>
             <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
               <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
@@ -206,11 +211,13 @@ import {
   alertController,
   IonSegment,
   IonSegmentButton,
-  isPlatform
+  isPlatform,
+  modalController
 } from "@ionic/vue";
 import JobConfiguration from '@/components/JobConfiguration.vue'
 import { codeWorkingOutline, refreshOutline, timeOutline, timerOutline } from "ionicons/icons";
 import emitter from '@/event-bus';
+import BatchDetailModal from '@/components/BatchDetailModal.vue';
 
 export default defineComponent({
   name: "Pipeline",
@@ -271,6 +278,12 @@ export default defineComponent({
     })
   },
   methods: {
+    async batchDetail() {
+      const batchDetailModal = await modalController.create({
+        component: BatchDetailModal
+      });
+      return batchDetailModal.present();
+    },
     getTime (time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.TIME_SIMPLE);
     },
