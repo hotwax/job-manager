@@ -220,8 +220,6 @@ import JobConfiguration from '@/components/JobConfiguration.vue'
 import { codeWorkingOutline, refreshOutline, timeOutline, timerOutline } from "ionicons/icons";
 import emitter from '@/event-bus';
 import JobHistoryModal from '@/components/JobHistoryModal.vue';
-import { JobService } from '@/services/JobService'
-import { hasError } from '@/utils';
 
 export default defineComponent({
   name: "Pipeline",
@@ -283,15 +281,9 @@ export default defineComponent({
   },
   methods: {
     async viewJobHistory(job: any) {
-      const jobHistory = await this.fetchJobHistory(job?.systemJobEnumId);
-      const currentJob = {
-        ...job,
-        jobHistory
-      }
-
       const jobHistoryModal = await modalController.create({
         component: JobHistoryModal,
-        componentProps: { currentJob }
+        componentProps: { currentJob: job }
       });
       return jobHistoryModal.present();
     },
@@ -415,35 +407,6 @@ export default defineComponent({
         this.isJobDetailAnimationCompleted = true;
       }
     },
-    async fetchJobHistory(payload: any) {
-      let resp;
-
-      try {
-        resp = await JobService.fetchJobInformation({
-          "inputFields": {
-            "productStoreId": this.getCurrentEComStore.productStoreId,
-            "statusId": ["SERVICE_CANCELLED", "SERVICE_CRASHED", "SERVICE_FAILED", "SERVICE_FINISHED"],
-            "statusId_op": "in",
-            "systemJobEnumId": payload
-          },
-          "fieldList": [ "runTime", "statusId" ],
-          "entityName": "JobSandbox",
-          "noConditionFind": "Y",
-          "viewSize": process.env.VUE_APP_VIEW_SIZE,
-          "orderBy": "runTime DESC"
-        })
-        if(resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
-          const jobs = resp.data.docs;
-          jobs.map((job: any) => {
-            job['statusDesc'] = this.store.state.util.statusDesc[job.statusId];
-          })
-          return jobs
-        }
-      } catch(err) {
-        console.error(err);
-      }
-      return []
-    }
   },
   created() {
     this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0});
