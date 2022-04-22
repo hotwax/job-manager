@@ -69,7 +69,7 @@
                   <ion-button fill="clear" @click.stop="skipJob(job)">{{ $t("Skip") }}</ion-button>
                   <ion-button color="danger" fill="clear" @click.stop="cancelJob(job)">{{ $t("Cancel") }}</ion-button>
                 </div>
-                <ion-button fill="clear" color="medium" slot="end" @click.stop="viewJobHistory()">
+                <ion-button fill="clear" color="medium" slot="end" @click.stop="viewJobHistory(job)">
                   <ion-icon slot="icon-only" :icon="timeOutline" />
                 </ion-button>
               </div> 
@@ -220,6 +220,8 @@ import JobConfiguration from '@/components/JobConfiguration.vue'
 import { codeWorkingOutline, refreshOutline, timeOutline, timerOutline } from "ionicons/icons";
 import emitter from '@/event-bus';
 import JobHistoryModal from '@/components/JobHistoryModal.vue';
+import { JobService } from '@/services/JobService'
+import { hasError } from '@/utils';
 
 export default defineComponent({
   name: "Pipeline",
@@ -280,9 +282,16 @@ export default defineComponent({
     })
   },
   methods: {
-    async viewJobHistory() {
+    async viewJobHistory(job: any) {
+      const jobHistory = await this.fetchJobHistory(job?.systemJobEnumId);
+      const currentJob = {
+        ...job,
+        jobHistory
+      }
+
       const jobHistoryModal = await modalController.create({
-        component: JobHistoryModal
+        component: JobHistoryModal,
+        componentProps: { currentJob }
       });
       return jobHistoryModal.present();
     },
@@ -406,6 +415,35 @@ export default defineComponent({
         this.isJobDetailAnimationCompleted = true;
       }
     },
+    async fetchJobHistory(payload: any) {
+      let resp;
+
+      try {
+        resp = await JobService.fetchJobInformation({
+          "inputFields": {
+            "productStoreId": this.getCurrentEComStore.productStoreId,
+            "statusId": ["SERVICE_CANCELLED", "SERVICE_CRASHED", "SERVICE_FAILED", "SERVICE_FINISHED"],
+            "statusId_op": "in",
+            "systemJobEnumId": payload
+          },
+          "fieldList": [ "runTime", "statusId" ],
+          "entityName": "JobSandbox",
+          "noConditionFind": "Y",
+          "viewSize": process.env.VUE_APP_VIEW_SIZE,
+          "orderBy": "runTime DESC"
+        })
+        if(resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
+          const jobs = resp.data.docs;
+          jobs.map((job: any) => {
+            job['statusDesc'] = this.store.state.util.statusDesc[job.statusId];
+          })
+          return jobs
+        }
+      } catch(err) {
+        console.error(err);
+      }
+      return []
+    }
   },
   created() {
     this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0});

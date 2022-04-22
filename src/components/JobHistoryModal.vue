@@ -6,15 +6,21 @@
           <ion-icon slot="icon-only" :icon="closeOutline" />
         </ion-button>
       </ion-buttons>
-      <ion-title>Job enum name</ion-title>
+      <ion-title>{{ getEnumName(currentJob?.systemJobEnumId) }}</ion-title>
     </ion-toolbar>
   </ion-header>
 
   <ion-content>
-    <ion-item>
-      <ion-label>{{ $t("Run time") }}</ion-label>
-      <ion-badge slot="end">Finished</ion-badge>
-    </ion-item>
+    <div v-if="currentJob.jobHistory?.length === 0">
+      <p class="ion-text-center">{{ $t("No jobs have run yet")}}</p>
+    </div>
+
+    <div v-else>
+      <ion-item v-for="(job, index) in currentJob.jobHistory" :key="index">
+        <ion-label>{{ job.runTime ? getTime(job.runTime) : "-" }}</ion-label>
+        <ion-badge v-if="job.statusId" :color="job.statusId === 'SERVICE_FINISHED' ? 'success' : 'danger'">{{ job.statusDesc }}</ion-badge>
+      </ion-item>
+    </div>
   </ion-content>
 </template>
 
@@ -34,6 +40,8 @@ import {
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { closeOutline } from 'ionicons/icons';
+import { mapGetters } from 'vuex';
+import { DateTime } from 'luxon';
 
 export default defineComponent({
   name: 'JobHistoryModal',
@@ -49,9 +57,18 @@ export default defineComponent({
     IonTitle,
     IonToolbar,
   },
+  props: ['currentJob'],
+  computed: {
+    ...mapGetters({
+      getEnumName: 'job/getEnumName'
+    })
+  },
   methods: {
     closeModal() {
       modalController.dismiss({ dismissed: true });
+    },
+    getTime (time: any) {
+      return DateTime.fromMillis(time).toLocaleString(DateTime.TIME_SIMPLE);
     },
   },
   setup() {
