@@ -64,8 +64,15 @@
                 <ion-label class="ion-text-wrap">{{ job.currentRetryCount }}</ion-label>
               </ion-item>
 
-              <ion-button fill="clear" @click.stop="skipJob(job)">{{ $t("Skip") }}</ion-button>
-              <ion-button color="danger" fill="clear" @click.stop="cancelJob(job)">{{ $t("Cancel") }}</ion-button>
+              <div class="actions">
+                <div>
+                  <ion-button fill="clear" @click.stop="skipJob(job)">{{ $t("Skip") }}</ion-button>
+                  <ion-button color="danger" fill="clear" @click.stop="cancelJob(job)">{{ $t("Cancel") }}</ion-button>
+                </div>
+                <ion-button fill="clear" color="medium" slot="end" @click.stop="viewJobHistory()">
+                  <ion-icon slot="icon-only" :icon="timeOutline" />
+                </ion-button>
+              </div> 
             </ion-card>
             <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
               <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
@@ -206,11 +213,13 @@ import {
   alertController,
   IonSegment,
   IonSegmentButton,
-  isPlatform
+  isPlatform,
+  modalController
 } from "@ionic/vue";
 import JobConfiguration from '@/components/JobConfiguration.vue'
 import { codeWorkingOutline, refreshOutline, timeOutline, timerOutline } from "ionicons/icons";
 import emitter from '@/event-bus';
+import JobHistoryModal from '@/components/JobHistoryModal.vue';
 
 export default defineComponent({
   name: "Pipeline",
@@ -271,6 +280,12 @@ export default defineComponent({
     })
   },
   methods: {
+    async viewJobHistory() {
+      const jobHistoryModal = await modalController.create({
+        component: JobHistoryModal
+      });
+      return jobHistoryModal.present();
+    },
     getTime (time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.TIME_SIMPLE);
     },
@@ -428,6 +443,11 @@ ion-card-header :last-child {
 
 ion-item {
   --background: transparent;
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
 }
 
 @media (min-width: 991px) {
