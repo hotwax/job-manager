@@ -29,7 +29,7 @@
             <p class="ion-text-center">{{ $t("There are no jobs pending right now")}}</p>
             <ion-button fill="outline" @click="refreshJobs()">
               {{ $t('retry') }}
-              <ion-spinner v-if="isLoading" name="crescent" />
+              <ion-spinner v-if="isRetrying" name="crescent" />
             </ion-button>
           </div>
 
@@ -93,7 +93,7 @@
             <p class="ion-text-center">{{ $t("There are no jobs running right now")}}</p>
             <ion-button fill="outline" @click="refreshJobs()">
               {{ $t('retry') }}
-              <ion-spinner v-if="isLoading" name="crescent" />
+              <ion-spinner v-if="isRetrying" name="crescent" />
             </ion-button>
           </div>
 
@@ -143,7 +143,7 @@
             <p class="ion-text-center">{{ $t("No jobs have run yet")}}</p>
             <ion-button fill="outline" @click="refreshJobs()">
               {{ $t('retry') }}
-              <ion-spinner v-if="isLoading" name="crescent" />
+              <ion-spinner v-if="isRetrying" name="crescent" />
             </ion-button>
           </div>
 
@@ -277,7 +277,7 @@ export default defineComponent({
       freqType: '' as any,
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
-      isLoading: false
+      isRetrying: false
     }
   },
   computed: {
@@ -333,21 +333,21 @@ export default defineComponent({
       })
     },
     async refreshJobs(event: any) {
-      this.isLoading = true;
+      this.isRetrying = true;
       if(this.segmentSelected === 'pending') {
         this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => {
           if(event) event.target.complete();
-          this.isLoading = false;
+          this.isRetrying = false;
         });
       } else if(this.segmentSelected === 'running') {
         this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => {
           if(event) event.target.complete();
-          this.isLoading = false;
+          this.isRetrying = false;
         });
       } else {
         this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => {
           if(event) event.target.complete();
-          this.isLoading = false;
+          this.isRetrying = false;
         });
       }
     },
