@@ -61,7 +61,7 @@ export default defineComponent({
     IonToolbar,
   },
   data() {
-    return{
+    return {
       jobHistory: []
     }
   },
@@ -70,6 +70,7 @@ export default defineComponent({
     ...mapGetters({
       getEnumName: 'job/getEnumName',
       getCurrentEComStore:'user/getCurrentEComStore',
+      getServiceStatusDesc: 'util/getServiceStatusDesc'
     })
   },
   methods: {
@@ -98,10 +99,10 @@ export default defineComponent({
         })
         if(resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
           const jobs = resp.data.docs;
-          jobs.map((job: any) => {
-            job['statusDesc'] = this.store.state.util.statusDesc[job.statusId];
+          this.jobHistory = jobs.map((job: any) => {
+            job['statusDesc'] = this.getServiceStatusDesc[job.statusId];
+            return job;
           })
-          this.jobHistory = jobs;
 
           return jobs
         } else {
@@ -110,7 +111,7 @@ export default defineComponent({
       } catch(err) {
         console.error(err);
       }
-      return []
+      return resp
     }
   },
   mounted() {
