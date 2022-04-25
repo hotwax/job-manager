@@ -135,12 +135,14 @@ import {
   IonTitle,
   IonToggle,
   IonToolbar,
+  isPlatform,
   modalController
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { addCircleOutline } from 'ionicons/icons';
 import BatchModal from '@/components/BatchModal.vue';
 import { useStore } from "@/store";
+import { useRouter } from 'vue-router'
 import { mapGetters } from "vuex";
 import JobConfiguration from '@/components/JobConfiguration.vue';
 import { DateTime } from 'luxon';
@@ -177,7 +179,8 @@ export default defineComponent({
       title: 'New orders',
       currentJobStatus: '',
       freqType: '',
-      isJobDetailAnimationCompleted: false
+      isJobDetailAnimationCompleted: false,
+      isDesktop: isPlatform('desktop')
     }
   },
   computed: {
@@ -249,6 +252,11 @@ export default defineComponent({
       if (this.currentJob?.runTime && !isFutureDate(this.currentJob?.runTime)) {
         this.currentJob.runTime = ''
       }
+
+      if(!this.isDesktop) {
+        this.router.push({name: 'JobDetails', params: {job: JSON.stringify(this.currentJob), title: this.title, status: this.currentJobStatus, type: this.freqType}});
+        return;
+      }
       if (this.currentJob && !this.isJobDetailAnimationCompleted) {
         emitter.emit('playAnimation');
         this.isJobDetailAnimationCompleted = true;
@@ -294,10 +302,12 @@ export default defineComponent({
   },
   setup() {
     const store = useStore();
+    const router = useRouter();
 
     return {
       addCircleOutline,
-      store
+      store,
+      router
     };
   },
 });

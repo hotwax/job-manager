@@ -39,11 +39,8 @@ export default defineComponent({
   props: ["job", "title", "status", "type"],
   data(){
     return{
-      currentJob: {}
+      currentJob: JSON.parse(this.job)
     }
-  },
-  mounted(){
-    this.currentJob = JSON.parse(this.job)
   },
 });
 </script>

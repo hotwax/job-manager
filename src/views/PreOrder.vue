@@ -125,11 +125,13 @@ import {
   IonMenuButton,
   IonPage,
   IonTitle,
-  IonToolbar
+  IonToolbar,
+  isPlatform
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { useStore } from "@/store";
 import { mapGetters } from "vuex";
+import { useRouter } from 'vue-router'
 import { DateTime } from 'luxon';
 import { alertController } from '@ionic/vue';
 import JobConfiguration from '@/components/JobConfiguration.vue'
@@ -215,7 +217,8 @@ export default defineComponent({
       title: 'Automatically list pre-order',
       currentJobStatus: '',
       freqType: '',
-      isJobDetailAnimationCompleted: false
+      isJobDetailAnimationCompleted: false,
+      isDesktop: isPlatform('desktop')
     }
   },
   methods: {
@@ -273,6 +276,11 @@ export default defineComponent({
       this.currentJobStatus = status
       this.freqType = id && this.jobFrequencyType[id]
 
+      if(!this.isDesktop) {
+        this.router.push({name: 'JobDetails', params: {job: JSON.stringify(this.currentJob), title: this.title, status: this.currentJobStatus, type: this.freqType}});
+        return;
+      }
+
       // if job runTime is not a valid date then making runTime as empty
       if (this.currentJob?.runTime && !isFutureDate(this.currentJob?.runTime)) {
         this.currentJob.runTime = ''
@@ -298,9 +306,10 @@ export default defineComponent({
   },
   setup() {
     const store = useStore();
-
+    const router = useRouter();
     return {
-      store
+      store,
+      router
     };
   },
 });

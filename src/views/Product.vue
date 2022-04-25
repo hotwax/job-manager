@@ -48,13 +48,15 @@ import {
   IonMenuButton,
   IonPage,
   IonTitle,
-  IonToolbar
+  IonToolbar,
+  isPlatform
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
 import JobConfiguration from '@/components/JobConfiguration.vue'
 import { isFutureDate } from '@/utils';
 import emitter from '@/event-bus';
+import { useRouter } from 'vue-router'
 
 export default defineComponent({
   name: 'Product',
@@ -87,7 +89,8 @@ export default defineComponent({
       title: 'Import products',
       currentJobStatus: '',
       freqType: '',
-      isJobDetailAnimationCompleted: false
+      isJobDetailAnimationCompleted: false,
+      isDesktop: isPlatform('desktop')
     }
   },
   mounted () {
@@ -104,6 +107,11 @@ export default defineComponent({
       this.title = title
       this.currentJobStatus = status
       this.freqType = id && this.jobFrequencyType[id]
+
+      if(!this.isDesktop) {
+        this.router.push({name: 'JobDetails', params: {job: JSON.stringify(this.currentJob), title: this.title, status: this.currentJobStatus, type: this.freqType}});
+        return;
+      }
 
       // if job runTime is not a valid date then making runTime as empty
       if (this.currentJob?.runTime && !isFutureDate(this.currentJob?.runTime)) {
@@ -126,9 +134,11 @@ export default defineComponent({
       showBackdrop: false
     }
     const store = useStore();
+    const router = useRouter();
     return {
       customPopoverOptions,
-      store
+      store,
+      router
     }
   }
 });
