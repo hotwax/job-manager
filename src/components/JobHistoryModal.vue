@@ -40,11 +40,10 @@ import {
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { closeOutline } from 'ionicons/icons';
-import { mapGetters } from 'vuex';
+import { mapGetters, useStore } from 'vuex';
 import { DateTime } from 'luxon';
 import { JobService } from '@/services/JobService'
 import { hasError } from '@/utils';
-import { useStore } from '@/store';
 
 export default defineComponent({
   name: 'JobHistoryModal',
@@ -103,15 +102,12 @@ export default defineComponent({
             job['statusDesc'] = this.getServiceStatusDesc[job.statusId];
             return job;
           })
-
-          return jobs
         } else {
           this.jobHistory = [];
         }
       } catch(err) {
         console.error(err);
       }
-      return resp
     }
   },
   mounted() {
