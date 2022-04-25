@@ -456,5 +456,8 @@ const actions: ActionTree<JobState, RootState> = {
     }
     return resp;
   },
+  setCurrent({commit}){
+    
+  }
 }
 export default actions;

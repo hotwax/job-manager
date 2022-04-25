@@ -8,7 +8,7 @@
     </ion-header>
 
     <ion-content>
-      <JobConfiguration :title="title" :job="currentJob" :status="status" :type="type" :key="currentJob"/>
+      <JobConfiguration :title="this.title" :job="currentJob" :status="status" :type="type" :key="currentJob"/>
     </ion-content>
   </ion-page>
 </template>
@@ -39,8 +39,13 @@ export default defineComponent({
   props: ["job", "title", "status", "type"],
   data(){
     return{
-      currentJob: JSON.parse(this.job)
+      currentJob: JSON.parse((this as any).$route.params.job)
     }
   },
+  mounted(){
+    console.log(this.job, this.title, this.status, this.type)
+    console.log(this.$route)
+    console.log(this.currentJob)
+  }
 });
 </script>

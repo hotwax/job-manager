@@ -11,7 +11,8 @@ export default interface JobState {
     history: {
       list: any,
       total: 0
-    }
+    },
+    current: any;
     temporalExp: any;
     enumIds: any;
 }

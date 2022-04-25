@@ -24,6 +24,7 @@ const jobModule: Module<JobState, RootState> = {
       temporalExp: [],
       enumIds: {}
     },
+    current: {},
     getters,
     actions,
     mutations,
