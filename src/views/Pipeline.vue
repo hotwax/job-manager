@@ -284,7 +284,7 @@ export default defineComponent({
   methods: {
     async copyToClipboard(job: any) {
       const { Clipboard } = Plugins;
-      const jobDetails = job.jobId + " " + this.getEnumName(job.systemJobEnumId) + " " + this.getEnumDescription(job.systemJobEnumId);
+      const jobDetails = `jobId: ${job.jobId}, jobName: ${this.getEnumName(job.systemJobEnumId)}, jobDescription: ${this.getEnumDescription(job.systemJobEnumId)}`;
 
       await Clipboard.write({
         string: jobDetails
