@@ -66,6 +66,7 @@ const routes: Array<RouteRecordRaw> = [
     path: '/job-details',
     name: 'JobDetails',
     component: JobDetails,
+    props: true
   },
   {  
     path: '/initial-load',

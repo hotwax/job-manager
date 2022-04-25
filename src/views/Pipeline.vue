@@ -189,6 +189,7 @@
 <script lang="ts">
 import { DateTime } from 'luxon';
 import { mapGetters, useStore } from 'vuex'
+import { useRouter } from 'vue-router'
 import { defineComponent, ref } from "vue";
 import {
   IonBadge,
@@ -391,16 +392,15 @@ export default defineComponent({
        return alert.present();
     },
     viewJobConfiguration(job: any) {
-      if(!this.isDesktop) {
-        return;
-      }
-
       this.currentJob = {id: job.jobId, ...job}
       this.title = this.getEnumName(job.systemJobEnumId)
       this.currentJobStatus = job.tempExprId
       const id = Object.entries(this.jobEnums).find((enums) => enums[1] == job.systemJobEnumId) as any
       this.freqType = id && (Object.entries(this.jobFrequencyType).find((freq) => freq[0] == id[0]) as any)[1]
-
+      if(!this.isDesktop) {
+        this.router.push({name: 'JobDetails', params: {job: JSON.stringify(this.currentJob), title: this.title, status: this.currentJobStatus, type: this.freqType}});
+        return;
+      }
       if (this.currentJob && !this.isJobDetailAnimationCompleted) {
         emitter.emit('playAnimation');
         this.isJobDetailAnimationCompleted = true;
@@ -411,6 +411,7 @@ export default defineComponent({
     this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0});
   },
   setup() {
+    const router = useRouter();
     const store = useStore();
     const segmentSelected = ref('pending');
 
@@ -420,7 +421,8 @@ export default defineComponent({
       refreshOutline,
       timeOutline,
       timerOutline,
-      segmentSelected
+      segmentSelected,
+      router
     };
   }
 });
