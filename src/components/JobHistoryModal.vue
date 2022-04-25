@@ -69,7 +69,7 @@ export default defineComponent({
     ...mapGetters({
       getEnumName: 'job/getEnumName',
       getCurrentEComStore:'user/getCurrentEComStore',
-      getServiceStatusDesc: 'util/getServiceStatusDesc'
+      getStatusDesc: 'util/getStatusDesc'
     })
   },
   methods: {
@@ -99,7 +99,7 @@ export default defineComponent({
         if(resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
           const jobs = resp.data.docs;
           this.jobHistory = jobs.map((job: any) => {
-            job['statusDesc'] = this.getServiceStatusDesc(job.statusId);
+            job['statusDesc'] = this.getStatusDesc(job.statusId);
             return job;
           })
         } else {
