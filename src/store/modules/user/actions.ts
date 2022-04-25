@@ -55,11 +55,6 @@ const actions: ActionTree<UserState, RootState> = {
   async getProfile ({ commit, dispatch }) {
     const resp = await UserService.getProfile()
     if (resp.status === 200) {
-      const localTimeZone = DateTime.local().zoneName;
-      if (resp.data.userTimeZone !== localTimeZone) {
-        emitter.emit('timeZoneDifferent', { profileTimeZone: resp.data.userTimeZone, localTimeZone});
-      }
-
       const payload = {
         "inputFields": {
           "storeName_op": "not-empty"
