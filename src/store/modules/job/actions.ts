@@ -39,20 +39,27 @@ const actions: ActionTree<JobState, RootState> = {
   },
 
   async fetchJobHistory({ commit, dispatch, state }, payload){ 
-    await JobService.fetchJobInformation({
+    const params = {
       "inputFields": {
-        "productStoreId": payload.eComStoreId,
         "statusId": ["SERVICE_CANCELLED", "SERVICE_CRASHED", "SERVICE_FAILED", "SERVICE_FINISHED"],
         "statusId_op": "in",
         "systemJobEnumId_op": "not-empty"
-      },
+      } as any,
       "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId" ],
       "entityName": "JobSandbox",
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
       "orderBy": "runTime DESC"
-    }).then((resp) => {
+    }
+
+    if (payload.eComStoreId) {
+      params.inputFields["productStoreId"] = payload.eComStoreId
+    } else {
+      params.inputFields["productStoreId_op"] = "empty"
+    }
+
+    await JobService.fetchJobInformation(params).then((resp) => {
       if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
         if (resp.data.docs) {
           const total = resp.data.count;
@@ -85,19 +92,27 @@ const actions: ActionTree<JobState, RootState> = {
   },
 
   async fetchRunningJobs({ commit, dispatch, state }, payload){
-    await JobService.fetchJobInformation({
+
+    const params = {
       "inputFields": {
-        "productStoreId": payload.eComStoreId,
         "statusId": "SERVICE_RUNNING",
         "systemJobEnumId_op": "not-empty"
-      },
+      } as any,
       "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName" ],
       "entityName": "JobSandbox",
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
       "orderBy": "runTime DESC"
-    }).then((resp) => {
+    }
+
+    if (payload.eComStoreId) {
+      params.inputFields["productStoreId"] = payload.eComStoreId
+    } else {
+      params.inputFields["productStoreId_op"] = "empty"
+    }
+
+    await JobService.fetchJobInformation(params).then((resp) => {
       if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
         if (resp.data.docs) {
           const total = resp.data.count;
@@ -128,19 +143,26 @@ const actions: ActionTree<JobState, RootState> = {
   },
 
   async fetchPendingJobs({ commit, dispatch, state }, payload){
-    await JobService.fetchJobInformation({
+    const params = {
       "inputFields": {
-        "productStoreId": payload.eComStoreId,
         "statusId": "SERVICE_PENDING",
         "systemJobEnumId_op": "not-empty"
-      },
+      } as any,
       "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount" ],
       "entityName": "JobSandbox",
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
       "orderBy": "runTime ASC"
-    }).then((resp) => {
+    }
+
+    if(payload.eComStoreId) {
+      params.inputFields["productStoreId"] = payload.eComStoreId
+    } else {
+      params.inputFields["productStoreId_op"] = "empty"
+    }
+
+    await JobService.fetchJobInformation(params).then((resp) => {
       if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
         if (resp.data.docs) {
           const total = resp.data.count;
