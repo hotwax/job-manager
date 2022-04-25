@@ -22,6 +22,9 @@
         </ion-menu-toggle>
       </ion-list>
     </ion-content>
+    <ion-footer>
+      {{ eComStore.storeName }}
+    </ion-footer>
   </ion-menu>
 </template>
 
@@ -66,6 +69,7 @@ export default defineComponent({
     ...mapGetters({
       isUserAuthenticated: 'user/isUserAuthenticated',
       currentFacility: 'user/getCurrentFacility',
+      eComStore: 'user/getCurrentEComStore'
     })
   },
   watch:{
