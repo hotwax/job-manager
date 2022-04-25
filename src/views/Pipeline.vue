@@ -34,7 +34,7 @@
               <ion-card-header>
                 <div> 
                   <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
-                  <ion-card-title>{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
+                  <ion-card-title @click="copyToClipboard(job)">{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
                 </div>
                 <ion-badge v-if="job.runTime" color="dark">{{ timeTillJob(job.runTime)}}</ion-badge>
               </ion-card-header>
@@ -94,7 +94,7 @@
               <ion-card-header>
                 <div>
                   <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
-                  <ion-card-title>{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
+                  <ion-card-title @click="copyToClipboard(job)">{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
                 </div>
                 <ion-badge color="dark">Running</ion-badge>
               </ion-card-header>
@@ -140,7 +140,7 @@
             <ion-card-header>
               <div>
                 <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
-                <ion-card-title>{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
+                <ion-card-title @click="copyToClipboard(job)">{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
               </div>
               <div>
                 <ion-badge v-if="job.runTime" color="dark">{{ timeTillJob(job.runTime)}}</ion-badge>
@@ -220,6 +220,8 @@ import JobConfiguration from '@/components/JobConfiguration.vue'
 import { codeWorkingOutline, refreshOutline, timeOutline, timerOutline } from "ionicons/icons";
 import emitter from '@/event-bus';
 import JobHistoryModal from '@/components/JobHistoryModal.vue';
+import { Plugins } from '@capacitor/core';
+import { showToast } from '@/utils'
 
 export default defineComponent({
   name: "Pipeline",
@@ -280,6 +282,16 @@ export default defineComponent({
     })
   },
   methods: {
+    async copyToClipboard(job: any) {
+      const { Clipboard } = Plugins;
+      const jobDetails = job.jobId + " " + this.getEnumName(job.systemJobEnumId) + " " + this.getEnumDescription(job.systemJobEnumId);
+
+      await Clipboard.write({
+        string: jobDetails
+      }).then(() => {
+        showToast(this.$t('Job details copied'));
+      })
+    },
     async viewJobHistory() {
       const jobHistoryModal = await modalController.create({
         component: JobHistoryModal
