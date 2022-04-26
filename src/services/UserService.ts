@@ -48,12 +48,20 @@ const getEComStores = async (payload: any): Promise<any> => {
   });
 }
 
-const getSearchPreferences = async (payload: any): Promise<any> => {
+const getSearchPreference = async (payload: any): Promise<any> => {
   return api({
     url: "performFind",
     method: "post",
     data: payload
-  })
+  });
+}
+
+const updateSearchPreference = async (payload: any): Promise<any> => {
+  return api({
+    url: "updateSearchPreference",
+    method: "post",
+    data: payload
+  });
 }
 
 export const UserService = {
@@ -62,6 +70,7 @@ export const UserService = {
     getEComStores,
     getProfile,
     getShopifyConfig,
+    getSearchPreference,
     setUserTimeZone,
-    getSearchPreferences
+    updateSearchPreference
 }

@@ -62,6 +62,9 @@
                   <ion-button color="danger" fill="clear" @click.stop="cancelJob(job)">{{ $t("Cancel") }}</ion-button>
                 </div>
                 <div>
+                  <ion-button fill="clear" color="medium" slot="end" @click.stop="updateSearchPreference(job)">
+                    <ion-icon slot="icon-only" :icon="starOutline" />
+                  </ion-button>
                   <ion-button fill="clear" color="medium" slot="end">
                     <ion-icon slot="icon-only" :icon="copyOutline" />
                   </ion-button>
@@ -214,7 +217,7 @@ import {
   modalController
 } from "@ionic/vue";
 import JobConfiguration from '@/components/JobConfiguration.vue'
-import { codeWorkingOutline, copyOutline, refreshOutline, timeOutline, timerOutline } from "ionicons/icons";
+import { codeWorkingOutline, copyOutline, refreshOutline, starOutline, timeOutline, timerOutline } from "ionicons/icons";
 import emitter from '@/event-bus';
 import JobHistoryModal from '@/components/JobHistoryModal.vue';
 
@@ -274,7 +277,7 @@ export default defineComponent({
       isPendingJobsScrollable: 'job/isPendingJobsScrollable',
       isRunningJobsScrollable: 'job/isRunningJobsScrollable',
       isHistoryJobsScrollable: 'job/isHistoryJobsScrollable',
-      getSearchPreferences: 'user/getSearchPreferences'
+      getSearchPreference: 'user/getSearchPreference'
     })
   },
   methods: {
@@ -404,6 +407,21 @@ export default defineComponent({
         this.isJobDetailAnimationCompleted = true;
       }
     },
+    async updateSearchPreference(job: any) {
+      if(this.getSearchPreference?.searchPrefValue[job?.systemJobEnumId] || !this.getSearchPreference?.searchPrefValue[job?.systemJobEnumId]) {
+
+        const searchPrefValue = {
+          ...this.getSearchPreference?.searchPrefValue,
+          [job?.systemJobEnumId]: !this.getSearchPreference?.searchPrefValue[job?.systemJobEnumId]
+        }
+
+        const payload = {
+          "searchPrefId": this.getSearchPreference?.searchPrefId,
+          "searchPrefValue": searchPrefValue,
+        }
+        this.store.dispatch('user/updateSearchPreference', payload)
+      }
+    }
   },
   created() {
     this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0});
@@ -419,7 +437,8 @@ export default defineComponent({
       refreshOutline,
       timeOutline,
       timerOutline,
-      segmentSelected
+      segmentSelected,
+      starOutline
     };
   }
 });

@@ -71,8 +71,8 @@ const actions: ActionTree<UserState, RootState> = {
         }, ...(stores ? stores : [])]
       })
 
-      await dispatch('getSearchPreferences').then((searchPreferences: any) => {
-        resp.data.searchPreferences = searchPreferences
+      await dispatch('getSearchPreference').then((searchPreference: any) => {
+        resp.data.searchPreference = searchPreference
       })
 
       this.dispatch('util/getServiceStatusDesc')
@@ -142,7 +142,7 @@ const actions: ActionTree<UserState, RootState> = {
    * Get user search preferences
    */
 
-  async getSearchPreferences({ state }) {
+  async getSearchPreference({ state }) {
     let resp;
     const user = state?.current as any
 
@@ -157,14 +157,34 @@ const actions: ActionTree<UserState, RootState> = {
         "distinct": "Y",
         "noConditionFind": "Y"
       }
-      resp = await UserService.getSearchPreferences(payload);
+      resp = await UserService.getSearchPreference(payload);
       if(resp.status === 200 && resp.data.docs?.length && !hasError(resp)) {
-        return resp.data.docs;
+        return resp.data.docs[0];
       }
     } catch(error) {
       console.log(error);
     }
-    return []
+    return {}
+  },
+
+  /**
+   * Update user's search preference
+   */
+  async updateSearchPreference({ commit, state }, payload) {
+    let resp;
+    const user = state.current;
+
+    try{
+      resp = await UserService.updateSearchPreference(payload);
+      if(resp.status === 200 && !hasError(resp)) {
+        (user as any).searchPreference = payload;
+        commit(types.USER_INFO_UPDATED, user);
+      }
+    } catch(error) {
+      console.error(error);
+    }
+
+    return resp;
   }
 }
 

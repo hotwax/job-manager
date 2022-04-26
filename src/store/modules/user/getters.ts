@@ -24,8 +24,8 @@ const getters: GetterTree <UserState, RootState> = {
     getCurrentEComStore(state) {
         return state.currentEComStore
     },
-    getSearchPreferences(state) {
-        return state.current ? (state.current as any)['searchPreferences'] : []
+    getSearchPreference(state) {
+        return state.current ? (state.current as any)['searchPreference'] : {}
     }
 }
 export default getters;
