@@ -32,10 +32,7 @@
           <div v-else>
             <ion-card v-for="job in pendingJobs" :key="job.jobId" @click="viewJobConfiguration(job)" :button="isDesktop">
               <ion-card-header>
-                <div> 
-                  <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
-                  <ion-card-title>{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
-                </div>
+                <ion-card-title>{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
                 <ion-badge v-if="job.runTime" color="dark">{{ timeTillJob(job.runTime)}}</ion-badge>
               </ion-card-header>
 
@@ -53,11 +50,6 @@
                 <ion-icon slot="start" :icon="timerOutline" />
                 <ion-label class="ion-text-wrap">{{ job.tempExprId ? temporalExpr(job.tempExprId)?.description : "🙃"  }}</ion-label>
               </ion-item>
-
-            <ion-item>
-              <ion-icon slot="start" :icon="codeWorkingOutline" />
-              <ion-label class="ion-text-wrap">{{ job.serviceName }}</ion-label>
-            </ion-item>
 
               <ion-item lines="full">
                 <ion-icon slot="start" :icon="refreshOutline" />
