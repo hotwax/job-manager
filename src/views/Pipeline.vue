@@ -27,10 +27,12 @@
           <!-- Empty state -->
           <div v-if="pendingJobs?.length === 0">
             <p class="ion-text-center">{{ $t("There are no jobs pending right now")}}</p>
-            <ion-button fill="outline" @click="refreshJobs()">
-              {{ $t('retry') }}
-              <ion-spinner v-if="isRetrying" name="crescent" />
-            </ion-button>
+            <div class="ion-text-center">
+              <ion-button fill="outline" @click="refreshJobs()">
+                {{ $t('retry') }}
+                <ion-spinner v-if="isRetrying" name="crescent" />
+              </ion-button>
+            </div>
           </div>
 
           <div v-else>
@@ -91,10 +93,12 @@
           <!-- Empty state -->
           <div v-if="runningJobs?.length === 0">
             <p class="ion-text-center">{{ $t("There are no jobs running right now")}}</p>
-            <ion-button fill="outline" @click="refreshJobs()">
-              {{ $t('retry') }}
-              <ion-spinner v-if="isRetrying" name="crescent" />
-            </ion-button>
+            <div class="ion-text-center">
+              <ion-button fill="outline" @click="refreshJobs()">
+                {{ $t('retry') }}
+                <ion-spinner v-if="isRetrying" name="crescent" />
+              </ion-button>
+            </div>
           </div>
 
           <div v-else>
@@ -141,10 +145,12 @@
           <!-- Empty state -->
           <div v-if="jobHistory?.length === 0">
             <p class="ion-text-center">{{ $t("No jobs have run yet")}}</p>
-            <ion-button fill="outline" @click="refreshJobs()">
-              {{ $t('retry') }}
-              <ion-spinner v-if="isRetrying" name="crescent" />
-            </ion-button>
+            <div class="ion-text-center">
+              <ion-button fill="outline" @click="refreshJobs()">
+                {{ $t('retry') }}
+                <ion-spinner v-if="isRetrying" name="crescent" />
+              </ion-button>
+            </div>
           </div>
 
           <div v-else>
