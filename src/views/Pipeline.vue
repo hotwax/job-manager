@@ -32,10 +32,7 @@
           <div v-else>
             <ion-card v-for="job in pendingJobs" :key="job.jobId" @click="viewJobConfiguration(job)" :button="isDesktop">
               <ion-card-header>
-                <div> 
-                  <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
-                  <ion-card-title @click="copyToClipboard(job)">{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
-                </div>
+                <ion-card-title>{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
                 <ion-badge v-if="job.runTime" color="dark">{{ timeTillJob(job.runTime)}}</ion-badge>
               </ion-card-header>
 
@@ -54,11 +51,6 @@
                 <ion-label class="ion-text-wrap">{{ job.tempExprId ? temporalExpr(job.tempExprId)?.description : "🙃"  }}</ion-label>
               </ion-item>
 
-            <ion-item>
-              <ion-icon slot="start" :icon="codeWorkingOutline" />
-              <ion-label class="ion-text-wrap">{{ job.serviceName }}</ion-label>
-            </ion-item>
-
               <ion-item lines="full">
                 <ion-icon slot="start" :icon="refreshOutline" />
                 <ion-label class="ion-text-wrap">{{ job.currentRetryCount }}</ion-label>
@@ -69,9 +61,14 @@
                   <ion-button fill="clear" @click.stop="skipJob(job)">{{ $t("Skip") }}</ion-button>
                   <ion-button color="danger" fill="clear" @click.stop="cancelJob(job)">{{ $t("Cancel") }}</ion-button>
                 </div>
-                <ion-button fill="clear" color="medium" slot="end" @click.stop="viewJobHistory()">
-                  <ion-icon slot="icon-only" :icon="timeOutline" />
-                </ion-button>
+                <div>
+                  <ion-button fill="clear" color="medium" slot="end" @click.stop="copyToClipboard(job)">
+                    <ion-icon slot="icon-only" :icon="copyOutline" />
+                  </ion-button>
+                  <ion-button fill="clear" color="medium" slot="end" @click.stop="viewJobHistory()">
+                    <ion-icon slot="icon-only" :icon="timeOutline" />
+                  </ion-button>
+                </div>
               </div> 
             </ion-card>
             <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
@@ -94,7 +91,7 @@
               <ion-card-header>
                 <div>
                   <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
-                  <ion-card-title @click="copyToClipboard(job)">{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
+                  <ion-card-title>{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
                 </div>
                 <ion-badge color="dark">Running</ion-badge>
               </ion-card-header>
@@ -140,7 +137,7 @@
             <ion-card-header>
               <div>
                 <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
-                <ion-card-title @click="copyToClipboard(job)">{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
+                <ion-card-title>{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
               </div>
               <div>
                 <ion-badge v-if="job.runTime" color="dark">{{ timeTillJob(job.runTime)}}</ion-badge>
@@ -217,7 +214,7 @@ import {
   modalController
 } from "@ionic/vue";
 import JobConfiguration from '@/components/JobConfiguration.vue'
-import { codeWorkingOutline, refreshOutline, timeOutline, timerOutline } from "ionicons/icons";
+import { codeWorkingOutline, copyOutline, refreshOutline, timeOutline, timerOutline } from "ionicons/icons";
 import emitter from '@/event-bus';
 import JobHistoryModal from '@/components/JobHistoryModal.vue';
 import { Plugins } from '@capacitor/core';
@@ -427,6 +424,7 @@ export default defineComponent({
     const segmentSelected = ref('pending');
 
     return {
+      copyOutline,
       store,
       codeWorkingOutline,
       refreshOutline,
