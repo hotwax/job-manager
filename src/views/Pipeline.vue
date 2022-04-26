@@ -410,7 +410,7 @@ export default defineComponent({
     async updateSearchPreference(job: any) {
       const searchPreference = this.getSearchPreference
 
-      if(searchPreference?.searchPrefValue) {
+      if(searchPreference?.searchPrefId) {
         const searchPrefValue = {
           ...searchPreference?.searchPrefValue,
           [job?.systemJobEnumId]: searchPreference?.searchPrefValue[job?.systemJobEnumId] || !searchPreference?.searchPrefValue[job?.systemJobEnumId] ? !searchPreference?.searchPrefValue[job?.systemJobEnumId] : true
@@ -420,7 +420,14 @@ export default defineComponent({
           "searchPrefId": searchPreference?.searchPrefId,
           "searchPrefValue": searchPrefValue,
         }
-        this.store.dispatch('user/updateSearchPreference', payload)
+        this.store.dispatch('user/updateSearchPreference', payload);
+      } else {
+        const payload = {
+          searchPrefValue: {
+            [job?.systemJobEnumId]: true
+          }
+        }
+        this.store.dispatch('user/createSearchPreference', payload);
       }
     }
   },

@@ -64,7 +64,25 @@ const updateSearchPreference = async (payload: any): Promise<any> => {
   });
 }
 
+const createSearchPreference = async (payload: any): Promise<any> => {
+  return api({
+    url: "createSearchPreference",
+    method: "post",
+    data: payload
+  });
+}
+
+const createUserSearchPreference = async (payload: any): Promise<any> => {
+  return api({
+    url: "createUserSearchPreference",
+    method: "post",
+    data: payload
+  });
+}
+
 export const UserService = {
+    createSearchPreference,
+    createUserSearchPreference,
     login,
     getAvailableTimeZones,
     getEComStores,

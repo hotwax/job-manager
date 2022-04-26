@@ -185,6 +185,53 @@ const actions: ActionTree<UserState, RootState> = {
     }
 
     return resp;
+  },
+
+  /**
+   * Create search preference
+   */
+  async createSearchPreference({ commit, dispatch, state }, payload) {
+    let resp;
+    const user = state.current;
+
+    try{
+      resp = await UserService.createSearchPreference(payload);
+      if(resp.status === 200 && !hasError(resp)) {
+        const params = {
+          "searchPrefId": resp.data,
+          "userSearchPrefTypeId": "PINNED_JOB"
+        }
+
+        const userPreference = await dispatch('createUserSearchPreference', params);
+        if(userPreference) {
+          (user as any).searchPreference = {
+            "searchPrefId": resp.data,
+            "userSearchPrefTypeId": "PINNED_JOB"
+          }
+          commit(types.USER_INFO_UPDATED, user);
+
+        }
+      }
+    } catch(error) {
+      console.error(error);
+    }
+  },
+
+  /**
+   * Create user search preference
+   */
+
+  async createUserSearchPreference({ commit }, payload) {
+    let resp;
+
+    try{
+      resp = await UserService.createUserSearchPreference(payload);
+      if(resp.status === 200 && !hasError(resp)) {
+        return resp.data;
+      }
+    } catch(error) {
+      console.error(error);
+    }
   }
 }
 
