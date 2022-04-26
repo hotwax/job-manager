@@ -71,6 +71,10 @@ const actions: ActionTree<UserState, RootState> = {
         }, ...(stores ? stores : [])]
       })
 
+      await dispatch('getSearchPreferences').then((searchPreferences: any) => {
+        resp.data.searchPreferences = searchPreferences
+      })
+
       this.dispatch('util/getServiceStatusDesc')
 
       commit(types.USER_INFO_UPDATED, resp.data);
@@ -132,6 +136,35 @@ const actions: ActionTree<UserState, RootState> = {
 
   async setEComStore({ commit, dispatch }, payload) {
     commit(types.USER_CURRENT_ECOM_STORE_UPDATED, payload.store);
+  },
+
+  /**
+   * Get user search preferences
+   */
+
+  async getSearchPreferences({ state }) {
+    let resp;
+    const user = state?.current as any
+
+    try{
+      const payload = {
+        "inputFields": {
+          "userLoginId": user?.userLoginId,
+          "userSearchPrefTypeId": "PINNED_JOB"
+        },
+        "fieldList": ["searchPrefId", "searchPrefValue"],
+        "entityName": "UserAndSearchPreference",
+        "distinct": "Y",
+        "noConditionFind": "Y"
+      }
+      resp = await UserService.getSearchPreferences(payload);
+      if(resp.status === 200 && resp.data.docs?.length && !hasError(resp)) {
+        return resp.data.docs;
+      }
+    } catch(error) {
+      console.log(error);
+    }
+    return []
   }
 }
 
