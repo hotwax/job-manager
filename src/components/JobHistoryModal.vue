@@ -18,7 +18,7 @@
     <div v-else>
       <ion-item v-for="(job, index) in jobHistory" :key="index">
         <ion-label>{{ job.runTime ? getTime(job.runTime) : "-" }}</ion-label>
-        <ion-badge v-if="job.statusId" :color="job.statusId === 'SERVICE_FINISHED' ? 'success' : 'danger'">{{ job.statusDesc }}</ion-badge>
+        <ion-badge v-if="job.statusId" :color="job.statusId === 'SERVICE_FINISHED' ? 'success' : 'danger'">{{ getStatusDesc(job.statusId) }}</ion-badge>
       </ion-item>
     </div>
   </ion-content>
@@ -97,11 +97,7 @@ export default defineComponent({
           "orderBy": "runTime DESC"
         })
         if(resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
-          const jobs = resp.data.docs;
-          this.jobHistory = jobs.map((job: any) => {
-            job['statusDesc'] = this.getStatusDesc(job.statusId);
-            return job;
-          })
+          this.jobHistory = resp.data.docs;
         } else {
           this.jobHistory = [];
         }
