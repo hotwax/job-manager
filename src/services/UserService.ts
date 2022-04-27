@@ -58,7 +58,7 @@ const getSearchPreference = async (payload: any): Promise<any> => {
 
 const updateSearchPreference = async (payload: any): Promise<any> => {
   return api({
-    url: "updateSearchPreference",
+    url: "service/updateSearchPreference",
     method: "post",
     data: payload
   });
@@ -66,7 +66,7 @@ const updateSearchPreference = async (payload: any): Promise<any> => {
 
 const createSearchPreference = async (payload: any): Promise<any> => {
   return api({
-    url: "createSearchPreference",
+    url: "service/createSearchPreference",
     method: "post",
     data: payload
   });
@@ -74,7 +74,7 @@ const createSearchPreference = async (payload: any): Promise<any> => {
 
 const createUserSearchPreference = async (payload: any): Promise<any> => {
   return api({
-    url: "createUserSearchPreference",
+    url: "service/createUserSearchPreference",
     method: "post",
     data: payload
   });
