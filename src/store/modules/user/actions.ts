@@ -72,7 +72,7 @@ const actions: ActionTree<UserState, RootState> = {
       })
 
       this.dispatch('util/getServiceStatusDesc')
-      await dispatch('getSearchPreference').then((searchPreference: any) => {
+      await dispatch('getSearchPreference', resp.data?.userLoginId).then((searchPreference: any) => {
         resp.data.searchPreference = searchPreference
       })
 
@@ -141,14 +141,14 @@ const actions: ActionTree<UserState, RootState> = {
    * Get user search preferences
    */
 
-  async getSearchPreference({ commit, state }) {
+  async getSearchPreference({ commit, state }, payload) {
     let resp;
     const user = state?.current as any
 
     try{
-      const payload = {
+      const params = {
         "inputFields": {
-          "userLoginId": user?.userLoginId,
+          "userLoginId": payload ? payload : user?.userLoginId,
           "userSearchPrefTypeId": "PINNED_JOB"
         },
         "fieldList": ["searchPrefId", "searchPrefValue"],
@@ -156,7 +156,7 @@ const actions: ActionTree<UserState, RootState> = {
         "distinct": "Y",
         "noConditionFind": "Y"
       }
-      resp = await UserService.getSearchPreference(payload);
+      resp = await UserService.getSearchPreference(params);
       if(resp.status === 200 && resp.data.docs?.length && !hasError(resp)) {
         return resp.data.docs[0];
       }
