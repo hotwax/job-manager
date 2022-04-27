@@ -70,8 +70,8 @@ const actions: ActionTree<UserState, RootState> = {
           storeName: "None"
         }, ...(stores ? stores : [])]
       })
-      await dispatch('getSearchPreference');
 
+      this.dispatch('util/getServiceStatusDesc')
       await dispatch('getSearchPreference').then((searchPreference: any) => {
         resp.data.searchPreference = searchPreference
       })
