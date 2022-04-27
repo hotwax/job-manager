@@ -27,7 +27,7 @@
         <ion-item lines="none">
           <ion-label class="ion-text-wrap">
             <p class="overline">{{ instanceUrl }}</p>
-            {{ eComStore }}
+            {{ eComStore.storeName }}
           </ion-label>
           <ion-note slot="end">{{ userProfile.userTimeZone }}</ion-note>
         </ion-item>
