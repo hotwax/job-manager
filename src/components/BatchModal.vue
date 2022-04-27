@@ -17,7 +17,7 @@
     </ion-item>
     <div class="ion-padding ion-text-center">
       <h4>{{ $t("Schedule run time") }}</h4>
-      <ion-datetime :value="currentBatch?.runTime ? getDateTime(currentBatch.runTime) : ''" @ionChange="updateRunTime($event, currentBatch)" placeholder="date picker" presentation="time" size="cover" />
+      <ion-datetime :value="currentBatch?.runTime ? getDateTime(currentBatch.runTime) : ''" @ionChange="updateRunTime($event, currentBatch)" presentation="time" size="cover" />
     </div>    
 
     <ion-fab vertical="bottom" horizontal="end" slot="fixed" @click="updateJob()">
