@@ -319,17 +319,21 @@ const actions: ActionTree<JobState, RootState> = {
     job?.runTime && (payload['SERVICE_TIME'] = job.runTime.toString())
 
     try {
-      resp = await JobService.scheduleJob({ ...job.runtimeData, ...payload });
-      if (resp.status == 200 && !hasError(resp)) {
-        showToast(translate('Service has been scheduled'))
-        dispatch('fetchJobs', {
-          inputFields: {
-            'systemJobEnumId': payload.systemJobEnumId,
-            'systemJobEnumId_op': 'equals'
-          }
-        })
+      if(payload.jobFields?.productStoreId) {
+        resp = await JobService.scheduleJob({ ...job.runtimeData, ...payload });
+        if (resp.status == 200 && !hasError(resp)) {
+          showToast(translate('Service has been scheduled'))
+          dispatch('fetchJobs', {
+            inputFields: {
+              'systemJobEnumId': payload.systemJobEnumId,
+              'systemJobEnumId_op': 'equals'
+            }
+          })
+        } else {
+          showToast(translate('Something went wrong'))
+        }
       } else {
-        showToast(translate('Something went wrong'))
+        showToast(translate('Please select product store before scheduling the job.'))
       }
     } catch (err) {
       showToast(translate('Something went wrong'))
