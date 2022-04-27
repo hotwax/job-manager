@@ -411,21 +411,34 @@ export default defineComponent({
       const searchPreference = this.getSearchPreference
 
       if(searchPreference?.searchPrefId) {
-        const searchPrefValue = {
-          ...searchPreference?.searchPrefValue,
-          [job?.systemJobEnumId]: searchPreference?.searchPrefValue[job?.systemJobEnumId] || !searchPreference?.searchPrefValue[job?.systemJobEnumId] ? !searchPreference?.searchPrefValue[job?.systemJobEnumId] : true
-        }
+        let searchPrefValues = [];
+        
+        if(searchPreference?.searchPrefValue) {
+          searchPrefValues = searchPreference?.searchPrefValue.split(',');
+          const preference = searchPrefValues.find((pref: any) => {
+            if(pref.includes(job?.systemJobEnumId)) return pref;
+          })
 
+          if(preference) {
+            const searchPreference = `${job?.systemJobEnumId}: ${preference.split(" ")[1] === 'true' ? 'false' : 'true'}`
+            searchPrefValues[searchPrefValues.indexOf(preference)] = searchPreference;
+          } else {
+            const searchPreference = `${job?.systemJobEnumId}: 'true'}`
+            searchPrefValues.push(searchPreference)
+          }
+        } else {
+          const searchPreference = `${job?.systemJobEnumId}: 'true'}`
+          searchPrefValues.push(searchPreference)
+        }
+        
         const payload = {
           "searchPrefId": searchPreference?.searchPrefId,
-          "searchPrefValue": searchPrefValue,
+          "searchPrefValue": searchPrefValues.toString(),
         }
         this.store.dispatch('user/updateSearchPreference', payload);
       } else {
         const payload = {
-          searchPrefValue: {
-            [job?.systemJobEnumId]: true
-          }
+          searchPrefValue: `${job?.systemJobEnumId}: true`
         }
         this.store.dispatch('user/createSearchPreference', payload);
       }

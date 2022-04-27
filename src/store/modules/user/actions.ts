@@ -70,12 +70,11 @@ const actions: ActionTree<UserState, RootState> = {
           storeName: "None"
         }, ...(stores ? stores : [])]
       })
+      await dispatch('getSearchPreference');
 
       await dispatch('getSearchPreference').then((searchPreference: any) => {
         resp.data.searchPreference = searchPreference
       })
-
-      this.dispatch('util/getServiceStatusDesc')
 
       commit(types.USER_INFO_UPDATED, resp.data);
     }
@@ -142,7 +141,7 @@ const actions: ActionTree<UserState, RootState> = {
    * Get user search preferences
    */
 
-  async getSearchPreference({ state }) {
+  async getSearchPreference({ commit, state }) {
     let resp;
     const user = state?.current as any
 
@@ -162,7 +161,7 @@ const actions: ActionTree<UserState, RootState> = {
         return resp.data.docs[0];
       }
     } catch(error) {
-      console.log(error);
+      console.error(error);
     }
     return {}
   },
@@ -170,15 +169,17 @@ const actions: ActionTree<UserState, RootState> = {
   /**
    * Update user's search preference
    */
-  async updateSearchPreference({ commit, state }, payload) {
+  async updateSearchPreference({ commit, dispatch, state }, payload) {
     let resp;
-    const user = state.current;
+    const user = state?.current as any
 
     try{
       resp = await UserService.updateSearchPreference(payload);
       if(resp.status === 200 && !hasError(resp)) {
-        (user as any).searchPreference = payload;
-        commit(types.USER_INFO_UPDATED, user);
+        await dispatch('getSearchPreference').then((searchPreference: any) => {
+          user.searchPreference = searchPreference
+          commit(types.USER_INFO_UPDATED, user);
+        })
       }
     } catch(error) {
       console.error(error);
@@ -192,24 +193,24 @@ const actions: ActionTree<UserState, RootState> = {
    */
   async createSearchPreference({ commit, dispatch, state }, payload) {
     let resp;
-    const user = state.current;
+    const user = state?.current as any
 
     try{
       resp = await UserService.createSearchPreference(payload);
       if(resp.status === 200 && !hasError(resp)) {
-        const params = {
-          "searchPrefId": resp.data,
-          "userSearchPrefTypeId": "PINNED_JOB"
-        }
-
-        const userPreference = await dispatch('createUserSearchPreference', params);
-        if(userPreference) {
-          (user as any).searchPreference = {
-            "searchPrefId": resp.data,
-            "userSearchPrefTypeId": "PINNED_JOB"
+        if(resp.data?.searchPrefId) {
+          const params = {
+            "searchPrefId": resp.data?.searchPrefId,
+            "userSearchPrefTypeId": "PINNED_JOB",
           }
-          commit(types.USER_INFO_UPDATED, user);
-
+          
+          const userPreference = await dispatch('createUserSearchPreference', params);
+          if(userPreference) {
+            await dispatch('getSearchPreference').then((searchPreference: any) => {
+              user.searchPreference = searchPreference
+              commit(types.USER_INFO_UPDATED, user);
+            })
+          }
         }
       }
     } catch(error) {
