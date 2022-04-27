@@ -247,14 +247,14 @@ export default defineComponent({
       this.title = title
       this.currentJobStatus = status
       this.freqType = id && this.jobFrequencyType[id]
-
+      
       // if job runTime is not a valid date then making runTime as empty
       if (this.currentJob?.runTime && !isFutureDate(this.currentJob?.runTime)) {
         this.currentJob.runTime = ''
       }
-
+      this.store.dispatch('job/currentJobUpdated', this.currentJob)
       if(!this.isDesktop) {
-        this.router.push({name: 'JobDetails', params: {job: JSON.stringify(this.currentJob), title: this.title, status: this.currentJobStatus, type: this.freqType}});
+        this.router.push({name: 'JobDetails', params: { title: this.title, status: this.currentJobStatus, type: this.freqType, jobId: this.currentJob.jobId, category: "orders"}});
         return;
       }
       if (this.currentJob && !this.isJobDetailAnimationCompleted) {

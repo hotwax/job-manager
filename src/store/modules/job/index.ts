@@ -22,9 +22,9 @@ const jobModule: Module<JobState, RootState> = {
         total: 0
       },
       temporalExp: [],
-      enumIds: {}
+      enumIds: {},
+      current: {},
     },
-    current: {},
     getters,
     actions,
     mutations,

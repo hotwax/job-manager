@@ -8,7 +8,7 @@
     </ion-header>
 
     <ion-content>
-      <JobConfiguration :title="this.title" :job="currentJob" :status="status" :type="type" :key="currentJob"/>
+      <JobConfiguration :title="this.title" :job="currentJob" :status="this.status" :type="this.type" :key="currentJob"/>
     </ion-content>
   </ion-page>
 </template>
@@ -24,7 +24,7 @@ import {
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import JobConfiguration from '@/components/JobConfiguration.vue';
-
+import { mapGetters } from "vuex";
 export default defineComponent({
   name: 'JobDetails',
   components: {
@@ -36,16 +36,11 @@ export default defineComponent({
     IonToolbar,
     JobConfiguration
   },
-  props: ["job", "title", "status", "type"],
-  data(){
-    return{
-      currentJob: JSON.parse((this as any).$route.params.job)
-    }
-  },
-  mounted(){
-    console.log(this.job, this.title, this.status, this.type)
-    console.log(this.$route)
-    console.log(this.currentJob)
+  props:['title', 'status', 'type'],
+  computed:{
+    ...mapGetters({
+      currentJob: 'job/getCurrentJob'
+    }),
   }
 });
 </script>

@@ -257,7 +257,7 @@ const actions: ActionTree<JobState, RootState> = {
     }
     return resp;
   },
-  async updateJob ({ dispatch }, job) {
+  async updateJob ({ commit, dispatch }, job) {
     let resp;
 
     const payload = {
@@ -276,12 +276,13 @@ const actions: ActionTree<JobState, RootState> = {
       resp = await JobService.updateJob(payload)
       if (resp.status === 200 && !hasError(resp) && resp.data.successMessage) {
         showToast(translate('Service updated successfully'))
-        dispatch('fetchJobs', {
+        const jobs = await dispatch('fetchJobs', {
           inputFields: {
             'systemJobEnumId': payload.systemJobEnumId,
             'systemJobEnumId_op': 'equals'
           }
         })
+        commit(types.JOB_CURRENT_UPDATED, jobs[payload.systemJobEnumId]);
       } else {
         showToast(translate('Something went wrong'))
       }
@@ -456,8 +457,8 @@ const actions: ActionTree<JobState, RootState> = {
     }
     return resp;
   },
-  setCurrent({commit}){
-    
+  currentJobUpdated({ commit }, payload){
+    commit(types.JOB_CURRENT_UPDATED, payload);
   }
 }
 export default actions;

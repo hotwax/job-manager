@@ -397,10 +397,12 @@ export default defineComponent({
       this.currentJobStatus = job.tempExprId
       const id = Object.entries(this.jobEnums).find((enums) => enums[1] == job.systemJobEnumId) as any
       this.freqType = id && (Object.entries(this.jobFrequencyType).find((freq) => freq[0] == id[0]) as any)[1]
+      this.store.dispatch('job/currentJobUpdated', this.currentJob)
       if(!this.isDesktop) {
-        this.router.push({name: 'JobDetails', params: {job: JSON.stringify(this.currentJob), title: this.title, status: this.currentJobStatus, type: this.freqType}});
+        this.router.push({name: 'JobDetails', params: { title: this.title, status: this.currentJobStatus, type: this.freqType, jobId: this.currentJob.jobId, category: "pipeline"}});
         return;
       }
+
       if (this.currentJob && !this.isJobDetailAnimationCompleted) {
         emitter.emit('playAnimation');
         this.isJobDetailAnimationCompleted = true;
