@@ -51,7 +51,6 @@
         <ion-input :placeholder="$t('occurrences')" v-model="count"/>
       </ion-item> -->
     </ion-list>
-
     <div class="actions desktop-only">
       <div>
         <ion-button size="small" fill="outline" color="medium" :disabled="status === 'SERVICE_DRAFT'" @click="skipJob(job)">{{ $t("Skip once") }}</ion-button>
@@ -63,9 +62,9 @@
     </div>
 
     <div class=" actions mobile-only">
-      <ion-button size="small" fill="outline" color="medium" :disabled="status === 'SERVICE_DRAFT'" @click="skipJob(job)">{{ $t("Skip once") }}</ion-button>
-      <ion-button size="small" fill="outline" color="danger" :disabled="status === 'SERVICE_DRAFT'" @click="cancelJob(job)">{{ $t("Disable") }}</ion-button>
-      <ion-button expand="block" fill="outline" @click="saveChanges()">{{ $t("Save changes") }}</ion-button>
+      <ion-button size="small" expand="block" fill="outline" color="medium" :disabled="status === 'SERVICE_DRAFT'" @click="skipJob(job)">{{ $t("Skip once") }}</ion-button>
+      <ion-button size="small" expand="block" fill="outline" color="danger" :disabled="status === 'SERVICE_DRAFT'" @click="cancelJob(job)">{{ $t("Disable") }}</ion-button>
+      <ion-button expand="block" @click="saveChanges()">{{ $t("Save changes") }}</ion-button>
     </div>
   </section>
 </template>
@@ -93,6 +92,7 @@ import {
   syncOutline,
   personCircleOutline
 } from "ionicons/icons";
+import { showToast } from "@/utils";
 import { mapGetters, useStore } from "vuex";
 import { translate } from "@/i18n";
 import { DateTime } from 'luxon';
@@ -178,7 +178,9 @@ export default defineComponent({
             text: this.$t('Skip'),
             handler: () => {
               if (job) {
-                this.store.dispatch('job/skipJob', job)
+                this.store.dispatch('job/skipJob', job).then(() => {
+                  showToast(translate("This job has been skipped!"))
+                })
               }
             }
           }],
@@ -196,7 +198,9 @@ export default defineComponent({
           }, {
             text: this.$t('Cancel'),
             handler: () => {
-              this.store.dispatch('job/cancelJob', job);
+              this.store.dispatch('job/cancelJob', job).then(() => {
+                showToast(translate("This job has been canceled!"))
+              });
             }
           }],
         });
@@ -212,8 +216,10 @@ export default defineComponent({
             role: 'cancel'
           }, {
             text: this.$t('Save'),
-            handler: () => {
-              this.updateJob();
+            handler:  () => {
+              this.updateJob().then(() => {
+                showToast(translate("The changes have been saved!"))
+              });
             }
           }]
         });
