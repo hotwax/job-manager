@@ -39,6 +39,7 @@
 <script lang="ts">
 import {
   IonContent,
+  IonFooter,
   IonHeader,
   IonIcon,
   IonItem,
@@ -46,6 +47,7 @@ import {
   IonList,
   IonMenu,
   IonMenuToggle,
+  IonNote,
   IonTitle,
   IonToolbar
 } from "@ionic/vue";
@@ -57,6 +59,7 @@ export default defineComponent({
   name: "Menu",
   components: {
     IonContent,
+    IonFooter,
     IonHeader,
     IonIcon,
     IonItem,
@@ -64,6 +67,7 @@ export default defineComponent({
     IonList,
     IonMenu,
     IonMenuToggle,
+    IonNote,
     IonTitle,
     IonToolbar
   },
