@@ -27,6 +27,12 @@
           <!-- Empty state -->
           <div v-if="pendingJobs?.length === 0">
             <p class="ion-text-center">{{ $t("There are no jobs pending right now")}}</p>
+            <div class="ion-text-center">
+              <ion-button fill="outline" @click="refreshJobs()">
+                {{ $t('retry') }}
+                <ion-spinner v-if="isRetrying" name="crescent" />
+              </ion-button>
+            </div>
           </div>
 
           <div v-else>
@@ -84,6 +90,12 @@
           <!-- Empty state -->
           <div v-if="runningJobs?.length === 0">
             <p class="ion-text-center">{{ $t("There are no jobs running right now")}}</p>
+            <div class="ion-text-center">
+              <ion-button fill="outline" @click="refreshJobs()">
+                {{ $t('retry') }}
+                <ion-spinner v-if="isRetrying" name="crescent" />
+              </ion-button>
+            </div>
           </div>
 
           <div v-else>
@@ -130,6 +142,12 @@
           <!-- Empty state -->
           <div v-if="jobHistory?.length === 0">
             <p class="ion-text-center">{{ $t("No jobs have run yet")}}</p>
+            <div class="ion-text-center">
+              <ion-button fill="outline" @click="refreshJobs()">
+                {{ $t('retry') }}
+                <ion-spinner v-if="isRetrying" name="crescent" />
+              </ion-button>
+            </div>
           </div>
 
           <div v-else>
@@ -210,6 +228,7 @@ import {
   alertController,
   IonSegment,
   IonSegmentButton,
+  IonSpinner,
   isPlatform,
   modalController
 } from "@ionic/vue";
@@ -242,6 +261,7 @@ export default defineComponent({
     IonInfiniteScrollContent,
     IonSegment,
     IonSegmentButton,
+    IonSpinner,
     JobConfiguration
   },
   data() {
@@ -259,7 +279,8 @@ export default defineComponent({
       currentJobStatus: '',
       freqType: '' as any,
       isJobDetailAnimationCompleted: false,
-      isDesktop: isPlatform('desktop')
+      isDesktop: isPlatform('desktop'),
+      isRetrying: false
     }
   },
   computed: {
@@ -315,12 +336,22 @@ export default defineComponent({
       })
     },
     async refreshJobs(event: any) {
+      this.isRetrying = true;
       if(this.segmentSelected === 'pending') {
-        this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => { event.target.complete() });
+        this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => {
+          if(event) event.target.complete();
+          this.isRetrying = false;
+        });
       } else if(this.segmentSelected === 'running') {
-        this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => { event.target.complete() });
+        this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => {
+          if(event) event.target.complete();
+          this.isRetrying = false;
+        });
       } else {
-        this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => { event.target.complete() });
+        this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => {
+          if(event) event.target.complete();
+          this.isRetrying = false;
+        });
       }
     },
     segmentChanged (e: CustomEvent) {
