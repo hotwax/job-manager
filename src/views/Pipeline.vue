@@ -286,7 +286,7 @@ export default defineComponent({
       await Clipboard.write({
         string: jobDetails
       }).then(() => {
-        showToast(this.$t('Job details copied'));
+        showToast(this.$t("Copied job details to clipboard"));
       })
     },
     async viewJobHistory() {
