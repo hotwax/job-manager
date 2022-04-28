@@ -71,7 +71,7 @@
                   <ion-button fill="clear" color="medium" @click.stop="copyJobInformation(job)">
                     <ion-icon slot="icon-only" :icon="copyOutline" />
                   </ion-button>
-                  <ion-button fill="clear" color="medium" slot="end" @click.stop="viewJobHistory()">
+                  <ion-button fill="clear" color="medium" slot="end" @click.stop="viewJobHistory(job)">
                     <ion-icon slot="icon-only" :icon="timeOutline" />
                   </ion-button>
                 </div>
@@ -310,9 +310,10 @@ export default defineComponent({
         showToast(this.$t("Copied job details to clipboard"));
       })
     },
-    async viewJobHistory() {
+    async viewJobHistory(job: any) {
       const jobHistoryModal = await modalController.create({
-        component: JobHistoryModal
+        component: JobHistoryModal,
+        componentProps: { currentJob: job }
       });
       return jobHistoryModal.present();
     },
