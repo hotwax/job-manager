@@ -109,6 +109,7 @@
   "Reroutes": "Reroutes",
   "Reserve for completed orders": "Reserve for completed orders",
   "Reserving inventory for completed orders allows POS sales to accurately deduct inventory in HotWax Commerce.": "Reserving inventory for completed orders allows POS sales to accurately deduct inventory in HotWax Commerce.",
+  "retry": "retry",
   "Returns": "Returns",
   "Routing": "Routing",
   "Run daily": "Run daily",
