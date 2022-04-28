@@ -62,7 +62,7 @@
                   <ion-button color="danger" fill="clear" @click.stop="cancelJob(job)">{{ $t("Cancel") }}</ion-button>
                 </div>
                 <div>
-                  <ion-button fill="clear" color="medium" @click.stop="copyToClipboard(job)">
+                  <ion-button fill="clear" color="medium" @click.stop="copyJobInformation(job)">
                     <ion-icon slot="icon-only" :icon="copyOutline" />
                   </ion-button>
                   <ion-button fill="clear" color="medium" slot="end" @click.stop="viewJobHistory()">
@@ -279,7 +279,7 @@ export default defineComponent({
     })
   },
   methods: {
-    async copyToClipboard(job: any) {
+    async copyJobInformation(job: any) {
       const { Clipboard } = Plugins;
       const jobDetails = `jobId: ${job.jobId}, jobName: ${this.getEnumName(job.systemJobEnumId)}, jobDescription: ${this.getEnumDescription(job.systemJobEnumId)}`;
 
