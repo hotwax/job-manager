@@ -89,8 +89,8 @@ export default defineComponent({
       this.currentBatch = this.getJob(this.enum)?.find((job: any) => job.id === this.id)
       this.jobName = this.currentBatch?.jobName
     },
-    getDateTime(time: any) {
-      return DateTime.fromMillis(time)
+    getDateTime() {
+      return DateTime.now().set({ hour: 14,  minute: 0, second: 40 });
     },
     closeModal() {
       modalController.dismiss({ dismissed: true });
