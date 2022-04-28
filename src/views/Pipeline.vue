@@ -68,7 +68,7 @@
                   <ion-button color="danger" fill="clear" @click.stop="cancelJob(job)">{{ $t("Cancel") }}</ion-button>
                 </div>
                 <div>
-                  <ion-button fill="clear" color="medium" slot="end">
+                  <ion-button fill="clear" color="medium" @click.stop="copyJobInformation(job)">
                     <ion-icon slot="icon-only" :icon="copyOutline" />
                   </ion-button>
                   <ion-button fill="clear" color="medium" slot="end" @click.stop="viewJobHistory()">
@@ -236,6 +236,8 @@ import JobConfiguration from '@/components/JobConfiguration.vue'
 import { codeWorkingOutline, copyOutline, refreshOutline, timeOutline, timerOutline } from "ionicons/icons";
 import emitter from '@/event-bus';
 import JobHistoryModal from '@/components/JobHistoryModal.vue';
+import { Plugins } from '@capacitor/core';
+import { showToast } from '@/utils'
 
 export default defineComponent({
   name: "Pipeline",
@@ -298,6 +300,16 @@ export default defineComponent({
     })
   },
   methods: {
+    async copyJobInformation(job: any) {
+      const { Clipboard } = Plugins;
+      const jobDetails = `jobId: ${job.jobId}, jobName: ${this.getEnumName(job.systemJobEnumId)}, jobDescription: ${this.getEnumDescription(job.systemJobEnumId)}`;
+
+      await Clipboard.write({
+        string: jobDetails
+      }).then(() => {
+        showToast(this.$t("Copied job details to clipboard"));
+      })
+    },
     async viewJobHistory() {
       const jobHistoryModal = await modalController.create({
         component: JobHistoryModal
