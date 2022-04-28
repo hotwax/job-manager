@@ -22,12 +22,24 @@
         </ion-menu-toggle>
       </ion-list>
     </ion-content>
+    <ion-footer>
+      <ion-toolbar>
+        <ion-item lines="none">
+          <ion-label class="ion-text-wrap">
+            <p class="overline">{{ instanceUrl }}</p>
+            {{ eComStore.storeName }}
+          </ion-label>
+          <ion-note slot="end">{{ userProfile?.userTimeZone }}</ion-note>
+        </ion-item>
+      </ion-toolbar>
+    </ion-footer>
   </ion-menu>
 </template>
 
 <script lang="ts">
 import {
   IonContent,
+  IonFooter,
   IonHeader,
   IonIcon,
   IonItem,
@@ -35,6 +47,7 @@ import {
   IonList,
   IonMenu,
   IonMenuToggle,
+  IonNote,
   IonTitle,
   IonToolbar
 } from "@ionic/vue";
@@ -46,6 +59,7 @@ export default defineComponent({
   name: "Menu",
   components: {
     IonContent,
+    IonFooter,
     IonHeader,
     IonIcon,
     IonItem,
@@ -53,6 +67,7 @@ export default defineComponent({
     IonList,
     IonMenu,
     IonMenuToggle,
+    IonNote,
     IonTitle,
     IonToolbar
   },
@@ -66,6 +81,9 @@ export default defineComponent({
     ...mapGetters({
       isUserAuthenticated: 'user/isUserAuthenticated',
       currentFacility: 'user/getCurrentFacility',
+      eComStore: 'user/getCurrentEComStore',
+      instanceUrl: 'user/getInstanceUrl',
+      userProfile: 'user/getUserProfile'
     })
   },
   watch:{
