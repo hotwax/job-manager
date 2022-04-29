@@ -88,8 +88,13 @@ const actions: ActionTree<JobState, RootState> = {
     await JobService.fetchJobInformation({
       "inputFields": {
         "productStoreId": payload.eComStoreId,
-        "statusId": ["SERVICE_RUNNING", "SERVICE_QUEUED"],
-        "systemJobEnumId_op": "not-empty"
+        "systemJobEnumId_op": "not-empty",
+        "statusId_fld0_value": "SERVICE_RUNNING",
+        "statusId_fld0_op": "equals",
+        "statusId_fld0_grp": "1",
+        "statusId_fld1_value": "SERVICE_QUEUED",
+        "statusId_fld1_op": "equals",
+        "statusId_fld1_grp": "2",
       },
       "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName" ],
       "entityName": "JobSandbox",

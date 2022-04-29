@@ -173,7 +173,7 @@
               <ion-label class="ion-text-wrap">
                 {{ job.runTime ? getTime(job.runTime) : "-"  }}
               </ion-label>
-              <ion-note slot="end">{{ job.statusId == "SERVICE_CANCELLED" || job.statusId == "SERVICE_CRASHED" ? getRunTime(job.startDateTime, job.cancelDateTime) : getRunTime(job.startDateTime, job.finishDateTime) }}</ion-note>
+              <ion-note slot="end">{{ job.statusId == "SERVICE_CANCELLED" || job.statusId == "SERVICE_CRASHED" ? getJobExecutionTime(job.startDateTime, job.cancelDateTime) : getJobExecutionTime(job.startDateTime, job.finishDateTime) }}</ion-note>
             </ion-item>
 
             <ion-item>
@@ -305,7 +305,7 @@ export default defineComponent({
     })
   },
   methods: {
-    getRunTime(startTime: any, endTime: any){
+    getJobExecutionTime(startTime: any, endTime: any){
       if (startTime && endTime) {
         return DateTime.fromMillis(endTime).diff( DateTime.fromMillis(startTime)).toFormat("hh:mm:ss")
       } else {
