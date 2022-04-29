@@ -46,7 +46,7 @@ const actions: ActionTree<JobState, RootState> = {
         "statusId_op": "in",
         "systemJobEnumId_op": "not-empty"
       },
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId", "cancelDateTime", "finishDateTime" ],
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId", "cancelDateTime", "finishDateTime", "startDateTime" ],
       "entityName": "JobSandbox",
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
@@ -88,7 +88,7 @@ const actions: ActionTree<JobState, RootState> = {
     await JobService.fetchJobInformation({
       "inputFields": {
         "productStoreId": payload.eComStoreId,
-        "statusId": "SERVICE_RUNNING",
+        "statusId": ["SERVICE_RUNNING", "SERVICE_QUEUED"],
         "systemJobEnumId_op": "not-empty"
       },
       "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName" ],
@@ -148,7 +148,7 @@ const actions: ActionTree<JobState, RootState> = {
           if(payload.viewIndex && payload.viewIndex > 0){
             jobs = state.pending.list.concat(resp.data.docs);
           }
-          
+
           commit(types.JOB_PENDING_UPDATED, { jobs, total });
           const tempExprList = [] as any;
           const enumIds = [] as any;
