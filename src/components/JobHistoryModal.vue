@@ -16,10 +16,12 @@
     </div>
 
     <div v-else>
-      <ion-item v-for="(job, index) in jobHistory" :key="index">
-        <ion-label>{{ job.runTime ? getTime(job.runTime) : "-" }}</ion-label>
-        <ion-badge v-if="job.statusId" :color="job.statusId === 'SERVICE_FINISHED' ? 'success' : 'danger'">{{ getStatusDesc(job.statusId) }}</ion-badge>
-      </ion-item>
+      <ion-list>
+        <ion-item v-for="(job, index) in jobHistory" :key="index">
+          <ion-label>{{ job.runTime ? getTime(job.runTime) : "-" }}</ion-label>
+          <ion-badge v-if="job.statusId" :color="job.statusId === 'SERVICE_FINISHED' ? 'success' : 'danger'">{{ getStatusDesc(job.statusId) }}</ion-badge>
+        </ion-item>
+      </ion-list>
     </div>
   </ion-content>
 </template>
@@ -77,7 +79,7 @@ export default defineComponent({
       modalController.dismiss({ dismissed: true });
     },
     getTime (time: any) {
-      return DateTime.fromMillis(time).toLocaleString(DateTime.TIME_SIMPLE);
+      return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
     },
     async fetchJobHistory() {
       let resp;
