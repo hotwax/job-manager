@@ -96,7 +96,7 @@ const actions: ActionTree<JobState, RootState> = {
         "statusId_fld1_op": "equals",
         "statusId_fld1_grp": "2",
       },
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName" ],
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId" ],
       "entityName": "JobSandbox",
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
@@ -110,7 +110,9 @@ const actions: ActionTree<JobState, RootState> = {
           if(payload.viewIndex && payload.viewIndex > 0){
             jobs = state.running.list.concat(resp.data.docs);
           }
-          
+          jobs.map((job: any) => {
+            job['statusDesc'] = this.state.util.statusDesc[job.statusId];
+          })
           commit(types.JOB_RUNNING_UPDATED, { jobs, total });
           const tempExprList = [] as any;
           const enumIds = [] as any;

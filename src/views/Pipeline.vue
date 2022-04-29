@@ -105,7 +105,7 @@
                   <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
                   <ion-card-title>{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
                 </div>
-                <ion-badge color="dark">Running</ion-badge>
+                <ion-badge color="dark">{{ job.statusDesc }}</ion-badge>
               </ion-card-header>
 
               <ion-item lines="none">
@@ -307,10 +307,17 @@ export default defineComponent({
   methods: {
     getJobExecutionTime(startTime: any, endTime: any){
       if (startTime && endTime) {
-        return DateTime.fromMillis(endTime).diff( DateTime.fromMillis(startTime)).toFormat("hh:mm:ss")
-      } else {
-        return
+        const timeDiff = DateTime.fromMillis(endTime).diff( DateTime.fromMillis(startTime))
+        const hours =  timeDiff.hours
+        const minutes = timeDiff.minutes
+        const seconds =  timeDiff
+        let format = ""
+        if(hours) format += "hh 'hr' "
+        if(minutes) format += "mm 'min' "
+        if(seconds) format += "ss 'sec'"
+        if (format) return timeDiff.toFormat(format);
       }
+      return
     },
     async copyJobInformation(job: any) {
       const { Clipboard } = Plugins;
