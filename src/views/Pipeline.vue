@@ -158,7 +158,7 @@
                 <ion-card-title>{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
               </div>
               <div>
-                <ion-badge v-if="job.cancelDateTime || job.finishDateTime" color="dark">{{ job.statusDesc == "Cancelled" || job.statusDesc == "Crashed" ?  timeTillJob(job.cancelDateTime) : timeTillJob(job.finishDateTime) }}</ion-badge>
+                <ion-badge v-if="job.cancelDateTime || job.finishDateTime" color="dark">{{ job.statusId == "SERVICE_CANCELLED" || job.statusId == "SERVICE_CRASHED" ?  timeTillJob(job.cancelDateTime) : timeTillJob(job.finishDateTime) }}</ion-badge>
                 <ion-badge v-if="job.statusId" :color="job.statusId === 'SERVICE_FINISHED' ? 'success' : 'danger'">{{ job.statusDesc }}</ion-badge>
               </div>
             </ion-card-header>
