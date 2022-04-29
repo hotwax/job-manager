@@ -199,6 +199,28 @@
         </aside>
       </main>
     </ion-content>
+
+    <ion-footer>
+      <ion-toolbar>
+        <ion-title>Pinned jobs</ion-title>
+        <ion-chip slot="end" outline>
+          <ion-label>enum name</ion-label>
+          <ion-icon :icon="closeCircleOutline" />
+        </ion-chip>
+        <ion-chip slot="end" outline>
+          <ion-label>enum name</ion-label>
+          <ion-icon :icon="closeCircleOutline" />
+        </ion-chip>
+        <ion-chip slot="end" outline>
+          <ion-label>enum name</ion-label>
+          <ion-icon :icon="closeCircleOutline" />
+        </ion-chip>
+        <ion-chip slot="end" outline>
+          <ion-label>enum name</ion-label>
+          <ion-icon :icon="closeCircleOutline" />
+        </ion-chip>
+      </ion-toolbar>  
+    </ion-footer>
   </ion-page>
 </template>
 <script lang="ts">
@@ -233,7 +255,7 @@ import {
   modalController
 } from "@ionic/vue";
 import JobConfiguration from '@/components/JobConfiguration.vue'
-import { codeWorkingOutline, copyOutline, refreshOutline, timeOutline, timerOutline } from "ionicons/icons";
+import { closeCircleOutline, codeWorkingOutline, copyOutline, refreshOutline, timeOutline, timerOutline } from "ionicons/icons";
 import emitter from '@/event-bus';
 import JobHistoryModal from '@/components/JobHistoryModal.vue';
 import { Plugins } from '@capacitor/core';
@@ -456,6 +478,7 @@ export default defineComponent({
     const segmentSelected = ref('pending');
 
     return {
+      closeCircleOutline,
       copyOutline,
       store,
       codeWorkingOutline,
