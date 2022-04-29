@@ -158,7 +158,7 @@
                 <ion-card-title>{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
               </div>
               <div>
-                <ion-badge v-if="job.runTime" color="dark">{{ timeTillJob(job.runTime)}}</ion-badge>
+                <ion-badge v-if="job.cancelDateTime || job.finishDateTime" color="dark">{{ job.statusDesc == "Cancelled" || job.statusDesc == "Crashed" ?  timeTillJob(job.cancelDateTime) : timeTillJob(job.finishDateTime) }}</ion-badge>
                 <ion-badge v-if="job.statusId" :color="job.statusId === 'SERVICE_FINISHED' ? 'success' : 'danger'">{{ job.statusDesc }}</ion-badge>
               </div>
             </ion-card-header>
@@ -318,7 +318,7 @@ export default defineComponent({
       return jobHistoryModal.present();
     },
     getTime (time: any) {
-      return DateTime.fromMillis(time).toLocaleString(DateTime.TIME_SIMPLE);
+      return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
     },
     timeTillJob (time: any) {
       const timeDiff = DateTime.fromMillis(time).diff(DateTime.local());
