@@ -45,7 +45,7 @@ const actions: ActionTree<JobState, RootState> = {
         "statusId_op": "in",
         "systemJobEnumId_op": "not-empty"
       } as any,
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId" ],
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId", "cancelDateTime", "finishDateTime", "startDateTime" ],
       "entityName": "JobSandbox",
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
@@ -95,10 +95,15 @@ const actions: ActionTree<JobState, RootState> = {
 
     const params = {
       "inputFields": {
-        "statusId": "SERVICE_RUNNING",
-        "systemJobEnumId_op": "not-empty"
+        "systemJobEnumId_op": "not-empty",
+        "statusId_fld0_value": "SERVICE_RUNNING",
+        "statusId_fld0_op": "equals",
+        "statusId_fld0_grp": "1",
+        "statusId_fld1_value": "SERVICE_QUEUED",
+        "statusId_fld1_op": "equals",
+        "statusId_fld1_grp": "2",
       } as any,
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName" ],
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId" ],
       "entityName": "JobSandbox",
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
@@ -120,7 +125,9 @@ const actions: ActionTree<JobState, RootState> = {
           if(payload.viewIndex && payload.viewIndex > 0){
             jobs = state.running.list.concat(resp.data.docs);
           }
-          
+          jobs.map((job: any) => {
+            job['statusDesc'] = this.state.util.statusDesc[job.statusId];
+          })
           commit(types.JOB_RUNNING_UPDATED, { jobs, total });
           const tempExprList = [] as any;
           const enumIds = [] as any;
@@ -170,7 +177,6 @@ const actions: ActionTree<JobState, RootState> = {
           if(payload.viewIndex && payload.viewIndex > 0){
             jobs = state.pending.list.concat(resp.data.docs);
           }
-          
           commit(types.JOB_PENDING_UPDATED, { jobs, total });
           const tempExprList = [] as any;
           const enumIds = [] as any;
