@@ -93,7 +93,7 @@
             <div class="ion-text-center">
               <ion-button fill="outline" @click="refreshJobs()">
                 {{ $t('retry') }}
-                <ion-spinner v-if="isRetrying" name="crescent" />
+                <ion-spinner slot="end" v-if="isRetrying" name="crescent" />
               </ion-button>
             </div>
           </div>
