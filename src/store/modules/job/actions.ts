@@ -39,9 +39,10 @@ const actions: ActionTree<JobState, RootState> = {
   },
 
   async fetchJobHistory({ commit, dispatch, state }, payload){ 
-    await JobService.fetchJobInformation({
+    const params = {
       "inputFields": {
-        "productStoreId": payload.eComStoreId,
+        "productStoreId": payload.eComStoreId ? payload.eComStoreId : "",
+        "productStoreId_op": payload.eComStoreId ? "not-empty" : "empty",
         "statusId": ["SERVICE_CANCELLED", "SERVICE_CRASHED", "SERVICE_FAILED", "SERVICE_FINISHED"],
         "statusId_op": "in",
         "systemJobEnumId_op": "not-empty"
@@ -52,7 +53,9 @@ const actions: ActionTree<JobState, RootState> = {
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
       "orderBy": "runTime DESC"
-    }).then((resp) => {
+    }
+
+    await JobService.fetchJobInformation(params).then((resp) => {
       if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
         if (resp.data.docs) {
           const total = resp.data.count;
@@ -85,9 +88,10 @@ const actions: ActionTree<JobState, RootState> = {
   },
 
   async fetchRunningJobs({ commit, dispatch, state }, payload){
-    await JobService.fetchJobInformation({
+    const params = {
       "inputFields": {
-        "productStoreId": payload.eComStoreId,
+        "productStoreId": payload.eComStoreId ? payload.eComStoreId : "",
+        "productStoreId_op": payload.eComStoreId ? "not-empty" : "empty",
         "systemJobEnumId_op": "not-empty",
         "statusId_fld0_value": "SERVICE_RUNNING",
         "statusId_fld0_op": "equals",
@@ -102,7 +106,9 @@ const actions: ActionTree<JobState, RootState> = {
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
       "orderBy": "runTime DESC"
-    }).then((resp) => {
+    } 
+
+    await JobService.fetchJobInformation(params).then((resp) => {
       if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
         if (resp.data.docs) {
           const total = resp.data.count;
@@ -135,9 +141,10 @@ const actions: ActionTree<JobState, RootState> = {
   },
 
   async fetchPendingJobs({ commit, dispatch, state }, payload){
-    await JobService.fetchJobInformation({
+    const params = {
       "inputFields": {
-        "productStoreId": payload.eComStoreId,
+        "productStoreId": payload.eComStoreId ? payload.eComStoreId : "",
+        "productStoreId_op": payload.eComStoreId ? "not-empty" : "empty",
         "statusId": "SERVICE_PENDING",
         "systemJobEnumId_op": "not-empty"
       },
@@ -147,7 +154,9 @@ const actions: ActionTree<JobState, RootState> = {
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
       "orderBy": "runTime ASC"
-    }).then((resp) => {
+    }
+
+    await JobService.fetchJobInformation(params).then((resp) => {
       if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
         if (resp.data.docs) {
           const total = resp.data.count;
