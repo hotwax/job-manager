@@ -27,7 +27,9 @@
         <ion-item lines="none">
           <ion-label class="ion-text-wrap">
             <p class="overline">{{ instanceUrl }}</p>
-            {{ eComStore.storeName }}
+            <ion-select interface="popover" :value="eComStore.productStoreId" @ionChange="setEComStore($event)">
+              <ion-select-option v-for="store in (userProfile ? userProfile.stores : [])" :key="store.productStoreId" :value="store.productStoreId" >{{ store.storeName }}</ion-select-option>
+            </ion-select>
           </ion-label>
           <ion-note slot="end">{{ userProfile?.userTimeZone }}</ion-note>
         </ion-item>
@@ -48,6 +50,8 @@ import {
   IonMenu,
   IonMenuToggle,
   IonNote,
+  IonSelect,
+  IonSelectOption,
   IonTitle,
   IonToolbar
 } from "@ionic/vue";
@@ -68,6 +72,8 @@ export default defineComponent({
     IonMenu,
     IonMenuToggle,
     IonNote,
+    IonSelect,
+    IonSelectOption,
     IonTitle,
     IonToolbar
   },
@@ -85,6 +91,15 @@ export default defineComponent({
       instanceUrl: 'user/getInstanceUrl',
       userProfile: 'user/getUserProfile'
     })
+  },
+  methods: {
+    setEComStore(store: any) {
+      if(this.userProfile) {
+        this.store.dispatch('user/setEcomStore', {
+          'eComStore': this.userProfile.stores.find((str: any) => str.productStoreId == store['detail'].value)
+        })
+      }
+    },
   },
   watch:{
     $route (to) {
