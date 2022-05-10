@@ -43,7 +43,8 @@ const actions: ActionTree<JobState, RootState> = {
       "inputFields": {
         "statusId": ["SERVICE_CANCELLED", "SERVICE_CRASHED", "SERVICE_FAILED", "SERVICE_FINISHED"],
         "statusId_op": "in",
-        "systemJobEnumId_op": "not-empty"
+        "systemJobEnumId_op": "not-empty",
+        "productStoreId": this.state.user.currentEComStore.productStoreId
       } as any,
       "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId", "cancelDateTime", "finishDateTime", "startDateTime" ],
       "entityName": "JobSandbox",
@@ -102,6 +103,7 @@ const actions: ActionTree<JobState, RootState> = {
         "statusId_fld1_value": "SERVICE_QUEUED",
         "statusId_fld1_op": "equals",
         "statusId_fld1_grp": "2",
+        "productStoreId": this.state.user.currentEComStore.productStoreId
       } as any,
       "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId" ],
       "entityName": "JobSandbox",
@@ -153,7 +155,8 @@ const actions: ActionTree<JobState, RootState> = {
     const params = {
       "inputFields": {
         "statusId": "SERVICE_PENDING",
-        "systemJobEnumId_op": "not-empty"
+        "systemJobEnumId_op": "not-empty",
+        "productStoreId": this.state.user.currentEComStore.productStoreId
       } as any,
       "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId" ],
       "entityName": "JobSandbox",
@@ -233,6 +236,7 @@ const actions: ActionTree<JobState, RootState> = {
       "inputFields":{
         "statusId": ['SERVICE_DRAFT', 'SERVICE_PENDING'],
         "statusId_op": "in",
+        "productStoreId": this.state.user.currentEComStore.productStoreId,
         ...payload.inputFields
       },
       "entityName": "JobSandbox",
