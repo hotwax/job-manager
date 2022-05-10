@@ -303,7 +303,7 @@ const actions: ActionTree<JobState, RootState> = {
     const payload = {
       'jobId': job.jobId,
       'systemJobEnumId': job.systemJobEnumId,
-      'recurrenceTimeZone': DateTime.now().zoneName,
+      'recurrenceTimeZone': this.state.user.current.userTimeZone,
       'tempExprId': job.jobStatus,
       'statusId': "SERVICE_PENDING"
     } as any
@@ -346,7 +346,7 @@ const actions: ActionTree<JobState, RootState> = {
         'maxRecurrenceCount': '-1',
         'parentJobId': job.parentJobId,
         'runAsUser': 'system', // default system, but empty in run now
-        'recurrenceTimeZone': DateTime.now().zoneName
+        'recurrenceTimeZone': this.state.user.current.userTimeZone
       },
       'shopifyConfigId': this.state.user.shopifyConfig,
       'statusId': "SERVICE_PENDING",
@@ -405,7 +405,7 @@ const actions: ActionTree<JobState, RootState> = {
       'jobId': job.jobId,
       'runTime': updatedRunTime,
       'systemJobEnumId': job.systemJobEnumId,
-      'recurrenceTimeZone': DateTime.now().zoneName,
+      'recurrenceTimeZone': this.state.user.current.userTimeZone,
       'statusId': "SERVICE_PENDING"
     } as any
 
@@ -428,7 +428,7 @@ const actions: ActionTree<JobState, RootState> = {
         'systemJobEnumId': job.systemJobEnumId,
         'tempExprId': job.jobStatus,
         'parentJobId': job.parentJobId,
-        'recurrenceTimeZone': DateTime.now().zoneName
+        'recurrenceTimeZone': this.state.user.current.userTimeZone
       },
       'shopifyConfigId': this.state.user.shopifyConfig,
       'statusId': "SERVICE_PENDING",
@@ -474,7 +474,7 @@ const actions: ActionTree<JobState, RootState> = {
         jobId: job.jobId,
         systemJobEnumId: job.systemJobEnumId,
         statusId: "SERVICE_CANCELLED",
-        recurrenceTimeZone: DateTime.now().zoneName,
+        recurrenceTimeZone: this.state.user.current.userTimeZone,
         cancelDateTime: DateTime.now().toMillis()
       });
       if (resp.status == 200 && !hasError(resp)) {
