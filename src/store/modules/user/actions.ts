@@ -80,7 +80,8 @@ const actions: ActionTree<UserState, RootState> = {
   /**
    * update current eComStore information
    */
-  async setEcomStore({ commit }, payload) {
+  async setEcomStore({ commit, dispatch }, payload) {
+    dispatch('job/clearJobState', null, { root: true });
     commit(types.USER_CURRENT_ECOM_STORE_UPDATED, payload.eComStore);
   },
   /**
