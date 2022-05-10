@@ -100,8 +100,8 @@
                 <ion-icon :icon="addCircleOutline" slot="end" />
               </ion-button>
             </ion-item-divider>
-            <ion-item v-for="batch in getJob(jobEnums['BTCH_BRKR_ORD'])" :key="batch.id" button detail @click="editBatch(batch.id)" v-show="batch.status === 'SERVICE_PENDING'">
-              <ion-label class="ion-text-wrap">{{ batch.jobName }}</ion-label>
+            <ion-item v-for="batch in getJob(jobEnums['BTCH_BRKR_ORD'])" :key="batch?.id" button detail @click="editBatch(batch?.id)" v-show="batch?.status === 'SERVICE_PENDING'">
+              <ion-label class="ion-text-wrap">{{ batch?.jobName }}</ion-label>
               <ion-note slot="end">{{ batch?.runTime ? getTime(batch.runTime) : '' }}</ion-note>
             </ion-item>
           </ion-card>

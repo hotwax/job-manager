@@ -39,20 +39,27 @@ const actions: ActionTree<JobState, RootState> = {
   },
 
   async fetchJobHistory({ commit, dispatch, state }, payload){ 
-    await JobService.fetchJobInformation({
+    const params = {
       "inputFields": {
-        "productStoreId": payload.eComStoreId,
         "statusId": ["SERVICE_CANCELLED", "SERVICE_CRASHED", "SERVICE_FAILED", "SERVICE_FINISHED"],
         "statusId_op": "in",
         "systemJobEnumId_op": "not-empty"
-      },
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId" ],
+      } as any,
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId", "cancelDateTime", "finishDateTime", "startDateTime" ],
       "entityName": "JobSandbox",
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
       "orderBy": "runTime DESC"
-    }).then((resp) => {
+    }
+
+    if (payload.eComStoreId) {
+      params.inputFields["productStoreId"] = payload.eComStoreId
+    } else {
+      params.inputFields["productStoreId_op"] = "empty"
+    }
+
+    await JobService.fetchJobInformation(params).then((resp) => {
       if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
         if (resp.data.docs) {
           const total = resp.data.count;
@@ -85,19 +92,32 @@ const actions: ActionTree<JobState, RootState> = {
   },
 
   async fetchRunningJobs({ commit, dispatch, state }, payload){
-    await JobService.fetchJobInformation({
+
+    const params = {
       "inputFields": {
-        "productStoreId": payload.eComStoreId,
-        "statusId": "SERVICE_RUNNING",
-        "systemJobEnumId_op": "not-empty"
-      },
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName" ],
+        "systemJobEnumId_op": "not-empty",
+        "statusId_fld0_value": "SERVICE_RUNNING",
+        "statusId_fld0_op": "equals",
+        "statusId_fld0_grp": "1",
+        "statusId_fld1_value": "SERVICE_QUEUED",
+        "statusId_fld1_op": "equals",
+        "statusId_fld1_grp": "2",
+      } as any,
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId" ],
       "entityName": "JobSandbox",
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
       "orderBy": "runTime DESC"
-    }).then((resp) => {
+    }
+
+    if (payload.eComStoreId) {
+      params.inputFields["productStoreId"] = payload.eComStoreId
+    } else {
+      params.inputFields["productStoreId_op"] = "empty"
+    }
+
+    await JobService.fetchJobInformation(params).then((resp) => {
       if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
         if (resp.data.docs) {
           const total = resp.data.count;
@@ -105,7 +125,9 @@ const actions: ActionTree<JobState, RootState> = {
           if(payload.viewIndex && payload.viewIndex > 0){
             jobs = state.running.list.concat(resp.data.docs);
           }
-          
+          jobs.map((job: any) => {
+            job['statusDesc'] = this.state.util.statusDesc[job.statusId];
+          })
           commit(types.JOB_RUNNING_UPDATED, { jobs, total });
           const tempExprList = [] as any;
           const enumIds = [] as any;
@@ -128,27 +150,38 @@ const actions: ActionTree<JobState, RootState> = {
   },
 
   async fetchPendingJobs({ commit, dispatch, state }, payload){
-    await JobService.fetchJobInformation({
+    const params = {
       "inputFields": {
-        "productStoreId": payload.eComStoreId,
         "statusId": "SERVICE_PENDING",
         "systemJobEnumId_op": "not-empty"
-      },
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount" ],
+      } as any,
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId" ],
       "entityName": "JobSandbox",
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
       "orderBy": "runTime ASC"
-    }).then((resp) => {
+    }
+
+    if(payload.eComStoreId) {
+      params.inputFields["productStoreId"] = payload.eComStoreId
+    } else {
+      params.inputFields["productStoreId_op"] = "empty"
+    }
+
+    await JobService.fetchJobInformation(params).then((resp) => {
       if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
         if (resp.data.docs) {
           const total = resp.data.count;
-          let jobs = resp.data.docs;
+          let jobs = resp.data.docs.map((job: any) => {
+            return {
+              ...job,
+              'status': job?.statusId
+            }
+          })
           if(payload.viewIndex && payload.viewIndex > 0){
             jobs = state.pending.list.concat(resp.data.docs);
           }
-          
           commit(types.JOB_PENDING_UPDATED, { jobs, total });
           const tempExprList = [] as any;
           const enumIds = [] as any;
@@ -198,13 +231,20 @@ const actions: ActionTree<JobState, RootState> = {
   async fetchJobs ({ state, commit, dispatch }, payload) {
     const resp = await JobService.fetchJobInformation({
       "inputFields":{
-        "statusId": ['SERVICE_DRAFT', 'SERVICE_PENDING'],
-        "statusId_op": "in",
+        "statusId_fld0_value": "SERVICE_DRAFT",
+        "statusId_fld0_op": "equals",
+        "statusId_fld0_grp": "1",
+        "statusId_fld1_value": "SERVICE_PENDING",
+        "statusId_fld1_op": "equals",
+        "statusId_fld1_grp": "2",
+        "productStoreId_fld0_value": this.state.user.currentEComStore.productStoreId,
+        "productStoreId_fld0_op": "equals",
+        "productStoreId_fld0_grp": "2",
         ...payload.inputFields
       },
       "entityName": "JobSandbox",
       "noConditionFind": "Y",
-      "viewSize": (payload.inputFields?.systemJobEnumId?.length * 2)
+      "viewSize": (payload.inputFields?.systemJobEnumId?.length * 3)
     })
     if (resp.status === 200 && !hasError(resp) && resp.data.docs) {
       const cached = JSON.parse(JSON.stringify(state.cached));
@@ -263,7 +303,7 @@ const actions: ActionTree<JobState, RootState> = {
     const payload = {
       'jobId': job.jobId,
       'systemJobEnumId': job.systemJobEnumId,
-      'recurrenceTimeZone': DateTime.now().zoneName,
+      'recurrenceTimeZone': this.state.user.current.userTimeZone,
       'tempExprId': job.jobStatus,
       'statusId': "SERVICE_PENDING"
     } as any
@@ -307,7 +347,7 @@ const actions: ActionTree<JobState, RootState> = {
         'maxRecurrenceCount': '-1',
         'parentJobId': job.parentJobId,
         'runAsUser': 'system', // default system, but empty in run now
-        'recurrenceTimeZone': DateTime.now().zoneName
+        'recurrenceTimeZone': this.state.user.current.userTimeZone
       },
       'shopifyConfigId': this.state.user.shopifyConfig,
       'statusId': "SERVICE_PENDING",
@@ -366,7 +406,7 @@ const actions: ActionTree<JobState, RootState> = {
       'jobId': job.jobId,
       'runTime': updatedRunTime,
       'systemJobEnumId': job.systemJobEnumId,
-      'recurrenceTimeZone': DateTime.now().zoneName,
+      'recurrenceTimeZone': this.state.user.current.userTimeZone,
       'statusId': "SERVICE_PENDING"
     } as any
 
@@ -389,7 +429,7 @@ const actions: ActionTree<JobState, RootState> = {
         'systemJobEnumId': job.systemJobEnumId,
         'tempExprId': job.jobStatus,
         'parentJobId': job.parentJobId,
-        'recurrenceTimeZone': DateTime.now().zoneName
+        'recurrenceTimeZone': this.state.user.current.userTimeZone
       },
       'shopifyConfigId': this.state.user.shopifyConfig,
       'statusId': "SERVICE_PENDING",
@@ -435,7 +475,7 @@ const actions: ActionTree<JobState, RootState> = {
         jobId: job.jobId,
         systemJobEnumId: job.systemJobEnumId,
         statusId: "SERVICE_CANCELLED",
-        recurrenceTimeZone: DateTime.now().zoneName,
+        recurrenceTimeZone: this.state.user.current.userTimeZone,
         cancelDateTime: DateTime.now().toMillis()
       });
       if (resp.status == 200 && !hasError(resp)) {
