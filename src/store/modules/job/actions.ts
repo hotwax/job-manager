@@ -231,13 +231,20 @@ const actions: ActionTree<JobState, RootState> = {
   async fetchJobs ({ state, commit, dispatch }, payload) {
     const resp = await JobService.fetchJobInformation({
       "inputFields":{
-        "statusId": ['SERVICE_DRAFT', 'SERVICE_PENDING'],
-        "statusId_op": "in",
+        "statusId_fld0_value": "SERVICE_DRAFT",
+        "statusId_fld0_op": "equals",
+        "statusId_fld0_grp": "1",
+        "statusId_fld1_value": "SERVICE_PENDING",
+        "statusId_fld1_op": "equals",
+        "statusId_fld1_grp": "2",
+        "productStoreId_fld0_value": this.state.user.currentEComStore.productStoreId,
+        "productStoreId_fld0_op": "equals",
+        "productStoreId_fld0_grp": "2",
         ...payload.inputFields
       },
       "entityName": "JobSandbox",
       "noConditionFind": "Y",
-      "viewSize": (payload.inputFields?.systemJobEnumId?.length * 2)
+      "viewSize": (payload.inputFields?.systemJobEnumId?.length * 3)
     })
     if (resp.status === 200 && !hasError(resp) && resp.data.docs) {
       const cached = JSON.parse(JSON.stringify(state.cached));
@@ -296,7 +303,7 @@ const actions: ActionTree<JobState, RootState> = {
     const payload = {
       'jobId': job.jobId,
       'systemJobEnumId': job.systemJobEnumId,
-      'recurrenceTimeZone': DateTime.now().zoneName,
+      'recurrenceTimeZone': this.state.user.current.userTimeZone,
       'tempExprId': job.jobStatus,
       'statusId': "SERVICE_PENDING"
     } as any
@@ -339,7 +346,7 @@ const actions: ActionTree<JobState, RootState> = {
         'maxRecurrenceCount': '-1',
         'parentJobId': job.parentJobId,
         'runAsUser': 'system', // default system, but empty in run now
-        'recurrenceTimeZone': DateTime.now().zoneName
+        'recurrenceTimeZone': this.state.user.current.userTimeZone
       },
       'shopifyConfigId': this.state.user.shopifyConfig,
       'statusId': "SERVICE_PENDING",
@@ -398,7 +405,7 @@ const actions: ActionTree<JobState, RootState> = {
       'jobId': job.jobId,
       'runTime': updatedRunTime,
       'systemJobEnumId': job.systemJobEnumId,
-      'recurrenceTimeZone': DateTime.now().zoneName,
+      'recurrenceTimeZone': this.state.user.current.userTimeZone,
       'statusId': "SERVICE_PENDING"
     } as any
 
@@ -421,7 +428,7 @@ const actions: ActionTree<JobState, RootState> = {
         'systemJobEnumId': job.systemJobEnumId,
         'tempExprId': job.jobStatus,
         'parentJobId': job.parentJobId,
-        'recurrenceTimeZone': DateTime.now().zoneName
+        'recurrenceTimeZone': this.state.user.current.userTimeZone
       },
       'shopifyConfigId': this.state.user.shopifyConfig,
       'statusId': "SERVICE_PENDING",
@@ -467,7 +474,7 @@ const actions: ActionTree<JobState, RootState> = {
         jobId: job.jobId,
         systemJobEnumId: job.systemJobEnumId,
         statusId: "SERVICE_CANCELLED",
-        recurrenceTimeZone: DateTime.now().zoneName,
+        recurrenceTimeZone: this.state.user.current.userTimeZone,
         cancelDateTime: DateTime.now().toMillis()
       });
       if (resp.status == 200 && !hasError(resp)) {
