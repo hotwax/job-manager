@@ -499,6 +499,37 @@ const actions: ActionTree<JobState, RootState> = {
   },
   currentJobUpdated({ commit }, payload){
     commit(types.JOB_CURRENT_UPDATED, payload);
+  },
+  async getCurrentJob({ commit, state }, payload) {
+    const currentJob = state.current;
+    if (payload.jobId === currentJob.jobId) {
+      commit(types.JOB_CURRENT_UPDATED, currentJob);
+      return currentJob;
+    }
+
+    let resp;
+    try {
+      const params = {
+        "inputFields": {
+          "jobId": payload?.jobId,
+          "systemJobEnumId_op": "not-empty"
+        } as any,
+        "fieldList": ["systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId"],
+        "entityName": "JobSandbox",
+        "noConditionFind": "Y"
+      }
+      resp = await JobService.fetchJobInformation(params);
+      if(resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
+        const currentJob = {
+          ...resp.data.docs[0],
+          'status': resp.data.docs[0]?.statusId 
+        }
+        commit(types.JOB_CURRENT_UPDATED, currentJob);
+        return currentJob;
+      }
+    } catch (err) {
+      console.error(err);
+    }
   }
 }
 export default actions;
