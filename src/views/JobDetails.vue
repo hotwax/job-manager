@@ -66,7 +66,7 @@ export default defineComponent({
   },
   mounted() {
     this.store.dispatch('job/getCurrentJob', { jobId: this.$route.params.jobId }).then((job: any) => {
-      if(job?.lobId) {
+      if(job?.jobId) {
         this.viewJobConfiguration(job);
       }
     })

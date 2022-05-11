@@ -500,7 +500,7 @@ const actions: ActionTree<JobState, RootState> = {
   currentJobUpdated({ commit }, payload){
     commit(types.JOB_CURRENT_UPDATED, payload);
   },
-  async getCurrentJob({ commit, state }, payload) {
+  async getCurrentJob({ commit, state, dispatch }, payload) {
     const currentJob = state.current;
     if (payload.jobId === currentJob.jobId) {
       commit(types.JOB_CURRENT_UPDATED, currentJob);
@@ -525,6 +525,13 @@ const actions: ActionTree<JobState, RootState> = {
           'status': resp.data.docs[0]?.statusId 
         }
         commit(types.JOB_CURRENT_UPDATED, currentJob);
+
+        const enumIds = [] as any;
+        resp.data.docs.map((item: any) => {
+          enumIds.push(item.systemJobEnumId);
+        })
+        await dispatch('fetchJobDescription', enumIds);
+
         return currentJob;
       }
     } catch (err) {
