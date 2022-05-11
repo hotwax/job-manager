@@ -384,18 +384,27 @@ export default defineComponent({
         this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => {
           if(event) event.target.complete();
           this.isRetrying = false;
+          emitter.off("selectedShop",this.refreshJobs);
+        }).catch(()=>{
+          this.isRetrying = false;
         });
       } else if(this.segmentSelected === 'running') {
         this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => {
           if(event) event.target.complete();
+          this.isRetrying = false;
+          emitter.off("selectedShop",this.refreshJobs);
+        }).catch(()=>{
           this.isRetrying = false;
         });
       } else {
         this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => {
           if(event) event.target.complete();
           this.isRetrying = false;
+          emitter.off("selectedShop",this.refreshJobs);
+        }).catch(()=>{
+          this.isRetrying = false;
         });
-      }
+      } 
     },
     segmentChanged (e: CustomEvent) {
       this.segmentSelected = e.detail.value
@@ -480,6 +489,7 @@ export default defineComponent({
   },
   created() {
     this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0});
+    emitter.on("selectedShop", this.refreshJobs);
   },
   setup() {
     const store = useStore();

@@ -59,6 +59,7 @@ import { defineComponent, ref } from "vue";
 import { mapGetters } from "vuex";
 import { pulseOutline, calendarNumberOutline, ticketOutline, albumsOutline, shirtOutline, settings, iceCreamOutline } from "ionicons/icons";
 import { useStore } from "@/store";
+import emitter from "@/event-bus"
 export default defineComponent({
   name: "Menu",
   components: {
@@ -99,6 +100,7 @@ export default defineComponent({
           'eComStore': this.userProfile.stores.find((str: any) => str.productStoreId == store['detail'].value)
         })
       }
+      emitter.emit("selectedShop", store)
     },
   },
   watch:{
