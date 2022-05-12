@@ -101,8 +101,20 @@
               </ion-button>
             </ion-item-divider>
             <ion-item v-for="batch in getJob(jobEnums['BTCH_BRKR_ORD'])" :key="batch?.id" button detail @click="editBatch(batch?.id)" v-show="batch?.status === 'SERVICE_PENDING'">
-              <ion-label class="ion-text-wrap">{{ batch?.jobName }}</ion-label>
-              <ion-note slot="end">{{ batch?.runTime ? getTime(batch.runTime) : '' }}</ion-note>
+
+              <ion-item-sliding>
+                
+                  <ion-label class="ion-text-wrap">{{ batch?.jobName }}</ion-label>
+                  <ion-note slot="end">{{ batch?.runTime ? getTime(batch.runTime) : '' }}</ion-note>
+                  <ion-item>
+                  <ion-item-options>
+                    <ion-item-option color="danger">
+                    <ion-icon @click="confirmDelete" class="delete-icon" slot="end" :icon="trash"></ion-icon>
+                    </ion-item-option>
+                  </ion-item-options>
+                </ion-item>
+              </ion-item-sliding>
+
             </ion-item>
           </ion-card>
         </section>
@@ -128,9 +140,12 @@ import {
   IonInput,
   IonItem,
   IonItemDivider,
+  IonItemSliding,
   IonLabel,
   IonMenuButton,
   IonNote,
+  IonItemOption,
+  IonItemOptions,
   IonPage,
   IonTitle,
   IonToggle,
@@ -138,7 +153,7 @@ import {
   modalController
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
-import { addCircleOutline } from 'ionicons/icons';
+import { addCircleOutline, trash } from 'ionicons/icons';
 import BatchModal from '@/components/BatchModal.vue';
 import { useStore } from "@/store";
 import { mapGetters } from "vuex";
@@ -159,10 +174,13 @@ export default defineComponent({
     IonIcon,
     IonInput,
     IonItem,
+    IonItemSliding,
     IonItemDivider,
     IonLabel,
     IonMenuButton,
     IonNote,
+    IonItemOption,
+    IonItemOptions,
     IonPage,
     IonTitle,
     IonToggle,
@@ -282,6 +300,33 @@ export default defineComponent({
         });
 
       return jobAlert.present();
+    },
+
+    async confirmDelete() {
+      const alert = await alertController
+        .create({
+          cssClass: 'my-custom-class',
+          message: 'Confirm delete batch?',
+          buttons: [
+            {
+              text: 'Cancel',
+              role: 'cancel',
+              cssClass: 'secondary',
+              id: 'cancel-button',
+              handler: blah => {
+                console.log('Confirm Cancel:', blah)
+              },
+            },
+            {
+              text: 'Yes',
+              id: 'confirm-button',
+              handler: () => {
+                console.log('Confirm Okay')
+              },
+            },
+          ],
+        });
+      return alert.present();
     }
   },
   mounted () {
@@ -297,8 +342,15 @@ export default defineComponent({
 
     return {
       addCircleOutline,
-      store
+      store,
+      trash,
     };
   },
 });
 </script>
+
+<style scoped>
+  .delete-icon {
+    text-transform: none;
+  }
+</style>
