@@ -282,15 +282,21 @@ export default defineComponent({
         });
 
       return jobAlert.present();
+    },
+    fetchJobs(){
+      this.store.dispatch("job/fetchJobs", {
+        "inputFields":{
+          "systemJobEnumId": Object.values(this.jobEnums),
+          "systemJobEnumId_op": "in"
+        }
+      });
     }
   },
   mounted () {
-    this.store.dispatch("job/fetchJobs", {
-      "inputFields":{
-        "systemJobEnumId": Object.values(this.jobEnums),
-        "systemJobEnumId_op": "in"
-      }
-    });
+    emitter.on("selectedShop", this.fetchJobs);
+  },
+  unmounted(){
+    emitter.off("selectedShop", this.fetchJobs);
   },
   setup() {
     const store = useStore();

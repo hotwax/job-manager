@@ -207,12 +207,10 @@ export default defineComponent({
     }
   },
   mounted () {
-    this.store.dispatch("job/fetchJobs", {
-      "inputFields":{
-        "systemJobEnumId": Object.values(this.jobEnums),
-        "systemJobEnumId_op": "in"
-      }
-    })
+    emitter.on("selectedShop", this.fetchJobs);
+  },
+  unmounted(){
+    emitter.off("selectedShop", this.fetchJobs);
   },
   computed: {
     ...mapGetters({
@@ -295,6 +293,14 @@ export default defineComponent({
       if (job) {
         job.runTime = DateTime.fromISO(ev['detail'].value).toMillis()
       }
+    },
+    fetchJobs(){
+      this.store.dispatch("job/fetchJobs", {
+        "inputFields":{
+          "systemJobEnumId": Object.values(this.jobEnums),
+          "systemJobEnumId_op": "in"
+        }
+      });
     }
   },
   setup() {
