@@ -70,7 +70,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, toRefs, watch } from "vue";
 import {
   IonBadge,
   IonButton,
@@ -258,10 +258,16 @@ export default defineComponent({
     }
   },
   setup(props) {
+    const { title } = toRefs(props);
     const customPopoverOptions: any = {
-      header: props?.title,
+      header: '' as any,
       showBackdrop: false
     }
+
+    watch(title, (newTitle) => {
+      customPopoverOptions.header = newTitle;
+    })
+
     const store = useStore();
     return {
       calendarClearOutline,
