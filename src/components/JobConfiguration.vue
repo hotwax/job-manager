@@ -259,7 +259,7 @@ export default defineComponent({
   },
   setup(props) {
     const customPopoverOptions: any = {
-      header: props.title,
+      header: props?.title,
       showBackdrop: false
     }
     const store = useStore();
