@@ -221,7 +221,7 @@
       <ion-toolbar>
         <ion-title>Pinned jobs</ion-title>
         <ion-chip v-for="(job, index) in searchPreferences" :key="index" slot="end" outline>
-          <ion-label>{{ getEnumName(job) }}</ion-label>
+          <ion-label>{{ getEnumName(job.systemJobEnumId) }}</ion-label>
           <ion-icon :icon="closeCircleOutline" />
         </ion-chip>
       </ion-toolbar>  
