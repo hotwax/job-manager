@@ -68,7 +68,7 @@
                   <ion-button color="danger" fill="clear" @click.stop="cancelJob(job)">{{ $t("Cancel") }}</ion-button>
                 </div>
                 <div>
-                  <ion-button fill="clear" color="medium" slot="end" @click.stop="updateSearchPreference(job)">
+                  <ion-button fill="clear" color="medium" slot="end" @click.stop="updateSearchPreference(job?.systemJobEnumId)">
                     <ion-icon slot="icon-only" :icon="starOutline" />
                   </ion-button>
                   <ion-button fill="clear" color="medium" @click.stop="copyJobInformation(job)">
@@ -220,9 +220,9 @@
     <ion-footer>
       <ion-toolbar>
         <ion-title>Pinned jobs</ion-title>
-        <ion-chip v-for="(job, index) in searchPreferences" :key="index" slot="end" outline>
-          <ion-label>{{ getEnumName(job.systemJobEnumId) }}</ion-label>
-          <ion-icon :icon="closeCircleOutline" />
+        <ion-chip v-for="(prefJob, index) in searchPreferences" :key="index" slot="end" outline>
+          <ion-label>{{ getEnumName(prefJob) }}</ion-label>
+          <ion-icon @click="updateSearchPreference(prefJob)" :icon="closeCircleOutline" />
         </ion-chip>
       </ion-toolbar>  
     </ion-footer>
@@ -496,53 +496,27 @@ export default defineComponent({
         this.isJobDetailAnimationCompleted = true;
       }
     },
-    async updateSearchPreference(job: any) {
-      const searchPreference = this.getSearchPreference
-
-      if(searchPreference?.searchPrefId) {
-        let searchPrefValues = [];
-        
-        if(searchPreference?.searchPrefValue) {
-          searchPrefValues = searchPreference?.searchPrefValue.split(',');
-          const preference = searchPrefValues.find((pref: any) => {
-            if(pref.includes(job?.systemJobEnumId)) return pref;
-          })
-
-          if(preference) {
-            const searchPreference = `${job?.systemJobEnumId}: ${preference.split(" ")[1] === 'true' ? 'false' : 'true'}`
-            searchPrefValues[searchPrefValues.indexOf(preference)] = searchPreference;
-          } else {
-            const searchPreference = `${job?.systemJobEnumId}: 'true'}`
-            searchPrefValues.push(searchPreference)
-          }
-        } else {
-          const searchPreference = `${job?.systemJobEnumId}: 'true'}`
-          searchPrefValues.push(searchPreference)
-        }
-        
+    async updateSearchPreference(enumId: any) {
+      if(this.getSearchPreference?.searchPrefId) {
         const payload = {
-          "searchPrefId": searchPreference?.searchPrefId,
-          "searchPrefValue": searchPrefValues.toString(),
+          "searchPrefId": this.getSearchPreference?.searchPrefId,
+          "searchPrefValue": JSON.stringify({ 
+            ...this.getSearchPreference?.searchPrefValue,
+            [enumId]: this.getSearchPreference?.searchPrefValue[enumId] ? false : true
+          })
         }
-        this.store.dispatch('user/updateSearchPreference', payload);
+
+        await this.store.dispatch('user/updateSearchPreference', payload);
       } else {
         const payload = {
-          searchPrefValue: `${job?.systemJobEnumId}: true`
+          searchPrefValue: JSON.stringify({ [enumId]: true })
         }
-        this.store.dispatch('user/createSearchPreference', payload);
+        await this.store.dispatch('user/createSearchPreference', payload);
       }
+      await this.listSearchPreferences();
     },
     listSearchPreferences() {
-      const searchPreference = this.getSearchPreference
-
-      if(searchPreference?.searchPrefId) {
-        let searchPrefValues = [];
-        if(searchPreference?.searchPrefValue) {
-          searchPrefValues = searchPreference?.searchPrefValue.split(',');
-          const preferences = searchPrefValues.filter((pref: any) => pref.includes('true'));
-          this.searchPreferences = preferences.map((pref: any) => pref.split(':')[0]);
-        }
-      }
+      (this as any).searchPreferences = Object.keys(this.getSearchPreference?.searchPrefValue).filter((pref: any) => this.getSearchPreference?.searchPrefValue[pref]);
     }
   },
   created() {
