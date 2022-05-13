@@ -13,11 +13,11 @@
         <ion-label slot="end">{{ job?.lastUpdatedStamp ? getTime(job.lastUpdatedStamp) : $t('No previous occurrence') }}</ion-label>
       </ion-item>
 
-      <ion-item id="product-run-time-modal" button>
+      <ion-item button>
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
-        <ion-label slot="end">{{ job?.runTime ? getTime(job.runTime) : $t('Select run time') }}</ion-label>
-        <ion-modal trigger="product-run-time-modal">
+        <ion-label @click="setOpen(true)" slot="end">{{ job?.runTime ? getTime(job.runTime) : $t('Select run time') }}</ion-label>
+        <ion-modal :is-open="isModalOpen" @didDismiss="setOpen(false)">
           <ion-content force-overscroll="false">
             <ion-datetime
               :min="minDateTime"
@@ -46,11 +46,11 @@
         <ion-label slot="end">{{ job?.lastUpdatedStamp ? getTime(job.lastUpdatedStamp) : $t('No previous occurrence') }}</ion-label>
       </ion-item>
 
-      <ion-item id="order-run-time-modal" button>
+      <ion-item button>
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
-        <ion-label slot="end">{{ job?.runTime ? getTime(job.runTime) : $t('Select run time') }}</ion-label>
-        <ion-modal trigger="order-run-time-modal">
+        <ion-label @click="setOpen(true)" slot="end">{{ job?.runTime ? getTime(job.runTime) : $t('Select run time') }}</ion-label>
+        <ion-modal :is-open="isModalOpen" @didDismiss="setOpen(false)">
           <ion-content force-overscroll="false">
             <ion-datetime
               :min="minDateTime"
@@ -141,8 +141,8 @@ export default defineComponent({
   data() {
     return {
       jobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
-      // lastShopifyOrderId: '',
-      minDateTime: DateTime.now().toISO()
+      minDateTime: DateTime.now().toISO(),
+      isModalOpen: false
     }
   },
   props: ['title', 'job', 'modalType', 'lastShopifyOrderId'],
@@ -208,7 +208,18 @@ export default defineComponent({
       if (job) {
         job.runTime = DateTime.fromISO(ev['detail'].value).toMillis()
       }
+    },
+    setOpen(state: boolean) {
+      this.isModalOpen = state;
     }
+  },
+  mounted() {
+    this.store.dispatch("job/fetchJobs", {
+      "inputFields":{
+        "systemJobEnumId": Object.values(this.jobEnums),
+        "systemJobEnumId_op": "in"
+      }
+    });
   },
   setup() {
     const store = useStore();

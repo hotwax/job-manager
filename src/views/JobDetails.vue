@@ -46,7 +46,8 @@ export default defineComponent({
       title: '' as any,
       jobCategory: '' as any,
       lastShopifyOrderId: '' as any,
-      jobTitles: JSON.parse(process.env.VUE_APP_INITIAL_JOB_TITLES as string) as any
+      jobTitles: JSON.parse(process.env.VUE_APP_INITIAL_JOB_TITLES as string) as any,
+      jobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any
     }
   },
   computed:{
@@ -73,7 +74,7 @@ export default defineComponent({
       if(job?.jobId) {
         this.viewJobConfiguration(job);
       }
-    })
+    });
   },
   setup() {
     const store = useStore();
