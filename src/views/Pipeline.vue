@@ -220,20 +220,8 @@
     <ion-footer>
       <ion-toolbar>
         <ion-title>Pinned jobs</ion-title>
-        <ion-chip slot="end" outline>
-          <ion-label>enum name</ion-label>
-          <ion-icon :icon="closeCircleOutline" />
-        </ion-chip>
-        <ion-chip slot="end" outline>
-          <ion-label>enum name</ion-label>
-          <ion-icon :icon="closeCircleOutline" />
-        </ion-chip>
-        <ion-chip slot="end" outline>
-          <ion-label>enum name</ion-label>
-          <ion-icon :icon="closeCircleOutline" />
-        </ion-chip>
-        <ion-chip slot="end" outline>
-          <ion-label>enum name</ion-label>
+        <ion-chip v-for="(job, index) in searchPreferences" :key="index" slot="end" outline>
+          <ion-label>{{ getEnumName(job) }}</ion-label>
           <ion-icon :icon="closeCircleOutline" />
         </ion-chip>
       </ion-toolbar>  
@@ -327,7 +315,8 @@ export default defineComponent({
       freqType: '' as any,
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
-      isRetrying: false
+      isRetrying: false,
+      searchPreferences: []
     }
   },
   computed: {
@@ -542,10 +531,23 @@ export default defineComponent({
         }
         this.store.dispatch('user/createSearchPreference', payload);
       }
+    },
+    listSearchPreferences() {
+      const searchPreference = this.getSearchPreference
+
+      if(searchPreference?.searchPrefId) {
+        let searchPrefValues = [];
+        if(searchPreference?.searchPrefValue) {
+          searchPrefValues = searchPreference?.searchPrefValue.split(',');
+          const preferences = searchPrefValues.filter((pref: any) => pref.includes('true'));
+          this.searchPreferences = preferences.map((pref: any) => pref.split(':')[0]);
+        }
+      }
     }
   },
   created() {
     this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0});
+    this.listSearchPreferences();
   },
   setup() {
     const store = useStore();
