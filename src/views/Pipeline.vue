@@ -22,6 +22,7 @@
     </ion-header>
 
     <ion-content>
+      <ion-input :placeholder="$t('Search jobs')" v-model="queryString" v-on:keyup.enter="findJobs()" />
       <main>
         <section v-if="segmentSelected === 'pending'">
           <!-- Empty state -->
@@ -201,7 +202,7 @@
 
           <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
             <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
-          </ion-refresher>
+          </ion-refresher>         
           <ion-infinite-scroll @ionInfinite="loadMoreJobHistory($event)" threshold="100px" :disabled="!isHistoryJobsScrollable">
             <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="$t('Loading')"/>
           </ion-infinite-scroll>
@@ -240,6 +241,7 @@ import {
   IonTitle,
   IonInfiniteScroll,
   IonInfiniteScrollContent,
+  IonInput,
   alertController,
   IonSegment,
   IonSegmentButton,
@@ -277,6 +279,7 @@ export default defineComponent({
     IonTitle,
     IonInfiniteScroll,
     IonInfiniteScrollContent,
+    IonInput,
     IonSegment,
     IonSegmentButton,
     IonSpinner,
@@ -298,7 +301,8 @@ export default defineComponent({
       freqType: '' as any,
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
-      isRetrying: false
+      isRetrying: false,
+      queryString: '' as any
     }
   },
   computed: {
@@ -355,6 +359,7 @@ export default defineComponent({
       return DateTime.local().plus(timeDiff).toRelative();
     },
     async loadMoreJobHistory(event: any){
+      if(this.queryString.length>0) this.findJobs();
       this.getJobHistory(
         undefined,
         Math.ceil(this.jobHistory.length / (process.env.VUE_APP_VIEW_SIZE as any)).toString()
@@ -363,6 +368,7 @@ export default defineComponent({
       })
     },
     async loadMoreRunningJobs(event: any){
+       if(this.queryString.length>0) this.findJobs();
       this.getRunningJobs(
         undefined,
         Math.ceil(this.runningJobs.length / (process.env.VUE_APP_VIEW_SIZE as any)).toString()
@@ -371,6 +377,7 @@ export default defineComponent({
       })
     },
     async loadMorePendingJobs (event: any) {
+       if(this.queryString.length>0) this.findJobs();
       this.getPendingJobs(
         undefined,
         Math.ceil(this.pendingJobs.length / (process.env.VUE_APP_VIEW_SIZE as any)).toString()
@@ -397,7 +404,13 @@ export default defineComponent({
         });
       }
     },
+    findJobs(){
+      this.segmentSelected === 'pending' ? this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0,queryString:this.queryString}) : 
+      this.segmentSelected === 'running' ? this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0,queryString:this.queryString}) :
+      this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0,queryString:this.queryString});
+    },
     segmentChanged (e: CustomEvent) {
+      this.queryString="";
       this.segmentSelected = e.detail.value
       this.segmentSelected === 'pending' ? this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}) : 
       this.segmentSelected === 'running' ? this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}) :
