@@ -83,7 +83,7 @@ export default defineComponent({
   unmounted() {
     emitter.off('presentLoader', this.presentLoader);
     emitter.off('dismissLoader', this.dismissLoader);
-    emitter.on('playAnimation', this.playAnimation);
+    emitter.off('playAnimation', this.playAnimation);
   },
   setup(){
     const store = useStore();
