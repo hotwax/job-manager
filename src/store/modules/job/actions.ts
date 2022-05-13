@@ -496,5 +496,46 @@ const actions: ActionTree<JobState, RootState> = {
     }
     return resp;
   },
+  currentJobUpdated({ commit }, payload) {
+    commit(types.JOB_CURRENT_UPDATED, payload);
+  },
+  async getCurrentJob({ commit, state, dispatch }, payload) {
+    const currentJob = state.current;
+    if (payload.jobId === currentJob.jobId) {
+      commit(types.JOB_CURRENT_UPDATED, currentJob);
+      return currentJob;
+    }
+
+    let resp;
+    try {
+      const params = {
+        "inputFields": {
+          "jobId": payload?.jobId,
+          "systemJobEnumId_op": "not-empty"
+        } as any,
+        "fieldList": ["systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId"],
+        "entityName": "JobSandbox",
+        "noConditionFind": "Y"
+      }
+      resp = await JobService.fetchJobInformation(params);
+      if(resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
+        const currentJob = {
+          ...resp.data.docs[0],
+          'status': resp.data.docs[0]?.statusId 
+        }
+        commit(types.JOB_CURRENT_UPDATED, currentJob);
+
+        const enumIds = [] as any;
+        resp.data.docs.map((item: any) => {
+          enumIds.push(item.systemJobEnumId);
+        })
+        await dispatch('fetchJobDescription', enumIds);
+
+        return currentJob;
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
 }
 export default actions;
