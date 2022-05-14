@@ -8,8 +8,8 @@
     </ion-header>
 
     <ion-content>
-      <!-- <JobConfiguration v-if="jobCategory !== 'initial-load'" /> -->
-      <InitialLoadJobModal :title="title" :job="currentJob" :modalType='title' :lastShopifyOrderId='lastShopifyOrderId' :key="currentJob" />
+      <InitialLoadJobModal v-if="jobCategory === 'initial-load'" :job="currentJob" :type='jobType' :shopifyOrderId='lastShopifyOrderId' :key="currentJob" />
+      <JobConfiguration v-else />
     </ion-content>
   </ion-page>
 </template>
@@ -24,7 +24,7 @@ import {
   IonToolbar
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
-// import JobConfiguration from '@/components/JobConfiguration.vue';
+import JobConfiguration from '@/components/JobConfiguration.vue';
 import InitialLoadJobModal from '@/components/InitialLoadJobModal.vue';
 import { useStore, mapGetters } from "vuex";
 import { isFutureDate } from '@/utils';
@@ -38,15 +38,15 @@ export default defineComponent({
     IonPage,
     IonTitle,
     IonToolbar,
-    // JobConfiguration,
+    JobConfiguration,
     InitialLoadJobModal
   },
   data() {
     return {
-      title: '' as any,
+      jobType: '' as any,
       jobCategory: '' as any,
       lastShopifyOrderId: '' as any,
-      jobTitles: JSON.parse(process.env.VUE_APP_INITIAL_JOB_TITLES as string) as any,
+      jobTypes: JSON.parse(process.env.VUE_APP_INITIAL_JOB_TYPES as string) as any,
       jobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any
     }
   },
@@ -58,14 +58,16 @@ export default defineComponent({
   methods: {
     viewJobConfiguration(job: any) {
       this.jobCategory = this.$route.params.category;
-      this.title = this.jobTitles[this.currentJob?.systemJobEnumId];
-      
-      if(job?.runtimeData?.sinceId?.length >= 0) {
-        this.lastShopifyOrderId = job.runtimeData.sinceId !== 'null' ? job.runtimeData.sinceId : ''
-      }
-      // if job runTime is not a valid date then assigning current date to the runTime
-      if (job?.runTime && !isFutureDate(job?.runTime)) {
-        job.runTime = ''
+      if(this.jobCategory === 'initial-load') {
+        this.jobType = this.jobTypes[this.currentJob?.systemJobEnumId];
+        
+        if(job?.runtimeData?.sinceId?.length >= 0) {
+          this.lastShopifyOrderId = job.runtimeData.sinceId !== 'null' ? job.runtimeData.sinceId : ''
+        }
+        // if job runTime is not a valid date then assigning current date to the runTime
+        if (job?.runTime && !isFutureDate(job?.runTime)) {
+          job.runTime = ''
+        }
       }
     }
   },

@@ -1,5 +1,5 @@
 <template>
-  <section v-show="modalType === 'products'">
+  <section v-show="type === 'products'">
     <ion-item lines="none">
       <h1>{{ $t("Products") }}</h1>
       <!-- TODO: make the badges dynamic on the basis of job status -->
@@ -32,7 +32,7 @@
     <ion-button size="small" fill="outline" expand="block" @click="runJob('Products', jobEnums['IMP_PRDTS_BLK'])">{{ $t("Run import") }}</ion-button>
   </section>
 
-  <section v-show="modalType === 'orders'">
+  <section v-show="type === 'orders'">
     <ion-item lines="none">
       <h1>{{ $t("Orders") }}</h1>
       <!-- TODO: make the badges dynamic on the basis of job status -->
@@ -86,7 +86,7 @@
 
       <ion-item>
         <ion-label class="ion-text-wrap">{{ $t("Last Shopify Order ID") }}</ion-label>
-        <ion-input :placeholder="$t('Internal Shopify Order ID')" />
+        <ion-input v-model="lastShopifyOrderId" :placeholder="$t('Internal Shopify Order ID')" />
       </ion-item>
     </ion-list>
 
@@ -98,7 +98,7 @@
 import { defineComponent } from "vue";
 import {
   alertController,
-  // IonBadge,
+  IonBadge,
   IonButton,
   IonContent,
   IonDatetime,
@@ -125,7 +125,7 @@ import { isFutureDate } from '@/utils';
 export default defineComponent({
   name: "InitialLoadJobModal",
   components: {
-    // IonBadge,
+    IonBadge,
     IonButton,
     IonContent,
     IonDatetime,
@@ -140,12 +140,13 @@ export default defineComponent({
   },
   data() {
     return {
-      jobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
+      isModalOpen: false,
+      lastShopifyOrderId: this.shopifyOrderId,
       minDateTime: DateTime.now().toISO(),
-      isModalOpen: false
+      jobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any
     }
   },
-  props: ['title', 'job', 'modalType', 'lastShopifyOrderId'],
+  props: ['job', 'type', 'shopifyOrderId'],
   computed: {
     ...mapGetters({
       getJob: 'job/getJob',

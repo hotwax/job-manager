@@ -38,7 +38,7 @@
         </section>
 
         <aside class="desktop-only" v-show="currentSelectedJobModal">
-          <InitialLoadJobModal :title="currentSelectedJobModal" :job="job" :modalType='currentSelectedJobModal' :lastShopifyOrderId='lastShopifyOrderId' :key="job" />
+          <InitialLoadJobModal :job="job" :type='currentSelectedJobModal' :shopifyOrderId='lastShopifyOrderId' :key="job" />
         </aside>
       </main>
     </ion-content>
@@ -105,7 +105,10 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
+      getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
+      shopifyConfigId: 'user/getShopifyConfigId',
+      currentEComStore: 'user/getCurrentEComStore'
     })
   },
   methods: {
