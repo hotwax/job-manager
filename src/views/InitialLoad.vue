@@ -152,24 +152,4 @@ export default defineComponent({
 ion-card > ion-button {
   margin: var(--spacer-sm);
 }
-
-aside > section {
-  overflow: hidden;
-  border: var(--border-medium);
-  border-radius: 16px;
-}
-
-aside > section > ion-list {
-  margin-top: var(--spacer-xs);
-}
-
-aside > section > ion-button {
-  margin: var(--spacer-base) var(--spacer-sm);
-}
-
-ion-modal {
-  --width: 290px;
-  --height: 382px;
-  --border-radius: 8px;
-}
 </style>

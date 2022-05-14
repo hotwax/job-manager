@@ -98,7 +98,6 @@
 import { defineComponent } from "vue";
 import {
   alertController,
-  IonBadge,
   IonButton,
   IonContent,
   IonDatetime,
@@ -125,7 +124,6 @@ import { isFutureDate } from '@/utils';
 export default defineComponent({
   name: "InitialLoadJobModal",
   components: {
-    IonBadge,
     IonButton,
     IonContent,
     IonDatetime,
@@ -249,20 +247,19 @@ ion-list {
   margin: var(--spacer-base) 0;
 }
 
-.actions > ion-button {
-  margin: var(--spacer-sm);
-}
-
 @media (min-width: 991px) {  
   section {
     overflow: hidden;
     border: var(--border-medium);
     border-radius: 16px;
   }
-  .actions {
-    display: flex;
-    justify-content: space-between;
-    margin: var(--spacer-base) var(--spacer-sm) var(--spacer-base);
+
+  section > ion-list {
+    margin-top: var(--spacer-xs);
+  }
+
+  section > ion-button {
+    margin: var(--spacer-base) var(--spacer-sm);
   }
 
   .mobile-only {
