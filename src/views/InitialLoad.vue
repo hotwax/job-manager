@@ -46,11 +46,6 @@
             </ion-item>
 
             <ion-list>
-              <ion-item>
-                <ion-icon slot="start" :icon="calendarClearOutline" />
-                <ion-label class="ion-text-wrap">{{ $t("Last run") }}</ion-label>
-                <ion-label slot="end">{{ job?.lastUpdatedStamp ? getTime(job.lastUpdatedStamp) : $t('No previous occurrence') }}</ion-label>
-              </ion-item>
 
               <ion-item id="product-run-time-modal" button>
                 <ion-icon slot="start" :icon="timeOutline" />
@@ -79,11 +74,6 @@
             </ion-item>
 
             <ion-list>
-              <ion-item>
-                <ion-icon slot="start" :icon="calendarClearOutline" />
-                <ion-label class="ion-text-wrap">{{ $t("Last run") }}</ion-label>
-                <ion-label slot="end">{{ job?.lastUpdatedStamp ? getTime(job.lastUpdatedStamp) : $t('No previous occurrence') }}</ion-label>
-              </ion-item>
 
               <ion-item id="order-run-time-modal" button>
                 <ion-icon slot="start" :icon="timeOutline" />
