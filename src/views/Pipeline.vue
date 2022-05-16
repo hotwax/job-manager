@@ -395,7 +395,7 @@ export default defineComponent({
           this.isRetrying = false;
         });
       } else {
-        this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0, queryString: this.queryString}).then(() => {
+        this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0, queryString: this.queryString}).then(() => {
           if(event) event.target.complete();
           this.isRetrying = false;
         });
