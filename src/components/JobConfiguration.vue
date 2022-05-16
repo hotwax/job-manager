@@ -9,7 +9,6 @@
       <ion-item>
         <ion-icon slot="start" :icon="calendarClearOutline" />
         <ion-label>{{ $t("Last run") }}</ion-label>
-        <ion-label slot="end">{{ job?.lastUpdatedStamp ? getTime(job.lastUpdatedStamp) : $t('No previous occurrence') }}</ion-label>
       </ion-item>
 
       <ion-item>
