@@ -101,14 +101,14 @@
               </ion-button>
             </ion-item-divider>
 
-            <ion-item-sliding  v-for="batch in getJob(jobEnums['BTCH_BRKR_ORD'])" :key="batch?.id" button detail v-show="batch?.status === 'SERVICE_PENDING'">
-              <ion-item  @click="editBatch(batch?.id)">
+            <ion-item-sliding v-for="batch in getJob(jobEnums['BTCH_BRKR_ORD'])" :key="batch?.id" button detail v-show="batch?.status === 'SERVICE_PENDING'">
+              <ion-item @click="editBatch(batch?.id)">
                 <ion-label class="ion-text-wrap">{{ batch?.jobName }}</ion-label>
                 <ion-note slot="end">{{ batch?.runTime ? getTime(batch.runTime) : '' }}</ion-note>
               </ion-item>
               <ion-item-options side="end">
                 <ion-item-option @click="deleteBatch(batch)" color="danger">
-                  <ion-icon slot="icon-only" :icon="trash"></ion-icon>
+                  <ion-icon slot="icon-only" :icon="trash" />
                 </ion-item-option>
               </ion-item-options>
             </ion-item-sliding>
