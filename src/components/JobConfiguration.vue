@@ -4,6 +4,7 @@
       <h1>{{ $t(title) }}</h1>
       <ion-badge slot="end" color="dark" v-if="job?.runTime">{{ $t("running") }} {{ timeTillJob(job.runTime) }}</ion-badge>
     </ion-item>
+
     <ion-list>
       <ion-item>
         <ion-icon slot="start" :icon="calendarClearOutline" />
@@ -51,6 +52,7 @@
         <ion-input :placeholder="$t('occurrences')" v-model="count"/>
       </ion-item> -->
     </ion-list>
+
     <div class="actions desktop-only">
       <div>
         <ion-button size="small" fill="outline" color="medium" :disabled="status === 'SERVICE_DRAFT'" @click="skipJob(job)">{{ $t("Skip once") }}</ion-button>
