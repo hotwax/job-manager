@@ -100,22 +100,18 @@
                 <ion-icon :icon="addCircleOutline" slot="end" />
               </ion-button>
             </ion-item-divider>
-            <ion-item v-for="batch in getJob(jobEnums['BTCH_BRKR_ORD'])" :key="batch?.id" button detail @click="editBatch(batch?.id)" v-show="batch?.status === 'SERVICE_PENDING'">
 
-              <ion-item-sliding>
-                
-                  <ion-label class="ion-text-wrap">{{ batch?.jobName }}</ion-label>
-                  <ion-note slot="end">{{ batch?.runTime ? getTime(batch.runTime) : '' }}</ion-note>
-                  <ion-item>
-                  <ion-item-options>
-                    <ion-item-option color="danger">
-                    <ion-icon @click="confirmDelete" class="delete-icon" slot="end" :icon="trash"></ion-icon>
-                    </ion-item-option>
-                  </ion-item-options>
-                </ion-item>
-              </ion-item-sliding>
-
-            </ion-item>
+            <ion-item-sliding  v-for="batch in getJob(jobEnums['BTCH_BRKR_ORD'])" :key="batch?.id" button detail v-show="batch?.status === 'SERVICE_PENDING'">
+              <ion-item  @click="editBatch(batch?.id)">
+                <ion-label class="ion-text-wrap">{{ batch?.jobName }}</ion-label>
+                <ion-note slot="end">{{ batch?.runTime ? getTime(batch.runTime) : '' }}</ion-note>
+              </ion-item>
+              <ion-item-options side="end">
+                <ion-item-option @click="deleteBatch(batch)" color="danger">
+                  <ion-icon slot="icon-only" :icon="trash"></ion-icon>
+                </ion-item-option>
+              </ion-item-options>
+            </ion-item-sliding>
           </ion-card>
         </section>
 
@@ -230,6 +226,25 @@ export default defineComponent({
       });
       return batchmodal.present();
     },
+    async deleteBatch(batch: any) {
+      const deleteBatchAlert = await alertController
+        .create({
+          message: this.$t('Are you sure?'),
+          buttons: [
+            {
+              text: this.$t('Cancel'),
+              role: 'cancel',
+            },
+            {
+              text: this.$t('Delete'),
+              handler: () => {
+                  this.store.dispatch('job/cancelJob', batch);
+              },
+            },
+          ],
+        });
+      return deleteBatchAlert.present();
+    },
     getTime (time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
     },
@@ -301,33 +316,6 @@ export default defineComponent({
 
       return jobAlert.present();
     },
-
-    async confirmDelete() {
-      const alert = await alertController
-        .create({
-          cssClass: 'my-custom-class',
-          message: 'Confirm delete batch?',
-          buttons: [
-            {
-              text: 'Cancel',
-              role: 'cancel',
-              cssClass: 'secondary',
-              id: 'cancel-button',
-              handler: blah => {
-                console.log('Confirm Cancel:', blah)
-              },
-            },
-            {
-              text: 'Yes',
-              id: 'confirm-button',
-              handler: () => {
-                console.log('Confirm Okay')
-              },
-            },
-          ],
-        });
-      return alert.present();
-    }
   },
   mounted () {
     this.store.dispatch("job/fetchJobs", {
@@ -348,9 +336,3 @@ export default defineComponent({
   },
 });
 </script>
-
-<style scoped>
-  .delete-icon {
-    text-transform: none;
-  }
-</style>
