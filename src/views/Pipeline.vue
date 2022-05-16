@@ -218,7 +218,7 @@
     </ion-content>
 
     <ion-footer>
-      <ion-toolbar>
+      <ion-toolbar class="overflow">
         <ion-title>Pinned jobs</ion-title>
         <ion-chip v-for="(prefJob, index) in searchPreferences" :key="index" slot="end" outline>
           <ion-label>{{ getEnumName(prefJob) }}</ion-label>
@@ -566,6 +566,9 @@ ion-item {
   justify-content: space-between;
 }
 
+.overflow{
+  overflow: scroll;
+}
 @media (min-width: 991px) {
   ion-header{
     display: flex;
