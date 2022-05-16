@@ -315,7 +315,7 @@ export default defineComponent({
           ]
         });
       return jobAlert.present();
-    },
+    }
   },
   mounted () {
     this.store.dispatch("job/fetchJobs", {
