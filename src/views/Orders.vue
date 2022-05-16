@@ -315,7 +315,7 @@ export default defineComponent({
           ]
         });
       return jobAlert.present();
-    },
+    }
   },
   mounted () {
     this.store.dispatch("job/fetchJobs", {
@@ -327,7 +327,6 @@ export default defineComponent({
   },
   setup() {
     const store = useStore();
-
     return {
       addCircleOutline,
       store,
