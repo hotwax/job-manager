@@ -239,7 +239,7 @@ export default defineComponent({
             {
               text: this.$t("Cancel"),
               handler: async () => {
-                  await this.store.dispatch('job/cancelJob', batch);
+                await this.store.dispatch('job/cancelJob', batch);
               },
             },
           ],
@@ -314,7 +314,6 @@ export default defineComponent({
             }
           ]
         });
-
       return jobAlert.present();
     },
   },
