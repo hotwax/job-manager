@@ -38,13 +38,13 @@
           <div v-else>
             <ion-card v-for="job in pendingJobs" :key="job.jobId" @click="viewJobConfiguration(job)" :button="isDesktop">
               <ion-card-header>
-                <ion-card-title>{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
+                <ion-card-title>{{ job.systemJobEnum?.enumName }}</ion-card-title>
                 <ion-badge v-if="job.runTime" color="dark">{{ timeFromNow(job.runTime)}}</ion-badge>
               </ion-card-header>
 
               <ion-item lines="none">
                 <ion-label class="ion-text-wrap">
-                  <p>{{ getEnumDescription(job.systemJobEnumId) }}</p>
+                  <p>{{ job.systemJobEnum?.description }}</p>
                 </ion-label>
               </ion-item>
               <ion-item>
@@ -54,7 +54,7 @@
 
               <ion-item>
                 <ion-icon slot="start" :icon="timerOutline" />
-                <ion-label class="ion-text-wrap">{{ job.tempExprId ? temporalExpr(job.tempExprId)?.description : "🙃"  }}</ion-label>
+                <ion-label class="ion-text-wrap">{{ job.tempExpr?.tempExprId ? job.tempExpr.description : "🙃"  }}</ion-label>
               </ion-item>
 
               <ion-item lines="full">
@@ -103,14 +103,14 @@
               <ion-card-header>
                 <div>
                   <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
-                  <ion-card-title>{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
+                  <ion-card-title>{{ job.systemJobEnum?.enumName }}</ion-card-title>
                 </div>
-                <ion-badge color="dark">{{ job.statusDesc }}</ion-badge>
+                <ion-badge color="dark">{{ job.status.description }}</ion-badge>
               </ion-card-header>
 
               <ion-item lines="none">
                 <ion-label class="ion-text-wrap">
-                  <p>{{ getEnumDescription(job.systemJobEnumId) }}</p>
+                  <p>{{ job.systemJobEnum?.description }}</p>
                 </ion-label>
               </ion-item>
               <ion-item>
@@ -120,7 +120,7 @@
 
               <ion-item>
                 <ion-icon slot="start" :icon="timerOutline" />
-                <ion-label class="ion-text-wrap">{{ job.tempExprId ? temporalExpr(job.tempExprId)?.description : "🙃"  }}</ion-label>
+                <ion-label class="ion-text-wrap">{{ job.tempExpr?.tempExprId ? job.tempExpr.description : "🙃"  }}</ion-label>
               </ion-item>
 
               <ion-item lines="full">
@@ -161,17 +161,17 @@
             <ion-card-header>
               <div>
                 <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
-                <ion-card-title>{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
+                <ion-card-title>{{ job.systemJobEnum?.enumName }}</ion-card-title>
               </div>
               <div>
                 <ion-badge v-if="job.cancelDateTime || job.finishDateTime" color="dark">{{ job.statusId == "SERVICE_CANCELLED" || job.statusId == "SERVICE_CRASHED" ?  timeFromNow(job.cancelDateTime) : timeFromNow(job.finishDateTime) }}</ion-badge>
-                <ion-badge v-if="job.statusId" :color="job.statusId === 'SERVICE_FINISHED' ? 'success' : 'danger'">{{ job.statusDesc }}</ion-badge>
+                <ion-badge v-if="job.status.id" :color="job.status.id === 'SERVICE_FINISHED' ? 'success' : 'danger'">{{ job.status.description }}</ion-badge>
               </div>
             </ion-card-header>
 
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
-                <p>{{ getEnumDescription(job.systemJobEnumId) }}</p>
+                <p>{{ job.systemJobEnum?.description }}</p>
               </ion-label>
             </ion-item>
             <ion-item>
@@ -179,12 +179,12 @@
               <ion-label class="ion-text-wrap">
                 {{ job.runTime ? getTime(job.runTime) : "-"  }}
               </ion-label>
-              <ion-note slot="end">{{ job.statusId == "SERVICE_CANCELLED" || job.statusId == "SERVICE_CRASHED" ? getJobExecutionTime(job.startDateTime, job.cancelDateTime) : getJobExecutionTime(job.startDateTime, job.finishDateTime) }}</ion-note>
+              <ion-note slot="end">{{ job.status.id == "SERVICE_CANCELLED" || job.status.id == "SERVICE_CRASHED" ? getJobExecutionTime(job.startDateTime, job.cancelDateTime) : getJobExecutionTime(job.startDateTime, job.finishDateTime) }}</ion-note>
             </ion-item>
 
             <ion-item>
               <ion-icon slot="start" :icon="timerOutline" />
-              <ion-label class="ion-text-wrap">{{ job.tempExprId ? temporalExpr(job.tempExprId)?.description : "🙃"  }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ job.tempExpr?.tempExprId ? job.tempExpr.description : "🙃"  }}</ion-label>
             </ion-item>
 
             <ion-item lines="full">

@@ -26,14 +26,14 @@ const mutations: MutationTree <JobState> = {
     },
     [types.JOB_TEMPORAL_EXPRESSION_UPDATED] (state, temporalExpressions) {
         if(temporalExpressions){
-            temporalExpressions.forEach((temporalExpression: any) => {
+            temporalExpressions.map((temporalExpression: any) => {
               state.temporalExp[temporalExpression.tempExprId] = temporalExpression;
             })
         }
     },
     [types.JOB_DESCRIPTION_UPDATED] (state, enums) {
         if (enums) {
-            enums.forEach((enumInfo: any) => {
+            enums.map((enumInfo: any) => {
               state.enumIds[enumInfo.enumId] = enumInfo
             });
         }

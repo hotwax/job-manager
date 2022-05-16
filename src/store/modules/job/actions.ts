@@ -4,6 +4,7 @@ import JobState from './JobState'
 import * as types from './mutation-types'
 import { hasError, showToast } from '@/utils'
 import { JobService } from '@/services/JobService'
+import { Job } from '@/types';
 import { translate } from '@/i18n'
 import { DateTime } from 'luxon';
 
@@ -64,12 +65,26 @@ const actions: ActionTree<JobState, RootState> = {
         if (resp.data.docs) {
           const total = resp.data.count;
           let jobs = resp.data.docs;
+          jobs = jobs.map((item: any) => {
+            const job: Job = {
+              id: item.jobId,
+              name: item.jobName,
+              systemJobEnum: state.enumIds[item.systemJobEnumId],
+              parentJobId: item.parentJobId,
+              runTime: item.runTime,
+              serviceName: item.serviceName,
+              status: {
+                id: item.statusId,
+                description: this.state.util.statusDesc[item.statusId]
+              },
+              tempExpr: state.temporalExp[item.tempExprId],
+              currentRetryCount: 0
+            }
+            return job;
+          }) 
           if(payload.viewIndex && payload.viewIndex > 0){
-            jobs = state.history.list.concat(resp.data.docs);
+            jobs = state.history.list.concat(jobs);
           }
-          jobs.map((job: any) => {
-            job['statusDesc'] = this.state.util.statusDesc[job.statusId];
-          })          
           commit(types.JOB_HISTORY_UPDATED, { jobs, total });
           const tempExprList = [] as any;
           const enumIds = [] as any;
@@ -117,18 +132,9 @@ const actions: ActionTree<JobState, RootState> = {
       params.inputFields["productStoreId_op"] = "empty"
     }
 
-    await JobService.fetchJobInformation(params).then((resp) => {
+    await JobService.fetchJobInformation(params).then( async (resp) => {
       if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
         if (resp.data.docs) {
-          const total = resp.data.count;
-          let jobs = resp.data.docs;
-          if(payload.viewIndex && payload.viewIndex > 0){
-            jobs = state.running.list.concat(resp.data.docs);
-          }
-          jobs.map((job: any) => {
-            job['statusDesc'] = this.state.util.statusDesc[job.statusId];
-          })
-          commit(types.JOB_RUNNING_UPDATED, { jobs, total });
           const tempExprList = [] as any;
           const enumIds = [] as any;
           resp.data.docs.map((item: any) => {
@@ -136,8 +142,31 @@ const actions: ActionTree<JobState, RootState> = {
             tempExprList.push(item.tempExprId);
           })
           const tempExpr = [...new Set(tempExprList)];
-          dispatch('fetchTemporalExpression', tempExpr);
-          dispatch('fetchJobDescription', enumIds);
+          await dispatch('fetchTemporalExpression', tempExpr);
+          await dispatch('fetchJobDescription', enumIds);
+          const total = resp.data.count;
+          let jobs = resp.data.docs;
+          jobs = jobs.map((item: any) => {
+            const job: Job = {
+              id: item.jobId,
+              name: item.jobName,
+              systemJobEnum: state.enumIds[item.systemJobEnumId],
+              parentJobId: item.parentJobId,
+              runTime: item.runTime,
+              serviceName: item.serviceName,
+              status: {
+                id: item.statusId,
+                description: this.state.util.statusDesc[item.statusId]
+              },
+              tempExpr: state.temporalExp[item.tempExprId],
+              currentRetryCount: 0
+            }
+            return job;
+          })
+          if(payload.viewIndex && payload.viewIndex > 0){
+            jobs = state.running.list.concat(jobs);
+          }
+          commit(types.JOB_RUNNING_UPDATED, { jobs, total });
         }
       } else {
         commit(types.JOB_RUNNING_UPDATED, { jobs: [], total: 0 });
@@ -169,20 +198,10 @@ const actions: ActionTree<JobState, RootState> = {
       params.inputFields["productStoreId_op"] = "empty"
     }
 
-    await JobService.fetchJobInformation(params).then((resp) => {
+    await JobService.fetchJobInformation(params).then( async (resp) => {
       if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
         if (resp.data.docs) {
-          const total = resp.data.count;
-          let jobs = resp.data.docs.map((job: any) => {
-            return {
-              ...job,
-              'status': job?.statusId
-            }
-          })
-          if(payload.viewIndex && payload.viewIndex > 0){
-            jobs = state.pending.list.concat(resp.data.docs);
-          }
-          commit(types.JOB_PENDING_UPDATED, { jobs, total });
+          
           const tempExprList = [] as any;
           const enumIds = [] as any;
           resp.data.docs.map((item: any) => {
@@ -190,8 +209,31 @@ const actions: ActionTree<JobState, RootState> = {
             tempExprList.push(item.tempExprId);
           })
           const tempExpr = [...new Set(tempExprList)];
-          dispatch('fetchTemporalExpression', tempExpr);
-          dispatch('fetchJobDescription', enumIds);
+          await dispatch('fetchTemporalExpression', tempExpr);
+          await dispatch('fetchJobDescription', enumIds);
+          const total = resp.data.count;
+          let jobs = resp.data.docs;
+          jobs = jobs.map((item: any) => {
+            const job: Job = {
+              id: item.jobId,
+              name: item.jobName,
+              systemJobEnum: state.enumIds[item.systemJobEnumId],
+              parentJobId: item.parentJobId,
+              runTime: item.runTime,
+              serviceName: item.serviceName,
+              status: {
+                id: item.statusId,
+                description: this.state.util.statusDesc[item.statusId]
+              },
+              tempExpr: state.temporalExp[item.tempExprId],
+              currentRetryCount: item.currentRetryCount
+            }
+            return job;
+          })
+          if(payload.viewIndex && payload.viewIndex > 0){
+            jobs = state.pending.list.concat(jobs);
+          }
+          commit(types.JOB_PENDING_UPDATED, { jobs, total }); 
         }
       } else {
         commit(types.JOB_PENDING_UPDATED, { jobs: [], total: 0 });

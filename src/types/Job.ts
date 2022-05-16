@@ -1,14 +1,25 @@
 export interface Job {
-  jobId: String
-  jobName: String
-  systemJobEnumId: String
-  parentJobId: String
-  runTime: String
-  serviceName: String
-  statusId: String
-  tempExpr: {
-    tempExprId: String
+  id: String
+  name: String
+  systemJobEnum: {
+    id: any
+    name: String
     description: String
   }
-  currentRetryCount: number
+  parentJobId: String
+  runTime: String
+  cancelDateTime?: String
+  finishDateTime?: String
+  serviceName: String
+  status: {
+    id: String
+    description: any
+  }
+  tempExpr: {
+    id: any
+    integer1: number
+    integer2: number
+    description: String
+  }
+  currentRetryCount?: number
 }
