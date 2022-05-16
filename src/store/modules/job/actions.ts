@@ -59,7 +59,7 @@ const actions: ActionTree<JobState, RootState> = {
       params.inputFields["productStoreId_op"] = "empty"
     }
 
-    if(payload.queryString) {
+    if (payload.queryString) {
       params.inputFields["enumName_value"] = "%"+ payload.queryString + "%"
       params.inputFields["enumName_op"] = "like"
       params.inputFields["enumName_ic"] = "Y"
@@ -129,7 +129,7 @@ const actions: ActionTree<JobState, RootState> = {
       params.inputFields["productStoreId_op"] = "empty"
     }
 
-    if(payload.queryString) {
+    if (payload.queryString) {
       params.inputFields["enumName_value"] = "%"+ payload.queryString + "%"
       params.inputFields["jobName_op"] = "like"
       params.inputFields["jobName_ic"] = "Y"
@@ -179,7 +179,7 @@ const actions: ActionTree<JobState, RootState> = {
         "statusId": "SERVICE_PENDING",
         "systemJobEnumId_op": "not-empty"
       } as any,
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId","description" ],
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId" ],
       "entityName": "JobSandbox",
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
@@ -193,7 +193,7 @@ const actions: ActionTree<JobState, RootState> = {
       params.inputFields["productStoreId_op"] = "empty"
     }
 
-    if(payload.queryString) {
+    if (payload.queryString) {
       params.inputFields["enumName_value"] = "%"+ payload.queryString + "%"
       params.inputFields["enumName_op"] = "like"
       params.inputFields["enumName_ic"] = "Y"

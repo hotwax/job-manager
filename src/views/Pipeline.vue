@@ -22,7 +22,7 @@
     </ion-header>
 
     <ion-content>
-      <ion-input :placeholder="$t('Search jobs')" v-model="queryString" v-on:keyup.enter="segmentSelected === 'pending' ? getPendingJobs() : ( segmentSelected === 'running' ? getRunningJobs() : getJobHistory())"/>
+      <ion-searchbar :placeholder="$t('Search jobs')" @ionClear="queryString = ''; segmentSelected === 'pending' ? getPendingJobs() : ( segmentSelected === 'running' ? getRunningJobs() : getJobHistory())" v-model="queryString" v-on:keyup.enter="queryString = $event.target.value; segmentSelected === 'pending' ? getPendingJobs() : ( segmentSelected === 'running' ? getRunningJobs() : getJobHistory())" />
       <main>
         <section v-if="segmentSelected === 'pending'">
           <!-- Empty state -->
@@ -241,8 +241,8 @@ import {
   IonTitle,
   IonInfiniteScroll,
   IonInfiniteScrollContent,
-  IonInput,
   alertController,
+  IonSearchbar,
   IonSegment,
   IonSegmentButton,
   IonSpinner,
@@ -279,7 +279,7 @@ export default defineComponent({
     IonTitle,
     IonInfiniteScroll,
     IonInfiniteScrollContent,
-    IonInput,
+    IonSearchbar,
     IonSegment,
     IonSegmentButton,
     IonSpinner,
