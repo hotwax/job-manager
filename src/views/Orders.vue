@@ -229,19 +229,16 @@ export default defineComponent({
     async deleteBatch(batch: any) {
       const deleteBatchAlert = await alertController
         .create({
-          header: this.$t('Delete batch'),
-          message: this.$t("Canceling this batch will cancel this occurrence and all following occurrences. This batch will have to be re-enabled manually to run it again."),
+          header: this.$t('Cancel job'),
+          message: this.$t("Canceling this job will cancel this occurrence and all following occurrences. This job will have to be re-enabled manually to run it again."),
           buttons: [
             {
-              text: this.$t("Don't delete"),
+              text: this.$t("Don't cancel"),
               role: 'cancel',
             },
             {
-              text: this.$t("Delete batch"),
+              text: this.$t("Cancel"),
               handler: async () => {
-                  const allBatches = this.getJob(this.jobEnums['BTCH_BRKR_ORD']);
-                  const currentBatchIndex = allBatches.indexOf(batch);
-                  allBatches.splice(currentBatchIndex, 1);
                   await this.store.dispatch('job/cancelJob', batch);
               },
             },

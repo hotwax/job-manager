@@ -26,7 +26,6 @@
   "Canceled": "Canceled",
   "Cancel job": "Cancel job",
   "Canceling this job will cancel this occurrence and all following occurrences. This job will have to be re-enabled manually to run it again.": "Canceling this job will cancel this occurrence and all following occurrences. This job will have to be re-enabled manually to run it again.",
-  "Canceling this batch will cancel this occurrence and all following occurrences. This btach will have to be re-enabled manually to run it again.": "Canceling this batch will cancel this occurrence and all following occurrences. This batch will have to be re-enabled manually to run it again.",
   "Change": "Change",
   "Change time zone": "Change time zone",
   "Confirm": "Confirm",
