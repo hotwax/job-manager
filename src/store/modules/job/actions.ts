@@ -37,7 +37,7 @@ const actions: ActionTree<JobState, RootState> = {
     }
     return resp;
   },
-  
+
   async fetchJobHistory({ commit, dispatch, state }, payload){ 
     const params = {
       "inputFields": {
