@@ -6,10 +6,6 @@
     </ion-item>
 
     <ion-list>
-      <ion-item>
-        <ion-icon slot="start" :icon="calendarClearOutline" />
-        <ion-label>{{ $t("Last run") }}</ion-label>
-      </ion-item>
 
       <ion-item>
         <ion-icon slot="start" :icon="timeOutline" />
