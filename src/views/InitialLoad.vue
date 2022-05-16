@@ -207,6 +207,7 @@ export default defineComponent({
     }
   },
   mounted () {
+    this.fetchJobs();
     emitter.on("selectedShop", this.fetchJobs);
   },
   unmounted(){
