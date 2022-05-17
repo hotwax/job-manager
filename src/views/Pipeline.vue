@@ -69,15 +69,19 @@
                   <ion-button color="danger" fill="clear" @click.stop="cancelJob(job)">{{ $t("Cancel") }}</ion-button>
                 </div>
                 <div>
+                  <ion-button fill="clear" color="medium" slot="end" @click.stop="openQuickActions(job)">
+                    <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
+                  </ion-button>
+                  <!-- TODO / Remove this button when its state is managed in popover -->
                   <ion-button fill="clear" color="medium" slot="end" @click.stop="updateSearchPreference(job?.systemJobEnumId)">
                     <ion-icon slot="icon-only" :icon="starOutline" />
                   </ion-button>
-                  <ion-button fill="clear" color="medium" @click.stop="copyJobInformation(job)">
+                  <!-- <ion-button fill="clear" color="medium" @click.stop="copyJobInformation(job)">
                     <ion-icon slot="icon-only" :icon="copyOutline" />
                   </ion-button>
                   <ion-button fill="clear" color="medium" slot="end" @click.stop="viewJobHistory(job)">
                     <ion-icon slot="icon-only" :icon="timeOutline" />
-                  </ion-button>
+                  </ion-button> -->
                 </div>
               </div> 
             </ion-card>
@@ -238,11 +242,20 @@
 
     <ion-footer>
       <ion-toolbar>
-        <ion-title>Pinned jobs</ion-title>
-        <ion-chip v-for="(prefJob, index) in searchPreferences" :key="index" slot="end" outline>
-          <ion-label>{{ getEnumName(prefJob) }}</ion-label>
-          <ion-icon @click="updateSearchPreference(prefJob)" :icon="closeCircleOutline" />
-        </ion-chip>
+        <ion-title slot="start" class="desktop-only">
+            {{ $t("Pinned jobs") }}
+        </ion-title>
+
+        <ion-item lines="none">
+          <ion-icon slot="start" class="mobile-only" :icon="pinOutline" />
+
+          <div slot="end">
+            <ion-chip v-for="(prefJob, index) in searchPreferences" :key="index" outline>
+              <ion-label>{{ getEnumName(prefJob) }}</ion-label>
+              <ion-icon @click="updateSearchPreference(prefJob)" :icon="closeCircleOutline" />
+            </ion-chip>
+          </div>
+        </ion-item>
       </ion-toolbar>  
     </ion-footer>
   </ion-page>
@@ -280,14 +293,16 @@ import {
   IonSegmentButton,
   IonSpinner,
   isPlatform,
-  modalController
+  modalController,
+  popoverController
 } from "@ionic/vue";
 import JobConfiguration from '@/components/JobConfiguration.vue'
-import { closeCircleOutline, codeWorkingOutline, copyOutline, refreshOutline, starOutline, timeOutline, timerOutline } from "ionicons/icons";
+import { closeCircleOutline, codeWorkingOutline, copyOutline, ellipsisVerticalOutline, pinOutline, refreshOutline, starOutline, timeOutline, timerOutline } from "ionicons/icons";
 import emitter from '@/event-bus';
 import JobHistoryModal from '@/components/JobHistoryModal.vue';
 import { Plugins } from '@capacitor/core';
 import { showToast } from '@/utils'
+import QuickActionsPopover from '@/components/QuickActionsPopover.vue'
 
 export default defineComponent({
   name: "Pipeline",
@@ -482,6 +497,15 @@ export default defineComponent({
       const viewIndex = vIndex ? vIndex : 0;
       await this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString});
     },
+    async openQuickActions(job: any) {
+      const popover = await popoverController.create({
+        component: QuickActionsPopover,
+        translucent: true,
+        showBackdrop: false,
+        componentProps: { job }
+      });
+      return popover.present();
+    },
     async cancelJob(job: any){
       const alert = await alertController
         .create({
@@ -556,6 +580,8 @@ export default defineComponent({
       copyOutline,
       store,
       codeWorkingOutline,
+      ellipsisVerticalOutline,
+      pinOutline,
       refreshOutline,
       timeOutline,
       timerOutline,
@@ -590,9 +616,27 @@ ion-item {
   justify-content: space-between;
 }
 
+ion-title {
+  flex-grow: 0;
+}
+
+ion-toolbar > ion-item > div {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: scroll;
+}
+
+ion-chip {
+  flex: 1 0 100%;
+  max-width: max-content;
+}
 @media (min-width: 991px) {
   ion-header{
     display: flex;
   }
+
+  ion-toolbar > ion-item > div {
+    overflow-x: hidden;
+  }  
 }
 </style>
