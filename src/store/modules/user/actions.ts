@@ -65,10 +65,14 @@ const actions: ActionTree<UserState, RootState> = {
         "noConditionFind": "Y"
       }
 
-      await dispatch('getEComStores', payload).then((stores: any) => { resp.data.stores = [{
-          productStoreId: "",
-          storeName: "None"
-        }, ...(stores ? stores : [])]
+      await dispatch('getEComStores', payload).then((stores: any) => {
+        resp.data.stores = [
+          ...(stores ? stores : []),
+          {
+            productStoreId: "",
+            storeName: "None"
+          }
+        ]
       })
 
       this.dispatch('util/getServiceStatusDesc')
@@ -76,6 +80,7 @@ const actions: ActionTree<UserState, RootState> = {
         resp.data.searchPreference = searchPreference
       })
 
+      commit(types.USER_CURRENT_ECOM_STORE_UPDATED, resp.data?.stores[0]);
       commit(types.USER_INFO_UPDATED, resp.data);
     }
   },
