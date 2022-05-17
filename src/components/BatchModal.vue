@@ -6,26 +6,43 @@
           <ion-icon slot="icon-only" :icon="closeOutline" />
         </ion-button>
       </ion-buttons>
-      <ion-title>{{ currentBatch?.jobName ? currentBatch?.jobName : $t('New Batch') }}</ion-title>
+      <ion-title>{{ currentBatch?.jobName ? currentBatch?.jobName : $t('New broker run') }}</ion-title>
     </ion-toolbar>
   </ion-header>
 
   <ion-content>
+
     <ion-item>
       <ion-label position="fixed">{{ $t('Batch name') }}</ion-label>
-      <ion-input :placeholder="$t('New Batch')" v-model="jobName" />
+      <ion-input :placeholder="showCurrentDateTime()" v-model="jobName" />
     </ion-item>
+
+    <ion-item>
+      <ion-label>{{ $t('Order queue') }}</ion-label>
+        <ion-select slot="end" interface="popover" value="brokering-queue">
+          <ion-select-option value="brokering-queue">{{ $t("Brokering queue") }}</ion-select-option>
+          <ion-select-option value="preorder-parking">{{ $t("Pre-order parking") }}</ion-select-option>
+          <ion-select-option value="backorder parking">{{ $t("Back-order parking") }}</ion-select-option>
+        </ion-select>
+    </ion-item>
+
+    <ion-item>
+      <ion-label position="fixed">{{ $t('Unfillable') }}</ion-label>
+      <ion-toggle @ionChange="toggleChange" slot="end" color="secondary" />
+    </ion-item>
+
     <ion-item>
       <ion-label position="fixed">{{ $t("Schedule") }}</ion-label>
-      <ion-datetime :value="currentBatch?.runTime ? getDateTime(currentBatch.runTime) : ''" @ionChange="updateRunTime($event, currentBatch)" display-format="MM/DD/YYYY" placeholder="date picker" />
+      <ion-datetime class="ionic-datetime-component" color="secondary" presentation="time" />
     </ion-item>    
 
-    <ion-fab vertical="bottom" horizontal="end" slot="fixed" @click="updateJob()">
+    <ion-fab vertical="bottom" horizontal="end" slot="fixed">
       <ion-fab-button>
         <ion-icon :icon="checkmarkDoneOutline" />  
       </ion-fab-button>
     </ion-fab>
   </ion-content>
+
 </template>
 
 <script lang="ts">
@@ -41,7 +58,10 @@ import {
   IonItem,
   IonLabel,
   IonInput,
+  IonSelect,
+  IonSelectOption,
   IonTitle,
+  IonToggle,
   IonToolbar,
   modalController
 } from '@ionic/vue';
@@ -64,14 +84,18 @@ export default defineComponent({
     IonItem,
     IonLabel,
     IonInput,
+    IonSelect,
+    IonSelectOption,
     IonTitle,
+    IonToggle,
     IonToolbar,
   },
   props: ["id", "enum"],
   data() {
     return {
       currentBatch: {} as any,
-      jobName: '' as string
+      jobName: '' as string,
+      toggleValue: false as boolean,
     }
   },
   computed: {
@@ -82,7 +106,7 @@ export default defineComponent({
     })
   },
   mounted() {
-    this.getCurrentBatch();
+    // this.getCurrentBatch();
   },
   methods: {
     getCurrentBatch() {
@@ -121,7 +145,14 @@ export default defineComponent({
       if(batch) {
         batch['runTime'] = DateTime.fromISO(ev['detail'].value).toMillis()
       }
-    }
+    },
+    showCurrentDateTime() {
+      const today = new Date();
+      return (today.getMonth() + 1) + '-' + today.getDate() + '-' + today.getFullYear() + "  " + today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+    },
+    // toggleChange() {
+    //   this.toggleValue = !this.toggleValue;
+    // },
   },
   setup() {
     const store = useStore();
@@ -134,3 +165,9 @@ export default defineComponent({
   },
 });
 </script>
+
+<style scope>
+.ionic-datetime-component {
+    width: 60%;
+}
+</style>
