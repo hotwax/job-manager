@@ -430,13 +430,13 @@ export default defineComponent({
         });
       return alert.present();
     },
-    async getPendingJobs(viewSize: any = process.env.VUE_APP_VIEW_SIZE, viewIndex: any = 0) {
+    async getPendingJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
       await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString});
     },
-    async getRunningJobs(viewSize: any = process.env.VUE_APP_VIEW_SIZE, viewIndex: any = 0) {
+    async getRunningJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
       await this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString});
     },
-    async getJobHistory(viewSize: any = process.env.VUE_APP_VIEW_SIZE, viewIndex: any = 0) {
+    async getJobHistory(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
       await this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString});
     },
     async cancelJob(job: any){
