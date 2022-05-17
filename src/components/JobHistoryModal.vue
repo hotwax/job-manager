@@ -16,10 +16,15 @@
     </div>
 
     <div v-else>
-      <ion-item v-for="(job, index) in jobHistory" :key="index">
-        <ion-label>{{ job.runTime ? getTime(job.runTime) : "-" }}</ion-label>
-        <ion-badge v-if="job.statusId" :color="job.statusId === 'SERVICE_FINISHED' ? 'success' : 'danger'">{{ getStatusDesc(job.statusId) }}</ion-badge>
-      </ion-item>
+      <ion-list>
+        <ion-item v-for="(job, index) in jobHistory" :key="index">
+          <ion-label>
+            {{ job.runTime ? getTime(job.runTime) : "-" }}
+            <p v-if="job.runTime">{{ getDate(job.runTime) }}</p>
+          </ion-label>
+          <ion-badge v-if="job.statusId" :color="job.statusId === 'SERVICE_FINISHED' ? 'success' : 'danger'">{{ getStatusDesc(job.statusId) }}</ion-badge>
+        </ion-item>
+      </ion-list>
     </div>
   </ion-content>
 </template>
@@ -34,6 +39,7 @@ import {
   IonIcon,
   IonItem,
   IonLabel,
+  IonList,
   IonTitle,
   IonToolbar,
   modalController
@@ -56,6 +62,7 @@ export default defineComponent({
     IonIcon,
     IonItem,
     IonLabel,
+    IonList,
     IonTitle,
     IonToolbar,
   },
@@ -76,8 +83,11 @@ export default defineComponent({
     closeModal() {
       modalController.dismiss({ dismissed: true });
     },
-    getTime (time: any) {
-      return DateTime.fromMillis(time).toLocaleString(DateTime.TIME_SIMPLE);
+    getDate (runTime: any) {
+      return DateTime.fromMillis(runTime).toLocaleString(DateTime.DATE_MED);
+    },
+    getTime (runTime: any) {
+      return DateTime.fromMillis(runTime).toLocaleString(DateTime.TIME_SIMPLE);
     },
     async fetchJobHistory() {
       let resp;

@@ -22,6 +22,7 @@
     </ion-header>
 
     <ion-content>
+      <ion-searchbar :placeholder="$t('Search jobs')" @ionClear="queryString = ''; segmentSelected === 'pending' ? getPendingJobs() : ( segmentSelected === 'running' ? getRunningJobs() : getJobHistory())" v-model="queryString" v-on:keyup.enter="queryString = $event.target.value; segmentSelected === 'pending' ? getPendingJobs() : ( segmentSelected === 'running' ? getRunningJobs() : getJobHistory())" />
       <main>
         <section v-if="segmentSelected === 'pending'">
           <!-- Empty state -->
@@ -39,7 +40,7 @@
             <ion-card v-for="job in pendingJobs" :key="job.jobId" @click="viewJobConfiguration(job)" :button="isDesktop">
               <ion-card-header>
                 <ion-card-title>{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
-                <ion-badge v-if="job.runTime" color="dark">{{ timeTillJob(job.runTime)}}</ion-badge>
+                <ion-badge v-if="job.runTime" color="dark">{{ timeFromNow(job.runTime)}}</ion-badge>
               </ion-card-header>
 
               <ion-item lines="none">
@@ -96,7 +97,7 @@
             <div class="ion-text-center">
               <ion-button fill="outline" @click="refreshJobs()">
                 {{ $t('retry') }}
-                <ion-spinner v-if="isRetrying" name="crescent" />
+                <ion-spinner slot="end" v-if="isRetrying" name="crescent" />
               </ion-button>
             </div>
           </div>
@@ -108,7 +109,7 @@
                   <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
                   <ion-card-title>{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
                 </div>
-                <ion-badge color="dark">Running</ion-badge>
+                <ion-badge color="dark">{{ job.statusDesc }}</ion-badge>
               </ion-card-header>
 
               <ion-item lines="none">
@@ -129,6 +130,12 @@
               <ion-item lines="full">
                 <ion-icon slot="start" :icon="codeWorkingOutline" />
                 <ion-label class="ion-text-wrap">{{ job.serviceName }}</ion-label>
+              </ion-item>
+
+              <ion-item>
+                <ion-button fill="clear" color="medium" slot="end" @click.stop="copyJobInformation(job)">
+                  <ion-icon slot="icon-only" :icon="copyOutline" />
+                </ion-button>
               </ion-item>
             </ion-card>
 
@@ -161,7 +168,7 @@
                 <ion-card-title>{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
               </div>
               <div>
-                <ion-badge v-if="job.runTime" color="dark">{{ timeTillJob(job.runTime)}}</ion-badge>
+                <ion-badge v-if="job.cancelDateTime || job.finishDateTime" color="dark">{{ job.statusId == "SERVICE_CANCELLED" || job.statusId == "SERVICE_CRASHED" ?  timeFromNow(job.cancelDateTime) : timeFromNow(job.finishDateTime) }}</ion-badge>
                 <ion-badge v-if="job.statusId" :color="job.statusId === 'SERVICE_FINISHED' ? 'success' : 'danger'">{{ job.statusDesc }}</ion-badge>
               </div>
             </ion-card-header>
@@ -173,7 +180,10 @@
             </ion-item>
             <ion-item>
               <ion-icon slot="start" :icon="timeOutline" />
-              <ion-label class="ion-text-wrap">{{ job.runTime ? getTime(job.runTime) : "-"  }}</ion-label>
+              <ion-label class="ion-text-wrap">
+                {{ job.runTime ? getTime(job.runTime) : "-"  }}
+              </ion-label>
+              <ion-note slot="end">{{ job.statusId == "SERVICE_CANCELLED" || job.statusId == "SERVICE_CRASHED" ? getJobExecutionTime(job.startDateTime, job.cancelDateTime) : getJobExecutionTime(job.startDateTime, job.finishDateTime) }}</ion-note>
             </ion-item>
 
             <ion-item>
@@ -186,11 +196,16 @@
               <ion-label class="ion-text-wrap">{{ job.serviceName }}</ion-label>
             </ion-item>
 
+            <ion-item>
+              <ion-button fill="clear" color="medium" slot="end" @click.stop="copyJobInformation(job)">
+                <ion-icon slot="icon-only" :icon="copyOutline" />
+              </ion-button>
+            </ion-item>
           </ion-card>
 
           <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
             <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
-          </ion-refresher>
+          </ion-refresher>   
           <ion-infinite-scroll @ionInfinite="loadMoreJobHistory($event)" threshold="100px" :disabled="!isHistoryJobsScrollable">
             <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="$t('Loading')"/>
           </ion-infinite-scroll>
@@ -221,6 +236,7 @@ import {
   IonItem,
   IonLabel,
   IonMenuButton,
+  IonNote,
   IonPage,
   IonRefresher,
   IonRefresherContent,
@@ -229,6 +245,7 @@ import {
   IonInfiniteScroll,
   IonInfiniteScrollContent,
   alertController,
+  IonSearchbar,
   IonSegment,
   IonSegmentButton,
   IonSpinner,
@@ -257,6 +274,7 @@ export default defineComponent({
     IonItem,
     IonLabel,
     IonMenuButton,
+    IonNote,
     IonPage,
     IonRefresher,
     IonRefresherContent,
@@ -264,6 +282,7 @@ export default defineComponent({
     IonTitle,
     IonInfiniteScroll,
     IonInfiniteScrollContent,
+    IonSearchbar,
     IonSegment,
     IonSegmentButton,
     IonSpinner,
@@ -285,7 +304,8 @@ export default defineComponent({
       freqType: '' as any,
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
-      isRetrying: false
+      isRetrying: false,
+      queryString: '' as any
     }
   },
   computed: {
@@ -304,6 +324,20 @@ export default defineComponent({
     })
   },
   methods: {
+    getJobExecutionTime(startTime: any, endTime: any){
+      if (startTime && endTime) {
+        const timeDiff = DateTime.fromMillis(endTime).diff( DateTime.fromMillis(startTime))
+        const hours =  timeDiff.hours
+        const minutes = timeDiff.minutes
+        const seconds =  timeDiff
+        let format = ""
+        if(hours) format += "hh 'hr' "
+        if(minutes) format += "mm 'min' "
+        if(seconds) format += "ss 'sec'"
+        if (format) return timeDiff.toFormat(format);
+      }
+      return
+    },
     async copyJobInformation(job: any) {
       const { Clipboard } = Plugins;
       const jobDetails = `jobId: ${job.jobId}, jobName: ${this.getEnumName(job.systemJobEnumId)}, jobDescription: ${this.getEnumDescription(job.systemJobEnumId)}`;
@@ -324,7 +358,7 @@ export default defineComponent({
     getTime (time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.TIME_SIMPLE);
     },
-    timeTillJob (time: any) {
+    timeFromNow (time: any) {
       const timeDiff = DateTime.fromMillis(time).diff(DateTime.local());
       return DateTime.local().plus(timeDiff).toRelative();
     },
@@ -355,27 +389,29 @@ export default defineComponent({
     async refreshJobs(event: any) {
       this.isRetrying = true;
       if(this.segmentSelected === 'pending') {
-        this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => {
+        this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0, queryString: this.queryString}).then(() => {
           if(event) event.target.complete();
           this.isRetrying = false;
         });
       } else if(this.segmentSelected === 'running') {
-        this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => {
+        this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0, queryString: this.queryString}).then(() => {
           if(event) event.target.complete();
           this.isRetrying = false;
         });
       } else {
-        this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => {
+        this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0, queryString: this.queryString}).then(() => {
           if(event) event.target.complete();
           this.isRetrying = false;
         });
       }
     },
+
     segmentChanged (e: CustomEvent) {
+      this.queryString = "";
       this.segmentSelected = e.detail.value
-      this.segmentSelected === 'pending' ? this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}) : 
-      this.segmentSelected === 'running' ? this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}) :
-      this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0});
+      this.segmentSelected === 'pending' ? this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0, queryString: this.queryString}) :
+      this.segmentSelected === 'running' ? this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0, queryString: this.queryString}) :
+      this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0, queryString: this.queryString});
     },
     async skipJob (job: any) {
       const alert = await alertController
@@ -391,7 +427,7 @@ export default defineComponent({
               text: this.$t('Skip'),
               handler: async () => {
                 await this.store.dispatch('job/skipJob', job);
-                await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewIndex: 0})
+                await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewIndex: 0, queryString: this.queryString})
               },
             }
           ]
@@ -401,17 +437,17 @@ export default defineComponent({
     async getPendingJobs(vSize: any, vIndex: any) {
       const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
       const viewIndex = vIndex ? vIndex : 0;
-      await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex});
+      await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString});
     },
     async getRunningJobs(vSize: any, vIndex: any) {
       const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
       const viewIndex = vIndex ? vIndex : 0;
-      await this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex});
+      await this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString});
     },
     async getJobHistory(vSize: any, vIndex: any) {
       const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
       const viewIndex = vIndex ? vIndex : 0;
-      await this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex});
+      await this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString});
     },
     async cancelJob(job: any){
       const alert = await alertController
@@ -427,7 +463,7 @@ export default defineComponent({
               text: this.$t("CANCEL"),
               handler: async () => {
                 await this.store.dispatch('job/cancelJob', job);
-                await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewIndex: 0});
+                await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewIndex: 0, queryString: this.queryString});
               },
             }
           ],
@@ -489,7 +525,7 @@ export default defineComponent({
     }
   },
   created() {
-    this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0});
+    this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0, queryString: this.queryString});
   },
   setup() {
     const store = useStore();
