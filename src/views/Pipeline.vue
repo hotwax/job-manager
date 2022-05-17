@@ -69,15 +69,19 @@
                   <ion-button color="danger" fill="clear" @click.stop="cancelJob(job)">{{ $t("Cancel") }}</ion-button>
                 </div>
                 <div>
+                  <ion-button fill="clear" color="medium" slot="end" @click.stop="openQuickActions(job)">
+                    <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
+                  </ion-button>
+                  <!-- TODO / Remove this button when its state is managed in popover -->
                   <ion-button fill="clear" color="medium" slot="end" @click.stop="updateSearchPreference(job?.systemJobEnumId)">
                     <ion-icon slot="icon-only" :icon="starOutline" />
                   </ion-button>
-                  <ion-button fill="clear" color="medium" @click.stop="copyJobInformation(job)">
+                  <!-- <ion-button fill="clear" color="medium" @click.stop="copyJobInformation(job)">
                     <ion-icon slot="icon-only" :icon="copyOutline" />
                   </ion-button>
                   <ion-button fill="clear" color="medium" slot="end" @click.stop="viewJobHistory(job)">
                     <ion-icon slot="icon-only" :icon="timeOutline" />
-                  </ion-button>
+                  </ion-button> -->
                 </div>
               </div> 
             </ion-card>
@@ -271,14 +275,16 @@ import {
   IonSegmentButton,
   IonSpinner,
   isPlatform,
-  modalController
+  modalController,
+  popoverController
 } from "@ionic/vue";
 import JobConfiguration from '@/components/JobConfiguration.vue'
-import { closeCircleOutline, codeWorkingOutline, copyOutline, pinOutline, refreshOutline, starOutline, timeOutline, timerOutline } from "ionicons/icons";
+import { closeCircleOutline, codeWorkingOutline, copyOutline, ellipsisVerticalOutline, pinOutline, refreshOutline, starOutline, timeOutline, timerOutline } from "ionicons/icons";
 import emitter from '@/event-bus';
 import JobHistoryModal from '@/components/JobHistoryModal.vue';
 import { Plugins } from '@capacitor/core';
 import { showToast } from '@/utils'
+import QuickActionsPopover from '@/components/QuickActionsPopover.vue'
 
 export default defineComponent({
   name: "Pipeline",
@@ -473,6 +479,15 @@ export default defineComponent({
       const viewIndex = vIndex ? vIndex : 0;
       await this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString});
     },
+    async openQuickActions(job: any) {
+      const popover = await popoverController.create({
+        component: QuickActionsPopover,
+        translucent: true,
+        showBackdrop: false,
+        componentProps: { job }
+      });
+      return popover.present();
+    },
     async cancelJob(job: any){
       const alert = await alertController
         .create({
@@ -547,6 +562,7 @@ export default defineComponent({
       copyOutline,
       store,
       codeWorkingOutline,
+      ellipsisVerticalOutline,
       pinOutline,
       refreshOutline,
       timeOutline,

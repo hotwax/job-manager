@@ -1,7 +1,7 @@
 <template>
   <ion-content>
     <ion-list>
-      <ion-item @click.stop="closePopover(); updateSearchPreference(job)" button>
+      <ion-item @click.stop="closePopover(); updateSearchPreference(job?.systemJobEnumId)" button>
         <ion-icon slot="start" :icon="pinOutline" />
         {{ $t("Pin jobs") }}
       </ion-item>
@@ -55,7 +55,6 @@ export default defineComponent({
     },  
     async copyJobInformation(job: any) {
       const { Clipboard } = Plugins;
-      console.log(this.job);
       const jobDetails = `jobId: ${job.jobId}, jobName: ${this.getEnumName(job.systemJobEnumId)}, jobDescription: ${this.getEnumDescription(job.systemJobEnumId)}`;
 
       await Clipboard.write({
@@ -71,40 +70,28 @@ export default defineComponent({
       });
       return jobHistoryModal.present();
     },  
-    async updateSearchPreference(job: any) {
-      const searchPreference = this.getSearchPreference
-      if(searchPreference?.searchPrefId) {
-        let searchPrefValues = [];
-        
-        if(searchPreference?.searchPrefValue) {
-          searchPrefValues = searchPreference?.searchPrefValue.split(',');
-          const preference = searchPrefValues.find((pref: any) => {
-            if(pref.includes(job?.systemJobEnumId)) return pref;
-          })
-          if(preference) {
-            const searchPreference = `${job?.systemJobEnumId}: ${preference.split(" ")[1] === 'true' ? 'false' : 'true'}`
-            searchPrefValues[searchPrefValues.indexOf(preference)] = searchPreference;
-          } else {
-            const searchPreference = `${job?.systemJobEnumId}: 'true'}`
-            searchPrefValues.push(searchPreference)
-          }
-        } else {
-          const searchPreference = `${job?.systemJobEnumId}: 'true'}`
-          searchPrefValues.push(searchPreference)
-        }
-        
+     async updateSearchPreference(enumId: any) {
+      if(this.getSearchPreference?.searchPrefId) {
         const payload = {
-          "searchPrefId": searchPreference?.searchPrefId,
-          "searchPrefValue": searchPrefValues.toString(),
+          "searchPrefId": this.getSearchPreference?.searchPrefId,
+          "searchPrefValue": JSON.stringify({ 
+            ...this.getSearchPreference?.searchPrefValue,
+            [enumId]: this.getSearchPreference?.searchPrefValue[enumId] ? false : true
+          })
         }
-        this.store.dispatch('user/updateSearchPreference', payload);
+
+        await this.store.dispatch('user/updateSearchPreference', payload);
       } else {
         const payload = {
-          searchPrefValue: `${job?.systemJobEnumId}: true`
+          searchPrefValue: JSON.stringify({ [enumId]: true })
         }
-        this.store.dispatch('user/createSearchPreference', payload);
+        await this.store.dispatch('user/createSearchPreference', payload);
       }
+      await this.listSearchPreferences();
     },
+    listSearchPreferences() {
+      (this as any).searchPreferences = Object.keys(this.getSearchPreference?.searchPrefValue).filter((pref: any) => this.getSearchPreference?.searchPrefValue[pref]);
+    }
   },
   setup() {
     const store = useStore();  
