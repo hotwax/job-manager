@@ -158,7 +158,15 @@ const actions: ActionTree<UserState, RootState> = {
       }
       resp = await UserService.getSearchPreference(params);
       if(resp.status === 200 && resp.data.docs?.length && !hasError(resp)) {
-        return resp.data.docs[0];
+        let searchPreference = resp.data.docs[0];
+        if(searchPreference?.searchPrefId) {
+          searchPreference = {
+            searchPrefId: searchPreference?.searchPrefId,
+            searchPrefValue: searchPreference?.searchPrefValue ? JSON.parse(searchPreference?.searchPrefValue) : {}
+          }
+        }
+
+        return searchPreference;
       }
     } catch(error) {
       console.error(error);

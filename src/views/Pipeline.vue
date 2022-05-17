@@ -69,7 +69,7 @@
                   <ion-button color="danger" fill="clear" @click.stop="cancelJob(job)">{{ $t("Cancel") }}</ion-button>
                 </div>
                 <div>
-                  <ion-button fill="clear" color="medium" slot="end" @click.stop="updateSearchPreference(job)">
+                  <ion-button fill="clear" color="medium" slot="end" @click.stop="updateSearchPreference(job?.systemJobEnumId)">
                     <ion-icon slot="icon-only" :icon="starOutline" />
                   </ion-button>
                   <ion-button fill="clear" color="medium" @click.stop="copyJobInformation(job)">
@@ -217,6 +217,25 @@
         </aside>
       </main>
     </ion-content>
+
+    <ion-footer>
+      <ion-toolbar>
+        <ion-title slot="start" class="desktop-only">
+            {{ $t("Pinned jobs") }}
+        </ion-title>
+
+        <ion-item lines="none">
+          <ion-icon slot="start" class="mobile-only" :icon="pinOutline" />
+
+          <div slot="end">
+            <ion-chip v-for="(prefJob, index) in searchPreferences" :key="index" outline>
+              <ion-label>{{ getEnumName(prefJob) }}</ion-label>
+              <ion-icon @click="updateSearchPreference(prefJob)" :icon="closeCircleOutline" />
+            </ion-chip>
+          </div>
+        </ion-item>
+      </ion-toolbar>  
+    </ion-footer>
   </ion-page>
 </template>
 <script lang="ts">
@@ -231,6 +250,8 @@ import {
   IonCardHeader,
   IonCardSubtitle,
   IonCardTitle,
+  IonChip,
+  IonFooter,
   IonHeader,
   IonIcon,
   IonItem,
@@ -253,7 +274,7 @@ import {
   modalController
 } from "@ionic/vue";
 import JobConfiguration from '@/components/JobConfiguration.vue'
-import { codeWorkingOutline, copyOutline, refreshOutline, starOutline, timeOutline, timerOutline } from "ionicons/icons";
+import { closeCircleOutline, codeWorkingOutline, copyOutline, pinOutline, refreshOutline, starOutline, timeOutline, timerOutline } from "ionicons/icons";
 import emitter from '@/event-bus';
 import JobHistoryModal from '@/components/JobHistoryModal.vue';
 import { Plugins } from '@capacitor/core';
@@ -269,6 +290,8 @@ export default defineComponent({
     IonCardHeader,
     IonCardSubtitle,
     IonCardTitle,
+    IonChip,
+    IonFooter,
     IonHeader,
     IonIcon,
     IonItem,
@@ -305,7 +328,8 @@ export default defineComponent({
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
       isRetrying: false,
-      queryString: '' as any
+      queryString: '' as any,
+      searchPreferences: []
     }
   },
   computed: {
@@ -487,54 +511,43 @@ export default defineComponent({
         this.isJobDetailAnimationCompleted = true;
       }
     },
-    async updateSearchPreference(job: any) {
-      const searchPreference = this.getSearchPreference
-
-      if(searchPreference?.searchPrefId) {
-        let searchPrefValues = [];
-        
-        if(searchPreference?.searchPrefValue) {
-          searchPrefValues = searchPreference?.searchPrefValue.split(',');
-          const preference = searchPrefValues.find((pref: any) => {
-            if(pref.includes(job?.systemJobEnumId)) return pref;
-          })
-
-          if(preference) {
-            const searchPreference = `${job?.systemJobEnumId}: ${preference.split(" ")[1] === 'true' ? 'false' : 'true'}`
-            searchPrefValues[searchPrefValues.indexOf(preference)] = searchPreference;
-          } else {
-            const searchPreference = `${job?.systemJobEnumId}: 'true'}`
-            searchPrefValues.push(searchPreference)
-          }
-        } else {
-          const searchPreference = `${job?.systemJobEnumId}: 'true'}`
-          searchPrefValues.push(searchPreference)
-        }
-        
+    async updateSearchPreference(enumId: any) {
+      if(this.getSearchPreference?.searchPrefId) {
         const payload = {
-          "searchPrefId": searchPreference?.searchPrefId,
-          "searchPrefValue": searchPrefValues.toString(),
+          "searchPrefId": this.getSearchPreference?.searchPrefId,
+          "searchPrefValue": JSON.stringify({ 
+            ...this.getSearchPreference?.searchPrefValue,
+            [enumId]: this.getSearchPreference?.searchPrefValue[enumId] ? false : true
+          })
         }
-        this.store.dispatch('user/updateSearchPreference', payload);
+
+        await this.store.dispatch('user/updateSearchPreference', payload);
       } else {
         const payload = {
-          searchPrefValue: `${job?.systemJobEnumId}: true`
+          searchPrefValue: JSON.stringify({ [enumId]: true })
         }
-        this.store.dispatch('user/createSearchPreference', payload);
+        await this.store.dispatch('user/createSearchPreference', payload);
       }
+      await this.listSearchPreferences();
+    },
+    listSearchPreferences() {
+      (this as any).searchPreferences = Object.keys(this.getSearchPreference?.searchPrefValue).filter((pref: any) => this.getSearchPreference?.searchPrefValue[pref]);
     }
   },
   created() {
-    this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0, queryString: this.queryString});
+    this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0});
+    this.listSearchPreferences();
   },
   setup() {
     const store = useStore();
     const segmentSelected = ref('pending');
 
     return {
+      closeCircleOutline,
       copyOutline,
       store,
       codeWorkingOutline,
+      pinOutline,
       refreshOutline,
       timeOutline,
       timerOutline,
@@ -569,9 +582,27 @@ ion-item {
   justify-content: space-between;
 }
 
+ion-title {
+  flex-grow: 0;
+}
+
+ion-toolbar > ion-item > div {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: scroll;
+}
+
+ion-chip {
+  flex: 1 0 100%;
+  max-width: max-content;
+}
 @media (min-width: 991px) {
   ion-header{
     display: flex;
   }
+
+  ion-toolbar > ion-item > div {
+    overflow-x: hidden;
+  }  
 }
 </style>
