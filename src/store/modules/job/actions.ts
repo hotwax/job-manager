@@ -245,7 +245,6 @@ const actions: ActionTree<JobState, RootState> = {
       }
     });
     if(tempIds.length <= 0) return tempExprIds.map((id: any) => state.temporalExp[id]);
-    const cachedTempExpr = tempExprIds.map((id: any) => state.temporalExp[id]);
     const resp = await JobService.fetchTemporalExpression({
         "inputFields": {
         "tempExprId": tempIds,
