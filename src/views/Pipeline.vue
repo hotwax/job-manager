@@ -240,9 +240,9 @@
           <ion-icon slot="start" class="mobile-only" :icon="pinOutline" />
 
           <div slot="end">
-            <ion-chip v-for="(prefJob, index) in pinnedJobs" :key="index" outline>
-              <ion-label>{{ getEnumName(prefJob) }}</ion-label>
-              <ion-icon @click="updatePinnedJobs(prefJob)" :icon="closeCircleOutline" />
+            <ion-chip v-for="(job, index) in pinnedJobs" :key="index" outline>
+              <ion-label>{{ getEnumName(job) }}</ion-label>
+              <ion-icon @click="updatePinnedJobs(job)" :icon="closeCircleOutline" />
             </ion-chip>
           </div>
         </ion-item>
