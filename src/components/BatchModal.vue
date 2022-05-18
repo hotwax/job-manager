@@ -15,10 +15,10 @@
       <ion-label position="fixed">{{ $t('Batch name') }}</ion-label>
       <ion-input :placeholder="$t('New Batch')" v-model="jobName" />
     </ion-item>
-    <ion-item>
-      <ion-label position="fixed">{{ $t("Schedule") }}</ion-label>
-      <ion-datetime :value="currentBatch?.runTime ? getDateTime(currentBatch.runTime) : ''" @ionChange="updateRunTime($event, currentBatch)" display-format="MM/DD/YYYY" placeholder="date picker" />
-    </ion-item>    
+    <div class="ion-padding ion-text-center">
+      <h4>{{ $t("Schedule run time") }}</h4>
+      <ion-datetime :value="currentBatch?.runTime ? getDateTime(currentBatch.runTime) : ''" @ionChange="updateRunTime($event, currentBatch)" presentation="time" size="cover" />
+    </div>    
 
     <ion-fab vertical="bottom" horizontal="end" slot="fixed" @click="updateJob()">
       <ion-fab-button>
@@ -89,8 +89,8 @@ export default defineComponent({
       this.currentBatch = this.getJob(this.enum)?.find((job: any) => job.id === this.id)
       this.jobName = this.currentBatch?.jobName
     },
-    getDateTime(time: any) {
-      return DateTime.fromMillis(time)
+    getDateTime() {
+      return DateTime.now().set({ hour: 14,  minute: 0, second: 40 });
     },
     closeModal() {
       modalController.dismiss({ dismissed: true });
