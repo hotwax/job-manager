@@ -48,7 +48,7 @@ const getEComStores = async (payload: any): Promise<any> => {
   });
 }
 
-const getSearchPreference = async (payload: any): Promise<any> => {
+const getPinnedJobs = async (payload: any): Promise<any> => {
   return api({
     url: "performFind",
     method: "post",
@@ -56,7 +56,7 @@ const getSearchPreference = async (payload: any): Promise<any> => {
   });
 }
 
-const updateSearchPreference = async (payload: any): Promise<any> => {
+const updatePinnedJobs = async (payload: any): Promise<any> => {
   return api({
     url: "service/updateSearchPreference",
     method: "post",
@@ -64,7 +64,7 @@ const updateSearchPreference = async (payload: any): Promise<any> => {
   });
 }
 
-const createSearchPreference = async (payload: any): Promise<any> => {
+const createPinnedJob = async (payload: any): Promise<any> => {
   return api({
     url: "service/createSearchPreference",
     method: "post",
@@ -72,7 +72,7 @@ const createSearchPreference = async (payload: any): Promise<any> => {
   });
 }
 
-const createUserSearchPreference = async (payload: any): Promise<any> => {
+const registerPinnedJob = async (payload: any): Promise<any> => {
   return api({
     url: "service/createUserSearchPreference",
     method: "post",
@@ -81,14 +81,14 @@ const createUserSearchPreference = async (payload: any): Promise<any> => {
 }
 
 export const UserService = {
-    createSearchPreference,
-    createUserSearchPreference,
+    createPinnedJob,
     login,
     getAvailableTimeZones,
     getEComStores,
     getProfile,
     getShopifyConfig,
-    getSearchPreference,
+    getPinnedJobs,
+    registerPinnedJob,
     setUserTimeZone,
-    updateSearchPreference
+    updatePinnedJobs
 }
