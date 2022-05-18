@@ -17,7 +17,7 @@ const actions: ActionTree<UserState, RootState> = {
       if (resp.status === 200 && resp.data) {
         if (resp.data.token) {
             commit(types.USER_TOKEN_CHANGED, { newToken: resp.data.token })
-            dispatch('getProfile')
+            await dispatch('getProfile')
             dispatch('getShopifyConfig')
             return resp.data;
         } else if (hasError(resp)) {
@@ -74,9 +74,6 @@ const actions: ActionTree<UserState, RootState> = {
       })
 
       this.dispatch('util/getServiceStatusDesc')
-      await dispatch('getPinnedJobs', resp.data?.userLoginId).then((pinnedJobs: any) => {
-        resp.data.pinnedJobs = pinnedJobs
-      })
 
       commit(types.USER_CURRENT_ECOM_STORE_UPDATED, resp.data?.stores[0]);
       commit(types.USER_INFO_UPDATED, resp.data);
@@ -144,14 +141,14 @@ const actions: ActionTree<UserState, RootState> = {
    * Get user pinned jobs
    */
 
-  async getPinnedJobs({ state }, payload) {
+  async getPinnedJobs({ commit, state }) {
     let resp;
     const user = state?.current as any
 
     try{
       const params = {
         "inputFields": {
-          "userLoginId": payload ? payload : user?.userLoginId,
+          "userLoginId": user?.userLoginId,
           "userSearchPrefTypeId": "PINNED_JOB"
         },
         "fieldList": ["searchPrefId", "searchPrefValue"],
@@ -171,12 +168,18 @@ const actions: ActionTree<UserState, RootState> = {
         const enumIds = Object.keys(pinnedJobs?.searchPrefValue);
         await this.dispatch('job/fetchJobDescription', enumIds);
 
+        user.pinnedJobs = pinnedJobs
+        commit(types.USER_INFO_UPDATED, user);
+
         return pinnedJobs;
+      } else {
+        user.pinnedJobs = {}
+        commit(types.USER_INFO_UPDATED, user);
       }
     } catch(error) {
       console.error(error);
     }
-    return {}
+    return resp;
   },
 
   /**
@@ -184,15 +187,11 @@ const actions: ActionTree<UserState, RootState> = {
    */
   async updatePinnedJobs({ commit, dispatch, state }, payload) {
     let resp;
-    const user = state?.current as any
 
     try{
       resp = await UserService.updatePinnedJobs(payload);
       if(resp.status === 200 && !hasError(resp)) {
-        await dispatch('getPinnedJobs').then((pinnedJobs: any) => {
-          user.pinnedJobs = pinnedJobs
-          commit(types.USER_INFO_UPDATED, user);
-        })
+        await dispatch('getPinnedJobs')
       }
     } catch(error) {
       console.error(error);
@@ -206,7 +205,6 @@ const actions: ActionTree<UserState, RootState> = {
    */
   async createPinnedJob({ commit, dispatch, state }, payload) {
     let resp;
-    const user = state?.current as any
 
     try{
       resp = await UserService.createPinnedJob(payload);
@@ -220,10 +218,7 @@ const actions: ActionTree<UserState, RootState> = {
           const pinnedJob = await UserService.registerPinnedJob(params);
 
           if(pinnedJob.status === 200 && !hasError(pinnedJob)) {
-            await dispatch('getPinnedJobs').then((pinnedJobs: any) => {
-              user.pinnedJobs = pinnedJobs
-              commit(types.USER_INFO_UPDATED, user);
-            })
+            await dispatch('getPinnedJobs')
           }
         }
       }

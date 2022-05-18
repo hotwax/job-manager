@@ -551,6 +551,7 @@ export default defineComponent({
   },
   created() {
     this.getPendingJobs();
+    this.store.dispatch('user/getPinnedJobs');
   },
   setup() {
     const store = useStore();
