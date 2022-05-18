@@ -1,15 +1,15 @@
 <template>
   <ion-content>
     <ion-list>
-      <ion-item @click.stop="closePopover(); updateSearchPreference(job?.systemJobEnumId)" button>
+      <ion-item @click.stop="updateSearchPreference(job?.systemJobEnumId)" button>
         <ion-icon slot="start" :icon="pinOutline" />
         {{ $t("Pin jobs") }}
       </ion-item>
-      <ion-item @click.stop="closePopover(); copyJobInformation(job)" button>
+      <ion-item @click.stop="copyJobInformation(job)" button>
         <ion-icon slot="start" :icon="copyOutline" />
         {{ $t("Copy job details") }}
       </ion-item>
-      <ion-item @click.stop="closePopover(); viewJobHistory(job)" button lines="none">
+      <ion-item @click.stop="viewJobHistory(job)" button lines="none">
         <ion-icon slot="start" :icon="timeOutline" />
         {{ $t("View job history") }}
       </ion-item>
@@ -52,7 +52,7 @@ export default defineComponent({
   methods: {
     closePopover() {
       popoverController.dismiss({ dismissed: true });
-    },  
+    },
     async copyJobInformation(job: any) {
       const { Clipboard } = Plugins;
       const jobDetails = `jobId: ${job.jobId}, jobName: ${this.getEnumName(job.systemJobEnumId)}, jobDescription: ${this.getEnumDescription(job.systemJobEnumId)}`;
@@ -62,15 +62,19 @@ export default defineComponent({
       }).then(() => {
         showToast(this.$t("Copied job details to clipboard"));
       })
+      this.closePopover();
     },
     async viewJobHistory(job: any) {
       const jobHistoryModal = await modalController.create({
         component: JobHistoryModal,
         componentProps: { currentJob: job }
       });
-      return jobHistoryModal.present();
-    },  
-     async updateSearchPreference(enumId: any) {
+      await jobHistoryModal.present();
+      jobHistoryModal.onDidDismiss().then(() => {
+        this.closePopover();
+      })
+    },
+    async updateSearchPreference(enumId: any) {
       if(this.getSearchPreference?.searchPrefId) {
         const payload = {
           "searchPrefId": this.getSearchPreference?.searchPrefId,
@@ -87,10 +91,7 @@ export default defineComponent({
         }
         await this.store.dispatch('user/createSearchPreference', payload);
       }
-      await this.listSearchPreferences();
-    },
-    listSearchPreferences() {
-      (this as any).searchPreferences = Object.keys(this.getSearchPreference?.searchPrefValue).filter((pref: any) => this.getSearchPreference?.searchPrefValue[pref]);
+      this.closePopover();
     }
   },
   setup() {

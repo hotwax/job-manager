@@ -72,16 +72,6 @@
                   <ion-button fill="clear" color="medium" slot="end" @click.stop="openQuickActions(job)">
                     <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
                   </ion-button>
-                  <!-- TODO / Remove this button when its state is managed in popover -->
-                  <ion-button fill="clear" color="medium" slot="end" @click.stop="updateSearchPreference(job?.systemJobEnumId)">
-                    <ion-icon slot="icon-only" :icon="starOutline" />
-                  </ion-button>
-                  <!-- <ion-button fill="clear" color="medium" @click.stop="copyJobInformation(job)">
-                    <ion-icon slot="icon-only" :icon="copyOutline" />
-                  </ion-button>
-                  <ion-button fill="clear" color="medium" slot="end" @click.stop="viewJobHistory(job)">
-                    <ion-icon slot="icon-only" :icon="timeOutline" />
-                  </ion-button> -->
                 </div>
               </div> 
             </ion-card>
@@ -504,7 +494,12 @@ export default defineComponent({
         showBackdrop: false,
         componentProps: { job }
       });
-      return popover.present();
+      await popover.present();
+      popover.onDidDismiss().then((result) => {
+        if(result.role !== 'backdrop') {
+          this.listSearchPreferences();
+        }
+      })
     },
     async cancelJob(job: any){
       const alert = await alertController
