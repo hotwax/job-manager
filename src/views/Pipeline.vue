@@ -239,7 +239,7 @@
         <ion-icon slot="start" class="mobile-only" :icon="pinOutline" />  
 
         <div>
-          <ion-chip v-for="(job, index) in pinnedJobs" :key="index" outline>
+          <ion-chip v-for="(job, index) in getPinnedJobs?.searchPrefValue" :key="index" outline>
             <ion-label>{{ getEnumName(job) }}</ion-label>
             <ion-icon @click="updatePinnedJobs(job)" :icon="closeCircleOutline" />
           </ion-chip>  
@@ -356,10 +356,7 @@ export default defineComponent({
       isRunningJobsScrollable: 'job/isRunningJobsScrollable',
       isHistoryJobsScrollable: 'job/isHistoryJobsScrollable',
       getPinnedJobs: 'user/getPinnedJobs'
-    }),
-    pinnedJobs() {
-      return (this as any).getPinnedJobs?.searchPrefValue ? Object.keys((this as any).getPinnedJobs?.searchPrefValue)?.filter((pref: any) => (this as any).getPinnedJobs?.searchPrefValue[pref]) : [];
-    }
+    })
   },
   methods: {
     getJobExecutionTime(startTime: any, endTime: any){
@@ -529,21 +526,18 @@ export default defineComponent({
       }
     },
     async updatePinnedJobs(enumId: any) {
-      if(!this.getPinnedJobs?.searchPrefId) {
-        const payload = {
-          "searchPrefId": this.getPinnedJobs?.searchPrefId,
-          "searchPrefValue": JSON.stringify({ 
-            ...this.getPinnedJobs?.searchPrefValue,
-            [enumId]: this.getPinnedJobs?.searchPrefValue[enumId] ? false : true
-          })
+      let pinnedJobs = new Set(this.getPinnedJobs?.searchPrefValue);
+      
+      if(this.getPinnedJobs?.searchPrefId) {
+        if(pinnedJobs.has(enumId)) {
+          pinnedJobs.delete(enumId);
+        } else {
+          pinnedJobs.add(enumId);
         }
-
-        await this.store.dispatch('user/updatePinnedJobs', payload);
+        await this.store.dispatch('user/updatePinnedJobs', { searchPrefId: this.getPinnedJobs?.searchPrefId, searchPrefValue: [...pinnedJobs] });
       } else {
-        const payload = {
-          searchPrefValue: JSON.stringify({ [enumId]: true })
-        }
-        await this.store.dispatch('user/updatePinnedJobs', payload);
+        pinnedJobs.add(enumId)
+        await this.store.dispatch('user/updatePinnedJobs', { searchPrefId: this.getPinnedJobs?.searchPrefId, searchPrefValue: [...pinnedJobs] });
       }
     }
   },

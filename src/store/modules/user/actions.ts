@@ -160,9 +160,9 @@ const actions: ActionTree<UserState, RootState> = {
       if(resp.status === 200 && resp.data.docs?.length && !hasError(resp)) {
         const pinnedJobs = resp.data.docs[0];
         if(pinnedJobs?.searchPrefId) {
-          pinnedJobs['searchPrefValue'] = pinnedJobs?.searchPrefValue ? JSON.parse(pinnedJobs?.searchPrefValue) : {}
+          pinnedJobs['searchPrefValue'] = pinnedJobs?.searchPrefValue ? JSON.parse(pinnedJobs?.searchPrefValue) : [];
         }
-        const enumIds = Object.keys(pinnedJobs?.searchPrefValue);
+        const enumIds = pinnedJobs?.searchPrefValue;
         await this.dispatch('job/fetchJobDescription', enumIds);
 
         user.pinnedJobs = pinnedJobs
@@ -170,7 +170,7 @@ const actions: ActionTree<UserState, RootState> = {
 
         return pinnedJobs;
       } else {
-        user.pinnedJobs = {}
+        user.pinnedJobs = []
         commit(types.USER_INFO_UPDATED, user);
       }
     } catch(error) {
@@ -187,12 +187,18 @@ const actions: ActionTree<UserState, RootState> = {
 
     try{
       if(payload?.searchPrefId) {
-        resp = await UserService.updatePinnedJobs(payload);
-        if (resp.status === 200 && !hasError(resp)) {
+        resp = await UserService.updatePinnedJobs({
+          'searchPrefId': payload?.searchPrefId,
+          'searchPrefValue': JSON.stringify(payload?.searchPrefValue)
+        });
+
+        if(resp.status === 200 && !hasError(resp)) {
           await dispatch('getPinnedJobs')
         }
       } else {
-        resp = await UserService.createPinnedJob(payload);
+        resp = await UserService.createPinnedJob({
+          'searchPrefValue': JSON.stringify(payload?.searchPrefValue)
+        });
         if(resp.status === 200 && !hasError(resp)) {
           if(resp.data?.searchPrefId) {
             const params = {

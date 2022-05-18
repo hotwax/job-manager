@@ -75,23 +75,19 @@ export default defineComponent({
       })
     },
     async updatePinnedJobs(enumId: any) {
+      let pinnedJobs = new Set(this.getPinnedJobs?.searchPrefValue);
+      
       if(this.getPinnedJobs?.searchPrefId) {
-        const payload = {
-          "searchPrefId": this.getPinnedJobs?.searchPrefId,
-          "searchPrefValue": JSON.stringify({ 
-            ...this.getPinnedJobs?.searchPrefValue,
-            [enumId]: this.getPinnedJobs?.searchPrefValue[enumId] ? false : true
-          })
+        if(pinnedJobs.has(enumId)) {
+          pinnedJobs.delete(enumId);
+        } else {
+          pinnedJobs.add(enumId);
         }
-
-        await this.store.dispatch('user/updatePinnedJobs', payload);
+        await this.store.dispatch('user/updatePinnedJobs', { searchPrefId: this.getPinnedJobs?.searchPrefId, searchPrefValue: [...pinnedJobs] });
       } else {
-        const payload = {
-          searchPrefValue: JSON.stringify({ [enumId]: true })
-        }
-        await this.store.dispatch('user/updatePinnedJobs', payload);
+        pinnedJobs.add(enumId)
+        await this.store.dispatch('user/updatePinnedJobs', { searchPrefId: this.getPinnedJobs?.searchPrefId, searchPrefValue: [...pinnedJobs] });
       }
-      this.closePopover();
     }
   },
   setup() {
