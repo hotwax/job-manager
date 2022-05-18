@@ -34,7 +34,7 @@ import { Plugins } from '@capacitor/core';
 import { showToast } from '@/utils'
 
 export default defineComponent({
-  name: "OuickActionsPopover",
+  name: "QuickActionsPopover",
   components: { 
     IonContent,
     IonIcon,
