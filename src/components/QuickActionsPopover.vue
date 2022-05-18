@@ -1,15 +1,15 @@
 <template>
   <ion-content>
     <ion-list>
-      <ion-item @click.stop="updatePinnedJobs(job?.systemJobEnumId)" button>
+      <ion-item @click="updatePinnedJobs(job?.systemJobEnumId)" button>
         <ion-icon slot="start" :icon="pinOutline" />
         {{ $t("Pin jobs") }}
       </ion-item>
-      <ion-item @click.stop="copyJobInformation(job)" button>
+      <ion-item @click="copyJobInformation(job)" button>
         <ion-icon slot="start" :icon="copyOutline" />
         {{ $t("Copy job details") }}
       </ion-item>
-      <ion-item @click.stop="viewJobHistory(job)" button lines="none">
+      <ion-item @click="viewJobHistory(job)" button lines="none">
         <ion-icon slot="start" :icon="timeOutline" />
         {{ $t("View job history") }}
       </ion-item>
