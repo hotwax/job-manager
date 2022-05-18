@@ -85,7 +85,7 @@
               <ion-button fill="outline" @click="runJob('Release preorders', jobEnums['AUTO_RELSE_DAILY'])">{{ $t("Release") }}</ion-button>
             </ion-item>
             <ion-item lines="none">
-              <ion-label class="ion-text-wrap"><p>{{ $t("Auto releasing pre-orders will find pre-orders that have promise dates that have passed and release them from fulfillment.") }}</p></ion-label>
+              <ion-label class="ion-text-wrap"><p>{{ $t("Auto releasing pre-orders will find pre-orders that have promise dates that have passed and release them for fulfillment.") }}</p></ion-label>
             </ion-item>
           </ion-card>
 
@@ -130,7 +130,6 @@ import {
 import { defineComponent } from 'vue';
 import { useStore } from "@/store";
 import { mapGetters } from "vuex";
-import { DateTime } from 'luxon';
 import { alertController } from '@ionic/vue';
 import JobConfiguration from '@/components/JobConfiguration.vue'
 import { isFutureDate } from '@/utils';
