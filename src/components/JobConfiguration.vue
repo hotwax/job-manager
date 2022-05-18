@@ -125,8 +125,7 @@ export default defineComponent({
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
       shopifyConfigId: 'user/getShopifyConfigId',
-      currentEComStore: 'user/getCurrentEComStore',
-      getCurrentEComStore:'user/getCurrentEComStore',
+      currentEComStore: 'user/getCurrentEComStore'
     }),
     generateFrequencyOptions(): any {
       const optionDefault = [{
@@ -239,7 +238,7 @@ export default defineComponent({
       } else if (job?.status === 'SERVICE_PENDING') {
         this.store.dispatch('job/updateJob', job).then( async (resp) => {
           if(resp) {
-            await this.store.dispatch('job/fetchPendingJobs', { eComStoreId: this.getCurrentEComStore.productStoreId, viewSize: process.env.VUE_APP_VIEW_SIZE, viewIndex: 0 });
+            await this.store.dispatch('job/fetchPendingJobs', { eComStoreId: this.currentEComStore.productStoreId, viewSize: process.env.VUE_APP_VIEW_SIZE, viewIndex: 0 });
           }
         })
       }
