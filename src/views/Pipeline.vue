@@ -225,19 +225,17 @@
     <ion-footer>
       <ion-toolbar>
         <ion-title slot="start" class="desktop-only">
-            {{ $t("Pinned jobs") }}
+          {{ $t("Pinned jobs") }}
         </ion-title>
+      
+        <ion-icon slot="start" class="mobile-only" :icon="pinOutline" />  
 
-        <ion-item lines="none">
-          <ion-icon slot="start" class="mobile-only" :icon="pinOutline" />
-
-          <div slot="end">
-            <ion-chip v-for="(prefJob, index) in searchPreferences" :key="index" outline>
-              <ion-label>{{ getEnumName(prefJob) }}</ion-label>
-              <ion-icon @click="updateSearchPreference(prefJob)" :icon="closeCircleOutline" />
-            </ion-chip>
-          </div>
-        </ion-item>
+        <div>
+          <ion-chip v-for="(prefJob, index) in searchPreferences" :key="index" outline>
+            <ion-label>{{ getEnumName(prefJob) }}</ion-label>
+            <ion-icon @click="updateSearchPreference(prefJob)" :icon="closeCircleOutline" />
+          </ion-chip>  
+        </div>     
       </ion-toolbar>  
     </ion-footer>
   </ion-page>
@@ -602,23 +600,30 @@ ion-title {
   flex-grow: 0;
 }
 
-ion-toolbar > ion-item > div {
+ion-toolbar > ion-icon {
+  background: linear-gradient(to right, #ffffff7d, white);
+  backdrop-filter: blur(20px);
+  position: relative;
+  left: 16px;
+}
+
+ion-toolbar > div {
   display: flex;
   flex-wrap: nowrap;
-  overflow-x: scroll;
+  overflow-x: auto;
+  max-width: max-content;
+  margin-left: auto;
+  padding-left: 20px;
+
 }
 
 ion-chip {
-  flex: 1 0 100%;
-  max-width: max-content;
+  flex: 1 0 auto;
 }
+
 @media (min-width: 991px) {
   ion-header{
     display: flex;
   }
-
-  ion-toolbar > ion-item > div {
-    overflow-x: hidden;
-  }  
 }
 </style>
