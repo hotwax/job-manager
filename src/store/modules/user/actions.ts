@@ -182,7 +182,7 @@ const actions: ActionTree<UserState, RootState> = {
   /**
    * Update user's pinned jobs
    */
-  async updatePinnedJobs({ commit, dispatch, state }, payload) {
+  async updatePinnedJobs({ dispatch }, payload) {
     let resp;
 
     try{
@@ -200,7 +200,7 @@ const actions: ActionTree<UserState, RootState> = {
   /**
    * Create pinned jobs
    */
-  async createPinnedJob({ commit, dispatch, state }, payload) {
+  async createPinnedJob({ dispatch }, payload) {
     let resp;
 
     try{
