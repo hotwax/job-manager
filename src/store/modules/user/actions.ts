@@ -5,8 +5,6 @@ import UserState from './UserState'
 import * as types from './mutation-types'
 import { hasError, showToast } from '@/utils'
 import { translate } from '@/i18n'
-import { DateTime } from 'luxon';
-import emitter from '@/event-bus'
 
 const actions: ActionTree<UserState, RootState> = {
 
@@ -19,7 +17,7 @@ const actions: ActionTree<UserState, RootState> = {
       if (resp.status === 200 && resp.data) {
         if (resp.data.token) {
             commit(types.USER_TOKEN_CHANGED, { newToken: resp.data.token })
-            dispatch('getProfile')
+            await dispatch('getProfile')
             dispatch('getShopifyConfig')
             return resp.data;
         } else if (hasError(resp)) {
@@ -65,17 +63,19 @@ const actions: ActionTree<UserState, RootState> = {
         "noConditionFind": "Y"
       }
 
-      await dispatch('getEComStores', payload).then((stores: any) => { resp.data.stores = [{
-          productStoreId: "",
-          storeName: "None"
-        }, ...(stores ? stores : [])]
+      await dispatch('getEComStores', payload).then((stores: any) => {
+        resp.data.stores = [
+          ...(stores ? stores : []),
+          {
+            productStoreId: "",
+            storeName: "None"
+          }
+        ]
       })
 
       this.dispatch('util/getServiceStatusDesc')
-      await dispatch('getSearchPreference', resp.data?.userLoginId).then((searchPreference: any) => {
-        resp.data.searchPreference = searchPreference
-      })
 
+      commit(types.USER_CURRENT_ECOM_STORE_UPDATED, resp.data?.stores[0]);
       commit(types.USER_INFO_UPDATED, resp.data);
     }
   },
@@ -103,7 +103,7 @@ const actions: ActionTree<UserState, RootState> = {
   /**
    * Set User Instance Url
    */
-  setUserInstanceUrl ({ state, commit }, payload){
+  setUserInstanceUrl ({ commit }, payload){
     commit(types.USER_INSTANCE_URL_UPDATED, payload)
   },
 
@@ -118,7 +118,7 @@ const actions: ActionTree<UserState, RootState> = {
     }
   },
 
-  async getEComStores({ commit }, payload) {
+  async getEComStores(_context, payload) {
     let resp;
 
     try{
@@ -133,22 +133,22 @@ const actions: ActionTree<UserState, RootState> = {
     }
   },
 
-  async setEComStore({ commit, dispatch }, payload) {
+  async setEComStore({ commit }, payload) {
     commit(types.USER_CURRENT_ECOM_STORE_UPDATED, payload.store);
   },
 
   /**
-   * Get user search preferences
+   * Get user pinned jobs
    */
 
-  async getSearchPreference({ commit, state }, payload) {
+  async getPinnedJobs({ commit, state }) {
     let resp;
     const user = state?.current as any
 
     try{
       const params = {
         "inputFields": {
-          "userLoginId": payload ? payload : user?.userLoginId,
+          "userLoginId": user?.userLoginId,
           "userSearchPrefTypeId": "PINNED_JOB"
         },
         "fieldList": ["searchPrefId", "searchPrefValue"],
@@ -156,38 +156,39 @@ const actions: ActionTree<UserState, RootState> = {
         "distinct": "Y",
         "noConditionFind": "Y"
       }
-      resp = await UserService.getSearchPreference(params);
+      resp = await UserService.getPinnedJobs(params);
       if(resp.status === 200 && resp.data.docs?.length && !hasError(resp)) {
-        let searchPreference = resp.data.docs[0];
-        if(searchPreference?.searchPrefId) {
-          searchPreference = {
-            searchPrefId: searchPreference?.searchPrefId,
-            searchPrefValue: searchPreference?.searchPrefValue ? JSON.parse(searchPreference?.searchPrefValue) : {}
-          }
+        const pinnedJobs = resp.data.docs[0];
+        if(pinnedJobs?.searchPrefId) {
+          pinnedJobs['searchPrefValue'] = pinnedJobs?.searchPrefValue ? JSON.parse(pinnedJobs?.searchPrefValue) : {}
         }
+        const enumIds = Object.keys(pinnedJobs?.searchPrefValue);
+        await this.dispatch('job/fetchJobDescription', enumIds);
 
-        return searchPreference;
+        user.pinnedJobs = pinnedJobs
+        commit(types.USER_INFO_UPDATED, user);
+
+        return pinnedJobs;
+      } else {
+        user.pinnedJobs = {}
+        commit(types.USER_INFO_UPDATED, user);
       }
     } catch(error) {
       console.error(error);
     }
-    return {}
+    return resp;
   },
 
   /**
-   * Update user's search preference
+   * Update user's pinned jobs
    */
-  async updateSearchPreference({ commit, dispatch, state }, payload) {
+  async updatePinnedJobs({ commit, dispatch, state }, payload) {
     let resp;
-    const user = state?.current as any
 
     try{
-      resp = await UserService.updateSearchPreference(payload);
+      resp = await UserService.updatePinnedJobs(payload);
       if(resp.status === 200 && !hasError(resp)) {
-        await dispatch('getSearchPreference').then((searchPreference: any) => {
-          user.searchPreference = searchPreference
-          commit(types.USER_INFO_UPDATED, user);
-        })
+        await dispatch('getPinnedJobs')
       }
     } catch(error) {
       console.error(error);
@@ -197,14 +198,13 @@ const actions: ActionTree<UserState, RootState> = {
   },
 
   /**
-   * Create search preference
+   * Create pinned jobs
    */
-  async createSearchPreference({ commit, dispatch, state }, payload) {
+  async createPinnedJob({ commit, dispatch, state }, payload) {
     let resp;
-    const user = state?.current as any
 
     try{
-      resp = await UserService.createSearchPreference(payload);
+      resp = await UserService.createPinnedJob(payload);
       if(resp.status === 200 && !hasError(resp)) {
         if(resp.data?.searchPrefId) {
           const params = {
@@ -212,31 +212,12 @@ const actions: ActionTree<UserState, RootState> = {
             "userSearchPrefTypeId": "PINNED_JOB",
           }
           
-          const userPreference = await dispatch('createUserSearchPreference', params);
-          if(userPreference) {
-            await dispatch('getSearchPreference').then((searchPreference: any) => {
-              user.searchPreference = searchPreference
-              commit(types.USER_INFO_UPDATED, user);
-            })
+          const pinnedJob = await UserService.registerPinnedJob(params);
+
+          if(pinnedJob.status === 200 && !hasError(pinnedJob)) {
+            await dispatch('getPinnedJobs')
           }
         }
-      }
-    } catch(error) {
-      console.error(error);
-    }
-  },
-
-  /**
-   * Create user search preference
-   */
-
-  async createUserSearchPreference({ commit }, payload) {
-    let resp;
-
-    try{
-      resp = await UserService.createUserSearchPreference(payload);
-      if(resp.status === 200 && !hasError(resp)) {
-        return resp.data;
       }
     } catch(error) {
       console.error(error);

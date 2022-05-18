@@ -1,15 +1,15 @@
 <template>
   <ion-content>
     <ion-list>
-      <ion-item @click.stop="closePopover(); updateSearchPreference(job?.systemJobEnumId)" button>
+      <ion-item @click="updatePinnedJobs(job?.systemJobEnumId)" button>
         <ion-icon slot="start" :icon="pinOutline" />
         {{ $t("Pin jobs") }}
       </ion-item>
-      <ion-item @click.stop="closePopover(); copyJobInformation(job)" button>
+      <ion-item @click="copyJobInformation(job)" button>
         <ion-icon slot="start" :icon="copyOutline" />
         {{ $t("Copy job details") }}
       </ion-item>
-      <ion-item @click.stop="closePopover(); viewJobHistory(job)" button lines="none">
+      <ion-item @click="viewJobHistory(job)" button lines="none">
         <ion-icon slot="start" :icon="timeOutline" />
         {{ $t("View job history") }}
       </ion-item>
@@ -34,7 +34,7 @@ import { Plugins } from '@capacitor/core';
 import { showToast } from '@/utils'
 
 export default defineComponent({
-  name: "OuickActionsPopover",
+  name: "QuickActionsPopover",
   components: { 
     IonContent,
     IonIcon,
@@ -46,13 +46,13 @@ export default defineComponent({
     ...mapGetters({
         getEnumDescription: 'job/getEnumDescription',
         getEnumName: 'job/getEnumName',
-        getSearchPreference: 'user/getSearchPreference'
+        getPinnedJobs: 'user/getPinnedJobs'
     })
   },
   methods: {
     closePopover() {
       popoverController.dismiss({ dismissed: true });
-    },  
+    },
     async copyJobInformation(job: any) {
       const { Clipboard } = Plugins;
       const jobDetails = `jobId: ${job.jobId}, jobName: ${this.getEnumName(job.systemJobEnumId)}, jobDescription: ${this.getEnumDescription(job.systemJobEnumId)}`;
@@ -62,35 +62,36 @@ export default defineComponent({
       }).then(() => {
         showToast(this.$t("Copied job details to clipboard"));
       })
+      this.closePopover();
     },
     async viewJobHistory(job: any) {
       const jobHistoryModal = await modalController.create({
         component: JobHistoryModal,
         componentProps: { currentJob: job }
       });
-      return jobHistoryModal.present();
-    },  
-     async updateSearchPreference(enumId: any) {
-      if(this.getSearchPreference?.searchPrefId) {
+      await jobHistoryModal.present();
+      jobHistoryModal.onDidDismiss().then(() => {
+        this.closePopover();
+      })
+    },
+    async updatePinnedJobs(enumId: any) {
+      if(this.getPinnedJobs?.searchPrefId) {
         const payload = {
-          "searchPrefId": this.getSearchPreference?.searchPrefId,
+          "searchPrefId": this.getPinnedJobs?.searchPrefId,
           "searchPrefValue": JSON.stringify({ 
-            ...this.getSearchPreference?.searchPrefValue,
-            [enumId]: this.getSearchPreference?.searchPrefValue[enumId] ? false : true
+            ...this.getPinnedJobs?.searchPrefValue,
+            [enumId]: this.getPinnedJobs?.searchPrefValue[enumId] ? false : true
           })
         }
 
-        await this.store.dispatch('user/updateSearchPreference', payload);
+        await this.store.dispatch('user/updatePinnedJobs', payload);
       } else {
         const payload = {
           searchPrefValue: JSON.stringify({ [enumId]: true })
         }
-        await this.store.dispatch('user/createSearchPreference', payload);
+        await this.store.dispatch('user/createPinnedJob', payload);
       }
-      await this.listSearchPreferences();
-    },
-    listSearchPreferences() {
-      (this as any).searchPreferences = Object.keys(this.getSearchPreference?.searchPrefValue).filter((pref: any) => this.getSearchPreference?.searchPrefValue[pref]);
+      this.closePopover();
     }
   },
   setup() {

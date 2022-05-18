@@ -72,16 +72,6 @@
                   <ion-button fill="clear" color="medium" slot="end" @click.stop="openQuickActions(job)">
                     <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
                   </ion-button>
-                  <!-- TODO / Remove this button when its state is managed in popover -->
-                  <ion-button fill="clear" color="medium" slot="end" @click.stop="updateSearchPreference(job?.systemJobEnumId)">
-                    <ion-icon slot="icon-only" :icon="starOutline" />
-                  </ion-button>
-                  <!-- <ion-button fill="clear" color="medium" @click.stop="copyJobInformation(job)">
-                    <ion-icon slot="icon-only" :icon="copyOutline" />
-                  </ion-button>
-                  <ion-button fill="clear" color="medium" slot="end" @click.stop="viewJobHistory(job)">
-                    <ion-icon slot="icon-only" :icon="timeOutline" />
-                  </ion-button> -->
                 </div>
               </div> 
             </ion-card>
@@ -141,6 +131,18 @@
                   <ion-icon slot="icon-only" :icon="copyOutline" />
                 </ion-button>
               </ion-item>
+
+              <div class="actions">
+                <div></div>
+                <div>
+                  <ion-button fill="clear" color="medium" @click.stop="copyJobInformation(job)">
+                    <ion-icon slot="icon-only" :icon="copyOutline" />
+                  </ion-button>
+                  <ion-button fill="clear" color="medium" @click.stop="viewJobHistory(job)">
+                    <ion-icon slot="icon-only" :icon="timeOutline" />
+                  </ion-button>
+                </div>
+              </div>
             </ion-card>
 
             <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
@@ -200,11 +202,17 @@
               <ion-label class="ion-text-wrap">{{ job.serviceName }}</ion-label>
             </ion-item>
 
-            <ion-item>
-              <ion-button fill="clear" color="medium" slot="end" @click.stop="copyJobInformation(job)">
-                <ion-icon slot="icon-only" :icon="copyOutline" />
-              </ion-button>
-            </ion-item>
+            <div class="actions">
+              <div></div>
+              <div>
+                <ion-button fill="clear" color="medium" @click.stop="copyJobInformation(job)">
+                  <ion-icon slot="icon-only" :icon="copyOutline" />
+                </ion-button>
+                <ion-button fill="clear" color="medium" @click.stop="viewJobHistory(job)">
+                  <ion-icon slot="icon-only" :icon="timeOutline" />
+                </ion-button>
+              </div>
+            </div>
           </ion-card>
 
           <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
@@ -231,9 +239,9 @@
         <ion-icon slot="start" class="mobile-only" :icon="pinOutline" />  
 
         <div>
-          <ion-chip v-for="(prefJob, index) in searchPreferences" :key="index" outline>
-            <ion-label>{{ getEnumName(prefJob) }}</ion-label>
-            <ion-icon @click="updateSearchPreference(prefJob)" :icon="closeCircleOutline" />
+          <ion-chip v-for="(job, index) in pinnedJobs" :key="index" outline>
+            <ion-label>{{ getEnumName(job) }}</ion-label>
+            <ion-icon @click="updatePinnedJobs(job)" :icon="closeCircleOutline" />
           </ion-chip>  
         </div>     
       </ion-toolbar>  
@@ -332,8 +340,7 @@ export default defineComponent({
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
       isRetrying: false,
-      queryString: '' as any,
-      searchPreferences: []
+      queryString: '' as any
     }
   },
   computed: {
@@ -348,8 +355,11 @@ export default defineComponent({
       isPendingJobsScrollable: 'job/isPendingJobsScrollable',
       isRunningJobsScrollable: 'job/isRunningJobsScrollable',
       isHistoryJobsScrollable: 'job/isHistoryJobsScrollable',
-      getSearchPreference: 'user/getSearchPreference'
-    })
+      getPinnedJobs: 'user/getPinnedJobs'
+    }),
+    pinnedJobs() {
+      return (this as any).getPinnedJobs?.searchPrefValue ? Object.keys((this as any).getPinnedJobs?.searchPrefValue)?.filter((pref: any) => (this as any).getPinnedJobs?.searchPrefValue[pref]) : [];
+    }
   },
   methods: {
     getJobExecutionTime(startTime: any, endTime: any){
@@ -417,17 +427,17 @@ export default defineComponent({
     async refreshJobs(event: any) {
       this.isRetrying = true;
       if(this.segmentSelected === 'pending') {
-        this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0, queryString: this.queryString}).then(() => {
+        this.getPendingJobs().then(() => {
           if(event) event.target.complete();
           this.isRetrying = false;
         });
       } else if(this.segmentSelected === 'running') {
-        this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0, queryString: this.queryString}).then(() => {
+        this.getRunningJobs().then(() => {
           if(event) event.target.complete();
           this.isRetrying = false;
         });
       } else {
-        this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0, queryString: this.queryString}).then(() => {
+        this.getJobHistory().then(() => {
           if(event) event.target.complete();
           this.isRetrying = false;
         });
@@ -437,9 +447,9 @@ export default defineComponent({
     segmentChanged (e: CustomEvent) {
       this.queryString = "";
       this.segmentSelected = e.detail.value
-      this.segmentSelected === 'pending' ? this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0, queryString: this.queryString}) :
-      this.segmentSelected === 'running' ? this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0, queryString: this.queryString}) :
-      this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0, queryString: this.queryString});
+      this.segmentSelected === 'pending' ? this.getPendingJobs():
+      this.segmentSelected === 'running' ? this.getRunningJobs():
+      this.getJobHistory();
     },
     async skipJob (job: any) {
       const alert = await alertController
@@ -455,26 +465,20 @@ export default defineComponent({
               text: this.$t('Skip'),
               handler: async () => {
                 await this.store.dispatch('job/skipJob', job);
-                await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewIndex: 0, queryString: this.queryString})
+                await this.getPendingJobs();
               },
             }
           ]
         });
       return alert.present();
     },
-    async getPendingJobs(vSize: any, vIndex: any) {
-      const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
-      const viewIndex = vIndex ? vIndex : 0;
+    async getPendingJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
       await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString});
     },
-    async getRunningJobs(vSize: any, vIndex: any) {
-      const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
-      const viewIndex = vIndex ? vIndex : 0;
+    async getRunningJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
       await this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString});
     },
-    async getJobHistory(vSize: any, vIndex: any) {
-      const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
-      const viewIndex = vIndex ? vIndex : 0;
+    async getJobHistory(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
       await this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString});
     },
     async openQuickActions(job: any) {
@@ -484,7 +488,7 @@ export default defineComponent({
         showBackdrop: false,
         componentProps: { job }
       });
-      return popover.present();
+      return popover.present()
     },
     async cancelJob(job: any){
       const alert = await alertController
@@ -500,7 +504,7 @@ export default defineComponent({
               text: this.$t("CANCEL"),
               handler: async () => {
                 await this.store.dispatch('job/cancelJob', job);
-                await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewIndex: 0, queryString: this.queryString});
+                await this.getPendingJobs();
               },
             }
           ],
@@ -524,32 +528,28 @@ export default defineComponent({
         this.isJobDetailAnimationCompleted = true;
       }
     },
-    async updateSearchPreference(enumId: any) {
-      if(this.getSearchPreference?.searchPrefId) {
+    async updatePinnedJobs(enumId: any) {
+      if(this.getPinnedJobs?.searchPrefId) {
         const payload = {
-          "searchPrefId": this.getSearchPreference?.searchPrefId,
+          "searchPrefId": this.getPinnedJobs?.searchPrefId,
           "searchPrefValue": JSON.stringify({ 
-            ...this.getSearchPreference?.searchPrefValue,
-            [enumId]: this.getSearchPreference?.searchPrefValue[enumId] ? false : true
+            ...this.getPinnedJobs?.searchPrefValue,
+            [enumId]: this.getPinnedJobs?.searchPrefValue[enumId] ? false : true
           })
         }
 
-        await this.store.dispatch('user/updateSearchPreference', payload);
+        await this.store.dispatch('user/updatePinnedJobs', payload);
       } else {
         const payload = {
           searchPrefValue: JSON.stringify({ [enumId]: true })
         }
-        await this.store.dispatch('user/createSearchPreference', payload);
+        await this.store.dispatch('user/createPinnedJob', payload);
       }
-      await this.listSearchPreferences();
-    },
-    listSearchPreferences() {
-      (this as any).searchPreferences = Object.keys(this.getSearchPreference?.searchPrefValue).filter((pref: any) => this.getSearchPreference?.searchPrefValue[pref]);
     }
   },
   created() {
-    this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0});
-    this.listSearchPreferences();
+    this.getPendingJobs();
+    this.store.dispatch('user/getPinnedJobs');
   },
   setup() {
     const store = useStore();

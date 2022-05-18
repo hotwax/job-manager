@@ -90,7 +90,6 @@ import {
   personCircleOutline
 } from "ionicons/icons";
 import { mapGetters, useStore } from "vuex";
-import { translate } from "@/i18n";
 import { DateTime } from 'luxon';
 
 export default defineComponent({
