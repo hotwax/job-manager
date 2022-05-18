@@ -240,9 +240,9 @@
           <ion-icon slot="start" class="mobile-only" :icon="pinOutline" />
 
           <div slot="end">
-            <ion-chip v-for="(prefJob, index) in searchPreferences" :key="index" outline>
+            <ion-chip v-for="(prefJob, index) in pinnedJobs" :key="index" outline>
               <ion-label>{{ getEnumName(prefJob) }}</ion-label>
-              <ion-icon @click="updateSearchPreference(prefJob)" :icon="closeCircleOutline" />
+              <ion-icon @click="updatePinnedJobs(prefJob)" :icon="closeCircleOutline" />
             </ion-chip>
           </div>
         </ion-item>
@@ -343,7 +343,7 @@ export default defineComponent({
       isDesktop: isPlatform('desktop'),
       isRetrying: false,
       queryString: '' as any,
-      searchPreferences: []
+      pinnedJobs: []
     }
   },
   computed: {
@@ -358,7 +358,7 @@ export default defineComponent({
       isPendingJobsScrollable: 'job/isPendingJobsScrollable',
       isRunningJobsScrollable: 'job/isRunningJobsScrollable',
       isHistoryJobsScrollable: 'job/isHistoryJobsScrollable',
-      getSearchPreference: 'user/getSearchPreference'
+      getPinnedJobs: 'user/getPinnedJobs'
     })
   },
   methods: {
@@ -497,7 +497,7 @@ export default defineComponent({
       await popover.present();
       popover.onDidDismiss().then((result) => {
         if(result.role !== 'backdrop') {
-          this.listSearchPreferences();
+          this.listPinnedJobs();
         }
       })
     },
@@ -539,32 +539,32 @@ export default defineComponent({
         this.isJobDetailAnimationCompleted = true;
       }
     },
-    async updateSearchPreference(enumId: any) {
-      if(this.getSearchPreference?.searchPrefId) {
+    async updatePinnedJobs(enumId: any) {
+      if(this.getPinnedJobs?.searchPrefId) {
         const payload = {
-          "searchPrefId": this.getSearchPreference?.searchPrefId,
+          "searchPrefId": this.getPinnedJobs?.searchPrefId,
           "searchPrefValue": JSON.stringify({ 
-            ...this.getSearchPreference?.searchPrefValue,
-            [enumId]: this.getSearchPreference?.searchPrefValue[enumId] ? false : true
+            ...this.getPinnedJobs?.searchPrefValue,
+            [enumId]: this.getPinnedJobs?.searchPrefValue[enumId] ? false : true
           })
         }
 
-        await this.store.dispatch('user/updateSearchPreference', payload);
+        await this.store.dispatch('user/updatePinnedJobs', payload);
       } else {
         const payload = {
           searchPrefValue: JSON.stringify({ [enumId]: true })
         }
-        await this.store.dispatch('user/createSearchPreference', payload);
+        await this.store.dispatch('user/createPinnedJob', payload);
       }
-      await this.listSearchPreferences();
+      await this.listPinnedJobs();
     },
-    listSearchPreferences() {
-      (this as any).searchPreferences = Object.keys(this.getSearchPreference?.searchPrefValue).filter((pref: any) => this.getSearchPreference?.searchPrefValue[pref]);
+    listPinnedJobs() {
+      (this as any).pinnedJobs = Object.keys(this.getPinnedJobs?.searchPrefValue).filter((pref: any) => this.getPinnedJobs?.searchPrefValue[pref]);
     }
   },
   created() {
     this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0, queryString: this.queryString});
-    this.listSearchPreferences();
+    this.listPinnedJobs();
   },
   setup() {
     const store = useStore();

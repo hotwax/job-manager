@@ -1,7 +1,7 @@
 <template>
   <ion-content>
     <ion-list>
-      <ion-item @click.stop="updateSearchPreference(job?.systemJobEnumId)" button>
+      <ion-item @click.stop="updatePinnedJobs(job?.systemJobEnumId)" button>
         <ion-icon slot="start" :icon="pinOutline" />
         {{ $t("Pin jobs") }}
       </ion-item>
@@ -46,7 +46,7 @@ export default defineComponent({
     ...mapGetters({
         getEnumDescription: 'job/getEnumDescription',
         getEnumName: 'job/getEnumName',
-        getSearchPreference: 'user/getSearchPreference'
+        getPinnedJobs: 'user/getPinnedJobs'
     })
   },
   methods: {
@@ -74,22 +74,22 @@ export default defineComponent({
         this.closePopover();
       })
     },
-    async updateSearchPreference(enumId: any) {
-      if(this.getSearchPreference?.searchPrefId) {
+    async updatePinnedJobs(enumId: any) {
+      if(this.getPinnedJobs?.searchPrefId) {
         const payload = {
-          "searchPrefId": this.getSearchPreference?.searchPrefId,
+          "searchPrefId": this.getPinnedJobs?.searchPrefId,
           "searchPrefValue": JSON.stringify({ 
-            ...this.getSearchPreference?.searchPrefValue,
-            [enumId]: this.getSearchPreference?.searchPrefValue[enumId] ? false : true
+            ...this.getPinnedJobs?.searchPrefValue,
+            [enumId]: this.getPinnedJobs?.searchPrefValue[enumId] ? false : true
           })
         }
 
-        await this.store.dispatch('user/updateSearchPreference', payload);
+        await this.store.dispatch('user/updatePinnedJobs', payload);
       } else {
         const payload = {
           searchPrefValue: JSON.stringify({ [enumId]: true })
         }
-        await this.store.dispatch('user/createSearchPreference', payload);
+        await this.store.dispatch('user/createPinnedJob', payload);
       }
       this.closePopover();
     }
