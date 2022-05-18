@@ -526,7 +526,7 @@ export default defineComponent({
       }
     },
     async updatePinnedJobs(enumId: any) {
-      let pinnedJobs = new Set(this.getPinnedJobs?.searchPrefValue);
+      const pinnedJobs = new Set(this.getPinnedJobs?.searchPrefValue);
       
       if(this.getPinnedJobs?.searchPrefId) {
         if(pinnedJobs.has(enumId)) {
