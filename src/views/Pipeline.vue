@@ -529,7 +529,7 @@ export default defineComponent({
       }
     },
     async updatePinnedJobs(enumId: any) {
-      if(this.getPinnedJobs?.searchPrefId) {
+      if(!this.getPinnedJobs?.searchPrefId) {
         const payload = {
           "searchPrefId": this.getPinnedJobs?.searchPrefId,
           "searchPrefValue": JSON.stringify({ 
@@ -543,7 +543,7 @@ export default defineComponent({
         const payload = {
           searchPrefValue: JSON.stringify({ [enumId]: true })
         }
-        await this.store.dispatch('user/createPinnedJob', payload);
+        await this.store.dispatch('user/updatePinnedJobs', payload);
       }
     }
   },

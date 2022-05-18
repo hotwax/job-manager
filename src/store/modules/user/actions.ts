@@ -186,42 +186,30 @@ const actions: ActionTree<UserState, RootState> = {
     let resp;
 
     try{
-      resp = await UserService.updatePinnedJobs(payload);
-      if(resp.status === 200 && !hasError(resp)) {
-        await dispatch('getPinnedJobs')
-      }
-    } catch(error) {
-      console.error(error);
-    }
-
-    return resp;
-  },
-
-  /**
-   * Create pinned jobs
-   */
-  async createPinnedJob({ dispatch }, payload) {
-    let resp;
-
-    try{
-      resp = await UserService.createPinnedJob(payload);
-      if(resp.status === 200 && !hasError(resp)) {
-        if(resp.data?.searchPrefId) {
-          const params = {
-            "searchPrefId": resp.data?.searchPrefId,
-            "userSearchPrefTypeId": "PINNED_JOB",
-          }
-          
-          const pinnedJob = await UserService.registerPinnedJob(params);
-
-          if(pinnedJob.status === 200 && !hasError(pinnedJob)) {
-            await dispatch('getPinnedJobs')
+      if(payload?.searchPrefId) {
+        resp = await UserService.updatePinnedJobs(payload);
+        if (resp.status === 200 && !hasError(resp)) {
+          await dispatch('getPinnedJobs')
+        }
+      } else {
+        resp = await UserService.createPinnedJob(payload);
+        if(resp.status === 200 && !hasError(resp)) {
+          if(resp.data?.searchPrefId) {
+            const params = {
+              "searchPrefId": resp.data?.searchPrefId,
+              "userSearchPrefTypeId": "PINNED_JOB",
+            }
+            const pinnedJob = await UserService.registerPinnedJob(params);
+            if(pinnedJob.status === 200 && !hasError(pinnedJob)) {
+              await dispatch('getPinnedJobs')
+            }
           }
         }
       }
     } catch(error) {
       console.error(error);
     }
+    return resp;
   }
 }
 

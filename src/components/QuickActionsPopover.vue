@@ -89,7 +89,7 @@ export default defineComponent({
         const payload = {
           searchPrefValue: JSON.stringify({ [enumId]: true })
         }
-        await this.store.dispatch('user/createPinnedJob', payload);
+        await this.store.dispatch('user/updatePinnedJobs', payload);
       }
       this.closePopover();
     }
