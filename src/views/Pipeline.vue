@@ -69,7 +69,7 @@
                   <ion-button color="danger" fill="clear" @click.stop="cancelJob(job)">{{ $t("Cancel") }}</ion-button>
                 </div>
                 <div>
-                  <ion-button fill="clear" color="medium" slot="end" @click.stop="openQuickActions(job)">
+                  <ion-button fill="clear" color="medium" slot="end" @click.stop="openQuickActions(job, $event)">
                     <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
                   </ion-button>
                 </div>
@@ -233,19 +233,17 @@
     <ion-footer>
       <ion-toolbar>
         <ion-title slot="start" class="desktop-only">
-            {{ $t("Pinned jobs") }}
+          {{ $t("Pinned jobs") }}
         </ion-title>
+      
+        <ion-icon slot="start" class="mobile-only" :icon="pinOutline" />  
 
-        <ion-item lines="none">
-          <ion-icon slot="start" class="mobile-only" :icon="pinOutline" />
-
-          <div slot="end">
-            <ion-chip v-for="(job, index) in pinnedJobs" :key="index" outline>
-              <ion-label>{{ getEnumName(job) }}</ion-label>
-              <ion-icon @click="updatePinnedJobs(job)" :icon="closeCircleOutline" />
-            </ion-chip>
-          </div>
-        </ion-item>
+        <div>
+          <ion-chip v-for="(job, index) in pinnedJobs" :key="index" outline>
+            <ion-label>{{ getEnumName(job) }}</ion-label>
+            <ion-icon @click="updatePinnedJobs(job)" :icon="closeCircleOutline" />
+          </ion-chip>  
+        </div>     
       </ion-toolbar>  
     </ion-footer>
   </ion-page>
@@ -483,11 +481,11 @@ export default defineComponent({
     async getJobHistory(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
       await this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString});
     },
-    async openQuickActions(job: any) {
+    async openQuickActions(job: any, ev: Event) {
       const popover = await popoverController.create({
         component: QuickActionsPopover,
-        translucent: true,
         showBackdrop: false,
+        event: ev,
         componentProps: { job }
       });
       return popover.present()
@@ -602,23 +600,30 @@ ion-title {
   flex-grow: 0;
 }
 
-ion-toolbar > ion-item > div {
+ion-toolbar > ion-icon {
+  background: linear-gradient(to right, #ffffff7d, white);
+  backdrop-filter: blur(20px);
+  position: relative;
+  left: 16px;
+}
+
+ion-toolbar > div {
   display: flex;
   flex-wrap: nowrap;
-  overflow-x: scroll;
+  overflow-x: auto;
+  max-width: max-content;
+  margin-left: auto;
+  padding-left: 20px;
+
 }
 
 ion-chip {
-  flex: 1 0 100%;
-  max-width: max-content;
+  flex: 1 0 auto;
 }
+
 @media (min-width: 991px) {
   ion-header{
     display: flex;
   }
-
-  ion-toolbar > ion-item > div {
-    overflow-x: hidden;
-  }  
 }
 </style>
