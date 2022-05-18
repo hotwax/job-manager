@@ -342,8 +342,7 @@ export default defineComponent({
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
       isRetrying: false,
-      queryString: '' as any,
-      pinnedJobs: []
+      queryString: '' as any
     }
   },
   computed: {
@@ -359,7 +358,10 @@ export default defineComponent({
       isRunningJobsScrollable: 'job/isRunningJobsScrollable',
       isHistoryJobsScrollable: 'job/isHistoryJobsScrollable',
       getPinnedJobs: 'user/getPinnedJobs'
-    })
+    }),
+    pinnedJobs() {
+      return (this as any).getPinnedJobs?.searchPrefValue ? Object.keys((this as any).getPinnedJobs?.searchPrefValue)?.filter((pref: any) => (this as any).getPinnedJobs?.searchPrefValue[pref]) : [];
+    }
   },
   methods: {
     getJobExecutionTime(startTime: any, endTime: any){
@@ -494,12 +496,7 @@ export default defineComponent({
         showBackdrop: false,
         componentProps: { job }
       });
-      await popover.present();
-      popover.onDidDismiss().then((result) => {
-        if(result.role !== 'backdrop') {
-          this.listPinnedJobs();
-        }
-      })
+      return popover.present()
     },
     async cancelJob(job: any){
       const alert = await alertController
@@ -556,15 +553,10 @@ export default defineComponent({
         }
         await this.store.dispatch('user/createPinnedJob', payload);
       }
-      await this.listPinnedJobs();
-    },
-    listPinnedJobs() {
-      (this as any).pinnedJobs = Object.keys(this.getPinnedJobs?.searchPrefValue).filter((pref: any) => this.getPinnedJobs?.searchPrefValue[pref]);
     }
   },
   created() {
     this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0, queryString: this.queryString});
-    this.listPinnedJobs();
   },
   setup() {
     const store = useStore();

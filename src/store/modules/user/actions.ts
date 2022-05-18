@@ -163,15 +163,17 @@ const actions: ActionTree<UserState, RootState> = {
       }
       resp = await UserService.getPinnedJobs(params);
       if(resp.status === 200 && resp.data.docs?.length && !hasError(resp)) {
-        let pinnedJob = resp.data.docs[0];
-        if(pinnedJob?.searchPrefId) {
-          pinnedJob = {
-            searchPrefId: pinnedJob?.searchPrefId,
-            searchPrefValue: pinnedJob?.searchPrefValue ? JSON.parse(pinnedJob?.searchPrefValue) : {}
+        let pinnedJobs = resp.data.docs[0];
+        if(pinnedJobs?.searchPrefId) {
+          pinnedJobs = {
+            searchPrefId: pinnedJobs?.searchPrefId,
+            searchPrefValue: pinnedJobs?.searchPrefValue ? JSON.parse(pinnedJobs?.searchPrefValue) : {}
           }
         }
+        const enumIds = Object.keys(pinnedJobs?.searchPrefValue);
+        await this.dispatch('job/fetchJobDescription', enumIds);
 
-        return pinnedJob;
+        return pinnedJobs;
       }
     } catch(error) {
       console.error(error);
