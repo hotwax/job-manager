@@ -18,7 +18,7 @@ const actions: ActionTree<JobState, RootState> = {
       }
     });
     if(enumIds.length <= 0) return enumIds.map((id: any) => state.enumIds[id]);
-    const cachedEnum = payload.map((id: any) => state.enumIds[id]);
+ 
     const resp = await JobService.fetchJobDescription({
       "inputFields": {
         "enumId": enumIds,
@@ -58,6 +58,18 @@ const actions: ActionTree<JobState, RootState> = {
     } else {
       params.inputFields["productStoreId_op"] = "empty"
     }
+
+    if (payload.queryString) {
+      params.inputFields["enumName_value"] = "%"+ payload.queryString + "%"
+      params.inputFields["enumName_op"] = "like"
+      params.inputFields["enumName_ic"] = "Y"
+      params.inputFields["enumName_ic"] = "Y"
+      params.inputFields["enumName_grp"] = "1" 
+      params.inputFields["description_value"] = "%"+ payload.queryString + "%"
+      params.inputFields["description_op"] = "like"
+      params.inputFields["description_ic"] = "Y"
+      params.inputFields["description_grp"] = "2"
+    } 
 
     await JobService.fetchJobInformation(params).then((resp) => {
       if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
@@ -117,6 +129,18 @@ const actions: ActionTree<JobState, RootState> = {
       params.inputFields["productStoreId_op"] = "empty"
     }
 
+    if (payload.queryString) {
+      params.inputFields["enumName_value"] = "%"+ payload.queryString + "%"
+      params.inputFields["jobName_op"] = "like"
+      params.inputFields["jobName_ic"] = "Y"
+      params.inputFields["enumName_ic"] = "Y"
+      params.inputFields["enumName_grp"] = "1" 
+      params.inputFields["description_value"] = "%"+ payload.queryString + "%"
+      params.inputFields["description_op"] = "like"
+      params.inputFields["description_ic"] = "Y"
+      params.inputFields["description_grp"] = "2"
+    } 
+
     await JobService.fetchJobInformation(params).then((resp) => {
       if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
         if (resp.data.docs) {
@@ -169,6 +193,16 @@ const actions: ActionTree<JobState, RootState> = {
       params.inputFields["productStoreId_op"] = "empty"
     }
 
+    if (payload.queryString) {
+      params.inputFields["enumName_value"] = "%"+ payload.queryString + "%"
+      params.inputFields["enumName_op"] = "like"
+      params.inputFields["enumName_ic"] = "Y"
+      params.inputFields["enumName_grp"] = "1" 
+      params.inputFields["description_value"] = "%"+ payload.queryString + "%"
+      params.inputFields["description_op"] = "like"
+      params.inputFields["description_ic"] = "Y"
+      params.inputFields["description_grp"] = "2"
+    } 
     await JobService.fetchJobInformation(params).then((resp) => {
       if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
         if (resp.data.docs) {
@@ -211,7 +245,6 @@ const actions: ActionTree<JobState, RootState> = {
       }
     });
     if(tempIds.length <= 0) return tempExprIds.map((id: any) => state.temporalExp[id]);
-    const cachedTempExpr = tempExprIds.map((id: any) => state.temporalExp[id]);
     const resp = await JobService.fetchTemporalExpression({
         "inputFields": {
         "tempExprId": tempIds,

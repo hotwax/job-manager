@@ -6,11 +6,6 @@
     </ion-item>
 
     <ion-list>
-      <ion-item>
-        <ion-icon slot="start" :icon="calendarClearOutline" />
-        <ion-label>{{ $t("Last run") }}</ion-label>
-        <ion-label slot="end">{{ job?.lastUpdatedStamp ? getTime(job.lastUpdatedStamp) : $t('No previous occurrence') }}</ion-label>
-      </ion-item>
 
       <ion-item>
         <ion-icon slot="start" :icon="timeOutline" />
@@ -95,7 +90,6 @@ import {
   personCircleOutline
 } from "ionicons/icons";
 import { mapGetters, useStore } from "vuex";
-import { translate } from "@/i18n";
 import { DateTime } from 'luxon';
 
 export default defineComponent({
