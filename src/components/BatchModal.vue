@@ -19,11 +19,11 @@
 
     <ion-item>
       <ion-label>{{ $t('Order queue') }}</ion-label>
-        <ion-select slot="end" interface="popover" value="brokering-queue">
-          <ion-select-option value="brokering-queue">{{ $t("Brokering queue") }}</ion-select-option>
-          <ion-select-option value="preorder-parking">{{ $t("Pre-order parking") }}</ion-select-option>
-          <ion-select-option value="backorder parking">{{ $t("Back-order parking") }}</ion-select-option>
-        </ion-select>
+      <ion-select slot="end" interface="popover" value="brokering-queue">
+        <ion-select-option value="brokering-queue">{{ $t("Brokering queue") }}</ion-select-option>
+        <ion-select-option value="preorder-parking">{{ $t("Pre-order parking") }}</ion-select-option>
+        <ion-select-option value="backorder parking">{{ $t("Back-order parking") }}</ion-select-option>
+      </ion-select>
     </ion-item>
 
     <ion-item>
@@ -33,10 +33,10 @@
 
     <ion-item>
       <ion-label position="fixed">{{ $t("Schedule") }}</ion-label>
-      <ion-datetime class="ionic-datetime-component" color="secondary" presentation="time" />
+      <ion-datetime :value="currentBatch?.runTime ? getDateTime(currentBatch.runTime) : ''" @ionChange="updateRunTime($event, currentBatch)" presentation="time" size="cover" />
     </ion-item>    
 
-    <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab @click="sendModalData(toggleValue, orderQueueValue)" vertical="bottom" horizontal="end" slot="fixed">
       <ion-fab-button>
         <ion-icon :icon="checkmarkDoneOutline" />  
       </ion-fab-button>
@@ -96,6 +96,7 @@ export default defineComponent({
       currentBatch: {} as any,
       jobName: '' as string,
       toggleValue: false as boolean,
+      orderQueueValue: '' as string,
     }
   },
   computed: {
@@ -150,9 +151,12 @@ export default defineComponent({
       const today = new Date();
       return (today.getMonth() + 1) + '-' + today.getDate() + '-' + today.getFullYear() + "  " + today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
     },
-    // toggleChange() {
-    //   this.toggleValue = !this.toggleValue;
-    // },
+    toggleChange() {
+      this.toggleValue = !this.toggleValue;
+    },
+    // sendModalData(toggleValue: boolean, orderQueueValue: ) {
+
+    // }
   },
   setup() {
     const store = useStore();
@@ -160,14 +164,8 @@ export default defineComponent({
     return {
       closeOutline,
       checkmarkDoneOutline,
-      store
+      store,
     };
   },
 });
 </script>
-
-<style scope>
-.ionic-datetime-component {
-    width: 60%;
-}
-</style>
