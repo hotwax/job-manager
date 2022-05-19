@@ -6,9 +6,7 @@
         <ion-title>{{ $t("Pipeline") }}</ion-title>
       </ion-toolbar>
 
-      <div>
-        <ion-searchbar :placeholder="$t('Search jobs')" @ionClear="queryString = ''; segmentSelected === 'pending' ? getPendingJobs() : ( segmentSelected === 'running' ? getRunningJobs() : getJobHistory())" v-model="queryString" v-on:keyup.enter="queryString = $event.target.value; segmentSelected === 'pending' ? getPendingJobs() : ( segmentSelected === 'running' ? getRunningJobs() : getJobHistory())" />
-
+      <ion-toolbar>
         <ion-segment v-model="segmentSelected" @ionChange="segmentChanged">
           <ion-segment-button value="pending">
             <ion-label>{{ $t("Pending") }}</ion-label>
@@ -20,10 +18,11 @@
             <ion-label>{{ $t("History") }}</ion-label>
           </ion-segment-button>
         </ion-segment>
-      </div>
+      </ion-toolbar>
     </ion-header>
 
     <ion-content>
+      <ion-searchbar :placeholder="$t('Search jobs')" @ionClear="queryString = ''; segmentSelected === 'pending' ? getPendingJobs() : ( segmentSelected === 'running' ? getRunningJobs() : getJobHistory())" v-model="queryString" v-on:keyup.enter="queryString = $event.target.value; segmentSelected === 'pending' ? getPendingJobs() : ( segmentSelected === 'running' ? getRunningJobs() : getJobHistory())" />
       <main>
         <section v-if="segmentSelected === 'pending'">
           <!-- Empty state -->
@@ -542,7 +541,7 @@ ion-item {
 }
 
 @media (min-width: 991px) {
-  ion-header > div {
+  ion-header{
     display: flex;
   }
 }
