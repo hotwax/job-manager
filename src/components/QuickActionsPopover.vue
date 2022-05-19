@@ -44,9 +44,9 @@ export default defineComponent({
   props: ["job"],
   computed: {
     ...mapGetters({
-        getEnumDescription: 'job/getEnumDescription',
-        getEnumName: 'job/getEnumName',
-        getPinnedJobs: 'user/getPinnedJobs'
+      getEnumDescription: 'job/getEnumDescription',
+      getEnumName: 'job/getEnumName',
+      getPinnedJobs: 'user/getPinnedJobs'
     })
   },
   methods: {
