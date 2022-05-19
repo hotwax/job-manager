@@ -24,6 +24,7 @@ import {
   IonIcon,
   IonItem,
   IonList,
+  IonListHeader,
   modalController,
   popoverController
 } from "@ionic/vue";
@@ -41,6 +42,7 @@ export default defineComponent({
     IonIcon,
     IonItem,
     IonList,
+    IonListHeader
   },
   props: ["job"],
   computed: {
