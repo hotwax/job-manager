@@ -78,14 +78,14 @@ export default defineComponent({
       })
     },
     async updatePinnedJobs(enumId: any) {
-      const pinnedJobs = new Set(this.getPinnedJobs?.searchPrefValue);
+      const pinnedJobs = new Set(this.getPinnedJobs);
       if(pinnedJobs.has(enumId)) {
         pinnedJobs.delete(enumId);
       } else {
         pinnedJobs.add(enumId);
       }
 
-      await this.store.dispatch('user/updatePinnedJobs', { searchPrefId: this.getPinnedJobs?.searchPrefId, searchPrefValue: [...pinnedJobs] });
+      await this.store.dispatch('user/updatePinnedJobs', { searchPrefValue: [...pinnedJobs] });
     }
   },
   setup() {

@@ -239,7 +239,7 @@
         <ion-icon slot="start" class="mobile-only" :icon="pinOutline" />  
 
         <div>
-          <ion-chip v-for="(job, index) in getPinnedJobs?.searchPrefValue" :key="index" outline>
+          <ion-chip v-for="(job, index) in getPinnedJobs" :key="index" outline>
             <ion-label>{{ getEnumName(job) }}</ion-label>
             <ion-icon @click="updatePinnedJobs(job)" :icon="closeCircleOutline" />
           </ion-chip>  
@@ -526,14 +526,14 @@ export default defineComponent({
       }
     },
     async updatePinnedJobs(enumId: any) {
-      const pinnedJobs = new Set(this.getPinnedJobs?.searchPrefValue);
+      const pinnedJobs = new Set(this.getPinnedJobs);
       if(pinnedJobs.has(enumId)) {
         pinnedJobs.delete(enumId);
       } else {
         pinnedJobs.add(enumId);
       }
 
-      await this.store.dispatch('user/updatePinnedJobs', { searchPrefId: this.getPinnedJobs?.searchPrefId, searchPrefValue: [...pinnedJobs] });
+      await this.store.dispatch('user/updatePinnedJobs', { searchPrefValue: [...pinnedJobs] });
     }
   },
   created() {

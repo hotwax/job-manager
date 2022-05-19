@@ -25,7 +25,7 @@ const getters: GetterTree <UserState, RootState> = {
         return state.currentEComStore
     },
     getPinnedJobs(state) {
-        return state.current ? (state.current as any)['pinnedJobs'] : {}
+        return state.current ? (state.current as any)['pinnedJobs']?.searchPrefValue : []
     }
 }
 export default getters;

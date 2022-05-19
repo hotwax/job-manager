@@ -182,13 +182,14 @@ const actions: ActionTree<UserState, RootState> = {
   /**
    * Update user's pinned jobs
    */
-  async updatePinnedJobs({ dispatch }, payload) {
+  async updatePinnedJobs({ dispatch, state }, payload) {
     let resp;
+    const searchPrefId = (state.current as any)['pinnedJobs']?.searchPrefId;
 
     try{
-      if(payload?.searchPrefId) {
+      if(searchPrefId) {
         resp = await UserService.updatePinnedJobs({
-          'searchPrefId': payload?.searchPrefId,
+          'searchPrefId': searchPrefId,
           'searchPrefValue': JSON.stringify(payload?.searchPrefValue)
         });
 
