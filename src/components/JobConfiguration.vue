@@ -214,7 +214,7 @@ export default defineComponent({
             role: 'cancel'
           }, {
             text: this.$t('Save'),
-            handler:  () => {
+            handler: () => {
               this.updateJob().then(() => {
                 showToast(translate("The changes have been saved!"))
               });
