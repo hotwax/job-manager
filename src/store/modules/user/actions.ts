@@ -160,9 +160,9 @@ const actions: ActionTree<UserState, RootState> = {
       if(resp.status === 200 && resp.data.docs?.length && !hasError(resp)) {
         const pinnedJobs = resp.data.docs[0];
         if(pinnedJobs?.searchPrefId) {
-          pinnedJobs['searchPrefValue'] = pinnedJobs?.searchPrefValue ? JSON.parse(pinnedJobs?.searchPrefValue) : {}
+          pinnedJobs['searchPrefValue'] = pinnedJobs?.searchPrefValue ? JSON.parse(pinnedJobs?.searchPrefValue) : [];
         }
-        const enumIds = Object.keys(pinnedJobs?.searchPrefValue);
+        const enumIds = pinnedJobs?.searchPrefValue;
         await this.dispatch('job/fetchJobDescription', enumIds);
 
         user.pinnedJobs = pinnedJobs
@@ -170,7 +170,7 @@ const actions: ActionTree<UserState, RootState> = {
 
         return pinnedJobs;
       } else {
-        user.pinnedJobs = {}
+        user.pinnedJobs = []
         commit(types.USER_INFO_UPDATED, user);
       }
     } catch(error) {
@@ -182,46 +182,40 @@ const actions: ActionTree<UserState, RootState> = {
   /**
    * Update user's pinned jobs
    */
-  async updatePinnedJobs({ commit, dispatch, state }, payload) {
+  async updatePinnedJobs({ dispatch }, payload) {
     let resp;
 
     try{
-      resp = await UserService.updatePinnedJobs(payload);
-      if(resp.status === 200 && !hasError(resp)) {
-        await dispatch('getPinnedJobs')
-      }
-    } catch(error) {
-      console.error(error);
-    }
+      if(payload?.searchPrefId) {
+        resp = await UserService.updatePinnedJobs({
+          'searchPrefId': payload?.searchPrefId,
+          'searchPrefValue': JSON.stringify(payload?.searchPrefValue)
+        });
 
-    return resp;
-  },
-
-  /**
-   * Create pinned jobs
-   */
-  async createPinnedJob({ commit, dispatch, state }, payload) {
-    let resp;
-
-    try{
-      resp = await UserService.createPinnedJob(payload);
-      if(resp.status === 200 && !hasError(resp)) {
-        if(resp.data?.searchPrefId) {
-          const params = {
-            "searchPrefId": resp.data?.searchPrefId,
-            "userSearchPrefTypeId": "PINNED_JOB",
-          }
-          
-          const pinnedJob = await UserService.registerPinnedJob(params);
-
-          if(pinnedJob.status === 200 && !hasError(pinnedJob)) {
-            await dispatch('getPinnedJobs')
+        if(resp.status === 200 && !hasError(resp)) {
+          await dispatch('getPinnedJobs')
+        }
+      } else {
+        resp = await UserService.createPinnedJob({
+          'searchPrefValue': JSON.stringify(payload?.searchPrefValue)
+        });
+        if(resp.status === 200 && !hasError(resp)) {
+          if(resp.data?.searchPrefId) {
+            const params = {
+              "searchPrefId": resp.data?.searchPrefId,
+              "userSearchPrefTypeId": "PINNED_JOB",
+            }
+            const pinnedJob = await UserService.registerPinnedJob(params);
+            if(pinnedJob.status === 200 && !hasError(pinnedJob)) {
+              await dispatch('getPinnedJobs')
+            }
           }
         }
       }
     } catch(error) {
       console.error(error);
     }
+    return resp;
   }
 }
 

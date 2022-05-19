@@ -45,9 +45,9 @@ export default defineComponent({
   props: ["job"],
   computed: {
     ...mapGetters({
-        getEnumDescription: 'job/getEnumDescription',
-        getEnumName: 'job/getEnumName',
-        getPinnedJobs: 'user/getPinnedJobs'
+      getEnumDescription: 'job/getEnumDescription',
+      getEnumName: 'job/getEnumName',
+      getPinnedJobs: 'user/getPinnedJobs'
     })
   },
   methods: {
@@ -76,23 +76,14 @@ export default defineComponent({
       })
     },
     async updatePinnedJobs(enumId: any) {
-      if(this.getPinnedJobs?.searchPrefId) {
-        const payload = {
-          "searchPrefId": this.getPinnedJobs?.searchPrefId,
-          "searchPrefValue": JSON.stringify({ 
-            ...this.getPinnedJobs?.searchPrefValue,
-            [enumId]: this.getPinnedJobs?.searchPrefValue[enumId] ? false : true
-          })
-        }
-
-        await this.store.dispatch('user/updatePinnedJobs', payload);
+      const pinnedJobs = new Set(this.getPinnedJobs?.searchPrefValue);
+      if(pinnedJobs.has(enumId)) {
+        pinnedJobs.delete(enumId);
       } else {
-        const payload = {
-          searchPrefValue: JSON.stringify({ [enumId]: true })
-        }
-        await this.store.dispatch('user/createPinnedJob', payload);
+        pinnedJobs.add(enumId);
       }
-      this.closePopover();
+
+      await this.store.dispatch('user/updatePinnedJobs', { searchPrefId: this.getPinnedJobs?.searchPrefId, searchPrefValue: [...pinnedJobs] });
     }
   },
   setup() {

@@ -239,7 +239,7 @@
         <ion-icon slot="start" class="mobile-only" :icon="pinOutline" />  
 
         <div>
-          <ion-chip v-for="(job, index) in pinnedJobs" :key="index" outline>
+          <ion-chip v-for="(job, index) in getPinnedJobs?.searchPrefValue" :key="index" outline>
             <ion-label>{{ getEnumName(job) }}</ion-label>
             <ion-icon @click="updatePinnedJobs(job)" :icon="closeCircleOutline" />
           </ion-chip>  
@@ -285,7 +285,7 @@ import {
   popoverController
 } from "@ionic/vue";
 import JobConfiguration from '@/components/JobConfiguration.vue'
-import { closeCircleOutline, codeWorkingOutline, copyOutline, ellipsisVerticalOutline, pinOutline, refreshOutline, starOutline, timeOutline, timerOutline } from "ionicons/icons";
+import { closeCircleOutline, codeWorkingOutline, copyOutline, ellipsisVerticalOutline, pinOutline, refreshOutline, timeOutline, timerOutline } from "ionicons/icons";
 import emitter from '@/event-bus';
 import JobHistoryModal from '@/components/JobHistoryModal.vue';
 import { Plugins } from '@capacitor/core';
@@ -356,10 +356,7 @@ export default defineComponent({
       isRunningJobsScrollable: 'job/isRunningJobsScrollable',
       isHistoryJobsScrollable: 'job/isHistoryJobsScrollable',
       getPinnedJobs: 'user/getPinnedJobs'
-    }),
-    pinnedJobs() {
-      return (this as any).getPinnedJobs?.searchPrefValue ? Object.keys((this as any).getPinnedJobs?.searchPrefValue)?.filter((pref: any) => (this as any).getPinnedJobs?.searchPrefValue[pref]) : [];
-    }
+    })
   },
   methods: {
     getJobExecutionTime(startTime: any, endTime: any){
@@ -529,22 +526,14 @@ export default defineComponent({
       }
     },
     async updatePinnedJobs(enumId: any) {
-      if(this.getPinnedJobs?.searchPrefId) {
-        const payload = {
-          "searchPrefId": this.getPinnedJobs?.searchPrefId,
-          "searchPrefValue": JSON.stringify({ 
-            ...this.getPinnedJobs?.searchPrefValue,
-            [enumId]: this.getPinnedJobs?.searchPrefValue[enumId] ? false : true
-          })
-        }
-
-        await this.store.dispatch('user/updatePinnedJobs', payload);
+      const pinnedJobs = new Set(this.getPinnedJobs?.searchPrefValue);
+      if(pinnedJobs.has(enumId)) {
+        pinnedJobs.delete(enumId);
       } else {
-        const payload = {
-          searchPrefValue: JSON.stringify({ [enumId]: true })
-        }
-        await this.store.dispatch('user/createPinnedJob', payload);
+        pinnedJobs.add(enumId);
       }
+
+      await this.store.dispatch('user/updatePinnedJobs', { searchPrefId: this.getPinnedJobs?.searchPrefId, searchPrefValue: [...pinnedJobs] });
     }
   },
   created() {
@@ -565,8 +554,7 @@ export default defineComponent({
       refreshOutline,
       timeOutline,
       timerOutline,
-      segmentSelected,
-      starOutline
+      segmentSelected
     };
   }
 });
