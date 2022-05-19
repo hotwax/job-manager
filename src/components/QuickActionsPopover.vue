@@ -83,11 +83,10 @@ export default defineComponent({
         } else {
           pinnedJobs.add(enumId);
         }
-        await this.store.dispatch('user/updatePinnedJobs', { searchPrefId: this.getPinnedJobs?.searchPrefId, searchPrefValue: [...pinnedJobs] });
       } else {
         pinnedJobs.add(enumId)
-        await this.store.dispatch('user/updatePinnedJobs', { searchPrefId: this.getPinnedJobs?.searchPrefId, searchPrefValue: [...pinnedJobs] });
       }
+      await this.store.dispatch('user/updatePinnedJobs', { searchPrefId: this.getPinnedJobs?.searchPrefId, searchPrefValue: [...pinnedJobs] });
     }
   },
   setup() {
