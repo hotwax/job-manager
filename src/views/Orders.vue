@@ -100,10 +100,18 @@
                 <ion-icon :icon="addCircleOutline" slot="end" />
               </ion-button>
             </ion-item-divider>
-            <ion-item v-for="batch in getJob(jobEnums['BTCH_BRKR_ORD'])" :key="batch?.id" button detail @click="editBatch(batch?.id)" v-show="batch?.status === 'SERVICE_PENDING'">
-              <ion-label class="ion-text-wrap">{{ batch?.jobName }}</ion-label>
-              <ion-note slot="end">{{ batch?.runTime ? getTime(batch.runTime) : '' }}</ion-note>
-            </ion-item>
+
+            <ion-item-sliding v-for="batch in getJob(jobEnums['BTCH_BRKR_ORD'])" :key="batch?.id" button detail v-show="batch?.status === 'SERVICE_PENDING'">
+              <ion-item @click="editBatch(batch?.id)">
+                <ion-label class="ion-text-wrap">{{ batch?.jobName }}</ion-label>
+                <ion-note slot="end">{{ batch?.runTime ? getTime(batch.runTime) : '' }}</ion-note>
+              </ion-item>
+              <ion-item-options side="end">
+                <ion-item-option @click="deleteBatch(batch)" color="danger">
+                  <ion-icon slot="icon-only" :icon="trash" />
+                </ion-item-option>
+              </ion-item-options>
+            </ion-item-sliding>
           </ion-card>
         </section>
 
@@ -128,9 +136,12 @@ import {
   IonInput,
   IonItem,
   IonItemDivider,
+  IonItemSliding,
   IonLabel,
   IonMenuButton,
   IonNote,
+  IonItemOption,
+  IonItemOptions,
   IonPage,
   IonTitle,
   IonToggle,
@@ -139,7 +150,7 @@ import {
   modalController
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
-import { addCircleOutline } from 'ionicons/icons';
+import { addCircleOutline, trash } from 'ionicons/icons';
 import BatchModal from '@/components/BatchModal.vue';
 import { useStore } from "@/store";
 import { useRouter } from 'vue-router'
@@ -161,10 +172,13 @@ export default defineComponent({
     IonIcon,
     IonInput,
     IonItem,
+    IonItemSliding,
     IonItemDivider,
     IonLabel,
     IonMenuButton,
     IonNote,
+    IonItemOption,
+    IonItemOptions,
     IonPage,
     IonTitle,
     IonToggle,
@@ -214,6 +228,26 @@ export default defineComponent({
         componentProps: { id, enum: this.jobEnums['BTCH_BRKR_ORD'] }
       });
       return batchmodal.present();
+    },
+    async deleteBatch(batch: any) {
+      const deleteBatchAlert = await alertController
+        .create({
+          header: this.$t('Cancel job'),
+          message: this.$t("Canceling this job will cancel this occurrence and all following occurrences. This job will have to be re-enabled manually to run it again."),
+          buttons: [
+            {
+              text: this.$t("Don't cancel"),
+              role: 'cancel',
+            },
+            {
+              text: this.$t("Cancel"),
+              handler: async () => {
+                await this.store.dispatch('job/cancelJob', batch);
+              },
+            },
+          ],
+        });
+      return deleteBatchAlert.present();
     },
     getTime (time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
@@ -288,7 +322,6 @@ export default defineComponent({
             }
           ]
         });
-
       return jobAlert.present();
     }
   },
@@ -306,8 +339,9 @@ export default defineComponent({
 
     return {
       addCircleOutline,
+      router,
       store,
-      router
+      trash
     };
   },
 });
