@@ -67,7 +67,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, toRefs, watch } from "vue";
+import { defineComponent } from "vue";
 import {
   IonBadge,
   IonButton,
@@ -112,8 +112,7 @@ export default defineComponent({
   data() {
     return {
       jobStatus: this.status,
-      minDateTime: DateTime.now().toISO(),
-      isModalOpen: false
+      minDateTime: DateTime.now().toISO()
     }
   },
   props: ["job", "title", "status", "type"],

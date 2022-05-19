@@ -341,7 +341,7 @@ export default defineComponent({
       addCircleOutline,
       router,
       store,
-      trash
+      trash,
     };
   },
 });
