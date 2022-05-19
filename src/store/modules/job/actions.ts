@@ -349,13 +349,17 @@ const actions: ActionTree<JobState, RootState> = {
       resp = await JobService.updateJob(payload)
       if (resp.status === 200 && !hasError(resp) && resp.data.successMessage) {
         showToast(translate('Service updated successfully'))
-        const jobs = await dispatch('fetchJobs', {
+        let jobs = await dispatch('fetchJobs', {
           inputFields: {
             'systemJobEnumId': payload.systemJobEnumId,
             'systemJobEnumId_op': 'equals'
           }
         })
-        commit(types.JOB_CURRENT_UPDATED, jobs[payload.systemJobEnumId]);
+        if(jobs.status === 200 && !hasError(jobs) && jobs.data?.docs.length) {
+          jobs = jobs.data?.docs;
+          const job = jobs.find((job: any) => job?.jobId === payload.jobId);
+          commit(types.JOB_CURRENT_UPDATED, job);
+        }
       } else {
         showToast(translate('Something went wrong'))
       }
@@ -366,7 +370,7 @@ const actions: ActionTree<JobState, RootState> = {
     return resp;
   },
 
-  async scheduleService({ dispatch }, job) {
+  async scheduleService({ dispatch, commit }, job) {
     let resp;
 
     const payload = {
@@ -396,12 +400,17 @@ const actions: ActionTree<JobState, RootState> = {
       resp = await JobService.scheduleJob({ ...job.runtimeData, ...payload });
       if (resp.status == 200 && !hasError(resp)) {
         showToast(translate('Service has been scheduled'))
-        dispatch('fetchJobs', {
+        let jobs = await dispatch('fetchJobs', {
           inputFields: {
             'systemJobEnumId': payload.systemJobEnumId,
             'systemJobEnumId_op': 'equals'
           }
         })
+        if(jobs.status === 200 && !hasError(jobs) && jobs.data?.docs.length) {
+          jobs = jobs.data?.docs;
+          const job = jobs.find((job: any) => job?.jobId === payload.jobId);
+          commit(types.JOB_CURRENT_UPDATED, job);
+        }
       } else {
         showToast(translate('Something went wrong'))
       }
@@ -530,12 +539,10 @@ const actions: ActionTree<JobState, RootState> = {
     }
     return resp;
   },
-  currentJobUpdated({ commit }, payload){
-    commit(types.JOB_CURRENT_UPDATED, payload);
-  },
   async getCurrentJob({ commit, state, dispatch }, payload) {
+    console.log(state)
     const currentJob = state.current;
-    if (payload.jobId === currentJob.jobId) {
+    if (payload?.jobId === currentJob.jobId) {
       commit(types.JOB_CURRENT_UPDATED, currentJob);
       return currentJob;
     }

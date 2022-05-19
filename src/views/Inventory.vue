@@ -138,7 +138,7 @@ export default defineComponent({
       this.title = title
       this.currentJobStatus = status
       this.freqType = id && this.jobFrequencyType[id]
-      this.store.dispatch('job/currentJobUpdated', this.currentJob)
+
       if(!this.isDesktop && this.currentJob) {
         this.router.push({name: 'JobDetails', params: { title: this.title, status: this.currentJobStatus, type: this.freqType, jobId: this.currentJob.jobId, category: "inventory"}});
         return;
