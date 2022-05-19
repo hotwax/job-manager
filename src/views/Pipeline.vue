@@ -25,7 +25,7 @@
       <main>
         <section v-if="segmentSelected === 'pending'">
           <div class="search">
-            <ion-searchbar :placeholder="$t('Search jobs')" @ionClear="queryString = ''; segmentSelected === 'pending' ? getPendingJobs() : ( segmentSelected === 'running' ? getRunningJobs() : getJobHistory())" v-model="queryString" v-on:keyup.enter="queryString = $event.target.value; segmentSelected === 'pending' ? getPendingJobs() : ( segmentSelected === 'running' ? getRunningJobs() : getJobHistory())" />
+            <ion-searchbar :placeholder="$t('Search jobs')" @ionClear="queryString = ''; getPendingJobs()" v-model="queryString" v-on:keyup.enter="queryString = $event.target.value; getPendingJobs()" />
           </div>
           <!-- Empty state -->
           <div v-if="pendingJobs?.length === 0">
@@ -90,9 +90,9 @@
         </section>
 
         <section v-if="segmentSelected === 'running'">
-          <section class="search">
-            <ion-searchbar :placeholder="$t('Search jobs')" @ionClear="queryString = ''; segmentSelected === 'pending' ? getPendingJobs() : ( segmentSelected === 'running' ? getRunningJobs() : getJobHistory())" v-model="queryString" v-on:keyup.enter="queryString = $event.target.value; segmentSelected === 'pending' ? getPendingJobs() : ( segmentSelected === 'running' ? getRunningJobs() : getJobHistory())" />
-          </section>
+          <div class="search">
+            <ion-searchbar :placeholder="$t('Search jobs')" @ionClear="queryString = ''; getRunningJobs()" v-model="queryString" v-on:keyup.enter="queryString = $event.target.value; getRunningJobs()" />
+          </div>
 
           <!-- Empty state -->
           <div v-if="runningJobs?.length === 0">
@@ -164,9 +164,9 @@
         </section>
 
         <section v-if="segmentSelected === 'history'">
-          <section class="search">
-            <ion-searchbar :placeholder="$t('Search jobs')" @ionClear="queryString = ''; segmentSelected === 'pending' ? getPendingJobs() : ( segmentSelected === 'running' ? getRunningJobs() : getJobHistory())" v-model="queryString" v-on:keyup.enter="queryString = $event.target.value; segmentSelected === 'pending' ? getPendingJobs() : ( segmentSelected === 'running' ? getRunningJobs() : getJobHistory())" />
-          </section>
+          <div class="search">
+            <ion-searchbar :placeholder="$t('Search jobs')" @ionClear="queryString = ''; getJobHistory()" v-model="queryString" v-on:keyup.enter="queryString = $event.target.value; getJobHistory()" />
+          </div>
 
           <!-- Empty state -->
           <div v-if="jobHistory?.length === 0">
