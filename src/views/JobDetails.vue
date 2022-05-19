@@ -76,7 +76,7 @@ export default defineComponent({
     }
   },
   mounted() {
-    this.store.dispatch('job/getCurrentJob', { jobId: this.$route.params.jobId }).then((job: any) => {
+    this.store.dispatch('job/updateCurrentJob', { jobId: this.$route.params.jobId }).then((job: any) => {
       if(job?.jobId) {
         this.viewJobConfiguration(job);
       }

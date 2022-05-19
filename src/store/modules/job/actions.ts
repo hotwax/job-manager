@@ -539,8 +539,7 @@ const actions: ActionTree<JobState, RootState> = {
     }
     return resp;
   },
-  async getCurrentJob({ commit, state, dispatch }, payload) {
-    console.log(state)
+  async updateCurrentJob({ commit, state, dispatch }, payload) {
     const currentJob = state.current;
     if (payload?.jobId === currentJob.jobId) {
       commit(types.JOB_CURRENT_UPDATED, currentJob);
