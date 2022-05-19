@@ -423,7 +423,7 @@ export default defineComponent({
         }).catch(()=>{
           this.isRetrying = false;
         });
-      } 
+      }
     },
 
     segmentChanged (e: CustomEvent) {
@@ -504,7 +504,6 @@ export default defineComponent({
   },
   created() {
     this.getPendingJobs();
-    this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0});
     emitter.on("selectedShop", this.refreshJobs);
   },
   unmounted(){
