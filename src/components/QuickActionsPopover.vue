@@ -1,18 +1,19 @@
 <template>
   <ion-content>
     <ion-list>
-      <ion-item @click="updatePinnedJobs(job?.systemJobEnumId)" button>
-        <ion-icon slot="start" :icon="pinOutline" />
-        {{ $t("Pin jobs") }}
+      <ion-list-header>{{ $t("More options") }}</ion-list-header>
+      <ion-item @click="viewJobHistory(job)" button>
+        <ion-icon slot="start" :icon="timeOutline" />
+        {{ $t("History") }}
       </ion-item>
       <ion-item @click="copyJobInformation(job)" button>
         <ion-icon slot="start" :icon="copyOutline" />
-        {{ $t("Copy job details") }}
+        {{ $t("Copy details") }}
       </ion-item>
-      <ion-item @click="viewJobHistory(job)" button lines="none">
-        <ion-icon slot="start" :icon="timeOutline" />
-        {{ $t("View job history") }}
-      </ion-item>
+      <ion-item @click="updatePinnedJobs(job?.systemJobEnumId)" lines="none" button>
+        <ion-icon slot="start" :icon="pinOutline" />
+        {{ $t("Pin job") }}
+      </ion-item>      
     </ion-list>
   </ion-content>
 </template>
