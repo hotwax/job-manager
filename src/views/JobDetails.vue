@@ -44,9 +44,7 @@ export default defineComponent({
       freqType: '' as any,
       jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
       jobTitles: {
-        ...JSON.parse(process.env?.VUE_APP_PRD_JOB_TITLES as string) as any,
-        ...JSON.parse(process.env?.VUE_APP_ODR_JOB_TITLES as string) as any,
-        ...JSON.parse(process.env?.VUE_APP_INV_JOB_TITLES as string) as any
+        ...JSON.parse(process.env?.VUE_APP_JOB_TITLES as string) as any
       },
       jobEnums: {
         ...JSON.parse(process.env?.VUE_APP_ODR_JOB_ENUMS as string) as any,
@@ -54,11 +52,6 @@ export default defineComponent({
         ...JSON.parse(process.env?.VUE_APP_PRD_JOB_ENUMS as string) as any,
         ...JSON.parse(process.env?.VUE_APP_INV_JOB_ENUMS as string) as any,
         ...JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
-      },
-      jobIds: {
-        ...JSON.parse(process.env?.VUE_APP_PRD_JOB_IDS as string) as any,
-        ...JSON.parse(process.env?.VUE_APP_ODR_JOB_IDS as string) as any,
-        ...JSON.parse(process.env?.VUE_APP_INV_JOB_IDS as string) as any,
       }
     }
   },
@@ -73,11 +66,11 @@ export default defineComponent({
       const jobCategory = this.$route.params.category;
       if(jobCategory !== 'pipeline') {
         this.title = this.jobTitles[job?.systemJobEnumId];
-        const id = this.jobIds[job?.systemJobEnumId];
+        const id = Object.entries(this.jobEnums).find((enums) => enums[1] == job.systemJobEnumId) as any
         this.freqType = id && this.jobFrequencyType[id];
       } else {
         this.title = this.getEnumName(job.systemJobEnumId);
-        const id = Object.entries(this.jobEnums).find((enums) => enums[1] == job.systemJobEnumId) as any;
+        const id = Object.entries(this.jobEnums).find((enums) => enums[1] == job.systemJobEnumId) as any
         this.freqType = id && (Object.entries(this.jobFrequencyType).find((freq) => freq[0] == id[0]) as any)[1];
       }
     }
