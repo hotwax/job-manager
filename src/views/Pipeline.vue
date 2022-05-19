@@ -134,6 +134,18 @@
                   <ion-icon slot="icon-only" :icon="copyOutline" />
                 </ion-button>
               </ion-item>
+
+              <div class="actions">
+                <div></div>
+                <div>
+                  <ion-button fill="clear" color="medium" @click.stop="copyJobInformation(job)">
+                    <ion-icon slot="icon-only" :icon="copyOutline" />
+                  </ion-button>
+                  <ion-button fill="clear" color="medium" @click.stop="viewJobHistory(job)">
+                    <ion-icon slot="icon-only" :icon="timeOutline" />
+                  </ion-button>
+                </div>
+              </div>
             </ion-card>
 
             <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
@@ -193,11 +205,17 @@
               <ion-label class="ion-text-wrap">{{ job.serviceName }}</ion-label>
             </ion-item>
 
-            <ion-item>
-              <ion-button fill="clear" color="medium" slot="end" @click.stop="copyJobInformation(job)">
-                <ion-icon slot="icon-only" :icon="copyOutline" />
-              </ion-button>
-            </ion-item>
+            <div class="actions">
+              <div></div>
+              <div>
+                <ion-button fill="clear" color="medium" @click.stop="copyJobInformation(job)">
+                  <ion-icon slot="icon-only" :icon="copyOutline" />
+                </ion-button>
+                <ion-button fill="clear" color="medium" @click.stop="viewJobHistory(job)">
+                  <ion-icon slot="icon-only" :icon="timeOutline" />
+                </ion-button>
+              </div>
+            </div>
           </ion-card>
 
           <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
@@ -385,21 +403,21 @@ export default defineComponent({
     async refreshJobs(event: any) {
       this.isRetrying = true;
       if(this.segmentSelected === 'pending') {
-        this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0, queryString: this.queryString}).then(() => {
+        this.getPendingJobs().then(() => {
           if(event) event.target.complete();
           this.isRetrying = false;
         }).catch(()=>{
           this.isRetrying = false;
         });
       } else if(this.segmentSelected === 'running') {
-        this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0, queryString: this.queryString}).then(() => {
+        this.getRunningJobs().then(() => {
           if(event) event.target.complete();
           this.isRetrying = false;
         }).catch(()=>{
           this.isRetrying = false;
         });
       } else {
-        this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0, queryString: this.queryString}).then(() => {
+        this.getJobHistory().then(() => {
           if(event) event.target.complete();
           this.isRetrying = false;
         }).catch(()=>{
@@ -411,9 +429,9 @@ export default defineComponent({
     segmentChanged (e: CustomEvent) {
       this.queryString = "";
       this.segmentSelected = e.detail.value
-      this.segmentSelected === 'pending' ? this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0, queryString: this.queryString}) :
-      this.segmentSelected === 'running' ? this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0, queryString: this.queryString}) :
-      this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0, queryString: this.queryString});
+      this.segmentSelected === 'pending' ? this.getPendingJobs():
+      this.segmentSelected === 'running' ? this.getRunningJobs():
+      this.getJobHistory();
     },
     async skipJob (job: any) {
       const alert = await alertController
@@ -429,26 +447,20 @@ export default defineComponent({
               text: this.$t('Skip'),
               handler: async () => {
                 await this.store.dispatch('job/skipJob', job);
-                await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewIndex: 0, queryString: this.queryString})
+                await this.getPendingJobs();
               },
             }
           ]
         });
       return alert.present();
     },
-    async getPendingJobs(vSize: any, vIndex: any) {
-      const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
-      const viewIndex = vIndex ? vIndex : 0;
+    async getPendingJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
       await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString});
     },
-    async getRunningJobs(vSize: any, vIndex: any) {
-      const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
-      const viewIndex = vIndex ? vIndex : 0;
+    async getRunningJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
       await this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString});
     },
-    async getJobHistory(vSize: any, vIndex: any) {
-      const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
-      const viewIndex = vIndex ? vIndex : 0;
+    async getJobHistory(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
       await this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString});
     },
     async cancelJob(job: any){
@@ -465,7 +477,7 @@ export default defineComponent({
               text: this.$t("CANCEL"),
               handler: async () => {
                 await this.store.dispatch('job/cancelJob', job);
-                await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewIndex: 0, queryString: this.queryString});
+                await this.getPendingJobs();
               },
             }
           ],
@@ -491,6 +503,7 @@ export default defineComponent({
     },
   },
   created() {
+    this.getPendingJobs();
     this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0});
     emitter.on("selectedShop", this.refreshJobs);
   },

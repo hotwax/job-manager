@@ -130,7 +130,6 @@ import {
 import { defineComponent } from 'vue';
 import { useStore } from "@/store";
 import { mapGetters } from "vuex";
-import { DateTime } from 'luxon';
 import { alertController } from '@ionic/vue';
 import JobConfiguration from '@/components/JobConfiguration.vue'
 import { isFutureDate } from '@/utils';

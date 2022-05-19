@@ -1,8 +1,6 @@
 import { GetterTree } from 'vuex'
 import JobState from './JobState'
 import RootState from '../../RootState'
-import { JobService } from '@/services/JobService';
-import { State } from '@ionic/core/dist/types/stencil-public-runtime';
 
 const getters: GetterTree <JobState, RootState> = {
     getJobStatus: (state) => (id: string): any  => {
