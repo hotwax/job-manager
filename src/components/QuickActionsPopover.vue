@@ -85,7 +85,7 @@ export default defineComponent({
         pinnedJobs.add(enumId);
       }
 
-      await this.store.dispatch('user/updatePinnedJobs', { searchPrefValue: [...pinnedJobs] });
+      await this.store.dispatch('user/updatePinnedJobs', { pinnedJobs: [...pinnedJobs] });
     }
   },
   setup() {

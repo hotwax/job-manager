@@ -190,7 +190,7 @@ const actions: ActionTree<UserState, RootState> = {
       if(searchPrefId) {
         resp = await UserService.updatePinnedJobs({
           'searchPrefId': searchPrefId,
-          'searchPrefValue': JSON.stringify(payload?.searchPrefValue)
+          'searchPrefValue': JSON.stringify(payload?.pinnedJobs)
         });
 
         if(resp.status === 200 && !hasError(resp)) {
@@ -198,7 +198,7 @@ const actions: ActionTree<UserState, RootState> = {
         }
       } else {
         resp = await UserService.createPinnedJob({
-          'searchPrefValue': JSON.stringify(payload?.searchPrefValue)
+          'searchPrefValue': JSON.stringify(payload?.pinnedJobs)
         });
         if(resp.status === 200 && !hasError(resp)) {
           if(resp.data?.searchPrefId) {
