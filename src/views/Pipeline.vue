@@ -7,7 +7,7 @@
       </ion-toolbar>
 
       <div>
-        <ion-searchbar :placeholder="$t('Search jobs')" @ionClear="queryString = ''; segmentSelected === 'pending' ? getPendingJobs() : ( segmentSelected === 'running' ? getRunningJobs() : getJobHistory())" v-model="queryString" v-on:keyup.enter="queryString = $event.target.value; segmentSelected === 'pending' ? getPendingJobs() : ( segmentSelected === 'running' ? getRunningJobs() : getJobHistory())" />
+        <ion-searchbar :placeholder="$t('Search jobs')" @ionClear="queryString = ''; segmentSelected === 'pending' ? getPendingJobs() : ( segmentSelected === 'running' ? getRunningJobs() : getJobHistory())" v-model="queryString" @keyup.enter="queryString = $event.target.value; segmentSelected === 'pending' ? getPendingJobs() : ( segmentSelected === 'running' ? getRunningJobs() : getJobHistory())" />
 
         <ion-segment v-model="segmentSelected" @ionChange="segmentChanged">
           <ion-segment-button value="pending">
@@ -471,7 +471,7 @@ export default defineComponent({
               text: this.$t("CANCEL"),
               handler: async () => {
                 await this.store.dispatch('job/cancelJob', job);
-                await this.getPendingJobs();
+                await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewIndex: 0, queryString: this.queryString});
               },
             }
           ],
