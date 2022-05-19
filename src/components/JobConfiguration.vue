@@ -158,6 +158,12 @@ export default defineComponent({
         }
       ]
       return (this as any).type === 'slow' ? slow : optionDefault;
+    },
+    customPopoverOptions() {
+      return {
+        header: (this as any).title,
+        showBackdrop: false
+      }
     }
   },
   methods: {
@@ -255,21 +261,11 @@ export default defineComponent({
       }
     }
   },
-  setup(props) {
-    const { title } = toRefs(props);
-    const customPopoverOptions: any = {
-      header: '' as any,
-      showBackdrop: false
-    }
-
-    watch(title, (newTitle) => {
-      customPopoverOptions.header = newTitle;
-    })
-
+  setup() {
     const store = useStore();
+
     return {
       calendarClearOutline,
-      customPopoverOptions,
       timeOutline,
       timerOutline,
       store,

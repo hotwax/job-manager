@@ -65,11 +65,11 @@ export default defineComponent({
     viewJobConfiguration(job: any) {
       const jobCategory = this.$route.params.category;
       if(jobCategory !== 'pipeline') {
-        this.title = this.jobTitles[job?.systemJobEnumId];
+        this.title = this.$route.params.title ? this.$route.params.title : this.jobTitles[job?.systemJobEnumId];
         const id = Object.entries(this.jobEnums).find((enums) => enums[1] == job.systemJobEnumId) as any
         this.freqType = id && this.jobFrequencyType[id];
       } else {
-        this.title = this.getEnumName(job.systemJobEnumId);
+        this.title = this.$route.params.title ? this.$route.params.title : this.getEnumName(job.systemJobEnumId);
         const id = Object.entries(this.jobEnums).find((enums) => enums[1] == job.systemJobEnumId) as any
         this.freqType = id && (Object.entries(this.jobFrequencyType).find((freq) => freq[0] == id[0]) as any)[1];
       }
