@@ -115,7 +115,7 @@
           </ion-card>
         </section>
 
-        <aside class="desktop-only" v-show="currentJob">
+        <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
           <JobConfiguration :title="title" :job="currentJob" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
         </aside>
       </main>
