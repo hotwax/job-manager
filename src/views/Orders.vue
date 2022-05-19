@@ -317,7 +317,6 @@ export default defineComponent({
       return jobAlert.present();
     },
     fetchJobs(){
-      console.log(' from mounted hook')
       this.store.dispatch("job/fetchJobs", {
         "inputFields":{
           "systemJobEnumId": Object.values(this.jobEnums),
