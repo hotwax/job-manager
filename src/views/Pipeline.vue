@@ -422,7 +422,6 @@ export default defineComponent({
     },
 
     segmentChanged (e: CustomEvent) {
-      this.queryString = "";
       this.segmentSelected = e.detail.value
       this.segmentSelected === 'pending' ? this.getPendingJobs():
       this.segmentSelected === 'running' ? this.getRunningJobs():
