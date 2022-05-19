@@ -111,19 +111,18 @@ export default defineComponent({
   },
   data() {
     return {
-      currentJob: this.job,
       jobStatus: this.status,
       minDateTime: DateTime.now().toISO()
     }
   },
-  props: ["job", "title", "status", "type"],
+  props: ["title", "status", "type"],
   computed: {
     ...mapGetters({
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
       shopifyConfigId: 'user/getShopifyConfigId',
       currentEComStore: 'user/getCurrentEComStore',
-      getCurrentJob: 'job/getCurrentJob',
+      currentJob: 'job/getCurrentJob',
     }),
     generateFrequencyOptions(): any {
       const optionDefault = [{
@@ -244,13 +243,9 @@ export default defineComponent({
       job['jobStatus'] = this.jobStatus !== 'SERVICE_DRAFT' ? this.jobStatus : 'HOURLY';
 
       if (job?.status === 'SERVICE_DRAFT') {
-        await this.store.dispatch('job/scheduleService', job).then(() => {
-          this.currentJob = this.getCurrentJob
-        })
+        await this.store.dispatch('job/scheduleService', job)
       } else if (job?.status === 'SERVICE_PENDING') {
-        await this.store.dispatch('job/updateJob', job).then(() => {
-          this.currentJob = this.getCurrentJob
-        })
+        await this.store.dispatch('job/updateJob', job)
       }
     },
     getTime (time: any) {

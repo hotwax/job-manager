@@ -29,7 +29,7 @@
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
-          <JobConfiguration :title="title" :job="currentJob" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
+          <JobConfiguration :title="title" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
         </aside>
       </main>
     </ion-content>
@@ -102,12 +102,13 @@ export default defineComponent({
     });
   },
   methods: {
-    viewJobConfiguration(id: string, title: string, status: string) {
+    async viewJobConfiguration(id: string, title: string, status: string) {
       this.currentJob = this.getJob(this.jobEnums[id])
       this.title = title
       this.currentJobStatus = status
       this.freqType = id && this.jobFrequencyType[id]
 
+      await this.store.dispatch('job/updateCurrentJob', { job: this.currentJob });
       if(!this.isDesktop && this.currentJob) {
         this.router.push({name: 'JobDetails', params: { title: this.title, status: this.currentJobStatus, type: this.freqType, jobId: this.currentJob.jobId, category: "product"}});
         return;

@@ -540,8 +540,16 @@ const actions: ActionTree<JobState, RootState> = {
     return resp;
   },
   async updateCurrentJob({ commit, state, dispatch }, payload) {
-    const currentJob = state.current;
-    if (payload?.jobId === currentJob.jobId) {
+    const cachedJobs = state.cached;
+    const pendingJobs = state.pending.list;
+
+    if(payload?.job) {
+      commit(types.JOB_CURRENT_UPDATED, payload.job);
+      return payload?.job;
+    }
+
+    const currentJob = pendingJobs.find((job: any) => job.jobId === payload.jobId) ? pendingJobs.find((job: any) => job.jobId === payload.jobId) : cachedJobs[payload?.jobId];
+    if(currentJob) {
       commit(types.JOB_CURRENT_UPDATED, currentJob);
       return currentJob;
     }

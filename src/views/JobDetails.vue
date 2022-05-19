@@ -8,7 +8,7 @@
     </ion-header>
 
     <ion-content>
-      <JobConfiguration :title="title" :job="currentJob" :status="currentJob?.status === 'SERVICE_DRAFT' ? currentJob?.status : currentJob?.tempExprId" :type="freqType" :key="currentJob"/>
+      <JobConfiguration :title="title" :status="currentJob?.status === 'SERVICE_DRAFT' ? currentJob?.status : currentJob?.tempExprId" :type="freqType" :key="currentJob"/>
     </ion-content>
   </ion-page>
 </template>
