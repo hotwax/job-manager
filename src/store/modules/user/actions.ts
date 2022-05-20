@@ -161,11 +161,13 @@ const actions: ActionTree<UserState, RootState> = {
       }
       resp = await UserService.getPinnedJobs(params);
       if(resp.status === 200 && resp.data.docs?.length && !hasError(resp)) {
-        const pinnedJobs = resp.data.docs[0];
-        if(pinnedJobs?.searchPrefId) {
-          pinnedJobs['searchPrefValue'] = pinnedJobs?.searchPrefValue ? JSON.parse(pinnedJobs?.searchPrefValue) : [];
+        let pinnedJobs = resp.data.docs[0];
+        pinnedJobs = {
+          id: pinnedJobs?.searchPrefId ? pinnedJobs?.searchPrefId : '',
+          jobs: pinnedJobs?.searchPrefValue ? JSON.parse(pinnedJobs?.searchPrefValue) : []
         }
-        const enumIds = pinnedJobs?.searchPrefValue;
+
+        const enumIds = pinnedJobs?.jobs;
         await this.dispatch('job/fetchJobDescription', enumIds);
 
         user.pinnedJobs = pinnedJobs
@@ -187,12 +189,12 @@ const actions: ActionTree<UserState, RootState> = {
    */
   async updatePinnedJobs({ dispatch, state }, payload) {
     let resp;
-    const searchPrefId = (state.current as any)['pinnedJobs']?.searchPrefId;
+    const pinnedJobPrefId = (state.current as any)['pinnedJobs']?.id;
 
     try{
-      if(searchPrefId) {
+      if (pinnedJobPrefId) {
         resp = await UserService.updatePinnedJobs({
-          'searchPrefId': searchPrefId,
+          'searchPrefId': pinnedJobPrefId,
           'searchPrefValue': JSON.stringify(payload?.pinnedJobs)
         });
 
