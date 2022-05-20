@@ -86,6 +86,7 @@ export default defineComponent({
       }
 
       await this.store.dispatch('user/updatePinnedJobs', { pinnedJobs: [...pinnedJobs] });
+      this.closePopover();
     }
   },
   setup() {
