@@ -5,7 +5,6 @@ import UserState from './UserState'
 import * as types from './mutation-types'
 import { hasError, showToast } from '@/utils'
 import { translate } from '@/i18n'
-import { Settings } from 'luxon'
 
 const actions: ActionTree<UserState, RootState> = {
 
@@ -75,9 +74,7 @@ const actions: ActionTree<UserState, RootState> = {
       })
 
       this.dispatch('util/getServiceStatusDesc')
-      if (resp.data.userTimeZone) {
-        Settings.defaultZone = resp.data.userTimeZone;
-      }
+
       commit(types.USER_CURRENT_ECOM_STORE_UPDATED, resp.data?.stores[0]);
       commit(types.USER_INFO_UPDATED, resp.data);
     }
@@ -99,7 +96,6 @@ const actions: ActionTree<UserState, RootState> = {
       const current: any = state.current;
       current.userTimeZone = payload.tzId;
       commit(types.USER_INFO_UPDATED, current);
-      Settings.defaultZone = current.userTimeZone;
       showToast(translate("Time zone updated successfully"));
     }
   },
