@@ -69,11 +69,8 @@
                   <ion-button color="danger" fill="clear" @click.stop="cancelJob(job)">{{ $t("Cancel") }}</ion-button>
                 </div>
                 <div>
-                  <ion-button fill="clear" color="medium" @click.stop="copyJobInformation(job)">
-                    <ion-icon slot="icon-only" :icon="copyOutline" />
-                  </ion-button>
-                  <ion-button fill="clear" color="medium" slot="end" @click.stop="viewJobHistory(job)">
-                    <ion-icon slot="icon-only" :icon="timeOutline" />
+                  <ion-button fill="clear" color="medium" slot="end" @click.stop="openJobActions(job, $event)">
+                    <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
                   </ion-button>
                 </div>
               </div> 
@@ -232,6 +229,23 @@
         </aside>
       </main>
     </ion-content>
+
+    <ion-footer>
+      <ion-toolbar>
+        <ion-title slot="start" class="desktop-only">
+          {{ $t("Pinned jobs") }}
+        </ion-title>
+      
+        <ion-icon slot="start" class="mobile-only" :icon="pinOutline" />  
+
+        <div>
+          <ion-chip v-for="(job, index) in getPinnedJobs" :key="index" outline>
+            <ion-label>{{ getEnumName(job) }}</ion-label>
+            <ion-icon @click="updatePinnedJobs(job)" :icon="closeCircleOutline" />
+          </ion-chip>  
+        </div>     
+      </ion-toolbar>  
+    </ion-footer>
   </ion-page>
 </template>
 <script lang="ts">
@@ -247,6 +261,8 @@ import {
   IonCardHeader,
   IonCardSubtitle,
   IonCardTitle,
+  IonChip,
+  IonFooter,
   IonHeader,
   IonIcon,
   IonItem,
@@ -266,14 +282,16 @@ import {
   IonSegmentButton,
   IonSpinner,
   isPlatform,
-  modalController
+  modalController,
+  popoverController
 } from "@ionic/vue";
 import JobConfiguration from '@/components/JobConfiguration.vue'
-import { codeWorkingOutline, copyOutline, refreshOutline, timeOutline, timerOutline } from "ionicons/icons";
+import { closeCircleOutline, codeWorkingOutline, copyOutline, ellipsisVerticalOutline, pinOutline, refreshOutline, timeOutline, timerOutline } from "ionicons/icons";
 import emitter from '@/event-bus';
 import JobHistoryModal from '@/components/JobHistoryModal.vue';
 import { Plugins } from '@capacitor/core';
 import { showToast } from '@/utils'
+import JobActionsPopover from '@/components/JobActionsPopover.vue'
 
 export default defineComponent({
   name: "Pipeline",
@@ -285,6 +303,8 @@ export default defineComponent({
     IonCardHeader,
     IonCardSubtitle,
     IonCardTitle,
+    IonChip,
+    IonFooter,
     IonHeader,
     IonIcon,
     IonItem,
@@ -335,7 +355,8 @@ export default defineComponent({
       getCurrentEComStore:'user/getCurrentEComStore',
       isPendingJobsScrollable: 'job/isPendingJobsScrollable',
       isRunningJobsScrollable: 'job/isRunningJobsScrollable',
-      isHistoryJobsScrollable: 'job/isHistoryJobsScrollable'
+      isHistoryJobsScrollable: 'job/isHistoryJobsScrollable',
+      getPinnedJobs: 'user/getPinnedJobs'
     })
   },
   methods: {
@@ -458,6 +479,15 @@ export default defineComponent({
     async getJobHistory(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
       await this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString});
     },
+    async openJobActions(job: any, ev: Event) {
+      const popover = await popoverController.create({
+        component: JobActionsPopover,
+        showBackdrop: false,
+        event: ev,
+        componentProps: { job }
+      });
+      return popover.present()
+    },
     async cancelJob(job: any){
       const alert = await alertController
         .create({
@@ -498,9 +528,20 @@ export default defineComponent({
         this.isJobDetailAnimationCompleted = true;
       }
     },
+    async updatePinnedJobs(enumId: any) {
+      const pinnedJobs = new Set(this.getPinnedJobs);
+      if(pinnedJobs.has(enumId)) {
+        pinnedJobs.delete(enumId);
+      } else {
+        pinnedJobs.add(enumId);
+      }
+
+      await this.store.dispatch('user/updatePinnedJobs', { pinnedJobs: [...pinnedJobs] });
+    }
   },
   created() {
     this.getPendingJobs();
+    this.store.dispatch('user/getPinnedJobs');
   },
   setup() {
     const router = useRouter();
@@ -508,9 +549,12 @@ export default defineComponent({
     const segmentSelected = ref('pending');
 
     return {
+      closeCircleOutline,
       copyOutline,
       store,
       codeWorkingOutline,
+      ellipsisVerticalOutline,
+      pinOutline,
       refreshOutline,
       timeOutline,
       timerOutline,
@@ -543,6 +587,31 @@ ion-item {
 .actions {
   display: flex;
   justify-content: space-between;
+}
+
+ion-title {
+  flex-grow: 0;
+}
+
+ion-toolbar > ion-icon {
+  background: linear-gradient(to right, #ffffff7d, white);
+  backdrop-filter: blur(20px);
+  position: relative;
+  left: 16px;
+}
+
+ion-toolbar > div {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  max-width: max-content;
+  margin-left: auto;
+  padding-left: 20px;
+
+}
+
+ion-chip {
+  flex: 1 0 auto;
 }
 
 @media (min-width: 991px) {
