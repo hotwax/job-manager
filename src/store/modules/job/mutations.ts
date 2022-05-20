@@ -38,7 +38,7 @@ const mutations: MutationTree <JobState> = {
             });
         }
     },
-    [types.JOB_CURRENT_UPDATED](state, payload) {
+    [types.JOB_CURRENT_UPDATED] (state, payload){
         state.current = payload
     }
 }

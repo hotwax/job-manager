@@ -100,15 +100,23 @@
                 <ion-icon :icon="addCircleOutline" slot="end" />
               </ion-button>
             </ion-item-divider>
-            <ion-item v-for="batch in getJob(jobEnums['BTCH_BRKR_ORD'])" :key="batch?.id" button detail @click="editBatch(batch?.id)" v-show="batch?.status === 'SERVICE_PENDING'">
-              <ion-label class="ion-text-wrap">{{ batch?.jobName }}</ion-label>
-              <ion-note slot="end">{{ batch?.runTime ? getTime(batch.runTime) : '' }}</ion-note>
-            </ion-item>
+
+            <ion-item-sliding v-for="batch in getJob(jobEnums['BTCH_BRKR_ORD'])" :key="batch?.id" button detail v-show="batch?.status === 'SERVICE_PENDING'">
+              <ion-item @click="editBatch(batch?.id)">
+                <ion-label class="ion-text-wrap">{{ batch?.jobName }}</ion-label>
+                <ion-note slot="end">{{ batch?.runTime ? getTime(batch.runTime) : '' }}</ion-note>
+              </ion-item>
+              <ion-item-options side="end">
+                <ion-item-option @click="deleteBatch(batch)" color="danger">
+                  <ion-icon slot="icon-only" :icon="trash" />
+                </ion-item-option>
+              </ion-item-options>
+            </ion-item-sliding>
           </ion-card>
         </section>
 
-        <aside class="desktop-only" v-show="currentJob">
-          <JobConfiguration :title="title" :job="currentJob" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
+        <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
+          <JobConfiguration :title="title" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
         </aside>
       </main>
     </ion-content>
@@ -128,19 +136,24 @@ import {
   IonInput,
   IonItem,
   IonItemDivider,
+  IonItemSliding,
   IonLabel,
   IonMenuButton,
   IonNote,
+  IonItemOption,
+  IonItemOptions,
   IonPage,
   IonTitle,
   IonToggle,
   IonToolbar,
+  isPlatform,
   modalController
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
-import { addCircleOutline } from 'ionicons/icons';
+import { addCircleOutline, trash } from 'ionicons/icons';
 import BatchModal from '@/components/BatchModal.vue';
 import { useStore } from "@/store";
+import { useRouter } from 'vue-router'
 import { mapGetters } from "vuex";
 import JobConfiguration from '@/components/JobConfiguration.vue';
 import { DateTime } from 'luxon';
@@ -159,10 +172,13 @@ export default defineComponent({
     IonIcon,
     IonInput,
     IonItem,
+    IonItemSliding,
     IonItemDivider,
     IonLabel,
     IonMenuButton,
     IonNote,
+    IonItemOption,
+    IonItemOptions,
     IonPage,
     IonTitle,
     IonToggle,
@@ -177,7 +193,8 @@ export default defineComponent({
       title: 'New orders',
       currentJobStatus: '',
       freqType: '',
-      isJobDetailAnimationCompleted: false
+      isJobDetailAnimationCompleted: false,
+      isDesktop: isPlatform('desktop')
     }
   },
   computed: {
@@ -212,6 +229,26 @@ export default defineComponent({
       });
       return batchmodal.present();
     },
+    async deleteBatch(batch: any) {
+      const deleteBatchAlert = await alertController
+        .create({
+          header: this.$t('Cancel job'),
+          message: this.$t("Canceling this job will cancel this occurrence and all following occurrences. This job will have to be re-enabled manually to run it again."),
+          buttons: [
+            {
+              text: this.$t("Don't cancel"),
+              role: 'cancel',
+            },
+            {
+              text: this.$t("Cancel"),
+              handler: async () => {
+                await this.store.dispatch('job/cancelJob', batch);
+              },
+            },
+          ],
+        });
+      return deleteBatchAlert.present();
+    },
     getTime (time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
     },
@@ -239,7 +276,7 @@ export default defineComponent({
         this.store.dispatch('job/updateJob', job)
       }
     },
-    viewJobConfiguration(id: string, title: string, status: string) {
+    async viewJobConfiguration(id: string, title: string, status: string) {
       this.currentJob = this.getJob(this.jobEnums[id])
       this.title = title
       this.currentJobStatus = status
@@ -248,6 +285,12 @@ export default defineComponent({
       // if job runTime is not a valid date then making runTime as empty
       if (this.currentJob?.runTime && !isFutureDate(this.currentJob?.runTime)) {
         this.currentJob.runTime = ''
+      }
+
+      await this.store.dispatch('job/updateCurrentJob', { job: this.currentJob });
+      if(!this.isDesktop && this.currentJob) {
+        this.router.push({name: 'JobDetails', params: { title: this.title, jobId: this.currentJob.jobId, category: "orders"}});
+        return;
       }
       if (this.currentJob && !this.isJobDetailAnimationCompleted) {
         emitter.emit('playAnimation');
@@ -280,7 +323,6 @@ export default defineComponent({
             }
           ]
         });
-
       return jobAlert.present();
     }
   },
@@ -294,10 +336,13 @@ export default defineComponent({
   },
   setup() {
     const store = useStore();
+    const router = useRouter();
 
     return {
       addCircleOutline,
-      store
+      router,
+      store,
+      trash,
     };
   },
 });

@@ -9,7 +9,7 @@
 
     <ion-content>
       <InitialLoadJobModal v-if="jobCategory === 'initial-load'" :job="currentJob" :type='jobType' :shopifyOrderId='lastShopifyOrderId' :key="currentJob" />
-      <JobConfiguration v-else />
+      <JobConfiguration v-else :title="title" :status="currentJob?.status === 'SERVICE_DRAFT' ? currentJob?.status : currentJob?.tempExprId" :type="freqType" :key="currentJob"/>
     </ion-content>
   </ion-page>
 </template>
@@ -43,21 +43,35 @@ export default defineComponent({
   },
   data() {
     return {
+      title: '' as any,
       jobType: '' as any,
+      freqType: '' as any,
       jobCategory: '' as any,
       lastShopifyOrderId: '' as any,
+      jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
+      jobTitles: {
+        ...JSON.parse(process.env?.VUE_APP_JOB_TITLES as string) as any
+      },
+      jobEnums: {
+        ...JSON.parse(process.env?.VUE_APP_ODR_JOB_ENUMS as string) as any,
+        ...JSON.parse(process.env?.VUE_APP_PRODR_JOB_ENUMS as string) as any,
+        ...JSON.parse(process.env?.VUE_APP_PRD_JOB_ENUMS as string) as any,
+        ...JSON.parse(process.env?.VUE_APP_INV_JOB_ENUMS as string) as any,
+        ...JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
+      },
       jobTypes: JSON.parse(process.env.VUE_APP_INITIAL_JOB_TYPES as string) as any,
-      jobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any
     }
   },
   computed:{
     ...mapGetters({
       currentJob: 'job/getCurrentJob',
+      getEnumName: 'job/getEnumName'
     }),
   },
   methods: {
     viewJobConfiguration(job: any) {
       this.jobCategory = this.$route.params.category;
+
       if(this.jobCategory === 'initial-load') {
         this.jobType = this.jobTypes[this.currentJob?.systemJobEnumId];
         
@@ -68,18 +82,29 @@ export default defineComponent({
         if (job?.runTime && !isFutureDate(job?.runTime)) {
           job.runTime = ''
         }
+      } else if(this.jobCategory !== 'pipeline') {
+        this.title = this.$route.params.title ? this.$route.params.title : this.jobTitles[job?.systemJobEnumId];
+        const id = Object.keys(this.jobEnums).find((id: any) => this.jobEnums[id] === job.systemJobEnumId)
+        this.freqType = id && this.jobFrequencyType[id];
+      } else {
+        this.title = this.$route.params.title ? this.$route.params.title : this.getEnumName(job.systemJobEnumId);
+        const id = Object.keys(this.jobEnums).find((id: any) => this.jobEnums[id] === job.systemJobEnumId)
+        const jobFreqTypeId = (Object.keys(this.jobFrequencyType).find((enumId: any) => enumId === id)) as any;
+        this.freqType = (id && jobFreqTypeId) && this.jobFrequencyType[jobFreqTypeId];
       }
     }
   },
   mounted() {
-    this.store.dispatch('job/getCurrentJob', { jobId: this.$route.params.jobId }).then((job: any) => {
+    // getCurrentJob
+    this.store.dispatch('job/updateCurrentJob', { jobId: this.$route.params.jobId }).then((job: any) => {
       if(job?.jobId) {
         this.viewJobConfiguration(job);
       }
-    });
+    })
   },
   setup() {
     const store = useStore();
+
     return {
       store
     }

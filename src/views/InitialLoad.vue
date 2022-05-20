@@ -37,7 +37,7 @@
           </ion-card>
         </section>
 
-        <aside class="desktop-only" v-show="currentSelectedJobModal">
+        <aside class="desktop-only" v-if="isDesktop" v-show="currentSelectedJobModal">
           <InitialLoadJobModal :job="job" :type='currentSelectedJobModal' :shopifyOrderId='lastShopifyOrderId' :key="job" />
         </aside>
       </main>
@@ -112,11 +112,11 @@ export default defineComponent({
     })
   },
   methods: {
-    viewJobConfiguration(label: string, id: string) {
+    async viewJobConfiguration(label: string, id: string) {
       this.currentSelectedJobModal = label;
       this.job = this.getJob(id);
 
-      this.store.dispatch('job/currentJobUpdated', this.job);
+      await this.store.dispatch('job/updateCurrentJob', { job: this.job });
       if(!this.isDesktop && this.job) {
         this.router.push({name: 'JobDetails', params: { title: this.currentSelectedJobModal, jobId: this.job.jobId, category: "initial-load"}});
         return;

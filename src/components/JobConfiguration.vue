@@ -2,31 +2,26 @@
   <section>
     <ion-item lines="none">
       <h1>{{ $t(title) }}</h1>
-      <ion-badge slot="end" color="dark" v-if="job?.runTime">{{ $t("running") }} {{ timeTillJob(job.runTime) }}</ion-badge>
+      <ion-badge slot="end" color="dark" v-if="currentJob?.runTime">{{ $t("running") }} {{ timeTillJob(currentJob.runTime) }}</ion-badge>
     </ion-item>
 
     <ion-list>
-      <ion-item>
-        <ion-icon slot="start" :icon="calendarClearOutline" />
-        <ion-label>{{ $t("Last run") }}</ion-label>
-        <ion-label slot="end">{{ job?.lastUpdatedStamp ? getTime(job.lastUpdatedStamp) : $t('No previous occurrence') }}</ion-label>
-      </ion-item>
 
       <ion-item>
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label>{{ $t("Run time") }}</ion-label>
-        <ion-label id="open-run-time-modal" slot="end">{{ job?.runTime ? getTime(job.runTime) : $t('Select run time') }}</ion-label>
+        <ion-label id="open-run-time-modal" slot="end">{{ currentJob?.runTime ? getTime(currentJob.runTime) : $t('Select run time') }}</ion-label>
         <!-- TODO: display a button when we are not having a runtime and open the datetime component
         on click of that button
         Currently, when mapping the same datetime component for label and button so it's not working so for
         now commented the button and added a fallback string -->
-        <!-- <ion-button id="open-run-time-modal" size="small" fill="outline" color="medium" v-show="!job?.runTime">{{ $t("Select run time") }}</ion-button> -->
+        <!-- <ion-button id="open-run-time-modal" size="small" fill="outline" color="medium" v-show="!currentJob?.runTime">{{ $t("Select run time") }}</ion-button> -->
         <ion-modal trigger="open-run-time-modal">
           <ion-content force-overscroll="false">
             <ion-datetime
               :min="minDateTime"
-              :value="job?.runTime ? getDateTime(job.runTime) : ''"
-              @ionChange="updateRunTime($event, job)"
+              :value="currentJob?.runTime ? getDateTime(currentJob.runTime) : ''"
+              @ionChange="updateRunTime($event, currentJob)"
             />
           </ion-content>
         </ion-modal>
@@ -55,8 +50,8 @@
 
     <div class="actions desktop-only">
       <div>
-        <ion-button size="small" fill="outline" color="medium" :disabled="status === 'SERVICE_DRAFT'" @click="skipJob(job)">{{ $t("Skip once") }}</ion-button>
-        <ion-button size="small" fill="outline" color="danger" :disabled="status === 'SERVICE_DRAFT'" @click="cancelJob(job)">{{ $t("Disable") }}</ion-button>
+        <ion-button size="small" fill="outline" color="medium" :disabled="status === 'SERVICE_DRAFT'" @click="skipJob(currentJob)">{{ $t("Skip once") }}</ion-button>
+        <ion-button size="small" fill="outline" color="danger" :disabled="status === 'SERVICE_DRAFT'" @click="cancelJob(currentJob)">{{ $t("Disable") }}</ion-button>
       </div>
       <div>
         <ion-button size="small" fill="outline" @click="saveChanges()">{{ $t("Save changes") }}</ion-button>
@@ -64,9 +59,9 @@
     </div>
 
     <div class=" actions mobile-only">
-      <ion-button size="small" fill="outline" color="medium" :disabled="status === 'SERVICE_DRAFT'" @click="skipJob(job)">{{ $t("Skip once") }}</ion-button>
-      <ion-button size="small" fill="outline" color="danger" :disabled="status === 'SERVICE_DRAFT'" @click="cancelJob(job)">{{ $t("Disable") }}</ion-button>
-      <ion-button expand="block" fill="outline" @click="saveChanges()">{{ $t("Save changes") }}</ion-button>
+      <ion-button size="small" expand="block" fill="outline" color="medium" :disabled="status === 'SERVICE_DRAFT'" @click="skipJob(currentJob)">{{ $t("Skip once") }}</ion-button>
+      <ion-button size="small" expand="block" fill="outline" color="danger" :disabled="status === 'SERVICE_DRAFT'" @click="cancelJob(currentJob)">{{ $t("Disable") }}</ion-button>
+      <ion-button expand="block" @click="saveChanges()">{{ $t("Save changes") }}</ion-button>
     </div>
   </section>
 </template>
@@ -94,9 +89,10 @@ import {
   syncOutline,
   personCircleOutline
 } from "ionicons/icons";
+import { showToast } from "@/utils";
 import { mapGetters, useStore } from "vuex";
-import { translate } from "@/i18n";
 import { DateTime } from 'luxon';
+import { translate } from '@/i18n'
 
 export default defineComponent({
   name: "JobConfiguration",
@@ -119,13 +115,14 @@ export default defineComponent({
       minDateTime: DateTime.now().toISO()
     }
   },
-  props: ["job", "title", "status", "type"],
+  props: ["title", "status", "type"],
   computed: {
     ...mapGetters({
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
       shopifyConfigId: 'user/getShopifyConfigId',
-      currentEComStore: 'user/getCurrentEComStore'
+      currentEComStore: 'user/getCurrentEComStore',
+      currentJob: 'job/getCurrentJob',
     }),
     generateFrequencyOptions(): any {
       const optionDefault = [{
@@ -161,6 +158,12 @@ export default defineComponent({
         }
       ]
       return (this as any).type === 'slow' ? slow : optionDefault;
+    },
+    customPopoverOptions() {
+      return {
+        header: (this as any).title,
+        showBackdrop: false
+      }
     }
   },
   methods: {
@@ -179,7 +182,9 @@ export default defineComponent({
             text: this.$t('Skip'),
             handler: () => {
               if (job) {
-                this.store.dispatch('job/skipJob', job)
+                this.store.dispatch('job/skipJob', job).then(() => {
+                  showToast(translate("This job has been skipped!"))
+                })
               }
             }
           }],
@@ -197,7 +202,9 @@ export default defineComponent({
           }, {
             text: this.$t('Cancel'),
             handler: () => {
-              this.store.dispatch('job/cancelJob', job);
+              this.store.dispatch('job/cancelJob', job).then(() => {
+                showToast(translate("This job has been canceled!"))
+              });
             }
           }],
         });
@@ -214,7 +221,9 @@ export default defineComponent({
           }, {
             text: this.$t('Save'),
             handler: () => {
-              this.updateJob();
+              this.updateJob().then(() => {
+                showToast(translate("The changes have been saved!"))
+              });
             }
           }]
         });
@@ -230,13 +239,13 @@ export default defineComponent({
       return alert.present();
     },
     async updateJob() {
-      const job = this.job;
+      const job = this.currentJob;
       job['jobStatus'] = this.jobStatus !== 'SERVICE_DRAFT' ? this.jobStatus : 'HOURLY';
 
       if (job?.status === 'SERVICE_DRAFT') {
-        this.store.dispatch('job/scheduleService', job)
+        await this.store.dispatch('job/scheduleService', job)
       } else if (job?.status === 'SERVICE_PENDING') {
-        this.store.dispatch('job/updateJob', job)
+        await this.store.dispatch('job/updateJob', job)
       }
     },
     getTime (time: any) {
@@ -252,15 +261,11 @@ export default defineComponent({
       }
     }
   },
-  setup(props) {
-    const customPopoverOptions: any = {
-      header: props.title,
-      showBackdrop: false
-    }
+  setup() {
     const store = useStore();
+
     return {
       calendarClearOutline,
-      customPopoverOptions,
       timeOutline,
       timerOutline,
       store,

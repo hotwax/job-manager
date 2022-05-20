@@ -22,6 +22,7 @@
     </ion-header>
 
     <ion-content>
+      <ion-searchbar :placeholder="$t('Search jobs')" @ionClear="queryString = ''; segmentSelected === 'pending' ? getPendingJobs() : ( segmentSelected === 'running' ? getRunningJobs() : getJobHistory())" v-model="queryString" v-on:keyup.enter="queryString = $event.target.value; segmentSelected === 'pending' ? getPendingJobs() : ( segmentSelected === 'running' ? getRunningJobs() : getJobHistory())" />
       <main>
         <section v-if="segmentSelected === 'pending'">
           <!-- Empty state -->
@@ -68,11 +69,8 @@
                   <ion-button color="danger" fill="clear" @click.stop="cancelJob(job)">{{ $t("Cancel") }}</ion-button>
                 </div>
                 <div>
-                  <ion-button fill="clear" color="medium" @click.stop="copyJobInformation(job)">
-                    <ion-icon slot="icon-only" :icon="copyOutline" />
-                  </ion-button>
-                  <ion-button fill="clear" color="medium" slot="end" @click.stop="viewJobHistory(job)">
-                    <ion-icon slot="icon-only" :icon="timeOutline" />
+                  <ion-button fill="clear" color="medium" slot="end" @click.stop="openJobActions(job, $event)">
+                    <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
                   </ion-button>
                 </div>
               </div> 
@@ -133,6 +131,18 @@
                   <ion-icon slot="icon-only" :icon="copyOutline" />
                 </ion-button>
               </ion-item>
+
+              <div class="actions">
+                <div></div>
+                <div>
+                  <ion-button fill="clear" color="medium" @click.stop="copyJobInformation(job)">
+                    <ion-icon slot="icon-only" :icon="copyOutline" />
+                  </ion-button>
+                  <ion-button fill="clear" color="medium" @click.stop="viewJobHistory(job)">
+                    <ion-icon slot="icon-only" :icon="timeOutline" />
+                  </ion-button>
+                </div>
+              </div>
             </ion-card>
 
             <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
@@ -192,32 +202,56 @@
               <ion-label class="ion-text-wrap">{{ job.serviceName }}</ion-label>
             </ion-item>
 
-            <ion-item>
-              <ion-button fill="clear" color="medium" slot="end" @click.stop="copyJobInformation(job)">
-                <ion-icon slot="icon-only" :icon="copyOutline" />
-              </ion-button>
-            </ion-item>
+            <div class="actions">
+              <div></div>
+              <div>
+                <ion-button fill="clear" color="medium" @click.stop="copyJobInformation(job)">
+                  <ion-icon slot="icon-only" :icon="copyOutline" />
+                </ion-button>
+                <ion-button fill="clear" color="medium" @click.stop="viewJobHistory(job)">
+                  <ion-icon slot="icon-only" :icon="timeOutline" />
+                </ion-button>
+              </div>
+            </div>
           </ion-card>
 
           <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
             <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
-          </ion-refresher>
+          </ion-refresher>   
           <ion-infinite-scroll @ionInfinite="loadMoreJobHistory($event)" threshold="100px" :disabled="!isHistoryJobsScrollable">
             <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="$t('Loading')"/>
           </ion-infinite-scroll>
           </div>          
         </section>
 
-        <aside class="desktop-only" v-show="segmentSelected === 'pending' && currentJob">
-          <JobConfiguration :title="title" :job="currentJob" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
+        <aside class="desktop-only" v-if="isDesktop" v-show="segmentSelected === 'pending' && currentJob">
+          <JobConfiguration :title="title" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
         </aside>
       </main>
     </ion-content>
+
+    <ion-footer>
+      <ion-toolbar>
+        <ion-title slot="start" class="desktop-only">
+          {{ $t("Pinned jobs") }}
+        </ion-title>
+      
+        <ion-icon slot="start" class="mobile-only" :icon="pinOutline" />  
+
+        <div>
+          <ion-chip v-for="(job, index) in getPinnedJobs" :key="index" outline>
+            <ion-label>{{ getEnumName(job) }}</ion-label>
+            <ion-icon @click="updatePinnedJobs(job)" :icon="closeCircleOutline" />
+          </ion-chip>  
+        </div>     
+      </ion-toolbar>  
+    </ion-footer>
   </ion-page>
 </template>
 <script lang="ts">
 import { DateTime } from 'luxon';
 import { mapGetters, useStore } from 'vuex'
+import { useRouter } from 'vue-router'
 import { defineComponent, ref } from "vue";
 import {
   IonBadge,
@@ -227,6 +261,8 @@ import {
   IonCardHeader,
   IonCardSubtitle,
   IonCardTitle,
+  IonChip,
+  IonFooter,
   IonHeader,
   IonIcon,
   IonItem,
@@ -241,18 +277,21 @@ import {
   IonInfiniteScroll,
   IonInfiniteScrollContent,
   alertController,
+  IonSearchbar,
   IonSegment,
   IonSegmentButton,
   IonSpinner,
   isPlatform,
-  modalController
+  modalController,
+  popoverController
 } from "@ionic/vue";
 import JobConfiguration from '@/components/JobConfiguration.vue'
-import { codeWorkingOutline, copyOutline, refreshOutline, timeOutline, timerOutline } from "ionicons/icons";
+import { closeCircleOutline, codeWorkingOutline, copyOutline, ellipsisVerticalOutline, pinOutline, refreshOutline, timeOutline, timerOutline } from "ionicons/icons";
 import emitter from '@/event-bus';
 import JobHistoryModal from '@/components/JobHistoryModal.vue';
 import { Plugins } from '@capacitor/core';
 import { showToast } from '@/utils'
+import JobActionsPopover from '@/components/JobActionsPopover.vue'
 
 export default defineComponent({
   name: "Pipeline",
@@ -264,6 +303,8 @@ export default defineComponent({
     IonCardHeader,
     IonCardSubtitle,
     IonCardTitle,
+    IonChip,
+    IonFooter,
     IonHeader,
     IonIcon,
     IonItem,
@@ -277,6 +318,7 @@ export default defineComponent({
     IonTitle,
     IonInfiniteScroll,
     IonInfiniteScrollContent,
+    IonSearchbar,
     IonSegment,
     IonSegmentButton,
     IonSpinner,
@@ -298,7 +340,8 @@ export default defineComponent({
       freqType: '' as any,
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
-      isRetrying: false
+      isRetrying: false,
+      queryString: '' as any
     }
   },
   computed: {
@@ -312,7 +355,8 @@ export default defineComponent({
       getCurrentEComStore:'user/getCurrentEComStore',
       isPendingJobsScrollable: 'job/isPendingJobsScrollable',
       isRunningJobsScrollable: 'job/isRunningJobsScrollable',
-      isHistoryJobsScrollable: 'job/isHistoryJobsScrollable'
+      isHistoryJobsScrollable: 'job/isHistoryJobsScrollable',
+      getPinnedJobs: 'user/getPinnedJobs'
     })
   },
   methods: {
@@ -381,27 +425,29 @@ export default defineComponent({
     async refreshJobs(event: any) {
       this.isRetrying = true;
       if(this.segmentSelected === 'pending') {
-        this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => {
+        this.getPendingJobs().then(() => {
           if(event) event.target.complete();
           this.isRetrying = false;
         });
       } else if(this.segmentSelected === 'running') {
-        this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => {
+        this.getRunningJobs().then(() => {
           if(event) event.target.complete();
           this.isRetrying = false;
         });
       } else {
-        this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}).then(() => {
+        this.getJobHistory().then(() => {
           if(event) event.target.complete();
           this.isRetrying = false;
         });
       }
     },
+
     segmentChanged (e: CustomEvent) {
+      this.queryString = "";
       this.segmentSelected = e.detail.value
-      this.segmentSelected === 'pending' ? this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}) : 
-      this.segmentSelected === 'running' ? this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0}) :
-      this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0});
+      this.segmentSelected === 'pending' ? this.getPendingJobs():
+      this.segmentSelected === 'running' ? this.getRunningJobs():
+      this.getJobHistory();
     },
     async skipJob (job: any) {
       const alert = await alertController
@@ -417,27 +463,30 @@ export default defineComponent({
               text: this.$t('Skip'),
               handler: async () => {
                 await this.store.dispatch('job/skipJob', job);
-                await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewIndex: 0})
+                await this.getPendingJobs();
               },
             }
           ]
         });
       return alert.present();
     },
-    async getPendingJobs(vSize: any, vIndex: any) {
-      const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
-      const viewIndex = vIndex ? vIndex : 0;
-      await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex});
+    async getPendingJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
+      await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString});
     },
-    async getRunningJobs(vSize: any, vIndex: any) {
-      const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
-      const viewIndex = vIndex ? vIndex : 0;
-      await this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex});
+    async getRunningJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
+      await this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString});
     },
-    async getJobHistory(vSize: any, vIndex: any) {
-      const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
-      const viewIndex = vIndex ? vIndex : 0;
-      await this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex});
+    async getJobHistory(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
+      await this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString});
+    },
+    async openJobActions(job: any, ev: Event) {
+      const popover = await popoverController.create({
+        component: JobActionsPopover,
+        showBackdrop: false,
+        event: ev,
+        componentProps: { job }
+      });
+      return popover.present()
     },
     async cancelJob(job: any){
       const alert = await alertController
@@ -453,7 +502,7 @@ export default defineComponent({
               text: this.$t("CANCEL"),
               handler: async () => {
                 await this.store.dispatch('job/cancelJob', job);
-                await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewIndex: 0});
+                await this.getPendingJobs();
               },
             }
           ],
@@ -461,38 +510,56 @@ export default defineComponent({
 
        return alert.present();
     },
-    viewJobConfiguration(job: any) {
-      if(!this.isDesktop) {
-        return;
-      }
-
+    async viewJobConfiguration(job: any) {
       this.currentJob = {id: job.jobId, ...job}
       this.title = this.getEnumName(job.systemJobEnumId)
       this.currentJobStatus = job.tempExprId
       const id = Object.entries(this.jobEnums).find((enums) => enums[1] == job.systemJobEnumId) as any
       this.freqType = id && (Object.entries(this.jobFrequencyType).find((freq) => freq[0] == id[0]) as any)[1]
 
+      await this.store.dispatch('job/updateCurrentJob', { job: this.currentJob });
+      if(!this.isDesktop && this.currentJob) {
+        this.router.push({name: 'JobDetails', params: { title: this.title, jobId: this.currentJob.jobId, category: "pipeline"}});
+        return;
+      }
+
       if (this.currentJob && !this.isJobDetailAnimationCompleted) {
         emitter.emit('playAnimation');
         this.isJobDetailAnimationCompleted = true;
       }
     },
+    async updatePinnedJobs(enumId: any) {
+      const pinnedJobs = new Set(this.getPinnedJobs);
+      if(pinnedJobs.has(enumId)) {
+        pinnedJobs.delete(enumId);
+      } else {
+        pinnedJobs.add(enumId);
+      }
+
+      await this.store.dispatch('user/updatePinnedJobs', { pinnedJobs: [...pinnedJobs] });
+    }
   },
   created() {
-    this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0});
+    this.getPendingJobs();
+    this.store.dispatch('user/getPinnedJobs');
   },
   setup() {
+    const router = useRouter();
     const store = useStore();
     const segmentSelected = ref('pending');
 
     return {
+      closeCircleOutline,
       copyOutline,
       store,
       codeWorkingOutline,
+      ellipsisVerticalOutline,
+      pinOutline,
       refreshOutline,
       timeOutline,
       timerOutline,
-      segmentSelected
+      segmentSelected,
+      router
     };
   }
 });
@@ -520,6 +587,31 @@ ion-item {
 .actions {
   display: flex;
   justify-content: space-between;
+}
+
+ion-title {
+  flex-grow: 0;
+}
+
+ion-toolbar > ion-icon {
+  background: linear-gradient(to right, #ffffff7d, white);
+  backdrop-filter: blur(20px);
+  position: relative;
+  left: 16px;
+}
+
+ion-toolbar > div {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  max-width: max-content;
+  margin-left: auto;
+  padding-left: 20px;
+
+}
+
+ion-chip {
+  flex: 1 0 auto;
 }
 
 @media (min-width: 991px) {

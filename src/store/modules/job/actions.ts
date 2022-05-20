@@ -18,7 +18,7 @@ const actions: ActionTree<JobState, RootState> = {
       }
     });
     if(enumIds.length <= 0) return enumIds.map((id: any) => state.enumIds[id]);
-    const cachedEnum = payload.map((id: any) => state.enumIds[id]);
+ 
     const resp = await JobService.fetchJobDescription({
       "inputFields": {
         "enumId": enumIds,
@@ -58,6 +58,18 @@ const actions: ActionTree<JobState, RootState> = {
     } else {
       params.inputFields["productStoreId_op"] = "empty"
     }
+
+    if (payload.queryString) {
+      params.inputFields["enumName_value"] = "%"+ payload.queryString + "%"
+      params.inputFields["enumName_op"] = "like"
+      params.inputFields["enumName_ic"] = "Y"
+      params.inputFields["enumName_ic"] = "Y"
+      params.inputFields["enumName_grp"] = "1" 
+      params.inputFields["description_value"] = "%"+ payload.queryString + "%"
+      params.inputFields["description_op"] = "like"
+      params.inputFields["description_ic"] = "Y"
+      params.inputFields["description_grp"] = "2"
+    } 
 
     await JobService.fetchJobInformation(params).then((resp) => {
       if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
@@ -117,6 +129,18 @@ const actions: ActionTree<JobState, RootState> = {
       params.inputFields["productStoreId_op"] = "empty"
     }
 
+    if (payload.queryString) {
+      params.inputFields["enumName_value"] = "%"+ payload.queryString + "%"
+      params.inputFields["jobName_op"] = "like"
+      params.inputFields["jobName_ic"] = "Y"
+      params.inputFields["enumName_ic"] = "Y"
+      params.inputFields["enumName_grp"] = "1" 
+      params.inputFields["description_value"] = "%"+ payload.queryString + "%"
+      params.inputFields["description_op"] = "like"
+      params.inputFields["description_ic"] = "Y"
+      params.inputFields["description_grp"] = "2"
+    } 
+
     await JobService.fetchJobInformation(params).then((resp) => {
       if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
         if (resp.data.docs) {
@@ -169,6 +193,16 @@ const actions: ActionTree<JobState, RootState> = {
       params.inputFields["productStoreId_op"] = "empty"
     }
 
+    if (payload.queryString) {
+      params.inputFields["enumName_value"] = "%"+ payload.queryString + "%"
+      params.inputFields["enumName_op"] = "like"
+      params.inputFields["enumName_ic"] = "Y"
+      params.inputFields["enumName_grp"] = "1" 
+      params.inputFields["description_value"] = "%"+ payload.queryString + "%"
+      params.inputFields["description_op"] = "like"
+      params.inputFields["description_ic"] = "Y"
+      params.inputFields["description_grp"] = "2"
+    } 
     await JobService.fetchJobInformation(params).then((resp) => {
       if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
         if (resp.data.docs) {
@@ -211,7 +245,6 @@ const actions: ActionTree<JobState, RootState> = {
       }
     });
     if(tempIds.length <= 0) return tempExprIds.map((id: any) => state.temporalExp[id]);
-    const cachedTempExpr = tempExprIds.map((id: any) => state.temporalExp[id]);
     const resp = await JobService.fetchTemporalExpression({
         "inputFields": {
         "tempExprId": tempIds,
@@ -297,7 +330,7 @@ const actions: ActionTree<JobState, RootState> = {
     }
     return resp;
   },
-  async updateJob ({ dispatch }, job) {
+  async updateJob ({ commit, dispatch }, job) {
     let resp;
 
     const payload = {
@@ -316,12 +349,17 @@ const actions: ActionTree<JobState, RootState> = {
       resp = await JobService.updateJob(payload)
       if (resp.status === 200 && !hasError(resp) && resp.data.successMessage) {
         showToast(translate('Service updated successfully'))
-        dispatch('fetchJobs', {
+        let jobs = await dispatch('fetchJobs', {
           inputFields: {
             'systemJobEnumId': payload.systemJobEnumId,
             'systemJobEnumId_op': 'equals'
           }
         })
+        if(jobs.status === 200 && !hasError(jobs) && jobs.data?.docs.length) {
+          jobs = jobs.data?.docs;
+          const job = jobs.find((job: any) => job?.jobId === payload.jobId);
+          commit(types.JOB_CURRENT_UPDATED, job);
+        }
       } else {
         showToast(translate('Something went wrong'))
       }
@@ -332,7 +370,7 @@ const actions: ActionTree<JobState, RootState> = {
     return resp;
   },
 
-  async scheduleService({ dispatch }, job) {
+  async scheduleService({ dispatch, commit }, job) {
     let resp;
 
     const payload = {
@@ -362,12 +400,17 @@ const actions: ActionTree<JobState, RootState> = {
       resp = await JobService.scheduleJob({ ...job.runtimeData, ...payload });
       if (resp.status == 200 && !hasError(resp)) {
         showToast(translate('Service has been scheduled'))
-        dispatch('fetchJobs', {
+        let jobs = await dispatch('fetchJobs', {
           inputFields: {
             'systemJobEnumId': payload.systemJobEnumId,
             'systemJobEnumId_op': 'equals'
           }
         })
+        if(jobs.status === 200 && !hasError(jobs) && jobs.data?.docs.length) {
+          jobs = jobs.data?.docs;
+          const job = jobs.find((job: any) => job?.jobId === payload.jobId);
+          commit(types.JOB_CURRENT_UPDATED, job);
+        }
       } else {
         showToast(translate('Something went wrong'))
       }
@@ -387,8 +430,8 @@ const actions: ActionTree<JobState, RootState> = {
 
   async skipJob({ commit, getters }, job) {
     let skipTime = {};
-    const integer1 = getters['getTemporalExpr'](job.tempExprId).integer1;
-    const integer2 = getters['getTemporalExpr'](job.tempExprId).integer2
+    const integer1 = getters['getTemporalExpr'](job.tempExprId)?.integer1;
+    const integer2 = getters['getTemporalExpr'](job.tempExprId)?.integer2
     if(integer1 === 12) {
       skipTime = { minutes: integer2 }
     } else if (integer1 === 10) {
@@ -466,7 +509,7 @@ const actions: ActionTree<JobState, RootState> = {
     return resp;
   },
 
-  async cancelJob({ dispatch, state }, job) {
+  async cancelJob({ commit, dispatch, state }, job) {
     let resp;
 
     try {
@@ -481,12 +524,17 @@ const actions: ActionTree<JobState, RootState> = {
         showToast(translate('Service updated successfully'))
         state.cached[job.systemJobEnumId].statusId = 'SERVICE_DRAFT'
         state.cached[job.systemJobEnumId].status = 'SERVICE_DRAFT'
-        dispatch('fetchJobs', {
+        let jobs = await dispatch('fetchJobs', {
           inputFields: {
             'systemJobEnumId': job.systemJobEnumId,
             'systemJobEnumId_op': 'equals'
           }
         })
+        if (jobs.status === 200 && !hasError(jobs) && jobs.data?.docs.length) {
+          jobs = jobs.data?.docs;
+          const currentJob = jobs.find((currentJob: any) => currentJob?.jobId === job?.jobId);
+          commit(types.JOB_CURRENT_UPDATED, currentJob);
+        }
       } else {
         showToast(translate('Something went wrong'))
       }
@@ -496,12 +544,19 @@ const actions: ActionTree<JobState, RootState> = {
     }
     return resp;
   },
-  currentJobUpdated({ commit }, payload) {
-    commit(types.JOB_CURRENT_UPDATED, payload);
-  },
-  async getCurrentJob({ commit, state, dispatch }, payload) {
-    const currentJob = state.current;
-    if (payload.jobId === currentJob.jobId) {
+  async updateCurrentJob({ commit, state, dispatch }, payload) {
+    const cachedJobs = state.cached;
+    const pendingJobs = state.pending.list;
+
+    if(payload?.job) {
+      commit(types.JOB_CURRENT_UPDATED, payload.job);
+      return payload?.job;
+    }
+
+    let currentJob = pendingJobs.find((job: any) => job.jobId === payload.jobId);
+    currentJob = currentJob ? currentJob : cachedJobs[payload?.jobId];
+
+    if(currentJob) {
       commit(types.JOB_CURRENT_UPDATED, currentJob);
       return currentJob;
     }
@@ -510,9 +565,9 @@ const actions: ActionTree<JobState, RootState> = {
     try {
       const params = {
         "inputFields": {
-          "jobId": payload?.jobId,
-          "systemJobEnumId_op": "not-empty"
+          "jobId": payload?.jobId
         } as any,
+        "viewSize": 1,
         "fieldList": ["systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId"],
         "entityName": "JobSandbox",
         "noConditionFind": "Y"
@@ -525,9 +580,8 @@ const actions: ActionTree<JobState, RootState> = {
         }
         commit(types.JOB_CURRENT_UPDATED, currentJob);
 
-        const enumIds = [] as any;
-        resp.data.docs.map((item: any) => {
-          enumIds.push(item.systemJobEnumId);
+        const enumIds = resp.data.docs.map((item: any) => {
+          return item.systemJobEnumId
         })
         await dispatch('fetchJobDescription', enumIds);
 
