@@ -330,7 +330,7 @@ aside > section > ion-button {
 
 ion-modal {
   --width: 290px;
-  --height: 382px;
+  --height: 385px;
   --border-radius: 8px;
 }
 </style>
