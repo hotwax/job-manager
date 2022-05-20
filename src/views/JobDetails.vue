@@ -8,7 +8,7 @@
     </ion-header>
 
     <ion-content>
-      <InitialLoadJobModal v-if="jobCategory === 'initial-load'" :job="currentJob" :type='jobType' :shopifyOrderId='lastShopifyOrderId' :key="currentJob" />
+      <InitialLoadJobModal v-if="jobCategory === 'initial-load'" :job="currentJob" :type='type' :shopifyOrderId='lastShopifyOrderId' :key="currentJob" />
       <JobConfiguration v-else :title="title" :status="currentJob?.status === 'SERVICE_DRAFT' ? currentJob?.status : currentJob?.tempExprId" :type="freqType" :key="currentJob"/>
     </ion-content>
   </ion-page>
@@ -44,7 +44,7 @@ export default defineComponent({
   data() {
     return {
       title: '' as any,
-      jobType: '' as any,
+      type: '' as any,
       freqType: '' as any,
       jobCategory: '' as any,
       lastShopifyOrderId: '' as any,
@@ -73,12 +73,11 @@ export default defineComponent({
       this.jobCategory = this.$route.params.category;
 
       if(this.jobCategory === 'initial-load') {
-        this.jobType = this.jobTypes[this.currentJob?.systemJobEnumId];
+        this.type = this.jobTypes[this.currentJob?.systemJobEnumId];
         
         if(job?.runtimeData?.sinceId?.length >= 0) {
           this.lastShopifyOrderId = job.runtimeData.sinceId !== 'null' ? job.runtimeData.sinceId : ''
         }
-        // if job runTime is not a valid date then assigning current date to the runTime
         if (job?.runTime && !isFutureDate(job?.runTime)) {
           job.runTime = ''
         }
@@ -95,7 +94,6 @@ export default defineComponent({
     }
   },
   mounted() {
-    // getCurrentJob
     this.store.dispatch('job/updateCurrentJob', { jobId: this.$route.params.jobId }).then((job: any) => {
       if(job?.jobId) {
         this.viewJobConfiguration(job);
