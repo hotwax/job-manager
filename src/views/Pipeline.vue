@@ -69,7 +69,7 @@
                   <ion-button color="danger" fill="clear" @click.stop="cancelJob(job)">{{ $t("Cancel") }}</ion-button>
                 </div>
                 <div>
-                  <ion-button fill="clear" color="medium" slot="end" @click.stop="openQuickActions(job, $event)">
+                  <ion-button fill="clear" color="medium" slot="end" @click.stop="openJobActions(job, $event)">
                     <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
                   </ion-button>
                 </div>
@@ -478,7 +478,7 @@ export default defineComponent({
     async getJobHistory(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
       await this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString});
     },
-    async openQuickActions(job: any, ev: Event) {
+    async openJobActions(job: any, ev: Event) {
       const popover = await popoverController.create({
         component: QuickActionsPopover,
         showBackdrop: false,
