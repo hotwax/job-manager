@@ -17,7 +17,7 @@
     </ion-item>
     <ion-item>
       <ion-label>{{ $t('Order queue') }}</ion-label>
-      <ion-select slot="end" interface="popover" v-model="batchOrderId">
+      <ion-select slot="end" interface="popover" v-model="batchFacilityId">
         <ion-select-option value="_NA_">{{ $t("Brokering queue") }}</ion-select-option>
         <ion-select-option value="PRE_ORDER_PARKING">{{ $t("Pre-order parking") }}</ion-select-option>
         <ion-select-option value="BACKORDER_PARKING">{{ $t("Back-order parking") }}</ion-select-option>
@@ -100,7 +100,7 @@ export default defineComponent({
       currentBatch: {} as any,
       jobName: '' as string,
       unfillableOrder: false as boolean,
-      batchOrderId: '_NA_' as string,
+      batchFacilityId: '_NA_' as string,
       currentDateTime: '' as string,
     }
   },
@@ -130,7 +130,7 @@ export default defineComponent({
       
       if (!batchJobEnum) {
         const jobEnum: any = Object.values(this.jobEnums)?.find((job: any) => { 
-          return job.unfillable === this.unfillableOrder && job.facilityId === this.batchOrderId
+          return job.unfillable === this.unfillableOrder && job.facilityId === this.batchFacilityId
         });
         batchJobEnum = jobEnum.id
       }

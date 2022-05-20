@@ -98,7 +98,8 @@
             </ion-item-divider>
 
             <ion-item-sliding v-for="batch in orderBatchJobs" :key="batch?.id" button detail v-show="batch?.status === 'SERVICE_PENDING'">
-              <ion-item @click="editBatch(batch?.id)">
+            <!-- TODO: implement functionality to edit batch on clicking the item -->
+              <ion-item>
                 <ion-label class="ion-text-wrap">{{ batch?.jobName }}</ion-label>
                 <ion-note slot="end">{{ batch?.runTime ? getTime(batch.runTime) : '' }}</ion-note>
               </ion-item>
@@ -216,13 +217,6 @@ export default defineComponent({
     async addBatch() {
       const batchmodal = await modalController.create({
         component: BatchModal
-      });
-      return batchmodal.present();
-    },
-    async editBatch(id: string) {
-      const batchmodal = await modalController.create({
-        component: BatchModal,
-        componentProps: { id, enum: this.jobEnums['BTCH_BRKR_ORD'] }
       });
       return batchmodal.present();
     },
