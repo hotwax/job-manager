@@ -242,9 +242,9 @@ export default defineComponent({
       const job = this.currentJob;
       job['jobStatus'] = this.jobStatus !== 'SERVICE_DRAFT' ? this.jobStatus : 'HOURLY';
 
-      if (job?.status === 'SERVICE_DRAFT') {
+      if (job?.statusId === 'SERVICE_DRAFT') {
         await this.store.dispatch('job/scheduleService', job)
-      } else if (job?.status === 'SERVICE_PENDING') {
+      } else if (job?.statusId === 'SERVICE_PENDING') {
         await this.store.dispatch('job/updateJob', job)
       }
     },
