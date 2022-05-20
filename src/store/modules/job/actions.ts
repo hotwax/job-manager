@@ -548,7 +548,9 @@ const actions: ActionTree<JobState, RootState> = {
       return payload?.job;
     }
 
-    const currentJob = pendingJobs.find((job: any) => job.jobId === payload.jobId) ? pendingJobs.find((job: any) => job.jobId === payload.jobId) : cachedJobs[payload?.jobId];
+    let currentJob = pendingJobs.find((job: any) => job.jobId === payload.jobId);
+    currentJob = currentJob ? currentJob : cachedJobs[payload?.jobId];
+
     if(currentJob) {
       commit(types.JOB_CURRENT_UPDATED, currentJob);
       return currentJob;
@@ -573,9 +575,8 @@ const actions: ActionTree<JobState, RootState> = {
         }
         commit(types.JOB_CURRENT_UPDATED, currentJob);
 
-        const enumIds = [] as any;
-        resp.data.docs.map((item: any) => {
-          enumIds.push(item.systemJobEnumId);
+        const enumIds = resp.data.docs.map((item: any) => {
+          return item.systemJobEnumId
         })
         await dispatch('fetchJobDescription', enumIds);
 
