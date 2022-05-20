@@ -15,7 +15,7 @@
       <ion-label position="fixed">{{ $t('Batch name') }}</ion-label>
       <ion-input :placeholder="currentDateTime = getCurrentDateTime()" v-model="jobName" />
     </ion-item>
-    <ion-item>
+    <ion-item :disabled="currentBatch?.jobId">
       <ion-label>{{ $t('Order queue') }}</ion-label>
       <ion-select slot="end" interface="popover" v-model="batchFacilityId">
         <ion-select-option value="_NA_">{{ $t("Brokering queue") }}</ion-select-option>
@@ -24,11 +24,11 @@
       </ion-select>
     </ion-item>
     <ion-radio-group value="unfillableOrder">
-      <ion-item>
+      <ion-item :disabled="currentBatch?.jobId">
         <ion-label>{{ $t('New orders') }}</ion-label>
         <ion-radio slot="start" @click="unfillableOrder = false" color="secondary" value="unfillableOrder" />
       </ion-item>
-      <ion-item>
+      <ion-item :disabled="currentBatch?.jobId">
         <ion-label>{{ $t('Unfillable orders') }}</ion-label>
         <ion-radio slot="start" @click="unfillableOrder = true" color="secondary"/>
       </ion-item>
@@ -36,7 +36,7 @@
     
     <ion-item>
       <ion-label position="fixed">{{ $t("Schedule") }}</ion-label>
-      <ion-datetime :value="currentBatch?.runTime ? getDateTime(currentBatch.runTime) : ''" @ionChange="updateRunTime($event, currentBatch)" presentation="time" size="cover" />
+      <ion-datetime :value="currentBatch?.runTime ? getDateTime(currentBatch.runTime) : ''" @ionChange="updateRunTime($event)" presentation="time" size="cover" />
     </ion-item>    
     <ion-fab @click="updateJob()" vertical="bottom" horizontal="end" slot="fixed">
       <ion-fab-button>
@@ -93,7 +93,7 @@ export default defineComponent({
     IonTitle,
     IonToolbar,
   },
-  props: ["id", "enum"],
+  props: ["id", "enumId"],
   data() {
     return {
       jobEnums: JSON.parse(process.env?.VUE_APP_BATCH_JOB_ENUMS as string) as any,
@@ -102,6 +102,7 @@ export default defineComponent({
       unfillableOrder: false as boolean,
       batchFacilityId: '_NA_' as string,
       currentDateTime: '' as string,
+      jobRunTime: '' as any
     }
   },
   computed: {
@@ -117,7 +118,7 @@ export default defineComponent({
   },
   methods: {
     getCurrentBatch() {
-      this.currentBatch = this.getJob(this.enum)?.find((job: any) => job.id === this.id)
+      this.currentBatch = this.getJob(this.enumId)?.find((job: any) => job.id === this.id)
       this.jobName = this.currentBatch?.jobName
     },
     getDateTime(time: any) {
@@ -127,7 +128,7 @@ export default defineComponent({
       modalController.dismiss({ dismissed: true });
     },
     async updateJob() {
-      let batchJobEnum = this.enum;
+      let batchJobEnum = this.enumId;
       
       if (!batchJobEnum) {
         const jobEnum: any = Object.values(this.jobEnums)?.find((job: any) => { 
@@ -140,6 +141,10 @@ export default defineComponent({
 
       if (!job) {
         return;
+      }
+
+      if (this.jobRunTime) {
+        job['runTime'] = this.jobRunTime
       }
 
       job['jobStatus'] = 'EVERYDAY';
@@ -157,10 +162,8 @@ export default defineComponent({
         this.closeModal()
       }
     },
-    updateRunTime(ev: CustomEvent, batch: any) {
-      if(batch) {
-        batch['runTime'] = DateTime.fromISO(ev['detail'].value).toMillis()
-      }
+    updateRunTime(ev: CustomEvent) {
+      this.jobRunTime = DateTime.fromISO(ev['detail'].value).toMillis()
     },
     getCurrentDateTime() {
       return DateTime.now().setZone(this.userProfile.userTimeZone).toLocaleString(DateTime.DATETIME_MED);

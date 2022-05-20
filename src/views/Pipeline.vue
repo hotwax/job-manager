@@ -6,7 +6,9 @@
         <ion-title>{{ $t("Pipeline") }}</ion-title>
       </ion-toolbar>
 
-      <ion-toolbar>
+      <div>
+        <ion-searchbar :placeholder="$t('Search jobs')" @ionClear="queryString = ''; segmentSelected === 'pending' ? getPendingJobs() : ( segmentSelected === 'running' ? getRunningJobs() : getJobHistory())" v-model="queryString" @keyup.enter="queryString = $event.target.value; segmentSelected === 'pending' ? getPendingJobs() : ( segmentSelected === 'running' ? getRunningJobs() : getJobHistory())" />
+
         <ion-segment v-model="segmentSelected" @ionChange="segmentChanged">
           <ion-segment-button value="pending">
             <ion-label>{{ $t("Pending") }}</ion-label>
@@ -18,11 +20,10 @@
             <ion-label>{{ $t("History") }}</ion-label>
           </ion-segment-button>
         </ion-segment>
-      </ion-toolbar>
+      </div>
     </ion-header>
 
     <ion-content>
-      <ion-searchbar :placeholder="$t('Search jobs')" @ionClear="queryString = ''; segmentSelected === 'pending' ? getPendingJobs() : ( segmentSelected === 'running' ? getRunningJobs() : getJobHistory())" v-model="queryString" v-on:keyup.enter="queryString = $event.target.value; segmentSelected === 'pending' ? getPendingJobs() : ( segmentSelected === 'running' ? getRunningJobs() : getJobHistory())" />
       <main>
         <section v-if="segmentSelected === 'pending'">
           <!-- Empty state -->
@@ -230,8 +231,8 @@
       </main>
     </ion-content>
 
-    <ion-footer>
-      <ion-toolbar>
+    <ion-footer v-if="getPinnedJobs && getPinnedJobs.length">
+      <ion-toolbar >
         <ion-title slot="start" class="desktop-only">
           {{ $t("Pinned jobs") }}
         </ion-title>
@@ -239,9 +240,9 @@
         <ion-icon slot="start" class="mobile-only" :icon="pinOutline" />  
 
         <div>
-          <ion-chip v-for="(job, index) in getPinnedJobs" :key="index" outline>
+          <ion-chip v-for="(job, index) in getPinnedJobs" :key="index" @click="updateSelectedPinnedJob(job)" :outline="!isPinnedJobSelected(job)">
             <ion-label>{{ getEnumName(job) }}</ion-label>
-            <ion-icon @click="updatePinnedJobs(job)" :icon="closeCircleOutline" />
+            <ion-icon @click.stop="updatePinnedJobs(job)" :icon="closeCircleOutline" />
           </ion-chip>  
         </div>     
       </ion-toolbar>  
@@ -326,6 +327,7 @@ export default defineComponent({
   },
   data() {
     return {
+      selectedPinnedJobs:[],
       jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
       jobEnums: {
         ...JSON.parse(process.env?.VUE_APP_ODR_JOB_ENUMS as string) as any,
@@ -359,7 +361,22 @@ export default defineComponent({
       getPinnedJobs: 'user/getPinnedJobs'
     })
   },
-  methods: {
+  methods : {
+    isPinnedJobSelected(jobEnumId: any) {
+      return (this as any).selectedPinnedJobs.some((jobId: any) =>  jobId === jobEnumId );
+    },
+    updateSelectedPinnedJob(jobEnumId: any) {
+      const index = (this as any).selectedPinnedJobs.indexOf(jobEnumId);
+      if (index != -1) {
+        (this as any).selectedPinnedJobs.splice(index, 1);
+      } else {
+        (this as any).selectedPinnedJobs.push(jobEnumId)
+      }
+
+      this.segmentSelected === 'pending' ? this.getPendingJobs():
+      this.segmentSelected === 'running' ? this.getRunningJobs():
+      this.getJobHistory();
+  },
     getJobExecutionTime(startTime: any, endTime: any){
       if (startTime && endTime) {
         const timeDiff = DateTime.fromMillis(endTime).diff( DateTime.fromMillis(startTime))
@@ -443,7 +460,6 @@ export default defineComponent({
     },
 
     segmentChanged (e: CustomEvent) {
-      this.queryString = "";
       this.segmentSelected = e.detail.value
       this.segmentSelected === 'pending' ? this.getPendingJobs():
       this.segmentSelected === 'running' ? this.getRunningJobs():
@@ -471,13 +487,13 @@ export default defineComponent({
       return alert.present();
     },
     async getPendingJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
-      await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString});
+      await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, systemJobEnumId: this.selectedPinnedJobs});
     },
     async getRunningJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
-      await this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString});
+      await this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, systemJobEnumId: this.selectedPinnedJobs});
     },
     async getJobHistory(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
-      await this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString});
+      await this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, systemJobEnumId: this.selectedPinnedJobs});
     },
     async openJobActions(job: any, ev: Event) {
       const popover = await popoverController.create({
@@ -537,6 +553,7 @@ export default defineComponent({
       }
 
       await this.store.dispatch('user/updatePinnedJobs', { pinnedJobs: [...pinnedJobs] });
+      this.updateSelectedPinnedJob(enumId)
     }
   },
   created() {
@@ -617,7 +634,7 @@ ion-chip {
 }
 
 @media (min-width: 991px) {
-  ion-header{
+  ion-header > div {
     display: flex;
   }
 }

@@ -53,6 +53,11 @@ const actions: ActionTree<JobState, RootState> = {
       "orderBy": "runTime DESC"
     }
 
+    if(payload.systemJobEnumId) {
+      params.inputFields["systemJobEnumId"] = payload.systemJobEnumId
+      params.inputFields["systemJobEnumId_op"] = "in"
+    }
+
     if (payload.eComStoreId) {
       params.inputFields["productStoreId"] = payload.eComStoreId
     } else {
@@ -123,6 +128,11 @@ const actions: ActionTree<JobState, RootState> = {
       "orderBy": "runTime DESC"
     }
 
+    if(payload.systemJobEnumId) {
+      params.inputFields["systemJobEnumId"] = payload.systemJobEnumId
+      params.inputFields["systemJobEnumId_op"] = "in"
+    }
+
     if (payload.eComStoreId) {
       params.inputFields["productStoreId"] = payload.eComStoreId
     } else {
@@ -187,6 +197,11 @@ const actions: ActionTree<JobState, RootState> = {
       "orderBy": "runTime ASC"
     }
 
+    if(payload.systemJobEnumId) {
+      params.inputFields["systemJobEnumId"] = payload.systemJobEnumId
+      params.inputFields["systemJobEnumId_op"] = "in"
+    }
+    
     if(payload.eComStoreId) {
       params.inputFields["productStoreId"] = payload.eComStoreId
     } else {

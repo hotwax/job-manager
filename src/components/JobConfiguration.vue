@@ -10,13 +10,13 @@
       <ion-item>
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label>{{ $t("Run time") }}</ion-label>
-        <ion-label id="open-run-time-modal" slot="end">{{ currentJob?.runTime ? getTime(currentJob.runTime) : $t('Select run time') }}</ion-label>
+        <ion-label @click="() => isOpen = true" slot="end">{{ currentJob?.runTime ? getTime(currentJob.runTime) : $t('Select run time') }}</ion-label>
         <!-- TODO: display a button when we are not having a runtime and open the datetime component
         on click of that button
         Currently, when mapping the same datetime component for label and button so it's not working so for
         now commented the button and added a fallback string -->
         <!-- <ion-button id="open-run-time-modal" size="small" fill="outline" color="medium" v-show="!currentJob?.runTime">{{ $t("Select run time") }}</ion-button> -->
-        <ion-modal trigger="open-run-time-modal">
+        <ion-modal  :is-open="isOpen" @didDismiss="() => isOpen = false">
           <ion-content force-overscroll="false">
             <ion-datetime
               :min="minDateTime"
@@ -111,6 +111,7 @@ export default defineComponent({
   },
   data() {
     return {
+      isOpen: false,
       jobStatus: this.status,
       minDateTime: DateTime.now().toISO()
     }
@@ -242,9 +243,9 @@ export default defineComponent({
       const job = this.currentJob;
       job['jobStatus'] = this.jobStatus !== 'SERVICE_DRAFT' ? this.jobStatus : 'HOURLY';
 
-      if (job?.status === 'SERVICE_DRAFT') {
+      if (job?.statusId === 'SERVICE_DRAFT') {
         await this.store.dispatch('job/scheduleService', job)
-      } else if (job?.status === 'SERVICE_PENDING') {
+      } else if (job?.statusId === 'SERVICE_PENDING') {
         await this.store.dispatch('job/updateJob', job)
       }
     },
