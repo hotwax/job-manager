@@ -108,7 +108,8 @@ export default defineComponent({
     ...mapGetters({
       getJob: 'job/getJob',
       shopifyConfigId: 'user/getShopifyConfigId',
-      currentEComStore: 'user/getCurrentEComStore'
+      currentEComStore: 'user/getCurrentEComStore',
+      userProfile: "user/getUserProfile"
     })
   },
   mounted() {
@@ -162,7 +163,7 @@ export default defineComponent({
       }
     },
     getCurrentDateTime() {
-      return DateTime.now().toLocaleString(DateTime.DATETIME_MED);
+      return DateTime.now().setZone(this.userProfile.userTimeZone).toLocaleString(DateTime.DATETIME_MED);
     },
   },
   setup() {
