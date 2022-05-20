@@ -239,9 +239,9 @@
         <ion-icon slot="start" class="mobile-only" :icon="pinOutline" />  
 
         <div>
-          <ion-chip v-for="(job, index) in getPinnedJobs" :key="index" outline>
+          <ion-chip v-for="(job, index) in getPinnedJobs" :key="index" @click="updateSelectedPinnedJob(job)" :outline="!isPinnedJobSelected(job)">
             <ion-label>{{ getEnumName(job) }}</ion-label>
-            <ion-icon @click="updatePinnedJobs(job)" :icon="closeCircleOutline" />
+            <ion-icon @click.stop="updatePinnedJobs(job)" :icon="closeCircleOutline" />
           </ion-chip>  
         </div>     
       </ion-toolbar>  
@@ -326,6 +326,7 @@ export default defineComponent({
   },
   data() {
     return {
+      selectedPinnedJobs:[],
       jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
       jobEnums: {
         ...JSON.parse(process.env?.VUE_APP_ODR_JOB_ENUMS as string) as any,
@@ -359,7 +360,22 @@ export default defineComponent({
       getPinnedJobs: 'user/getPinnedJobs'
     })
   },
-  methods: {
+  methods : {
+    isPinnedJobSelected(jobEnumId: any) {
+      return (this as any).selectedPinnedJobs.some((jobId: any) =>  jobId === jobEnumId );
+    },
+    updateSelectedPinnedJob(jobEnumId: any) {
+      const index = (this as any).selectedPinnedJobs.indexOf(jobEnumId);
+      if (index != -1) {
+        (this as any).selectedPinnedJobs.splice(index, 1);
+      } else {
+        (this as any).selectedPinnedJobs.push(jobEnumId)
+      }
+
+      this.segmentSelected === 'pending' ? this.getPendingJobs():
+      this.segmentSelected === 'running' ? this.getRunningJobs():
+      this.getJobHistory();
+  },
     getJobExecutionTime(startTime: any, endTime: any){
       if (startTime && endTime) {
         const timeDiff = DateTime.fromMillis(endTime).diff( DateTime.fromMillis(startTime))
@@ -471,13 +487,13 @@ export default defineComponent({
       return alert.present();
     },
     async getPendingJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
-      await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString});
+      await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, systemJobEnumId: this.selectedPinnedJobs});
     },
     async getRunningJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
-      await this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString});
+      await this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, systemJobEnumId: this.selectedPinnedJobs});
     },
     async getJobHistory(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
-      await this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString});
+      await this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, systemJobEnumId: this.selectedPinnedJobs});
     },
     async openJobActions(job: any, ev: Event) {
       const popover = await popoverController.create({
@@ -537,6 +553,7 @@ export default defineComponent({
       }
 
       await this.store.dispatch('user/updatePinnedJobs', { pinnedJobs: [...pinnedJobs] });
+      this.updateSelectedPinnedJob(enumId)
     }
   },
   created() {
