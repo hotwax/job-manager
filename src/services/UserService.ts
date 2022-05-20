@@ -56,7 +56,7 @@ const getPinnedJobs = async (payload: any): Promise<any> => {
   });
 }
 
-const updatePinnedJobsPref = async (payload: any): Promise<any> => {
+const updatePinnedJobPref = async (payload: any): Promise<any> => {
   return api({
     url: "service/updateSearchPreference",
     method: "post",
@@ -90,5 +90,5 @@ export const UserService = {
     getPinnedJobs,
     associatePinnedJobPrefToUser,
     setUserTimeZone,
-    updatePinnedJobsPref
+    updatePinnedJobPref
 }

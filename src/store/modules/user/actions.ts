@@ -193,7 +193,7 @@ const actions: ActionTree<UserState, RootState> = {
 
     try{
       if (pinnedJobPrefId) {
-        resp = await UserService.updatePinnedJobsPref({
+        resp = await UserService.updatePinnedJobPref({
           'searchPrefId': pinnedJobPrefId,
           'searchPrefValue': JSON.stringify(payload?.pinnedJobs)
         });
