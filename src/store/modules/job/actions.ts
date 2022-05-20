@@ -565,9 +565,9 @@ const actions: ActionTree<JobState, RootState> = {
     try {
       const params = {
         "inputFields": {
-          "jobId": payload?.jobId,
-          "systemJobEnumId_op": "not-empty"
+          "jobId": payload?.jobId
         } as any,
+        "viewSize": 1,
         "fieldList": ["systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId"],
         "entityName": "JobSandbox",
         "noConditionFind": "Y"
