@@ -111,6 +111,7 @@ export default defineComponent({
   },
   data() {
     return {
+      isOpen: false,
       jobStatus: this.status,
       minDateTime: DateTime.now().toISO()
     }
@@ -259,20 +260,18 @@ export default defineComponent({
       if (job) {
         job.runTime = DateTime.fromISO(ev['detail'].value).toMillis()
       }
+    },
+    setOpen(state: boolean) {
+      this.isOpen = state;
     }
   },
   setup() {
     const store = useStore();
 
-    const isOpen = ref(false);
-    const setOpen = (state: boolean) => isOpen.value = state;
-
     return {
       calendarClearOutline,
-      isOpen,
       timeOutline,
       timerOutline,
-      setOpen,
       store,
       syncOutline,
       personCircleOutline

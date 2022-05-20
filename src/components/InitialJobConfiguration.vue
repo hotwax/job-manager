@@ -138,6 +138,7 @@ export default defineComponent({
   },
   data() {
     return {
+      isOpen: false,
       lastShopifyOrderId: this.shopifyOrderId,
       minDateTime: DateTime.now().toISO(),
       jobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any
@@ -206,6 +207,9 @@ export default defineComponent({
       if (job) {
         job.runTime = DateTime.fromISO(ev['detail'].value).toMillis()
       }
+    },
+    setOpen(state: boolean) {
+      this.isOpen = state;
     }
   },
   setup() {
@@ -217,17 +221,12 @@ export default defineComponent({
       header: translate('Fulfillment status'),
     };
 
-    const isOpen = ref(false);
-    const setOpen = (state: boolean) => isOpen.value = state;
-
     return {
       calendarClearOutline,
       customFulfillmentOptions,
       customOrderOptions,
       flagOutline,
-      isOpen,
       sendOutline,
-      setOpen,
       store,
       timeOutline
     };
