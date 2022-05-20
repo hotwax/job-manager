@@ -151,6 +151,9 @@ const actions: ActionTree<UserState, RootState> = {
           "userLoginId": user?.userLoginId,
           "userSearchPrefTypeId": "PINNED_JOB"
         },
+        "viewSize": 1,
+        "filterByDate": "Y",
+        "sortBy": "fromDate ASC",
         "fieldList": ["searchPrefId", "searchPrefValue"],
         "entityName": "UserAndSearchPreference",
         "distinct": "Y",
