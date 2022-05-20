@@ -66,12 +66,13 @@ export default defineComponent({
       const jobCategory = this.$route.params.category;
       if(jobCategory !== 'pipeline') {
         this.title = this.$route.params.title ? this.$route.params.title : this.jobTitles[job?.systemJobEnumId];
-        const id = Object.entries(this.jobEnums).find((enums) => enums[1] == job.systemJobEnumId) as any
+        const id = Object.keys(this.jobEnums).find((id: any) => this.jobEnums[id] === job.systemJobEnumId)
         this.freqType = id && this.jobFrequencyType[id];
       } else {
         this.title = this.$route.params.title ? this.$route.params.title : this.getEnumName(job.systemJobEnumId);
-        const id = Object.entries(this.jobEnums).find((enums) => enums[1] == job.systemJobEnumId) as any
-        this.freqType = id && (Object.entries(this.jobFrequencyType).find((freq) => freq[0] == id[0]) as any)[1];
+        const id = Object.keys(this.jobEnums).find((id: any) => this.jobEnums[id] === job.systemJobEnumId)
+        const jobFreqTypeId = (Object.keys(this.jobFrequencyType).find((enumId: any) => enumId === id)) as any;
+        this.freqType = (id && jobFreqTypeId) && this.jobFrequencyType[jobFreqTypeId];
       }
     }
   },
