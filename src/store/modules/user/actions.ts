@@ -193,7 +193,7 @@ const actions: ActionTree<UserState, RootState> = {
 
     try{
       if (pinnedJobPrefId) {
-        resp = await UserService.updatePinnedJobs({
+        resp = await UserService.updatePinnedJobsPref({
           'searchPrefId': pinnedJobPrefId,
           'searchPrefValue': JSON.stringify(payload?.pinnedJobs)
         });
@@ -202,7 +202,7 @@ const actions: ActionTree<UserState, RootState> = {
           await dispatch('getPinnedJobs')
         }
       } else {
-        resp = await UserService.createPinnedJob({
+        resp = await UserService.createPinnedJobPref({
           'searchPrefValue': JSON.stringify(payload?.pinnedJobs)
         });
         if(resp.status === 200 && !hasError(resp)) {
@@ -211,7 +211,7 @@ const actions: ActionTree<UserState, RootState> = {
               "searchPrefId": resp.data?.searchPrefId,
               "userSearchPrefTypeId": "PINNED_JOB",
             }
-            const pinnedJob = await UserService.registerPinnedJob(params);
+            const pinnedJob = await UserService.associatePinnedJobPrefToUser(params);
             if(pinnedJob.status === 200 && !hasError(pinnedJob)) {
               await dispatch('getPinnedJobs')
             }

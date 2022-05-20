@@ -56,7 +56,7 @@ const getPinnedJobs = async (payload: any): Promise<any> => {
   });
 }
 
-const updatePinnedJobs = async (payload: any): Promise<any> => {
+const updatePinnedJobsPref = async (payload: any): Promise<any> => {
   return api({
     url: "service/updateSearchPreference",
     method: "post",
@@ -64,7 +64,7 @@ const updatePinnedJobs = async (payload: any): Promise<any> => {
   });
 }
 
-const createPinnedJob = async (payload: any): Promise<any> => {
+const createPinnedJobPref = async (payload: any): Promise<any> => {
   return api({
     url: "service/createSearchPreference",
     method: "post",
@@ -72,7 +72,7 @@ const createPinnedJob = async (payload: any): Promise<any> => {
   });
 }
 
-const registerPinnedJob = async (payload: any): Promise<any> => {
+const associatePinnedJobPrefToUser = async (payload: any): Promise<any> => {
   return api({
     url: "service/createUserSearchPreference",
     method: "post",
@@ -81,14 +81,14 @@ const registerPinnedJob = async (payload: any): Promise<any> => {
 }
 
 export const UserService = {
-    createPinnedJob,
+    createPinnedJobPref,
     login,
     getAvailableTimeZones,
     getEComStores,
     getProfile,
     getShopifyConfig,
     getPinnedJobs,
-    registerPinnedJob,
+    associatePinnedJobPrefToUser,
     setUserTimeZone,
-    updatePinnedJobs
+    updatePinnedJobsPref
 }
