@@ -13,7 +13,7 @@
   <ion-content> 
     <ion-item>
       <ion-label position="fixed">{{ $t('Batch name') }}</ion-label>
-      <ion-input :placeholder="currentDateTime = showCurrentDateTime()" v-model="jobName" />
+      <ion-input :placeholder="currentDateTime = getCurrentDateTime()" v-model="jobName" />
     </ion-item>
     <ion-item>
       <ion-label>{{ $t('Order queue') }}</ion-label>
@@ -72,7 +72,6 @@ import { closeOutline, checkmarkDoneOutline } from 'ionicons/icons';
 import { mapGetters, useStore } from 'vuex';
 import { DateTime } from 'luxon';
 import { isFutureDate } from '@/utils';
-import { JobService } from '@/services/JobService';
 export default defineComponent({
   name: 'BatchModal',
   components: {
@@ -127,11 +126,11 @@ export default defineComponent({
       modalController.dismiss({ dismissed: true });
     },
     async updateJob() {
-      let batchJobEnum =  this.enum;
-
+      let batchJobEnum = this.enum;
+      
       if (!batchJobEnum) {
         const jobEnum: any = Object.values(this.jobEnums)?.find((job: any) => { 
-          return job.unfillable == this.unfillableOrder && job.facilityId == this.batchOrderId
+          return job.unfillable === this.unfillableOrder && job.facilityId === this.batchOrderId
         });
         batchJobEnum = jobEnum.id
       }
@@ -162,9 +161,8 @@ export default defineComponent({
         batch['runTime'] = DateTime.fromISO(ev['detail'].value).toMillis()
       }
     },
-    showCurrentDateTime() {
-      const today = new Date();
-      return (today.getMonth() + 1) + '-' + today.getDate() + '-' + today.getFullYear() + "  " + today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+    getCurrentDateTime() {
+      return DateTime.now().toLocaleString(DateTime.DATETIME_MED);
     },
   },
   setup() {

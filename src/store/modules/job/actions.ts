@@ -287,9 +287,7 @@ const actions: ActionTree<JobState, RootState> = {
       // a new batch
       // TODO: this needs to be updated when we will be storing the draft and pending jobs separately
       const batchJobEnums = JSON.parse(process.env?.VUE_APP_BATCH_JOB_ENUMS as string)
-      let batchJobEnumIds = Object.values(batchJobEnums)?.map((job: any) => { 
-        return job.id;
-      });
+      let batchJobEnumIds = Object.values(batchJobEnums)?.map((job: any) => job.id);
       // If query is for single systemJobEnumId only update it 
       if (typeof payload.inputFields.systemJobEnumId === "string" && batchJobEnumIds.includes(payload.inputFields.systemJobEnumId)) {
         batchJobEnumIds = [ payload.inputFields.systemJobEnumId ];
