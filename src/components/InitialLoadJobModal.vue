@@ -138,7 +138,6 @@ export default defineComponent({
   },
   data() {
     return {
-      isModalOpen: false,
       lastShopifyOrderId: this.shopifyOrderId,
       minDateTime: DateTime.now().toISO(),
       jobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any
@@ -151,7 +150,7 @@ export default defineComponent({
     })
   },
   methods: {
-    async runJob(header: string, id: string) {
+    async runJob(header: string) {
       const alert = await alertController
         .create({
           header: this.$t(header),
