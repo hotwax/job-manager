@@ -38,7 +38,7 @@
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentSelectedJobModal">
-          <InitialLoadJobModal :job="job" :type='currentSelectedJobModal' :shopifyOrderId='lastShopifyOrderId' :key="job" />
+          <InitialLoadJobModal :type='currentSelectedJobModal' :shopifyOrderId='lastShopifyOrderId' :key="job" />
         </aside>
       </main>
     </ion-content>
@@ -124,10 +124,6 @@ export default defineComponent({
 
       if(this.job?.runtimeData?.sinceId?.length >= 0) {
         this.lastShopifyOrderId = this.job.runtimeData.sinceId !== 'null' ? this.job.runtimeData.sinceId : ''
-      }
-      // if job runTime is not a valid date then assigning current date to the runTime
-      if (this.job?.runTime && !isFutureDate(this.job?.runTime)) {
-        this.job.runTime = ''
       }
 
       if (this.job && !this.isJobDetailAnimationCompleted) {

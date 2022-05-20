@@ -10,19 +10,19 @@
       <ion-item>
         <ion-icon slot="start" :icon="calendarClearOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Last run") }}</ion-label>
-        <ion-label slot="end">{{ job?.lastUpdatedStamp ? getTime(job.lastUpdatedStamp) : $t('No previous occurrence') }}</ion-label>
+        <ion-label slot="end">{{ currentJob?.lastUpdatedStamp ? getTime(currentJob?.lastUpdatedStamp) : $t('No previous occurrence') }}</ion-label>
       </ion-item>
 
       <ion-item button>
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
-        <ion-label @click="setOpen(true)" slot="end">{{ job?.runTime ? getTime(job.runTime) : $t('Select run time') }}</ion-label>
-        <ion-modal :is-open="isModalOpen" @didDismiss="setOpen(false)">
+        <ion-label id="open-run-time-modal" slot="end">{{ currentJob?.runTime ? getTime(currentJob.runTime) : $t('Select run time') }}</ion-label>
+        <ion-modal trigger="open-run-time-modal">
           <ion-content force-overscroll="false">
             <ion-datetime
               :min="minDateTime"
-              :value="job?.runTime ? getDateTime(job.runTime) : ''"
-              @ionChange="updateRunTime($event, job)"
+              :value="currentJob?.runTime ? getDateTime(currentJob.runTime) : ''"
+              @ionChange="updateRunTime($event, currentJob)"
             />
           </ion-content>
         </ion-modal>
@@ -43,19 +43,19 @@
       <ion-item>
         <ion-icon slot="start" :icon="calendarClearOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Last run") }}</ion-label>
-        <ion-label slot="end">{{ job?.lastUpdatedStamp ? getTime(job.lastUpdatedStamp) : $t('No previous occurrence') }}</ion-label>
+        <ion-label slot="end">{{ currentJob?.lastUpdatedStamp ? getTime(currentJob?.lastUpdatedStamp) : $t('No previous occurrence') }}</ion-label>
       </ion-item>
 
       <ion-item button>
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
-        <ion-label @click="setOpen(true)" slot="end">{{ job?.runTime ? getTime(job.runTime) : $t('Select run time') }}</ion-label>
-        <ion-modal :is-open="isModalOpen" @didDismiss="setOpen(false)">
+        <ion-label id="open-run-time-modal" slot="end">{{ currentJob?.runTime ? getTime(currentJob?.runTime) : $t('Select run time') }}</ion-label>
+        <ion-modal trigger="open-run-time-modal">
           <ion-content force-overscroll="false">
             <ion-datetime
               :min="minDateTime"
-              :value="job?.runTime ? getDateTime(job.runTime) : ''"
-              @ionChange="updateRunTime($event, job)"
+              :value="currentJob?.runTime ? getDateTime(currentJob?.runTime) : ''"
+              @ionChange="updateRunTime($event, currentJob)"
             />
           </ion-content>
         </ion-modal>
@@ -144,10 +144,10 @@ export default defineComponent({
       jobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any
     }
   },
-  props: ['job', 'type', 'shopifyOrderId'],
+  props: ['type', 'shopifyOrderId'],
   computed: {
     ...mapGetters({
-      getJob: 'job/getJob',
+      currentJob: 'job/getCurrentJob',
     })
   },
   methods: {
@@ -164,7 +164,7 @@ export default defineComponent({
             {
               text: this.$t('Run now'),
               handler: async () => {
-                await this.updateJob(id)
+                await this.updateJob()
               }
             }
           ]
@@ -172,8 +172,8 @@ export default defineComponent({
 
       return alert.present();
     },
-    async updateJob(id: string) {
-      const job = this.getJob(id);
+    async updateJob() {
+      const job = this.currentJob;
 
       if(!job) {
         return;
@@ -207,18 +207,7 @@ export default defineComponent({
       if (job) {
         job.runTime = DateTime.fromISO(ev['detail'].value).toMillis()
       }
-    },
-    setOpen(state: boolean) {
-      this.isModalOpen = state;
     }
-  },
-  mounted() {
-    this.store.dispatch("job/fetchJobs", {
-      "inputFields":{
-        "systemJobEnumId": Object.values(this.jobEnums),
-        "systemJobEnumId_op": "in"
-      }
-    });
   },
   setup() {
     const store = useStore();
