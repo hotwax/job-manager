@@ -38,7 +38,7 @@
       <ion-label position="fixed">{{ $t("Schedule") }}</ion-label>
       <ion-datetime :value="currentBatch?.runTime ? getDateTime(currentBatch.runTime) : ''" @ionChange="updateRunTime($event, currentBatch)" presentation="time" size="cover" />
     </ion-item>    
-    <ion-fab @click="updateJob(unfillableOrder, batchOrderId)" vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab @click="updateJob()" vertical="bottom" horizontal="end" slot="fixed">
       <ion-fab-button>
         <ion-icon :icon="checkmarkDoneOutline" />  
       </ion-fab-button>
@@ -102,7 +102,6 @@ export default defineComponent({
       jobName: '' as string,
       unfillableOrder: false as boolean,
       batchOrderId: '_NA_' as string,
-      batchValue: '' as string,
       currentDateTime: '' as string,
     }
   },
@@ -127,17 +126,16 @@ export default defineComponent({
     closeModal() {
       modalController.dismiss({ dismissed: true });
     },
-    async updateJob(unfillableOrder: boolean, batchOrderId: string) {
+    async updateJob() {
       let batchJobEnum =  this.enum;
-      console.log("batchJobEnum", batchJobEnum)
 
       if (!batchJobEnum) {
         const jobEnum: any = Object.values(this.jobEnums)?.find((job: any) => { 
-          return job.unfillable == unfillableOrder && job.facilityId == batchOrderId
+          return job.unfillable == this.unfillableOrder && job.facilityId == this.batchOrderId
         });
         batchJobEnum = jobEnum.id
       }
-      
+
       const job = this.currentBatch ? this.currentBatch : this.getJob(batchJobEnum)?.find((job: any) => job.status === 'SERVICE_DRAFT');
 
       if (!job) {

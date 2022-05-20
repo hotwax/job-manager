@@ -16,17 +16,6 @@ const getters: GetterTree <JobState, RootState> = {
       const batchJobEnumIds = Object.values(batchJobEnums)?.map((job: any) => { 
         return job.id;
       });
-      console.log("batchJobEnumIds", batchJobEnumIds);
-
-      console.log("batch", batchJobEnumIds.map((batchJobEnumId: string) => {
-        console.log("state.cached[batchJobEnumId]", state.cached[batchJobEnumId]);
-        return state.cached[batchJobEnumId];
-      }));
-      console.log("batches", [
-        ...batchJobEnumIds.map((batchJobEnumId: string) => {
-          return state.cached[batchJobEnumId];
-        })
-      ]);
 
       return batchJobEnumIds.reduce((batches: any, batchJobEnumId: string) => {
           const jobs = state.cached[batchJobEnumId];
