@@ -361,16 +361,15 @@ export default defineComponent({
     })
   },
   methods : {
-    isPinnedJobSelected(JobEnumId: any) {
-
-    return (this as any).selectedPinnedJobs.some((jobId: any) =>  jobId === JobEnumId );  
+    isPinnedJobSelected(jobEnumId: any) {
+    return (this as any).selectedPinnedJobs.some((jobId: any) =>  jobId === jobEnumId );
     },
-    updateSelectedPinnedJob(JobEnumId: any) {
-      const index = (this as any).selectedPinnedJobs.indexOf(JobEnumId);
+    updateSelectedPinnedJob(jobEnumId: any) {
+      const index = (this as any).selectedPinnedJobs.indexOf(jobEnumId);
       if (index != -1) {
         (this as any).selectedPinnedJobs.splice(index, 1);
       } else {
-        (this as any).selectedPinnedJobs.push(JobEnumId)
+        (this as any).selectedPinnedJobs.push(jobEnumId)
       }
 
       this.segmentSelected === 'pending' ? this.getPendingJobs():
