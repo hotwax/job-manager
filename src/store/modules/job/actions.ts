@@ -287,31 +287,34 @@ const actions: ActionTree<JobState, RootState> = {
       // getting job with status Service draft as well, as this information will be needed when scheduling
       // a new batch
       // TODO: this needs to be updated when we will be storing the draft and pending jobs separately
-      const batchBrokeringJobs = [] as any
-      const batchBrokeringJobEnum = (JSON.parse(process.env.VUE_APP_ODR_JOB_ENUMS as string) as any)['BTCH_BRKR_ORD']
-      resp.data.docs.filter((job: any) => job.systemJobEnumId === batchBrokeringJobEnum).map((job: any) => {
-        batchBrokeringJobs.push({
-          ...job,
-          id: job.jobId,
-          frequency: job.tempExprId,
-          enumId: job.systemJobEnumId,
-          status: job.statusId
-        })
+      const batchJobEnums = JSON.parse(process.env?.VUE_APP_BATCH_JOB_ENUMS as string)
+      const batchJobEnumIds = Object.values(batchJobEnums)?.map((job: any) => { 
+        return job.id;
+      });
+      batchJobEnumIds.map((batchBrokeringJobEnum: any) => {
+        cached[batchBrokeringJobEnum] = resp.data.docs.filter((job: any) => job.systemJobEnumId === batchBrokeringJobEnum).reduce((batchBrokeringJobs: any, job: any) => {
+          batchBrokeringJobs.push({
+            ...job,
+            id: job.jobId,
+            frequency: job.tempExprId,
+            enumId: job.systemJobEnumId,
+            status: job.statusId
+          })
+          return batchBrokeringJobs;
+        }, [])
       })
-
-      resp.data.docs.filter((job: any) => job.statusId === 'SERVICE_PENDING').map((job: any) => {
-        // added condition to store multiple pending jobs in the state for order batch jobs
-        if (job.systemJobEnumId === batchBrokeringJobEnum) {
-          return cached[job.systemJobEnumId] = batchBrokeringJobs
-        }
-        return cached[job.systemJobEnumId] = {
+      
+      // added condition to store multiple pending jobs in the state for order batch jobs  
+      resp.data.docs.filter((job: any) => !batchJobEnumIds.includes(job.systemJobEnumId) && job.statusId === 'SERVICE_PENDING').reduce((cached: any, job: any) => {
+        cached[job.systemJobEnumId] = {
           ...job,
           id: job.jobId,
           frequency: job.tempExprId,
           enumId: job.systemJobEnumId,
           status: job.statusId
         }
-      })  
+        return cached;
+      }, cached)  
 
       resp.data.docs.filter((job: any) => job.statusId === 'SERVICE_DRAFT').map((job: any) => {
         return cached[job.systemJobEnumId] = cached[job.systemJobEnumId] ? cached[job.systemJobEnumId] : {

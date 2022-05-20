@@ -10,28 +10,35 @@
     </ion-toolbar>
   </ion-header>
 
-  <ion-content>
+  <ion-content> 
     <ion-item>
       <ion-label position="fixed">{{ $t('Batch name') }}</ion-label>
-      <ion-input :placeholder="showCurrentDateTime()" v-model="jobName" />
+      <ion-input :placeholder="time = showCurrentDateTime()" v-model="jobName" />
     </ion-item>
     <ion-item>
       <ion-label>{{ $t('Order queue') }}</ion-label>
-      <ion-select @ionChange="orderQueueValue = $event.detail.value" slot="end" interface="popover" value="brokering-queue" v-model="orderQueueValue">
-        <ion-select-option value="brokering-queue">{{ $t("Brokering queue") }}</ion-select-option>
-        <ion-select-option value="preorder-parking">{{ $t("Pre-order parking") }}</ion-select-option>
-        <ion-select-option value="backorder parking">{{ $t("Back-order parking") }}</ion-select-option>
+      <ion-select slot="end" interface="popover" v-model="orderQueueValue">
+        <ion-select-option value="_NA_">{{ $t("Brokering queue") }}</ion-select-option>
+        <ion-select-option value="PRE_ORDER_PARKING">{{ $t("Pre-order parking") }}</ion-select-option>
+        <ion-select-option value="BACKORDER_PARKING">{{ $t("Back-order parking") }}</ion-select-option>
       </ion-select>
     </ion-item>
-    <ion-item>
-      <ion-label position="fixed">{{ $t('Unfillable') }}</ion-label>
-      <ion-toggle @ionChange="toggleValue = !toggleValue" slot="end" color="secondary" />
-    </ion-item>
+    <ion-radio-group value="unfillableOrder">
+      <ion-item>
+        <ion-label>{{ $t('New orders') }}</ion-label>
+        <ion-radio slot="start" @click="unfillableOrder = false" color="secondary" value="unfillableOrder" />
+      </ion-item>
+      <ion-item>
+        <ion-label>{{ $t('Unfillable orders') }}</ion-label>
+        <ion-radio slot="start" @click="unfillableOrder = true" color="secondary"/>
+      </ion-item>
+    </ion-radio-group>
+    
     <ion-item>
       <ion-label position="fixed">{{ $t("Schedule") }}</ion-label>
       <ion-datetime :value="currentBatch?.runTime ? getDateTime(currentBatch.runTime) : ''" @ionChange="updateRunTime($event, currentBatch)" presentation="time" size="cover" />
     </ion-item>    
-    <ion-fab @click="sendModalData(toggleValue, orderQueueValue)" vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab @click="updateJob(unfillableOrder, orderQueueValue)" vertical="bottom" horizontal="end" slot="fixed">
       <ion-fab-button>
         <ion-icon :icon="checkmarkDoneOutline" />  
       </ion-fab-button>
@@ -52,10 +59,11 @@ import {
   IonInput,
   IonItem,
   IonLabel,
+  IonRadio,
+  IonRadioGroup,
   IonSelect,
   IonSelectOption,
   IonTitle,
-  IonToggle,
   IonToolbar,
   modalController
 } from '@ionic/vue';
@@ -64,6 +72,7 @@ import { closeOutline, checkmarkDoneOutline } from 'ionicons/icons';
 import { mapGetters, useStore } from 'vuex';
 import { DateTime } from 'luxon';
 import { isFutureDate } from '@/utils';
+import { JobService } from '@/services/JobService';
 export default defineComponent({
   name: 'BatchModal',
   components: {
@@ -78,20 +87,23 @@ export default defineComponent({
     IonInput,
     IonItem,
     IonLabel,
+    IonRadio,
+    IonRadioGroup,
     IonSelect,
     IonSelectOption,
     IonTitle,
-    IonToggle,
     IonToolbar,
   },
   props: ["id", "enum"],
   data() {
     return {
+      jobEnums: JSON.parse(process.env?.VUE_APP_BATCH_JOB_ENUMS as string) as any,
       currentBatch: {} as any,
       jobName: '' as string,
-      toggleValue: false as boolean,
-      orderQueueValue: 'brokering-queue' as string,
+      unfillableOrder: false as boolean,
+      orderQueueValue: '_NA_' as string,
       batchValue: '' as string,
+      time: '' as string,
     }
   },
   computed: {
@@ -102,7 +114,7 @@ export default defineComponent({
     })
   },
   mounted() {
-    // this.getCurrentBatch();
+    this.getCurrentBatch();
   },
   methods: {
     getCurrentBatch() {
@@ -115,8 +127,20 @@ export default defineComponent({
     closeModal() {
       modalController.dismiss({ dismissed: true });
     },
-    async updateJob() {
-      const job = this.currentBatch ? this.currentBatch : this.getJob(this.enum)?.find((job: any) => job.status === 'SERVICE_DRAFT');
+    async updateJob(unfillableOrder: boolean, orderQueueValue: string) {
+      console.log(unfillableOrder);
+      
+      let batchJobEnum =  this.enum;
+      console.log("batchJobEnum", batchJobEnum)
+
+      if (!batchJobEnum) {
+        const jobEnum: any = Object.values(this.jobEnums)?.find((job: any) => { 
+          return job.unfillable == unfillableOrder && job.facilityId == orderQueueValue
+        });
+        batchJobEnum = jobEnum.id
+      }
+      
+      const job = this.currentBatch ? this.currentBatch : this.getJob(batchJobEnum)?.find((job: any) => job.status === 'SERVICE_DRAFT');
 
       if (!job) {
         return;
@@ -137,6 +161,29 @@ export default defineComponent({
         this.closeModal()
       }
     },
+    // async updateJob() {
+
+    //   const job = this.currentBatch ? this.currentBatch : this.getJob(this.enum)?.find((job: any) => job.status === 'SERVICE_DRAFT');
+
+    //   if (!job) {
+    //     return;
+    //   }
+
+    //   job['jobStatus'] = 'EVERYDAY';
+    //   job['jobName'] = this.jobName
+
+    //   // if job runTime is not a valid date then making runTime as empty
+    //   if (job?.runTime && !isFutureDate(job?.runTime)) {
+    //     job.runTime = ''
+    //   }
+    //   if (job?.status === 'SERVICE_DRAFT') {
+    //     await this.store.dispatch('job/scheduleService', job)
+    //     this.closeModal()
+    //   } else if (job?.status === 'SERVICE_PENDING') {
+    //     await this.store.dispatch('job/updateJob', job)
+    //     this.closeModal()
+    //   }
+    // },
     updateRunTime(ev: CustomEvent, batch: any) {
       if(batch) {
         batch['runTime'] = DateTime.fromISO(ev['detail'].value).toMillis()
@@ -146,9 +193,6 @@ export default defineComponent({
       const today = new Date();
       return (today.getMonth() + 1) + '-' + today.getDate() + '-' + today.getFullYear() + "  " + today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
     },
-    sendModalData(toggleValue: boolean, orderQueueValue: string) {
-      console.log(toggleValue, orderQueueValue);
-    }
   },
   setup() {
     const store = useStore();
