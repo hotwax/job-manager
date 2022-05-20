@@ -35,8 +35,8 @@
           </ion-card>
         </section>
 
-        <aside class="desktop-only" v-show="currentJob">
-          <JobConfiguration :title="title" :job="currentJob" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
+        <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
+          <JobConfiguration :title="title" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
         </aside>
       </main>
     </ion-content>
@@ -57,12 +57,14 @@ import {
   IonTitle,
   IonToggle,
   IonToolbar,
+  isPlatform,
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
 import JobConfiguration from '@/components/JobConfiguration.vue'
 import { isFutureDate } from '@/utils';
 import emitter from '@/event-bus';
+import { useRouter } from 'vue-router'
 
 export default defineComponent({
   name: 'Inventory',
@@ -89,7 +91,8 @@ export default defineComponent({
       title: 'Hard sync',
       currentJobStatus: '',
       freqType: '',
-      isJobDetailAnimationCompleted: false
+      isJobDetailAnimationCompleted: false,
+      isDesktop: isPlatform('desktop')
     }
   },
   computed: {
@@ -130,11 +133,17 @@ export default defineComponent({
         this.store.dispatch('job/updateJob', job)
       }
     },
-    viewJobConfiguration(id: string, title: string, status: string) {
+    async viewJobConfiguration(id: string, title: string, status: string) {
       this.currentJob = this.getJob(this.jobEnums[id])
       this.title = title
       this.currentJobStatus = status
       this.freqType = id && this.jobFrequencyType[id]
+
+      await this.store.dispatch('job/updateCurrentJob', { job: this.currentJob });
+      if(!this.isDesktop && this.currentJob) {
+        this.router.push({name: 'JobDetails', params: { title: this.title, jobId: this.currentJob.jobId, category: "inventory"}});
+        return;
+      }
 
       // if job runTime is not a valid date then making runTime as empty
       if (this.currentJob?.runTime && !isFutureDate(this.currentJob?.runTime)) {
@@ -161,9 +170,10 @@ export default defineComponent({
   },
   setup() {
     const store = useStore();
-
+    const router = useRouter();
     return {
-      store
+      store,
+      router
     }  
   }
 });
