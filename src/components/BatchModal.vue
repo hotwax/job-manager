@@ -10,7 +10,7 @@
     </ion-toolbar>
   </ion-header>
 
-  <ion-content> 
+  <ion-content>
     <ion-item>
       <ion-label position="fixed">{{ $t('Batch name') }}</ion-label>
       <ion-input :placeholder="currentDateTime = getCurrentDateTime()" v-model="jobName" />

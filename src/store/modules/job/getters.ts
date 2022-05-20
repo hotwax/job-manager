@@ -11,13 +11,11 @@ const getters: GetterTree <JobState, RootState> = {
     },
     getOrderBatchJobs (state){
       const batchJobEnums = JSON.parse(process.env?.VUE_APP_BATCH_JOB_ENUMS as string)
-      const batchJobEnumIds = Object.values(batchJobEnums)?.map((job: any) => { 
-        return job.id;
-      });
+      const batchJobEnumIds = Object.values(batchJobEnums)?.map((job: any) => job.id);
 
       return batchJobEnumIds.reduce((batches: any, batchJobEnumId: string) => {
         const jobs = state.cached[batchJobEnumId];
-        if ( jobs ) {
+        if (jobs) {
           batches = [ ...batches, ...jobs];
         }
         return batches;
