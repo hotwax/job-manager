@@ -227,8 +227,8 @@
           </div>          
         </section>
 
-        <aside class="desktop-only" v-show="segmentSelected === 'pending' && currentJob">
-          <JobConfiguration :title="title" :job="currentJob" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
+        <aside class="desktop-only" v-if="isDesktop" v-show="segmentSelected === 'pending' && currentJob">
+          <JobConfiguration :title="title" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
         </aside>
       </main>
     </ion-content>
@@ -237,6 +237,7 @@
 <script lang="ts">
 import { DateTime } from 'luxon';
 import { mapGetters, useStore } from 'vuex'
+import { useRouter } from 'vue-router'
 import { defineComponent, ref } from "vue";
 import {
   IonBadge,
@@ -479,16 +480,18 @@ export default defineComponent({
 
        return alert.present();
     },
-    viewJobConfiguration(job: any) {
-      if(!this.isDesktop) {
-        return;
-      }
-
+    async viewJobConfiguration(job: any) {
       this.currentJob = {id: job.jobId, ...job}
       this.title = this.getEnumName(job.systemJobEnumId)
       this.currentJobStatus = job.tempExprId
       const id = Object.entries(this.jobEnums).find((enums) => enums[1] == job.systemJobEnumId) as any
       this.freqType = id && (Object.entries(this.jobFrequencyType).find((freq) => freq[0] == id[0]) as any)[1]
+
+      await this.store.dispatch('job/updateCurrentJob', { job: this.currentJob });
+      if(!this.isDesktop && this.currentJob) {
+        this.router.push({name: 'JobDetails', params: { title: this.title, jobId: this.currentJob.jobId, category: "pipeline"}});
+        return;
+      }
 
       if (this.currentJob && !this.isJobDetailAnimationCompleted) {
         emitter.emit('playAnimation');
@@ -500,6 +503,7 @@ export default defineComponent({
     this.getPendingJobs();
   },
   setup() {
+    const router = useRouter();
     const store = useStore();
     const segmentSelected = ref('pending');
 
@@ -510,7 +514,8 @@ export default defineComponent({
       refreshOutline,
       timeOutline,
       timerOutline,
-      segmentSelected
+      segmentSelected,
+      router
     };
   }
 });
