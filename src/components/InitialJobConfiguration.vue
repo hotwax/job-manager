@@ -16,8 +16,8 @@
       <ion-item button>
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
-        <ion-label @click="setOpen(true)" slot="end">{{ currentJob?.runTime ? getTime(currentJob?.runTime) : $t('Select run time') }}</ion-label>
-        <ion-modal :is-open="isOpen" @didDismiss="setOpen(false)">
+        <ion-label @click="() => isOpen = true" slot="end">{{ currentJob?.runTime ? getTime(currentJob?.runTime) : $t('Select run time') }}</ion-label>
+        <ion-modal :is-open="isOpen" @didDismiss="() => isOpen = false">
           <ion-content force-overscroll="false">
             <ion-datetime
               :min="minDateTime"
@@ -49,8 +49,8 @@
       <ion-item button>
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
-        <ion-label @click="setOpen(true)" slot="end">{{ currentJob?.runTime ? getTime(currentJob.runTime) : $t('Select run time') }}</ion-label>
-        <ion-modal :is-open="isOpen" @didDismiss="setOpen(false)">
+        <ion-label @click="() => isOpen = true" slot="end">{{ currentJob?.runTime ? getTime(currentJob.runTime) : $t('Select run time') }}</ion-label>
+        <ion-modal :is-open="isOpen" @didDismiss="() => isOpen = false">
           <ion-content force-overscroll="false">
             <ion-datetime
               :min="minDateTime"
@@ -95,7 +95,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from "vue";
+import { defineComponent } from "vue";
 import {
   alertController,
   IonButton,
@@ -207,9 +207,6 @@ export default defineComponent({
       if (job) {
         job.runTime = DateTime.fromISO(ev['detail'].value).toMillis()
       }
-    },
-    setOpen(state: boolean) {
-      this.isOpen = state;
     }
   },
   setup() {
