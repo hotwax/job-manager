@@ -430,8 +430,8 @@ const actions: ActionTree<JobState, RootState> = {
 
   async skipJob({ commit, getters }, job) {
     let skipTime = {};
-    const integer1 = getters['getTemporalExpr'](job.tempExprId).integer1;
-    const integer2 = getters['getTemporalExpr'](job.tempExprId).integer2
+    const integer1 = getters['getTemporalExpr'](job.tempExprId)?.integer1;
+    const integer2 = getters['getTemporalExpr'](job.tempExprId)?.integer2
     if(integer1 === 12) {
       skipTime = { minutes: integer2 }
     } else if (integer1 === 10) {
@@ -509,7 +509,7 @@ const actions: ActionTree<JobState, RootState> = {
     return resp;
   },
 
-  async cancelJob({ dispatch, state }, job) {
+  async cancelJob({ commit, dispatch, state }, job) {
     let resp;
 
     try {
@@ -524,12 +524,17 @@ const actions: ActionTree<JobState, RootState> = {
         showToast(translate('Service updated successfully'))
         state.cached[job.systemJobEnumId].statusId = 'SERVICE_DRAFT'
         state.cached[job.systemJobEnumId].status = 'SERVICE_DRAFT'
-        dispatch('fetchJobs', {
+        let jobs = await dispatch('fetchJobs', {
           inputFields: {
             'systemJobEnumId': job.systemJobEnumId,
             'systemJobEnumId_op': 'equals'
           }
         })
+        if (jobs.status === 200 && !hasError(jobs) && jobs.data?.docs.length) {
+          jobs = jobs.data?.docs;
+          const currentJob = jobs.find((currentJob: any) => currentJob?.jobId === job?.jobId);
+          commit(types.JOB_CURRENT_UPDATED, currentJob);
+        }
       } else {
         showToast(translate('Something went wrong'))
       }
