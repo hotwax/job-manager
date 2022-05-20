@@ -116,14 +116,18 @@ export default defineComponent({
       this.currentSelectedJobModal = label;
       this.job = this.getJob(id);
 
+      if(this.job?.runtimeData?.sinceId?.length >= 0) {
+        this.lastShopifyOrderId = this.job.runtimeData.sinceId !== 'null' ? this.job.runtimeData.sinceId : ''
+      }
+      // if job runTime is not a valid date then assigning current date to the runTime
+      if (this.job?.runTime && !isFutureDate(this.job?.runTime)) {
+        this.job.runTime = ''
+      }
+
       await this.store.dispatch('job/updateCurrentJob', { job: this.job });
       if(!this.isDesktop && this.job) {
         this.router.push({name: 'JobDetails', params: { title: this.currentSelectedJobModal, jobId: this.job.jobId, category: "initial-load"}});
         return;
-      }
-
-      if(this.job?.runtimeData?.sinceId?.length >= 0) {
-        this.lastShopifyOrderId = this.job.runtimeData.sinceId !== 'null' ? this.job.runtimeData.sinceId : ''
       }
 
       if (this.job && !this.isJobDetailAnimationCompleted) {

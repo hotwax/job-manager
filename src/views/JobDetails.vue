@@ -81,7 +81,7 @@ export default defineComponent({
         // if job runTime is not a valid date then assigning current date to the runTime
         if (job?.runTime && !isFutureDate(job?.runTime)) {
           job.runTime = ''
-          this.store.dispatch('job/updateCurrentJob', { job: job });
+          this.store.dispatch('job/updateCurrentJob', { job });
         }
       } else if(this.jobCategory !== 'pipeline') {
         this.title = this.$route.params.title ? this.$route.params.title : this.jobTitles[job?.systemJobEnumId];
