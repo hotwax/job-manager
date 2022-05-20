@@ -89,10 +89,6 @@
               <ion-label class="ion-text-wrap">{{ $t("Rejected orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('REJ_ORDR') }}</ion-label>
             </ion-item>
-            <ion-item @click="viewJobConfiguration('UNFIL_ORDERS', 'Unfillable orders', getJobStatus(this.jobEnums['UNFIL_ORDERS']))" detail button>
-              <ion-label class="ion-text-wrap">{{ $t("Unfillable orders") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('UNFIL_ORDERS') }} </ion-label>
-            </ion-item>
             <ion-item-divider>
               <ion-label class="ion-text-wrap">{{ $t("Batches") }}</ion-label>
               <ion-button fill="clear" @click="addBatch()" slot="end">
@@ -101,8 +97,9 @@
               </ion-button>
             </ion-item-divider>
 
-            <ion-item-sliding v-for="batch in getJob(jobEnums['BTCH_BRKR_ORD'])" :key="batch?.id" button detail v-show="batch?.status === 'SERVICE_PENDING'">
-              <ion-item @click="editBatch(batch?.id)">
+            <ion-item-sliding v-for="batch in orderBatchJobs" :key="batch?.id" button detail v-show="batch?.status === 'SERVICE_PENDING'">
+            <!-- TODO: implement functionality to edit batch on clicking the item -->
+              <ion-item>
                 <ion-label class="ion-text-wrap">{{ batch?.jobName }}</ion-label>
                 <ion-note slot="end">{{ batch?.runTime ? getTime(batch.runTime) : '' }}</ion-note>
               </ion-item>
@@ -188,6 +185,7 @@ export default defineComponent({
   data() {
     return {
       jobEnums: JSON.parse(process.env?.VUE_APP_ODR_JOB_ENUMS as string) as any,
+      batchJobEnums: JSON.parse(process.env?.VUE_APP_BATCH_JOB_ENUMS as string) as any,
       jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
       currentJob: '' as any,
       title: 'New orders',
@@ -201,6 +199,7 @@ export default defineComponent({
     ...mapGetters({
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
+      orderBatchJobs: "job/getOrderBatchJobs",
       shopifyConfigId: 'user/getShopifyConfigId',
       currentEComStore: 'user/getCurrentEComStore',
       getTemporalExpr: 'job/getTemporalExpr'
@@ -217,15 +216,7 @@ export default defineComponent({
   methods: {  
     async addBatch() {
       const batchmodal = await modalController.create({
-        component: BatchModal,
-        componentProps: { enum: this.jobEnums['BTCH_BRKR_ORD'] }
-      });
-      return batchmodal.present();
-    },
-    async editBatch(id: string) {
-      const batchmodal = await modalController.create({
-        component: BatchModal,
-        componentProps: { id, enum: this.jobEnums['BTCH_BRKR_ORD'] }
+        component: BatchModal
       });
       return batchmodal.present();
     },
@@ -330,6 +321,12 @@ export default defineComponent({
     this.store.dispatch("job/fetchJobs", {
       "inputFields":{
         "systemJobEnumId": Object.values(this.jobEnums),
+        "systemJobEnumId_op": "in"
+      }
+    });
+    this.store.dispatch("job/fetchJobs", {
+      "inputFields":{
+        "systemJobEnumId": Object.values(this.batchJobEnums).map((jobEnum: any) => jobEnum.id),
         "systemJobEnumId_op": "in"
       }
     });
