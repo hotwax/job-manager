@@ -290,7 +290,7 @@ import emitter from '@/event-bus';
 import JobHistoryModal from '@/components/JobHistoryModal.vue';
 import { Plugins } from '@capacitor/core';
 import { showToast } from '@/utils'
-import QuickActionsPopover from '@/components/QuickActionsPopover.vue'
+import JobActionsPopover from '@/components/JobActionsPopover.vue'
 
 export default defineComponent({
   name: "Pipeline",
@@ -480,7 +480,7 @@ export default defineComponent({
     },
     async openJobActions(job: any, ev: Event) {
       const popover = await popoverController.create({
-        component: QuickActionsPopover,
+        component: JobActionsPopover,
         showBackdrop: false,
         event: ev,
         componentProps: { job }
