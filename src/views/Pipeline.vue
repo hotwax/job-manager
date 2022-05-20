@@ -230,8 +230,8 @@
       </main>
     </ion-content>
 
-    <ion-footer>
-      <ion-toolbar>
+    <ion-footer v-if="getPinnedJobs && getPinnedJobs.length">
+      <ion-toolbar >
         <ion-title slot="start" class="desktop-only">
           {{ $t("Pinned jobs") }}
         </ion-title>
