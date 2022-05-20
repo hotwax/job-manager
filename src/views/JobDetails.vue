@@ -8,7 +8,7 @@
     </ion-header>
 
     <ion-content>
-      <InitialLoadJobModal v-if="jobCategory === 'initial-load'" :type='type' :shopifyOrderId='lastShopifyOrderId' :key="currentJob" />
+      <InitialJobConfiguration v-if="jobCategory === 'initial-load'" :type='type' :shopifyOrderId='lastShopifyOrderId' :key="currentJob" />
       <JobConfiguration v-else :title="title" :status="currentJob?.status === 'SERVICE_DRAFT' ? currentJob?.status : currentJob?.tempExprId" :type="freqType" :key="currentJob"/>
     </ion-content>
   </ion-page>
@@ -25,7 +25,7 @@ import {
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import JobConfiguration from '@/components/JobConfiguration.vue';
-import InitialLoadJobModal from '@/components/InitialLoadJobModal.vue';
+import InitialJobConfiguration from '@/components/InitialJobConfiguration.vue';
 import { useStore, mapGetters } from "vuex";
 import { isFutureDate } from '@/utils';
 
@@ -39,7 +39,7 @@ export default defineComponent({
     IonTitle,
     IonToolbar,
     JobConfiguration,
-    InitialLoadJobModal
+    InitialJobConfiguration
   },
   data() {
     return {

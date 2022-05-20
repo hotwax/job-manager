@@ -122,7 +122,7 @@ import { DateTime } from 'luxon';
 import { isFutureDate } from '@/utils';
 
 export default defineComponent({
-  name: "InitialLoadJobModal",
+  name: "InitialJobConfiguration",
   components: {
     IonButton,
     IonContent,
@@ -186,9 +186,9 @@ export default defineComponent({
         job.runTime = ''
       }
 
-      if (job?.status === 'SERVICE_DRAFT') {
+      if (job?.statusId === 'SERVICE_DRAFT') {
         this.store.dispatch('job/runServiceNow', job)
-      } else if (job?.status === 'SERVICE_PENDING') {
+      } else if (job?.statusId === 'SERVICE_PENDING') {
         this.store.dispatch('job/updateJob', job)
       }
     },

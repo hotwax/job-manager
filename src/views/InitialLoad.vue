@@ -38,7 +38,7 @@
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentSelectedJobModal">
-          <InitialLoadJobModal :type='currentSelectedJobModal' :shopifyOrderId='lastShopifyOrderId' :key="job" />
+          <InitialJobConfiguration :type='currentSelectedJobModal' :shopifyOrderId='lastShopifyOrderId' :key="job" />
         </aside>
       </main>
     </ion-content>
@@ -65,13 +65,13 @@ import { defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
 import { isFutureDate } from '@/utils';
 import emitter from '@/event-bus';
-import InitialLoadJobModal from '@/components/InitialLoadJobModal.vue';
+import InitialJobConfiguration from '@/components/InitialJobConfiguration.vue';
 import { useRouter } from 'vue-router';
 
 export default defineComponent({
   name: 'InitialLoad',
   components: {
-    InitialLoadJobModal,
+    InitialJobConfiguration,
     IonButton,
     IonCard,
     IonCardHeader,
