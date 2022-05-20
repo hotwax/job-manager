@@ -326,7 +326,7 @@ export default defineComponent({
   mounted () {
     this.store.dispatch("job/fetchJobs", {
       "inputFields":{
-        "systemJobEnumId": Object.values(this.jobEnums).map((jobEnum: any) => jobEnum.id),
+        "systemJobEnumId": Object.values(this.jobEnums),
         "systemJobEnumId_op": "in"
       }
     });
