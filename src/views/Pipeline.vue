@@ -362,7 +362,7 @@ export default defineComponent({
   },
   methods : {
     isPinnedJobSelected(jobEnumId: any) {
-    return (this as any).selectedPinnedJobs.some((jobId: any) =>  jobId === jobEnumId );
+      return (this as any).selectedPinnedJobs.some((jobId: any) =>  jobId === jobEnumId );
     },
     updateSelectedPinnedJob(jobEnumId: any) {
       const index = (this as any).selectedPinnedJobs.indexOf(jobEnumId);
