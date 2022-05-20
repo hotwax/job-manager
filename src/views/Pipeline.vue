@@ -610,11 +610,13 @@ ion-title {
   flex-grow: 0;
 }
 
+
 ion-toolbar > ion-icon {
-  background: linear-gradient(to right, #ffffff7d, white);
-  backdrop-filter: blur(20px);
-  position: relative;
-  left: 16px;
+  position: absolute;
+  background: linear-gradient(to right, white, white, transparent);
+  font-size: 24px;
+  z-index: 2;
+  padding: var(--spacer-sm);
 }
 
 ion-toolbar > div {
