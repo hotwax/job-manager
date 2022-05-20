@@ -281,7 +281,7 @@ export default defineComponent({
       this.title = title
       this.currentJobStatus = status
       this.freqType = id && this.jobFrequencyType[id]
-      
+
       // if job runTime is not a valid date then making runTime as empty
       if (this.currentJob?.runTime && !isFutureDate(this.currentJob?.runTime)) {
         this.currentJob.runTime = ''
@@ -289,7 +289,7 @@ export default defineComponent({
 
       await this.store.dispatch('job/updateCurrentJob', { job: this.currentJob });
       if(!this.isDesktop && this.currentJob) {
-        this.router.push({name: 'JobDetails', params: { title: this.title, status: this.currentJobStatus, type: this.freqType, jobId: this.currentJob.jobId, category: "orders"}});
+        this.router.push({name: 'JobDetails', params: { title: this.title, jobId: this.currentJob.jobId, category: "orders"}});
         return;
       }
       if (this.currentJob && !this.isJobDetailAnimationCompleted) {
