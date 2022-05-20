@@ -1,5 +1,5 @@
 <template>
-  <section v-show="type === 'products'">
+  <section v-if="type === 'products'">
     <ion-item lines="none">
       <h1>{{ $t("Products") }}</h1>
       <!-- TODO: make the badges dynamic on the basis of job status -->
@@ -32,7 +32,7 @@
     <ion-button size="small" fill="outline" expand="block" @click="runJob('Products')">{{ $t("Run import") }}</ion-button>
   </section>
 
-  <section v-show="type === 'orders'">
+  <section v-else>
     <ion-item lines="none">
       <h1>{{ $t("Orders") }}</h1>
       <!-- TODO: make the badges dynamic on the basis of job status -->
