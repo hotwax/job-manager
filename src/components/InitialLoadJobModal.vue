@@ -16,8 +16,8 @@
       <ion-item button>
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
-        <ion-label id="open-run-time-modal" slot="end">{{ currentJob?.runTime ? getTime(currentJob.runTime) : $t('Select run time') }}</ion-label>
-        <ion-modal trigger="open-run-time-modal">
+        <ion-label @click="setOpen(true)" slot="end">{{ currentJob?.runTime ? getTime(currentJob?.runTime) : $t('Select run time') }}</ion-label>
+        <ion-modal :is-open="isOpen" @didDismiss="setOpen(false)">
           <ion-content force-overscroll="false">
             <ion-datetime
               :min="minDateTime"
@@ -29,7 +29,7 @@
       </ion-item>
     </ion-list>
 
-    <ion-button size="small" fill="outline" expand="block" @click="runJob('Products', jobEnums['IMP_PRDTS_BLK'])">{{ $t("Run import") }}</ion-button>
+    <ion-button size="small" fill="outline" expand="block" @click="runJob('Products')">{{ $t("Run import") }}</ion-button>
   </section>
 
   <section v-show="type === 'orders'">
@@ -49,8 +49,8 @@
       <ion-item button>
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
-        <ion-label id="open-run-time-modal" slot="end">{{ currentJob?.runTime ? getTime(currentJob?.runTime) : $t('Select run time') }}</ion-label>
-        <ion-modal trigger="open-run-time-modal">
+        <ion-label @click="setOpen(true)" slot="end">{{ currentJob?.runTime ? getTime(currentJob.runTime) : $t('Select run time') }}</ion-label>
+        <ion-modal :is-open="isOpen" @didDismiss="setOpen(false)">
           <ion-content force-overscroll="false">
             <ion-datetime
               :min="minDateTime"
@@ -90,12 +90,12 @@
       </ion-item>
     </ion-list>
 
-    <ion-button size="small" fill="outline" expand="block" @click="runJob('Orders', jobEnums['IMP_ORDERS_BLK'])">{{ $t("Run import") }}</ion-button>
+    <ion-button size="small" fill="outline" expand="block" @click="runJob('Orders')">{{ $t("Run import") }}</ion-button>
   </section>
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, ref } from "vue";
 import {
   alertController,
   IonButton,
@@ -217,12 +217,17 @@ export default defineComponent({
       header: translate('Fulfillment status'),
     };
 
+    const isOpen = ref(false);
+    const setOpen = (state: boolean) => isOpen.value = state;
+
     return {
       calendarClearOutline,
       customFulfillmentOptions,
       customOrderOptions,
       flagOutline,
+      isOpen,
       sendOutline,
+      setOpen,
       store,
       timeOutline
     };
