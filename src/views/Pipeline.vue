@@ -449,7 +449,6 @@ export default defineComponent({
       return alert.present();
     },
     async getPendingJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
-      console.log('running');
       await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString});
     },
     async getRunningJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
