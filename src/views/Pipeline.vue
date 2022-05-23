@@ -332,7 +332,7 @@ export default defineComponent({
     },
     async copyJobInformation(job: any) {
       const { Clipboard } = Plugins;
-      const jobDetails = `jobId: ${job.jobId}, jobName: ${this.getEnumName(job.systemJobEnumId)}, jobDescription: ${this.getEnumDescription(job.systemJobEnumId)}`;
+      const jobDetails = `jobId: ${job.jobId}, jobName: ${job.systemJobEnum.enumId}, jobDescription: ${job.systemJobEnum.description}`;
 
       await Clipboard.write({
         string: jobDetails
@@ -465,11 +465,10 @@ export default defineComponent({
       if(!this.isDesktop) {
         return;
       }
-
-      this.currentJob = {id: job.jobId, ...job}
-      this.title = this.getEnumName(job.systemJobEnumId)
+      this.currentJob = job
+      this.title = job.systemJobEnum.enumName
       this.currentJobStatus = job.tempExprId
-      const id = Object.entries(this.jobEnums).find((enums) => enums[1] == job.systemJobEnumId) as any
+      const id = Object.entries(this.jobEnums).find((enums) => enums[1] == job.systemJobEnum.enumId) as any
       this.freqType = id && (Object.entries(this.jobFrequencyType).find((freq) => freq[0] == id[0]) as any)[1]
 
       if (this.currentJob && !this.isJobDetailAnimationCompleted) {

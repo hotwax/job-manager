@@ -429,8 +429,8 @@ const actions: ActionTree<JobState, RootState> = {
 
   async skipJob({ commit, getters }, job) {
     let skipTime = {};
-    const integer1 = getters['getTemporalExpr'](job.tempExprId).integer1;
-    const integer2 = getters['getTemporalExpr'](job.tempExprId).integer2
+    const integer1 = job.tempExpr.integer1
+    const integer2 = job.tempExpr.integer2
     if(integer1 === 12) {
       skipTime = { minutes: integer2 }
     } else if (integer1 === 10) {
@@ -444,9 +444,9 @@ const actions: ActionTree<JobState, RootState> = {
     const time = DateTime.fromMillis(job.runTime).diff(DateTime.local()).plus(skipTime);
     const updatedRunTime = time.toMillis() + DateTime.local().toMillis()
     const payload = {
-      'jobId': job.jobId,
+      'jobId': job.id,
       'runTime': updatedRunTime,
-      'systemJobEnumId': job.systemJobEnumId,
+      'systemJobEnumId': job.systemJobEnum.enumId,
       'recurrenceTimeZone': this.state.user.current.userTimeZone,
       'statusId': "SERVICE_PENDING"
     } as any
@@ -513,8 +513,8 @@ const actions: ActionTree<JobState, RootState> = {
 
     try {
       resp = await JobService.updateJob({
-        jobId: job.jobId,
-        systemJobEnumId: job.systemJobEnumId,
+        jobId: job.id,
+        systemJobEnumId: job.systemJobEnum.enumId,
         statusId: "SERVICE_CANCELLED",
         recurrenceTimeZone: this.state.user.current.userTimeZone,
         cancelDateTime: DateTime.now().toMillis()
@@ -525,7 +525,7 @@ const actions: ActionTree<JobState, RootState> = {
         state.cached[job.systemJobEnumId].status = 'SERVICE_DRAFT'
         dispatch('fetchJobs', {
           inputFields: {
-            'systemJobEnumId': job.systemJobEnumId,
+            'systemJobEnumId': job.systemJobEnum.enumId,
             'systemJobEnumId_op': 'equals'
           }
         })
