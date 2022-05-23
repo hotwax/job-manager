@@ -610,13 +610,16 @@ ion-title {
   flex-grow: 0;
 }
 
-
-ion-toolbar > ion-icon {
+ion-footer > ion-toolbar > ion-title,
+ion-footer > ion-toolbar > ion-icon {
   position: absolute;
   background: linear-gradient(to right, var(--ion-toolbar-background, var(--ion-background-color, #fff)), var(--ion-toolbar-background, var(--ion-background-color, #fff)), transparent);
-  font-size: 24px;
   z-index: 2;
   padding: var(--spacer-sm);
+}
+
+ion-footer > ion-toolbar > ion-icon {
+  font-size: 24px;
 }
 
 ion-toolbar > div {
