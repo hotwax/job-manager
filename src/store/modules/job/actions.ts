@@ -453,7 +453,8 @@ const actions: ActionTree<JobState, RootState> = {
   async skipJob({ commit, getters }, job) {
     let skipTime = {};
     const integer1 = getters['getTemporalExpr'](job.tempExprId)?.integer1;
-    const integer2 = getters['getTemporalExpr'](job.tempExprId)?.integer2
+    const integer2 = getters['getTemporalExpr'](job.tempExprId)?.integer2;
+    
     if(integer1 === 12) {
       skipTime = { minutes: integer2 }
     } else if (integer1 === 10) {

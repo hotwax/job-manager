@@ -102,6 +102,11 @@
                 <ion-label class="ion-text-wrap">{{ batch?.jobName }}</ion-label>
                 <ion-note slot="end">{{ batch?.runTime ? getTime(batch.runTime) : '' }}</ion-note>
               </ion-item>
+              <ion-item-options side="start">
+                <ion-item-option @click="skipBatch(batch)" color="secondary" style="color:black">
+                  Skip
+                </ion-item-option>
+              </ion-item-options>
               <ion-item-options side="end">
                 <ion-item-option @click="deleteBatch(batch)" color="danger">
                   <ion-icon slot="icon-only" :icon="trash" />
@@ -146,6 +151,8 @@ import {
   modalController
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
+import { showToast } from "@/utils";
+import { translate } from '@/i18n'
 import { addCircleOutline, trash } from 'ionicons/icons';
 import BatchModal from '@/components/BatchModal.vue';
 import { useStore } from "@/store";
@@ -245,6 +252,28 @@ export default defineComponent({
           ],
         });
       return deleteBatchAlert.present();
+    },
+    async skipBatch (batch: any) {
+      const alert = await alertController
+        .create({
+          header: this.$t('Skip job'),
+          message: this.$t('Skipping will run this job at the next occurrence based on the temporal expression.'),
+          buttons: [
+            {
+              text: this.$t("Don't skip"),
+              role: 'cancel',
+            },
+            {
+              text: this.$t('Skip'),
+              handler: async () => {
+                this.store.dispatch('job/skipJob', batch).then(() => {
+                  showToast(translate("This job has been skipped"))
+                })
+              },
+            }
+          ]
+        });
+      return alert.present();
     },
     getTime (time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
