@@ -449,6 +449,7 @@ export default defineComponent({
       return alert.present();
     },
     async getPendingJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
+      console.log('running');
       await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString});
     },
     async getRunningJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
@@ -498,6 +499,10 @@ export default defineComponent({
   },
   created() {
     this.getPendingJobs();
+    emitter.on('updatePendingJobs', this.getPendingJobs);
+  },
+  unmounted() {
+    emitter.off('updatePendingJobs', this.getPendingJobs);
   },
   setup() {
     const store = useStore();
