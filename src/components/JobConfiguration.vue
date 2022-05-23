@@ -184,7 +184,7 @@ export default defineComponent({
             handler: () => {
               if (job) {
                 this.store.dispatch('job/skipJob', job).then(() => {
-                  showToast(translate("This job has been skipped!"))
+                  showToast(translate("This job has been skipped"))
                 })
               }
             }
@@ -204,7 +204,7 @@ export default defineComponent({
             text: this.$t('Cancel'),
             handler: () => {
               this.store.dispatch('job/cancelJob', job).then(() => {
-                showToast(translate("This job has been canceled!"))
+                showToast(translate("This job has been canceled"))
               });
             }
           }],
