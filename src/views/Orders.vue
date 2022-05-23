@@ -103,7 +103,7 @@
                 <ion-note slot="end">{{ batch?.runTime ? getTime(batch.runTime) : '' }}</ion-note>
               </ion-item>
               <ion-item-options side="start">
-                <ion-item-option @click="skipBatch(batch)" color="secondary" style="color:black">
+                <ion-item-option @click="skipBatch(batch)" color="secondary">
                   Skip
                 </ion-item-option>
               </ion-item-options>
@@ -151,7 +151,6 @@ import {
   modalController
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
-import { showToast } from "@/utils";
 import { translate } from '@/i18n'
 import { addCircleOutline, trash } from 'ionicons/icons';
 import BatchModal from '@/components/BatchModal.vue';
@@ -160,7 +159,7 @@ import { useRouter } from 'vue-router'
 import { mapGetters } from "vuex";
 import JobConfiguration from '@/components/JobConfiguration.vue';
 import { DateTime } from 'luxon';
-import { isFutureDate } from '@/utils';
+import { isFutureDate, showToast } from '@/utils';
 import emitter from '@/event-bus';
 
 export default defineComponent({
