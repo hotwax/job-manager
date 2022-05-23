@@ -93,6 +93,7 @@ import { showToast } from "@/utils";
 import { mapGetters, useStore } from "vuex";
 import { DateTime } from 'luxon';
 import { translate } from '@/i18n'
+import { useRouter } from "vue-router";
 
 export default defineComponent({
   name: "JobConfiguration",
@@ -183,8 +184,10 @@ export default defineComponent({
             text: this.$t('Skip'),
             handler: () => {
               if (job) {
-                this.store.dispatch('job/skipJob', job).then(() => {
-                  showToast(translate("This job has been skipped"))
+                this.store.dispatch('job/skipJob', job).then((resp) => {
+                  if(resp) {
+                    showToast(translate("This job has been skipped"));
+                  }
                 })
               }
             }
@@ -203,9 +206,7 @@ export default defineComponent({
           }, {
             text: this.$t('Cancel'),
             handler: () => {
-              this.store.dispatch('job/cancelJob', job).then(() => {
-                showToast(translate("This job has been canceled"))
-              });
+              this.store.dispatch('job/cancelJob', job)
             }
           }],
         });
@@ -222,9 +223,7 @@ export default defineComponent({
           }, {
             text: this.$t('Save'),
             handler: () => {
-              this.updateJob().then(() => {
-                showToast(translate("The changes have been saved"))
-              });
+              this.updateJob();
             }
           }]
         });
@@ -244,7 +243,13 @@ export default defineComponent({
       job['jobStatus'] = this.jobStatus !== 'SERVICE_DRAFT' ? this.jobStatus : 'HOURLY';
 
       if (job?.statusId === 'SERVICE_DRAFT') {
-        await this.store.dispatch('job/scheduleService', job)
+        await this.store.dispatch('job/scheduleService', job).then((job: any) => {
+          if(job?.jobId) {
+            showToast(translate('Service has been scheduled'));
+            const category = this.$route.params.category;
+            this.router.push({ name: 'JobDetails', params: { jobId: job?.jobId, category: category }, replace: true });
+          }
+        })
       } else if (job?.statusId === 'SERVICE_PENDING') {
         await this.store.dispatch('job/updateJob', job)
       }
@@ -264,12 +269,14 @@ export default defineComponent({
   },
   setup() {
     const store = useStore();
+    const router = useRouter();
 
     return {
       calendarClearOutline,
       timeOutline,
       timerOutline,
       store,
+      router,
       syncOutline,
       personCircleOutline
     };
