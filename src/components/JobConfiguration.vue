@@ -223,7 +223,7 @@ export default defineComponent({
             text: this.$t('Save'),
             handler: () => {
               this.updateJob().then(() => {
-                showToast(translate("The changes have been saved!"))
+                showToast(translate("The changes have been saved"))
               });
             }
           }]
