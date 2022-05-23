@@ -104,7 +104,7 @@
               </ion-item>
               <ion-item-options side="start">
                 <ion-item-option @click="skipBatch(batch)" color="secondary">
-                  Skip
+                  <ion-icon slot="icon-only" :icon="arrowRedoOutline" />
                 </ion-item-option>
               </ion-item-options>
               <ion-item-options side="end">
@@ -152,7 +152,7 @@ import {
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { translate } from '@/i18n'
-import { addCircleOutline, trash } from 'ionicons/icons';
+import { addCircleOutline, arrowRedoOutline, trash } from 'ionicons/icons';
 import BatchModal from '@/components/BatchModal.vue';
 import { useStore } from "@/store";
 import { useRouter } from 'vue-router'
@@ -371,6 +371,7 @@ export default defineComponent({
 
     return {
       addCircleOutline,
+      arrowRedoOutline,
       router,
       store,
       trash,
