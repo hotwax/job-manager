@@ -9,8 +9,8 @@
 
       <ion-item>
         <ion-icon slot="start" :icon="timeOutline" />
-        <ion-label>{{ $t("Run time") }}</ion-label>
-        <ion-label @click="() => isOpen = true" slot="end">{{ currentJob?.runTime ? getTime(currentJob.runTime) : $t('Select run time') }}</ion-label>
+        <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
+        <ion-label class="ion-text-wrap" @click="() => isOpen = true" slot="end">{{ currentJob?.runTime ? getTime(currentJob.runTime) : $t('Select run time') }}</ion-label>
         <!-- TODO: display a button when we are not having a runtime and open the datetime component
         on click of that button
         Currently, when mapping the same datetime component for label and button so it's not working so for
@@ -29,7 +29,7 @@
 
       <ion-item>
         <ion-icon slot="start" :icon="timerOutline" />
-        <ion-label>{{ $t("Schedule") }}</ion-label>
+        <ion-label class="ion-text-wrap">{{ $t("Schedule") }}</ion-label>
         <ion-select :interface-options="customPopoverOptions" interface="popover" :value="jobStatus" :placeholder="$t('Disabled')" @ionChange="($event) => jobStatus = $event['detail'].value">
           <ion-select-option v-for="freq in generateFrequencyOptions" :key="freq.value" :value="freq.value">{{ $t(freq.label) }}</ion-select-option>
         </ion-select>
@@ -301,6 +301,10 @@ ion-list {
   .mobile-only {
     display: none;
   }  
+}
+
+ion-label:nth-child(3) {
+  cursor: pointer;
 }
 
 ion-modal {
