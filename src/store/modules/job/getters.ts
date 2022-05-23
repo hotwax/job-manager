@@ -9,6 +9,18 @@ const getters: GetterTree <JobState, RootState> = {
     getPendingJobs (state){
       return state.pending.list;
     },
+    getOrderBatchJobs (state){
+      const batchJobEnums = JSON.parse(process.env?.VUE_APP_BATCH_JOB_ENUMS as string)
+      const batchJobEnumIds = Object.values(batchJobEnums)?.map((job: any) => job.id);
+
+      return batchJobEnumIds.reduce((batches: any, batchJobEnumId: string) => {
+        const jobs = state.cached[batchJobEnumId];
+        if (jobs) {
+          batches = [ ...batches, ...jobs];
+        }
+        return batches;
+      }, [])
+    },
     getTemporalExpr: (state) => (id: string): any  => {
       return state.temporalExp[id];
     },
@@ -36,6 +48,9 @@ const getters: GetterTree <JobState, RootState> = {
     getJobHistory (state){
       return state.history.list;
     },
+    getCurrentJob (state) {
+      return state.current;
+    }
   }
 
   export default getters;
