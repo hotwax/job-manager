@@ -613,7 +613,7 @@ ion-title {
 
 ion-toolbar > ion-icon {
   position: absolute;
-  background: linear-gradient(to right, white, white, transparent);
+  background: linear-gradient(to right, var(--ion-color-light), var(--ion-color-light), transparent);
   font-size: 24px;
   z-index: 2;
   padding: var(--spacer-sm);
