@@ -185,7 +185,7 @@ export default defineComponent({
             handler: async () => {
               if (job) {
                 await this.store.dispatch('job/skipJob', job).then((resp) => {
-                  if(resp) {
+                  if (resp) {
                     emitter.emit('updatePendingJobs');
                     showToast(translate("This job has been skipped!"))
                   }
@@ -208,7 +208,7 @@ export default defineComponent({
             text: this.$t('Cancel'),
             handler: async () => {
               await this.store.dispatch('job/cancelJob', job).then((resp) => {
-                if(resp) {
+                if (resp) {
                   emitter.emit('updatePendingJobs');
                   showToast(translate("This job has been canceled!"))
                 }
