@@ -182,10 +182,13 @@ export default defineComponent({
             role: 'cancel'
           }, {
             text: this.$t('Skip'),
-            handler: () => {
+            handler: async () => {
               if (job) {
-                this.store.dispatch('job/skipJob', job).then(() => {
-                  showToast(translate("This job has been skipped!"))
+                await this.store.dispatch('job/skipJob', job).then((resp) => {
+                  if(resp) {
+                    emitter.emit('updatePendingJobs');
+                    showToast(translate("This job has been skipped!"))
+                  }
                 })
               }
             }
@@ -203,10 +206,13 @@ export default defineComponent({
             role: 'cancel'
           }, {
             text: this.$t('Cancel'),
-            handler: () => {
-              this.store.dispatch('job/cancelJob', job).then(() => {
-                showToast(translate("This job has been canceled!"))
-              });
+            handler: async () => {
+              await this.store.dispatch('job/cancelJob', job).then((resp) => {
+                if(resp) {
+                  emitter.emit('updatePendingJobs');
+                  showToast(translate("This job has been canceled!"))
+                }
+              })
             }
           }],
         });
@@ -247,7 +253,7 @@ export default defineComponent({
       if (job?.statusId === 'SERVICE_DRAFT') {
         await this.store.dispatch('job/scheduleService', job)
       } else if (job?.statusId === 'SERVICE_PENDING') {
-        await this.store.dispatch('job/updateJob', job).then( async (resp) => {
+        await this.store.dispatch('job/updateJob', job).then((resp) => {
           if(resp) {
             emitter.emit('updatePendingJobs');
           }

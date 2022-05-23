@@ -358,7 +358,8 @@ export default defineComponent({
       isPendingJobsScrollable: 'job/isPendingJobsScrollable',
       isRunningJobsScrollable: 'job/isRunningJobsScrollable',
       isHistoryJobsScrollable: 'job/isHistoryJobsScrollable',
-      getPinnedJobs: 'user/getPinnedJobs'
+      getPinnedJobs: 'user/getPinnedJobs',
+      getCurrentJob: 'job/getCurrentJob',
     })
   },
   methods : {
@@ -554,12 +555,18 @@ export default defineComponent({
 
       await this.store.dispatch('user/updatePinnedJobs', { pinnedJobs: [...pinnedJobs] });
       this.updateSelectedPinnedJob(enumId)
+    },
+    updateCurrentJob() {
+      if(!this.getCurrentJob) {
+        this.currentJob = ''
+      }
     }
   },
   created() {
     this.getPendingJobs();
     this.store.dispatch('user/getPinnedJobs');
     emitter.on('updatePendingJobs', this.getPendingJobs);
+    emitter.on('updatePendingJobs', this.updateCurrentJob);
   },
   unmounted() {
     emitter.off('updatePendingJobs', this.getPendingJobs);

@@ -544,8 +544,16 @@ const actions: ActionTree<JobState, RootState> = {
       });
       if (resp.status == 200 && !hasError(resp)) {
         showToast(translate('Service updated successfully'))
-        state.cached[job.systemJobEnumId].statusId = 'SERVICE_DRAFT'
-        state.cached[job.systemJobEnumId].status = 'SERVICE_DRAFT'
+        // TODO: When we trying to cancel the job from pipeline page those jobs are not in the cached state
+        // Instead those are in pending state because of which were getting error while calling it from pipeline page.
+        const cachedJob = state.cached[job?.systemJobEnumId]
+        if(cachedJob) {
+          cachedJob.statusId = 'SERVICE_DRAFT'
+          cachedJob.status = 'SERVICE_DRAFT'
+
+          commit(types.JOB_UPDATED, { cachedJob });
+        }
+
         let jobs = await dispatch('fetchJobs', {
           inputFields: {
             'systemJobEnumId': job.systemJobEnumId,
