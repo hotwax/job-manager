@@ -232,10 +232,9 @@ export default defineComponent({
     async updateJob() {
       const job = this.job;
       job['jobStatus'] = this.jobStatus !== 'SERVICE_DRAFT' ? this.jobStatus : 'HOURLY';
-
-      if (job?.status === 'SERVICE_DRAFT') {
+      if (job?.status.id === 'SERVICE_DRAFT') {
         this.store.dispatch('job/scheduleService', job)
-      } else if (job?.status === 'SERVICE_PENDING') {
+      } else if (job?.status.id === 'SERVICE_PENDING') {
         this.store.dispatch('job/updateJob', job)
       }
     },

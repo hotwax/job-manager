@@ -343,10 +343,10 @@ const actions: ActionTree<JobState, RootState> = {
     let resp;
 
     const payload = {
-      'jobId': job.jobId,
-      'systemJobEnumId': job.systemJobEnumId,
+      'jobId': job.jobId ? job.jobId : job.id,
+      'systemJobEnumId': job.systemJobEnumId ? job.systemJobEnumId : job.systemJobEnum.enumId,
       'recurrenceTimeZone': this.state.user.current.userTimeZone,
-      'tempExprId': job.jobStatus,
+      'tempExprId': job.jobStatus ? job.jobStatus : job.status.id,
       'statusId': "SERVICE_PENDING"
     } as any
 
@@ -378,13 +378,13 @@ const actions: ActionTree<JobState, RootState> = {
     let resp;
 
     const payload = {
-      'JOB_NAME': job.jobName,
+      'JOB_NAME': job.jobName ? job.jobName : job.name,
       'SERVICE_NAME': job.serviceName,
       'SERVICE_COUNT': '0',
       'jobFields': {
         'productStoreId': this.state.user.currentEComStore.productStoreId,
-        'systemJobEnumId': job.systemJobEnumId,
-        'tempExprId': job.jobStatus,
+        'systemJobEnumId': job.systemJobEnumId ? job.systemJobEnumId : job.systemJobEnum.enumId,
+        'tempExprId': job.jobStatus ? job.jobStatus : job.status.id,
         'maxRecurrenceCount': '-1',
         'parentJobId': job.parentJobId,
         'runAsUser': 'system', // default system, but empty in run now
@@ -392,7 +392,7 @@ const actions: ActionTree<JobState, RootState> = {
       },
       'shopifyConfigId': this.state.user.shopifyConfig,
       'statusId': "SERVICE_PENDING",
-      'systemJobEnumId': job.systemJobEnumId
+      'systemJobEnumId': job.systemJobEnumId ? job.systemJobEnumId : job.systemJobEnum.enumId
     } as any
 
     // checking if the runtimeData has productStoreId, and if present then adding it on root level
@@ -429,8 +429,8 @@ const actions: ActionTree<JobState, RootState> = {
 
   async skipJob({ commit, getters }, job) {
     let skipTime = {};
-    const integer1 = job.tempExpr.integer1
-    const integer2 = job.tempExpr.integer2
+    const integer1 = job.tempExpr.integer1 ? job.tempExpr.integer1 : getters['getTemporalExpr'](job.tempExprId).integer1;
+    const integer2 = job.tempExpr.integer2 ? job.tempExpr.integer2 : getters['getTemporalExpr'](job.tempExprId).integer2;
     if(integer1 === 12) {
       skipTime = { minutes: integer2 }
     } else if (integer1 === 10) {
@@ -444,9 +444,9 @@ const actions: ActionTree<JobState, RootState> = {
     const time = DateTime.fromMillis(job.runTime).diff(DateTime.local()).plus(skipTime);
     const updatedRunTime = time.toMillis() + DateTime.local().toMillis()
     const payload = {
-      'jobId': job.id,
+      'jobId': job.id ? job.id : job.jobId,
       'runTime': updatedRunTime,
-      'systemJobEnumId': job.systemJobEnum.enumId,
+      'systemJobEnumId': job.systemJobEnum.enumId ? job.systemJobEnum.enumId : job.systemJobEnumId,
       'recurrenceTimeZone': this.state.user.current.userTimeZone,
       'statusId': "SERVICE_PENDING"
     } as any
@@ -513,8 +513,8 @@ const actions: ActionTree<JobState, RootState> = {
 
     try {
       resp = await JobService.updateJob({
-        jobId: job.id,
-        systemJobEnumId: job.systemJobEnum.enumId,
+        jobId: job.id ? job.id : job.jobId,
+        systemJobEnumId: job.systemJobEnum.enumId ? job.systemJobEnum.enumId : job.systemJobEnumId,
         statusId: "SERVICE_CANCELLED",
         recurrenceTimeZone: this.state.user.current.userTimeZone,
         cancelDateTime: DateTime.now().toMillis()
@@ -525,7 +525,7 @@ const actions: ActionTree<JobState, RootState> = {
         state.cached[job.systemJobEnumId].status = 'SERVICE_DRAFT'
         dispatch('fetchJobs', {
           inputFields: {
-            'systemJobEnumId': job.systemJobEnum.enumId,
+            'systemJobEnumId': job.systemJobEnum.enumId ? job.systemJobEnum.enumId : job.systemJobEnumId,
             'systemJobEnumId_op': 'equals'
           }
         })
