@@ -297,10 +297,10 @@ export default defineComponent({
   },
   mounted () {
     this.fetchJobs();
-    emitter.on("selectedShop", this.fetchJobs);
+    emitter.on("productStoreChanged", this.fetchJobs);
   },
   unmounted(){
-    emitter.off("selectedShop", this.fetchJobs);
+    emitter.off("productStoreChanged", this.fetchJobs);
   },
   setup() {
     const store = useStore();

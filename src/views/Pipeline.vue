@@ -504,10 +504,10 @@ export default defineComponent({
   },
   created() {
     this.getPendingJobs();
-    emitter.on("selectedShop", this.refreshJobs);
+    emitter.on("productStoreChanged", this.refreshJobs);
   },
   unmounted(){
-    emitter.off("selectedShop", this.refreshJobs);
+    emitter.off("productStoreChanged", this.refreshJobs);
   },
   setup() {
     const store = useStore();
