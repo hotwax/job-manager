@@ -450,7 +450,7 @@ const actions: ActionTree<JobState, RootState> = {
     commit(types.JOB_UPDATED_BULK, {})
   },
 
-  async skipJob({ commit, getters }, job) {
+  async skipJob({ commit, dispatch, getters }, job) {
     let skipTime = {};
     const integer1 = getters['getTemporalExpr'](job.tempExprId)?.integer1;
     const integer2 = getters['getTemporalExpr'](job.tempExprId)?.integer2
@@ -475,7 +475,18 @@ const actions: ActionTree<JobState, RootState> = {
     } as any
 
     const resp = await JobService.updateJob(payload)
-    if (resp.status === 200 && !hasError(resp) && resp.data.docs) {
+    if (resp.status === 200 && !hasError(resp) && resp.data?.successMessage) {
+      let jobs = await dispatch('fetchJobs', {
+        inputFields: {
+          'systemJobEnumId': job.systemJobEnumId,
+          'systemJobEnumId_op': 'equals'
+        }
+      })
+      if (jobs.status === 200 && !hasError(jobs) && jobs.data?.docs.length) {
+        jobs = jobs.data?.docs;
+        const currentJob = jobs.find((currentJob: any) => currentJob?.jobId === job?.jobId);
+        commit(types.JOB_CURRENT_UPDATED, currentJob);
+      }
       commit(types.JOB_UPDATED, { job });
     }
     return resp;
@@ -544,8 +555,8 @@ const actions: ActionTree<JobState, RootState> = {
       });
       if (resp.status == 200 && !hasError(resp)) {
         showToast(translate('Service updated successfully'))
-        // TODO: When we trying to cancel the job from pipeline page those jobs are not in the cached state
-        // Instead those are in pending state because of which were getting error while calling it from pipeline page.
+        // TODO: When we are trying to cancel the job from pipeline page those jobs are not in the cached state, so we need to
+        // handle this case because we were getting error :- "can not set status and statusId for pending jobs in cached state".
         const cachedJob = state.cached[job?.systemJobEnumId]
         if(cachedJob) {
           cachedJob.statusId = 'SERVICE_DRAFT'

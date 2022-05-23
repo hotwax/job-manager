@@ -559,6 +559,8 @@ export default defineComponent({
     updateCurrentJob() {
       if(!this.getCurrentJob) {
         this.currentJob = ''
+      } else {
+        this.viewJobConfiguration(this.getCurrentJob);
       }
     }
   },
