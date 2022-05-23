@@ -10,13 +10,13 @@
       <ion-item>
         <ion-icon slot="start" :icon="calendarClearOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Last run") }}</ion-label>
-        <ion-label slot="end">{{ currentJob?.lastUpdatedStamp ? getTime(currentJob?.lastUpdatedStamp) : $t('No previous occurrence') }}</ion-label>
+        <ion-label class="ion-text-wrap" slot="end">{{ currentJob?.lastUpdatedStamp ? getTime(currentJob?.lastUpdatedStamp) : $t('No previous occurrence') }}</ion-label>
       </ion-item>
 
-      <ion-item button>
+      <ion-item>
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
-        <ion-label @click="() => isOpen = true" slot="end">{{ currentJob?.runTime ? getTime(currentJob?.runTime) : $t('Select run time') }}</ion-label>
+        <ion-label class="ion-text-wrap" @click="() => isOpen = true" slot="end">{{ currentJob?.runTime ? getTime(currentJob?.runTime) : $t('Select run time') }}</ion-label>
         <ion-modal :is-open="isOpen" @didDismiss="() => isOpen = false">
           <ion-content force-overscroll="false">
             <ion-datetime
@@ -234,6 +234,10 @@ export default defineComponent({
 <style scoped>
 ion-list {
   margin: var(--spacer-base) 0;
+}
+
+ion-item:nth-child(2) > ion-label:nth-child(3) {
+  cursor: pointer;
 }
 
 @media (min-width: 991px) {  
