@@ -48,11 +48,47 @@ const getEComStores = async (payload: any): Promise<any> => {
   });
 }
 
+const getPinnedJobs = async (payload: any): Promise<any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  });
+}
+
+const updatePinnedJobPref = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/updateSearchPreference",
+    method: "post",
+    data: payload
+  });
+}
+
+const createPinnedJobPref = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/createSearchPreference",
+    method: "post",
+    data: payload
+  });
+}
+
+const associatePinnedJobPrefToUser = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/createUserSearchPreference",
+    method: "post",
+    data: payload
+  });
+}
+
 export const UserService = {
+    createPinnedJobPref,
     login,
     getAvailableTimeZones,
     getEComStores,
     getProfile,
     getShopifyConfig,
+    getPinnedJobs,
+    associatePinnedJobPrefToUser,
     setUserTimeZone,
+    updatePinnedJobPref
 }

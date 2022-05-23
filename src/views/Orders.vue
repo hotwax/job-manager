@@ -89,10 +89,6 @@
               <ion-label class="ion-text-wrap">{{ $t("Rejected orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('REJ_ORDR') }}</ion-label>
             </ion-item>
-            <ion-item @click="viewJobConfiguration('UNFIL_ORDERS', 'Unfillable orders', getJobStatus(this.jobEnums['UNFIL_ORDERS']))" detail button>
-              <ion-label class="ion-text-wrap">{{ $t("Unfillable orders") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('UNFIL_ORDERS') }} </ion-label>
-            </ion-item>
             <ion-item-divider>
               <ion-label class="ion-text-wrap">{{ $t("Batches") }}</ion-label>
               <ion-button fill="clear" @click="addBatch()" slot="end">
@@ -101,8 +97,8 @@
               </ion-button>
             </ion-item-divider>
 
-            <ion-item-sliding v-for="batch in getJob(jobEnums['BTCH_BRKR_ORD'])" :key="batch?.id" button detail v-show="batch?.status === 'SERVICE_PENDING'">
-              <ion-item @click="editBatch(batch?.id)">
+            <ion-item-sliding v-for="batch in orderBatchJobs" :key="batch?.id" button detail v-show="batch?.status === 'SERVICE_PENDING'">
+              <ion-item @click="editBatch(batch.id, batch.systemJobEnumId)">
                 <ion-label class="ion-text-wrap">{{ batch?.jobName }}</ion-label>
                 <ion-note slot="end">{{ batch?.runTime ? getTime(batch.runTime) : '' }}</ion-note>
               </ion-item>
@@ -115,8 +111,8 @@
           </ion-card>
         </section>
 
-        <aside class="desktop-only" v-show="currentJob">
-          <JobConfiguration :title="title" :job="currentJob" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
+        <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
+          <JobConfiguration :title="title" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
         </aside>
       </main>
     </ion-content>
@@ -146,12 +142,14 @@ import {
   IonTitle,
   IonToggle,
   IonToolbar,
+  isPlatform,
   modalController
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { addCircleOutline, trash } from 'ionicons/icons';
 import BatchModal from '@/components/BatchModal.vue';
 import { useStore } from "@/store";
+import { useRouter } from 'vue-router'
 import { mapGetters } from "vuex";
 import JobConfiguration from '@/components/JobConfiguration.vue';
 import { DateTime } from 'luxon';
@@ -186,18 +184,21 @@ export default defineComponent({
   data() {
     return {
       jobEnums: JSON.parse(process.env?.VUE_APP_ODR_JOB_ENUMS as string) as any,
+      batchJobEnums: JSON.parse(process.env?.VUE_APP_BATCH_JOB_ENUMS as string) as any,
       jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
       currentJob: '' as any,
       title: 'New orders',
       currentJobStatus: '',
       freqType: '',
-      isJobDetailAnimationCompleted: false
+      isJobDetailAnimationCompleted: false,
+      isDesktop: isPlatform('desktop')
     }
   },
   computed: {
     ...mapGetters({
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
+      orderBatchJobs: "job/getOrderBatchJobs",
       shopifyConfigId: 'user/getShopifyConfigId',
       currentEComStore: 'user/getCurrentEComStore',
       getTemporalExpr: 'job/getTemporalExpr'
@@ -214,15 +215,14 @@ export default defineComponent({
   methods: {  
     async addBatch() {
       const batchmodal = await modalController.create({
-        component: BatchModal,
-        componentProps: { enum: this.jobEnums['BTCH_BRKR_ORD'] }
+        component: BatchModal
       });
       return batchmodal.present();
     },
-    async editBatch(id: string) {
+    async editBatch(id: string, enumId: string) {
       const batchmodal = await modalController.create({
         component: BatchModal,
-        componentProps: { id, enum: this.jobEnums['BTCH_BRKR_ORD'] }
+        componentProps: {id, enumId}
       });
       return batchmodal.present();
     },
@@ -273,7 +273,7 @@ export default defineComponent({
         this.store.dispatch('job/updateJob', job)
       }
     },
-    viewJobConfiguration(id: string, title: string, status: string) {
+    async viewJobConfiguration(id: string, title: string, status: string) {
       this.currentJob = this.getJob(this.jobEnums[id])
       this.title = title
       this.currentJobStatus = status
@@ -282,6 +282,12 @@ export default defineComponent({
       // if job runTime is not a valid date then making runTime as empty
       if (this.currentJob?.runTime && !isFutureDate(this.currentJob?.runTime)) {
         this.currentJob.runTime = ''
+      }
+
+      await this.store.dispatch('job/updateCurrentJob', { job: this.currentJob });
+      if(!this.isDesktop && this.currentJob) {
+        this.router.push({name: 'JobDetails', params: { title: this.title, jobId: this.currentJob.jobId, category: "orders"}});
+        return;
       }
       if (this.currentJob && !this.isJobDetailAnimationCompleted) {
         emitter.emit('playAnimation');
@@ -324,11 +330,20 @@ export default defineComponent({
         "systemJobEnumId_op": "in"
       }
     });
+    this.store.dispatch("job/fetchJobs", {
+      "inputFields":{
+        "systemJobEnumId": Object.values(this.batchJobEnums).map((jobEnum: any) => jobEnum.id),
+        "systemJobEnumId_op": "in"
+      }
+    });
   },
   setup() {
     const store = useStore();
+    const router = useRouter();
+
     return {
       addCircleOutline,
+      router,
       store,
       trash,
     };
