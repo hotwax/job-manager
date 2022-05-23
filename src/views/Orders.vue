@@ -97,8 +97,8 @@
               </ion-button>
             </ion-item-divider>
 
-            <ion-item-sliding v-for="batch in orderBatchJobs" :key="batch?.id" button detail v-show="batch?.status === 'SERVICE_PENDING'">
-              <ion-item @click="editBatch(batch.id, batch.systemJobEnumId)">
+            <ion-item-sliding v-for="batch in orderBatchJobs" :key="batch?.id" detail v-show="batch?.status === 'SERVICE_PENDING'">
+              <ion-item @click="editBatch(batch.id, batch.systemJobEnumId)" button>
                 <ion-label class="ion-text-wrap">{{ batch?.jobName }}</ion-label>
                 <ion-note slot="end">{{ batch?.runTime ? getTime(batch.runTime) : '' }}</ion-note>
               </ion-item>
