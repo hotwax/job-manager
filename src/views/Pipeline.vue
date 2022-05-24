@@ -547,10 +547,8 @@ export default defineComponent({
     },
     async updatePinnedJobs(enumId: any) {
       const pinnedJobs = new Set(this.getPinnedJobs);
-      if(pinnedJobs.has(enumId)) {
+      if (pinnedJobs.has(enumId)) {
         pinnedJobs.delete(enumId);
-      } else {
-        pinnedJobs.add(enumId);
       }
 
       await this.store.dispatch('user/updatePinnedJobs', { pinnedJobs: [...pinnedJobs] });
@@ -560,6 +558,14 @@ export default defineComponent({
   created() {
     this.getPendingJobs();
     this.store.dispatch('user/getPinnedJobs');
+  },
+  mounted(){
+    emitter.on("unSelectPinJob", (enumId)=> {
+      (this as any).updateSelectedPinnedJob(enumId);
+      });
+  },
+  unmounted(){
+    emitter.off("unSelectPinJob", (this as any).updateSelectedPinnedJob);
   },
   setup() {
     const router = useRouter();
