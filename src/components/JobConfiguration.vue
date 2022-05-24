@@ -211,7 +211,6 @@ export default defineComponent({
               this.store.dispatch('job/cancelJob', job).then((resp) => {
                 if(resp.data?.successMessage) {
                   emitter.emit('jobUpdated');
-                  showToast(translate("This job has been canceled!"))
                   const category = this.$route.params?.category;
                   if (category) {
                     this.router.push({ name: 'JobDetails', params: { jobId: job?.systemJobEnumId, category: category }, replace: true });

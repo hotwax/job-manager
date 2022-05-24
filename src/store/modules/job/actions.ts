@@ -376,7 +376,6 @@ const actions: ActionTree<JobState, RootState> = {
     try {
       resp = await JobService.updateJob(payload)
       if (resp.status === 200 && !hasError(resp) && resp.data.successMessage) {
-        showToast(translate('Service updated successfully'))
         let jobs = await dispatch('fetchJobs', {
           inputFields: {
             'systemJobEnumId': payload.systemJobEnumId,
@@ -388,6 +387,7 @@ const actions: ActionTree<JobState, RootState> = {
           const job = jobs.find((job: any) => job?.jobId === payload.jobId);
           commit(types.JOB_CURRENT_UPDATED, job);
         }
+        showToast(translate('Service updated successfully'))
       } else {
         showToast(translate('Something went wrong'))
       }
@@ -574,7 +574,6 @@ const actions: ActionTree<JobState, RootState> = {
         cancelDateTime: DateTime.now().toMillis()
       });
       if (resp.status == 200 && !hasError(resp)) {
-        showToast(translate('Service updated successfully'))
         // TODO: When we are trying to cancel the job from pipeline page those jobs are not in the cached state, so we need to
         // handle this case because we were getting error :- "can not set status and statusId for pending jobs in cached state".
         const cachedJob = state.cached[job?.systemJobEnumId]
@@ -596,6 +595,7 @@ const actions: ActionTree<JobState, RootState> = {
           const currentJob = jobs.find((currentJob: any) => currentJob?.systemJobEnumId === job?.systemJobEnumId);
           commit(types.JOB_CURRENT_UPDATED, currentJob);
         }
+        showToast(translate('Service updated successfully'))
       } else {
         showToast(translate('Something went wrong'))
       }
