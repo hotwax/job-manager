@@ -94,6 +94,7 @@ import { mapGetters, useStore } from "vuex";
 import { DateTime } from 'luxon';
 import { translate } from '@/i18n'
 import { useRouter } from "vue-router";
+import emitter from '@/event-bus';
 
 export default defineComponent({
   name: "JobConfiguration",
@@ -185,8 +186,9 @@ export default defineComponent({
             handler: () => {
               if (job) {
                 this.store.dispatch('job/skipJob', job).then((resp) => {
-                  if(resp) {
-                    showToast(translate("This job has been skipped"));
+                  if (resp) {
+                    emitter.emit('jobUpdated');
+                    showToast(translate("This job has been skipped!"))
                   }
                 })
               }
@@ -208,6 +210,8 @@ export default defineComponent({
             handler: () => {
               this.store.dispatch('job/cancelJob', job).then((resp) => {
                 if(resp.data?.successMessage) {
+                  emitter.emit('jobUpdated');
+                  showToast(translate("This job has been canceled!"))
                   const category = this.$route.params?.category;
                   if (category) {
                     this.router.push({ name: 'JobDetails', params: { jobId: job?.systemJobEnumId, category: category }, replace: true });
@@ -260,7 +264,11 @@ export default defineComponent({
           }
         })
       } else if (job?.statusId === 'SERVICE_PENDING') {
-        await this.store.dispatch('job/updateJob', job)
+        this.store.dispatch('job/updateJob', job).then((resp) => {
+          if (resp) {
+            emitter.emit('jobUpdated');
+          }
+        })
       }
     },
     getTime (time: any) {

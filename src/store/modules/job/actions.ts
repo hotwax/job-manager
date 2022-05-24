@@ -483,7 +483,18 @@ const actions: ActionTree<JobState, RootState> = {
     } as any
 
     const resp = await JobService.updateJob(payload)
-    if (resp.status === 200 && !hasError(resp) && resp.data.docs) {
+    if (resp.status === 200 && !hasError(resp) && resp.data?.successMessage) {
+      let jobs = await dispatch('fetchJobs', {
+        inputFields: {
+          'systemJobEnumId': job.systemJobEnumId,
+          'systemJobEnumId_op': 'equals'
+        }
+      })
+      if (jobs.status === 200 && !hasError(jobs) && jobs.data?.docs.length) {
+        jobs = jobs.data?.docs;
+        const currentJob = jobs.find((currentJob: any) => currentJob?.jobId === job?.jobId);
+        commit(types.JOB_CURRENT_UPDATED, currentJob);
+      }
       commit(types.JOB_UPDATED, { job });
     }
 
