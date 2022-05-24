@@ -253,7 +253,7 @@ export default defineComponent({
       return deleteBatchAlert.present();
     },
     async skipBatch (batch: any) {
-      const alert = await alertController
+      const skipJobAlert = await alertController
         .create({
           header: this.$t('Skip job'),
           message: this.$t('Skipping will run this job at the next occurrence based on the temporal expression.'),
@@ -276,7 +276,7 @@ export default defineComponent({
             }
           ]
         });
-      return alert.present();
+      return skipJobAlert.present();
     },
     getTime (time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
