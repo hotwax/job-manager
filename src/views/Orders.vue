@@ -265,8 +265,14 @@ export default defineComponent({
             {
               text: this.$t('Skip'),
               handler: async () => {
-                this.store.dispatch('job/skipJob', batch).then(() => {
-                  showToast(translate("This job has been skipped"))
+                this.store.dispatch('job/skipJob', batch).then((res) => {
+                  if (res.status === 200) {
+                    showToast(translate("This job has been skipped"));
+                  }
+                  else {
+                    showToast(translate("This job schedule cannot be skipped"));
+                    return;
+                  }
                 })
               },
             }
