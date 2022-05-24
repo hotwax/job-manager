@@ -18,7 +18,7 @@
 
     <ion-item :disabled="currentBatch?.jobId">
       <ion-label>{{ $t('Order queue') }}</ion-label>
-      <ion-select slot="end" interface="popover" v-model="batchFacilityId">
+      <ion-select slot="end" interface="popover" :value="this.currentScheduledBatch?.facilityId || batchFacilityId">
         <ion-select-option value="_NA_">{{ $t("Brokering queue") }}</ion-select-option>
         <ion-select-option value="PRE_ORDER_PARKING">{{ $t("Pre-order parking") }}</ion-select-option>
         <ion-select-option value="BACKORDER_PARKING">{{ $t("Back-order parking") }}</ion-select-option>
@@ -27,11 +27,11 @@
     <ion-radio-group>
       <ion-item :disabled="currentBatch?.jobId">
         <ion-label>{{ $t('New orders') }}</ion-label>
-        <ion-radio :checked="this.currentBatchDetail?.unfillable === false" slot="start" @click="unfillableOrder = false" color="secondary"/>
+        <ion-radio :checked="this.currentScheduledBatch?.unfillable === false" slot="start" @click="unfillableOrder = false" color="secondary"/>
       </ion-item>
       <ion-item :disabled="currentBatch?.jobId">
         <ion-label>{{ $t('Unfillable orders') }}</ion-label>
-        <ion-radio :checked="this.currentBatchDetail?.unfillable === true" slot="start" @click="unfillableOrder = true" color="secondary"/>
+        <ion-radio :checked="this.currentScheduledBatch?.unfillable === true" slot="start" @click="unfillableOrder = true" color="secondary"/>
       </ion-item>
     </ion-radio-group>
     
@@ -104,7 +104,7 @@ export default defineComponent({
       batchFacilityId: '_NA_' as string,
       currentDateTime: '' as string,
       jobRunTime: '' as any,
-      currentBatchDetail: {} as object 
+      currentScheduledBatch: {} as object 
     }
   },
   computed: {
@@ -122,9 +122,7 @@ export default defineComponent({
     getCurrentBatch() {
       this.currentBatch = this.getJob(this.enumId)?.find((job: any) => job.id === this.id)
       this.jobName = this.currentBatch?.jobName;
-      this.currentBatchDetail = (this as any).jobEnums[this.currentBatch?.enumId];
-      console.log(this.currentBatchDetail);
-      
+      this.currentScheduledBatch = (this as any).jobEnums[this.currentBatch?.enumId];
     },
     getDateTime(time: any) {
       return DateTime.fromMillis(time)
