@@ -556,19 +556,20 @@ export default defineComponent({
       await this.store.dispatch('user/updatePinnedJobs', { pinnedJobs: [...pinnedJobs] });
       this.updateSelectedPinnedJob(enumId)
     },
-    updateCurrentJob() {
-      if(!this.getCurrentJob) {
-        this.currentJob = ''
-      } else {
-        this.viewJobConfiguration(this.getCurrentJob);
+    updateJobs() {
+      if (this.isDesktop) {
+        this.currentJob = this.getCurrentJob ? this.getCurrentJob : '';
+        if (this.currentJob) {
+          this.viewJobConfiguration(this.getCurrentJob);
+        }
+        this.getPendingJobs();
       }
     }
   },
   created() {
     this.getPendingJobs();
     this.store.dispatch('user/getPinnedJobs');
-    emitter.on('jobUpdated', this.getPendingJobs);
-    emitter.on('jobUpdated', this.updateCurrentJob);
+    emitter.on('jobUpdated', this.updateJobs);
   },
   unmounted() {
     emitter.off('jobUpdated', this.getPendingJobs);
