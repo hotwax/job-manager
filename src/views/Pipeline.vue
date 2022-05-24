@@ -613,13 +613,17 @@ ion-title {
 ion-footer > ion-toolbar > ion-title,
 ion-footer > ion-toolbar > ion-icon {
   position: absolute;
-  background: linear-gradient(to right, var(--ion-toolbar-background, var(--ion-background-color, #fff)), var(--ion-toolbar-background, var(--ion-background-color, #fff)), transparent);
   z-index: 2;
   padding: var(--spacer-sm);
 }
 
+ion-footer > ion-toolbar > ion-title {
+  background: linear-gradient(to right, var(--ion-toolbar-background, var(--ion-background-color, #fff)) 85%, transparent);
+}
+
 ion-footer > ion-toolbar > ion-icon {
   font-size: 24px;
+  background: linear-gradient(to right, var(--ion-toolbar-background, var(--ion-background-color, #fff)) 50%, transparent);
 }
 
 ion-toolbar > div {
@@ -628,8 +632,10 @@ ion-toolbar > div {
   overflow-x: auto;
   max-width: max-content;
   margin-left: auto;
-  padding-left: 20px;
+}
 
+ion-toolbar > div > ion-chip:first-child {
+  margin-left: var(--spacer-2xl);
 }
 
 ion-chip {
@@ -639,6 +645,10 @@ ion-chip {
 @media (min-width: 991px) {
   ion-header > div {
     display: flex;
+  }
+
+  ion-toolbar > div > ion-chip:first-child {
+    margin-left: var(--spacer-3xl);
   }
 }
 </style>
