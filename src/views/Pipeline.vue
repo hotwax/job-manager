@@ -368,7 +368,7 @@ export default defineComponent({
     updateSelectedPinnedJob(jobEnumId: any) {
       const index = (this as any).selectedPinnedJobs.indexOf(jobEnumId);
       const pinnedJobs = new Set(this.getPinnedJobs);
-      if (index != -1 || !pinnedJobs.has(jobEnumId)) {
+      if ((this as any).selectedPinnedJobs.includes(jobEnumId) || !pinnedJobs.has(jobEnumId)) {
        if (index != -1) (this as any).selectedPinnedJobs.splice(index, 1)
       } else {
         (this as any).selectedPinnedJobs.push(jobEnumId)
