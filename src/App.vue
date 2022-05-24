@@ -12,8 +12,9 @@ import { createAnimation, IonApp, IonRouterOutlet, IonSplitPane } from '@ionic/v
 import { defineComponent } from 'vue';
 import Menu from '@/components/Menu.vue';
 import { loadingController } from '@ionic/vue';
-import { useStore } from 'vuex';
+import { mapGetters, useStore } from 'vuex';
 import emitter from "@/event-bus"
+import { Settings } from 'luxon'
 export default defineComponent({
   name: 'App',
   components: {
@@ -26,6 +27,11 @@ export default defineComponent({
     return {
       loader: null as any
     }
+  },
+  computed: {
+    ...mapGetters({
+      userProfile: 'user/getUserProfile',
+    })
   },
   methods: {
     async presentLoader() {
@@ -79,6 +85,9 @@ export default defineComponent({
     emitter.on('presentLoader', this.presentLoader);
     emitter.on('dismissLoader', this.dismissLoader);
     emitter.on('playAnimation', this.playAnimation);
+    if (this.userProfile && this.userProfile.userTimeZone) {
+      Settings.defaultZone = this.userProfile.userTimeZone;
+    }
   },
   unmounted() {
     emitter.off('presentLoader', this.presentLoader);
