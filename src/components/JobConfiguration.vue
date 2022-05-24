@@ -208,8 +208,10 @@ export default defineComponent({
             handler: () => {
               this.store.dispatch('job/cancelJob', job).then((resp) => {
                 if(resp.data?.successMessage) {
-                  const category = this.$route.params.category;
-                  this.router.push({ name: 'JobDetails', params: { jobId: job?.systemJobEnumId, category: category }, replace: true });
+                  const category = this.$route.params?.category;
+                  if (category) {
+                    this.router.push({ name: 'JobDetails', params: { jobId: job?.systemJobEnumId, category: category }, replace: true });
+                  }
                 }
               })
             }
@@ -248,11 +250,13 @@ export default defineComponent({
       job['jobStatus'] = this.jobStatus !== 'SERVICE_DRAFT' ? this.jobStatus : 'HOURLY';
 
       if (job?.statusId === 'SERVICE_DRAFT') {
-        await this.store.dispatch('job/scheduleService', job).then((job: any) => {
+        this.store.dispatch('job/scheduleService', job).then((job: any) => {
           if(job?.jobId) {
             showToast(translate('Service has been scheduled'));
             const category = this.$route.params.category;
-            this.router.push({ name: 'JobDetails', params: { jobId: job?.jobId, category: category }, replace: true });
+            if (category) {
+              this.router.push({ name: 'JobDetails', params: { jobId: job?.jobId, category: category }, replace: true });
+            }
           }
         })
       } else if (job?.statusId === 'SERVICE_PENDING') {
