@@ -567,11 +567,11 @@ export default defineComponent({
   created() {
     this.getPendingJobs();
     this.store.dispatch('user/getPinnedJobs');
-    emitter.on('updatePendingJobs', this.getPendingJobs);
-    emitter.on('updatePendingJobs', this.updateCurrentJob);
+    emitter.on('jobUpdated', this.getPendingJobs);
+    emitter.on('jobUpdated', this.updateCurrentJob);
   },
   unmounted() {
-    emitter.off('updatePendingJobs', this.getPendingJobs);
+    emitter.off('jobUpdated', this.getPendingJobs);
   },
   setup() {
     const router = useRouter();

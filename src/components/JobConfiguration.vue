@@ -186,7 +186,7 @@ export default defineComponent({
               if (job) {
                 this.store.dispatch('job/skipJob', job).then((resp) => {
                   if (resp) {
-                    emitter.emit('updatePendingJobs');
+                    emitter.emit('jobUpdated');
                     showToast(translate("This job has been skipped!"))
                   }
                 })
@@ -209,7 +209,7 @@ export default defineComponent({
             handler: () => {
               this.store.dispatch('job/cancelJob', job).then((resp) => {
                 if (resp) {
-                  emitter.emit('updatePendingJobs');
+                  emitter.emit('jobUpdated');
                   showToast(translate("This job has been canceled!"))
                 }
               })
@@ -254,8 +254,8 @@ export default defineComponent({
         await this.store.dispatch('job/scheduleService', job)
       } else if (job?.statusId === 'SERVICE_PENDING') {
         this.store.dispatch('job/updateJob', job).then((resp) => {
-          if(resp) {
-            emitter.emit('updatePendingJobs');
+          if (resp) {
+            emitter.emit('jobUpdated');
           }
         })
       }
