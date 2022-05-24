@@ -225,8 +225,8 @@
           </div>          
         </section>
 
-        <aside class="desktop-only" v-if="isDesktop" v-show="segmentSelected === 'pending' && isCurrentJob">
-          <JobConfiguration :title="title" :status="currentJobStatus" :type="freqType" :key="isCurrentJob"/>
+        <aside class="desktop-only" v-if="isDesktop" v-show="segmentSelected === 'pending' && currentJob && Object.keys(currentJob).length">
+          <JobConfiguration :title="title" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
         </aside>
       </main>
     </ion-content>
@@ -336,7 +336,6 @@ export default defineComponent({
         ...JSON.parse(process.env?.VUE_APP_INV_JOB_ENUMS as string) as any,
         ...JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
       },
-      isCurrentJob: false,
       title: '',
       currentJobStatus: '',
       freqType: '' as any,
@@ -528,7 +527,6 @@ export default defineComponent({
        return alert.present();
     },
     async viewJobConfiguration(job: any) {
-      this.isCurrentJob = true
       this.title = this.getEnumName(job.systemJobEnumId)
       this.currentJobStatus = job.tempExprId
       const id = Object.entries(this.jobEnums).find((enums) => enums[1] == job.systemJobEnumId) as any
@@ -560,8 +558,6 @@ export default defineComponent({
       if (this.isDesktop) {
         if (this.currentJob) {
           this.viewJobConfiguration(this.currentJob);
-        } else {
-          this.isCurrentJob = false
         }
         this.getPendingJobs();
       }
