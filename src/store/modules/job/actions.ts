@@ -583,7 +583,7 @@ const actions: ActionTree<JobState, RootState> = {
         if (jobs.status === 200 && !hasError(jobs) && jobs.data?.docs.length) {
           jobs = jobs.data?.docs;
           const currentJob = jobs.find((currentJob: any) => currentJob?.systemJobEnumId === job?.systemJobEnumId);
-          commit(types.JOB_CURRENT_UPDATED, currentJob ? currentJob : {});
+          commit(types.JOB_CURRENT_UPDATED, currentJob);
         }
       } else {
         showToast(translate('Something went wrong'))
