@@ -159,7 +159,7 @@ import { useRouter } from 'vue-router'
 import { mapGetters } from "vuex";
 import JobConfiguration from '@/components/JobConfiguration.vue';
 import { DateTime } from 'luxon';
-import { isFutureDate, showToast } from '@/utils';
+import { hasError, isFutureDate, showToast } from '@/utils';
 import emitter from '@/event-bus';
 
 export default defineComponent({
@@ -265,13 +265,11 @@ export default defineComponent({
             {
               text: this.$t('Skip'),
               handler: async () => {
-                this.store.dispatch('job/skipJob', batch).then((res) => {
-                  if (res.status === 200) {
+                this.store.dispatch('job/skipJob', batch).then((resp) => {
+                  if (resp.status === 200 && !hasError(resp)) {
                     showToast(translate("This job has been skipped"));
-                  }
-                  else {
+                  } else {
                     showToast(translate("This job schedule cannot be skipped"));
-                    return;
                   }
                 })
               },
