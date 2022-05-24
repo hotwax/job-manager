@@ -206,7 +206,12 @@ export default defineComponent({
           }, {
             text: this.$t('Cancel'),
             handler: () => {
-              this.store.dispatch('job/cancelJob', job)
+              this.store.dispatch('job/cancelJob', job).then((resp) => {
+                if(resp.data?.successMessage) {
+                  const category = this.$route.params.category;
+                  this.router.push({ name: 'JobDetails', params: { jobId: job?.systemJobEnumId, category: category }, replace: true });
+                }
+              })
             }
           }],
         });
