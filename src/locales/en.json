@@ -157,6 +157,8 @@
   "The changes have been saved": "The changes have been saved",
   "There are no jobs pending right now": "There are no jobs pending right now",
   "There are no jobs running right now": "There are no jobs running right now",
+  "This job has been skipped": "This job has been skipped",
+  "This job has been canceled": "This job has been canceled",
   "This job may take several minutes to run. Wait till the job has moved to the pipeline history before checking results.": "This job may take several minutes to run.{ space } Wait till the job has moved to the pipeline history before checking results.",
   "This job schedule cannot be skipped": "This job schedule cannot be skipped",
   "This job will be scheduled to run as soon as possible. There may not be enough time to revert this action.": "This job will be scheduled to run as soon as possible.{ space } There may not be enough time to revert this action.",
