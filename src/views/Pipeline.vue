@@ -566,6 +566,7 @@ export default defineComponent({
   created() {
     this.getPendingJobs();
     this.store.dispatch('user/getPinnedJobs');
+    this.store.dispatch('job/updateCurrentJob', { job: {} });
     emitter.on('jobUpdated', this.updateJobs);
   },
   unmounted() {
