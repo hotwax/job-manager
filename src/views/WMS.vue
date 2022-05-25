@@ -50,12 +50,15 @@
 
 <script lang="ts">
 import {
+  IonButton,  
   IonCard,
   IonCardHeader,
   IonCardTitle,
   IonContent,
   IonHeader,
+  IonIcon,
   IonItem,
+  IonItemDivider,
   IonLabel,
   IonMenuButton,
   IonPage,
@@ -68,12 +71,15 @@ import { addCircleOutline } from 'ionicons/icons'
 export default defineComponent({
   name: 'WMS',
   components: {
+    IonButton,  
     IonCard,
     IonCardHeader,
     IonCardTitle,
     IonContent,
     IonHeader,
+    IonIcon,
     IonItem,
+    IonItemDivider,
     IonLabel,
     IonMenuButton,
     IonPage,
@@ -87,3 +93,11 @@ export default defineComponent({
   }
 });
 </script>
+
+<style scoped>
+@media (min-width: 991px) {
+  section {
+    width: 444px;
+  } 
+}
+</style>

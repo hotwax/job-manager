@@ -74,3 +74,11 @@ export default defineComponent({
   }
 });
 </script>
+
+<style scoped>
+@media (min-width: 991px) {
+  section {
+    width: 444px;
+  } 
+}
+</style>
