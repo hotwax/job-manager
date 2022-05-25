@@ -8,6 +8,9 @@ import Orders from '@/views/Orders.vue'
 import JobDetails from '@/views/JobDetails.vue'
 import InitialLoad from '@/views/InitialLoad.vue'
 import Login from '@/views/Login.vue'
+import ERP from '@/views/ERP.vue'
+import POS from '@/views/POS.vue'
+import WMS from '@/views/WMS.vue'
 import Settings from "@/views/Settings.vue"
 import store from '@/store'
 
@@ -48,6 +51,24 @@ const routes: Array<RouteRecordRaw> = [
     path: '/product',
     name: 'Product',
     component: Product,
+    beforeEnter: authGuard
+  },
+  {  
+    path: '/erp',
+    name: 'ERP',
+    component: ERP,
+    beforeEnter: authGuard
+  },
+  {  
+    path: '/pos',
+    name: 'POS',
+    component: POS,
+    beforeEnter: authGuard
+  },
+  {  
+    path: '/wms',
+    name: 'WMS',
+    component: WMS,
     beforeEnter: authGuard
   },
   {

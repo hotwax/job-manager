@@ -53,7 +53,7 @@ import {
 } from "@ionic/vue";
 import { defineComponent, ref } from "vue";
 import { mapGetters } from "vuex";
-import { pulseOutline, calendarNumberOutline, ticketOutline, albumsOutline, shirtOutline, settings, iceCreamOutline } from "ionicons/icons";
+import { pulseOutline, calendarNumberOutline, ticketOutline, albumsOutline, shirtOutline, settings, iceCreamOutline, folderOpenOutline, storefrontOutline, businessOutline } from "ionicons/icons";
 import { useStore } from "@/store";
 export default defineComponent({
   name: "Menu",
@@ -138,6 +138,27 @@ export default defineComponent({
         url: "/product",
         iosIcon: shirtOutline,
         mdIcon: shirtOutline,
+        dependsOnBaseURL: false
+      },
+      {
+        title: "ERP",
+        url: "/erp",
+        iosIcon: folderOpenOutline,
+        mdIcon: folderOpenOutline,
+        dependsOnBaseURL: false
+      },
+      {
+        title: "POS",
+        url: "/pos",
+        iosIcon: storefrontOutline,
+        mdIcon: storefrontOutline,
+        dependsOnBaseURL: false
+      },
+      {
+        title: "WMS",
+        url: "/wms",
+        iosIcon: businessOutline,
+        mdIcon: businessOutline,
         dependsOnBaseURL: false
       },
       {
