@@ -580,6 +580,9 @@ const actions: ActionTree<JobState, RootState> = {
         if(cachedJob) {
           cachedJob.statusId = 'SERVICE_DRAFT'
           cachedJob.status = 'SERVICE_DRAFT'
+          // deleting the enum from cached job as we will not store the job with cancelled status
+          // TODO: remove the code to change the status to SERVICE_DRAFT after verifying the flow
+          delete state.cached[job?.systemJobEnumId]
 
           commit(types.JOB_UPDATED, { cachedJob });
         }
