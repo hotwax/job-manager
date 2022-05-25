@@ -15,10 +15,9 @@
       <ion-label position="fixed">{{ $t('Batch name') }}</ion-label>
       <ion-input :placeholder="currentDateTime = getCurrentDateTime()" v-model="jobName" />
     </ion-item>
-
     <ion-item :disabled="currentBatch?.jobId">
       <ion-label>{{ $t('Order queue') }}</ion-label>
-      <ion-select slot="end" interface="popover" :value="this.currentScheduledBatch?.facilityId || batchFacilityId">
+      <ion-select slot="end" interface="popover" :value="this.currentScheduledBatch?.facilityId || batchFacilityId" @ionChange="updateFacilityId($event)">
         <ion-select-option value="_NA_">{{ $t("Brokering queue") }}</ion-select-option>
         <ion-select-option value="PRE_ORDER_PARKING">{{ $t("Pre-order parking") }}</ion-select-option>
         <ion-select-option value="BACKORDER_PARKING">{{ $t("Back-order parking") }}</ion-select-option>
@@ -34,7 +33,6 @@
         <ion-radio :checked="this.currentScheduledBatch?.unfillable === true" slot="start" @click="unfillableOrder = true" color="secondary"/>
       </ion-item>
     </ion-radio-group>
-    
     <ion-item>
       <ion-label position="fixed">{{ $t("Schedule") }}</ion-label>
       <ion-datetime :value="currentBatch?.runTime ? getDateTime(currentBatch.runTime) : ''" @ionChange="updateRunTime($event)" presentation="time" size="cover" />
@@ -119,6 +117,9 @@ export default defineComponent({
     this.getCurrentBatch();
   },
   methods: {
+    updateFacilityId(ev: CustomEvent) {
+      this.batchFacilityId = ev['detail'].value
+    },
     getCurrentBatch() {
       this.currentBatch = this.getJob(this.enumId)?.find((job: any) => job.id === this.id)
       this.jobName = this.currentBatch?.jobName;
@@ -132,14 +133,13 @@ export default defineComponent({
     },
     async updateJob() {
       let batchJobEnum = this.enumId;
-    
       if (!batchJobEnum) {
-        const jobEnum: any = Object.values(this.jobEnums)?.find((job: any) => { 
+        const jobEnum: any = Object.values(this.jobEnums)?.find((job: any) => {
           return job.unfillable === this.unfillableOrder && job.facilityId === this.batchFacilityId
         });
         batchJobEnum = jobEnum.id
       }
-      
+
       const job = this.currentBatch ? this.currentBatch : this.getJob(batchJobEnum)?.find((job: any) => job.status === 'SERVICE_DRAFT');
 
       if (!job) {
