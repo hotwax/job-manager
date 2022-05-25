@@ -26,10 +26,12 @@
     <ion-radio-group>
       <ion-item :disabled="currentBatch?.jobId">
         <ion-label>{{ $t('New orders') }}</ion-label>
+        <!-- "this.currentScheduledBatch?.unfillable === false" - Did this because ion-radio is not considering boolean -->
         <ion-radio :checked="this.currentScheduledBatch?.unfillable === false" slot="start" @click="unfillableOrder = false" color="secondary"/>
       </ion-item>
       <ion-item :disabled="currentBatch?.jobId">
         <ion-label>{{ $t('Unfillable orders') }}</ion-label>
+        <!-- "this.currentScheduledBatch?.unfillable === false" - Did this because ion-radio is not considering boolean -->
         <ion-radio :checked="this.currentScheduledBatch?.unfillable === true" slot="start" @click="unfillableOrder = true" color="secondary"/>
       </ion-item>
     </ion-radio-group>
@@ -98,11 +100,12 @@ export default defineComponent({
       jobEnums: JSON.parse(process.env?.VUE_APP_BATCH_JOB_ENUMS as string) as any,
       currentBatch: {} as any,
       jobName: '' as string,
-      unfillableOrder: false as boolean,
+      unfillableOrder: 'false',
       batchFacilityId: '_NA_' as string,
       currentDateTime: '' as string,
       jobRunTime: '' as any,
-      currentScheduledBatch: {} as object 
+      currentScheduledBatch: {} as any,
+      orders: ""
     }
   },
   computed: {
@@ -111,7 +114,7 @@ export default defineComponent({
       shopifyConfigId: 'user/getShopifyConfigId',
       currentEComStore: 'user/getCurrentEComStore',
       userProfile: "user/getUserProfile"
-    })
+    }),
   },
   mounted() {
     this.getCurrentBatch();
