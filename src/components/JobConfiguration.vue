@@ -255,7 +255,6 @@ export default defineComponent({
       if (job?.statusId === 'SERVICE_DRAFT') {
         this.store.dispatch('job/scheduleService', job).then((job: any) => {
           if(job?.jobId) {
-            showToast(translate('Service has been scheduled'));
             const category = this.$route.params.category;
             if (category) {
               this.router.push({ name: 'JobDetails', params: { jobId: job?.jobId, category: category }, replace: true });

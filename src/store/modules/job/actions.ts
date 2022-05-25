@@ -441,6 +441,7 @@ const actions: ActionTree<JobState, RootState> = {
           commit(types.JOB_CURRENT_UPDATED, job);
           return job;
         }
+        showToast(translate('Service has been scheduled'));
       } else {
         showToast(translate('Something went wrong'))
       }
