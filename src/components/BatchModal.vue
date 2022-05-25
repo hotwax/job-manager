@@ -100,7 +100,7 @@ export default defineComponent({
       jobEnums: JSON.parse(process.env?.VUE_APP_BATCH_JOB_ENUMS as string) as any,
       currentBatch: {} as any,
       jobName: '' as string,
-      unfillableOrder: 'false',
+      unfillableOrder: false as boolean,
       batchFacilityId: '_NA_' as string,
       currentDateTime: '' as string,
       jobRunTime: '' as any,
