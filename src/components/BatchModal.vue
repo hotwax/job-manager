@@ -71,7 +71,7 @@ import { defineComponent } from 'vue';
 import { closeOutline, checkmarkDoneOutline } from 'ionicons/icons';
 import { mapGetters, useStore } from 'vuex';
 import { DateTime } from 'luxon';
-import { isFutureDate } from '@/utils';
+import { handleDateTimeInput, isFutureDate } from '@/utils';
 export default defineComponent({
   name: 'BatchModal',
   components: {
@@ -122,7 +122,7 @@ export default defineComponent({
       this.jobName = this.currentBatch?.jobName
     },
     getDateTime(time: any) {
-      return DateTime.fromMillis(time)
+      return DateTime.fromMillis(time).toISO()
     },
     closeModal() {
       modalController.dismiss({ dismissed: true });
@@ -163,7 +163,7 @@ export default defineComponent({
       }
     },
     updateRunTime(ev: CustomEvent) {
-      this.jobRunTime = DateTime.fromISO(ev['detail'].value).toMillis()
+      this.jobRunTime = handleDateTimeInput(ev['detail'].value)
     },
     getCurrentDateTime() {
       return DateTime.now().setZone(this.userProfile.userTimeZone).toLocaleString(DateTime.DATETIME_MED);
