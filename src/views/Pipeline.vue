@@ -566,13 +566,11 @@ export default defineComponent({
     this.store.dispatch('user/getPinnedJobs');
     emitter.on('jobUpdated', this.updateJobs);
   },
-  unmounted() {
-    emitter.off('jobUpdated', this.updateJobs);
-  },
   mounted(){
     emitter.on("pinnedJobsUpdated", (this as any).updateSelectedPinnedJob);
   },
   unmounted(){
+    emitter.off('jobUpdated', this.updateJobs);
     emitter.off("pinnedJobsUpdated", (this as any).updateSelectedPinnedJob);
   },
   setup() {
