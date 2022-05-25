@@ -225,7 +225,7 @@
           </div>          
         </section>
 
-        <aside class="desktop-only" v-if="isDesktop" v-show="segmentSelected === 'pending' && currentJob">
+        <aside class="desktop-only" v-if="isDesktop" v-show="segmentSelected === 'pending' && currentJob && Object.keys(currentJob).length">
           <JobConfiguration :title="title" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
         </aside>
       </main>
@@ -336,7 +336,6 @@ export default defineComponent({
         ...JSON.parse(process.env?.VUE_APP_INV_JOB_ENUMS as string) as any,
         ...JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
       },
-      currentJob: '' as any,
       title: '',
       currentJobStatus: '',
       freqType: '' as any,
@@ -358,7 +357,8 @@ export default defineComponent({
       isPendingJobsScrollable: 'job/isPendingJobsScrollable',
       isRunningJobsScrollable: 'job/isRunningJobsScrollable',
       isHistoryJobsScrollable: 'job/isHistoryJobsScrollable',
-      getPinnedJobs: 'user/getPinnedJobs'
+      getPinnedJobs: 'user/getPinnedJobs',
+      currentJob: 'job/getCurrentJob',
     })
   },
   methods : {
@@ -527,19 +527,18 @@ export default defineComponent({
        return alert.present();
     },
     async viewJobConfiguration(job: any) {
-      this.currentJob = {id: job.jobId, ...job}
       this.title = this.getEnumName(job.systemJobEnumId)
       this.currentJobStatus = job.tempExprId
       const id = Object.entries(this.jobEnums).find((enums) => enums[1] == job.systemJobEnumId) as any
       this.freqType = id && (Object.entries(this.jobFrequencyType).find((freq) => freq[0] == id[0]) as any)[1]
 
-      await this.store.dispatch('job/updateCurrentJob', { job: this.currentJob });
-      if(!this.isDesktop && this.currentJob) {
-        this.router.push({name: 'JobDetails', params: { title: this.title, jobId: this.currentJob.jobId, category: "pipeline"}});
+      await this.store.dispatch('job/updateCurrentJob', { job });
+      if(!this.isDesktop && job?.jobId) {
+        this.router.push({name: 'JobDetails', params: { title: this.title, jobId: job?.jobId, category: "pipeline"}});
         return;
       }
 
-      if (this.currentJob && !this.isJobDetailAnimationCompleted) {
+      if (job && !this.isJobDetailAnimationCompleted) {
         emitter.emit('playAnimation');
         this.isJobDetailAnimationCompleted = true;
       }
@@ -552,16 +551,26 @@ export default defineComponent({
 
       await this.store.dispatch('user/updatePinnedJobs', { pinnedJobs: [...pinnedJobs] });
       this.updateSelectedPinnedJob(enumId)
+    },
+    updateJobs() {
+      if (this.isDesktop) {
+        if (this.currentJob) {
+          this.viewJobConfiguration(this.currentJob);
+        }
+        this.getPendingJobs();
+      }
     }
   },
   created() {
     this.getPendingJobs();
     this.store.dispatch('user/getPinnedJobs');
+    emitter.on('jobUpdated', this.updateJobs);
   },
   mounted(){
     emitter.on("pinnedJobsUpdated", (this as any).updateSelectedPinnedJob);
   },
   unmounted(){
+    emitter.off('jobUpdated', this.updateJobs);
     emitter.off("pinnedJobsUpdated", (this as any).updateSelectedPinnedJob);
   },
   setup() {

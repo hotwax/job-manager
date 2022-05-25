@@ -277,8 +277,8 @@ const actions: ActionTree<JobState, RootState> = {
   },
   
   async fetchJobs ({ state, commit, dispatch }, payload) {
-    const resp = await JobService.fetchJobInformation({
-      "inputFields":{
+    const params = {
+      "inputFields": {
         "statusId_fld0_value": "SERVICE_DRAFT",
         "statusId_fld0_op": "equals",
         "statusId_fld0_grp": "1",
@@ -293,7 +293,13 @@ const actions: ActionTree<JobState, RootState> = {
       "entityName": "JobSandbox",
       "noConditionFind": "Y",
       "viewSize": (payload.inputFields?.systemJobEnumId?.length * 3)
-    })
+    } as any
+
+    if (payload?.orderBy) {
+      params['orderBy'] = payload.orderBy
+    }
+    const resp = await JobService.fetchJobInformation(params)
+
     if (resp.status === 200 && !hasError(resp) && resp.data.docs) {
       const cached = JSON.parse(JSON.stringify(state.cached));
 
@@ -370,7 +376,6 @@ const actions: ActionTree<JobState, RootState> = {
     try {
       resp = await JobService.updateJob(payload)
       if (resp.status === 200 && !hasError(resp) && resp.data.successMessage) {
-        showToast(translate('Service updated successfully'))
         let jobs = await dispatch('fetchJobs', {
           inputFields: {
             'systemJobEnumId': payload.systemJobEnumId,
@@ -382,6 +387,7 @@ const actions: ActionTree<JobState, RootState> = {
           const job = jobs.find((job: any) => job?.jobId === payload.jobId);
           commit(types.JOB_CURRENT_UPDATED, job);
         }
+        showToast(translate('Service updated successfully'))
       } else {
         showToast(translate('Something went wrong'))
       }
@@ -421,17 +427,19 @@ const actions: ActionTree<JobState, RootState> = {
     try {
       resp = await JobService.scheduleJob({ ...job.runtimeData, ...payload });
       if (resp.status == 200 && !hasError(resp)) {
-        showToast(translate('Service has been scheduled'))
-        let jobs = await dispatch('fetchJobs', {
+        const jobs = await dispatch('fetchJobs', {
           inputFields: {
             'systemJobEnumId': payload.systemJobEnumId,
-            'systemJobEnumId_op': 'equals'
-          }
+            'systemJobEnumId_op': 'equals',
+            'statusId': "SERVICE_PENDING",
+            'statusId_op': 'equals'
+          },
+          orderBy: "runTime ASC"
         })
-        if(jobs.status === 200 && !hasError(jobs) && jobs.data?.docs.length) {
-          jobs = jobs.data?.docs;
-          const job = jobs.find((job: any) => job?.jobId === payload.jobId);
+        if(jobs.status === 200 && !hasError(jobs) && jobs.data?.docs?.length) {
+          const job = jobs.data?.docs[0];
           commit(types.JOB_CURRENT_UPDATED, job);
+          return job;
         }
       } else {
         showToast(translate('Something went wrong'))
@@ -440,7 +448,7 @@ const actions: ActionTree<JobState, RootState> = {
       showToast(translate('Something went wrong'))
       console.error(err)
     }
-    return resp;
+    return {};
   },
 
   clearJobState({commit}) {
@@ -450,7 +458,7 @@ const actions: ActionTree<JobState, RootState> = {
     commit(types.JOB_UPDATED_BULK, {})
   },
 
-  async skipJob({ commit, getters }, job) {
+  async skipJob({ commit, dispatch, getters }, job) {
     let skipTime = {};
     const integer1 = getters['getTemporalExpr'](job.tempExprId)?.integer1;
     const integer2 = getters['getTemporalExpr'](job.tempExprId)?.integer2
@@ -475,8 +483,31 @@ const actions: ActionTree<JobState, RootState> = {
     } as any
 
     const resp = await JobService.updateJob(payload)
-    if (resp.status === 200 && !hasError(resp) && resp.data.docs) {
+    if (resp.status === 200 && !hasError(resp) && resp.data?.successMessage) {
+      let jobs = await dispatch('fetchJobs', {
+        inputFields: {
+          'systemJobEnumId': job.systemJobEnumId,
+          'systemJobEnumId_op': 'equals'
+        }
+      })
+      if (jobs.status === 200 && !hasError(jobs) && jobs.data?.docs.length) {
+        jobs = jobs.data?.docs;
+        const currentJob = jobs.find((currentJob: any) => currentJob?.jobId === job?.jobId);
+        commit(types.JOB_CURRENT_UPDATED, currentJob);
+      }
       commit(types.JOB_UPDATED, { job });
+    }
+
+    let jobs = await dispatch('fetchJobs', {
+      inputFields: {
+        'systemJobEnumId': payload.systemJobEnumId,
+        'systemJobEnumId_op': 'equals'
+      }
+    })
+    if (jobs.status === 200 && !hasError(jobs) && jobs.data?.docs?.length) {
+      jobs = jobs.data?.docs;
+      const currentJob = jobs.find((currentJob: any) => currentJob?.jobId === job?.jobId);
+      commit(types.JOB_CURRENT_UPDATED, currentJob);
     }
     return resp;
   },
@@ -543,9 +574,19 @@ const actions: ActionTree<JobState, RootState> = {
         cancelDateTime: DateTime.now().toMillis()
       });
       if (resp.status == 200 && !hasError(resp)) {
-        showToast(translate('Service updated successfully'))
-        state.cached[job.systemJobEnumId].statusId = 'SERVICE_DRAFT'
-        state.cached[job.systemJobEnumId].status = 'SERVICE_DRAFT'
+        // TODO: When we are trying to cancel the job from pipeline page those jobs are not in the cached state, so we need to
+        // handle this case because we were getting error :- "can not set status and statusId for pending jobs in cached state".
+        const cachedJob = state.cached[job?.systemJobEnumId]
+        if(cachedJob) {
+          cachedJob.statusId = 'SERVICE_DRAFT'
+          cachedJob.status = 'SERVICE_DRAFT'
+          // deleting the enum from cached job as we will not store the job with cancelled status
+          // TODO: remove the code to change the status to SERVICE_DRAFT after verifying the flow
+          delete state.cached[job?.systemJobEnumId]
+
+          commit(types.JOB_UPDATED, { cachedJob });
+        }
+
         let jobs = await dispatch('fetchJobs', {
           inputFields: {
             'systemJobEnumId': job.systemJobEnumId,
@@ -554,9 +595,10 @@ const actions: ActionTree<JobState, RootState> = {
         })
         if (jobs.status === 200 && !hasError(jobs) && jobs.data?.docs.length) {
           jobs = jobs.data?.docs;
-          const currentJob = jobs.find((currentJob: any) => currentJob?.jobId === job?.jobId);
+          const currentJob = jobs.find((currentJob: any) => currentJob?.systemJobEnumId === job?.systemJobEnumId);
           commit(types.JOB_CURRENT_UPDATED, currentJob);
         }
+        showToast(translate('Service updated successfully'))
       } else {
         showToast(translate('Something went wrong'))
       }

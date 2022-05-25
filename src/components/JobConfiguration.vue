@@ -93,6 +93,8 @@ import { handleDateTimeInput, showToast } from "@/utils";
 import { mapGetters, useStore } from "vuex";
 import { DateTime } from 'luxon';
 import { translate } from '@/i18n'
+import { useRouter } from "vue-router";
+import emitter from '@/event-bus';
 
 export default defineComponent({
   name: "JobConfiguration",
@@ -183,8 +185,11 @@ export default defineComponent({
             text: this.$t('Skip'),
             handler: () => {
               if (job) {
-                this.store.dispatch('job/skipJob', job).then(() => {
-                  showToast(translate("This job has been skipped"))
+                this.store.dispatch('job/skipJob', job).then((resp) => {
+                  if (resp) {
+                    emitter.emit('jobUpdated');
+                    showToast(translate("This job has been skipped!"))
+                  }
                 })
               }
             }
@@ -203,9 +208,15 @@ export default defineComponent({
           }, {
             text: this.$t('Cancel'),
             handler: () => {
-              this.store.dispatch('job/cancelJob', job).then(() => {
-                showToast(translate("This job has been canceled"))
-              });
+              this.store.dispatch('job/cancelJob', job).then((resp) => {
+                if(resp.data?.successMessage) {
+                  emitter.emit('jobUpdated');
+                  const category = this.$route.params?.category;
+                  if (category) {
+                    this.router.push({ name: 'JobDetails', params: { jobId: job?.systemJobEnumId, category: category }, replace: true });
+                  }
+                }
+              })
             }
           }],
         });
@@ -222,9 +233,7 @@ export default defineComponent({
           }, {
             text: this.$t('Save'),
             handler: () => {
-              this.updateJob().then(() => {
-                showToast(translate("The changes have been saved"))
-              });
+              this.updateJob();
             }
           }]
         });
@@ -244,9 +253,21 @@ export default defineComponent({
       job['jobStatus'] = this.jobStatus !== 'SERVICE_DRAFT' ? this.jobStatus : 'HOURLY';
 
       if (job?.statusId === 'SERVICE_DRAFT') {
-        await this.store.dispatch('job/scheduleService', job)
+        this.store.dispatch('job/scheduleService', job).then((job: any) => {
+          if(job?.jobId) {
+            showToast(translate('Service has been scheduled'));
+            const category = this.$route.params.category;
+            if (category) {
+              this.router.push({ name: 'JobDetails', params: { jobId: job?.jobId, category: category }, replace: true });
+            }
+          }
+        })
       } else if (job?.statusId === 'SERVICE_PENDING') {
-        await this.store.dispatch('job/updateJob', job)
+        this.store.dispatch('job/updateJob', job).then((resp) => {
+          if (resp) {
+            emitter.emit('jobUpdated');
+          }
+        })
       }
     },
     getTime (time: any) {
@@ -264,12 +285,14 @@ export default defineComponent({
   },
   setup() {
     const store = useStore();
+    const router = useRouter();
 
     return {
       calendarClearOutline,
       timeOutline,
       timerOutline,
       store,
+      router,
       syncOutline,
       personCircleOutline
     };
