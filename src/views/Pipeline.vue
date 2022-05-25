@@ -367,9 +367,8 @@ export default defineComponent({
     },
     updateSelectedPinnedJob(jobEnumId: any) {
       const index = (this as any).selectedPinnedJobs.indexOf(jobEnumId);
-      const pinnedJobs = new Set(this.getPinnedJobs);
-      if ((this as any).selectedPinnedJobs.includes(jobEnumId) || !pinnedJobs.has(jobEnumId)) {
-       if (index != -1) (this as any).selectedPinnedJobs.splice(index, 1)
+      if ((this as any).selectedPinnedJobs.includes(jobEnumId) || !this.getPinnedJobs.includes(jobEnumId)) {
+        if (index != -1) (this as any).selectedPinnedJobs.splice(index, 1)
       } else {
         (this as any).selectedPinnedJobs.push(jobEnumId)
       }
@@ -503,10 +502,6 @@ export default defineComponent({
         event: ev,
         componentProps: { job }
       });
-      emitter.on("unSelectPinJob", (enumId)=> {
-        (this as any).updateSelectedPinnedJob(enumId);
-      });
-      emitter.off("unSelectPinJob", (this as any).updateSelectedPinnedJob);
         return popover.present()
     },
     async cancelJob(job: any){
@@ -562,6 +557,12 @@ export default defineComponent({
   created() {
     this.getPendingJobs();
     this.store.dispatch('user/getPinnedJobs');
+  },
+  mounted(){
+    emitter.on("pinnedJobsUpdated", (this as any).updateSelectedPinnedJob);
+  },
+  unmounted(){
+    emitter.off("pinnedJobsUpdated", (this as any).updateSelectedPinnedJob);
   },
   setup() {
     const router = useRouter();

@@ -83,12 +83,11 @@ export default defineComponent({
       if(pinnedJobs.has(enumId)) {
         pinnedJobs.delete(enumId);
         await this.store.dispatch('user/updatePinnedJobs', { pinnedJobs: [...pinnedJobs] });
-        emitter.emit("unSelectPinJob", enumId);
+        emitter.emit("pinnedJobsUpdated", enumId);
       } else {
         pinnedJobs.add(enumId);
+        await this.store.dispatch('user/updatePinnedJobs', { pinnedJobs: [...pinnedJobs] });
       }
-
-      await this.store.dispatch('user/updatePinnedJobs', { pinnedJobs: [...pinnedJobs] });
       this.closePopover();
     }
   },
