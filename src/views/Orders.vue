@@ -102,6 +102,11 @@
                 <ion-label class="ion-text-wrap">{{ batch?.jobName }}</ion-label>
                 <ion-note slot="end">{{ batch?.runTime ? getTime(batch.runTime) : '' }}</ion-note>
               </ion-item>
+              <ion-item-options side="start">
+                <ion-item-option @click="skipBatch(batch)" color="secondary">
+                  <ion-icon slot="icon-only" :icon="arrowRedoOutline" />
+                </ion-item-option>
+              </ion-item-options>
               <ion-item-options side="end">
                 <ion-item-option @click="deleteBatch(batch)" color="danger">
                   <ion-icon slot="icon-only" :icon="trash" />
@@ -146,14 +151,15 @@ import {
   modalController
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
-import { addCircleOutline, trash } from 'ionicons/icons';
+import { translate } from '@/i18n'
+import { addCircleOutline, arrowRedoOutline, trash } from 'ionicons/icons';
 import BatchModal from '@/components/BatchModal.vue';
 import { useStore } from "@/store";
 import { useRouter } from 'vue-router'
 import { mapGetters } from "vuex";
 import JobConfiguration from '@/components/JobConfiguration.vue';
 import { DateTime } from 'luxon';
-import { isFutureDate } from '@/utils';
+import { hasError, isFutureDate, showToast } from '@/utils';
 import emitter from '@/event-bus';
 
 export default defineComponent({
@@ -245,6 +251,32 @@ export default defineComponent({
           ],
         });
       return deleteBatchAlert.present();
+    },
+    async skipBatch (batch: any) {
+      const skipJobAlert = await alertController
+        .create({
+          header: this.$t('Skip job'),
+          message: this.$t('Skipping will run this job at the next occurrence based on the temporal expression.'),
+          buttons: [
+            {
+              text: this.$t("Don't skip"),
+              role: 'cancel',
+            },
+            {
+              text: this.$t('Skip'),
+              handler: async () => {
+                this.store.dispatch('job/skipJob', batch).then((resp) => {
+                  if (resp.status === 200 && !hasError(resp)) {
+                    showToast(translate("This job has been skipped"));
+                  } else {
+                    showToast(translate("This job schedule cannot be skipped"));
+                  }
+                })
+              },
+            }
+          ]
+        });
+      return skipJobAlert.present();
     },
     getTime (time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
@@ -343,6 +375,7 @@ export default defineComponent({
 
     return {
       addCircleOutline,
+      arrowRedoOutline,
       router,
       store,
       trash,

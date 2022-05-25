@@ -17,23 +17,24 @@
     </ion-item>
     <ion-item :disabled="currentBatch?.jobId">
       <ion-label>{{ $t('Order queue') }}</ion-label>
-      <ion-select slot="end" interface="popover" v-model="batchFacilityId">
+      <ion-select slot="end" interface="popover" :value="this.currentScheduledBatch?.facilityId || batchFacilityId" @ionChange="batchFacilityId = $event['detail'].value">
         <ion-select-option value="_NA_">{{ $t("Brokering queue") }}</ion-select-option>
         <ion-select-option value="PRE_ORDER_PARKING">{{ $t("Pre-order parking") }}</ion-select-option>
         <ion-select-option value="BACKORDER_PARKING">{{ $t("Back-order parking") }}</ion-select-option>
       </ion-select>
     </ion-item>
-    <ion-radio-group value="unfillableOrder">
+    <ion-radio-group>
       <ion-item :disabled="currentBatch?.jobId">
         <ion-label>{{ $t('New orders') }}</ion-label>
-        <ion-radio slot="start" @click="unfillableOrder = false" color="secondary" value="unfillableOrder" />
+        <!-- "this.currentScheduledBatch?.unfillable === false" - Did this because ion-radio is not considering boolean -->
+        <ion-radio :checked="this.currentScheduledBatch?.unfillable === false" slot="start" @click="unfillableOrder = false" color="secondary"/>
       </ion-item>
       <ion-item :disabled="currentBatch?.jobId">
         <ion-label>{{ $t('Unfillable orders') }}</ion-label>
-        <ion-radio slot="start" @click="unfillableOrder = true" color="secondary"/>
+        <!-- "this.currentScheduledBatch?.unfillable === false" - Did this because ion-radio is not considering boolean -->
+        <ion-radio :checked="this.currentScheduledBatch?.unfillable === true" slot="start" @click="unfillableOrder = true" color="secondary"/>
       </ion-item>
     </ion-radio-group>
-    
     <ion-item>
       <ion-label position="fixed">{{ $t("Schedule") }}</ion-label>
       <ion-datetime :value="currentBatch?.runTime ? getDateTime(currentBatch.runTime) : ''" @ionChange="updateRunTime($event)" presentation="time" size="cover" />
@@ -71,7 +72,7 @@ import { defineComponent } from 'vue';
 import { closeOutline, checkmarkDoneOutline } from 'ionicons/icons';
 import { mapGetters, useStore } from 'vuex';
 import { DateTime } from 'luxon';
-import { isFutureDate } from '@/utils';
+import { handleDateTimeInput, isFutureDate } from '@/utils';
 export default defineComponent({
   name: 'BatchModal',
   components: {
@@ -102,7 +103,9 @@ export default defineComponent({
       unfillableOrder: false as boolean,
       batchFacilityId: '_NA_' as string,
       currentDateTime: '' as string,
-      jobRunTime: '' as any
+      jobRunTime: '' as any,
+      currentScheduledBatch: {} as any,
+      orders: ""
     }
   },
   computed: {
@@ -111,7 +114,7 @@ export default defineComponent({
       shopifyConfigId: 'user/getShopifyConfigId',
       currentEComStore: 'user/getCurrentEComStore',
       userProfile: "user/getUserProfile"
-    })
+    }),
   },
   mounted() {
     this.getCurrentBatch();
@@ -119,19 +122,19 @@ export default defineComponent({
   methods: {
     getCurrentBatch() {
       this.currentBatch = this.getJob(this.enumId)?.find((job: any) => job.id === this.id)
-      this.jobName = this.currentBatch?.jobName
+      this.jobName = this.currentBatch?.jobName;
+      this.currentScheduledBatch = (this as any).jobEnums[this.currentBatch?.enumId];
     },
     getDateTime(time: any) {
-      return DateTime.fromMillis(time)
+      return DateTime.fromMillis(time).toISO()
     },
     closeModal() {
       modalController.dismiss({ dismissed: true });
     },
     async updateJob() {
       let batchJobEnum = this.enumId;
-      
       if (!batchJobEnum) {
-        const jobEnum: any = Object.values(this.jobEnums)?.find((job: any) => { 
+        const jobEnum: any = Object.values(this.jobEnums)?.find((job: any) => {
           return job.unfillable === this.unfillableOrder && job.facilityId === this.batchFacilityId
         });
         batchJobEnum = jobEnum.id
@@ -163,7 +166,7 @@ export default defineComponent({
       }
     },
     updateRunTime(ev: CustomEvent) {
-      this.jobRunTime = DateTime.fromISO(ev['detail'].value).toMillis()
+      this.jobRunTime = handleDateTimeInput(ev['detail'].value)
     },
     getCurrentDateTime() {
       return DateTime.now().setZone(this.userProfile.userTimeZone).toLocaleString(DateTime.DATETIME_MED);

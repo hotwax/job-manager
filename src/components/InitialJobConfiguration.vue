@@ -119,7 +119,7 @@ import {
 import { mapGetters, useStore } from "vuex";
 import { translate } from "@/i18n";
 import { DateTime } from 'luxon';
-import { isFutureDate } from '@/utils';
+import { handleDateTimeInput,isFutureDate } from '@/utils';
 
 export default defineComponent({
   name: "InitialJobConfiguration",
@@ -194,7 +194,7 @@ export default defineComponent({
       }
     },
     getDateTime(time: any) {
-      return DateTime.fromMillis(time)
+      return DateTime.fromMillis(time).toISO()
     },
     getTime (time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
@@ -205,7 +205,7 @@ export default defineComponent({
     },
     updateRunTime(ev: CustomEvent, job: any) {
       if (job) {
-        job.runTime = DateTime.fromISO(ev['detail'].value).toMillis()
+        job.runTime = handleDateTimeInput(ev['detail'].value)
       }
     }
   },

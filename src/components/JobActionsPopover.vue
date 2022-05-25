@@ -34,6 +34,7 @@ import { mapGetters, useStore } from 'vuex'
 import JobHistoryModal from '@/components/JobHistoryModal.vue'
 import { Plugins } from '@capacitor/core';
 import { showToast } from '@/utils'
+import emitter from "@/event-bus"
 
 export default defineComponent({
   name: "JobActionsPopover",
@@ -81,11 +82,12 @@ export default defineComponent({
       const pinnedJobs = new Set(this.getPinnedJobs);
       if(pinnedJobs.has(enumId)) {
         pinnedJobs.delete(enumId);
+        await this.store.dispatch('user/updatePinnedJobs', { pinnedJobs: [...pinnedJobs] });
+        emitter.emit("pinnedJobsUpdated", enumId);
       } else {
         pinnedJobs.add(enumId);
+        await this.store.dispatch('user/updatePinnedJobs', { pinnedJobs: [...pinnedJobs] });
       }
-
-      await this.store.dispatch('user/updatePinnedJobs', { pinnedJobs: [...pinnedJobs] });
       this.closePopover();
     }
   },

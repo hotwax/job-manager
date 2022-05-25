@@ -89,7 +89,7 @@ import {
   syncOutline,
   personCircleOutline
 } from "ionicons/icons";
-import { showToast } from "@/utils";
+import { handleDateTimeInput, showToast } from "@/utils";
 import { mapGetters, useStore } from "vuex";
 import { DateTime } from 'luxon';
 import { translate } from '@/i18n'
@@ -171,7 +171,7 @@ export default defineComponent({
   },
   methods: {
     getDateTime(time: any) {
-      return DateTime.fromMillis(time)
+      return DateTime.fromMillis(time).toISO()
     },
     async skipJob(job: any) {
       const alert = await alertController
@@ -279,7 +279,7 @@ export default defineComponent({
     },
     updateRunTime(ev: CustomEvent, job: any) {
       if (job) {
-        job.runTime = DateTime.fromISO(ev['detail'].value).toMillis()
+        job.runTime = handleDateTimeInput(ev['detail'].value)
       }
     }
   },
