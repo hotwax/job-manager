@@ -42,7 +42,7 @@
           </ion-card>
         </section>
 
-        <aside class="desktop-only"></aside>
+        <!-- <aside class="desktop-only"></aside> -->
       </main>
     </ion-content>
   </ion-page>
