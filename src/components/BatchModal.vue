@@ -17,7 +17,7 @@
     </ion-item>
     <ion-item :disabled="currentBatch?.jobId">
       <ion-label>{{ $t('Order queue') }}</ion-label>
-      <ion-select slot="end" interface="popover" :value="this.currentScheduledBatch?.facilityId || batchFacilityId" @ionChange="updateFacilityId($event)">
+      <ion-select slot="end" interface="popover" :value="this.currentScheduledBatch?.facilityId || batchFacilityId" @ionChange="batchFacilityId = $event['detail'].value">
         <ion-select-option value="_NA_">{{ $t("Brokering queue") }}</ion-select-option>
         <ion-select-option value="PRE_ORDER_PARKING">{{ $t("Pre-order parking") }}</ion-select-option>
         <ion-select-option value="BACKORDER_PARKING">{{ $t("Back-order parking") }}</ion-select-option>
@@ -120,9 +120,6 @@ export default defineComponent({
     this.getCurrentBatch();
   },
   methods: {
-    updateFacilityId(ev: CustomEvent) {
-      this.batchFacilityId = ev['detail'].value
-    },
     getCurrentBatch() {
       this.currentBatch = this.getJob(this.enumId)?.find((job: any) => job.id === this.id)
       this.jobName = this.currentBatch?.jobName;
