@@ -427,6 +427,7 @@ const actions: ActionTree<JobState, RootState> = {
     try {
       resp = await JobService.scheduleJob({ ...job.runtimeData, ...payload });
       if (resp.status == 200 && !hasError(resp)) {
+        showToast(translate('Service has been scheduled'));
         const jobs = await dispatch('fetchJobs', {
           inputFields: {
             'systemJobEnumId': payload.systemJobEnumId,
@@ -441,7 +442,6 @@ const actions: ActionTree<JobState, RootState> = {
           commit(types.JOB_CURRENT_UPDATED, job);
           return job;
         }
-        showToast(translate('Service has been scheduled'));
       } else {
         showToast(translate('Something went wrong'))
       }
