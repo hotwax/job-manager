@@ -503,9 +503,10 @@ export default defineComponent({
         componentProps: { job }
       });
 
-      popover.onDidDismiss()
-        .then((result) => {
-        if (!this.getPinnedJobs.includes(result.data.systemJobEnumId)) this.updateSelectedPinnedJob(result.data.systemJobEnumId);
+      popover.onDidDismiss().then((result) => {
+        if (result.data.systemJobEnumId && !this.getPinnedJobs.includes(result.data.systemJobEnumId)){
+          this.updateSelectedPinnedJob(result.data.systemJobEnumId);
+        }
       });
         return popover.present()
     },

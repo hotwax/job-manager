@@ -55,7 +55,6 @@ export default defineComponent({
   methods: {
     closePopover(enumId?: any) {
       popoverController.dismiss({
-        dismissed: true,
         systemJobEnumId: enumId
       });
     },
