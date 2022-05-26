@@ -504,8 +504,8 @@ export default defineComponent({
       });
 
       popover.onDidDismiss()
-      .then((result) => {
-        if (!this.getPinnedJobs.includes(result.data.systemJobEnumId)) (this as any).updateSelectedPinnedJob(result.data.systemJobEnumId)
+        .then((result) => {
+        if (!this.getPinnedJobs.includes(result.data.systemJobEnumId)) this.updateSelectedPinnedJob(result.data.systemJobEnumId);
       });
         return popover.present()
     },
