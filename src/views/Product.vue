@@ -26,6 +26,20 @@
               <ion-label class="ion-text-wrap"><p>{{ $t("Sync products and category structures from Shopify into HotWax Commerce and keep them up to date.") }}</p></ion-label>
             </ion-item>
           </ion-card>
+
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>Web Hooks</ion-card-title>
+            </ion-card-header>
+            <ion-item>
+              <ion-label class="ion-text-wrap">New Products</ion-label>
+              <ion-toggle slot="end" color="secondary"></ion-toggle>
+            </ion-item>
+            <ion-item lines="none">
+              <ion-label>Delete Products</ion-label>
+              <ion-toggle slot="end" color="secondary"></ion-toggle>
+            </ion-item>
+          </ion-card>
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
