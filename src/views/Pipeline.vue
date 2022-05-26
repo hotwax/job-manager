@@ -30,7 +30,7 @@
           <div v-if="pendingJobs?.length === 0">
             <p class="ion-text-center">{{ $t("There are no jobs pending right now")}}</p>
             <div class="ion-text-center">
-              <ion-button fill="outline" @click="refreshJobs()">
+              <ion-button fill="outline" @click="refreshJobs(undefined, true)">
                 {{ $t('retry') }}
                 <ion-spinner v-if="isRetrying" name="crescent" />
               </ion-button>
@@ -76,7 +76,7 @@
                 </div>
               </div> 
             </ion-card>
-            <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
+            <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event, true)">
               <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
             </ion-refresher>
             <ion-infinite-scroll @ionInfinite="loadMorePendingJobs($event)" threshold="100px" :disabled="!isPendingJobsScrollable">
@@ -90,7 +90,7 @@
           <div v-if="runningJobs?.length === 0">
             <p class="ion-text-center">{{ $t("There are no jobs running right now")}}</p>
             <div class="ion-text-center">
-              <ion-button fill="outline" @click="refreshJobs()">
+              <ion-button fill="outline" @click="refreshJobs(undefined, true)">
                 {{ $t('retry') }}
                 <ion-spinner slot="end" v-if="isRetrying" name="crescent" />
               </ion-button>
@@ -146,7 +146,7 @@
               </div>
             </ion-card>
 
-            <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
+            <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event, true)">
               <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
             </ion-refresher>
             <ion-infinite-scroll @ionInfinite="loadMoreRunningJobs($event)" threshold="100px" :disabled="!isRunningJobsScrollable">
@@ -160,7 +160,7 @@
           <div v-if="jobHistory?.length === 0">
             <p class="ion-text-center">{{ $t("No jobs have run yet")}}</p>
             <div class="ion-text-center">
-              <ion-button fill="outline" @click="refreshJobs()">
+              <ion-button fill="outline" @click="refreshJobs(undefined, true)">
                 {{ $t('retry') }}
                 <ion-spinner v-if="isRetrying" name="crescent" />
               </ion-button>
@@ -216,7 +216,7 @@
             </div>
           </ion-card>
 
-          <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
+          <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event, true)">
             <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
           </ion-refresher>   
           <ion-infinite-scroll @ionInfinite="loadMoreJobHistory($event)" threshold="100px" :disabled="!isHistoryJobsScrollable">
@@ -439,29 +439,23 @@ export default defineComponent({
         event.target.complete();
       })
     },
-    async refreshJobs(event: any) {
-      this.isRetrying = true;
+    async refreshJobs(event: any, retry = false ) {
+      this.isRetrying = retry;
       if(this.segmentSelected === 'pending') {
         this.getPendingJobs().then(() => {
           if(event) event.target.complete();
           this.isRetrying = false;
-        }).catch(()=>{
-          this.isRetrying = false;
-        });
+        })
       } else if(this.segmentSelected === 'running') {
         this.getRunningJobs().then(() => {
           if(event) event.target.complete();
           this.isRetrying = false;
-        }).catch(()=>{
-          this.isRetrying = false;
-        });
+        })
       } else {
         this.getJobHistory().then(() => {
           if(event) event.target.complete();
           this.isRetrying = false;
-        }).catch(()=>{
-          this.isRetrying = false;
-        });
+        })
       }
     },
 
