@@ -29,14 +29,14 @@
 
           <ion-card>
             <ion-card-header>
-              <ion-card-title>Web Hooks</ion-card-title>
+              <ion-card-title>{{ $t("Webhooks") }}</ion-card-title>
             </ion-card-header>
             <ion-item>
-              <ion-label class="ion-text-wrap">New Products</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("New products") }}</ion-label>
               <ion-toggle slot="end" color="secondary"></ion-toggle>
             </ion-item>
             <ion-item lines="none">
-              <ion-label>Delete Products</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("Delete products") }}</ion-label>
               <ion-toggle slot="end" color="secondary"></ion-toggle>
             </ion-item>
           </ion-card>
@@ -63,6 +63,7 @@ import {
   IonPage,
   IonTitle,
   IonToolbar,
+  IonToggle,
   isPlatform
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
@@ -86,6 +87,7 @@ export default defineComponent({
     IonPage,
     IonTitle,
     IonToolbar,
+    IonToggle,
     JobConfiguration
   },
   computed: {
