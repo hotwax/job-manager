@@ -34,7 +34,6 @@ import { mapGetters, useStore } from 'vuex'
 import JobHistoryModal from '@/components/JobHistoryModal.vue'
 import { Plugins } from '@capacitor/core';
 import { showToast } from '@/utils'
-import emitter from "@/event-bus"
 
 export default defineComponent({
   name: "JobActionsPopover",
