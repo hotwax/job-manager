@@ -76,7 +76,7 @@
                 </div>
               </div> 
             </ion-card>
-            <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event, true)">
+            <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
               <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
             </ion-refresher>
             <ion-infinite-scroll @ionInfinite="loadMorePendingJobs($event)" threshold="100px" :disabled="!isPendingJobsScrollable">
@@ -146,7 +146,7 @@
               </div>
             </ion-card>
 
-            <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event, true)">
+            <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
               <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
             </ion-refresher>
             <ion-infinite-scroll @ionInfinite="loadMoreRunningJobs($event)" threshold="100px" :disabled="!isRunningJobsScrollable">
@@ -216,7 +216,7 @@
             </div>
           </ion-card>
 
-          <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event, true)">
+          <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
             <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
           </ion-refresher>   
           <ion-infinite-scroll @ionInfinite="loadMoreJobHistory($event)" threshold="100px" :disabled="!isHistoryJobsScrollable">
@@ -439,8 +439,8 @@ export default defineComponent({
         event.target.complete();
       })
     },
-    async refreshJobs(event: any, retry = false ) {
-      this.isRetrying = retry;
+    async refreshJobs(event: any, isRetrying = false ) {
+      this.isRetrying = isRetrying;
       if(this.segmentSelected === 'pending') {
         this.getPendingJobs().then(() => {
           if(event) event.target.complete();
@@ -569,9 +569,9 @@ export default defineComponent({
     // setting the current job as empty because when coming back to the pipeline page the currentJob
     // state does not gets updated and hence the job configuration component takes it space in DOM
     await this.store.dispatch('job/updateCurrentJob', { job: {} });
-    emitter.on("productStoreChanged", this.refreshJobs);
   },
   mounted(){
+    emitter.on("productStoreChanged", this.refreshJobs);
     emitter.on("pinnedJobsUpdated", (this as any).updateSelectedPinnedJob);
   },
   unmounted(){
