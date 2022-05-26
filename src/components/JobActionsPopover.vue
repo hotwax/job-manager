@@ -54,8 +54,11 @@ export default defineComponent({
     })
   },
   methods: {
-    closePopover() {
-      popoverController.dismiss({ dismissed: true });
+    closePopover(enumId?: any) {
+      popoverController.dismiss({
+        dismissed: true,
+        systemJobEnumId: enumId
+      });
     },
     async copyJobInformation(job: any) {
       const { Clipboard } = Plugins;
@@ -83,12 +86,11 @@ export default defineComponent({
       if(pinnedJobs.has(enumId)) {
         pinnedJobs.delete(enumId);
         await this.store.dispatch('user/updatePinnedJobs', { pinnedJobs: [...pinnedJobs] });
-        emitter.emit("pinnedJobsUpdated", enumId);
       } else {
         pinnedJobs.add(enumId);
         await this.store.dispatch('user/updatePinnedJobs', { pinnedJobs: [...pinnedJobs] });
       }
-      this.closePopover();
+      this.closePopover(enumId);
     }
   },
   setup() {
