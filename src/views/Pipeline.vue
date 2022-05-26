@@ -30,7 +30,7 @@
           <div v-if="pendingJobs?.length === 0">
             <p class="ion-text-center">{{ $t("There are no jobs pending right now")}}</p>
             <div class="ion-text-center">
-              <ion-button fill="outline" @click="refreshJobs()">
+              <ion-button fill="outline" @click="refreshJobs(undefined, true)">
                 {{ $t('retry') }}
                 <ion-spinner v-if="isRetrying" name="crescent" />
               </ion-button>
@@ -90,7 +90,7 @@
           <div v-if="runningJobs?.length === 0">
             <p class="ion-text-center">{{ $t("There are no jobs running right now")}}</p>
             <div class="ion-text-center">
-              <ion-button fill="outline" @click="refreshJobs()">
+              <ion-button fill="outline" @click="refreshJobs(undefined, true)">
                 {{ $t('retry') }}
                 <ion-spinner slot="end" v-if="isRetrying" name="crescent" />
               </ion-button>
@@ -160,7 +160,7 @@
           <div v-if="jobHistory?.length === 0">
             <p class="ion-text-center">{{ $t("No jobs have run yet")}}</p>
             <div class="ion-text-center">
-              <ion-button fill="outline" @click="refreshJobs()">
+              <ion-button fill="outline" @click="refreshJobs(undefined, true)">
                 {{ $t('retry') }}
                 <ion-spinner v-if="isRetrying" name="crescent" />
               </ion-button>
@@ -439,23 +439,23 @@ export default defineComponent({
         event.target.complete();
       })
     },
-    async refreshJobs(event: any) {
-      this.isRetrying = true;
+    async refreshJobs(event: any, isRetrying = false ) {
+      this.isRetrying = isRetrying;
       if(this.segmentSelected === 'pending') {
         this.getPendingJobs().then(() => {
           if(event) event.target.complete();
           this.isRetrying = false;
-        });
+        })
       } else if(this.segmentSelected === 'running') {
         this.getRunningJobs().then(() => {
           if(event) event.target.complete();
           this.isRetrying = false;
-        });
+        })
       } else {
         this.getJobHistory().then(() => {
           if(event) event.target.complete();
           this.isRetrying = false;
-        });
+        })
       }
     },
 
@@ -571,9 +571,11 @@ export default defineComponent({
     await this.store.dispatch('job/updateCurrentJob', { job: {} });
   },
   mounted(){
+    emitter.on("productStoreChanged", this.refreshJobs);
     emitter.on("pinnedJobsUpdated", (this as any).updateSelectedPinnedJob);
   },
   unmounted(){
+    emitter.off("productStoreChanged", this.refreshJobs);
     emitter.off('jobUpdated', this.updateJobs);
     emitter.off("pinnedJobsUpdated", (this as any).updateSelectedPinnedJob);
   },

@@ -353,21 +353,28 @@ export default defineComponent({
           ]
         });
       return jobAlert.present();
+    },
+    fetchJobs(){
+      this.store.dispatch("job/fetchJobs", {
+        "inputFields":{
+          "systemJobEnumId": Object.values(this.jobEnums),
+          "systemJobEnumId_op": "in"
+        }
+      });
     }
   },
   mounted () {
-    this.store.dispatch("job/fetchJobs", {
-      "inputFields":{
-        "systemJobEnumId": Object.values(this.jobEnums),
-        "systemJobEnumId_op": "in"
-      }
-    });
+    this.fetchJobs();
     this.store.dispatch("job/fetchJobs", {
       "inputFields":{
         "systemJobEnumId": Object.values(this.batchJobEnums).map((jobEnum: any) => jobEnum.id),
         "systemJobEnumId_op": "in"
       }
     });
+    emitter.on("productStoreChanged", this.fetchJobs);
+  },
+  unmounted(){
+    emitter.off("productStoreChanged", this.fetchJobs);
   },
   setup() {
     const store = useStore();

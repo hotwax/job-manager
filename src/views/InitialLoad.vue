@@ -96,12 +96,11 @@ export default defineComponent({
     }
   },
   mounted () {
-    this.store.dispatch("job/fetchJobs", {
-      "inputFields":{
-        "systemJobEnumId": Object.values(this.jobEnums),
-        "systemJobEnumId_op": "in"
-      }
-    })
+    this.fetchJobs();
+    emitter.on("productStoreChanged", this.fetchJobs);
+  },
+  unmounted(){
+    emitter.off("productStoreChanged", this.fetchJobs);
   },
   computed: {
     ...mapGetters({
@@ -134,6 +133,14 @@ export default defineComponent({
         emitter.emit('playAnimation');
         this.isJobDetailAnimationCompleted = true;
       }
+    },
+    fetchJobs(){
+      this.store.dispatch("job/fetchJobs", {
+        "inputFields":{
+          "systemJobEnumId": Object.values(this.jobEnums),
+          "systemJobEnumId_op": "in"
+        }
+      });
     }
   },
   setup() {
