@@ -9,8 +9,8 @@
 
       <ion-item>
         <ion-icon slot="start" :icon="timeOutline" />
-        <ion-label>{{ $t("Run time") }}</ion-label>
-        <ion-label @click="() => isOpen = true" slot="end">{{ currentJob?.runTime ? getTime(currentJob.runTime) : $t('Select run time') }}</ion-label>
+        <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
+        <ion-label class="ion-text-wrap" @click="() => isOpen = true" slot="end">{{ currentJob?.runTime ? getTime(currentJob.runTime) : $t('Select run time') }}</ion-label>
         <!-- TODO: display a button when we are not having a runtime and open the datetime component
         on click of that button
         Currently, when mapping the same datetime component for label and button so it's not working so for
@@ -29,7 +29,7 @@
 
       <ion-item>
         <ion-icon slot="start" :icon="timerOutline" />
-        <ion-label>{{ $t("Schedule") }}</ion-label>
+        <ion-label class="ion-text-wrap">{{ $t("Schedule") }}</ion-label>
         <ion-select :interface-options="customPopoverOptions" interface="popover" :value="jobStatus" :placeholder="$t('Disabled')" @ionChange="($event) => jobStatus = $event['detail'].value">
           <ion-select-option v-for="freq in generateFrequencyOptions" :key="freq.value" :value="freq.value">{{ $t(freq.label) }}</ion-select-option>
         </ion-select>
@@ -89,10 +89,12 @@ import {
   syncOutline,
   personCircleOutline
 } from "ionicons/icons";
-import { showToast } from "@/utils";
+import { handleDateTimeInput, showToast } from "@/utils";
 import { mapGetters, useStore } from "vuex";
 import { DateTime } from 'luxon';
 import { translate } from '@/i18n'
+import { useRouter } from "vue-router";
+import emitter from '@/event-bus';
 
 export default defineComponent({
   name: "JobConfiguration",
@@ -169,7 +171,7 @@ export default defineComponent({
   },
   methods: {
     getDateTime(time: any) {
-      return DateTime.fromMillis(time)
+      return DateTime.fromMillis(time).toISO()
     },
     async skipJob(job: any) {
       const alert = await alertController
@@ -183,8 +185,11 @@ export default defineComponent({
             text: this.$t('Skip'),
             handler: () => {
               if (job) {
-                this.store.dispatch('job/skipJob', job).then(() => {
-                  showToast(translate("This job has been skipped!"))
+                this.store.dispatch('job/skipJob', job).then((resp) => {
+                  if (resp) {
+                    emitter.emit('jobUpdated');
+                    showToast(translate("This job has been skipped!"))
+                  }
                 })
               }
             }
@@ -203,9 +208,15 @@ export default defineComponent({
           }, {
             text: this.$t('Cancel'),
             handler: () => {
-              this.store.dispatch('job/cancelJob', job).then(() => {
-                showToast(translate("This job has been canceled!"))
-              });
+              this.store.dispatch('job/cancelJob', job).then((resp) => {
+                if(resp.data?.successMessage) {
+                  emitter.emit('jobUpdated');
+                  const category = this.$route.params?.category;
+                  if (category) {
+                    this.router.push({ name: 'JobDetails', params: { jobId: job?.systemJobEnumId, category: category }, replace: true });
+                  }
+                }
+              })
             }
           }],
         });
@@ -222,9 +233,7 @@ export default defineComponent({
           }, {
             text: this.$t('Save'),
             handler: () => {
-              this.updateJob().then(() => {
-                showToast(translate("The changes have been saved!"))
-              });
+              this.updateJob();
             }
           }]
         });
@@ -244,9 +253,20 @@ export default defineComponent({
       job['jobStatus'] = this.jobStatus !== 'SERVICE_DRAFT' ? this.jobStatus : 'HOURLY';
 
       if (job?.statusId === 'SERVICE_DRAFT') {
-        await this.store.dispatch('job/scheduleService', job)
+        this.store.dispatch('job/scheduleService', job).then((job: any) => {
+          if(job?.jobId) {
+            const category = this.$route.params.category;
+            if (category) {
+              this.router.push({ name: 'JobDetails', params: { jobId: job?.jobId, category: category }, replace: true });
+            }
+          }
+        })
       } else if (job?.statusId === 'SERVICE_PENDING') {
-        await this.store.dispatch('job/updateJob', job)
+        this.store.dispatch('job/updateJob', job).then((resp) => {
+          if (resp) {
+            emitter.emit('jobUpdated');
+          }
+        })
       }
     },
     getTime (time: any) {
@@ -258,18 +278,20 @@ export default defineComponent({
     },
     updateRunTime(ev: CustomEvent, job: any) {
       if (job) {
-        job.runTime = DateTime.fromISO(ev['detail'].value).toMillis()
+        job.runTime = handleDateTimeInput(ev['detail'].value)
       }
     }
   },
   setup() {
     const store = useStore();
+    const router = useRouter();
 
     return {
       calendarClearOutline,
       timeOutline,
       timerOutline,
       store,
+      router,
       syncOutline,
       personCircleOutline
     };
@@ -301,6 +323,10 @@ ion-list {
   .mobile-only {
     display: none;
   }  
+}
+
+ion-label:nth-child(3) {
+  cursor: pointer;
 }
 
 ion-modal {
