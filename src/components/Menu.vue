@@ -11,8 +11,9 @@
         <ion-menu-toggle auto-hide="false" v-for="(page, index) in appPages" :key="index">
           <ion-item 
             :lines="page.lines"
+            :isIntegrated="page.isIntegration"
             button
-            @click="selectedIndex = index"
+            @click="selectedIndex = index ; selectedIntegratedIndex = -1"
             router-direction="root"
             :router-link="page.url"
             class="hydrated"
@@ -27,17 +28,17 @@
         <ion-item-divider color="light">
           <ion-label>Integrations</ion-label>
         </ion-item-divider>
-        <ion-menu-toggle auto-hide="false" v-for="(ipage, index) in appIntegrationPages" :key="index">
+        <ion-menu-toggle auto-hide="false" v-for="(page, index) in appIntegrationPages" :key="index">
           <ion-item 
-            :lines="ipage.lines"
+            :lines="page.lines"
             button
-            @click="selectedIntegratedIndex = index"
+            @click="selectedIntegratedIndex = index ; selectedIndex = -1"
             router-direction="root"
-            :router-link="ipage.url"
+            :router-link="page.url"
             class="hydrated"
             :class="{ selected: selectedIntegratedIndex === index }">
-            <ion-icon slot="start" :ios="ipage.iosIcon" :md="ipage.mdIcon" />
-            <ion-label>{{ $t(ipage.title) }}</ion-label>
+            <ion-icon slot="start" :ios="page.iosIcon" :md="page.mdIcon" />
+            <ion-label>{{ $t(page.title) }}</ion-label>
           </ion-item>
         </ion-menu-toggle>
       </ion-list>
@@ -130,35 +131,40 @@ export default defineComponent({
         url: "/pipeline",
         iosIcon: pulseOutline,
         mdIcon: pulseOutline,
-        dependsOnBaseURL: true
+        dependsOnBaseURL: true,
+        isIntegration: false
       },
       {
         title: "Initial load",
         url: "/initial-load",
         iosIcon: iceCreamOutline,
         mdIcon: iceCreamOutline,
-        dependsOnBaseURL: false
+        dependsOnBaseURL: false,
+        isIntegration: false
       },
       {
         title: "Pre-order",
         url: "/pre-order",
         iosIcon: calendarNumberOutline,
         mdIcon: calendarNumberOutline,
-        dependsOnBaseURL: false
+        dependsOnBaseURL: false,
+        isIntegration: false
       },
       {
         title: "Orders",
         url: "/orders",
         iosIcon: ticketOutline,
         mdIcon: ticketOutline,
-        dependsOnBaseURL: false
+        dependsOnBaseURL: false,
+        isIntegration: false
       },
       {
         title: "Inventory",
         url: "/inventory",
         iosIcon: albumsOutline,
         mdIcon: albumsOutline,
-        dependsOnBaseURL: false
+        dependsOnBaseURL: false,
+        isIntegration: false
       },
       {
         title: "Products",
@@ -166,8 +172,9 @@ export default defineComponent({
         iosIcon: shirtOutline,
         mdIcon: shirtOutline,
         lines: 'none',
-        dependsOnBaseURL: false
-      }
+        dependsOnBaseURL: false,
+        isIntegration: false
+      },
     ];
     let appIntegrationPages = [
       {
@@ -175,14 +182,16 @@ export default defineComponent({
         url: "/erp",
         iosIcon: folderOpenOutline,
         mdIcon: folderOpenOutline,
-        dependsOnBaseURL: false
+        dependsOnBaseURL: false,
+        isIntegration: true
       },
       {
         title: "POS",
         url: "/pos",
         iosIcon: storefrontOutline,
         mdIcon: storefrontOutline,
-        dependsOnBaseURL: false
+        dependsOnBaseURL: false,
+        isIntegration: true        
       },
       {
         title: "WMS",
@@ -190,7 +199,8 @@ export default defineComponent({
         iosIcon: businessOutline,
         mdIcon: businessOutline,
         lines: 'full',
-        dependsOnBaseURL: false
+        dependsOnBaseURL: false,
+        isIntegration: true
       },
       {
         title: "Settings",
