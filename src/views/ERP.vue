@@ -14,42 +14,39 @@
             <ion-card-header>
               <ion-card-title>{{ $t("Import") }}</ion-card-title>
             </ion-card-header>
-            <ion-item @click="viewJobConfiguration('INVENTORY', 'Inventory', getJobStatus(this.jobEnums['INVENTORY']))" detail button>
+            <ion-item @click="viewJobConfiguration('IMP_INVENTORY', 'Inventory', getJobStatus(this.jobEnums['IMP_INVENTORY']))" detail button>
               <ion-label class="ion-text-wrap">{{ $t("Inventory") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('INVENTORY') }}</ion-label>
+              <ion-label slot="end">{{ getTemporalExpression('IMP_INVENTORY') }}</ion-label>
             </ion-item>
-            <ion-item detail button>
+            <ion-item @click="viewJobConfiguration('IMP_INVENTORY_COST', 'Inventory cost', getJobStatus(this.jobEnums['IMP_INVENTORY_COST']))" detail button>
               <ion-label class="ion-text-wrap">{{ $t("Inventory cost") }}</ion-label>
-              <ion-label slot="end"></ion-label>
+              <ion-label slot="end">{{ getTemporalExpression('IMP_INVENTORY_COST') }}</ion-label>
             </ion-item>
-            <ion-item detail button>
+            <ion-item @click="viewJobConfiguration('LANDED_INVENTORY_COST', 'Landed inventory cost', getJobStatus(this.jobEnums['LANDED_INVENTORY_COST']))" detail button>
               <ion-label class="ion-text-wrap">{{ $t("Landed inventory cost") }}</ion-label>
-              <ion-label slot="end"></ion-label>
+              <ion-label slot="end">{{ getTemporalExpression('LANDED_INVENTORY_COST') }}</ion-label>
             </ion-item>
-            <ion-item detail button>
+            <ion-item @click="viewJobConfiguration('NEW_PURCHASE_ORDERS', 'New purchase orders', getJobStatus(this.jobEnums['NEW_PURCHASE_ORDERS']))" detail button>
               <ion-label class="ion-text-wrap">{{ $t("New purchase orders") }}</ion-label>
-              <ion-label slot="end"></ion-label>
+              <ion-label slot="end">{{ getTemporalExpression('NEW_PURCHASE_ORDERS') }}</ion-label>
             </ion-item>
-            <ion-item detail button>
+            <ion-item @click="viewJobConfiguration('CLOSED_PURCHASE_ORDERS', 'Closed purchase orders', getJobStatus(this.jobEnums['CLOSED_PURCHASE_ORDERS']))" lines="none" detail button>
               <ion-label class="ion-text-wrap">{{ $t("Closed purchase orders") }}</ion-label>
-              <ion-label slot="end"></ion-label>
+              <ion-label slot="end">{{ getTemporalExpression('CLOSED_PURCHASE_ORDERS') }}</ion-label>
             </ion-item>
-            <!-- <ion-item>
-              <ion-label class="ion-text-wrap"><p>{{ $t("Unfulfilled orders that pass their auto cancelation date will be canceled automatically in HotWax Commerce. They will also be canceled in Shopify if upload for canceled orders is enabled.") }}</p></ion-label>
-            </ion-item> -->
           </ion-card>
 
           <ion-card>
             <ion-card-header>
               <ion-card-title>{{ $t("Upload") }}</ion-card-title>
             </ion-card-header>
-            <ion-item detail button>
+            <ion-item @click="viewJobConfiguration('UPLOAD_SALES', 'Sales', getJobStatus(this.jobEnums['UPLOAD_SALES']))" detail button>
               <ion-label class="ion-text-wrap">{{ $t("Sales") }}</ion-label>
-              <ion-label slot="end"></ion-label>
+              <ion-label slot="end">{{ getTemporalExpression('UPLOAD_SALES') }}</ion-label>
             </ion-item>
-            <ion-item detail button>
+            <ion-item @click="viewJobConfiguration('UPLOAD_INVENTORY', 'Inventory', getJobStatus(this.jobEnums['UPLOAD_INVENTORY']))" lines="none" detail button>
               <ion-label class="ion-text-wrap">{{ $t("Inventory") }}</ion-label>
-              <ion-label slot="end"></ion-label>
+              <ion-label slot="end">{{ getTemporalExpression('UPLOAD_INVENTORY') }}</ion-label>
             </ion-item>
           </ion-card>
         </section>
@@ -147,6 +144,7 @@ export default defineComponent({
         emitter.emit('playAnimation');
         this.isJobDetailAnimationCompleted = true;
       }
+      console.log(this.currentJob)
     },  
     getTime (time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
@@ -180,7 +178,7 @@ export default defineComponent({
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
         this.$t('Disabled')
     },  
-        async runJob(header: string, id: string) {
+    async runJob(header: string, id: string) {
       const job = this.getJob(id)
       const jobAlert = await alertController
         .create({
