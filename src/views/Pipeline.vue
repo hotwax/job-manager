@@ -504,8 +504,9 @@ export default defineComponent({
       });
 
       popover.onDidDismiss().then((result) => {
-        if (result.data.systemJobEnumId && !this.getPinnedJobs.includes(result.data.systemJobEnumId)){
-          this.updateSelectedPinnedJob(result.data.systemJobEnumId);
+        const jobEnumId = result.data.systemJobEnumId;
+        if (jobEnumId && !this.getPinnedJobs.includes(jobEnumId)){
+          this.updateSelectedPinnedJob(jobEnumId);
         }
       });
         return popover.present()
@@ -575,6 +576,9 @@ export default defineComponent({
     // setting the current job as empty because when coming back to the pipeline page the currentJob
     // state does not gets updated and hence the job configuration component takes it space in DOM
     await this.store.dispatch('job/updateCurrentJob', { job: {} });
+  },
+  unmounted(){
+    emitter.off('jobUpdated', this.updateJobs);
   },
   setup() {
     const router = useRouter();
