@@ -9,7 +9,8 @@
     <ion-content>
       <ion-list>
         <ion-menu-toggle auto-hide="false" v-for="(page, index) in appPages" :key="index">
-          <ion-item
+          <ion-item 
+            :lines="page.lines"
             button
             @click="selectedIndex = index"
             router-direction="root"
@@ -21,7 +22,27 @@
           </ion-item>
         </ion-menu-toggle>
       </ion-list>
+
+      <ion-list>
+        <ion-item-divider color="light">
+          <ion-label>Integrations</ion-label>
+        </ion-item-divider>
+        <ion-menu-toggle auto-hide="false" v-for="(ipage, index) in appIntegrationPages" :key="index">
+          <ion-item 
+            :lines="ipage.lines"
+            button
+            @click="selectedIntegratedIndex = index"
+            router-direction="root"
+            :router-link="ipage.url"
+            class="hydrated"
+            :class="{ selected: selectedIntegratedIndex === index }">
+            <ion-icon slot="start" :ios="ipage.iosIcon" :md="ipage.mdIcon" />
+            <ion-label>{{ $t(ipage.title) }}</ion-label>
+          </ion-item>
+        </ion-menu-toggle>
+      </ion-list>
     </ion-content>
+    
     <ion-footer>
       <ion-toolbar>
         <ion-item lines="none">
@@ -43,6 +64,7 @@ import {
   IonHeader,
   IonIcon,
   IonItem,
+  IonItemDivider,
   IonLabel,
   IonList,
   IonMenu,
@@ -63,6 +85,7 @@ export default defineComponent({
     IonHeader,
     IonIcon,
     IonItem,
+    IonItemDivider,
     IonLabel,
     IonList,
     IonMenu,
@@ -74,6 +97,9 @@ export default defineComponent({
   created() {
     // When open any specific screen it should show that screen selected
     this.selectedIndex = this.appPages.findIndex((screen) => {
+      return screen.url === this.$router.currentRoute.value.path;
+    })
+    this.selectedIntegratedIndex = this.appIntegrationPages.findIndex((screen) => {
       return screen.url === this.$router.currentRoute.value.path;
     })
   },
@@ -97,6 +123,7 @@ export default defineComponent({
   setup() {
     const store = useStore();
     const selectedIndex = ref(0);
+    const selectedIntegratedIndex = ref(0);
     let appPages = [
       {
         title: "Pipeline",
@@ -138,8 +165,11 @@ export default defineComponent({
         url: "/product",
         iosIcon: shirtOutline,
         mdIcon: shirtOutline,
+        lines: 'none',
         dependsOnBaseURL: false
-      },
+      }
+    ];
+    let appIntegrationPages = [
       {
         title: "ERP",
         url: "/erp",
@@ -159,6 +189,7 @@ export default defineComponent({
         url: "/wms",
         iosIcon: businessOutline,
         mdIcon: businessOutline,
+        lines: 'full',
         dependsOnBaseURL: false
       },
       {
@@ -169,12 +200,16 @@ export default defineComponent({
         dependsOnBaseURL: true
       },
     ];
+    
     if (process.env.VUE_APP_BASE_URL) {
       appPages = appPages.filter((page) => page.dependsOnBaseURL);
+      appIntegrationPages = appIntegrationPages.filter((page) => page.dependsOnBaseURL);
     }
     return {
       selectedIndex,
+      selectedIntegratedIndex,
       appPages,
+      appIntegrationPages ,
       pulseOutline, 
       calendarNumberOutline, 
       ticketOutline, 
