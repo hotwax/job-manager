@@ -33,11 +33,11 @@
             </ion-card-header>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("New products") }}</ion-label>
-              <ion-toggle slot="end" color="secondary"></ion-toggle>
+              <ion-toggle slot="end" :checked="isNewProducts()" color="secondary"></ion-toggle>
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">{{ $t("Delete products") }}</ion-label>
-              <ion-toggle slot="end" color="secondary"></ion-toggle>
+              <ion-toggle slot="end" :checked="isDeleteProducts" color="secondary"></ion-toggle>
             </ion-item>
           </ion-card>
         </section>
@@ -94,7 +94,9 @@ export default defineComponent({
     ...mapGetters({
       getJobStatus: 'job/getJobStatus',
       getTemporalExpr: 'job/getTemporalExpr',
-      getJob: 'job/getJob'
+      getJob: 'job/getJob',
+      shopifyConfigId: 'user/getShopifyConfigId',
+      fetchCachedWebhooks: 'webhooks/fetchCachedWebhooks'
     }),
   },
   data() {
@@ -106,7 +108,8 @@ export default defineComponent({
       currentJobStatus: '',
       freqType: '',
       isJobDetailAnimationCompleted: false,
-      isDesktop: isPlatform('desktop')
+      isDesktop: isPlatform('desktop'),
+      webhooksEnums: JSON.parse(process.env?.VUE_APP_WEBHOOKS_ENUMS as string) as any
     }
   },
   mounted () {
@@ -116,8 +119,21 @@ export default defineComponent({
         "systemJobEnumId_op": "in"
       }
     });
+    this.getWebhooks()
   },
   methods: {
+    async getWebhooks(){
+      await this.store.dispatch('webhooks/fetchWebhooks', {shopifyConfigId: this.shopifyConfigId})
+      console.log(this.webhooksEnums.DELETE_PRODUCTS, this.fetchCachedWebhooks['products/delete'].topic);
+    },
+    isNewProducts(): boolean {
+      const status = this.fetchCachedWebhooks['products/create']
+      return status && status !== this.webhooksEnums['products/create']
+    },
+    isDeleteProducts(): boolean {
+      const status = this.fetchCachedWebhooks['products/delete']
+      return status && status !== this.webhooksEnums['products/delete']
+    },
     async viewJobConfiguration(id: string, title: string, status: string) {
       this.currentJob = this.getJob(this.jobEnums[id])
       this.title = title

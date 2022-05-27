@@ -38,6 +38,28 @@
 
           <ion-card>
             <ion-card-header>
+              <ion-card-title>{{ $t("Webhooks") }}</ion-card-title>
+            </ion-card-header>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("New orders") }}</ion-label>
+              <ion-toggle slot="end" color="secondary"></ion-toggle>
+            </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("Cancelled orders") }}</ion-label>
+              <ion-toggle slot="end" color="secondary"></ion-toggle>
+            </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("Payment status") }}</ion-label>
+              <ion-toggle slot="end" color="secondary"></ion-toggle>
+            </ion-item>
+            <ion-item lines="none">
+              <ion-label class="ion-text-wrap">{{ $t("Returns") }}</ion-label>
+              <ion-toggle slot="end" color="secondary"></ion-toggle>
+            </ion-item>
+          </ion-card>
+
+          <ion-card>
+            <ion-card-header>
               <ion-card-title>{{ $t("Upload") }}</ion-card-title>
             </ion-card-header>
             <ion-item @click="viewJobConfiguration('UPLD_CMPLT_ORDRS', 'Completed orders', getJobStatus(this.jobEnums['UPLD_CMPLT_ORDRS']))" detail button>
