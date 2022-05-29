@@ -37,7 +37,7 @@
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">{{ $t("Delete products") }}</ion-label>
-              <ion-toggle slot="end" :checked="isDeleteProducts" color="secondary"></ion-toggle>
+              <ion-toggle slot="end" :checked="isDeleteProducts()" color="secondary"></ion-toggle>
             </ion-item>
           </ion-card>
         </section>
@@ -96,7 +96,7 @@ export default defineComponent({
       getTemporalExpr: 'job/getTemporalExpr',
       getJob: 'job/getJob',
       shopifyConfigId: 'user/getShopifyConfigId',
-      fetchCachedWebhooks: 'webhooks/fetchCachedWebhooks'
+      getCachedWebhooks: 'webhooks/getCachedWebhooks'
     }),
   },
   data() {
@@ -119,20 +119,14 @@ export default defineComponent({
         "systemJobEnumId_op": "in"
       }
     });
-    this.getWebhooks()
+    this.store.dispatch('webhooks/fetchWebhooks', {shopifyConfigId: this.shopifyConfigId})    
   },
   methods: {
-    async getWebhooks(){
-      await this.store.dispatch('webhooks/fetchWebhooks', {shopifyConfigId: this.shopifyConfigId})
-      console.log(this.webhooksEnums.DELETE_PRODUCTS, this.fetchCachedWebhooks['products/delete'].topic);
-    },
     isNewProducts(): boolean {
-      const status = this.fetchCachedWebhooks['products/create']
-      return status && status !== this.webhooksEnums['products/create']
+      return this.getCachedWebhooks['NEW_PRODUCTS']?.topic === this.webhooksEnums['NEW_PRODUCTS']
     },
     isDeleteProducts(): boolean {
-      const status = this.fetchCachedWebhooks['products/delete']
-      return status && status !== this.webhooksEnums['products/delete']
+      return this.getCachedWebhooks['DELETE_PRODUCTS']?.topic === this.webhooksEnums['DELETE_PRODUCTS']
     },
     async viewJobConfiguration(id: string, title: string, status: string) {
       this.currentJob = this.getJob(this.jobEnums[id])

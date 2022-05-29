@@ -3,7 +3,7 @@ import RootState from "@/store/RootState";
 import WebhooksState from "./WebhooksState";
 
 const getters: GetterTree<WebhooksState, RootState> = {
-  fetchCachedWebhooks: (state) => state.cached
+  getCachedWebhooks: (state) => state.cached
 }
 
 export default getters

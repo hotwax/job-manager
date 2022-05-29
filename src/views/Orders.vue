@@ -42,19 +42,19 @@
             </ion-card-header>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("New orders") }}</ion-label>
-              <ion-toggle slot="end" color="secondary"></ion-toggle>
+              <ion-toggle :checked="isNewOrders()" slot="end" color="secondary"></ion-toggle>
             </ion-item>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Cancelled orders") }}</ion-label>
-              <ion-toggle slot="end" color="secondary"></ion-toggle>
+              <ion-toggle :checked="isCancelledOrders()" slot="end" color="secondary"></ion-toggle>
             </ion-item>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Payment status") }}</ion-label>
-              <ion-toggle slot="end" color="secondary"></ion-toggle>
+              <ion-toggle :checked="isPaymentStatus()" slot="end" color="secondary"></ion-toggle>
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">{{ $t("Returns") }}</ion-label>
-              <ion-toggle slot="end" color="secondary"></ion-toggle>
+              <ion-toggle :checked="isReturns()" slot="end" color="secondary"></ion-toggle>
             </ion-item>
           </ion-card>
 
@@ -214,6 +214,7 @@ export default defineComponent({
       jobEnums: JSON.parse(process.env?.VUE_APP_ODR_JOB_ENUMS as string) as any,
       batchJobEnums: JSON.parse(process.env?.VUE_APP_BATCH_JOB_ENUMS as string) as any,
       jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
+      webhooksEnums: JSON.parse(process.env?.VUE_APP_WEBHOOKS_ENUMS as string) as any,
       currentJob: '' as any,
       title: 'New orders',
       currentJobStatus: '',
@@ -229,7 +230,8 @@ export default defineComponent({
       orderBatchJobs: "job/getOrderBatchJobs",
       shopifyConfigId: 'user/getShopifyConfigId',
       currentEComStore: 'user/getCurrentEComStore',
-      getTemporalExpr: 'job/getTemporalExpr'
+      getTemporalExpr: 'job/getTemporalExpr',
+      getCachedWebhooks: 'webhooks/getCachedWebhooks'
     }),
     promiseDateChanges(): boolean {
       const status = this.getJobStatus(this.jobEnums['NTS_PRMS_DT_CHNG']);
@@ -241,6 +243,18 @@ export default defineComponent({
     },
   },
   methods: {  
+    isNewOrders(): boolean {
+      return this.getCachedWebhooks['NEW_ORDERS']?.topic === this.webhooksEnums['NEW_ORDERS']
+    },
+    isCancelledOrders(): boolean {
+      return this.getCachedWebhooks['CANCELLED_ORDERS']?.topic === this.webhooksEnums['CANCELLED_ORDERS']
+    },
+    isPaymentStatus(): boolean {
+      return this.getCachedWebhooks['PAYMENT_STATUS']?.topic === this.webhooksEnums['PAYMENT_STATUS']
+    },
+    isReturns(): boolean {
+      return this.getCachedWebhooks['RETURNS']?.topic === this.webhooksEnums['RETURNS']
+    },
     async addBatch() {
       const batchmodal = await modalController.create({
         component: BatchModal
@@ -390,6 +404,7 @@ export default defineComponent({
         "systemJobEnumId_op": "in"
       }
     });
+    this.store.dispatch('webhooks/fetchWebhooks', {shopifyConfigId: this.shopifyConfigId})
   },
   setup() {
     const store = useStore();
