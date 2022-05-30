@@ -19,6 +19,7 @@
         <ion-modal  :is-open="isOpen" @didDismiss="() => isOpen = false">
           <ion-content force-overscroll="false">
             <ion-datetime
+              hour-cycle="h12"
               :min="minDateTime"
               :value="currentJob?.runTime ? getDateTime(currentJob.runTime) : ''"
               @ionChange="updateRunTime($event, currentJob)"
