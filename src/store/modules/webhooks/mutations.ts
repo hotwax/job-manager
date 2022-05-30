@@ -1,8 +1,9 @@
 import { MutationTree } from "vuex";
 import WebhooksState from "./WebhooksState";
+import * as types from './mutations-types'
 
 const mutations: MutationTree<WebhooksState> = {
-  setWebhooks (state, payload: any) {
+  [types.WEBHOOK_UPDATED] (state, payload: any) {
     state.cached = payload
   }
 }

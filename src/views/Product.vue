@@ -33,11 +33,11 @@
             </ion-card-header>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("New products") }}</ion-label>
-              <ion-toggle slot="end" :checked="isNewProducts()" color="secondary"></ion-toggle>
+              <ion-toggle slot="end" :checked="isNewProducts()" color="secondary" />
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">{{ $t("Delete products") }}</ion-label>
-              <ion-toggle slot="end" :checked="isDeleteProducts()" color="secondary"></ion-toggle>
+              <ion-toggle slot="end" :checked="isDeleteProducts()" color="secondary" />
             </ion-item>
           </ion-card>
         </section>

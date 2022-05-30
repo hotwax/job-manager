@@ -8,6 +8,6 @@ const fetchShopifyWebhooks = async (payload?: any): Promise <any>  => {
   });
 }
 
-export const WebhooksService = {
+export const WebhookService = {
   fetchShopifyWebhooks
 }
