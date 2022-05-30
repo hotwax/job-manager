@@ -8,7 +8,7 @@ import userModule from './modules/user';
 import productModule from "./modules/product"
 import jobModule from "./modules/job"
 import utilModule from "./modules/util"
-import webhooksModule from "./modules/webhooks"
+import webhookModule from "./modules/webhook"
 
 
 // TODO check how to register it from the components only
@@ -37,7 +37,7 @@ const store = createStore<RootState>({
         'product': productModule,
         'job': jobModule,
         'util': utilModule,
-        'webhooks': webhooksModule
+        'webhooks': webhookModule
     },
 })
 

@@ -214,7 +214,7 @@ export default defineComponent({
       jobEnums: JSON.parse(process.env?.VUE_APP_ODR_JOB_ENUMS as string) as any,
       batchJobEnums: JSON.parse(process.env?.VUE_APP_BATCH_JOB_ENUMS as string) as any,
       jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
-      webhookEnums: JSON.parse(process.env?.VUE_APP_WEBHOOKS_ENUMS as string) as any,
+      webhookEnums: JSON.parse(process.env?.VUE_APP_WEBHOOK_ENUMS as string) as any,
       currentJob: '' as any,
       title: 'New orders',
       currentJobStatus: '',
@@ -231,7 +231,7 @@ export default defineComponent({
       shopifyConfigId: 'user/getShopifyConfigId',
       currentEComStore: 'user/getCurrentEComStore',
       getTemporalExpr: 'job/getTemporalExpr',
-      getCachedWebhooks: 'webhooks/getCachedWebhooks'
+      getCachedWebhook: 'webhooks/getCachedWebhook'
     }),
     promiseDateChanges(): boolean {
       const status = this.getJobStatus(this.jobEnums['NTS_PRMS_DT_CHNG']);
@@ -244,16 +244,16 @@ export default defineComponent({
   },
   methods: {  
     isNewOrders(): boolean {
-      return this.getCachedWebhooks['NEW_ORDERS']?.topic === this.webhookEnums['NEW_ORDERS']
+      return this.getCachedWebhook['NEW_ORDERS']?.topic === this.webhookEnums['NEW_ORDERS']
     },
     isCancelledOrders(): boolean {
-      return this.getCachedWebhooks['CANCELLED_ORDERS']?.topic === this.webhookEnums['CANCELLED_ORDERS']
+      return this.getCachedWebhook['CANCELLED_ORDERS']?.topic === this.webhookEnums['CANCELLED_ORDERS']
     },
     isPaymentStatus(): boolean {
-      return this.getCachedWebhooks['PAYMENT_STATUS']?.topic === this.webhookEnums['PAYMENT_STATUS']
+      return this.getCachedWebhook['PAYMENT_STATUS']?.topic === this.webhookEnums['PAYMENT_STATUS']
     },
     isReturns(): boolean {
-      return this.getCachedWebhooks['RETURNS']?.topic === this.webhookEnums['RETURNS']
+      return this.getCachedWebhook['RETURNS']?.topic === this.webhookEnums['RETURNS']
     },
     async addBatch() {
       const batchmodal = await modalController.create({

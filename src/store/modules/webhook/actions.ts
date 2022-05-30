@@ -10,7 +10,7 @@ const actions: ActionTree<WebhooksState, RootState> = {
     await WebhookService.fetchShopifyWebhooks(payload).then(resp => {
       if (resp.status === 200 && resp.data.webhooks?.length > 0 && !hasError(resp)) {
         const { webhooks } = JSON.parse(resp.data.webhooks);
-        const webhooksEnums = JSON.parse(process.env?.VUE_APP_WEBHOOKS_ENUMS as string) as any
+        const webhooksEnums = JSON.parse(process.env?.VUE_APP_WEBHOOK_ENUMS as string) as any
         const topics: any = {}
         webhooks.map((webhook: any) => {
           if (webhooksEnums['NEW_PRODUCTS'] === webhook.topic) topics['NEW_PRODUCTS'] = webhook
