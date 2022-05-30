@@ -1,11 +1,11 @@
 import { Module } from 'vuex'
-import WebhooksState from './WebhooksState'
+import WebhookState from './WebhookState'
 import RootState from '@/store/RootState'
 import getters from './getters'
 import mutations from './mutations'
 import actions from './actions'
 
-const webhooksModule: Module<WebhooksState, RootState> = {
+const webhookModule: Module<WebhookState, RootState> = {
   namespaced: true,
   state: {
     cached: {
@@ -26,4 +26,4 @@ const webhooksModule: Module<WebhooksState, RootState> = {
   mutations,
 }
 
-export default webhooksModule
+export default webhookModule

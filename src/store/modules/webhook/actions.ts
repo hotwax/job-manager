@@ -1,11 +1,11 @@
 import { ActionTree } from "vuex";
 import RootState from "@/store/RootState";
-import WebhooksState from "./WebhooksState";
+import WebhookState from "./WebhookState";
 import { WebhookService } from "@/services/WebhookService";
 import { hasError } from "@/utils";
 import * as types from './mutations-types'
 
-const actions: ActionTree<WebhooksState, RootState> = {
+const actions: ActionTree<WebhookState, RootState> = {
   async fetchWebhooks({ commit }, payload){
     await WebhookService.fetchShopifyWebhooks(payload).then(resp => {
       if (resp.status === 200 && resp.data.webhooks?.length > 0 && !hasError(resp)) {

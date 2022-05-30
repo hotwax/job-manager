@@ -231,7 +231,7 @@ export default defineComponent({
       shopifyConfigId: 'user/getShopifyConfigId',
       currentEComStore: 'user/getCurrentEComStore',
       getTemporalExpr: 'job/getTemporalExpr',
-      getCachedWebhook: 'webhooks/getCachedWebhook'
+      getCachedWebhook: 'webhook/getCachedWebhook'
     }),
     promiseDateChanges(): boolean {
       const status = this.getJobStatus(this.jobEnums['NTS_PRMS_DT_CHNG']);
@@ -404,7 +404,7 @@ export default defineComponent({
         "systemJobEnumId_op": "in"
       }
     });
-    this.store.dispatch('webhooks/fetchWebhooks', {shopifyConfigId: this.shopifyConfigId})
+    this.store.dispatch('webhook/fetchWebhooks', {shopifyConfigId: this.shopifyConfigId})
   },
   setup() {
     const store = useStore();

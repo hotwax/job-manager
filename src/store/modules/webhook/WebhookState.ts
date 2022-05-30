@@ -1,4 +1,4 @@
-export default interface WebhooksState {
+export default interface WebhookState {
   cached: Object
   key: {
     topic: string,

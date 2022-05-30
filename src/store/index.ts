@@ -37,7 +37,7 @@ const store = createStore<RootState>({
         'product': productModule,
         'job': jobModule,
         'util': utilModule,
-        'webhooks': webhookModule
+        'webhook': webhookModule
     },
 })
 

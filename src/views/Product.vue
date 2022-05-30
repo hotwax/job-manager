@@ -96,7 +96,7 @@ export default defineComponent({
       getTemporalExpr: 'job/getTemporalExpr',
       getJob: 'job/getJob',
       shopifyConfigId: 'user/getShopifyConfigId',
-      getCachedWebhook: 'webhooks/getCachedWebhook'
+      getCachedWebhook: 'webhook/getCachedWebhook'
     }),
   },
   data() {
@@ -109,7 +109,7 @@ export default defineComponent({
       freqType: '',
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
-      webhooksEnums: JSON.parse(process.env?.VUE_APP_WEBHOOK_ENUMS as string) as any
+      webhookEnums: JSON.parse(process.env?.VUE_APP_WEBHOOK_ENUMS as string) as any
     }
   },
   mounted () {
@@ -119,14 +119,14 @@ export default defineComponent({
         "systemJobEnumId_op": "in"
       }
     });
-    this.store.dispatch('webhooks/fetchWebhooks', {shopifyConfigId: this.shopifyConfigId})    
+    this.store.dispatch('webhook/fetchWebhooks', {shopifyConfigId: this.shopifyConfigId})    
   },
   methods: {
     isNewProducts(): boolean {
-      return this.getCachedWebhook['NEW_PRODUCTS']?.topic === this.webhooksEnums['NEW_PRODUCTS']
+      return this.getCachedWebhook['NEW_PRODUCTS']?.topic === this.webhookEnums['NEW_PRODUCTS']
     },
     isDeleteProducts(): boolean {
-      return this.getCachedWebhook['DELETE_PRODUCTS']?.topic === this.webhooksEnums['DELETE_PRODUCTS']
+      return this.getCachedWebhook['DELETE_PRODUCTS']?.topic === this.webhookEnums['DELETE_PRODUCTS']
     },
     async viewJobConfiguration(id: string, title: string, status: string) {
       this.currentJob = this.getJob(this.jobEnums[id])

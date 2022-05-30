@@ -1,8 +1,8 @@
 import { GetterTree } from "vuex";
 import RootState from "@/store/RootState";
-import WebhooksState from "./WebhooksState";
+import WebhookState from "./WebhookState";
 
-const getters: GetterTree<WebhooksState, RootState> = {
+const getters: GetterTree<WebhookState, RootState> = {
   getCachedWebhook: (state) => state.cached
 }
 
