@@ -33,11 +33,11 @@
             </ion-card-header>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("New products") }}</ion-label>
-              <ion-toggle slot="end" :checked="isNewProducts()" color="secondary" />
+              <ion-toggle slot="end" :checked="isNewProducts()" @ionChange="$event.target.checked ? subscribeNewProductsWebhook() : unsubscribeWebhook(this.webhookEnums['NEW_PRODUCTS'])" color="secondary" />
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">{{ $t("Delete products") }}</ion-label>
-              <ion-toggle slot="end" :checked="isDeleteProducts()" color="secondary" />
+              <ion-toggle slot="end" :checked="isDeleteProducts()" @ionChange="$event.target.checked ? subscribeDeleteProductsWebhook() : unsubscribeWebhook(this.webhookEnums['DELETE_PRODUCTS'])" color="secondary" />
             </ion-item>
           </ion-card>
         </section>
@@ -122,14 +122,21 @@ export default defineComponent({
     this.store.dispatch('webhook/fetchWebhooks', {shopifyConfigId: this.shopifyConfigId})    
   },
   methods: {
-    updateWebhook(status: string){
-      this.store.dispatch('webhook/fetchWebhooks', status)
+    subscribeNewProductsWebhook(){
+      this.store.dispatch('webhook/updateNewProducts', {shopifyConfigId: this.shopifyConfigId })
+    },
+    subscribeDeleteProductsWebhook(){
+      this.store.dispatch('webhook/updateDeleteProducts', {shopifyConfigId: this.shopifyConfigId })
+    },
+    unsubscribeWebhook(webhookEnum: string){
+      const webhookId = this.getCachedWebhook[webhookEnum]?.id
+      this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhookId, shopifyConfigId: this.shopifyConfigId })
     },
     isNewProducts(): boolean {
-      return this.getCachedWebhook['NEW_PRODUCTS']?.topic === this.webhookEnums['NEW_PRODUCTS']
+      return this.getCachedWebhook[this.webhookEnums['NEW_PRODUCTS']]?.topic === this.webhookEnums['NEW_PRODUCTS']
     },
     isDeleteProducts(): boolean {
-      return this.getCachedWebhook['DELETE_PRODUCTS']?.topic === this.webhookEnums['DELETE_PRODUCTS']
+      return this.getCachedWebhook[this.webhookEnums['DELETE_PRODUCTS']]?.topic === this.webhookEnums['DELETE_PRODUCTS']
     },
     async viewJobConfiguration(id: string, title: string, status: string) {
       this.currentJob = this.getJob(this.jobEnums[id])

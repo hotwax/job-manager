@@ -6,8 +6,9 @@ const mutations: MutationTree<WebhookState> = {
   [types.WEBHOOK_UPDATED] (state, payload: any) {
     state.cached = payload
   },
-  [types.WEBHOOK_CURRENT_UPDATED] (state, payload: any) {
-    // state.cached[payload[webhookEnum]] = payload.webhook
+  [types.WEBHOOK_CURRENT_UPDATED] (state, payload: object) {
+    state.cached = payload
+    
   }
 }
 

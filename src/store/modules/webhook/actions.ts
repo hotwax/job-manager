@@ -2,39 +2,98 @@ import { ActionTree } from "vuex";
 import RootState from "@/store/RootState";
 import WebhookState from "./WebhookState";
 import { WebhookService } from "@/services/WebhookService";
-import { hasError } from "@/utils";
+import { hasError, showToast } from "@/utils";
 import * as types from './mutations-types'
+import { translate } from '@/i18n'
 
 const actions: ActionTree<WebhookState, RootState> = {
   async fetchWebhooks({ commit }, payload){
     await WebhookService.fetchShopifyWebhooks(payload).then(resp => {
       if (resp.status === 200 && resp.data.webhooks?.length > 0 && !hasError(resp)) {
         const { webhooks } = JSON.parse(resp.data.webhooks);
-        const webhookEnums = JSON.parse(process.env?.VUE_APP_WEBHOOK_ENUMS as string) as any
         const topics: any = {}
-        webhooks.map((webhook: any) => {
-          if (webhookEnums['NEW_PRODUCTS'] === webhook.topic) topics['NEW_PRODUCTS'] = webhook
-          if (webhookEnums['DELETE_PRODUCTS'] === webhook.topic) topics['DELETE_PRODUCTS'] = webhook
-          if (webhookEnums['NEW_ORDERS'] === webhook.topic) topics['NEW_ORDERS'] = webhook
-          if (webhookEnums['CANCELLED_ORDERS'] === webhook.topic) topics['CANCELLED_ORDERS'] = webhook
-          if (webhookEnums['PAYMENT_STATUS'] === webhook.topic) topics['PAYMENT_STATUS'] = webhook
-          if (webhookEnums['RETURNS'] === webhook.topic) topics['RETURNS'] = webhook
+        webhooks.forEach((topic: any) => {
+          topics[topic.topic] = topic
         })
         commit(types.WEBHOOK_UPDATED, topics)
+        console.log(topics);
       }
     }).catch(err => console.error(err))
   },
-  async updateWebhook({ commit }, payload: any) {
-    await WebhookService.updateWebhook(payload).then(resp => {
-      console.log(resp);
-      commit(types.WEBHOOK_CURRENT_UPDATED, resp)
+  async unsubscribeWebhook({ commit, state }, payload: any) {
+    console.log(payload);
+    
+    await WebhookService.unsubscribe(payload).then(resp => {
+      if (resp.status === 200 && resp.data.webhooks?.length > 0 && !hasError(resp)) {
+        console.log(resp);
+        return true
+      }
+    }).catch(() => {
+      showToast(translate("Something went wrong"));
+      console.log(state.cached);
+      return false
     })  
   },
-  async deleteWebhook({ commit }, payload: any) {
-    await WebhookService.deleteWebhook(payload).then(resp => {
-      console.log(resp);
-      commit(types.WEBHOOK_CURRENT_UPDATED, resp)
-    })  
+  // Webhook Subscription Actions
+  async updateNewOrder({ commit }, payload: any) {
+    console.log('New Order');
+
+    await WebhookService.subscribeNewOrderWebhook(payload).then(resp => {
+      if (resp.status === 200 && resp.data.webhooks?.length > 0 && !hasError(resp)) {
+        console.log(resp);
+        commit(types.WEBHOOK_CURRENT_UPDATED, resp)
+      }
+    })
+  },
+  async updateCancelledOrder({ commit }, payload: any) {
+    console.log('Cancel Order');
+
+    await WebhookService.subscribeCancelledOrderWebhook(payload).then(resp => {
+      if (resp.status === 200 && resp.data.webhooks?.length > 0 && !hasError(resp)) {
+        console.log(resp);
+        commit(types.WEBHOOK_CURRENT_UPDATED, resp)
+      }
+    })
+  },
+  async updatePaymentStatus({ commit }, payload: any) {
+    console.log('Payment Status');
+
+    await WebhookService.subscribeNewOrderWebhook(payload).then(resp => {
+      if (resp.status === 200 && resp.data.webhooks?.length > 0 && !hasError(resp)) {
+        console.log(resp);
+        commit(types.WEBHOOK_CURRENT_UPDATED, resp)
+      }
+    })
+  },
+  async updateReturns({ commit }, payload: any) {
+    console.log('Returns');
+
+    await WebhookService.subscribeCancelledOrderWebhook(payload).then(resp => {
+      if (resp.status === 200 && resp.data.webhooks?.length > 0 && !hasError(resp)) {
+        console.log(resp);
+        commit(types.WEBHOOK_CURRENT_UPDATED, resp)
+      }
+    })
+  },
+  async updateDeleteProducts({ commit }, payload: any) {
+    console.log('New Products');
+
+    await WebhookService.subscribeDeleteProductsWebhook(payload).then(resp => {
+      if (resp.status === 200 && resp.data.webhooks?.length > 0 && !hasError(resp)) {
+        console.log(resp);
+        commit(types.WEBHOOK_CURRENT_UPDATED, resp)
+      }
+    })
+  },
+  async updateNewProducts({ commit }, payload: any) {
+    console.log('Delete Products');
+
+    await WebhookService.subscribeNewProductsWebhook(payload).then(resp => {
+      if (resp.status === 200 && resp.data.webhooks?.length > 0 && !hasError(resp)) {
+        console.log(resp);
+        commit(types.WEBHOOK_CURRENT_UPDATED, resp)
+      }
+    })
   }
 }
 

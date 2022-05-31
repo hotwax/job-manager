@@ -42,19 +42,19 @@
             </ion-card-header>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("New orders") }}</ion-label>
-              <ion-toggle :checked="isNewOrders()" @ionChange="updateWebhook(this.webhookEnums['NEW_ORDERS'], $event.target.checked)" slot="end" color="secondary" />
+              <ion-toggle :checked="isNewOrders()" @ionChange="$event.target.checked ? subscribeNewOrdersWebhook() : unsubscribeWebhook(this.webhookEnums['NEW_ORDERS'])" slot="end" color="secondary" />
             </ion-item>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Cancelled orders") }}</ion-label>
-              <ion-toggle :checked="isCancelledOrders()" @ionChange="updateWebhook(this.webhookEnums['CANCELLED_ORDERS'], $event.target.checked)" slot="end" color="secondary" />
+              <ion-toggle :checked="isCancelledOrders()" @ionChange="$event.target.checked ? subscribeCancelledOrdersWebhook() : unsubscribeWebhook(this.webhookEnums['CANCELLED_ORDERS'])" slot="end" color="secondary" />
             </ion-item>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Payment status") }}</ion-label>
-              <ion-toggle :checked="isPaymentStatus()" @ionChange="updateWebhook(this.webhookEnums['PAYMENT_STATUS'], $event.target.checked)" slot="end" color="secondary" />
+              <ion-toggle :checked="isPaymentStatus()" @ionChange="$event.target.checked ? subscribePaymentStatusWebhook() : unsubscribeWebhook(this.webhookEnums['PAYMENT_STATUS'])" slot="end" color="secondary" />
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">{{ $t("Returns") }}</ion-label>
-              <ion-toggle :checked="isReturns()" @ionChange="updateWebhook(this.webhookEnums['RETURNS'], $event.target.checked)" slot="end" color="secondary" />
+              <ion-toggle :checked="isReturns()" @ionChange="$event.target.checked ? subscribeReturnsWebhook() : unsubscribeWebhook(this.webhookEnums['RETURNS'])" slot="end" color="secondary" />
             </ion-item>
           </ion-card>
 
@@ -242,22 +242,38 @@ export default defineComponent({
       return status && status !== "SERVICE_DRAFT";
     },
   },
-  methods: {  
-    updateWebhook(paload: any ,status: any){
-      console.log(paload, status);
-      status ? this.store.dispatch('webhook/updateWebhook', paload) : this.store.dispatch('webhook/deleteWebhook', paload)
+  methods: {
+    updateWebhook(paload: any, isStatus: any){
+      const webhookId = this.getCachedWebhook["PAYMENT_STATUS"]?.id
+      isStatus ? this.store.dispatch('webhook/updateNewOrder', { shopifyConfigId: this.shopifyConfigId }) : this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhookId , shopifyConfigId: this.shopifyConfigId })
+    },
+    subscribeNewOrdersWebhook(){
+      this.store.dispatch('webhook/updateNewOrder', {shopifyConfigId: this.shopifyConfigId })
+    },
+    subscribeCancelledOrdersWebhook(){
+      this.store.dispatch('webhook/updateCancelledOrder', {shopifyConfigId: this.shopifyConfigId })
+    },
+    subscribePaymentStatusWebhook(){
+      this.store.dispatch('webhook/updatePaymentStatus', {shopifyConfigId: this.shopifyConfigId })
+    },
+    subscribeReturnsWebhook(){
+      this.store.dispatch('webhook/updateReturns', {shopifyConfigId: this.shopifyConfigId })
+    },
+    unsubscribeWebhook(webhookEnum: string){
+      const webhookId = this.getCachedWebhook[webhookEnum]?.id
+      this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhookId, shopifyConfigId: this.shopifyConfigId })
     },
     isNewOrders(): boolean {
-      return this.getCachedWebhook['NEW_ORDERS']?.topic === this.webhookEnums['NEW_ORDERS']
+      return this.getCachedWebhook[this.webhookEnums['NEW_ORDERS']]?.topic === this.webhookEnums['NEW_ORDERS']
     },
     isCancelledOrders(): boolean {
-      return this.getCachedWebhook['CANCELLED_ORDERS']?.topic === this.webhookEnums['CANCELLED_ORDERS']
+      return this.getCachedWebhook[this.webhookEnums['CANCELLED_ORDERS']]?.topic === this.webhookEnums['CANCELLED_ORDERS']
     },
     isPaymentStatus(): boolean {
-      return this.getCachedWebhook['PAYMENT_STATUS']?.topic === this.webhookEnums['PAYMENT_STATUS']
+      return this.getCachedWebhook[this.webhookEnums['PAYMENT_STATUS']]?.topic === this.webhookEnums['PAYMENT_STATUS']
     },
     isReturns(): boolean {
-      return this.getCachedWebhook['RETURNS']?.topic === this.webhookEnums['RETURNS']
+      return this.getCachedWebhook[this.webhookEnums['RETURNS']]?.topic === this.webhookEnums['RETURNS']
     },
     async addBatch() {
       const batchmodal = await modalController.create({

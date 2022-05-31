@@ -8,14 +8,7 @@ import actions from './actions'
 const webhookModule: Module<WebhookState, RootState> = {
   namespaced: true,
   state: {
-    cached: {
-      NEW_PRODUCTS: {},
-      DELETE_PRODUCTS: {},
-      NEW_ORDERS: {},
-      CANCELLED_ORDERS: {},
-      PAYMENT_STATUS: {},
-      RETURNS: {}
-    },
+    cached: {},
     key: {
       topic: "",
       list: []
