@@ -8,6 +8,24 @@ const fetchShopifyWebhooks = async (payload?: any): Promise <any>  => {
   });
 }
 
+const updateWebhook =async (payload?: any): Promise <any> => {
+  // return api({
+  //   url: 'updation url',
+  //   methood: 'post',
+  //   data: payload
+  // })
+}
+
+const deleteWebhook = async (payload?: any): Promise <any> => {
+  return api({
+    url: '',
+    method: '',
+    data: payload
+  })
+}
+
 export const WebhookService = {
-  fetchShopifyWebhooks
+  fetchShopifyWebhooks,
+  updateWebhook,
+  deleteWebhook
 }

@@ -122,6 +122,9 @@ export default defineComponent({
     this.store.dispatch('webhook/fetchWebhooks', {shopifyConfigId: this.shopifyConfigId})    
   },
   methods: {
+    updateWebhook(status: string){
+      this.store.dispatch('webhook/fetchWebhooks', status)
+    },
     isNewProducts(): boolean {
       return this.getCachedWebhook['NEW_PRODUCTS']?.topic === this.webhookEnums['NEW_PRODUCTS']
     },

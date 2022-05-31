@@ -23,6 +23,18 @@ const actions: ActionTree<WebhookState, RootState> = {
         commit(types.WEBHOOK_UPDATED, topics)
       }
     }).catch(err => console.error(err))
+  },
+  async updateWebhook({ commit }, payload: any) {
+    await WebhookService.updateWebhook(payload).then(resp => {
+      console.log(resp);
+      commit(types.WEBHOOK_CURRENT_UPDATED, resp)
+    })  
+  },
+  async deleteWebhook({ commit }, payload: any) {
+    await WebhookService.deleteWebhook(payload).then(resp => {
+      console.log(resp);
+      commit(types.WEBHOOK_CURRENT_UPDATED, resp)
+    })  
   }
 }
 
