@@ -33,11 +33,11 @@
             </ion-card-header>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("New products") }}</ion-label>
-              <ion-toggle slot="end" :checked="isNewProducts()" @ionChange="$event.target.checked ? subscribeNewProductsWebhook() : unsubscribeWebhook(this.webhookEnums['NEW_PRODUCTS'])" color="secondary" />
+              <ion-toggle slot="end" :checked="isNewProducts" @ionChange.prevent="$event.target.checked ? subscribeNewProductsWebhook() : unsubscribeWebhook(this.webhookEnums['NEW_PRODUCTS'], $event['detail'].checked)" color="secondary" />
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">{{ $t("Delete products") }}</ion-label>
-              <ion-toggle slot="end" :checked="isDeleteProducts()" @ionChange="$event.target.checked ? subscribeDeleteProductsWebhook() : unsubscribeWebhook(this.webhookEnums['DELETE_PRODUCTS'])" color="secondary" />
+              <ion-toggle slot="end" :checked="isDeleteProducts" @ionChange.stop="$event.target.checked ? subscribeDeleteProductsWebhook() : unsubscribeWebhook(this.webhookEnums['DELETE_PRODUCTS'], $event)" color="secondary" />
             </ion-item>
           </ion-card>
         </section>
@@ -98,6 +98,12 @@ export default defineComponent({
       shopifyConfigId: 'user/getShopifyConfigId',
       getCachedWebhook: 'webhook/getCachedWebhook'
     }),
+    isNewProducts() {
+      return (this as any).getCachedWebhook[(this as any).webhookEnums['NEW_PRODUCTS']]?.topic === (this as any).webhookEnums['NEW_PRODUCTS']
+    },
+    isDeleteProducts() {
+      return (this as any).getCachedWebhook[(this as any).webhookEnums['DELETE_PRODUCTS']]?.topic === (this as any).webhookEnums['DELETE_PRODUCTS']
+    },
   },
   data() {
     return {
@@ -109,7 +115,7 @@ export default defineComponent({
       freqType: '',
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
-      webhookEnums: JSON.parse(process.env?.VUE_APP_WEBHOOK_ENUMS as string) as any
+      webhookEnums: JSON.parse(process.env?.VUE_APP_WEBHOOK_ENUMS as string) as any,
     }
   },
   mounted () {
@@ -128,15 +134,15 @@ export default defineComponent({
     subscribeDeleteProductsWebhook(){
       this.store.dispatch('webhook/updateDeleteProducts', {shopifyConfigId: this.shopifyConfigId })
     },
-    unsubscribeWebhook(webhookEnum: string){
+    async unsubscribeWebhook(webhookEnum: string, e: CustomEvent){
+      e.preventDefault();
+      
+
       const webhookId = this.getCachedWebhook[webhookEnum]?.id
-      this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhookId, shopifyConfigId: this.shopifyConfigId })
-    },
-    isNewProducts(): boolean {
-      return this.getCachedWebhook[this.webhookEnums['NEW_PRODUCTS']]?.topic === this.webhookEnums['NEW_PRODUCTS']
-    },
-    isDeleteProducts(): boolean {
-      return this.getCachedWebhook[this.webhookEnums['DELETE_PRODUCTS']]?.topic === this.webhookEnums['DELETE_PRODUCTS']
+      const status = await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhookId, shopifyConfigId: this.shopifyConfigId })
+      console.log();
+      
+      
     },
     async viewJobConfiguration(id: string, title: string, status: string) {
       this.currentJob = this.getJob(this.jobEnums[id])

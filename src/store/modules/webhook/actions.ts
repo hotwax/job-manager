@@ -22,8 +22,7 @@ const actions: ActionTree<WebhookState, RootState> = {
   },
   async unsubscribeWebhook({ commit, state }, payload: any) {
     console.log(payload);
-    
-    await WebhookService.unsubscribe(payload).then(resp => {
+    const status = await WebhookService.unsubscribe(payload).then(resp => {
       if (resp.status === 200 && resp.data.webhooks?.length > 0 && !hasError(resp)) {
         console.log(resp);
         return true
@@ -31,8 +30,10 @@ const actions: ActionTree<WebhookState, RootState> = {
     }).catch(() => {
       showToast(translate("Something went wrong"));
       console.log(state.cached);
+      WebhookService.unsubscribe(payload)
       return false
-    })  
+    })
+    return status
   },
   // Webhook Subscription Actions
   async updateNewOrder({ commit }, payload: any) {
