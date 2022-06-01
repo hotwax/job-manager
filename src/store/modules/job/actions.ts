@@ -53,7 +53,7 @@ const actions: ActionTree<JobState, RootState> = {
       "orderBy": "runTime DESC"
     }
 
-    if(payload.systemJobEnumId) {
+    if(payload.systemJobEnumId && payload.systemJobEnumId.length > 0) {
       params.inputFields["systemJobEnumId"] = payload.systemJobEnumId
       params.inputFields["systemJobEnumId_op"] = "in"
     }
@@ -128,7 +128,7 @@ const actions: ActionTree<JobState, RootState> = {
       "orderBy": "runTime DESC"
     }
 
-    if(payload.systemJobEnumId) {
+    if(payload.systemJobEnumId && payload.systemJobEnumId.length > 0) {
       params.inputFields["systemJobEnumId"] = payload.systemJobEnumId
       params.inputFields["systemJobEnumId_op"] = "in"
     }
@@ -197,7 +197,7 @@ const actions: ActionTree<JobState, RootState> = {
       "orderBy": "runTime ASC"
     }
 
-    if(payload.systemJobEnumId) {
+    if(payload.systemJobEnumId && payload.systemJobEnumId.length > 0) {
       params.inputFields["systemJobEnumId"] = payload.systemJobEnumId
       params.inputFields["systemJobEnumId_op"] = "in"
     }

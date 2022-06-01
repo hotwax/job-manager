@@ -502,7 +502,7 @@ export default defineComponent({
         event: ev,
         componentProps: { job }
       });
-        return popover.present()
+      return popover.present()
     },
     async cancelJob(job: any){
       const alert = await alertController
