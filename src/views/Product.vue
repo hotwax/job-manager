@@ -33,11 +33,11 @@
             </ion-card-header>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("New products") }}</ion-label>
-              <ion-toggle slot="end" :checked="isNewProducts" @ionChange.prevent="$event.target.checked ? subscribeNewProductsWebhook() : unsubscribeWebhook(this.webhookEnums['NEW_PRODUCTS'], $event['detail'].checked)" color="secondary" />
+              <ion-toggle slot="end" :checked="isNewProductsSubscribed" @ionChange.prevent="$event.target.checked ? subscribeNewProductsWebhook() : unsubscribeWebhook(this.webhookEnums['NEW_PRODUCTS'], $event, $event['detail'].checked)" color="secondary" />
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">{{ $t("Delete products") }}</ion-label>
-              <ion-toggle slot="end" :checked="isDeleteProducts" @ionChange.stop="$event.target.checked ? subscribeDeleteProductsWebhook() : unsubscribeWebhook(this.webhookEnums['DELETE_PRODUCTS'], $event)" color="secondary" />
+              <ion-toggle slot="end" :checked="isDeleteProductsSubscribed" v-model="isDeleteProductsSubscribed" @ionChange="$event.target.checked ? subscribeDeleteProductsWebhook() : unsubscribeWebhook(this.webhookEnums['DELETE_PRODUCTS'], $event, $event['detail'].checked)" color="secondary" />
             </ion-item>
           </ion-card>
         </section>
@@ -98,12 +98,6 @@ export default defineComponent({
       shopifyConfigId: 'user/getShopifyConfigId',
       getCachedWebhook: 'webhook/getCachedWebhook'
     }),
-    isNewProducts() {
-      return (this as any).getCachedWebhook[(this as any).webhookEnums['NEW_PRODUCTS']]?.topic === (this as any).webhookEnums['NEW_PRODUCTS']
-    },
-    isDeleteProducts() {
-      return (this as any).getCachedWebhook[(this as any).webhookEnums['DELETE_PRODUCTS']]?.topic === (this as any).webhookEnums['DELETE_PRODUCTS']
-    },
   },
   data() {
     return {
@@ -116,6 +110,8 @@ export default defineComponent({
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
       webhookEnums: JSON.parse(process.env?.VUE_APP_WEBHOOK_ENUMS as string) as any,
+      isNewProductsSubscribed: false,
+      isDeleteProductsSubscribed: false
     }
   },
   mounted () {
@@ -125,24 +121,45 @@ export default defineComponent({
         "systemJobEnumId_op": "in"
       }
     });
-    this.store.dispatch('webhook/fetchWebhooks', {shopifyConfigId: this.shopifyConfigId})    
+    this.fetchWebhooks()
   },
   methods: {
+    async fetchWebhooks() {
+      await this.store.dispatch('webhook/fetchWebhooks', {shopifyConfigId: this.shopifyConfigId})
+      this.isNewProducts()
+      this.isDeleteProducts() 
+    },
+    isNewProducts() {
+      this.isNewProductsSubscribed = (this as any).getCachedWebhook[(this as any).webhookEnums['NEW_PRODUCTS']]?.topic === (this as any).webhookEnums['NEW_PRODUCTS']
+    },
+    isDeleteProducts() {
+      this.isDeleteProductsSubscribed = (this as any).getCachedWebhook[(this as any).webhookEnums['DELETE_PRODUCTS']]?.topic === (this as any).webhookEnums['DELETE_PRODUCTS']
+    },
     subscribeNewProductsWebhook(){
       this.store.dispatch('webhook/updateNewProducts', {shopifyConfigId: this.shopifyConfigId })
     },
     subscribeDeleteProductsWebhook(){
       this.store.dispatch('webhook/updateDeleteProducts', {shopifyConfigId: this.shopifyConfigId })
     },
-    async unsubscribeWebhook(webhookEnum: string, e: CustomEvent){
-      e.preventDefault();
-      
+    async unsubscribeWebhook(webhookEnum: string, e: CustomEvent, previousStatus: boolean){
+      if (this.isDeleteProductsSubscribed) {
+        
+        e.stopImmediatePropagation();
+        e.stopPropagation();
+        e.preventDefault();
+        const webhookId = this.getCachedWebhook[webhookEnum]
 
-      const webhookId = this.getCachedWebhook[webhookEnum]?.id
-      const status = await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhookId, shopifyConfigId: this.shopifyConfigId })
-      console.log();
-      
-      
+        const status = await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhookId?.topic, shopifyConfigId: this.shopifyConfigId })
+          console.log(status);
+        
+        if (status){           
+          this.isDeleteProductsSubscribed = false
+        } else {
+          this.isDeleteProductsSubscribed = true;
+        }
+      } else {
+          setTimeout(() => { this.isDeleteProductsSubscribed = true; }, 0);
+      }
     },
     async viewJobConfiguration(id: string, title: string, status: string) {
       this.currentJob = this.getJob(this.jobEnums[id])
