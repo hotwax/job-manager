@@ -502,7 +502,6 @@ export default defineComponent({
         event: ev,
         componentProps: { job }
       });
-
       popover.onDidDismiss().then((result) => {
         const jobEnumId = result.data.systemJobEnumId;
         if (jobEnumId && !this.getPinnedJobs.includes(jobEnumId)){
