@@ -53,7 +53,7 @@ const actions: ActionTree<JobState, RootState> = {
       "orderBy": "runTime DESC"
     }
 
-    if(payload.systemJobEnumId) {
+    if(payload.systemJobEnumId && payload.systemJobEnumId.length > 0) {
       params.inputFields["systemJobEnumId"] = payload.systemJobEnumId
       params.inputFields["systemJobEnumId_op"] = "in"
     }
@@ -128,7 +128,7 @@ const actions: ActionTree<JobState, RootState> = {
       "orderBy": "runTime DESC"
     }
 
-    if(payload.systemJobEnumId) {
+    if(payload.systemJobEnumId && payload.systemJobEnumId.length > 0) {
       params.inputFields["systemJobEnumId"] = payload.systemJobEnumId
       params.inputFields["systemJobEnumId_op"] = "in"
     }
@@ -197,7 +197,7 @@ const actions: ActionTree<JobState, RootState> = {
       "orderBy": "runTime ASC"
     }
 
-    if(payload.systemJobEnumId) {
+    if(payload.systemJobEnumId && payload.systemJobEnumId.length > 0) {
       params.inputFields["systemJobEnumId"] = payload.systemJobEnumId
       params.inputFields["systemJobEnumId_op"] = "in"
     }
@@ -405,10 +405,11 @@ const actions: ActionTree<JobState, RootState> = {
       'JOB_NAME': job.jobName,
       'SERVICE_NAME': job.serviceName,
       'SERVICE_COUNT': '0',
+      'SERVICE_TEMP_EXPR': job.jobStatus,
       'jobFields': {
         'productStoreId': this.state.user.currentEComStore.productStoreId,
         'systemJobEnumId': job.systemJobEnumId,
-        'tempExprId': job.jobStatus,
+        'tempExprId': job.jobStatus, // Need to remove this as we are passing frequency in SERVICE_TEMP_EXPR, currently kept it for backward compatibility
         'maxRecurrenceCount': '-1',
         'parentJobId': job.parentJobId,
         'runAsUser': 'system', // default system, but empty in run now
@@ -520,10 +521,11 @@ const actions: ActionTree<JobState, RootState> = {
       'JOB_NAME': job.jobName,
       'SERVICE_NAME': job.serviceName,
       'SERVICE_COUNT': '0',
+      'SERVICE_TEMP_EXPR': job.jobStatus,
       'jobFields': {
         'productStoreId': this.state.user.currentEComStore.productStoreId,
         'systemJobEnumId': job.systemJobEnumId,
-        'tempExprId': job.jobStatus,
+        'tempExprId': job.jobStatus, // Need to remove this as we are passing frequency in SERVICE_TEMP_EXPR, currently kept it for backward compatibility
         'parentJobId': job.parentJobId,
         'recurrenceTimeZone': this.state.user.current.userTimeZone
       },
