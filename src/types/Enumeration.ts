@@ -1,6 +1,6 @@
 export interface Enumeration {
-    id: String;
-    name: String;
-    description: String;
-    typeId: String;
+    id?: string;
+    name?: string;
+    description?: string;
+    typeId?: string;
 }

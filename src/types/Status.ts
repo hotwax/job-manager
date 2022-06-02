@@ -1,4 +1,5 @@
 export interface Status {
-    id: String;
-    description: String;
+    id?: string;
+    description?: string;
+    desc?: string;
 }

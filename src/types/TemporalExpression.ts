@@ -1,4 +1,4 @@
 export interface TemporalExpression {
-    id: String;
-    description: String;
+    id?: string;
+    description?: string;
 }
