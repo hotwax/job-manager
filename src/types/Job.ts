@@ -1,5 +1,5 @@
 import { Status } from "./Status";
-import { TemporalExpression } from "./temporalExpression";
+import { TemporalExpression } from "./TemporalExpression";
 import { Enumeration } from "./Enumeration";
 
 export interface Job {
