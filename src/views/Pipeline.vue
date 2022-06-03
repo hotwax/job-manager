@@ -293,8 +293,8 @@ import JobHistoryModal from '@/components/JobHistoryModal.vue';
 import { Plugins } from '@capacitor/core';
 import { showToast } from '@/utils'
 import JobActionsPopover from '@/components/JobActionsPopover.vue'
-import { PendingJobsTypes, RunningJobsTypes, JobsHistoryTypes } from '../types/index';
-
+import { Job } from '@/types/Job';
+ 
 export default defineComponent({
   name: "Pipeline",
   components: {
@@ -393,8 +393,10 @@ export default defineComponent({
       return
     },
     async copyJobInformation(job: any) {
+      console.log(job);
+      
       const { Clipboard } = Plugins;
-      const jobDetails = `jobId: ${job.jobId}, jobName: ${this.getEnumName(job.systemJobEnumId)}, jobDescription: ${this.getEnumDescription(job.systemJobEnumId)}`;
+      const jobDetails = `jobId: ${job.id}, jobName: ${this.getEnumName(job.systemJobEnum[0].id)}, jobDescription: ${this.getEnumDescription(job.systemJobEnum[0].id)}`;
 
       await Clipboard.write({
         string: jobDetails
@@ -528,10 +530,8 @@ export default defineComponent({
        return alert.present();
     },
     async viewJobConfiguration(job: any) {
-      console.log(job);
-      
-      this.title = this.getEnumName(job.systemJobEnumId)
-      this.currentJobStatus = job.tempExprId;
+      this.title = this.getEnumName(job.systemJobEnum[0].id)
+      this.currentJobStatus = job.tempExpr[0].id;
       const id = Object.entries(this.jobEnums).find((enums) => enums[1] == job.systemJobEnum) as any
       this.freqType = id && (Object.entries(this.jobFrequencyType).find((freq) => freq[0] == id[0]) as any)[1]
 

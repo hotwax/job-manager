@@ -6,7 +6,7 @@ import { hasError, showToast } from '@/utils'
 import { JobService } from '@/services/JobService'
 import { translate } from '@/i18n'
 import { DateTime } from 'luxon';
-import { PendingJobsTypes, RunningJobsTypes, JobsHistoryTypes } from '@/types'
+import { Job } from '@/types/Job'
 
 const actions: ActionTree<JobState, RootState> = {
 
@@ -89,7 +89,7 @@ const actions: ActionTree<JobState, RootState> = {
             job['statusDesc'] = this.state.util.statusDesc[job.statusId];
           }) 
 
-          const typeDefinedJobs: JobsHistoryTypes = jobs.map((response: any) => {
+          const typeDefinedJobs: Job = jobs.map((response: any) => {
             return { 
               id: response.jobId,
               name: response.jobName,
@@ -190,34 +190,8 @@ const actions: ActionTree<JobState, RootState> = {
           jobs.map((job: any) => {
             job['statusDesc'] = this.state.util.statusDesc[job.statusId];
           })
-          console.log(jobs);
           
-          const typeDefinedJobs: RunningJobsTypes = jobs.map((response: any) => {
-            return { 
-              id: response.jobId,
-              name: response.jobName,
-              systemJobEnum: [
-                {id: response.enumId},
-                {name: response.enumName},
-                {description: response.description},
-                {typeId: response.enumTypeId},
-              ],
-              parentJobId: response.parentJobId,
-              runTime: response.runTime,
-              serviceName: response.serviceName,
-              status: [
-                {id: response.statusId},
-                {description: response.status},
-              ],
-              tempExpr: [
-                {id: response.temporalExpression.tempExprId},
-                {description: response.temporalExpression.description},
-              ],
-              currentRetryCount: response.currentRetryCount,
-            }
-          })
-          console.log(typeDefinedJobs);
-          commit(types.JOB_RUNNING_UPDATED, { jobs: typeDefinedJobs, total });
+          commit(types.JOB_RUNNING_UPDATED, { jobs, total });
           const tempExprList = [] as any;
           const enumIds = [] as any;
           resp.data.docs.map((item: any) => {
@@ -288,7 +262,7 @@ const actions: ActionTree<JobState, RootState> = {
             jobs = state.pending.list.concat(resp.data.docs);
           }
           
-          const typeDefinedJobs: PendingJobsTypes = jobs.map((response: any) => {
+          const typeDefinedJobs: Job = jobs.map((response: any) => {
             return { 
               id: response.jobId,
               name: response.jobName,
