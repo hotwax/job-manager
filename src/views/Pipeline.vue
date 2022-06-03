@@ -40,13 +40,13 @@
           <div v-else>
             <ion-card v-for="job in pendingJobs" :key="job.id" @click="viewJobConfiguration(job)" :button="isDesktop">
               <ion-card-header>
-                <ion-card-title>{{ getEnumName(job.systemJobEnum[0].id) }}</ion-card-title>
+                <ion-card-title>{{ getEnumName(job.systemJobEnum.id) }}</ion-card-title>
                 <ion-badge v-if="job.runTime" color="dark">{{ timeFromNow(job.runTime)}}</ion-badge>
               </ion-card-header>
 
               <ion-item lines="none">
                 <ion-label class="ion-text-wrap">
-                  <p>{{ getEnumDescription(job.systemJobEnum[0].id) }}</p>
+                  <p>{{ getEnumDescription(job.systemJobEnum.id) }}</p>
                 </ion-label>
               </ion-item>
               <ion-item>
@@ -56,7 +56,7 @@
 
               <ion-item>
                 <ion-icon slot="start" :icon="timerOutline" />
-                <ion-label class="ion-text-wrap">{{ job.tempExpr[0].id ? temporalExpr(job.tempExpr[0].id)?.description : "🙃"  }}</ion-label>
+                <ion-label class="ion-text-wrap">{{ job.tempExpr.id ? temporalExpr(job.tempExpr.id)?.description : "🙃"  }}</ion-label>
               </ion-item>
 
               <ion-item lines="full">
@@ -102,14 +102,14 @@
               <ion-card-header>
                 <div>
                   <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
-                  <ion-card-title>{{ getEnumName(job.systemJobEnum[0].id) }}</ion-card-title>
+                  <ion-card-title>{{ getEnumName(job.systemJobEnum.id) }}</ion-card-title>
                 </div>
                 <ion-badge color="dark">{{ job.statusDesc }}</ion-badge>
               </ion-card-header>
 
               <ion-item lines="none">
                 <ion-label class="ion-text-wrap">
-                  <p>{{ getEnumDescription(job.systemJobEnum[0].id) }}</p>
+                  <p>{{ getEnumDescription(job.systemJobEnum.id) }}</p>
                 </ion-label>
               </ion-item>
               <ion-item>
@@ -119,7 +119,7 @@
 
               <ion-item>
                 <ion-icon slot="start" :icon="timerOutline" />
-                <ion-label class="ion-text-wrap">{{ job.tempExpr[0].id ? temporalExpr(job.tempExpr[0].id)?.description : "🙃"  }}</ion-label>
+                <ion-label class="ion-text-wrap">{{ job.tempExpr.id ? temporalExpr(job.tempExpr.id)?.description : "🙃"  }}</ion-label>
               </ion-item>
 
               <ion-item lines="full">
@@ -172,17 +172,17 @@
             <ion-card-header>
               <div>
                 <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
-                <ion-card-title>{{ job.systemJobEnum[1].name }}</ion-card-title>
+                <ion-card-title>{{ job.systemJobEnum.name }}</ion-card-title>
               </div>
               <div>
-                <ion-badge v-if="job.cancelDateTime || job.finishDateTime" color="dark">{{ job.status[0].id == "SERVICE_CANCELLED" || job.status[0].id == "SERVICE_CRASHED" ?  timeFromNow(job.cancelDateTime) : timeFromNow(job.finishDateTime) }}</ion-badge>
-                <ion-badge v-if="job.status[0].id" :color="job.status[0].id === 'SERVICE_FINISHED' ? 'success' : 'danger'">{{ job.status[2].desc }}</ion-badge>
+                <ion-badge v-if="job.cancelDateTime || job.finishDateTime" color="dark">{{ job.status.id == "SERVICE_CANCELLED" || job.status.id == "SERVICE_CRASHED" ?  timeFromNow(job.cancelDateTime) : timeFromNow(job.finishDateTime) }}</ion-badge>
+                <ion-badge v-if="job.status.id" :color="job.status.id === 'SERVICE_FINISHED' ? 'success' : 'danger'">{{ job.status.desc }}</ion-badge>
               </div>
             </ion-card-header>
 
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
-                <p>{{ getEnumDescription(job.systemJobEnum[0].id) }}</p>
+                <p>{{ getEnumDescription(job.systemJobEnum.id) }}</p>
               </ion-label>
             </ion-item>
             <ion-item>
@@ -190,12 +190,12 @@
               <ion-label class="ion-text-wrap">
                 {{ job.runTime ? getTime(job.runTime) : "-"  }}
               </ion-label>
-              <ion-note slot="end">{{ job.status[0].id == "SERVICE_CANCELLED" || job.status[0].id == "SERVICE_CRASHED" ? getJobExecutionTime(job.startDateTime, job.cancelDateTime) : getJobExecutionTime(job.startDateTime, job.finishDateTime) }}</ion-note>
+              <ion-note slot="end">{{ job.status.id == "SERVICE_CANCELLED" || job.status.id == "SERVICE_CRASHED" ? getJobExecutionTime(job.startDateTime, job.cancelDateTime) : getJobExecutionTime(job.startDateTime, job.finishDateTime) }}</ion-note>
             </ion-item>
 
             <ion-item>
               <ion-icon slot="start" :icon="timerOutline" />
-              <ion-label class="ion-text-wrap">{{ job.tempExpr[0].id ? temporalExpr(job.tempExpr[0].id)?.description : "🙃"  }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ job.tempExpr.id ? temporalExpr(job.tempExpr.id)?.description : "🙃"  }}</ion-label>
             </ion-item>
 
             <ion-item lines="full">
@@ -396,7 +396,7 @@ export default defineComponent({
       console.log(job);
       
       const { Clipboard } = Plugins;
-      const jobDetails = `jobId: ${job.id}, jobName: ${this.getEnumName(job.systemJobEnum[0].id)}, jobDescription: ${this.getEnumDescription(job.systemJobEnum[0].id)}`;
+      const jobDetails = `jobId: ${job.id}, jobName: ${this.getEnumName(job.systemJobEnum.id)}, jobDescription: ${this.getEnumDescription(job.systemJobEnum.id)}`;
 
       await Clipboard.write({
         string: jobDetails
@@ -530,8 +530,8 @@ export default defineComponent({
        return alert.present();
     },
     async viewJobConfiguration(job: any) {
-      this.title = this.getEnumName(job.systemJobEnum[0].id)
-      this.currentJobStatus = job.tempExpr[0].id;
+      this.title = this.getEnumName(job.systemJobEnum.id)
+      this.currentJobStatus = job.tempExpr.id;
       const id = Object.entries(this.jobEnums).find((enums) => enums[1] == job.systemJobEnum) as any
       this.freqType = id && (Object.entries(this.jobFrequencyType).find((freq) => freq[0] == id[0]) as any)[1]
 

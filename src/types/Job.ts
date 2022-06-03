@@ -5,12 +5,12 @@ import { Enumeration } from "./Enumeration";
 export interface Job {
     id: string;
     name: string;
-    systemJobEnum?: Array<Enumeration>;
+    systemJobEnum?: Enumeration;
     parentJobId?: string;
     runTime?: string;
     serviceName?: string;
-    status?: Array<Status>;
-    tempExpr?: Array<TemporalExpression>;
+    status?: Status;
+    tempExpr?: TemporalExpression;
     currentRetryCount?: number;
     finishDateTime: number;
     cancelDateTime: number;

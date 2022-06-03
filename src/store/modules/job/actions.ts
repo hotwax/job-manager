@@ -93,23 +93,24 @@ const actions: ActionTree<JobState, RootState> = {
             return { 
               id: response.jobId,
               name: response.jobName,
-              systemJobEnum: [
-                {id: response.enumId},
-                {name: response.enumName},
-                {description: response.description},
-              ],
+              systemJobEnum: {
+                id: response.enumId,
+                name: response.enumName,
+                description: response.description,
+              },
               parentJobId: response.parentJobId,
               runTime: response.runTime,
               serviceName: response.serviceName,
-              status: [
-                {id: response.statusId},
-                {description: response.status},
-                {desc: response.statusDesc},
-              ],
-              tempExpr: [
-                {id: response.temporalExpression.tempExprId},
-                {description: response.temporalExpression.description},
-              ],
+              status: {
+                id: response.statusId,
+                description: response.status,
+                desc: response.statusDesc,
+              },
+              tempExpr: {
+                id: response.temporalExpression.tempExprId,
+                description: response.temporalExpression.description,
+              },
+              currentRetryCount: response.currentRetryCount,
               finishDateTime: response.finishDateTime,
               cancelDateTime: response.cancelDateTime,
             }
@@ -195,24 +196,26 @@ const actions: ActionTree<JobState, RootState> = {
             return { 
               id: response.jobId,
               name: response.jobName,
-              systemJobEnum: [
-                {id: response.enumId},
-                {name: response.enumName},
-                {description: response.description},
-                {typeId: response.enumTypeId},
-              ],
+              systemJobEnum: {
+                id: response.enumId,
+                name: response.enumName,
+                description: response.description,
+              },
               parentJobId: response.parentJobId,
               runTime: response.runTime,
               serviceName: response.serviceName,
-              status: [
-                {id: response.statusId},
-                {description: response.status},
-              ],
-              tempExpr: [
-                {id: response.temporalExpression.tempExprId},
-                {description: response.temporalExpression.description},
-              ],
+              status: {
+                id: response.statusId,
+                description: response.status,
+                desc: response.statusDesc,
+              },
+              tempExpr: {
+                id: response.temporalExpression.tempExprId,
+                description: response.temporalExpression.description,
+              },
               currentRetryCount: response.currentRetryCount,
+              finishDateTime: response.finishDateTime,
+              cancelDateTime: response.cancelDateTime,
             }
           })
           
@@ -291,24 +294,26 @@ const actions: ActionTree<JobState, RootState> = {
             return { 
               id: response.jobId,
               name: response.jobName,
-              systemJobEnum: [
-                {id: response.enumId},
-                {name: response.enumName},
-                {description: response.description},
-                {typeId: response.enumTypeId},
-              ],
+              systemJobEnum: {
+                id: response.enumId,
+                name: response.enumName,
+                description: response.description,
+              },
               parentJobId: response.parentJobId,
               runTime: response.runTime,
               serviceName: response.serviceName,
-              status: [
-                {id: response.statusId},
-                {description: response.status},
-              ],
-              tempExpr: [
-                {id: response.temporalExpression.tempExprId},
-                {description: response.temporalExpression.description},
-              ],
+              status: {
+                id: response.statusId,
+                description: response.status,
+                desc: response.statusDesc,
+              },
+              tempExpr: {
+                id: response.temporalExpression.tempExprId,
+                description: response.temporalExpression.description,
+              },
               currentRetryCount: response.currentRetryCount,
+              finishDateTime: response.finishDateTime,
+              cancelDateTime: response.cancelDateTime,
             }
           })
           
