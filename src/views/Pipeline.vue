@@ -393,8 +393,6 @@ export default defineComponent({
       return
     },
     async copyJobInformation(job: any) {
-      console.log(job);
-      
       const { Clipboard } = Plugins;
       const jobDetails = `jobId: ${job.id}, jobName: ${this.getEnumName(job.systemJobEnum.id)}, jobDescription: ${this.getEnumDescription(job.systemJobEnum.id)}`;
 

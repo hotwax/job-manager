@@ -89,30 +89,30 @@ const actions: ActionTree<JobState, RootState> = {
             job['statusDesc'] = this.state.util.statusDesc[job.statusId];
           }) 
 
-          const typeDefinedJobs: Job = jobs.map((response: any) => {
+          const typeDefinedJobs: Job = jobs.map((job: any) => {
             return { 
-              id: response.jobId,
-              name: response.jobName,
+              id: job.jobId,
+              name: job.jobName,
               systemJobEnum: {
-                id: response.enumId,
-                name: response.enumName,
-                description: response.description,
+                id: job.enumId,
+                name: job.enumName,
+                description: job.description,
               },
-              parentJobId: response.parentJobId,
-              runTime: response.runTime,
-              serviceName: response.serviceName,
+              parentJobId: job.parentJobId,
+              runTime: job.runTime,
+              serviceName: job.serviceName,
               status: {
-                id: response.statusId,
-                description: response.status,
-                desc: response.statusDesc,
+                id: job.statusId,
+                description: job.status,
+                desc: job.statusDesc,
               },
               tempExpr: {
-                id: response.temporalExpression.tempExprId,
-                description: response.temporalExpression.description,
+                id: job.temporalExpression.tempExprId,
+                description: job.temporalExpression.description,
               },
-              currentRetryCount: response.currentRetryCount,
-              finishDateTime: response.finishDateTime,
-              cancelDateTime: response.cancelDateTime,
+              currentRetryCount: job.currentRetryCount,
+              finishDateTime: job.finishDateTime,
+              cancelDateTime: job.cancelDateTime,
             }
           }) 
 
@@ -192,30 +192,30 @@ const actions: ActionTree<JobState, RootState> = {
             job['statusDesc'] = this.state.util.statusDesc[job.statusId];
           })
 
-          const typeDefinedJobs: Job = jobs.map((response: any) => {
+          const typeDefinedJobs: Job = jobs.map((job: any) => {
             return { 
-              id: response.jobId,
-              name: response.jobName,
+              id: job.jobId,
+              name: job.jobName,
               systemJobEnum: {
-                id: response.enumId,
-                name: response.enumName,
-                description: response.description,
+                id: job.enumId,
+                name: job.enumName,
+                description: job.description,
               },
-              parentJobId: response.parentJobId,
-              runTime: response.runTime,
-              serviceName: response.serviceName,
+              parentJobId: job.parentJobId,
+              runTime: job.runTime,
+              serviceName: job.serviceName,
               status: {
-                id: response.statusId,
-                description: response.status,
-                desc: response.statusDesc,
+                id: job.statusId,
+                description: job.status,
+                desc: job.statusDesc,
               },
               tempExpr: {
-                id: response.temporalExpression.tempExprId,
-                description: response.temporalExpression.description,
+                id: job.temporalExpression.tempExprId,
+                description: job.temporalExpression.description,
               },
-              currentRetryCount: response.currentRetryCount,
-              finishDateTime: response.finishDateTime,
-              cancelDateTime: response.cancelDateTime,
+              currentRetryCount: job.currentRetryCount,
+              finishDateTime: job.finishDateTime,
+              cancelDateTime: job.cancelDateTime,
             }
           })
           
@@ -290,30 +290,31 @@ const actions: ActionTree<JobState, RootState> = {
             jobs = state.pending.list.concat(resp.data.docs);
           }
           
-          const typeDefinedJobs: Job = jobs.map((response: any) => {
+          const typeDefinedJobs: Job = jobs.map((job: any) => {
             return { 
-              id: response.jobId,
-              name: response.jobName,
+              id: job.jobId,
+              name: job.jobName,
               systemJobEnum: {
-                id: response.enumId,
-                name: response.enumName,
-                description: response.description,
+                id: job.enumId,
+                name: job.enumName,
+                description: job.description,
+                typeId: job.typeId,
               },
-              parentJobId: response.parentJobId,
-              runTime: response.runTime,
-              serviceName: response.serviceName,
+              parentJobId: job.parentJobId,
+              runTime: job.runTime,
+              serviceName: job.serviceName,
               status: {
-                id: response.statusId,
-                description: response.status,
-                desc: response.statusDesc,
+                id: job.statusId,
+                description: job.status,
+                desc: job.statusDesc,
               },
               tempExpr: {
-                id: response.temporalExpression.tempExprId,
-                description: response.temporalExpression.description,
+                id: job.temporalExpression.tempExprId,
+                description: job.temporalExpression.description,
               },
-              currentRetryCount: response.currentRetryCount,
-              finishDateTime: response.finishDateTime,
-              cancelDateTime: response.cancelDateTime,
+              currentRetryCount: job.currentRetryCount,
+              finishDateTime: job.finishDateTime,
+              cancelDateTime: job.cancelDateTime,
             }
           })
           
