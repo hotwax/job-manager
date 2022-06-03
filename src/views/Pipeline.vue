@@ -295,7 +295,7 @@ import { showToast } from '@/utils'
 import JobActionsPopover from '@/components/JobActionsPopover.vue'
 import { Job } from '@/types/Job';
 import { Enumeration } from '@/types/Enumeration';
-import { TemporalExpression } from '@/types/temporalExpression';
+import { TemporalExpression } from '@/types/TemporalExpression';
  
 export default defineComponent({
   name: "Pipeline",
