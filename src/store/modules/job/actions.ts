@@ -89,34 +89,33 @@ const actions: ActionTree<JobState, RootState> = {
             job['statusDesc'] = this.state.util.statusDesc[job.statusId];
           }) 
 
-          const typeDefinedJobs: Job = jobs.map((job: any) => {
-            return { 
-              id: job.jobId,
-              name: job.jobName,
-              systemJobEnum: {
-                id: job.enumId,
-                name: job.enumName,
-                description: job.description,
-              },
-              parentJobId: job.parentJobId,
-              runTime: job.runTime,
-              serviceName: job.serviceName,
-              status: {
-                id: job.statusId,
-                description: job.status,
-                desc: job.statusDesc,
-              },
-              tempExpr: {
-                id: job.temporalExpression.tempExprId,
-                description: job.temporalExpression.description,
-              },
-              currentRetryCount: job.currentRetryCount,
-              finishDateTime: job.finishDateTime,
-              cancelDateTime: job.cancelDateTime,
-            }
-          }) 
+          jobs = jobs.map((job: any) => ({
+            id: job.jobId,
+            name: job.jobName,
+            systemJobEnum: {
+              id: job.enumId,
+              name: job.enumName,
+              description: job.description,
+              typeId: job.typeId,
+            },
+            parentJobId: job.parentJobId,
+            runTime: job.runTime,
+            serviceName: job.serviceName,
+            status: {
+              id: job.statusId,
+              description: job.status,
+              desc: job.statusDesc,
+            },
+            tempExpr: {
+              id: job.temporalExpression.tempExprId,
+              description: job.temporalExpression.description,
+            },
+            currentRetryCount: job.currentRetryCount,
+            finishDateTime: job.finishDateTime,
+            cancelDateTime: job.cancelDateTime,
+          })) as Job; 
 
-          commit(types.JOB_HISTORY_UPDATED, { jobs: typeDefinedJobs, total });
+          commit(types.JOB_HISTORY_UPDATED, { jobs, total });
           const tempExprList = [] as any;
           const enumIds = [] as any;
           resp.data.docs.map((item: any) => {
@@ -192,34 +191,33 @@ const actions: ActionTree<JobState, RootState> = {
             job['statusDesc'] = this.state.util.statusDesc[job.statusId];
           })
 
-          const typeDefinedJobs: Job = jobs.map((job: any) => {
-            return { 
-              id: job.jobId,
-              name: job.jobName,
-              systemJobEnum: {
-                id: job.enumId,
-                name: job.enumName,
-                description: job.description,
-              },
-              parentJobId: job.parentJobId,
-              runTime: job.runTime,
-              serviceName: job.serviceName,
-              status: {
-                id: job.statusId,
-                description: job.status,
-                desc: job.statusDesc,
-              },
-              tempExpr: {
-                id: job.temporalExpression.tempExprId,
-                description: job.temporalExpression.description,
-              },
-              currentRetryCount: job.currentRetryCount,
-              finishDateTime: job.finishDateTime,
-              cancelDateTime: job.cancelDateTime,
-            }
-          })
+          jobs = jobs.map((job: any) => ({
+            id: job.jobId,
+            name: job.jobName,
+            systemJobEnum: {
+              id: job.enumId,
+              name: job.enumName,
+              description: job.description,
+              typeId: job.typeId,
+            },
+            parentJobId: job.parentJobId,
+            runTime: job.runTime,
+            serviceName: job.serviceName,
+            status: {
+              id: job.statusId,
+              description: job.status,
+              desc: job.statusDesc,
+            },
+            tempExpr: {
+              id: job.temporalExpression.tempExprId,
+              description: job.temporalExpression.description,
+            },
+            currentRetryCount: job.currentRetryCount,
+            finishDateTime: job.finishDateTime,
+            cancelDateTime: job.cancelDateTime,
+          })) as Job;
           
-          commit(types.JOB_RUNNING_UPDATED, { jobs: typeDefinedJobs, total });
+          commit(types.JOB_RUNNING_UPDATED, { jobs, total });
           const tempExprList = [] as any;
           const enumIds = [] as any;
           resp.data.docs.map((item: any) => {
@@ -290,35 +288,33 @@ const actions: ActionTree<JobState, RootState> = {
             jobs = state.pending.list.concat(resp.data.docs);
           }
           
-          const typeDefinedJobs: Job = jobs.map((job: any) => {
-            return { 
-              id: job.jobId,
-              name: job.jobName,
-              systemJobEnum: {
-                id: job.enumId,
-                name: job.enumName,
-                description: job.description,
-                typeId: job.typeId,
-              },
-              parentJobId: job.parentJobId,
-              runTime: job.runTime,
-              serviceName: job.serviceName,
-              status: {
-                id: job.statusId,
-                description: job.status,
-                desc: job.statusDesc,
-              },
-              tempExpr: {
-                id: job.temporalExpression.tempExprId,
-                description: job.temporalExpression.description,
-              },
-              currentRetryCount: job.currentRetryCount,
-              finishDateTime: job.finishDateTime,
-              cancelDateTime: job.cancelDateTime,
-            }
-          })
+          jobs = jobs.map((job: any) => ({
+            id: job.jobId,
+            name: job.jobName,
+            systemJobEnum: {
+              id: job.enumId,
+              name: job.enumName,
+              description: job.description,
+              typeId: job.typeId,
+            },
+            parentJobId: job.parentJobId,
+            runTime: job.runTime,
+            serviceName: job.serviceName,
+            status: {
+              id: job.statusId,
+              description: job.status,
+              desc: job.statusDesc,
+            },
+            tempExpr: {
+              id: job.temporalExpression.tempExprId,
+              description: job.temporalExpression.description,
+            },
+            currentRetryCount: job.currentRetryCount,
+            finishDateTime: job.finishDateTime,
+            cancelDateTime: job.cancelDateTime,
+          })) as Job;
           
-          commit(types.JOB_PENDING_UPDATED, { jobs: typeDefinedJobs, total });
+          commit(types.JOB_PENDING_UPDATED, { jobs, total });
           const tempExprList = [] as any;
           const enumIds = [] as any;
           resp.data.docs.map((item: any) => {

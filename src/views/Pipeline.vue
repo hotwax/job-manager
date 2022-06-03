@@ -40,13 +40,13 @@
           <div v-else>
             <ion-card v-for="job in pendingJobs" :key="job.id" @click="viewJobConfiguration(job)" :button="isDesktop">
               <ion-card-header>
-                <ion-card-title>{{ getEnumName(job.systemJobEnum.id) }}</ion-card-title>
+                <ion-card-title>{{ job.systemJobEnum.name }}</ion-card-title>
                 <ion-badge v-if="job.runTime" color="dark">{{ timeFromNow(job.runTime)}}</ion-badge>
               </ion-card-header>
 
               <ion-item lines="none">
                 <ion-label class="ion-text-wrap">
-                  <p>{{ getEnumDescription(job.systemJobEnum.id) }}</p>
+                  <p>{{ job.systemJobEnum.description }}</p>
                 </ion-label>
               </ion-item>
               <ion-item>
@@ -56,7 +56,7 @@
 
               <ion-item>
                 <ion-icon slot="start" :icon="timerOutline" />
-                <ion-label class="ion-text-wrap">{{ job.tempExpr.id ? temporalExpr(job.tempExpr.id)?.description : "🙃"  }}</ion-label>
+                <ion-label class="ion-text-wrap">{{ job.tempExpr.description ? job.tempExpr.description : "🙃"  }}</ion-label>
               </ion-item>
 
               <ion-item lines="full">
@@ -102,14 +102,14 @@
               <ion-card-header>
                 <div>
                   <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
-                  <ion-card-title>{{ getEnumName(job.systemJobEnum.id) }}</ion-card-title>
+                  <ion-card-title>{{ job.systemJobEnum.name }}</ion-card-title>
                 </div>
                 <ion-badge color="dark">{{ job.statusDesc }}</ion-badge>
               </ion-card-header>
 
               <ion-item lines="none">
                 <ion-label class="ion-text-wrap">
-                  <p>{{ getEnumDescription(job.systemJobEnum.id) }}</p>
+                  <p>{{ job.systemJobEnum.description }}</p>
                 </ion-label>
               </ion-item>
               <ion-item>
@@ -119,7 +119,7 @@
 
               <ion-item>
                 <ion-icon slot="start" :icon="timerOutline" />
-                <ion-label class="ion-text-wrap">{{ job.tempExpr.id ? temporalExpr(job.tempExpr.id)?.description : "🙃"  }}</ion-label>
+                <ion-label class="ion-text-wrap">{{ job.tempExpr.id ? job.tempExpr.description : "🙃"  }}</ion-label>
               </ion-item>
 
               <ion-item lines="full">
@@ -182,7 +182,7 @@
 
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
-                <p>{{ getEnumDescription(job.systemJobEnum.id) }}</p>
+                <p>{{ job.systemJobEnum.description }}</p>
               </ion-label>
             </ion-item>
             <ion-item>
@@ -195,7 +195,7 @@
 
             <ion-item>
               <ion-icon slot="start" :icon="timerOutline" />
-              <ion-label class="ion-text-wrap">{{ job.tempExpr.id ? temporalExpr(job.tempExpr.id)?.description : "🙃"  }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ job.tempExpr.id ? job.tempExpr.description : "🙃"  }}</ion-label>
             </ion-item>
 
             <ion-item lines="full">
@@ -241,7 +241,7 @@
 
         <div>
           <ion-chip v-for="(job, index) in getPinnedJobs" :key="index" @click="updateSelectedPinnedJob(job)" :outline="!isPinnedJobSelected(job)">
-            <ion-label>{{ getEnumName(job) }}</ion-label>
+            <ion-label>{{ job.systemJobEnum.name }}</ion-label>
             <ion-icon @click.stop="updatePinnedJobs(job)" :icon="closeCircleOutline" />
           </ion-chip>  
         </div>     
@@ -294,6 +294,8 @@ import { Plugins } from '@capacitor/core';
 import { showToast } from '@/utils'
 import JobActionsPopover from '@/components/JobActionsPopover.vue'
 import { Job } from '@/types/Job';
+import { Enumeration } from '@/types/Enumeration';
+import { TemporalExpression } from '@/types/temporalExpression';
  
 export default defineComponent({
   name: "Pipeline",
@@ -337,13 +339,13 @@ export default defineComponent({
         ...JSON.parse(process.env?.VUE_APP_INV_JOB_ENUMS as string) as any,
         ...JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
       },
-      title: '',
-      currentJobStatus: '',
+      title: '' as string | undefined,
+      currentJobStatus: '' as string | undefined,
       freqType: '' as any,
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
       isRetrying: false,
-      queryString: '' as any,
+      queryString: '' as any
     }
   },
   computed: {
@@ -392,9 +394,9 @@ export default defineComponent({
       }
       return
     },
-    async copyJobInformation(job: any) {
+    async copyJobInformation(job: Job) {
       const { Clipboard } = Plugins;
-      const jobDetails = `jobId: ${job.id}, jobName: ${this.getEnumName(job.systemJobEnum.id)}, jobDescription: ${this.getEnumDescription(job.systemJobEnum.id)}`;
+      const jobDetails = `jobId: ${job.id}, jobName: ${this.getEnumName((job.systemJobEnum as Enumeration).id)}, jobDescription: ${this.getEnumDescription((job.systemJobEnum as Enumeration).id)}`;
 
       await Clipboard.write({
         string: jobDetails
@@ -402,7 +404,7 @@ export default defineComponent({
         showToast(this.$t("Copied job details to clipboard"));
       })
     },
-    async viewJobHistory(job: any) {
+    async viewJobHistory(job: Job) {
       const jobHistoryModal = await modalController.create({
         component: JobHistoryModal,
         componentProps: { currentJob: job }
@@ -466,7 +468,7 @@ export default defineComponent({
       this.segmentSelected === 'running' ? this.getRunningJobs():
       this.getJobHistory();
     },
-    async skipJob (job: any) {
+    async skipJob (job: Job) {
       const alert = await alertController
         .create({
           header: this.$t('Skip job'),
@@ -496,7 +498,7 @@ export default defineComponent({
     async getJobHistory(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
       await this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, systemJobEnumId: this.selectedPinnedJobs});
     },
-    async openJobActions(job: any, ev: Event) {
+    async openJobActions(job: Job, ev: Event) {
       const popover = await popoverController.create({
         component: JobActionsPopover,
         showBackdrop: false,
@@ -505,7 +507,7 @@ export default defineComponent({
       });
       return popover.present()
     },
-    async cancelJob(job: any){
+    async cancelJob(job: Job){
       const alert = await alertController
         .create({
           header: this.$t('Cancel job'),
@@ -527,9 +529,9 @@ export default defineComponent({
 
        return alert.present();
     },
-    async viewJobConfiguration(job: any) {
-      this.title = this.getEnumName(job.systemJobEnum.id)
-      this.currentJobStatus = job.tempExpr.id;
+    async viewJobConfiguration(job: Job) {
+      this.title = (job.systemJobEnum as Enumeration).name;
+      this.currentJobStatus = (job.tempExpr as TemporalExpression).id;
       const id = Object.entries(this.jobEnums).find((enums) => enums[1] == job.systemJobEnum) as any
       this.freqType = id && (Object.entries(this.jobFrequencyType).find((freq) => freq[0] == id[0]) as any)[1]
 

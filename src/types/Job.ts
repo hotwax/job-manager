@@ -12,6 +12,6 @@ export interface Job {
     status?: Status;
     tempExpr?: TemporalExpression;
     currentRetryCount?: number;
-    finishDateTime: number;
-    cancelDateTime: number;
+    finishDateTime?: number;
+    cancelDateTime?: number;
 }
