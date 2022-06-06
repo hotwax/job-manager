@@ -1,7 +1,11 @@
-import { RunningJobsTypes, PendingJobsTypes, JobsHistoryTypes } from "./Job";
+import { Job } from "./Job";
+import { Enumeration } from "./Enumeration";
+import { Status } from "./Status";
+import { TemporalExpression } from "./TemporalExpression";
 
 export {
-    PendingJobsTypes,
-    RunningJobsTypes,
-    JobsHistoryTypes
+    Job,
+    Enumeration,
+    Status,
+    TemporalExpression
 }

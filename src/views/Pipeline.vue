@@ -293,9 +293,7 @@ import JobHistoryModal from '@/components/JobHistoryModal.vue';
 import { Plugins } from '@capacitor/core';
 import { showToast } from '@/utils'
 import JobActionsPopover from '@/components/JobActionsPopover.vue'
-import { Job } from '@/types/Job';
-import { Enumeration } from '@/types/Enumeration';
-import { TemporalExpression } from '@/types/TemporalExpression';
+import { Job, Enumeration, TemporalExpression } from '@/types';
  
 export default defineComponent({
   name: "Pipeline",

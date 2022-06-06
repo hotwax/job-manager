@@ -6,7 +6,7 @@ import { hasError, showToast } from '@/utils'
 import { JobService } from '@/services/JobService'
 import { translate } from '@/i18n'
 import { DateTime } from 'luxon';
-import { Job } from '@/types/Job'
+import { Job } from '@/types'
 
 const actions: ActionTree<JobState, RootState> = {
 
