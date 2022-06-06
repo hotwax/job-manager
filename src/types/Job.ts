@@ -7,7 +7,7 @@ export interface Job {
     name: string;
     systemJobEnum?: Enumeration;
     parentJobId?: string;
-    runTime?: string;
+    runTime?: number;
     serviceName?: string;
     status?: Status;
     tempExpr?: TemporalExpression;

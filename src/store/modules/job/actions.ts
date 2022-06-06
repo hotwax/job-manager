@@ -6,7 +6,7 @@ import { hasError, showToast } from '@/utils'
 import { JobService } from '@/services/JobService'
 import { translate } from '@/i18n'
 import { DateTime } from 'luxon';
-import { Job } from '@/types'
+import { Job, TemporalExpression, Enumeration } from '@/types'
 
 const actions: ActionTree<JobState, RootState> = {
 
@@ -543,10 +543,10 @@ const actions: ActionTree<JobState, RootState> = {
     commit(types.JOB_UPDATED_BULK, {})
   },
 
-  async skipJob({ commit, dispatch, getters }, job) {
+  async skipJob({ commit, dispatch, getters }, job: Job) {
     let skipTime = {};
-    const integer1 = getters['getTemporalExpr'](job.tempExprId)?.integer1;
-    const integer2 = getters['getTemporalExpr'](job.tempExprId)?.integer2
+    const integer1 = getters['getTemporalExpr']((job.tempExpr as TemporalExpression).id)?.integer1;
+    const integer2 = getters['getTemporalExpr']((job.tempExpr as TemporalExpression).id)?.integer2
     if(integer1 === 12) {
       skipTime = { minutes: integer2 }
     } else if (integer1 === 10) {
@@ -557,12 +557,13 @@ const actions: ActionTree<JobState, RootState> = {
       showToast(translate("This job schedule cannot be skipped"));
       return;
     }
-    const time = DateTime.fromMillis(job.runTime).diff(DateTime.local()).plus(skipTime);
+  
+    const time = DateTime.fromMillis((job.runTime as number)).diff(DateTime.local()).plus(skipTime);
     const updatedRunTime = time.toMillis() + DateTime.local().toMillis()
     const payload = {
-      'jobId': job.jobId,
+      'jobId': job.id,
       'runTime': updatedRunTime,
-      'systemJobEnumId': job.systemJobEnumId,
+      'systemJobEnumId': (job.systemJobEnum as Enumeration).id,
       'recurrenceTimeZone': this.state.user.current.userTimeZone,
       'statusId': "SERVICE_PENDING"
     } as any
@@ -571,13 +572,13 @@ const actions: ActionTree<JobState, RootState> = {
     if (resp.status === 200 && !hasError(resp) && resp.data?.successMessage) {
       let jobs = await dispatch('fetchJobs', {
         inputFields: {
-          'systemJobEnumId': job.systemJobEnumId,
+          'systemJobEnumId': (job.systemJobEnum as Enumeration).id,
           'systemJobEnumId_op': 'equals'
         }
       })
       if (jobs.status === 200 && !hasError(jobs) && jobs.data?.docs.length) {
         jobs = jobs.data?.docs;
-        const currentJob = jobs.find((currentJob: any) => currentJob?.jobId === job?.jobId);
+        const currentJob = jobs.find((currentJob: any) => currentJob?.jobId === job?.id);
         commit(types.JOB_CURRENT_UPDATED, currentJob);
       }
       commit(types.JOB_UPDATED, { job });
@@ -591,7 +592,7 @@ const actions: ActionTree<JobState, RootState> = {
     })
     if (jobs.status === 200 && !hasError(jobs) && jobs.data?.docs?.length) {
       jobs = jobs.data?.docs;
-      const currentJob = jobs.find((currentJob: any) => currentJob?.jobId === job?.jobId);
+      const currentJob = jobs.find((currentJob: any) => currentJob?.jobId === job?.id);
       commit(types.JOB_CURRENT_UPDATED, currentJob);
     }
     return resp;
