@@ -3,8 +3,8 @@ import api from '@/api'
 const fetchJobInformation = async (payload: any): Promise <any>  => {
   return api({
     url: "/findJobs",
-    method: "post",
-    data: payload
+    method: "get",
+    params: payload
   });
 }
 const fetchJobDescription = async (payload: any): Promise <any>  => {
