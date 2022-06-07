@@ -65,6 +65,7 @@ import JobConfiguration from '@/components/JobConfiguration.vue'
 import { isFutureDate } from '@/utils';
 import emitter from '@/event-bus';
 import { useRouter } from 'vue-router'
+import { Job, Status } from '@/types';
 
 export default defineComponent({
   name: 'Inventory',
@@ -87,7 +88,7 @@ export default defineComponent({
     return {
       jobEnums: JSON.parse(process.env?.VUE_APP_INV_JOB_ENUMS as string) as any,
       jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
-      currentJob: '' as any,
+      currentJob: ('' as any) as Job,
       title: 'Hard sync',
       currentJobStatus: '',
       freqType: '',
@@ -110,7 +111,7 @@ export default defineComponent({
   },
   methods: {
     async updateJob(checked: boolean, id: string, status="EVERY_15_MIN") {
-      const job = this.getJob(id);
+      const job: Job = this.getJob(id);
 
       // TODO: added this condition to not call the api when the value of the select automatically changes
       // need to handle this properly
@@ -118,7 +119,7 @@ export default defineComponent({
         return;
       }
 
-      job['jobStatus'] = status
+      (job.status as Status).id = status
 
       // if job runTime is not a valid date then making runTime as empty
       if (job?.runTime && !isFutureDate(job?.runTime)) {
@@ -141,7 +142,7 @@ export default defineComponent({
 
       await this.store.dispatch('job/updateCurrentJob', { job: this.currentJob });
       if(!this.isDesktop && this.currentJob) {
-        this.router.push({name: 'JobDetails', params: { title: this.title, jobId: this.currentJob.jobId, category: "inventory"}});
+        this.router.push({name: 'JobDetails', params: { title: this.title, jobId: this.currentJob.id, category: "inventory"}});
         return;
       }
 

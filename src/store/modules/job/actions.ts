@@ -384,7 +384,7 @@ const actions: ActionTree<JobState, RootState> = {
     const resp = await JobService.fetchJobInformation(params)
 
     if (resp.status === 200 && !hasError(resp) && resp.data.docs) {
-      const cached = JSON.parse(JSON.stringify(state.cached));
+      let cached = JSON.parse(JSON.stringify(state.cached));
 
       // added condition to store multiple pending jobs in the state for order batch jobs,
       // getting job with status Service draft as well, as this information will be needed when scheduling
@@ -436,6 +436,32 @@ const actions: ActionTree<JobState, RootState> = {
       // fetching temp expressions
       const tempExpr = Object.values(cached).map((job: any) => job.tempExprId)
       await dispatch('fetchTemporalExpression', tempExpr)
+
+      cached = Object.values(cached).map((cachedJob: any) => ({
+        id: cachedJob.id,
+        name: cachedJob.jobName,
+        systemJobEnum: {
+          id: cachedJob.enumId,
+          name: cachedJob.enumName,
+          description: cachedJob.description,
+          typeId: cachedJob.enumTypeId,
+        },
+        parentJobId: cachedJob.parentJobId,
+        runTime: cachedJob.runTime,
+        serviceName: cachedJob.serviceName,
+        status: {
+          id: cachedJob.statusId,
+          description: cachedJob.status,
+          desc: cachedJob.statusDesc,
+        },
+        tempExpr: {
+          id: cachedJob.temporalExpression.tempExprId,
+          description: cachedJob.temporalExpression.description,
+        },
+        currentRetryCount: cachedJob.id,
+        finishDateTime: cachedJob.id,
+        cancelDateTime: cachedJob.id,
+      }))
 
       commit(types.JOB_UPDATED_BULK, cached);
     }
