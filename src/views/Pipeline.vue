@@ -66,8 +66,8 @@
 
               <div class="actions">
                 <div>
-                  <ion-button fill="clear" @click.stop="skipJob(job)">{{ $t("Skip") }}</ion-button>
-                  <ion-button color="danger" fill="clear" @click.stop="cancelJob(job)">{{ $t("Cancel") }}</ion-button>
+                  <ion-button v-if="can('update', 'Job')" fill="clear" @click.stop="skipJob(job)">{{ $t("Skip") }}</ion-button>
+                  <ion-button v-if="can('update', 'Job')" color="danger" fill="clear" @click.stop="cancelJob(job)">{{ $t("Cancel") }}</ion-button>
                 </div>
                 <div>
                   <ion-button fill="clear" color="medium" slot="end" @click.stop="openJobActions(job, $event)">
@@ -293,6 +293,8 @@ import JobHistoryModal from '@/components/JobHistoryModal.vue';
 import { Plugins } from '@capacitor/core';
 import { showToast } from '@/utils'
 import JobActionsPopover from '@/components/JobActionsPopover.vue'
+import { useAbility } from '@casl/vue';
+
 
 export default defineComponent({
   name: "Pipeline",
@@ -581,8 +583,11 @@ export default defineComponent({
     const router = useRouter();
     const store = useStore();
     const segmentSelected = ref('pending');
+    const { can } = useAbility();
+
 
     return {
+      can,
       closeCircleOutline,
       copyOutline,
       store,
