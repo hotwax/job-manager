@@ -413,7 +413,7 @@ const actions: ActionTree<JobState, RootState> = {
         'tempExprId': job.jobStatus, // Need to remove this as we are passing frequency in SERVICE_TEMP_EXPR, currently kept it for backward compatibility
         'maxRecurrenceCount': '-1',
         'parentJobId': job.parentJobId,
-        'runAsUser': 'system', //Need to remove this as we are passing frequency in SERVICE_RUN_AS_SYSTEM, currently kept it for backward compatibility
+        'runAsUser': 'system', //Need to remove this as we are using SERVICE_RUN_AS_SYSTEM, currently kept it for backward compatibility
         'recurrenceTimeZone': this.state.user.current.userTimeZone
       },
       'shopifyConfigId': this.state.user.shopifyConfig,
