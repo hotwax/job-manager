@@ -406,13 +406,14 @@ const actions: ActionTree<JobState, RootState> = {
       'SERVICE_NAME': job.serviceName,
       'SERVICE_COUNT': '0',
       'SERVICE_TEMP_EXPR': job.jobStatus,
+      'SERVICE_RUN_AS_SYSTEM':'Y',
       'jobFields': {
         'productStoreId': this.state.user.currentEComStore.productStoreId,
         'systemJobEnumId': job.systemJobEnumId,
         'tempExprId': job.jobStatus, // Need to remove this as we are passing frequency in SERVICE_TEMP_EXPR, currently kept it for backward compatibility
         'maxRecurrenceCount': '-1',
         'parentJobId': job.parentJobId,
-        'runAsUser': 'system', // default system, but empty in run now
+        'runAsUser': 'system', //default system, but empty in run now.  TODO Need to remove this as we are using SERVICE_RUN_AS_SYSTEM, currently kept it for backward compatibility
         'recurrenceTimeZone': this.state.user.current.userTimeZone
       },
       'shopifyConfigId': this.state.user.shopifyConfig,
