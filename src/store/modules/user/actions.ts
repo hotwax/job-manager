@@ -6,7 +6,7 @@ import * as types from './mutation-types'
 import { hasError, showToast } from '@/utils'
 import { translate } from '@/i18n'
 import { Settings } from 'luxon'
-import ability from '@/authorization';
+import { defineAbilityForUser } from '@/authorization'
 
 
 const actions: ActionTree<UserState, RootState> = {
@@ -22,7 +22,6 @@ const actions: ActionTree<UserState, RootState> = {
             commit(types.USER_TOKEN_CHANGED, { newToken: resp.data.token })
             await dispatch('getProfile')
             dispatch('getShopifyConfig')
-            ability.update([]);
             return resp.data;
         } else if (hasError(resp)) {
           showToast(translate('Sorry, your username or password is incorrect. Please try again.'));
@@ -49,7 +48,7 @@ const actions: ActionTree<UserState, RootState> = {
     // TODO add any other tasks if need
     dispatch('job/clearJobState', null, { root: true });
     commit(types.USER_END_SESSION)
-    ability.update([]);
+    defineAbilityForUser();
   },
 
   /**
@@ -67,9 +66,10 @@ const actions: ActionTree<UserState, RootState> = {
         "distinct": "Y",
         "noConditionFind": "Y"
       }
+      const userProfile = resp.data;
 
       await dispatch('getEComStores', payload).then((stores: any) => {
-        resp.data.stores = [
+        userProfile.stores = [
           ...(stores ? stores : []),
           {
             productStoreId: "",
@@ -79,11 +79,12 @@ const actions: ActionTree<UserState, RootState> = {
       })
 
       this.dispatch('util/getServiceStatusDesc')
-      if (resp.data.userTimeZone) {
-        Settings.defaultZone = resp.data.userTimeZone;
+      if (userProfile.userTimeZone) {
+        Settings.defaultZone = userProfile.userTimeZone;
       }
-      commit(types.USER_CURRENT_ECOM_STORE_UPDATED, resp.data?.stores[0]);
-      commit(types.USER_INFO_UPDATED, resp.data);
+      defineAbilityForUser(userProfile)
+      commit(types.USER_CURRENT_ECOM_STORE_UPDATED, userProfile?.stores[0]);
+      commit(types.USER_INFO_UPDATED, userProfile);
     }
   },
 
