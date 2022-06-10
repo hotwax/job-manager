@@ -15,6 +15,7 @@ import { loadingController } from '@ionic/vue';
 import { mapGetters, useStore } from 'vuex';
 import emitter from "@/event-bus"
 import { Settings } from 'luxon'
+import { defineAbilityForUser } from '@/authorization'
 export default defineComponent({
   name: 'App',
   components: {
@@ -90,6 +91,7 @@ export default defineComponent({
     if (this.userProfile && this.userProfile.userTimeZone) {
       Settings.defaultZone = this.userProfile.userTimeZone;
     }
+    defineAbilityForUser(this.userProfile);
   },
   unmounted() {
     emitter.off('presentLoader', this.presentLoader);
