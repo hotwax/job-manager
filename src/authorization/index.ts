@@ -23,5 +23,9 @@ export const defineAbilityForUser = (user?: any) => {
         ability.update([]);
     }
 }
+export const resetAbility = () => {
+    ability.update([]);
+}
+
 
 export default ability;

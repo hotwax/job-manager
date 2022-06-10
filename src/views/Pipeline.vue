@@ -66,8 +66,8 @@
 
               <div class="actions">
                 <div>
-                  <ion-button v-if="can('update', 'Job')" fill="clear" @click.stop="skipJob(job)">{{ $t("Skip") }}</ion-button>
-                  <ion-button v-if="can('update', 'Job')" color="danger" fill="clear" @click.stop="cancelJob(job)">{{ $t("Cancel") }}</ion-button>
+                  <ion-button v-if="can(ACTIONS.UPDATE, SUBJECTS.JOB)" fill="clear" @click.stop="skipJob(job)">{{ $t("Skip") }}</ion-button>
+                  <ion-button v-if="can(ACTIONS.UPDATE, SUBJECTS.JOB)" color="danger" fill="clear" @click.stop="cancelJob(job)">{{ $t("Cancel") }}</ion-button>
                 </div>
                 <div>
                   <ion-button fill="clear" color="medium" slot="end" @click.stop="openJobActions(job, $event)">
@@ -294,6 +294,7 @@ import { Plugins } from '@capacitor/core';
 import { showToast } from '@/utils'
 import JobActionsPopover from '@/components/JobActionsPopover.vue'
 import { useAbility } from '@casl/vue';
+import { SUBJECTS, ACTIONS } from '@/authorization'
 
 
 export default defineComponent({
@@ -587,6 +588,7 @@ export default defineComponent({
 
 
     return {
+      ACTIONS,
       can,
       closeCircleOutline,
       copyOutline,
@@ -595,6 +597,7 @@ export default defineComponent({
       ellipsisVerticalOutline,
       pinOutline,
       refreshOutline,
+      SUBJECTS,
       timeOutline,
       timerOutline,
       segmentSelected,

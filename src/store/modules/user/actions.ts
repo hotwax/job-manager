@@ -6,7 +6,7 @@ import * as types from './mutation-types'
 import { hasError, showToast } from '@/utils'
 import { translate } from '@/i18n'
 import { Settings } from 'luxon'
-import { defineAbilityForUser } from '@/authorization'
+import { defineAbilityForUser, resetAbility } from '@/authorization'
 
 
 const actions: ActionTree<UserState, RootState> = {
@@ -48,7 +48,7 @@ const actions: ActionTree<UserState, RootState> = {
     // TODO add any other tasks if need
     dispatch('job/clearJobState', null, { root: true });
     commit(types.USER_END_SESSION)
-    defineAbilityForUser();
+    resetAbility();
   },
 
   /**
