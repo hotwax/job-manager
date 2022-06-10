@@ -16,6 +16,7 @@ const ability = new Ability();
 export const defineAbilityForUser = (user?: any) => {
     if (user) {
         const { can, rules } = new AbilityBuilder(Ability);
+        // TODO Set specific permission based upon the server permissions
         can(ACTIONS.READ, SUBJECTS.JOB);
         can(ACTIONS.UPDATE, SUBJECTS.JOB);
         ability.update(rules);

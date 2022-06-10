@@ -91,6 +91,7 @@ export default defineComponent({
     if (this.userProfile && this.userProfile.userTimeZone) {
       Settings.defaultZone = this.userProfile.userTimeZone;
     }
+    // When the app resumes, set permission for the current user
     defineAbilityForUser(this.userProfile);
   },
   unmounted() {
