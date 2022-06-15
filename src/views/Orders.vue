@@ -214,7 +214,7 @@ export default defineComponent({
       return status && status !== "SERVICE_DRAFT";
     },
     autoCancelCheckDaily(): boolean {
-      const status = this.getJobStatus(this.jobEnums["REAL_WBHKS"]);
+      const status = this.getJobStatus(this.jobEnums["AUTO_CNCL_DAL"]);
       return status && status !== "SERVICE_DRAFT";
     },
   },
