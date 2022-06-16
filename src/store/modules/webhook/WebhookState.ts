@@ -1,5 +1,5 @@
 export default interface WebhookState {
-  cached: Object
+  cached: any
   key: {
     topic: string,
     list: Array<any>

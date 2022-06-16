@@ -7,12 +7,12 @@ import * as types from './mutations-types'
 import { translate } from '@/i18n'
 
 const actions: ActionTree<WebhookState, RootState> = {
-  async fetchWebhooks({ commit }, payload){
-    await WebhookService.fetchShopifyWebhooks(payload).then(resp => {
-      if (resp.status === 200 && resp.data.webhooks?.length > 0 && !hasError(resp)) {
-        const { webhooks } = JSON.parse(resp.data.webhooks);
+  async fetchWebhooks({ commit }) {
+    await WebhookService.fetchShopifyWebhooks({ shopifyConfigId: this.state.user.shopifyConfig }).then(resp => {
+      if (resp.status == 200 && resp.data.webhooks?.length > 0 && !hasError(resp)) {
+        const webhooks = resp.data.webhooks;
         const topics: any = {}
-        webhooks.forEach((topic: any) => {
+        webhooks.map((topic: any) => {
           topics[topic.topic] = topic
         })
         commit(types.WEBHOOK_UPDATED, topics)
@@ -20,7 +20,8 @@ const actions: ActionTree<WebhookState, RootState> = {
       }
     }).catch(err => console.error(err))
   },
-  async unsubscribeWebhook({ commit, state }, payload: any) {
+  async unsubscribeWebhook({ dispatch, state }, payload: any) {
+    delete state.cached['bulk_operations/finish']
     console.log(payload);
     const status = await WebhookService.unsubscribe(payload).then(resp => {
       if (resp.status === 200 && resp.data.webhooks?.length > 0 && !hasError(resp)) {
@@ -29,9 +30,9 @@ const actions: ActionTree<WebhookState, RootState> = {
       }
     }).catch(() => {
       showToast(translate("Something went wrong"));
-      console.log(state.cached);
-      WebhookService.unsubscribe(payload)
       return false
+    }).finally(() => {
+      dispatch('fetchWebhooks')
     })
     return status
   },
@@ -95,6 +96,26 @@ const actions: ActionTree<WebhookState, RootState> = {
         commit(types.WEBHOOK_CURRENT_UPDATED, resp)
       }
     })
+  },
+  async subscribeFileStatusUpdateWebhook({ dispatch }) {
+
+    let resp;
+
+    try {
+      resp = await WebhookService.subscribeNewProductsWebhook({ shopifyConfigId: this.state.user.shopifyConfig })
+
+      if (resp.status == 200 && !hasError(resp) && resp.data.webhooks?.length > 0) {  
+        showToast(translate('Webhook subscribed succesfully'))
+      } else {
+        showToast(translate('Something went wrong'))
+        console.error(resp)
+      }
+    } catch (err) {
+      showToast(translate('Something went wrong'))
+      console.error(err);
+    } finally {
+      await dispatch('fetchWebhooks')
+    }
   }
 }
 
