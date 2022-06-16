@@ -125,7 +125,7 @@ export default defineComponent({
   },
   methods: {
     async fetchWebhooks() {
-      await this.store.dispatch('webhook/fetchWebhooks', {shopifyConfigId: this.shopifyConfigId})
+      await this.store.dispatch('webhook/fetchWebhooks')
       this.isNewProducts()
       this.isDeleteProducts() 
     },

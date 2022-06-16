@@ -115,7 +115,7 @@ export default defineComponent({
         "systemJobEnumId_op": "in"
       }
     })
-    this.store.dispatch('webhook/fetchWebhooks', { shopifyConfigId: this.shopifyConfigId })
+    this.store.dispatch('webhook/fetchWebhooks')
   },
   computed: {
     ...mapGetters({
