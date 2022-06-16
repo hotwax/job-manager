@@ -41,6 +41,7 @@
   "Daily": "Daily",
   "Dashoard": "Dashoard",
   "Days": "Days",
+  "Delete products": "Delete products",
   "Disable": "Disable",
   "Dismiss": "Dismiss",
   "Disabled": "Disabled",
@@ -77,6 +78,7 @@
   "More options": "More options",
   "New broker run": "New broker run",
   "New orders": "New orders",
+  "New products": "New products",
   "No jobs have run yet": "No jobs have run yet",
   "No previous occurrence": "No previous occurrence",
   "Notes": "Notes",
@@ -175,6 +177,7 @@
   "Unfillable": "Unfillable",
   "Unfillable orders": "Unfillable orders",
   "Unfulfilled orders that pass their auto cancelation date will be canceled automatically in HotWax Commerce. They will also be canceled in Shopify if upload for canceled orders is enabled.": "Unfulfilled orders that pass their auto cancelation date will be canceled automatically in HotWax Commerce. They will also be canceled in Shopify if upload for canceled orders is enabled.",
+  "Webhooks": "Webhooks",
   "When importing historical completed orders, this should be turned off.": "When importing historical completed orders, this should be turned off.",
   "When using HotWax BOPIS, Shopify isn't aware of the actual inventory consumed. HotWax will automatically restore inventory automatically reduced by Shopify and deduct inventory from the correct store to maintain inventory accuracy.": "When using HotWax BOPIS, Shopify isn't aware of the actual inventory consumed. HotWax will automatically restore inventory automatically reduced by Shopify and deduct inventory from the correct store to maintain inventory accuracy."
 }
