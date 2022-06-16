@@ -35,6 +35,16 @@
               </ion-label>
             </ion-item>
           </ion-card>
+
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>{{ $t("Process Uploads") }}</ion-card-title>
+            </ion-card-header>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("File Status Webhook") }}</ion-label>
+              <ion-toggle :checked="fileStatusUpdateWebhook" color="secondary" slot="end" @ionChange="fileStatusUpdateWebhook ? unsubscribeWebhook() : subscribeWebhook()" />
+            </ion-item>
+          </ion-card>
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentSelectedJobModal">
@@ -58,6 +68,7 @@ import {
   IonMenuButton,
   IonPage,
   IonTitle,
+  IonToggle,
   IonToolbar,
   isPlatform
 } from '@ionic/vue';
@@ -83,11 +94,13 @@ export default defineComponent({
     IonMenuButton,
     IonPage,
     IonTitle,
+    IonToggle,
     IonToolbar
   },
   data() {
     return {
       jobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
+      webhookEnums: JSON.parse(process.env?.VUE_APP_WEBHOOK_ENUMS as string) as any,
       currentSelectedJobModal: '',
       job: {} as any,
       lastShopifyOrderId: '',
@@ -102,14 +115,19 @@ export default defineComponent({
         "systemJobEnumId_op": "in"
       }
     })
+    this.store.dispatch('webhook/fetchWebhooks', { shopifyConfigId: this.shopifyConfigId })
   },
   computed: {
     ...mapGetters({
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
       shopifyConfigId: 'user/getShopifyConfigId',
-      currentEComStore: 'user/getCurrentEComStore'
-    })
+      currentEComStore: 'user/getCurrentEComStore',
+      getCachedWebhook: 'webhook/getCachedWebhook'
+    }),
+    fileStatusUpdateWebhook(): boolean {
+      return this.getCachedWebhook[this.webhookEnums['BULK_OPERATIONS_FINISH']]?.topic === this.webhookEnums['BULK_OPERATIONS_FINISH']
+    }
   },
   methods: {
     async viewJobConfiguration(label: string, id: string) {
@@ -134,6 +152,13 @@ export default defineComponent({
         emitter.emit('playAnimation');
         this.isJobDetailAnimationCompleted = true;
       }
+    },
+    async subscribeWebhook() {
+      await this.store.dispatch('webhook/subscribeFileStatusUpdateWebhook')
+    },
+    async unsubscribeWebhook() {
+      const webhook = this.getCachedWebhook[this.webhookEnums['BULK_OPERATIONS_FINISH']]
+      await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhook?.id, shopifyConfigId: this.shopifyConfigId })
     }
   },
   setup() {
