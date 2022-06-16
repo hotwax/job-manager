@@ -41,8 +41,8 @@
               <ion-card-title>{{ $t("Process Uploads") }}</ion-card-title>
             </ion-card-header>
             <ion-item>
-              <ion-label class="ion-text-wrap">{{ $t("File Status Webhook") }}</ion-label>
-              <ion-toggle :checked="fileStatusUpdateWebhook" color="secondary" slot="end" @ionChange="fileStatusUpdateWebhook ? unsubscribeWebhook() : subscribeWebhook()" />
+              <ion-label class="ion-text-wrap">{{ $t("File upload status") }}</ion-label>
+              <ion-toggle :checked="fileStatusUpdateWebhook" color="secondary" slot="end" @ionChange="updateWebhook($event['detail'].checked, 'BULK_OPERATIONS_FINISH')" />
             </ion-item>
           </ion-card>
         </section>
@@ -153,12 +153,20 @@ export default defineComponent({
         this.isJobDetailAnimationCompleted = true;
       }
     },
-    async subscribeWebhook() {
-      await this.store.dispatch('webhook/subscribeFileStatusUpdateWebhook')
-    },
-    async unsubscribeWebhook() {
-      const webhook = this.getCachedWebhook[this.webhookEnums['BULK_OPERATIONS_FINISH']]
-      await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhook?.id, shopifyConfigId: this.shopifyConfigId })
+    async updateWebhook(checked: boolean, id: string) {
+      const webhook = this.getCachedWebhook[this.webhookEnums[id]]
+
+      // TODO: added this condition to not call the api when the value of the select automatically changes
+      // need to handle this properly
+      if ((checked && webhook) || (!checked && !webhook)) {
+        return;
+      }
+
+      if (checked) {
+        await this.store.dispatch('webhook/subscribeFileStatusUpdateWebhook')
+      } else {
+        await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhook?.id, shopifyConfigId: this.shopifyConfigId })
+      }
     }
   },
   setup() {
