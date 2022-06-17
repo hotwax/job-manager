@@ -31,6 +31,10 @@
               <ion-checkbox slot="end" :checked="addPreOrderShippingDateInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_PRODR_SHPG_DTE_SHPFY'])"/>
             </ion-item>
             <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("Update shipping dates in Shopify") }}</ion-label>
+              <ion-checkbox slot="end" :checked="updatePreOrderShippingDateInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['JOB_UPD_PREORD_SKU'])"/>
+            </ion-item>
+            <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Remove shipping dates in Shopify") }}</ion-label>
               <ion-checkbox slot="end" :checked="removePreOrderShippingDateInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['REMV_PRODR_SHPG_DTE_SHPFY'])"/>
             </ion-item>
@@ -60,6 +64,10 @@
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Add shipping dates in Shopify") }}</ion-label>
               <ion-checkbox slot="end" :checked="addBackOrderShippingDateInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_BACKODR_SHPG_DTE_SHPFY'])"/>
+            </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("Update shipping dates in Shopify") }}</ion-label>
+              <ion-checkbox slot="end" :checked="updateBackOrderShippingDateInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['JOB_UPD_BACKORD_SKU'])"/>
             </ion-item>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Remove shipping dates in Shopify") }}</ion-label>
@@ -179,6 +187,10 @@ export default defineComponent({
       const status = this.getJobStatus(this.jobEnums["ADD_PRODR_SHPG_DTE_SHPFY"]);
       return status && status !== "SERVICE_DRAFT";
     },
+    updatePreOrderShippingDateInShopify(): boolean {
+      const status = this.getJobStatus(this.jobEnums["JOB_UPD_PREORD_SKU"]);
+      return status && status !== "SERVICE_DRAFT";
+    },
     removePreOrderShippingDateInShopify(): boolean {
       const status = this.getJobStatus(this.jobEnums["REMV_PRODR_SHPG_DTE_SHPFY"]);
       return status && status !== "SERVICE_DRAFT";
@@ -197,6 +209,10 @@ export default defineComponent({
     },
     addBackOrderShippingDateInShopify(): boolean {
       const status = this.getJobStatus(this.jobEnums["ADD_BACKODR_SHPG_DTE_SHPFY"]);
+      return status && status !== "SERVICE_DRAFT";
+    },
+    updateBackOrderShippingDateInShopify(): boolean {
+      const status = this.getJobStatus(this.jobEnums["JOB_UPD_BACKORD_SKU"]);
       return status && status !== "SERVICE_DRAFT";
     },
     removeBackOrderShippingDateInShopify(): boolean {

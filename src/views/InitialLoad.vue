@@ -44,6 +44,10 @@
               <ion-label class="ion-text-wrap">{{ $t("File upload status") }}</ion-label>
               <ion-toggle :checked="fileStatusUpdateWebhook" color="secondary" slot="end" @ionChange="updateWebhook($event['detail'].checked, 'BULK_OPERATIONS_FINISH')" />
             </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("Upload Pending Process") }}</ion-label>
+              <ion-checkbox slot="end" :checked="processPendingUploadsOnShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['UL_PRCS'])"/>
+            </ion-item>
           </ion-card>
         </section>
 
@@ -61,6 +65,7 @@ import {
   IonCard,
   IonCardHeader,
   IonCardTitle,
+  IonCheckbox,
   IonContent,
   IonHeader,
   IonItem,
@@ -74,10 +79,11 @@ import {
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
-import { isFutureDate } from '@/utils';
+import { isFutureDate, showToast } from '@/utils';
 import emitter from '@/event-bus';
 import InitialJobConfiguration from '@/components/InitialJobConfiguration.vue';
 import { useRouter } from 'vue-router';
+import { translate } from '@/i18n';
 
 export default defineComponent({
   name: 'InitialLoad',
@@ -87,6 +93,7 @@ export default defineComponent({
     IonCard,
     IonCardHeader,
     IonCardTitle,
+    IonCheckbox,
     IonContent,
     IonHeader,
     IonItem,
@@ -128,9 +135,43 @@ export default defineComponent({
     fileStatusUpdateWebhook(): boolean {
       const webhookTopic = this.webhookEnums['BULK_OPERATIONS_FINISH']
       return this.getCachedWebhook[webhookTopic]?.topic === webhookTopic
+    },
+    processPendingUploadsOnShopify(): boolean {
+      const status = this.getJobStatus(this.jobEnums["UL_PRCS"]);
+      return status && status !== "SERVICE_DRAFT";
     }
   },
   methods: {
+    async updateJob(checked: boolean, id: string, status = 'EVERY_15_MIN') {
+      const job = this.getJob(id);
+
+      // added check that if the job is not present, then display a toast and then return
+      if (!job) {
+        showToast(translate('Configuration missing'))
+        return;
+      }
+
+      // TODO: added this condition to not call the api when the value of the select automatically changes
+      // need to handle this properly
+      if ((checked && job?.status === 'SERVICE_PENDING') || (!checked && job?.status === 'SERVICE_DRAFT')) {
+        return;
+      }
+
+      job['jobStatus'] = status
+
+      // if job runTime is not a valid date then making runTime as empty
+      if (job?.runTime && !isFutureDate(job?.runTime)) {
+        job.runTime = ''
+      }
+
+      if (!checked) {
+        this.store.dispatch('job/cancelJob', job)
+      } else if (job?.status === 'SERVICE_DRAFT') {
+        this.store.dispatch('job/scheduleService', job)
+      } else if (job?.status === 'SERVICE_PENDING') {
+        this.store.dispatch('job/updateJob', job)
+      }
+    },
     async viewJobConfiguration(label: string, id: string) {
       this.currentSelectedJobModal = label;
       this.job = this.getJob(id);
