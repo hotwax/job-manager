@@ -99,10 +99,12 @@ export default defineComponent({
       getCachedWebhook: 'webhook/getCachedWebhook'
     }),
     newProductsWebhook(): boolean {
-      return this.getCachedWebhook[this.webhookEnums['NEW_PRODUCTS']]?.topic === this.webhookEnums['NEW_PRODUCTS']
+      const webhookTopic = this.webhookEnums['NEW_PRODUCTS']
+      return this.getCachedWebhook[webhookTopic]?.topic === webhookTopic
     },
     deleteProductsWebhook(): boolean {
-      return this.getCachedWebhook[this.webhookEnums['DELETE_PRODUCTS']]?.topic === this.webhookEnums['DELETE_PRODUCTS']
+      const webhookTopic = this.webhookEnums['DELETE_PRODUCTS']
+      return this.getCachedWebhook[webhookTopic]?.topic === webhookTopic
     }
   },
   data() {
@@ -140,7 +142,7 @@ export default defineComponent({
       if (checked) {
         await this.store.dispatch('webhook/subscribeWebhook', id)
       } else {
-        await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhook?.id?.toString(), shopifyConfigId: this.shopifyConfigId })
+        await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhook?.id, shopifyConfigId: this.shopifyConfigId })
       }
     },
     async viewJobConfiguration(id: string, title: string, status: string) {

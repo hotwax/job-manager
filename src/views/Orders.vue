@@ -242,16 +242,20 @@ export default defineComponent({
       return status && status !== "SERVICE_DRAFT";
     },
     isNewOrders(): boolean {
-      return this.getCachedWebhook[this.webhookEnums['NEW_ORDERS']]?.topic === this.webhookEnums['NEW_ORDERS']
+      const webhookTopic = this.webhookEnums['NEW_ORDERS']
+      return this.getCachedWebhook[webhookTopic]?.topic === webhookTopic
     },
     isCancelledOrders(): boolean {
-      return this.getCachedWebhook[this.webhookEnums['CANCELLED_ORDERS']]?.topic === this.webhookEnums['CANCELLED_ORDERS']
+      const webhookTopic = this.webhookEnums['CANCELLED_ORDERS']
+      return this.getCachedWebhook[webhookTopic]?.topic === webhookTopic
     },
     isPaymentStatus(): boolean {
-      return this.getCachedWebhook[this.webhookEnums['PAYMENT_STATUS']]?.topic === this.webhookEnums['PAYMENT_STATUS']
+      const webhookTopic = this.webhookEnums['PAYMENT_STATUS']
+      return this.getCachedWebhook[webhookTopic]?.topic === webhookTopic
     },
     isReturns(): boolean {
-      return this.getCachedWebhook[this.webhookEnums['RETURNS']]?.topic === this.webhookEnums['RETURNS']
+      const webhookTopic = this.webhookEnums['RETURNS']
+      return this.getCachedWebhook[webhookTopic]?.topic === webhookTopic
     },
   },
   methods: {
@@ -267,7 +271,7 @@ export default defineComponent({
       if (checked) {
         await this.store.dispatch('webhook/subscribeWebhook', id)
       } else {
-        await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhook?.id?.toString(), shopifyConfigId: this.shopifyConfigId })
+        await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhook?.id, shopifyConfigId: this.shopifyConfigId })
       }
     },
     async addBatch() {

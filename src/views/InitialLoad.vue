@@ -126,7 +126,8 @@ export default defineComponent({
       getCachedWebhook: 'webhook/getCachedWebhook'
     }),
     fileStatusUpdateWebhook(): boolean {
-      return this.getCachedWebhook[this.webhookEnums['BULK_OPERATIONS_FINISH']]?.topic === this.webhookEnums['BULK_OPERATIONS_FINISH']
+      const webhookTopic = this.webhookEnums['BULK_OPERATIONS_FINISH']
+      return this.getCachedWebhook[webhookTopic]?.topic === webhookTopic
     }
   },
   methods: {
