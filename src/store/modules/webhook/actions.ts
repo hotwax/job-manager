@@ -12,8 +12,8 @@ const actions: ActionTree<WebhookState, RootState> = {
       if (resp.status == 200 && resp.data.webhooks?.length > 0 && !hasError(resp)) {
         const webhooks = resp.data.webhooks;
         const topics: any = {}
-        webhooks.map((topic: any) => {
-          topics[topic.topic] = topic
+        webhooks.map((webhook: any) => {
+          topics[webhook.topic] = webhook
         })
         commit(types.WEBHOOK_UPDATED, topics)
       }
