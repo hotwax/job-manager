@@ -243,19 +243,19 @@ export default defineComponent({
     },
     isNewOrders(): boolean {
       const webhookTopic = this.webhookEnums['NEW_ORDERS']
-      return this.getCachedWebhook[webhookTopic]?.topic === webhookTopic
+      return this.getCachedWebhook[webhookTopic]
     },
     isCancelledOrders(): boolean {
       const webhookTopic = this.webhookEnums['CANCELLED_ORDERS']
-      return this.getCachedWebhook[webhookTopic]?.topic === webhookTopic
+      return this.getCachedWebhook[webhookTopic]
     },
     isPaymentStatus(): boolean {
       const webhookTopic = this.webhookEnums['PAYMENT_STATUS']
-      return this.getCachedWebhook[webhookTopic]?.topic === webhookTopic
+      return this.getCachedWebhook[webhookTopic]
     },
     isReturns(): boolean {
       const webhookTopic = this.webhookEnums['RETURNS']
-      return this.getCachedWebhook[webhookTopic]?.topic === webhookTopic
+      return this.getCachedWebhook[webhookTopic]
     },
   },
   methods: {

@@ -134,7 +134,7 @@ export default defineComponent({
     }),
     fileStatusUpdateWebhook(): boolean {
       const webhookTopic = this.webhookEnums['BULK_OPERATIONS_FINISH']
-      return this.getCachedWebhook[webhookTopic]?.topic === webhookTopic
+      return this.getCachedWebhook[webhookTopic]
     },
     processPendingUploadsOnShopify(): boolean {
       const status = this.getJobStatus(this.jobEnums["UL_PRCS"]);

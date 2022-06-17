@@ -100,11 +100,11 @@ export default defineComponent({
     }),
     newProductsWebhook(): boolean {
       const webhookTopic = this.webhookEnums['NEW_PRODUCTS']
-      return this.getCachedWebhook[webhookTopic]?.topic === webhookTopic
+      return this.getCachedWebhook[webhookTopic]
     },
     deleteProductsWebhook(): boolean {
       const webhookTopic = this.webhookEnums['DELETE_PRODUCTS']
-      return this.getCachedWebhook[webhookTopic]?.topic === webhookTopic
+      return this.getCachedWebhook[webhookTopic]
     }
   },
   data() {
