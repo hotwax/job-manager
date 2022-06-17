@@ -33,11 +33,11 @@
             </ion-card-header>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("New products") }}</ion-label>
-              <ion-toggle slot="end" :checked="isNewProductsSubscribed" @ionChange="updateWebhook($event['detail'].checked, 'NEW_PRODUCTS')" color="secondary" />
+              <ion-toggle slot="end" :checked="newProductsWebhook" @ionChange="updateWebhook($event['detail'].checked, 'NEW_PRODUCTS')" color="secondary" />
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">{{ $t("Delete products") }}</ion-label>
-              <ion-toggle slot="end" :checked="isDeleteProductsSubscribed" @ionChange="updateWebhook($event['detail'].checked, 'DELETE_PRODUCTS')" color="secondary" />
+              <ion-toggle slot="end" :checked="deleteProductsWebhook" @ionChange="updateWebhook($event['detail'].checked, 'DELETE_PRODUCTS')" color="secondary" />
             </ion-item>
           </ion-card>
         </section>
@@ -98,6 +98,12 @@ export default defineComponent({
       shopifyConfigId: 'user/getShopifyConfigId',
       getCachedWebhook: 'webhook/getCachedWebhook'
     }),
+    newProductsWebhook(): boolean {
+      return this.getCachedWebhook[this.webhookEnums['NEW_PRODUCTS']]?.topic === this.webhookEnums['NEW_PRODUCTS']
+    },
+    deleteProductsWebhook(): boolean {
+      return this.getCachedWebhook[this.webhookEnums['DELETE_PRODUCTS']]?.topic === this.webhookEnums['DELETE_PRODUCTS']
+    }
   },
   data() {
     return {
@@ -110,8 +116,6 @@ export default defineComponent({
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
       webhookEnums: JSON.parse(process.env?.VUE_APP_WEBHOOK_ENUMS as string) as any,
-      isNewProductsSubscribed: false,
-      isDeleteProductsSubscribed: false
     }
   },
   mounted () {
@@ -121,20 +125,9 @@ export default defineComponent({
         "systemJobEnumId_op": "in"
       }
     });
-    this.fetchWebhooks()
+    this.store.dispatch('webhook/fetchWebhooks')
   },
   methods: {
-    async fetchWebhooks() {
-      await this.store.dispatch('webhook/fetchWebhooks')
-      this.isNewProducts()
-      this.isDeleteProducts() 
-    },
-    isNewProducts() {
-      this.isNewProductsSubscribed = (this as any).getCachedWebhook[(this as any).webhookEnums['NEW_PRODUCTS']]?.topic === (this as any).webhookEnums['NEW_PRODUCTS']
-    },
-    isDeleteProducts() {
-      this.isDeleteProductsSubscribed = (this as any).getCachedWebhook[(this as any).webhookEnums['DELETE_PRODUCTS']]?.topic === (this as any).webhookEnums['DELETE_PRODUCTS']
-    },
     async updateWebhook(checked: boolean, id: string) {
       const webhook = this.getCachedWebhook[this.webhookEnums[id]]
 
