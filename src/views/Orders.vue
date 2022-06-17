@@ -42,19 +42,19 @@
             </ion-card-header>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("New orders") }}</ion-label>
-              <ion-toggle :checked="isNewOrders()" @ionChange="$event.target.checked ? subscribeNewOrdersWebhook() : unsubscribeWebhook(this.webhookEnums['NEW_ORDERS'])" slot="end" color="secondary" />
+              <ion-toggle :checked="isNewOrders()" @ionChange="updateWebhook($event['detail'].checked, 'NEW_ORDERS')" slot="end" color="secondary" />
             </ion-item>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Cancelled orders") }}</ion-label>
-              <ion-toggle :checked="isCancelledOrders()" @ionChange="$event.target.checked ? subscribeCancelledOrdersWebhook() : unsubscribeWebhook(this.webhookEnums['CANCELLED_ORDERS'])" slot="end" color="secondary" />
+              <ion-toggle :checked="isCancelledOrders()" @ionChange="updateWebhook($event['detail'].checked, 'CANCELLED_ORDERS')" slot="end" color="secondary" />
             </ion-item>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Payment status") }}</ion-label>
-              <ion-toggle :checked="isPaymentStatus()" @ionChange="$event.target.checked ? subscribePaymentStatusWebhook() : unsubscribeWebhook(this.webhookEnums['PAYMENT_STATUS'])" slot="end" color="secondary" />
+              <ion-toggle :checked="isPaymentStatus()" @ionChange="updateWebhook($event['detail'].checked, 'PAYMENT_STATUS')" slot="end" color="secondary" />
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">{{ $t("Returns") }}</ion-label>
-              <ion-toggle :checked="isReturns()" @ionChange="$event.target.checked ? subscribeReturnsWebhook() : unsubscribeWebhook(this.webhookEnums['RETURNS'])" slot="end" color="secondary" />
+              <ion-toggle :checked="isReturns()" @ionChange="updateWebhook($event['detail'].checked, 'RETURNS')" slot="end" color="secondary" />
             </ion-item>
           </ion-card>
 
@@ -243,25 +243,29 @@ export default defineComponent({
     },
   },
   methods: {
-    updateWebhook(paload: any, isStatus: any){
-      const webhookId = this.getCachedWebhook["PAYMENT_STATUS"]?.id
-      isStatus ? this.store.dispatch('webhook/updateNewOrder', { shopifyConfigId: this.shopifyConfigId }) : this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhookId , shopifyConfigId: this.shopifyConfigId })
-    },
-    subscribeNewOrdersWebhook(){
-      this.store.dispatch('webhook/updateNewOrder', {shopifyConfigId: this.shopifyConfigId })
-    },
-    subscribeCancelledOrdersWebhook(){
-      this.store.dispatch('webhook/updateCancelledOrder', {shopifyConfigId: this.shopifyConfigId })
-    },
-    subscribePaymentStatusWebhook(){
-      this.store.dispatch('webhook/updatePaymentStatus', {shopifyConfigId: this.shopifyConfigId })
-    },
-    subscribeReturnsWebhook(){
-      this.store.dispatch('webhook/updateReturns', {shopifyConfigId: this.shopifyConfigId })
-    },
-    unsubscribeWebhook(webhookEnum: string){
-      const webhookId = this.getCachedWebhook[webhookEnum]?.id
-      this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhookId, shopifyConfigId: this.shopifyConfigId })
+    async updateWebhook(checked: boolean, id: string) {
+      const webhook = this.getCachedWebhook[this.webhookEnums[id]]
+
+      // TODO: added this condition to not call the api when the value of the select automatically changes
+      // need to handle this properly
+      if ((checked && webhook) || (!checked && !webhook)) {
+        return;
+      }
+
+      // stores the action that needs to be called on the basis of current webhook selected, doing
+      // so as we have defined separate methods for different webhook subscription
+      const webhookAction = {
+        'NEW_ORDERS': 'updateNewOrder',
+        'CANCELLED_ORDERS': 'updateCancelledOrder',
+        'PAYMENT_STATUS': "updatePaymentStatus",
+        'RETURNS': "updateReturns"
+      } as any
+
+      if (checked) {
+        await this.store.dispatch(`webhook/${webhookAction[id]}`)
+      } else {
+        await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhook?.id?.toString(), shopifyConfigId: this.shopifyConfigId })
+      }
     },
     isNewOrders(): boolean {
       return this.getCachedWebhook[this.webhookEnums['NEW_ORDERS']]?.topic === this.webhookEnums['NEW_ORDERS']

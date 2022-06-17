@@ -33,11 +33,11 @@
             </ion-card-header>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("New products") }}</ion-label>
-              <ion-toggle slot="end" :checked="isNewProductsSubscribed" @ionChange.prevent="$event.target.checked ? subscribeNewProductsWebhook() : unsubscribeWebhook(this.webhookEnums['NEW_PRODUCTS'], $event, $event['detail'].checked)" color="secondary" />
+              <ion-toggle slot="end" :checked="isNewProductsSubscribed" @ionChange="updateWebhook($event['detail'].checked, 'NEW_PRODUCTS')" color="secondary" />
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">{{ $t("Delete products") }}</ion-label>
-              <ion-toggle slot="end" :checked="isDeleteProductsSubscribed" v-model="isDeleteProductsSubscribed" @ionChange="$event.target.checked ? subscribeDeleteProductsWebhook() : unsubscribeWebhook(this.webhookEnums['DELETE_PRODUCTS'], $event, $event['detail'].checked)" color="secondary" />
+              <ion-toggle slot="end" :checked="isDeleteProductsSubscribed" @ionChange="updateWebhook($event['detail'].checked, 'DELETE_PRODUCTS')" color="secondary" />
             </ion-item>
           </ion-card>
         </section>
@@ -135,30 +135,26 @@ export default defineComponent({
     isDeleteProducts() {
       this.isDeleteProductsSubscribed = (this as any).getCachedWebhook[(this as any).webhookEnums['DELETE_PRODUCTS']]?.topic === (this as any).webhookEnums['DELETE_PRODUCTS']
     },
-    subscribeNewProductsWebhook(){
-      this.store.dispatch('webhook/updateNewProducts', {shopifyConfigId: this.shopifyConfigId })
-    },
-    subscribeDeleteProductsWebhook(){
-      this.store.dispatch('webhook/updateDeleteProducts', {shopifyConfigId: this.shopifyConfigId })
-    },
-    async unsubscribeWebhook(webhookEnum: string, e: CustomEvent, previousStatus: boolean){
-      if (this.isDeleteProductsSubscribed) {
-        
-        e.stopImmediatePropagation();
-        e.stopPropagation();
-        e.preventDefault();
-        const webhookId = this.getCachedWebhook[webhookEnum]
+    async updateWebhook(checked: boolean, id: string) {
+      const webhook = this.getCachedWebhook[this.webhookEnums[id]]
 
-        const status = await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhookId?.topic, shopifyConfigId: this.shopifyConfigId })
-          console.log(status);
-        
-        if (status){           
-          this.isDeleteProductsSubscribed = false
-        } else {
-          this.isDeleteProductsSubscribed = true;
-        }
+      // TODO: added this condition to not call the api when the value of the select automatically changes
+      // need to handle this properly
+      if ((checked && webhook) || (!checked && !webhook)) {
+        return;
+      }
+
+      // stores the action that needs to be called on the basis of current webhook selected, doing
+      // so as we have defined separate methods for different webhook subscription
+      const webhookAction = {
+        'NEW_PRODUCTS': 'updateNewProducts',
+        'DELETE_PRODUCTS': 'updateDeleteProducts'
+      } as any
+
+      if (checked) {
+        await this.store.dispatch(`webhook/${webhookAction[id]}`)
       } else {
-          setTimeout(() => { this.isDeleteProductsSubscribed = true; }, 0);
+        await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhook?.id?.toString(), shopifyConfigId: this.shopifyConfigId })
       }
     },
     async viewJobConfiguration(id: string, title: string, status: string) {
