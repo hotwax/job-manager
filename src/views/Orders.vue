@@ -252,17 +252,8 @@ export default defineComponent({
         return;
       }
 
-      // stores the action that needs to be called on the basis of current webhook selected, doing
-      // so as we have defined separate methods for different webhook subscription
-      const webhookAction = {
-        'NEW_ORDERS': 'updateNewOrder',
-        'CANCELLED_ORDERS': 'updateCancelledOrder',
-        'PAYMENT_STATUS': "updatePaymentStatus",
-        'RETURNS': "updateReturns"
-      } as any
-
       if (checked) {
-        await this.store.dispatch(`webhook/${webhookAction[id]}`)
+        await this.store.dispatch('webhook/subscribeWebhook', id)
       } else {
         await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhook?.id?.toString(), shopifyConfigId: this.shopifyConfigId })
       }

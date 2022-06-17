@@ -19,67 +19,41 @@ const actions: ActionTree<WebhookState, RootState> = {
       }
     }).catch(err => console.error(err))
   },
-  async unsubscribeWebhook({ dispatch, state }, payload: any) {
+  async unsubscribeWebhook({ dispatch }, payload: any) {
     await WebhookService.unsubscribe(payload).then(resp => {
-      if (resp.status === 200 && resp.data.webhooks?.length > 0 && !hasError(resp)) {
+      if (resp.status === 200 && !hasError(resp)) {
         showToast(translate("Webhook unsubscribed successfully"));
       }
     }).catch(() => {
       showToast(translate("Something went wrong"));
     }).finally(() => dispatch('fetchWebhooks'))
   },
-  // Webhook Subscription Actions
-  async updateNewOrder({ commit }, payload: any) {
-    await WebhookService.subscribeNewOrderWebhook(payload).then(resp => {
-      if (resp.status === 200 && resp.data.webhooks?.length > 0 && !hasError(resp)) {
-        commit(types.WEBHOOK_CURRENT_UPDATED, resp)
-      }
-    })
-  },
-  async updateCancelledOrder({ commit }, payload: any) {
-    await WebhookService.subscribeCancelledOrderWebhook(payload).then(resp => {
-      if (resp.status === 200 && resp.data.webhooks?.length > 0 && !hasError(resp)) {
-        commit(types.WEBHOOK_CURRENT_UPDATED, resp)
-      }
-    })
-  },
-  async updatePaymentStatus({ commit }, payload: any) {
-    await WebhookService.subscribeNewOrderWebhook(payload).then(resp => {
-      if (resp.status === 200 && resp.data.webhooks?.length > 0 && !hasError(resp)) {
-        commit(types.WEBHOOK_CURRENT_UPDATED, resp)
-      }
-    })
-  },
-  async updateReturns({ commit }, payload: any) {
-    await WebhookService.subscribeCancelledOrderWebhook(payload).then(resp => {
-      if (resp.status === 200 && resp.data.webhooks?.length > 0 && !hasError(resp)) {
-        commit(types.WEBHOOK_CURRENT_UPDATED, resp)
-      }
-    })
-  },
-  async updateDeleteProducts({ commit }, payload: any) {
-    await WebhookService.subscribeDeleteProductsWebhook(payload).then(resp => {
-      if (resp.status === 200 && resp.data.webhooks?.length > 0 && !hasError(resp)) {
-        commit(types.WEBHOOK_CURRENT_UPDATED, resp)
-      }
-    })
-  },
-  async updateNewProducts({ commit }, payload: any) {
-    await WebhookService.subscribeNewProductsWebhook(payload).then(resp => {
-      if (resp.status === 200 && resp.data.webhooks?.length > 0 && !hasError(resp)) {
-        console.log(resp);
-        commit(types.WEBHOOK_CURRENT_UPDATED, resp)
-      }
-    })
-  },
-  async subscribeFileStatusUpdateWebhook({ dispatch }) {
+  async subscribeWebhook({ dispatch }, id: string) {
+
+    // stores the webhook service that needs to be called on the basis of current webhook selected, doing
+    // so as we have defined separate service for different webhook subscription
+    const webhookMethods = {
+      'NEW_ORDERS': WebhookService.subscribeNewOrderWebhook,
+      'CANCELLED_ORDERS': WebhookService.subscribeCancelledOrderWebhook,
+      'PAYMENT_STATUS':WebhookService.subscribePaymentStatusWebhook,
+      'RETURNS': WebhookService.subscribeReturnWebhook,
+      'NEW_PRODUCTS': WebhookService.subscribeNewProductsWebhook,
+      'DELETE_PRODUCTS': WebhookService.subscribeDeleteProductsWebhook,
+      'BULK_OPERATIONS_FINISH': WebhookService.subscribeFileStatusUpdateWebhook
+    } as any
+    const webhookMethod: any = webhookMethods[id];
+
+    if (!webhookMethod) {
+      showToast(translate("Configuration missing"));
+      return;
+    }
 
     let resp;
 
     try {
-      resp = await WebhookService.subscribeNewProductsWebhook({ shopifyConfigId: this.state.user.shopifyConfig })
+      resp = await webhookMethod({ shopifyConfigId: this.state.user.shopifyConfig })
 
-      if (resp.status == 200 && !hasError(resp) && resp.data.webhooks?.length > 0) {  
+      if (resp.status == 200 && !hasError(resp)) {
         showToast(translate('Webhook subscribed successfully'))
       } else {
         showToast(translate('Something went wrong'))
