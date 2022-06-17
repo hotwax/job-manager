@@ -30,6 +30,7 @@
   "Canceling this job will cancel this occurrence and all following occurrences. This job will have to be re-enabled manually to run it again.": "Canceling this job will cancel this occurrence and all following occurrences. This job will have to be re-enabled manually to run it again.",
   "Change": "Change",
   "Change time zone": "Change time zone",
+  "Configuration missing": "Configuration missing",
   "Confirm": "Confirm",
   "Click the backdrop to dismiss.": "Click the backdrop to dismiss.",
   "Cancelled orders": "Cancelled orders",
