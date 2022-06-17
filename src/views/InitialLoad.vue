@@ -145,15 +145,15 @@ export default defineComponent({
     async updateJob(checked: boolean, id: string, status = 'EVERY_15_MIN') {
       const job = this.getJob(id);
 
-      // added check that if the job is not present, then display a toast and then return
-      if (!job) {
-        showToast(translate('Configuration missing'))
-        return;
-      }
-
       // TODO: added this condition to not call the api when the value of the select automatically changes
       // need to handle this properly
       if ((checked && job?.status === 'SERVICE_PENDING') || (!checked && job?.status === 'SERVICE_DRAFT')) {
+        return;
+      }
+
+      // added check that if the job is not present, then display a toast and then return
+      if (!job) {
+        showToast(translate('Configuration missing'))
         return;
       }
 
@@ -195,8 +195,8 @@ export default defineComponent({
         this.isJobDetailAnimationCompleted = true;
       }
     },
-    async updateWebhook(checked: boolean, id: string) {
-      const webhook = this.getCachedWebhook[this.webhookEnums[id]]
+    async updateWebhook(checked: boolean, enumId: string) {
+      const webhook = this.getCachedWebhook[this.webhookEnums[enumId]]
 
       // TODO: added this condition to not call the api when the value of the select automatically changes
       // need to handle this properly
@@ -205,7 +205,7 @@ export default defineComponent({
       }
 
       if (checked) {
-        await this.store.dispatch('webhook/subscribeWebhook', id)
+        await this.store.dispatch('webhook/subscribeWebhook', enumId)
       } else {
         await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhook?.id, shopifyConfigId: this.shopifyConfigId })
       }

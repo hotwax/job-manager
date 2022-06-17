@@ -259,8 +259,8 @@ export default defineComponent({
     },
   },
   methods: {
-    async updateWebhook(checked: boolean, id: string) {
-      const webhook = this.getCachedWebhook[this.webhookEnums[id]]
+    async updateWebhook(checked: boolean, enumId: string) {
+      const webhook = this.getCachedWebhook[this.webhookEnums[enumId]]
 
       // TODO: added this condition to not call the api when the value of the select automatically changes
       // need to handle this properly
@@ -269,7 +269,7 @@ export default defineComponent({
       }
 
       if (checked) {
-        await this.store.dispatch('webhook/subscribeWebhook', id)
+        await this.store.dispatch('webhook/subscribeWebhook', enumId)
       } else {
         await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhook?.id, shopifyConfigId: this.shopifyConfigId })
       }

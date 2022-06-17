@@ -8,6 +8,7 @@ const fetchShopifyWebhooks = async (payload?:  any): Promise <any>  => {
   });
 }
 
+// TODO: add the service endpoint for the new order webhook
 const subscribeNewOrderWebhook = async (payload?: any): Promise <any> => {
   return api ({
     url: '',
@@ -16,6 +17,7 @@ const subscribeNewOrderWebhook = async (payload?: any): Promise <any> => {
   })
 }
 
+// TODO: add the service endpoint for the cancelled order webhook
 const subscribeCancelledOrderWebhook = async (payload?: any): Promise <any> => {
   return api ({
     url: '',
@@ -24,6 +26,7 @@ const subscribeCancelledOrderWebhook = async (payload?: any): Promise <any> => {
   })
 }
 
+// TODO: add the service endpoint for the payment status webhook
 const subscribePaymentStatusWebhook = async (payload?: any): Promise <any> => {
   return api ({
     url: '',
@@ -32,6 +35,7 @@ const subscribePaymentStatusWebhook = async (payload?: any): Promise <any> => {
   })
 }
 
+// TODO: add the service endpoint for the order return webhook
 const subscribeReturnWebhook = async (payload?: any): Promise <any> => {
   return api ({
     url: '',
@@ -40,6 +44,7 @@ const subscribeReturnWebhook = async (payload?: any): Promise <any> => {
   })
 }
 
+// TODO: add the service endpoint for the new product webhook
 const subscribeNewProductsWebhook = async (payload?: any): Promise <any> => {
   return api ({
     url: '',
