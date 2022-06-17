@@ -20,13 +20,20 @@ const actions: ActionTree<WebhookState, RootState> = {
     }).catch(err => console.error(err))
   },
   async unsubscribeWebhook({ dispatch }, payload: any) {
-    await WebhookService.unsubscribe(payload).then(resp => {
+
+    let resp;
+
+    try {
+      resp = await WebhookService.unsubscribeWebhook(payload)
       if (resp.status === 200 && !hasError(resp)) {
         showToast(translate("Webhook unsubscribed successfully"));
       }
-    }).catch(() => {
+    } catch(err) {
+      console.log(err)
       showToast(translate("Something went wrong"));
-    }).finally(() => dispatch('fetchWebhooks'))
+    } finally {
+      dispatch('fetchWebhooks')
+    }
   },
   async subscribeWebhook({ dispatch }, id: string) {
 

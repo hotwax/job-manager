@@ -64,7 +64,7 @@ const subscribeFileStatusUpdateWebhook = async (payload?: any): Promise <any> =>
   })
 }
 
-const unsubscribe = async (payload?: any): Promise <any> => {
+const unsubscribeWebhook = async (payload?: any): Promise <any> => {
   return api ({
     url: 'service/removeShopifyWebhook',
     method: 'post',
@@ -81,5 +81,5 @@ export const WebhookService = {
   subscribeReturnWebhook,
   subscribeNewProductsWebhook,
   subscribeDeleteProductsWebhook,
-  unsubscribe
+  unsubscribeWebhook
 }
