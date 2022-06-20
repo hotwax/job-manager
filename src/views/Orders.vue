@@ -159,7 +159,7 @@ import { useRouter } from 'vue-router'
 import { mapGetters } from "vuex";
 import JobConfiguration from '@/components/JobConfiguration.vue';
 import { DateTime } from 'luxon';
-import { hasError, isFutureDate, showToast } from '@/utils';
+import { hasError, isFutureDate, showToast, updateRuntime } from '@/utils';
 import emitter from '@/event-bus';
 
 export default defineComponent({
@@ -300,6 +300,7 @@ export default defineComponent({
       if (!checked) {
         this.store.dispatch('job/cancelJob', job)
       } else if (job?.status === 'SERVICE_DRAFT') {
+        job.runTime = updateRuntime(job)
         this.store.dispatch('job/scheduleService', job)
       } else if (job?.status === 'SERVICE_PENDING') {
         this.store.dispatch('job/updateJob', job)
