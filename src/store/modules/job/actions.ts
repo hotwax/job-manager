@@ -6,6 +6,7 @@ import { hasError, showToast } from '@/utils'
 import { JobService } from '@/services/JobService'
 import { translate } from '@/i18n'
 import { DateTime } from 'luxon';
+import { Job } from '@/types'
 
 const actions: ActionTree<JobState, RootState> = {
 
@@ -45,7 +46,7 @@ const actions: ActionTree<JobState, RootState> = {
         "statusId_op": "in",
         "systemJobEnumId_op": "not-empty"
       } as any,
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId", "cancelDateTime", "finishDateTime", "startDateTime" ],
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId", "cancelDateTime", "finishDateTime", "startDateTime", "enumId", "enumName", "description" ],
       "entityName": "JobSandbox",
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
@@ -86,7 +87,34 @@ const actions: ActionTree<JobState, RootState> = {
           }
           jobs.map((job: any) => {
             job['statusDesc'] = this.state.util.statusDesc[job.statusId];
-          })          
+          }) 
+
+          jobs = jobs.map((job: any) => ({
+            id: job.jobId,
+            name: job.jobName,
+            systemJobEnum: {
+              id: job.enumId,
+              name: job.enumName,
+              description: job.description,
+              typeId: job.typeId,
+            },
+            parentJobId: job.parentJobId,
+            runTime: job.runTime,
+            serviceName: job.serviceName,
+            status: {
+              id: job.statusId,
+              description: job.status,
+              desc: job.statusDesc,
+            },
+            tempExpr: {
+              id: job.temporalExpression.tempExprId,
+              description: job.temporalExpression.description,
+            },
+            currentRetryCount: job.currentRetryCount,
+            finishDateTime: job.finishDateTime,
+            cancelDateTime: job.cancelDateTime,
+          })) as Job; 
+
           commit(types.JOB_HISTORY_UPDATED, { jobs, total });
           const tempExprList = [] as any;
           const enumIds = [] as any;
@@ -162,6 +190,33 @@ const actions: ActionTree<JobState, RootState> = {
           jobs.map((job: any) => {
             job['statusDesc'] = this.state.util.statusDesc[job.statusId];
           })
+
+          jobs = jobs.map((job: any) => ({
+            id: job.jobId,
+            name: job.jobName,
+            systemJobEnum: {
+              id: job.enumId,
+              name: job.enumName,
+              description: job.description,
+              typeId: job.typeId,
+            },
+            parentJobId: job.parentJobId,
+            runTime: job.runTime,
+            serviceName: job.serviceName,
+            status: {
+              id: job.statusId,
+              description: job.status,
+              desc: job.statusDesc,
+            },
+            tempExpr: {
+              id: job.temporalExpression.tempExprId,
+              description: job.temporalExpression.description,
+            },
+            currentRetryCount: job.currentRetryCount,
+            finishDateTime: job.finishDateTime,
+            cancelDateTime: job.cancelDateTime,
+          })) as Job;
+          
           commit(types.JOB_RUNNING_UPDATED, { jobs, total });
           const tempExprList = [] as any;
           const enumIds = [] as any;
@@ -189,7 +244,7 @@ const actions: ActionTree<JobState, RootState> = {
         "statusId": "SERVICE_PENDING",
         "systemJobEnumId_op": "not-empty"
       } as any,
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId" ],
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "enumId", "enumName", "description", "enumTypeId" ],
       "entityName": "JobSandbox",
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
@@ -228,9 +283,37 @@ const actions: ActionTree<JobState, RootState> = {
               'status': job?.statusId
             }
           })
+  
           if(payload.viewIndex && payload.viewIndex > 0){
             jobs = state.pending.list.concat(resp.data.docs);
           }
+          
+          jobs = jobs.map((job: any) => ({
+            id: job.jobId,
+            name: job.jobName,
+            systemJobEnum: {
+              id: job.enumId,
+              name: job.enumName,
+              description: job.description,
+              typeId: job.typeId,
+            },
+            parentJobId: job.parentJobId,
+            runTime: job.runTime,
+            serviceName: job.serviceName,
+            status: {
+              id: job.statusId,
+              description: job.status,
+              desc: job.statusDesc,
+            },
+            tempExpr: {
+              id: job.temporalExpression.tempExprId,
+              description: job.temporalExpression.description,
+            },
+            currentRetryCount: job.currentRetryCount,
+            finishDateTime: job.finishDateTime,
+            cancelDateTime: job.cancelDateTime,
+          })) as Job;
+          
           commit(types.JOB_PENDING_UPDATED, { jobs, total });
           const tempExprList = [] as any;
           const enumIds = [] as any;
@@ -301,7 +384,7 @@ const actions: ActionTree<JobState, RootState> = {
     const resp = await JobService.fetchJobInformation(params)
 
     if (resp.status === 200 && !hasError(resp) && resp.data.docs) {
-      const cached = JSON.parse(JSON.stringify(state.cached));
+      let cached = JSON.parse(JSON.stringify(state.cached));
 
       // added condition to store multiple pending jobs in the state for order batch jobs,
       // getting job with status Service draft as well, as this information will be needed when scheduling
@@ -353,6 +436,32 @@ const actions: ActionTree<JobState, RootState> = {
       // fetching temp expressions
       const tempExpr = Object.values(cached).map((job: any) => job.tempExprId)
       await dispatch('fetchTemporalExpression', tempExpr)
+
+      cached = Object.values(cached).map((cachedJob: any) => ({
+        id: cachedJob.id,
+        name: cachedJob.jobName,
+        systemJobEnum: {
+          id: cachedJob.enumId,
+          name: cachedJob.enumName,
+          description: cachedJob.description,
+          typeId: cachedJob.enumTypeId,
+        },
+        parentJobId: cachedJob.parentJobId,
+        runTime: cachedJob.runTime,
+        serviceName: cachedJob.serviceName,
+        status: {
+          id: cachedJob.statusId,
+          description: cachedJob.status,
+          desc: cachedJob.statusDesc,
+        },
+        tempExpr: {
+          id: cachedJob.temporalExpression.tempExprId,
+          description: cachedJob.temporalExpression.description,
+        },
+        currentRetryCount: cachedJob.id,
+        finishDateTime: cachedJob.id,
+        cancelDateTime: cachedJob.id,
+      }))
 
       commit(types.JOB_UPDATED_BULK, cached);
     }
