@@ -131,9 +131,12 @@ const handleDateTimeInput = (dateTimeValue: any) => {
   return DateTime.fromISO(dateTime).toMillis()
 }
 
-const updateRuntime = (job: any) => {
-  job?.frequency === 'EVERYDAY' ? job.runTime = DateTime.local().startOf('day').toMillis(): job.runTime =  DateTime.now().toMillis()
-  return job.runTime;
+const prepareRuntime = (job: any) => {
+  if (job.frequency === 'EVERYDAY') {
+    return DateTime.local().startOf('day').toMillis()
+  } else {
+    return DateTime.now().toMillis()
+  }
 }
 
-export { handleDateTimeInput, showToast, hasError , parseCsv , jsonToCsv, JsonToCsvOption, isFutureDate, updateRuntime }
+export { handleDateTimeInput, showToast, hasError , parseCsv , jsonToCsv, JsonToCsvOption, isFutureDate, prepareRuntime }
