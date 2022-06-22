@@ -69,6 +69,25 @@ const subscribeFileStatusUpdateWebhook = async (payload?: any): Promise <any> =>
   })
 }
 
+const webhookMethods = {
+  'NEW_ORDERS': subscribeNewOrderWebhook,
+  'CANCELLED_ORDERS': subscribeCancelledOrderWebhook,
+  'PAYMENT_STATUS': subscribePaymentStatusWebhook,
+  'RETURNS': subscribeReturnWebhook,
+  'NEW_PRODUCTS': subscribeNewProductsWebhook,
+  'DELETE_PRODUCTS': subscribeDeleteProductsWebhook,
+  'BULK_OPERATIONS_FINISH': subscribeFileStatusUpdateWebhook
+} as any
+
+const subscribeWebhook = async (payload?: any, id?: string): Promise <any> => {
+  const endpointUrl = webhookMethods[id as string];
+  return api ({
+    url: endpointUrl ? `service/ + ${endpointUrl}` : '',
+    method: 'post',
+    data: payload
+  })
+}
+
 const unsubscribeWebhook = async (payload?: any): Promise <any> => {
   return api ({
     url: 'service/removeShopifyWebhook',
@@ -86,5 +105,7 @@ export const WebhookService = {
   subscribeReturnWebhook,
   subscribeNewProductsWebhook,
   subscribeDeleteProductsWebhook,
-  unsubscribeWebhook
+  unsubscribeWebhook,
+  subscribeWebhook,
+  webhookMethods
 }
