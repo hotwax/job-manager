@@ -36,12 +36,10 @@ const actions: ActionTree<WebhookState, RootState> = {
     }
   },
   async subscribeWebhook({ dispatch }, id: string) {
-    const webhookMethod: any = WebhookService.webhookMethods[id];
-
     let resp;
 
     try {
-      resp = await webhookMethod({ shopifyConfigId: this.state.user.shopifyConfig }, id)
+      resp = await WebhookService.subscribeWebhook({ shopifyConfigId: this.state.user.shopifyConfig }, id)
     
       if (resp.status == 200 && !hasError(resp)) {
         showToast(translate('Webhook subscribed successfully'))
