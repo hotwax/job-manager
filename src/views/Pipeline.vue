@@ -26,6 +26,9 @@
     <ion-content>
       <main>
         <section v-if="segmentSelected === 'pending'">
+          <div class="search">
+            <ion-searchbar :placeholder="$t('Search jobs')" @ionClear="queryString = ''; getPendingJobs()" v-model="queryString" v-on:keyup.enter="queryString = $event.target.value; getPendingJobs()" />
+          </div>
           <!-- Empty state -->
           <div v-if="pendingJobs?.length === 0">
             <p class="ion-text-center">{{ $t("There are no jobs pending right now")}}</p>
@@ -86,6 +89,10 @@
         </section>
 
         <section v-if="segmentSelected === 'running'">
+          <div class="search">
+            <ion-searchbar :placeholder="$t('Search jobs')" @ionClear="queryString = ''; getRunningJobs()" v-model="queryString" v-on:keyup.enter="queryString = $event.target.value; getRunningJobs()" />
+          </div>
+
           <!-- Empty state -->
           <div v-if="runningJobs?.length === 0">
             <p class="ion-text-center">{{ $t("There are no jobs running right now")}}</p>
@@ -156,6 +163,10 @@
         </section>
 
         <section v-if="segmentSelected === 'history'">
+          <div class="search">
+            <ion-searchbar :placeholder="$t('Search jobs')" @ionClear="queryString = ''; getJobHistory()" v-model="queryString" v-on:keyup.enter="queryString = $event.target.value; getJobHistory()" />
+          </div>
+
           <!-- Empty state -->
           <div v-if="jobHistory?.length === 0">
             <p class="ion-text-center">{{ $t("No jobs have run yet")}}</p>
@@ -600,6 +611,18 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.search {
+  position: sticky;
+  top: var(--spacer-base);
+  z-index: 2;
+  margin-bottom: var(--spacer-base);
+}
+
+ion-searchbar {
+  --background: transparent;
+  backdrop-filter: blur(10px);
+}
+
 ion-card-header {
   display: flex;
   justify-content: space-between;
