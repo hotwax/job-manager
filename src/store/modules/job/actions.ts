@@ -427,7 +427,7 @@ const actions: ActionTree<JobState, RootState> = {
     job?.runTime && (payload['SERVICE_TIME'] = job.runTime.toString())
 
     // assigning '' (empty string) to all the runtimeData properties whose value is "null"
-    Object.keys(job.runtimeData).map((key: any) => {
+    job.runtimeData && Object.keys(job.runtimeData).map((key: any) => {
       if (job.runtimeData[key] === 'null' ) job.runtimeData[key] = ''
     })
 
@@ -547,7 +547,7 @@ const actions: ActionTree<JobState, RootState> = {
     job?.runTime && (payload['SERVICE_TIME'] = job.runTime.toString())
 
     // assigning '' (empty string) to all the runtimeData properties whose value is "null"
-    Object.keys(job.runtimeData).map((key: any) => {
+    job.runtimeData && Object.keys(job.runtimeData).map((key: any) => {
       if (job.runtimeData[key] === 'null' ) job.runtimeData[key] = ''
     })
 
