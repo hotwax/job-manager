@@ -426,6 +426,11 @@ const actions: ActionTree<JobState, RootState> = {
     job?.priority && (payload['SERVICE_PRIORITY'] = job.priority.toString())
     job?.runTime && (payload['SERVICE_TIME'] = job.runTime.toString())
 
+    // assigning '' (empty string) to all the runtimeData properties whose value is "null"
+    Object.keys(job.runtimeData).map((key: any) => {
+      if (job.runtimeData[key] === 'null' ) job.runtimeData[key] = ''
+    })
+
     try {
       resp = await JobService.scheduleJob({ ...job.runtimeData, ...payload });
       if (resp.status == 200 && !hasError(resp)) {
@@ -540,6 +545,11 @@ const actions: ActionTree<JobState, RootState> = {
     job?.priority && (payload['SERVICE_PRIORITY'] = job.priority.toString())
     job?.sinceId && (payload['sinceId'] = job.sinceId)
     job?.runTime && (payload['SERVICE_TIME'] = job.runTime.toString())
+
+    // assigning '' (empty string) to all the runtimeData properties whose value is "null"
+    Object.keys(job.runtimeData).map((key: any) => {
+      if (job.runtimeData[key] === 'null' ) job.runtimeData[key] = ''
+    })
 
     try {
       resp = await JobService.scheduleJob({ ...job.runtimeData, ...payload });
