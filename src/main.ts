@@ -28,6 +28,10 @@ import './theme/variables.css';
 
 import i18n from './i18n'
 import store from './store'
+import { abilitiesPlugin } from '@casl/vue';
+import ability from '@/authorization';
+
+
 
 const app = createApp(App)
   .use(IonicVue, {
@@ -35,7 +39,8 @@ const app = createApp(App)
   })
   .use(router)
   .use(i18n)
-  .use(store);
+  .use(store)
+  .use(abilitiesPlugin, ability);
 
 // Filters are removed in Vue 3 and global filter introduced https://v3.vuejs.org/guide/migration/filters.html#global-filters
 app.config.globalProperties.$filters = {
