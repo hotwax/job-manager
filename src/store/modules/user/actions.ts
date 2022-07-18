@@ -72,15 +72,16 @@ const actions: ActionTree<UserState, RootState> = {
           }
         ]
       })
-      if(resp.data?.stores[0]){
-        dispatch('getShopifyConfig', resp.data?.stores[0].productStoreId);
+      const stores = resp.data?.stores;
+      if(stores.length > 0){
+        dispatch('getShopifyConfig', stores[0].productStoreId);
       }
 
       this.dispatch('util/getServiceStatusDesc')
       if (resp.data.userTimeZone) {
         Settings.defaultZone = resp.data.userTimeZone;
       }
-      commit(types.USER_CURRENT_ECOM_STORE_UPDATED, resp.data?.stores[0]);
+      commit(types.USER_CURRENT_ECOM_STORE_UPDATED, stores[0]);
       commit(types.USER_INFO_UPDATED, resp.data);
     }
   },
@@ -115,17 +116,19 @@ const actions: ActionTree<UserState, RootState> = {
   },
 
   async getShopifyConfig({ commit }, productStoreId) {
-    const resp = await UserService.getShopifyConfig({
-      "inputFields": {
-        "productStoreId": productStoreId,
-      },
-      "entityName": "ShopifyConfig",
-      "noConditionFind": "Y",
-      "fieldList": ["shopifyConfigId"]
-    })
+    if (productStoreId) { 
+      const resp = await UserService.getShopifyConfig({
+        "inputFields": {
+          "productStoreId": productStoreId,
+        },
+        "entityName": "ShopifyConfig",
+        "noConditionFind": "Y",
+        "fieldList": ["shopifyConfigId"]
+      })
 
-    if (resp.status === 200 && !hasError(resp)) {
-      commit(types.USER_SHOPIFY_CONFIG_UPDATED, resp.data.docs?.length > 0 ? resp.data.docs[0].shopifyConfigId : {});
+      if (resp.status === 200 && !hasError(resp)) {
+        commit(types.USER_SHOPIFY_CONFIG_UPDATED, resp.data.docs?.length > 0 ? resp.data.docs[0].shopifyConfigId : {});
+      }
     }
   },
 
