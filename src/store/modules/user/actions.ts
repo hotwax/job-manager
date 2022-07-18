@@ -116,9 +116,12 @@ const actions: ActionTree<UserState, RootState> = {
 
   async getShopifyConfig({ commit }, productStoreId) {
     const resp = await UserService.getShopifyConfig({
+      "inputFields": {
+        "productStoreId": productStoreId,
+      },
       "entityName": "ShopifyConfig",
-      "productStoreId": productStoreId,
-      "noConditionFind": "Y"
+      "noConditionFind": "Y",
+      "fieldList": ["shopifyConfigId"]
     })
 
     if (resp.status === 200 && !hasError(resp)) {
