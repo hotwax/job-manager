@@ -19,7 +19,6 @@ const actions: ActionTree<UserState, RootState> = {
         if (resp.data.token) {
             commit(types.USER_TOKEN_CHANGED, { newToken: resp.data.token })
             await dispatch('getProfile')
-            dispatch('getShopifyConfig')
             return resp.data;
         } else if (hasError(resp)) {
           showToast(translate('Sorry, your username or password is incorrect. Please try again.'));
@@ -73,6 +72,9 @@ const actions: ActionTree<UserState, RootState> = {
           }
         ]
       })
+      if(resp.data?.stores[0]){
+        dispatch('getShopifyConfig', resp.data?.stores[0].productStoreId);
+      }
 
       this.dispatch('util/getServiceStatusDesc')
       if (resp.data.userTimeZone) {
@@ -89,6 +91,7 @@ const actions: ActionTree<UserState, RootState> = {
   async setEcomStore({ commit, dispatch }, payload) {
     dispatch('job/clearJobState', null, { root: true });
     commit(types.USER_CURRENT_ECOM_STORE_UPDATED, payload.eComStore);
+    dispatch('getShopifyConfig', payload.eComStore.productStoreId);
   },
   /**
    * Update user timeZone
@@ -111,9 +114,10 @@ const actions: ActionTree<UserState, RootState> = {
     commit(types.USER_INSTANCE_URL_UPDATED, payload)
   },
 
-  async getShopifyConfig({ commit }) {
+  async getShopifyConfig({ commit }, productStoreId) {
     const resp = await UserService.getShopifyConfig({
       "entityName": "ShopifyConfig",
+      "productStoreId": productStoreId,
       "noConditionFind": "Y"
     })
 
