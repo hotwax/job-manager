@@ -72,16 +72,16 @@ const actions: ActionTree<UserState, RootState> = {
           }
         ]
       })
-      const stores = resp.data?.stores;
-      if(stores.length > 0){
-        dispatch('getShopifyConfig', stores[0].productStoreId);
+      const currentProductStoreId = resp.data?.stores[0].productStoreId;
+      if (currentProductStoreId) {
+        dispatch('getShopifyConfig', currentProductStoreId);
       }
 
       this.dispatch('util/getServiceStatusDesc')
       if (resp.data.userTimeZone) {
         Settings.defaultZone = resp.data.userTimeZone;
       }
-      commit(types.USER_CURRENT_ECOM_STORE_UPDATED, stores[0]);
+      commit(types.USER_CURRENT_ECOM_STORE_UPDATED, resp.data?.stores[0]);
       commit(types.USER_INFO_UPDATED, resp.data);
     }
   },
