@@ -355,8 +355,9 @@ export default defineComponent({
       getEnumName: 'job/getEnumName',
       getCurrentEComStore:'user/getCurrentEComStore',
       isPendingJobsScrollable: 'job/isPendingJobsScrollable',
-      isRunningJobsScrollable: 'job/isRunningJobsScrollable',
       isHistoryJobsScrollable: 'job/isHistoryJobsScrollable',
+      getDraftJobs: 'job/getDraftJobs',
+      isRunningJobsScrollable: 'job/isRunningJobsScrollable',
       getPinnedJobs: 'user/getPinnedJobs',
       currentJob: 'job/getCurrentJob',
     })

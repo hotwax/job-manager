@@ -1,0 +1,6 @@
+---
+title: Implemented logic to store draft jobs on login and clear on logout
+ticket_id: "#24gtw1w"
+merge_request: 75
+author: Disha Talreja
+type: added
