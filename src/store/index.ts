@@ -21,11 +21,7 @@ const state: any = {
 }
 
 const persistState = createPersistedState({
-<<<<<<< HEAD
-    paths: ['user', 'job.draft'],
-=======
-    paths: ['user', 'util'],
->>>>>>> 6182aa60cdebd6173f0ef4c4b824753d733fe67a
+    paths: ['user', 'job.draft', 'util'],
     fetchBeforeUse: true
 })
 
