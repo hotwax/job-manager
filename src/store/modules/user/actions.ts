@@ -50,7 +50,7 @@ const actions: ActionTree<UserState, RootState> = {
   /**
    * Get User profile
    */
-  async getProfile ({ commit, dispatch }) {
+  async getProfile ({ commit }) {
     const resp = await UserService.getProfile()
     if (resp.status === 200) {
       const payload = {
