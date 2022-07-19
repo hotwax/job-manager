@@ -4,7 +4,7 @@ export default interface JobState {
       list: any,
       total: 0
     }
-    history: {
+    running: {
       list: any,
       total: 0
     }
@@ -12,6 +12,11 @@ export default interface JobState {
       list: any,
       total: 0
     }
+    history: {
+      list: any,
+      total: 0
+    },
+    current: any;
     temporalExp: any;
     enumIds: any;
 }

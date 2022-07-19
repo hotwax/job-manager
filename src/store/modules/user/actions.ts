@@ -5,8 +5,7 @@ import UserState from './UserState'
 import * as types from './mutation-types'
 import { hasError, showToast } from '@/utils'
 import { translate } from '@/i18n'
-import { DateTime } from 'luxon';
-import emitter from '@/event-bus'
+import { Settings } from 'luxon'
 
 const actions: ActionTree<UserState, RootState> = {
 
@@ -19,7 +18,7 @@ const actions: ActionTree<UserState, RootState> = {
       if (resp.status === 200 && resp.data) {
         if (resp.data.token) {
             commit(types.USER_TOKEN_CHANGED, { newToken: resp.data.token })
-            dispatch('getProfile')
+            await dispatch('getProfile')
             dispatch('getShopifyConfig')
             return resp.data;
         } else if (hasError(resp)) {
@@ -45,7 +44,7 @@ const actions: ActionTree<UserState, RootState> = {
    */
   async logout ({ commit, dispatch }) {
     // TODO add any other tasks if need
-    dispatch('job/clearPendingJobs', null, { root: true });
+    dispatch('job/clearJobState', null, { root: true });
     commit(types.USER_END_SESSION)
   },
 
@@ -55,24 +54,31 @@ const actions: ActionTree<UserState, RootState> = {
   async getProfile ({ commit, dispatch }) {
     const resp = await UserService.getProfile()
     if (resp.status === 200) {
-      const localTimeZone = DateTime.local().zoneName;
-      if (resp.data.userTimeZone !== localTimeZone) {
-        emitter.emit('timeZoneDifferent', { profileTimeZone: resp.data.userTimeZone, localTimeZone});
-      }
-
       const payload = {
+        "inputFields": {
+          "storeName_op": "not-empty"
+        },
         "fieldList": ["productStoreId", "storeName"],
         "entityName": "ProductStore",
         "distinct": "Y",
         "noConditionFind": "Y"
       }
 
-      await dispatch('getEComStores', payload).then((stores: any) => { resp.data.stores = [{
-          productStoreId: "",
-          storeName: "None"
-        }, ...(stores ? stores : [])]
+      await dispatch('getEComStores', payload).then((stores: any) => {
+        resp.data.stores = [
+          ...(stores ? stores : []),
+          {
+            productStoreId: "",
+            storeName: "None"
+          }
+        ]
       })
 
+      this.dispatch('util/getServiceStatusDesc')
+      if (resp.data.userTimeZone) {
+        Settings.defaultZone = resp.data.userTimeZone;
+      }
+      commit(types.USER_CURRENT_ECOM_STORE_UPDATED, resp.data?.stores[0]);
       commit(types.USER_INFO_UPDATED, resp.data);
     }
   },
@@ -81,7 +87,7 @@ const actions: ActionTree<UserState, RootState> = {
    * update current eComStore information
    */
   async setEcomStore({ commit, dispatch }, payload) {
-    dispatch("job/clearPendingJobs", null, { root: true })
+    dispatch('job/clearJobState', null, { root: true });
     commit(types.USER_CURRENT_ECOM_STORE_UPDATED, payload.eComStore);
   },
   /**
@@ -93,6 +99,7 @@ const actions: ActionTree<UserState, RootState> = {
       const current: any = state.current;
       current.userTimeZone = payload.tzId;
       commit(types.USER_INFO_UPDATED, current);
+      Settings.defaultZone = current.userTimeZone;
       showToast(translate("Time zone updated successfully"));
     }
   },
@@ -100,7 +107,7 @@ const actions: ActionTree<UserState, RootState> = {
   /**
    * Set User Instance Url
    */
-  setUserInstanceUrl ({ state, commit }, payload){
+  setUserInstanceUrl ({ commit }, payload){
     commit(types.USER_INSTANCE_URL_UPDATED, payload)
   },
 
@@ -115,7 +122,7 @@ const actions: ActionTree<UserState, RootState> = {
     }
   },
 
-  async getEComStores({ commit }, payload) {
+  async getEComStores(_context, payload) {
     let resp;
 
     try{
@@ -130,8 +137,95 @@ const actions: ActionTree<UserState, RootState> = {
     }
   },
 
-  async setEComStore({ commit, dispatch }, payload) {
+  async setEComStore({ commit }, payload) {
     commit(types.USER_CURRENT_ECOM_STORE_UPDATED, payload.store);
+  },
+
+  /**
+   * Get user pinned jobs
+   */
+
+  async getPinnedJobs({ commit, state }) {
+    let resp;
+    const user = state?.current as any
+
+    try{
+      const params = {
+        "inputFields": {
+          "userLoginId": user?.userLoginId,
+          "userSearchPrefTypeId": "PINNED_JOB"
+        },
+        "viewSize": 1,
+        "filterByDate": "Y",
+        "sortBy": "fromDate ASC",
+        "fieldList": ["searchPrefId", "searchPrefValue"],
+        "entityName": "UserAndSearchPreference",
+        "distinct": "Y",
+        "noConditionFind": "Y"
+      }
+      resp = await UserService.getPinnedJobs(params);
+      if(resp.status === 200 && resp.data.docs?.length && !hasError(resp)) {
+        let pinnedJobs = resp.data.docs[0];
+        pinnedJobs = {
+          id: pinnedJobs?.searchPrefId ? pinnedJobs?.searchPrefId : '',
+          jobs: pinnedJobs?.searchPrefValue ? JSON.parse(pinnedJobs?.searchPrefValue) : []
+        }
+
+        const enumIds = pinnedJobs?.jobs;
+        await this.dispatch('job/fetchJobDescription', enumIds);
+
+        user.pinnedJobs = pinnedJobs
+        commit(types.USER_INFO_UPDATED, user);
+
+        return pinnedJobs;
+      } else {
+        user.pinnedJobs = []
+        commit(types.USER_INFO_UPDATED, user);
+      }
+    } catch(error) {
+      console.error(error);
+    }
+    return resp;
+  },
+
+  /**
+   * Update user's pinned jobs
+   */
+  async updatePinnedJobs({ dispatch, state }, payload) {
+    let resp;
+    const pinnedJobPrefId = (state.current as any)['pinnedJobs']?.id;
+
+    try{
+      if (pinnedJobPrefId) {
+        resp = await UserService.updatePinnedJobPref({
+          'searchPrefId': pinnedJobPrefId,
+          'searchPrefValue': JSON.stringify(payload?.pinnedJobs)
+        });
+
+        if(resp.status === 200 && !hasError(resp)) {
+          await dispatch('getPinnedJobs')
+        }
+      } else {
+        resp = await UserService.createPinnedJobPref({
+          'searchPrefValue': JSON.stringify(payload?.pinnedJobs)
+        });
+        if(resp.status === 200 && !hasError(resp)) {
+          if(resp.data?.searchPrefId) {
+            const params = {
+              "searchPrefId": resp.data?.searchPrefId,
+              "userSearchPrefTypeId": "PINNED_JOB",
+            }
+            const pinnedJob = await UserService.associatePinnedJobPrefToUser(params);
+            if(pinnedJob.status === 200 && !hasError(pinnedJob)) {
+              await dispatch('getPinnedJobs')
+            }
+          }
+        }
+      }
+    } catch(error) {
+      console.error(error);
+    }
+    return resp;
   }
 }
 

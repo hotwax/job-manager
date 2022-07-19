@@ -254,6 +254,9 @@ body {
   --spacer-xl: 2.5rem;   /* 40px */
   --spacer-2xl: 5rem;    /* 80px */
   --spacer-3xl: 10rem;   /* 160px */
+
+  /** Border variable **/
+  --border-medium: 1px solid var(--ion-color-medium);
 }
 
 .overline {
@@ -270,6 +273,7 @@ ion-select {
 }
 
 aside {
+  flex: 1 0 355px;
   position: sticky;
   top: var(--spacer-lg);
   flex: 1;
@@ -289,14 +293,12 @@ aside {
     justify-content: center;
     align-items: start;
     gap: var(--spacer-2xl);
-    max-width: 900px;
+    max-width: 990px;
     margin: var(--spacer-base) auto 0;
   }
 
-  main > section > *{
-    max-width: 343px;
-    margin-left: auto;
-    margin-right: auto;
+  main > section {
+    max-width: 50ch;
   }
 
   .desktop-only {
@@ -305,7 +307,12 @@ aside {
 
   .mobile-only {
     display: none;
-  }  
+  }
+
+  aside {
+    width: 0px;
+    opacity: 0;
+  }
 }
 
 @media (prefers-color-scheme: dark) {

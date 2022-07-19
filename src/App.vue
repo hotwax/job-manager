@@ -8,11 +8,13 @@
 </template>
 
 <script lang="ts">
-import { IonApp, IonRouterOutlet, IonSplitPane } from '@ionic/vue';
+import { createAnimation, IonApp, IonRouterOutlet, IonSplitPane } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import Menu from '@/components/Menu.vue';
 import { loadingController } from '@ionic/vue';
+import { mapGetters, useStore } from 'vuex';
 import emitter from "@/event-bus"
+import { Settings } from 'luxon'
 export default defineComponent({
   name: 'App',
   components: {
@@ -25,6 +27,11 @@ export default defineComponent({
     return {
       loader: null as any
     }
+  },
+  computed: {
+    ...mapGetters({
+      userProfile: 'user/getUserProfile',
+    })
   },
   methods: {
     async presentLoader() {
@@ -43,6 +50,29 @@ export default defineComponent({
         this.loader.dismiss();
         this.loader = null as any;
       }
+    },
+    playAnimation() {
+      const aside = document.querySelector('aside') as Element
+      const main = document.querySelector('main') as Element
+
+      const revealAnimation = createAnimation()
+        .addElement(aside)
+        .duration(1500)
+        .easing('ease')
+        .keyframes([
+          { offset: 0, flex: '0', opacity: '0' },
+          { offset: 0.5, flex: '1', opacity: '0' },
+          { offset: 1, flex: '1', opacity: '1' }
+        ])
+
+      const gapAnimation = createAnimation()
+        .addElement(main)
+        .duration(500)
+        .fromTo('gap', '0', 'var(--spacer-2xl)');
+
+      createAnimation()
+        .addAnimation([gapAnimation, revealAnimation])
+        .play();
     }
   },
   async mounted() {
@@ -54,10 +84,24 @@ export default defineComponent({
       });
     emitter.on('presentLoader', this.presentLoader);
     emitter.on('dismissLoader', this.dismissLoader);
+    emitter.on('playAnimation', this.playAnimation);
+    // Handles case when user resumes or reloads the app
+    // Luxon timezzone should be set with the user's selected timezone
+    if (this.userProfile && this.userProfile.userTimeZone) {
+      Settings.defaultZone = this.userProfile.userTimeZone;
+    }
   },
   unmounted() {
     emitter.off('presentLoader', this.presentLoader);
     emitter.off('dismissLoader', this.dismissLoader);
+    emitter.off('playAnimation', this.playAnimation);
+  },
+  setup(){
+    const store = useStore();
+
+    return {
+      store,
+    }
   },
 });
 </script>

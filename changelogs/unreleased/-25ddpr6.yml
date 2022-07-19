@@ -1,0 +1,6 @@
+---
+title: Added empty state text on pipeline page in pending and running segment
+ticket_id: "#25ddpr6"
+merge_request: 86
+author: Azkya Khan
+type: added

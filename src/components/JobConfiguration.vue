@@ -2,30 +2,26 @@
   <section>
     <ion-item lines="none">
       <h1>{{ $t(title) }}</h1>
-      <ion-badge slot="end" color="dark" v-if="job?.runTime">{{ $t("running") }} {{ timeTillJob(job.runTime) }}</ion-badge>
+      <ion-badge slot="end" color="dark" v-if="currentJob?.runTime">{{ $t("running") }} {{ timeTillJob(currentJob.runTime) }}</ion-badge>
     </ion-item>
 
     <ion-list>
-      <ion-item>
-        <ion-icon slot="start" :icon="calendarClearOutline" />
-        <ion-label>{{ $t("Last run") }}</ion-label>
-        <ion-label slot="end">{{ job?.lastUpdatedStamp ? getTime(job.lastUpdatedStamp) : $t('No previous occurrence') }}</ion-label>
-      </ion-item>
 
       <ion-item>
         <ion-icon slot="start" :icon="timeOutline" />
-        <ion-label>{{ $t("Run time") }}</ion-label>
-        <ion-label id="open-run-time-modal" slot="end">{{ job?.runTime ? getTime(job.runTime) : $t('Select run time') }}</ion-label>
+        <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
+        <ion-label class="ion-text-wrap" @click="() => isOpen = true" slot="end">{{ currentJob?.runTime ? getTime(currentJob.runTime) : $t('Select run time') }}</ion-label>
         <!-- TODO: display a button when we are not having a runtime and open the datetime component
         on click of that button
         Currently, when mapping the same datetime component for label and button so it's not working so for
         now commented the button and added a fallback string -->
-        <!-- <ion-button id="open-run-time-modal" size="small" fill="outline" color="medium" v-show="!job?.runTime">{{ $t("Select run time") }}</ion-button> -->
-        <ion-modal trigger="open-run-time-modal">
+        <!-- <ion-button id="open-run-time-modal" size="small" fill="outline" color="medium" v-show="!currentJob?.runTime">{{ $t("Select run time") }}</ion-button> -->
+        <ion-modal  :is-open="isOpen" @didDismiss="() => isOpen = false">
           <ion-content force-overscroll="false">
             <ion-datetime
-              :value="job?.runTime ? getDateTime(job.runTime) : ''"
-              @ionChange="updateRunTime($event, job)"
+              :min="minDateTime"
+              :value="currentJob?.runTime ? getDateTime(currentJob.runTime) : ''"
+              @ionChange="updateRunTime($event, currentJob)"
             />
           </ion-content>
         </ion-modal>
@@ -33,7 +29,7 @@
 
       <ion-item>
         <ion-icon slot="start" :icon="timerOutline" />
-        <ion-label>{{ $t("Schedule") }}</ion-label>
+        <ion-label class="ion-text-wrap">{{ $t("Schedule") }}</ion-label>
         <ion-select :interface-options="customPopoverOptions" interface="popover" :value="jobStatus" :placeholder="$t('Disabled')" @ionChange="($event) => jobStatus = $event['detail'].value">
           <ion-select-option v-for="freq in generateFrequencyOptions" :key="freq.value" :value="freq.value">{{ $t(freq.label) }}</ion-select-option>
         </ion-select>
@@ -52,14 +48,20 @@
       </ion-item> -->
     </ion-list>
 
-    <div class="actions">
+    <div class="actions desktop-only">
       <div>
-        <ion-button size="small" fill="outline" color="medium" @click="skipJob(job)">{{ $t("Skip once") }}</ion-button>
-        <ion-button size="small" fill="outline" color="danger" @click="cancelJob(job.jobId, job.systemJobEnumId)">{{ $t("Disable") }}</ion-button>
+        <ion-button size="small" fill="outline" color="medium" :disabled="status === 'SERVICE_DRAFT'" @click="skipJob(currentJob)">{{ $t("Skip once") }}</ion-button>
+        <ion-button size="small" fill="outline" color="danger" :disabled="status === 'SERVICE_DRAFT'" @click="cancelJob(currentJob)">{{ $t("Disable") }}</ion-button>
       </div>
       <div>
         <ion-button size="small" fill="outline" @click="saveChanges()">{{ $t("Save changes") }}</ion-button>
       </div>
+    </div>
+
+    <div class=" actions mobile-only">
+      <ion-button size="small" expand="block" fill="outline" color="medium" :disabled="status === 'SERVICE_DRAFT'" @click="skipJob(currentJob)">{{ $t("Skip once") }}</ion-button>
+      <ion-button size="small" expand="block" fill="outline" color="danger" :disabled="status === 'SERVICE_DRAFT'" @click="cancelJob(currentJob)">{{ $t("Disable") }}</ion-button>
+      <ion-button expand="block" @click="saveChanges()">{{ $t("Save changes") }}</ion-button>
     </div>
   </section>
 </template>
@@ -87,12 +89,15 @@ import {
   syncOutline,
   personCircleOutline
 } from "ionicons/icons";
+import { handleDateTimeInput, showToast } from "@/utils";
 import { mapGetters, useStore } from "vuex";
-import { translate } from "@/i18n";
 import { DateTime } from 'luxon';
+import { translate } from '@/i18n'
+import { useRouter } from "vue-router";
+import emitter from '@/event-bus';
 
 export default defineComponent({
-  name: "JobDetail",
+  name: "JobConfiguration",
   components: {
     IonBadge,
     IonButton,
@@ -108,16 +113,19 @@ export default defineComponent({
   },
   data() {
     return {
-      jobStatus: this.status
+      isOpen: false,
+      jobStatus: this.status,
+      minDateTime: DateTime.now().toISO()
     }
   },
-  props: ["job", "title", "status", "type"],
+  props: ["title", "status", "type"],
   computed: {
     ...mapGetters({
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
       shopifyConfigId: 'user/getShopifyConfigId',
-      currentEComStore: 'user/getCurrentEComStore'
+      currentEComStore: 'user/getCurrentEComStore',
+      currentJob: 'job/getCurrentJob',
     }),
     generateFrequencyOptions(): any {
       const optionDefault = [{
@@ -127,11 +135,17 @@ export default defineComponent({
           "value": "EVERY_15_MIN",
           "label": "Every 15 minutes"
         },{
+          "value": "EVERY_30_MIN",
+          "label": "Every 30 minutes"
+        },{
           "value": "HOURLY",
           "label": "Hourly"
         },{
-          "value": "DAILY",
-          "label": "Daily"
+          "value": "EVERY_6_HOUR",
+          "label": "Every 6 hours"
+        },{
+          "value": "EVERYDAY",
+          "label": "Every day"
         }
       ]
 
@@ -142,16 +156,22 @@ export default defineComponent({
           "value": "EVERY_6_HOUR",
           "label": "Every 6 hours"
         },{
-          "value": "DAILY",
-          "label": "Daily"
+          "value": "EVERYDAY",
+          "label": "Every day"
         }
       ]
       return (this as any).type === 'slow' ? slow : optionDefault;
+    },
+    customPopoverOptions() {
+      return {
+        header: (this as any).title,
+        showBackdrop: false
+      }
     }
   },
   methods: {
     getDateTime(time: any) {
-      return DateTime.fromMillis(time)
+      return DateTime.fromMillis(time).toISO()
     },
     async skipJob(job: any) {
       const alert = await alertController
@@ -165,14 +185,19 @@ export default defineComponent({
             text: this.$t('Skip'),
             handler: () => {
               if (job) {
-                this.store.dispatch('job/skipJob', job)
+                this.store.dispatch('job/skipJob', job).then((resp) => {
+                  if (resp) {
+                    emitter.emit('jobUpdated');
+                    showToast(translate("This job has been skipped!"))
+                  }
+                })
               }
             }
           }],
         });
       return alert.present();
     },
-    async cancelJob(jobId: string, systemJobEnumId: string) {
+    async cancelJob(job: any) {
       const alert = await alertController
         .create({
           header: this.$t('Cancel job'),
@@ -183,7 +208,15 @@ export default defineComponent({
           }, {
             text: this.$t('Cancel'),
             handler: () => {
-              this.store.dispatch('job/updateJob', {jobId, systemJobEnumId, statusId: "SERVICE_CANCELLED"});
+              this.store.dispatch('job/cancelJob', job).then((resp) => {
+                if(resp.data?.successMessage) {
+                  emitter.emit('jobUpdated');
+                  const category = this.$route.params?.category;
+                  if (category) {
+                    this.router.push({ name: 'JobDetails', params: { jobId: job?.systemJobEnumId, category: category }, replace: true });
+                  }
+                }
+              })
             }
           }],
         });
@@ -216,40 +249,24 @@ export default defineComponent({
       return alert.present();
     },
     async updateJob() {
-      const job = this.job;
+      const job = this.currentJob;
+      job['jobStatus'] = this.jobStatus !== 'SERVICE_DRAFT' ? this.jobStatus : 'HOURLY';
 
-      // TODO: pass user time zone in the payload
-      const payload = {
-        'systemJobEnumId': job.systemJobEnumId,
-        'statusId': "SERVICE_PENDING",
-        'recurrenceTimeZone': DateTime.now().zoneName
-      } as any
-      if (job?.status === 'SERVICE_DRAFT') {
-        payload['JOB_NAME'] = job.jobName
-        payload['SERVICE_NAME'] = job.serviceName
-        payload['SERVICE_TIME'] = job.runTime.toString()
-        payload['SERVICE_COUNT'] = '0'
-        payload['jobFields'] = {
-          'productStoreId': this.currentEComStore.productStoreId,
-          'systemJobEnumId': job.systemJobEnumId,
-          'tempExprId': this.jobStatus,
-          'maxRecurrenceCount': '-1',
-          'parentJobId': job.parentJobId,
-          'runAsUser': 'system', // default system, but empty in run now
-          'recurrenceTimeZone': DateTime.now().zoneName
-        }
-        payload['shopifyConfigId'] = this.shopifyConfigId
-
-        // checking if the runTimeData has productStoreId, and if present then adding it on root level
-        job?.runTimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.currentEComStore.productStoreId)
-
-        this.store.dispatch('job/scheduleService', {...job.runTimeData, ...payload})
-      } else if (job?.status === 'SERVICE_PENDING') {
-        payload['tempExprId'] = this.jobStatus
-        payload['jobId'] = job.id
-        payload['runTime'] = job.runTime
-
-        this.store.dispatch('job/updateJob', payload)
+      if (job?.statusId === 'SERVICE_DRAFT') {
+        this.store.dispatch('job/scheduleService', job).then((job: any) => {
+          if(job?.jobId) {
+            const category = this.$route.params.category;
+            if (category) {
+              this.router.push({ name: 'JobDetails', params: { jobId: job?.jobId, category: category }, replace: true });
+            }
+          }
+        })
+      } else if (job?.statusId === 'SERVICE_PENDING') {
+        this.store.dispatch('job/updateJob', job).then((resp) => {
+          if (resp) {
+            emitter.emit('jobUpdated');
+          }
+        })
       }
     },
     getTime (time: any) {
@@ -261,22 +278,20 @@ export default defineComponent({
     },
     updateRunTime(ev: CustomEvent, job: any) {
       if (job) {
-        job.runTime = DateTime.fromISO(ev['detail'].value).toMillis()
+        job.runTime = handleDateTimeInput(ev['detail'].value)
       }
     }
   },
   setup() {
-    const customPopoverOptions: any = {
-      header: translate('Schedule inventory hard sync'),
-      showBackdrop: false
-    }
     const store = useStore();
+    const router = useRouter();
+
     return {
       calendarClearOutline,
-      customPopoverOptions,
       timeOutline,
       timerOutline,
       store,
+      router,
       syncOutline,
       personCircleOutline
     };
@@ -285,24 +300,38 @@ export default defineComponent({
 </script>
 
 <style scoped>
-section {
-  overflow: hidden;
-  flex: 1 355px;
-  border: 1px solid var(--ion-color-medium);
-  border-radius: 16px;
-}
 ion-list {
-  margin-top: var(--spacer-xs);
+  margin: var(--spacer-base) 0;
 }
-.actions {
-  display: flex;
-  justify-content: space-between;
-  margin: var(--spacer-base) var(--spacer-sm) var(--spacer-base);
+
+.actions > ion-button {
+  margin: var(--spacer-sm);
+}
+
+@media (min-width: 991px) {  
+  section {
+    overflow: hidden;
+    border: var(--border-medium);
+    border-radius: 16px;
+  }
+  .actions {
+    display: flex;
+    justify-content: space-between;
+    margin: var(--spacer-base) var(--spacer-sm) var(--spacer-base);
+  }
+
+  .mobile-only {
+    display: none;
+  }  
+}
+
+ion-label:nth-child(3) {
+  cursor: pointer;
 }
 
 ion-modal {
   --width: 290px;
-  --height: 382px;
+  --height: 385px;
   --border-radius: 8px;
 }
 </style>

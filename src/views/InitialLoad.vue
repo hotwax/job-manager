@@ -35,102 +35,24 @@
               </ion-label>
             </ion-item>
           </ion-card>
+
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>{{ $t("Process Uploads") }}</ion-card-title>
+            </ion-card-header>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("File upload status") }}</ion-label>
+              <ion-toggle :checked="fileStatusUpdateWebhook" color="secondary" slot="end" @ionChange="updateWebhook($event['detail'].checked, 'BULK_OPERATIONS_FINISH')" />
+            </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("Upload Pending Process") }}</ion-label>
+              <ion-checkbox slot="end" :checked="processPendingUploadsOnShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['UL_PRCS'])"/>
+            </ion-item>
+          </ion-card>
         </section>
 
-        <aside v-show="currentSelectedJobModal">
-          <section v-show="currentSelectedJobModal === 'products'">
-            <ion-item lines="none">
-              <h1>{{ $t("Products") }}</h1>
-              <!-- TODO: make the badges dynamic on the basis of job status -->
-              <!-- <ion-badge slot="end" color="warning">running</ion-badge> -->
-            </ion-item>
-
-            <ion-list>
-              <ion-item>
-                <ion-icon slot="start" :icon="calendarClearOutline" />
-                <ion-label>{{ $t("Last run") }}</ion-label>
-                <ion-label slot="end">{{ job?.lastUpdatedStamp ? getTime(job.lastUpdatedStamp) : $t('No previous occurrence') }}</ion-label>
-              </ion-item>
-
-              <ion-item id="product-run-time-modal" button>
-                <ion-icon slot="start" :icon="timeOutline" />
-                <ion-label>{{ $t("Run time") }}</ion-label>
-                <ion-label slot="end">{{ job?.runTime ? getTime(job.runTime) : $t('Select run time') }}</ion-label>
-                <ion-modal trigger="product-run-time-modal">
-                  <ion-content force-overscroll="false">
-                    <ion-datetime
-                      :min="minDateTime"
-                      :value="job?.runTime ? getDateTime(job.runTime) : ''"
-                      @ionChange="updateRunTime($event, job)"
-                    />
-                  </ion-content>
-                </ion-modal>
-              </ion-item>
-            </ion-list>
-
-            <ion-button size="small" fill="outline" expand="block" @click="runJob('Products', jobEnums['IMP_PRDTS_BLK'])">{{ $t("Run import") }}</ion-button>
-          </section>
-
-           <section v-show="currentSelectedJobModal === 'orders'">
-            <ion-item lines="none">
-              <h1>{{ $t("Orders") }}</h1>
-              <!-- TODO: make the badges dynamic on the basis of job status -->
-              <!-- <ion-badge slot="end" color="medium">pending</ion-badge> -->
-            </ion-item>
-
-            <ion-list>
-              <ion-item>
-                <ion-icon slot="start" :icon="calendarClearOutline" />
-                <ion-label>{{ $t("Last run") }}</ion-label>
-                <ion-label slot="end">{{ job?.lastUpdatedStamp ? getTime(job.lastUpdatedStamp) : $t('No previous occurrence') }}</ion-label>
-              </ion-item>
-
-              <ion-item id="order-run-time-modal" button>
-                <ion-icon slot="start" :icon="timeOutline" />
-                <ion-label>{{ $t("Run time") }}</ion-label>
-                <ion-label slot="end">{{ job?.runTime ? getTime(job.runTime) : $t('Select run time') }}</ion-label>
-                <ion-modal trigger="order-run-time-modal">
-                  <ion-content force-overscroll="false">
-                    <ion-datetime
-                      :min="minDateTime"
-                      :value="job?.runTime ? getDateTime(job.runTime) : ''"
-                      @ionChange="updateRunTime($event, job)"
-                    />
-                  </ion-content>
-                </ion-modal>
-              </ion-item>
-
-              <ion-item>
-                <ion-icon slot="start" :icon="flagOutline" />
-                <ion-label>{{ $t("Order status") }}</ion-label>
-                <ion-select value="open" :interface-options="customOrderOptions" interface="popover">
-                  <ion-select-option value="open">{{ $t("Open") }}</ion-select-option>
-                  <!-- TODO: commenting options for now, enable it once having support -->
-                  <!-- <ion-select-option value="archived">{{ $t("Archived") }}</ion-select-option>
-                  <ion-select-option value="canceled">{{ $t("Canceled") }}</ion-select-option> -->
-                </ion-select>
-              </ion-item>
-
-              <ion-item>
-                <ion-icon slot="start" :icon="sendOutline" />
-                <ion-label>{{ $t("Fulfillment status") }}</ion-label>
-                <ion-select value="unshipped" :interface-options="customFulfillmentOptions" interface="popover">
-                  <!-- TODO: commenting options for now, enable it once having support -->
-                  <ion-select-option value="unshipped">{{ $t("Unfulfilled") }}</ion-select-option>
-                  <!-- <ion-select-option value="partially-fulfilled">{{ $t("Partally fulfilled") }}</ion-select-option>
-                  <ion-select-option value="on-hold">{{ $t("On hold") }}</ion-select-option>
-                  <ion-select-option value="fulfilled">{{ $t("Fulfilled") }}</ion-select-option> -->
-                </ion-select>
-              </ion-item>
-
-              <ion-item>
-                <ion-label>{{ $t("Last Shopify Order ID") }}</ion-label>
-                <ion-input v-model="lastShopifyOrderId" :placeholder="$t('Internal Shopify Order ID')" />
-              </ion-item>
-            </ion-list>
-
-            <ion-button size="small" fill="outline" expand="block" @click="runJob('Orders', jobEnums['IMP_ORDERS_BLK'])">{{ $t("Run import") }}</ion-button>
-          </section>
+        <aside class="desktop-only" v-if="isDesktop" v-show="currentSelectedJobModal">
+          <InitialJobConfiguration :type='currentSelectedJobModal' :shopifyOrderId='lastShopifyOrderId' :key="job" />
         </aside>
       </main>
     </ion-content>
@@ -139,69 +61,58 @@
 
 <script lang="ts">
 import {
-  alertController,
   IonButton,
   IonCard,
   IonCardHeader,
   IonCardTitle,
+  IonCheckbox,
   IonContent,
-  IonDatetime,
   IonHeader,
-  IonIcon,
-  IonInput,
   IonItem,
   IonLabel,
-  IonList,
   IonMenuButton,
-  IonModal,
   IonPage,
-  IonSelect,
-  IonSelectOption,
   IonTitle,
-  IonToolbar
+  IonToggle,
+  IonToolbar,
+  isPlatform
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
-import {
-  calendarClearOutline,
-  flagOutline,
-  sendOutline,
-  timeOutline,
-} from "ionicons/icons";
-import { translate } from '@/i18n';
-import { DateTime } from 'luxon';
 import { mapGetters, useStore } from 'vuex';
-import { isValidDate } from '@/utils';
+import { isFutureDate, showToast } from '@/utils';
+import emitter from '@/event-bus';
+import InitialJobConfiguration from '@/components/InitialJobConfiguration.vue';
+import { useRouter } from 'vue-router';
+import { translate } from '@/i18n';
 
 export default defineComponent({
   name: 'InitialLoad',
   components: {
+    InitialJobConfiguration,
     IonButton,
     IonCard,
     IonCardHeader,
     IonCardTitle,
+    IonCheckbox,
     IonContent,
-    IonDatetime,
     IonHeader,
-    IonIcon,
-    IonInput,
     IonItem,
     IonLabel,
-    IonList,
     IonMenuButton,
-    IonModal,
     IonPage,
-    IonSelect,
-    IonSelectOption,
     IonTitle,
+    IonToggle,
     IonToolbar
   },
   data() {
     return {
       jobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
+      webhookEnums: JSON.parse(process.env?.VUE_APP_WEBHOOK_ENUMS as string) as any,
       currentSelectedJobModal: '',
       job: {} as any,
       lastShopifyOrderId: '',
-      minDateTime: DateTime.now().toISO()
+      isJobDetailAnimationCompleted: false,
+      isDesktop: isPlatform('desktop')
     }
   },
   mounted () {
@@ -211,118 +122,102 @@ export default defineComponent({
         "systemJobEnumId_op": "in"
       }
     })
+    this.store.dispatch('webhook/fetchWebhooks')
   },
   computed: {
     ...mapGetters({
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
       shopifyConfigId: 'user/getShopifyConfigId',
-      currentEComStore: 'user/getCurrentEComStore'
-    })
+      currentEComStore: 'user/getCurrentEComStore',
+      getCachedWebhook: 'webhook/getCachedWebhook'
+    }),
+    fileStatusUpdateWebhook(): boolean {
+      const webhookTopic = this.webhookEnums['BULK_OPERATIONS_FINISH']
+      return this.getCachedWebhook[webhookTopic]
+    },
+    processPendingUploadsOnShopify(): boolean {
+      const status = this.getJobStatus(this.jobEnums["UL_PRCS"]);
+      return status && status !== "SERVICE_DRAFT";
+    }
   },
   methods: {
-    viewJobConfiguration(label: string, id: string) {
+    async updateJob(checked: boolean, id: string, status = 'EVERY_15_MIN') {
+      const job = this.getJob(id);
+
+      // TODO: added this condition to not call the api when the value of the select automatically changes
+      // need to handle this properly
+      if ((checked && job?.status === 'SERVICE_PENDING') || (!checked && job?.status === 'SERVICE_DRAFT')) {
+        return;
+      }
+
+      // added check that if the job is not present, then display a toast and then return
+      if (!job) {
+        showToast(translate('Configuration missing'))
+        return;
+      }
+
+      job['jobStatus'] = status
+
+      // if job runTime is not a valid date then making runTime as empty
+      if (job?.runTime && !isFutureDate(job?.runTime)) {
+        job.runTime = ''
+      }
+
+      if (!checked) {
+        this.store.dispatch('job/cancelJob', job)
+      } else if (job?.status === 'SERVICE_DRAFT') {
+        this.store.dispatch('job/scheduleService', job)
+      } else if (job?.status === 'SERVICE_PENDING') {
+        this.store.dispatch('job/updateJob', job)
+      }
+    },
+    async viewJobConfiguration(label: string, id: string) {
       this.currentSelectedJobModal = label;
       this.job = this.getJob(id);
+
       if(this.job?.runtimeData?.sinceId?.length >= 0) {
         this.lastShopifyOrderId = this.job.runtimeData.sinceId !== 'null' ? this.job.runtimeData.sinceId : ''
       }
       // if job runTime is not a valid date then assigning current date to the runTime
-      if (this.job?.runTime && !isValidDate(this.job?.runTime)) {
-        this.job.runTime = DateTime.local().toMillis()
+      if (this.job?.runTime && !isFutureDate(this.job?.runTime)) {
+        this.job.runTime = ''
+      }
+
+      await this.store.dispatch('job/updateCurrentJob', { job: this.job });
+      if(!this.isDesktop && this.job) {
+        this.router.push({name: 'JobDetails', params: { title: this.currentSelectedJobModal, jobId: this.job.jobId, category: "initial-load"}});
+        return;
+      }
+
+      if (this.job && !this.isJobDetailAnimationCompleted) {
+        emitter.emit('playAnimation');
+        this.isJobDetailAnimationCompleted = true;
       }
     },
-    async runJob(header: string, id: string) {
-      const alert = await alertController
-        .create({
-          header: this.$t(header),
-          message: this.$t('This job may take several minutes to run. Wait till the job has moved to the pipeline history before checking results.', {space: '<br/><br/>'}),
-          buttons: [
-            {
-              text: this.$t("Cancel"),
-              role: 'cancel',
-            },
-            {
-              text: this.$t('Run now'),
-              handler: async () => {
-                await this.updateJob(id)
-              }
-            }
-          ]
-        });
+    async updateWebhook(checked: boolean, enumId: string) {
+      const webhook = this.getCachedWebhook[this.webhookEnums[enumId]]
 
-      return alert.present();
-    },
-    async updateJob(id: string) {
-      const job = this.getJob(id);
-
-      // TODO: pass user time zone in the payload
-      const payload = {
-        'systemJobEnumId': job.systemJobEnumId,
-        'statusId': "SERVICE_PENDING",
-        'recurrenceTimeZone': DateTime.now().zoneName
-      } as any
-      if (job?.status === 'SERVICE_DRAFT') {
-        payload['JOB_NAME'] = job.jobName
-        payload['SERVICE_NAME'] = job.serviceName
-        payload['SERVICE_TIME'] = job.runTime.toString()
-        payload['SERVICE_COUNT'] = '0'
-        payload['SERVICE_PRIORITY'] = job.priority ? job.priority.toString() : ""
-        payload['jobFields'] = {
-          'productStoreId': this.currentEComStore.productStoreId,
-          'systemJobEnumId': job.systemJobEnumId,
-          'tempExprId': job.tempExprId,
-          'parentJobId': job.parentJobId,
-          'recurrenceTimeZone': DateTime.now().zoneName
-        }
-        payload['shopifyConfigId'] = this.shopifyConfigId
-        this.lastShopifyOrderId && (payload['sinceId'] = this.lastShopifyOrderId)
-
-        // checking if the runtimeData has productStoreId, and if present then adding it on root level
-        job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.currentEComStore.productStoreId)
-        this.store.dispatch('job/scheduleService', {...job.runtimeData, ...payload})
-      } else if (job?.status === 'SERVICE_PENDING') {
-        payload['tempExprId'] = job.tempExprId
-        payload['jobId'] = job.id
-        payload['runTime'] = job.runTime
-        this.lastShopifyOrderId && (payload['sinceId'] = this.lastShopifyOrderId)
-
-        this.store.dispatch('job/updateJob', payload)
+      // TODO: added this condition to not call the api when the value of the select automatically changes
+      // need to handle this properly
+      if ((checked && webhook) || (!checked && !webhook)) {
+        return;
       }
-    },
-    getDateTime(time: any) {
-      return DateTime.fromMillis(time)
-    },
-    getTime (time: any) {
-      return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
-    },
-    timeTillJob (time: any) {
-      const timeDiff = DateTime.fromMillis(time).diff(DateTime.local());
-      return DateTime.local().plus(timeDiff).toRelative();
-    },
-    updateRunTime(ev: CustomEvent, job: any) {
-      if (job) {
-        job.runTime = DateTime.fromISO(ev['detail'].value).toMillis()
+
+      if (checked) {
+        await this.store.dispatch('webhook/subscribeWebhook', enumId)
+      } else {
+        await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhook?.id, shopifyConfigId: this.shopifyConfigId })
       }
     }
   },
   setup() {
-    const customOrderOptions: any = {
-      header: translate('Order status'),
-    };
-    const customFulfillmentOptions: any = {
-      header: translate('Fulfillment status'),
-    };
     const store = useStore();
+    const router = useRouter();
 
     return {
-      calendarClearOutline,
-      flagOutline,
-      sendOutline,
-      timeOutline,
-      customOrderOptions,
-      customFulfillmentOptions,
-      store
+      store,
+      router
     }
   }
 });
@@ -331,25 +226,5 @@ export default defineComponent({
 <style scoped>
 ion-card > ion-button {
   margin: var(--spacer-sm);
-}
-
-aside > section {
-  overflow: hidden;
-  border: 1px solid var(--ion-color-medium);
-  border-radius: 16px;
-}
-
-aside > section > ion-list {
-  margin-top: var(--spacer-xs);
-}
-
-aside > section > ion-button {
-  margin: var(--spacer-base) var(--spacer-sm);
-}
-
-ion-modal {
-  --width: 290px;
-  --height: 382px;
-  --border-radius: 8px;
 }
 </style>

@@ -13,6 +13,10 @@ const jobModule: Module<JobState, RootState> = {
         list: [],
         total: 0
       },
+      running: {
+        list: [],
+        total: 0
+      },
       history: {
         list: [],
         total: 0
@@ -22,7 +26,8 @@ const jobModule: Module<JobState, RootState> = {
         total: 0
       },
       temporalExp: [],
-      enumIds: {}
+      enumIds: {},
+      current: {},
     },
     getters,
     actions,

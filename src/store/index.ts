@@ -7,6 +7,8 @@ import createPersistedState from "vuex-persistedstate";
 import userModule from './modules/user';
 import productModule from "./modules/product"
 import jobModule from "./modules/job"
+import utilModule from "./modules/util"
+import webhookModule from "./modules/webhook"
 
 
 // TODO check how to register it from the components only
@@ -19,7 +21,11 @@ const state: any = {
 }
 
 const persistState = createPersistedState({
+<<<<<<< HEAD
     paths: ['user', 'job.draft'],
+=======
+    paths: ['user', 'util'],
+>>>>>>> 6182aa60cdebd6173f0ef4c4b824753d733fe67a
     fetchBeforeUse: true
 })
 
@@ -33,7 +39,9 @@ const store = createStore<RootState>({
     modules: { 
         'user': userModule,
         'product': productModule,
-        'job': jobModule
+        'job': jobModule,
+        'util': utilModule,
+        'webhook': webhookModule
     },
 })
 
