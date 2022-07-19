@@ -64,7 +64,10 @@ const actions: ActionTree<UserState, RootState> = {
         "noConditionFind": "Y"
       }
 
-      await dispatch('getEComStores', payload).then((stores: any) => {
+      let stores = await UserService.getEComStores(payload);
+      if(stores.status === 200 && stores.data.docs?.length > 0 && !hasError(stores)) {
+        stores = stores.data.docs;
+
         resp.data.stores = [
           ...(stores ? stores : []),
           {
@@ -72,8 +75,7 @@ const actions: ActionTree<UserState, RootState> = {
             storeName: "None"
           }
         ]
-      })
-
+      }
       this.dispatch('util/getServiceStatusDesc')
       if (resp.data.userTimeZone) {
         Settings.defaultZone = resp.data.userTimeZone;
@@ -119,21 +121,6 @@ const actions: ActionTree<UserState, RootState> = {
 
     if (resp.status === 200 && !hasError(resp)) {
       commit(types.USER_SHOPIFY_CONFIG_UPDATED, resp.data.docs?.length > 0 ? resp.data.docs[0].shopifyConfigId : {});
-    }
-  },
-
-  async getEComStores(_context, payload) {
-    let resp;
-
-    try{
-      resp = await UserService.getEComStores(payload);
-      if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
-        const stores = resp.data.docs
-
-        return stores
-      }
-    } catch(err) {
-      console.error(err)
     }
   },
 
