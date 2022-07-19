@@ -564,6 +564,7 @@ export default defineComponent({
   async created() {
     this.getPendingJobs();
     this.store.dispatch('user/getPinnedJobs');
+    this.store.dispatch('job/updateCurrentJob', { job: {} });
     emitter.on('jobUpdated', this.updateJobs);
     // TODO: improved this to manage the current job using local variable
     // setting the current job as empty because when coming back to the pipeline page the currentJob
