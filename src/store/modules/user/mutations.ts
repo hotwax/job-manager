@@ -9,7 +9,7 @@ const mutations: MutationTree <UserState> = {
     [types.USER_END_SESSION] (state) {
       state.token = ''
       state.current = null
-      state.shopifyConfig = {}
+      state.shopifyConfigId = ""
       state.currentEComStore = {
         productStoreId: "",
         storeName: "None"
@@ -22,7 +22,7 @@ const mutations: MutationTree <UserState> = {
         state.instanceUrl = payload;
     },
     [types.USER_SHOPIFY_CONFIG_UPDATED] (state, payload) {
-        state.shopifyConfig = payload;
+        state.shopifyConfigId = payload;
     },
     [types.USER_CURRENT_ECOM_STORE_UPDATED] (state, payload) {
         state.currentEComStore = payload;
