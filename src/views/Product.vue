@@ -26,6 +26,20 @@
               <ion-label class="ion-text-wrap"><p>{{ $t("Sync products and category structures from Shopify into HotWax Commerce and keep them up to date.") }}</p></ion-label>
             </ion-item>
           </ion-card>
+
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>{{ $t("Webhooks") }}</ion-card-title>
+            </ion-card-header>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("New products") }}</ion-label>
+              <ion-toggle slot="end" :checked="newProductsWebhook" @ionChange="updateWebhook($event['detail'].checked, 'NEW_PRODUCTS')" color="secondary" />
+            </ion-item>
+            <ion-item lines="none">
+              <ion-label class="ion-text-wrap">{{ $t("Delete products") }}</ion-label>
+              <ion-toggle slot="end" :checked="deleteProductsWebhook" @ionChange="updateWebhook($event['detail'].checked, 'DELETE_PRODUCTS')" color="secondary" />
+            </ion-item>
+          </ion-card>
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
@@ -49,6 +63,7 @@ import {
   IonPage,
   IonTitle,
   IonToolbar,
+  IonToggle,
   isPlatform
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
@@ -72,14 +87,25 @@ export default defineComponent({
     IonPage,
     IonTitle,
     IonToolbar,
+    IonToggle,
     JobConfiguration
   },
   computed: {
     ...mapGetters({
       getJobStatus: 'job/getJobStatus',
       getTemporalExpr: 'job/getTemporalExpr',
-      getJob: 'job/getJob'
+      getJob: 'job/getJob',
+      shopifyConfigId: 'user/getShopifyConfigId',
+      getCachedWebhook: 'webhook/getCachedWebhook'
     }),
+    newProductsWebhook(): boolean {
+      const webhookTopic = this.webhookEnums['NEW_PRODUCTS']
+      return this.getCachedWebhook[webhookTopic]
+    },
+    deleteProductsWebhook(): boolean {
+      const webhookTopic = this.webhookEnums['DELETE_PRODUCTS']
+      return this.getCachedWebhook[webhookTopic]
+    }
   },
   data() {
     return {
@@ -90,7 +116,8 @@ export default defineComponent({
       currentJobStatus: '',
       freqType: '',
       isJobDetailAnimationCompleted: false,
-      isDesktop: isPlatform('desktop')
+      isDesktop: isPlatform('desktop'),
+      webhookEnums: JSON.parse(process.env?.VUE_APP_WEBHOOK_ENUMS as string) as any,
     }
   },
   mounted () {
@@ -100,8 +127,24 @@ export default defineComponent({
         "systemJobEnumId_op": "in"
       }
     });
+    this.store.dispatch('webhook/fetchWebhooks')
   },
   methods: {
+    async updateWebhook(checked: boolean, enumId: string) {
+      const webhook = this.getCachedWebhook[this.webhookEnums[enumId]]
+
+      // TODO: added this condition to not call the api when the value of the select automatically changes
+      // need to handle this properly
+      if ((checked && webhook) || (!checked && !webhook)) {
+        return;
+      }
+
+      if (checked) {
+        await this.store.dispatch('webhook/subscribeWebhook', enumId)
+      } else {
+        await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhook?.id, shopifyConfigId: this.shopifyConfigId })
+      }
+    },
     async viewJobConfiguration(id: string, title: string, status: string) {
       this.currentJob = this.getJob(this.jobEnums[id])
       this.title = title

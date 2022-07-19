@@ -123,4 +123,20 @@ const isFutureDate = (time: any) => {
   return DateTime.fromMillis(time).diff(DateTime.local()).milliseconds > 0;
 }
 
-export { showToast, hasError , parseCsv , jsonToCsv, JsonToCsvOption, isFutureDate }
+const handleDateTimeInput = (dateTimeValue: any) => {
+  // TODO Handle it in a better way
+  // Remove timezone and then convert to timestamp
+  // Current date time picker picks browser timezone and there is no supprt to change it
+  const dateTime = DateTime.fromISO(dateTimeValue, { setZone: true}).toFormat("yyyy-MM-dd'T'HH:mm:ss")
+  return DateTime.fromISO(dateTime).toMillis()
+}
+
+const prepareRuntime = (job: any) => {
+  if (job.frequency === 'EVERYDAY') {
+    return DateTime.now().startOf('day').toMillis()
+  } else {
+    return DateTime.now().toMillis()
+  }
+}
+
+export { handleDateTimeInput, showToast, hasError , parseCsv , jsonToCsv, JsonToCsvOption, isFutureDate, prepareRuntime }

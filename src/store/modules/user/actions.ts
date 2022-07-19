@@ -5,6 +5,7 @@ import UserState from './UserState'
 import * as types from './mutation-types'
 import { hasError, showToast } from '@/utils'
 import { translate } from '@/i18n'
+import { Settings } from 'luxon'
 
 const actions: ActionTree<UserState, RootState> = {
 
@@ -18,7 +19,6 @@ const actions: ActionTree<UserState, RootState> = {
         if (resp.data.token) {
             commit(types.USER_TOKEN_CHANGED, { newToken: resp.data.token })
             await dispatch('getProfile')
-            dispatch('getShopifyConfig')
             return resp.data;
         } else if (hasError(resp)) {
           showToast(translate('Sorry, your username or password is incorrect. Please try again.'));
@@ -50,7 +50,7 @@ const actions: ActionTree<UserState, RootState> = {
   /**
    * Get User profile
    */
-  async getProfile ({ commit }) {
+  async getProfile ({ commit, dispatch }) {
     const resp = await UserService.getProfile()
     if (resp.status === 200) {
       const payload = {
@@ -75,8 +75,15 @@ const actions: ActionTree<UserState, RootState> = {
           }
         ]
       }
-      this.dispatch('util/getServiceStatusDesc')
+      const currentProductStoreId = resp.data?.stores[0].productStoreId;
+      if (currentProductStoreId) {
+        dispatch('getShopifyConfig', currentProductStoreId);
+      }
 
+      this.dispatch('util/getServiceStatusDesc')
+      if (resp.data.userTimeZone) {
+        Settings.defaultZone = resp.data.userTimeZone;
+      }
       commit(types.USER_CURRENT_ECOM_STORE_UPDATED, resp.data?.stores[0]);
       commit(types.USER_INFO_UPDATED, resp.data);
     }
@@ -88,6 +95,7 @@ const actions: ActionTree<UserState, RootState> = {
   async setEcomStore({ commit, dispatch }, payload) {
     dispatch('job/clearJobState', null, { root: true });
     commit(types.USER_CURRENT_ECOM_STORE_UPDATED, payload.eComStore);
+    dispatch('getShopifyConfig', payload.eComStore.productStoreId);
   },
   /**
    * Update user timeZone
@@ -98,6 +106,7 @@ const actions: ActionTree<UserState, RootState> = {
       const current: any = state.current;
       current.userTimeZone = payload.tzId;
       commit(types.USER_INFO_UPDATED, current);
+      Settings.defaultZone = current.userTimeZone;
       showToast(translate("Time zone updated successfully"));
     }
   },
@@ -109,14 +118,31 @@ const actions: ActionTree<UserState, RootState> = {
     commit(types.USER_INSTANCE_URL_UPDATED, payload)
   },
 
-  async getShopifyConfig({ commit }) {
-    const resp = await UserService.getShopifyConfig({
-      "entityName": "ShopifyConfig",
-      "noConditionFind": "Y"
-    })
-
-    if (resp.status === 200 && !hasError(resp)) {
-      commit(types.USER_SHOPIFY_CONFIG_UPDATED, resp.data.docs?.length > 0 ? resp.data.docs[0].shopifyConfigId : {});
+  async getShopifyConfig({ commit }, productStoreId) {
+    if (productStoreId) { 
+      let resp;
+      const payload = {
+        "inputFields": {
+          "productStoreId": productStoreId,
+        },
+        "entityName": "ShopifyConfig",
+        "noConditionFind": "Y",
+        "fieldList": ["shopifyConfigId"]
+      }
+      try {
+        resp = await UserService.getShopifyConfig(payload);
+        if (resp.status === 200 && !hasError(resp) && resp.data?.docs) {
+          commit(types.USER_SHOPIFY_CONFIG_UPDATED, resp.data.docs?.length > 0 ? resp.data.docs[0].shopifyConfigId : "");
+        } else {
+          console.error(resp);
+          commit(types.USER_SHOPIFY_CONFIG_UPDATED, "");
+        }
+      } catch (err) {
+        console.error(err);
+        commit(types.USER_SHOPIFY_CONFIG_UPDATED, "");
+      }
+    } else {
+      commit(types.USER_SHOPIFY_CONFIG_UPDATED, "");
     }
   },
 

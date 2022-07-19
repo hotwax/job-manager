@@ -38,6 +38,28 @@
 
           <ion-card>
             <ion-card-header>
+              <ion-card-title>{{ $t("Webhooks") }}</ion-card-title>
+            </ion-card-header>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("New orders") }}</ion-label>
+              <ion-toggle :checked="isNewOrders" @ionChange="updateWebhook($event['detail'].checked, 'NEW_ORDERS')" slot="end" color="secondary" />
+            </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("Cancelled orders") }}</ion-label>
+              <ion-toggle :checked="isCancelledOrders" @ionChange="updateWebhook($event['detail'].checked, 'CANCELLED_ORDERS')" slot="end" color="secondary" />
+            </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("Payment status") }}</ion-label>
+              <ion-toggle :checked="isPaymentStatus" @ionChange="updateWebhook($event['detail'].checked, 'PAYMENT_STATUS')" slot="end" color="secondary" />
+            </ion-item>
+            <ion-item lines="none">
+              <ion-label class="ion-text-wrap">{{ $t("Returns") }}</ion-label>
+              <ion-toggle :checked="isReturns" @ionChange="updateWebhook($event['detail'].checked, 'RETURNS')" slot="end" color="secondary" />
+            </ion-item>
+          </ion-card>
+
+          <ion-card>
+            <ion-card-header>
               <ion-card-title>{{ $t("Upload") }}</ion-card-title>
             </ion-card-header>
             <ion-item @click="viewJobConfiguration('UPLD_CMPLT_ORDRS', 'Completed orders', getJobStatus(this.jobEnums['UPLD_CMPLT_ORDRS']))" detail button>
@@ -97,11 +119,16 @@
               </ion-button>
             </ion-item-divider>
 
-            <ion-item-sliding v-for="batch in orderBatchJobs" :key="batch?.id" button detail v-show="batch?.status === 'SERVICE_PENDING'">
-              <ion-item @click="editBatch(batch.id, batch.systemJobEnumId)">
+            <ion-item-sliding v-for="batch in orderBatchJobs" :key="batch?.id" detail v-show="batch?.status === 'SERVICE_PENDING'">
+              <ion-item @click="editBatch(batch.id, batch.systemJobEnumId)" button>
                 <ion-label class="ion-text-wrap">{{ batch?.jobName }}</ion-label>
                 <ion-note slot="end">{{ batch?.runTime ? getTime(batch.runTime) : '' }}</ion-note>
               </ion-item>
+              <ion-item-options side="start">
+                <ion-item-option @click="skipBatch(batch)" color="secondary">
+                  <ion-icon slot="icon-only" :icon="arrowRedoOutline" />
+                </ion-item-option>
+              </ion-item-options>
               <ion-item-options side="end">
                 <ion-item-option @click="deleteBatch(batch)" color="danger">
                   <ion-icon slot="icon-only" :icon="trash" />
@@ -146,14 +173,15 @@ import {
   modalController
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
-import { addCircleOutline, trash } from 'ionicons/icons';
+import { translate } from '@/i18n'
+import { addCircleOutline, arrowRedoOutline, trash } from 'ionicons/icons';
 import BatchModal from '@/components/BatchModal.vue';
 import { useStore } from "@/store";
 import { useRouter } from 'vue-router'
 import { mapGetters } from "vuex";
 import JobConfiguration from '@/components/JobConfiguration.vue';
 import { DateTime } from 'luxon';
-import { isFutureDate } from '@/utils';
+import { hasError, isFutureDate, showToast, prepareRuntime } from '@/utils';
 import emitter from '@/event-bus';
 
 export default defineComponent({
@@ -186,6 +214,7 @@ export default defineComponent({
       jobEnums: JSON.parse(process.env?.VUE_APP_ODR_JOB_ENUMS as string) as any,
       batchJobEnums: JSON.parse(process.env?.VUE_APP_BATCH_JOB_ENUMS as string) as any,
       jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
+      webhookEnums: JSON.parse(process.env?.VUE_APP_WEBHOOK_ENUMS as string) as any,
       currentJob: '' as any,
       title: 'New orders',
       currentJobStatus: '',
@@ -201,18 +230,50 @@ export default defineComponent({
       orderBatchJobs: "job/getOrderBatchJobs",
       shopifyConfigId: 'user/getShopifyConfigId',
       currentEComStore: 'user/getCurrentEComStore',
-      getTemporalExpr: 'job/getTemporalExpr'
+      getTemporalExpr: 'job/getTemporalExpr',
+      getCachedWebhook: 'webhook/getCachedWebhook'
     }),
     promiseDateChanges(): boolean {
       const status = this.getJobStatus(this.jobEnums['NTS_PRMS_DT_CHNG']);
       return status && status !== "SERVICE_DRAFT";
     },
     autoCancelCheckDaily(): boolean {
-      const status = this.getJobStatus(this.jobEnums["REAL_WBHKS"]);
+      const status = this.getJobStatus(this.jobEnums["AUTO_CNCL_DAL"]);
       return status && status !== "SERVICE_DRAFT";
     },
+    isNewOrders(): boolean {
+      const webhookTopic = this.webhookEnums['NEW_ORDERS']
+      return this.getCachedWebhook[webhookTopic]
+    },
+    isCancelledOrders(): boolean {
+      const webhookTopic = this.webhookEnums['CANCELLED_ORDERS']
+      return this.getCachedWebhook[webhookTopic]
+    },
+    isPaymentStatus(): boolean {
+      const webhookTopic = this.webhookEnums['PAYMENT_STATUS']
+      return this.getCachedWebhook[webhookTopic]
+    },
+    isReturns(): boolean {
+      const webhookTopic = this.webhookEnums['RETURNS']
+      return this.getCachedWebhook[webhookTopic]
+    },
   },
-  methods: {  
+  methods: {
+    async updateWebhook(checked: boolean, enumId: string) {
+      const webhook = this.getCachedWebhook[this.webhookEnums[enumId]]
+
+      // TODO: added this condition to not call the api when the value of the select automatically changes
+      // need to handle this properly
+      if ((checked && webhook) || (!checked && !webhook)) {
+        return;
+      }
+
+      if (checked) {
+        await this.store.dispatch('webhook/subscribeWebhook', enumId)
+      } else {
+        await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhook?.id, shopifyConfigId: this.shopifyConfigId })
+      }
+    },
     async addBatch() {
       const batchmodal = await modalController.create({
         component: BatchModal
@@ -246,6 +307,32 @@ export default defineComponent({
         });
       return deleteBatchAlert.present();
     },
+    async skipBatch (batch: any) {
+      const skipJobAlert = await alertController
+        .create({
+          header: this.$t('Skip job'),
+          message: this.$t('Skipping will run this job at the next occurrence based on the temporal expression.'),
+          buttons: [
+            {
+              text: this.$t("Don't skip"),
+              role: 'cancel',
+            },
+            {
+              text: this.$t('Skip'),
+              handler: async () => {
+                this.store.dispatch('job/skipJob', batch).then((resp) => {
+                  if (resp.status === 200 && !hasError(resp)) {
+                    showToast(translate("This job has been skipped"));
+                  } else {
+                    showToast(translate("This job schedule cannot be skipped"));
+                  }
+                })
+              },
+            }
+          ]
+        });
+      return skipJobAlert.present();
+    },
     getTime (time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
     },
@@ -268,6 +355,7 @@ export default defineComponent({
       if (!checked) {
         this.store.dispatch('job/cancelJob', job)
       } else if (job?.status === 'SERVICE_DRAFT') {
+        job.runTime = prepareRuntime(job)
         this.store.dispatch('job/scheduleService', job)
       } else if (job?.status === 'SERVICE_PENDING') {
         this.store.dispatch('job/updateJob', job)
@@ -336,6 +424,7 @@ export default defineComponent({
         "systemJobEnumId_op": "in"
       }
     });
+    this.store.dispatch('webhook/fetchWebhooks')
   },
   setup() {
     const store = useStore();
@@ -343,6 +432,7 @@ export default defineComponent({
 
     return {
       addCircleOutline,
+      arrowRedoOutline,
       router,
       store,
       trash,

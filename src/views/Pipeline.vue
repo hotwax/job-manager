@@ -225,7 +225,7 @@
           </div>          
         </section>
 
-        <aside class="desktop-only" v-if="isDesktop" v-show="segmentSelected === 'pending' && currentJob">
+        <aside class="desktop-only" v-if="isDesktop" v-show="segmentSelected === 'pending' && currentJob && Object.keys(currentJob).length">
           <JobConfiguration :title="title" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
         </aside>
       </main>
@@ -336,7 +336,6 @@ export default defineComponent({
         ...JSON.parse(process.env?.VUE_APP_INV_JOB_ENUMS as string) as any,
         ...JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
       },
-      currentJob: '' as any,
       title: '',
       currentJobStatus: '',
       freqType: '' as any,
@@ -358,7 +357,8 @@ export default defineComponent({
       isPendingJobsScrollable: 'job/isPendingJobsScrollable',
       isRunningJobsScrollable: 'job/isRunningJobsScrollable',
       isHistoryJobsScrollable: 'job/isHistoryJobsScrollable',
-      getPinnedJobs: 'user/getPinnedJobs'
+      getPinnedJobs: 'user/getPinnedJobs',
+      currentJob: 'job/getCurrentJob',
     })
   },
   methods : {
@@ -367,8 +367,8 @@ export default defineComponent({
     },
     updateSelectedPinnedJob(jobEnumId: any) {
       const index = (this as any).selectedPinnedJobs.indexOf(jobEnumId);
-      if (index != -1) {
-        (this as any).selectedPinnedJobs.splice(index, 1);
+      if ((this as any).selectedPinnedJobs.includes(jobEnumId) || !this.getPinnedJobs.includes(jobEnumId)) {
+        if (index != -1) (this as any).selectedPinnedJobs.splice(index, 1)
       } else {
         (this as any).selectedPinnedJobs.push(jobEnumId)
       }
@@ -527,38 +527,55 @@ export default defineComponent({
        return alert.present();
     },
     async viewJobConfiguration(job: any) {
-      this.currentJob = {id: job.jobId, ...job}
       this.title = this.getEnumName(job.systemJobEnumId)
       this.currentJobStatus = job.tempExprId
       const id = Object.entries(this.jobEnums).find((enums) => enums[1] == job.systemJobEnumId) as any
       this.freqType = id && (Object.entries(this.jobFrequencyType).find((freq) => freq[0] == id[0]) as any)[1]
 
-      await this.store.dispatch('job/updateCurrentJob', { job: this.currentJob });
-      if(!this.isDesktop && this.currentJob) {
-        this.router.push({name: 'JobDetails', params: { title: this.title, jobId: this.currentJob.jobId, category: "pipeline"}});
+      await this.store.dispatch('job/updateCurrentJob', { job });
+      if(!this.isDesktop && job?.jobId) {
+        this.router.push({name: 'JobDetails', params: { title: this.title, jobId: job?.jobId, category: "pipeline"}});
         return;
       }
 
-      if (this.currentJob && !this.isJobDetailAnimationCompleted) {
+      if (job && !this.isJobDetailAnimationCompleted) {
         emitter.emit('playAnimation');
         this.isJobDetailAnimationCompleted = true;
       }
     },
     async updatePinnedJobs(enumId: any) {
       const pinnedJobs = new Set(this.getPinnedJobs);
-      if(pinnedJobs.has(enumId)) {
+      if (pinnedJobs.has(enumId)) {
         pinnedJobs.delete(enumId);
-      } else {
-        pinnedJobs.add(enumId);
       }
 
       await this.store.dispatch('user/updatePinnedJobs', { pinnedJobs: [...pinnedJobs] });
       this.updateSelectedPinnedJob(enumId)
+    },
+    updateJobs() {
+      if (this.isDesktop) {
+        if (this.currentJob) {
+          this.viewJobConfiguration(this.currentJob);
+        }
+        this.getPendingJobs();
+      }
     }
   },
-  created() {
+  async created() {
     this.getPendingJobs();
     this.store.dispatch('user/getPinnedJobs');
+    emitter.on('jobUpdated', this.updateJobs);
+    // TODO: improved this to manage the current job using local variable
+    // setting the current job as empty because when coming back to the pipeline page the currentJob
+    // state does not gets updated and hence the job configuration component takes it space in DOM
+    await this.store.dispatch('job/updateCurrentJob', { job: {} });
+  },
+  mounted(){
+    emitter.on("pinnedJobsUpdated", (this as any).updateSelectedPinnedJob);
+  },
+  unmounted(){
+    emitter.off('jobUpdated', this.updateJobs);
+    emitter.off("pinnedJobsUpdated", (this as any).updateSelectedPinnedJob);
   },
   setup() {
     const router = useRouter();
@@ -610,13 +627,20 @@ ion-title {
   flex-grow: 0;
 }
 
-
-ion-toolbar > ion-icon {
+ion-footer > ion-toolbar > ion-title,
+ion-footer > ion-toolbar > ion-icon {
   position: absolute;
-  background: linear-gradient(to right, white, white, transparent);
-  font-size: 24px;
   z-index: 2;
   padding: var(--spacer-sm);
+}
+
+ion-footer > ion-toolbar > ion-title {
+  background: linear-gradient(to right, var(--ion-toolbar-background, var(--ion-background-color, #fff)) 85%, transparent);
+}
+
+ion-footer > ion-toolbar > ion-icon {
+  font-size: 24px;
+  background: linear-gradient(to right, var(--ion-toolbar-background, var(--ion-background-color, #fff)) 50%, transparent);
 }
 
 ion-toolbar > div {
@@ -625,8 +649,10 @@ ion-toolbar > div {
   overflow-x: auto;
   max-width: max-content;
   margin-left: auto;
-  padding-left: 20px;
+}
 
+ion-toolbar > div > ion-chip:first-child {
+  margin-left: var(--spacer-2xl);
 }
 
 ion-chip {
@@ -636,6 +662,10 @@ ion-chip {
 @media (min-width: 991px) {
   ion-header > div {
     display: flex;
+  }
+
+  ion-toolbar > div > ion-chip:first-child {
+    margin-left: var(--spacer-3xl);
   }
 }
 </style>
