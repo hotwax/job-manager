@@ -13,8 +13,7 @@ const actions: ActionTree<JobState, RootState> = {
     await JobService.fetchJobInformation({
       "inputFields": {
         "productStoreId": payload.eComStoreId,
-        "statusId": ["SERVICE_DRAFT"],
-        "statusId_op": "in",
+        "statusId": "SERVICE_DRAFT",
         "systemJobEnumId_op": "not-empty"
       },
       "entityName": "JobSandbox",
@@ -36,12 +35,10 @@ const actions: ActionTree<JobState, RootState> = {
         }
       } else {
         commit(types.JOB_DRAFT_UPDATED,  { list: [], total: 0});
-        showToast(translate("Something went wrong"));
       }
     }).catch((err) => {
       commit(types.JOB_DRAFT_UPDATED, { list: [], total: 0});
       console.error(err);
-      showToast(translate("Something went wrong"));
     }) 
   },
 
