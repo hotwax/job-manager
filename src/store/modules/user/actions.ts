@@ -125,9 +125,14 @@ const actions: ActionTree<UserState, RootState> = {
         "noConditionFind": "Y",
         "fieldList": ["shopifyConfigId"]
       })
-
-      if (resp.status === 200 && !hasError(resp)) {
-        commit(types.USER_SHOPIFY_CONFIG_UPDATED, resp.data.docs?.length > 0 ? resp.data.docs[0].shopifyConfigId : {});
+      try {
+        if (resp.status === 200 && !hasError(resp) && resp.data?.docs) {
+          commit(types.USER_SHOPIFY_CONFIG_UPDATED, resp.data.docs?.length > 0 ? resp.data.docs[0].shopifyConfigId : {});
+        } else {
+          console.error(resp);
+        }
+      } catch (err) {
+        console.error(err);
       }
     }
   },
