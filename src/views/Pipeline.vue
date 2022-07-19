@@ -504,12 +504,12 @@ export default defineComponent({
       });
 
       popover.onDidDismiss().then((result) => {
-        const jobEnumId = result.data.systemJobEnumId;
+        const jobEnumId = result.data?.systemJobEnumId;
         if (jobEnumId && !this.getPinnedJobs.includes(jobEnumId)){
           this.updateSelectedPinnedJob(jobEnumId);
         }
       });
-        return popover.present()
+      return popover.present()
     },
     async cancelJob(job: any){
       const alert = await alertController
