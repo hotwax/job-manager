@@ -90,7 +90,7 @@
       </ion-item>
     </ion-list>
 
-    <ion-button size="small" fill="outline" expand="block" @click="runJob('Orders')">{{ $t("Run import") }}</ion-button>
+    <ion-button size="small" fill="outline" expand="block" :disabled="!lastShopifyOrderId" @click="runJob('Orders')">{{ $t("Run import") }}</ion-button>
   </section>
 </template>
 

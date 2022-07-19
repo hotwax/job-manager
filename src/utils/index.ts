@@ -131,4 +131,12 @@ const handleDateTimeInput = (dateTimeValue: any) => {
   return DateTime.fromISO(dateTime).toMillis()
 }
 
-export { handleDateTimeInput, showToast, hasError , parseCsv , jsonToCsv, JsonToCsvOption, isFutureDate }
+const prepareRuntime = (job: any) => {
+  if (job.frequency === 'EVERYDAY') {
+    return DateTime.now().startOf('day').toMillis()
+  } else {
+    return DateTime.now().toMillis()
+  }
+}
+
+export { handleDateTimeInput, showToast, hasError , parseCsv , jsonToCsv, JsonToCsvOption, isFutureDate, prepareRuntime }

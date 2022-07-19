@@ -38,6 +38,28 @@
 
           <ion-card>
             <ion-card-header>
+              <ion-card-title>{{ $t("Webhooks") }}</ion-card-title>
+            </ion-card-header>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("New orders") }}</ion-label>
+              <ion-toggle :checked="isNewOrders" @ionChange="updateWebhook($event['detail'].checked, 'NEW_ORDERS')" slot="end" color="secondary" />
+            </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("Cancelled orders") }}</ion-label>
+              <ion-toggle :checked="isCancelledOrders" @ionChange="updateWebhook($event['detail'].checked, 'CANCELLED_ORDERS')" slot="end" color="secondary" />
+            </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("Payment status") }}</ion-label>
+              <ion-toggle :checked="isPaymentStatus" @ionChange="updateWebhook($event['detail'].checked, 'PAYMENT_STATUS')" slot="end" color="secondary" />
+            </ion-item>
+            <ion-item lines="none">
+              <ion-label class="ion-text-wrap">{{ $t("Returns") }}</ion-label>
+              <ion-toggle :checked="isReturns" @ionChange="updateWebhook($event['detail'].checked, 'RETURNS')" slot="end" color="secondary" />
+            </ion-item>
+          </ion-card>
+
+          <ion-card>
+            <ion-card-header>
               <ion-card-title>{{ $t("Upload") }}</ion-card-title>
             </ion-card-header>
             <ion-item @click="viewJobConfiguration('UPLD_CMPLT_ORDRS', 'Completed orders', getJobStatus(this.jobEnums['UPLD_CMPLT_ORDRS']))" detail button>
@@ -159,7 +181,7 @@ import { useRouter } from 'vue-router'
 import { mapGetters } from "vuex";
 import JobConfiguration from '@/components/JobConfiguration.vue';
 import { DateTime } from 'luxon';
-import { hasError, isFutureDate, showToast } from '@/utils';
+import { hasError, isFutureDate, showToast, prepareRuntime } from '@/utils';
 import emitter from '@/event-bus';
 
 export default defineComponent({
@@ -192,6 +214,7 @@ export default defineComponent({
       jobEnums: JSON.parse(process.env?.VUE_APP_ODR_JOB_ENUMS as string) as any,
       batchJobEnums: JSON.parse(process.env?.VUE_APP_BATCH_JOB_ENUMS as string) as any,
       jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
+      webhookEnums: JSON.parse(process.env?.VUE_APP_WEBHOOK_ENUMS as string) as any,
       currentJob: '' as any,
       title: 'New orders',
       currentJobStatus: '',
@@ -207,7 +230,8 @@ export default defineComponent({
       orderBatchJobs: "job/getOrderBatchJobs",
       shopifyConfigId: 'user/getShopifyConfigId',
       currentEComStore: 'user/getCurrentEComStore',
-      getTemporalExpr: 'job/getTemporalExpr'
+      getTemporalExpr: 'job/getTemporalExpr',
+      getCachedWebhook: 'webhook/getCachedWebhook'
     }),
     promiseDateChanges(): boolean {
       const status = this.getJobStatus(this.jobEnums['NTS_PRMS_DT_CHNG']);
@@ -217,8 +241,39 @@ export default defineComponent({
       const status = this.getJobStatus(this.jobEnums["AUTO_CNCL_DAL"]);
       return status && status !== "SERVICE_DRAFT";
     },
+    isNewOrders(): boolean {
+      const webhookTopic = this.webhookEnums['NEW_ORDERS']
+      return this.getCachedWebhook[webhookTopic]
+    },
+    isCancelledOrders(): boolean {
+      const webhookTopic = this.webhookEnums['CANCELLED_ORDERS']
+      return this.getCachedWebhook[webhookTopic]
+    },
+    isPaymentStatus(): boolean {
+      const webhookTopic = this.webhookEnums['PAYMENT_STATUS']
+      return this.getCachedWebhook[webhookTopic]
+    },
+    isReturns(): boolean {
+      const webhookTopic = this.webhookEnums['RETURNS']
+      return this.getCachedWebhook[webhookTopic]
+    },
   },
-  methods: {  
+  methods: {
+    async updateWebhook(checked: boolean, enumId: string) {
+      const webhook = this.getCachedWebhook[this.webhookEnums[enumId]]
+
+      // TODO: added this condition to not call the api when the value of the select automatically changes
+      // need to handle this properly
+      if ((checked && webhook) || (!checked && !webhook)) {
+        return;
+      }
+
+      if (checked) {
+        await this.store.dispatch('webhook/subscribeWebhook', enumId)
+      } else {
+        await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhook?.id, shopifyConfigId: this.shopifyConfigId })
+      }
+    },
     async addBatch() {
       const batchmodal = await modalController.create({
         component: BatchModal
@@ -300,6 +355,7 @@ export default defineComponent({
       if (!checked) {
         this.store.dispatch('job/cancelJob', job)
       } else if (job?.status === 'SERVICE_DRAFT') {
+        job.runTime = prepareRuntime(job)
         this.store.dispatch('job/scheduleService', job)
       } else if (job?.status === 'SERVICE_PENDING') {
         this.store.dispatch('job/updateJob', job)
@@ -368,6 +424,7 @@ export default defineComponent({
         "systemJobEnumId_op": "in"
       }
     });
+    this.store.dispatch('webhook/fetchWebhooks')
   },
   setup() {
     const store = useStore();

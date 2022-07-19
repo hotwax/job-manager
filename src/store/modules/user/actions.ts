@@ -19,7 +19,6 @@ const actions: ActionTree<UserState, RootState> = {
         if (resp.data.token) {
             commit(types.USER_TOKEN_CHANGED, { newToken: resp.data.token })
             await dispatch('getProfile')
-            dispatch('getShopifyConfig')
             return resp.data;
         } else if (hasError(resp)) {
           showToast(translate('Sorry, your username or password is incorrect. Please try again.'));
@@ -73,6 +72,10 @@ const actions: ActionTree<UserState, RootState> = {
           }
         ]
       })
+      const currentProductStoreId = resp.data?.stores[0].productStoreId;
+      if (currentProductStoreId) {
+        dispatch('getShopifyConfig', currentProductStoreId);
+      }
 
       this.dispatch('util/getServiceStatusDesc')
       if (resp.data.userTimeZone) {
@@ -94,6 +97,7 @@ const actions: ActionTree<UserState, RootState> = {
   async setEcomStore({ commit, dispatch }, payload) {
     dispatch('job/clearJobState', null, { root: true });
     commit(types.USER_CURRENT_ECOM_STORE_UPDATED, payload.eComStore);
+    dispatch('getShopifyConfig', payload.eComStore.productStoreId);
     await UserService.setUserPreference({
       'userPrefTypeId': 'SELECTED_BRAND',
       'userPrefValue': payload.eComStore.productStoreId
@@ -120,14 +124,31 @@ const actions: ActionTree<UserState, RootState> = {
     commit(types.USER_INSTANCE_URL_UPDATED, payload)
   },
 
-  async getShopifyConfig({ commit }) {
-    const resp = await UserService.getShopifyConfig({
-      "entityName": "ShopifyConfig",
-      "noConditionFind": "Y"
-    })
-
-    if (resp.status === 200 && !hasError(resp)) {
-      commit(types.USER_SHOPIFY_CONFIG_UPDATED, resp.data.docs?.length > 0 ? resp.data.docs[0].shopifyConfigId : {});
+  async getShopifyConfig({ commit }, productStoreId) {
+    if (productStoreId) { 
+      let resp;
+      const payload = {
+        "inputFields": {
+          "productStoreId": productStoreId,
+        },
+        "entityName": "ShopifyConfig",
+        "noConditionFind": "Y",
+        "fieldList": ["shopifyConfigId"]
+      }
+      try {
+        resp = await UserService.getShopifyConfig(payload);
+        if (resp.status === 200 && !hasError(resp) && resp.data?.docs) {
+          commit(types.USER_SHOPIFY_CONFIG_UPDATED, resp.data.docs?.length > 0 ? resp.data.docs[0].shopifyConfigId : "");
+        } else {
+          console.error(resp);
+          commit(types.USER_SHOPIFY_CONFIG_UPDATED, "");
+        }
+      } catch (err) {
+        console.error(err);
+        commit(types.USER_SHOPIFY_CONFIG_UPDATED, "");
+      }
+    } else {
+      commit(types.USER_SHOPIFY_CONFIG_UPDATED, "");
     }
   },
 
