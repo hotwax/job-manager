@@ -339,6 +339,12 @@ export default defineComponent({
     async updateJob(checked: boolean, id: string, status = 'EVERY_15_MIN') {
       const job = this.getJob(id);
 
+      // added check that if the job is not present, then display a toast and then return
+      if (!job) {
+        showToast(translate('Configuration missing'))
+        return;
+      }
+
       // TODO: added this condition to not call the api when the value of the select automatically changes
       // need to handle this properly
       if (!job || (checked && job?.status === 'SERVICE_PENDING') || (!checked && job?.status === 'SERVICE_DRAFT')) {
