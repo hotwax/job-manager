@@ -81,7 +81,12 @@ const actions: ActionTree<UserState, RootState> = {
       if (resp.data.userTimeZone) {
         Settings.defaultZone = resp.data.userTimeZone;
       }
-      commit(types.USER_CURRENT_ECOM_STORE_UPDATED, resp.data?.stores[0]);
+      const userPref =  await UserService.getUserPreference({
+        'userPrefTypeId': 'SELECTED_BRAND'
+      });
+      const stores = resp.data.stores
+      const userPrefStore = stores.find((store: any) => store.productStoreId === userPref.data.userPrefValue)
+      commit(types.USER_CURRENT_ECOM_STORE_UPDATED, userPrefStore ? userPrefStore : stores ? stores[0]: {});
       commit(types.USER_INFO_UPDATED, resp.data);
     }
   },
@@ -93,6 +98,10 @@ const actions: ActionTree<UserState, RootState> = {
     dispatch('job/clearJobState', null, { root: true });
     commit(types.USER_CURRENT_ECOM_STORE_UPDATED, payload.eComStore);
     dispatch('getShopifyConfig', payload.eComStore.productStoreId);
+    await UserService.setUserPreference({
+      'userPrefTypeId': 'SELECTED_BRAND',
+      'userPrefValue': payload.eComStore.productStoreId
+    });
   },
   /**
    * Update user timeZone
