@@ -62,9 +62,10 @@ import {
 import { defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
 import JobConfiguration from '@/components/JobConfiguration.vue'
-import { isFutureDate, prepareRuntime } from '@/utils';
+import { isFutureDate, prepareRuntime, showToast } from '@/utils';
 import emitter from '@/event-bus';
 import { useRouter } from 'vue-router'
+import { translate } from '@/i18n';
 
 export default defineComponent({
   name: 'Inventory',
@@ -111,6 +112,12 @@ export default defineComponent({
   methods: {
     async updateJob(checked: boolean, id: string, status="EVERY_15_MIN") {
       const job = this.getJob(id);
+
+      // added check that if the job is not present, then display a toast and then return
+      if (!job) {
+        showToast(translate('Configuration missing'))
+        return;
+      }
 
       // TODO: added this condition to not call the api when the value of the select automatically changes
       // need to handle this properly
