@@ -142,7 +142,7 @@ import { mapGetters } from "vuex";
 import { useRouter } from 'vue-router'
 import { alertController } from '@ionic/vue';
 import JobConfiguration from '@/components/JobConfiguration.vue'
-import { isFutureDate, prepareRuntime, showToast } from '@/utils';
+import { isFutureDate, showToast } from '@/utils';
 import emitter from '@/event-bus';
 import { translate } from '@/i18n';
 
@@ -263,7 +263,6 @@ export default defineComponent({
       if (!checked) {
         this.store.dispatch('job/cancelJob', job)
       } else if (job?.status === 'SERVICE_DRAFT') {
-        job.runTime = prepareRuntime(job)
         this.store.dispatch('job/scheduleService', job)
       } else if (job?.status === 'SERVICE_PENDING') {
         this.store.dispatch('job/updateJob', job)
