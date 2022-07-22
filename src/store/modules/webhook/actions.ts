@@ -40,7 +40,7 @@ const actions: ActionTree<WebhookState, RootState> = {
 
     try {
       resp = await WebhookService.subscribeWebhook({ shopifyConfigId: this.state.user.shopifyConfig }, id)
-    
+
       if (resp.status == 200 && !hasError(resp)) {
         showToast(translate('Webhook subscribed successfully'))
       } else {
