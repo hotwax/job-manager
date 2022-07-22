@@ -502,6 +502,14 @@ export default defineComponent({
         event: ev,
         componentProps: { job }
       });
+
+      popover.onDidDismiss().then((result) => {
+        const jobEnumId = result.data?.systemJobEnumId;
+        // if pinnedJob does not contain jobEnumId, removing job from SelectedPinnedJob
+        if (jobEnumId && !this.getPinnedJobs.includes(jobEnumId)){
+          this.updateSelectedPinnedJob(jobEnumId);
+        }
+      });
       return popover.present()
     },
     async cancelJob(job: any){
@@ -570,12 +578,8 @@ export default defineComponent({
     // state does not gets updated and hence the job configuration component takes it space in DOM
     await this.store.dispatch('job/updateCurrentJob', { job: {} });
   },
-  mounted(){
-    emitter.on("pinnedJobsUpdated", (this as any).updateSelectedPinnedJob);
-  },
   unmounted(){
     emitter.off('jobUpdated', this.updateJobs);
-    emitter.off("pinnedJobsUpdated", (this as any).updateSelectedPinnedJob);
   },
   setup() {
     const router = useRouter();

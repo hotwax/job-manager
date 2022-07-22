@@ -34,7 +34,6 @@ import { mapGetters, useStore } from 'vuex'
 import JobHistoryModal from '@/components/JobHistoryModal.vue'
 import { Plugins } from '@capacitor/core';
 import { showToast } from '@/utils'
-import emitter from "@/event-bus"
 
 export default defineComponent({
   name: "JobActionsPopover",
@@ -54,8 +53,10 @@ export default defineComponent({
     })
   },
   methods: {
-    closePopover() {
-      popoverController.dismiss({ dismissed: true });
+    closePopover(enumId?: any) {
+      popoverController.dismiss({
+        systemJobEnumId: enumId
+      });
     },
     async copyJobInformation(job: any) {
       const { Clipboard } = Plugins;
@@ -83,12 +84,11 @@ export default defineComponent({
       if(pinnedJobs.has(enumId)) {
         pinnedJobs.delete(enumId);
         await this.store.dispatch('user/updatePinnedJobs', { pinnedJobs: [...pinnedJobs] });
-        emitter.emit("pinnedJobsUpdated", enumId);
       } else {
         pinnedJobs.add(enumId);
         await this.store.dispatch('user/updatePinnedJobs', { pinnedJobs: [...pinnedJobs] });
       }
-      this.closePopover();
+      this.closePopover(enumId);
     }
   },
   setup() {
