@@ -505,6 +505,7 @@ export default defineComponent({
 
       popover.onDidDismiss().then((result) => {
         const jobEnumId = result.data?.systemJobEnumId;
+        // if pinnedJob does not contain jobEnumId, removing job from SelectedPinnedJob
         if (jobEnumId && !this.getPinnedJobs.includes(jobEnumId)){
           this.updateSelectedPinnedJob(jobEnumId);
         }
