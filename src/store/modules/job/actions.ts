@@ -520,7 +520,7 @@ const actions: ActionTree<JobState, RootState> = {
     return resp;
   },
 
-  async runServiceNow({ dispatch, rootGetters }, job) {
+  async runServiceNow({ dispatch }, job) {
     let resp;
 
     const payload = {
@@ -535,7 +535,7 @@ const actions: ActionTree<JobState, RootState> = {
         'parentJobId': job.parentJobId,
         'recurrenceTimeZone': this.state.user.current.userTimeZone
       },
-      'shopifyConfigId': rootGetters['user/getShopifyConfigId'],
+      'shopifyConfigId': this.state.user.shopifyConfig,
       'statusId': "SERVICE_PENDING",
       'systemJobEnumId': job.systemJobEnumId
     } as any
