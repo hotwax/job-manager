@@ -7,8 +7,8 @@ import * as types from './mutations-types'
 import { translate } from '@/i18n'
 
 const actions: ActionTree<WebhookState, RootState> = {
-  async fetchWebhooks({ commit }) {
-    await WebhookService.fetchShopifyWebhooks({ shopifyConfigId: this.state.user.shopifyConfig }).then(resp => {
+  async fetchWebhooks({ commit, rootGetters }) {
+    await WebhookService.fetchShopifyWebhooks({ shopifyConfigId: rootGetters['user/getShopifyConfigId'] }).then(resp => {
       if (resp.status == 200 && resp.data.webhooks?.length > 0 && !hasError(resp)) {
         const webhooks = resp.data.webhooks;
         const topics: any = {}
@@ -35,7 +35,7 @@ const actions: ActionTree<WebhookState, RootState> = {
       dispatch('fetchWebhooks')
     }
   },
-  async subscribeWebhook({ dispatch }, id: string) {
+  async subscribeWebhook({ dispatch, rootGetters }, id: string) {
 
     // stores the webhook service that needs to be called on the basis of current webhook selected, doing
     // so as we have defined separate service for different webhook subscription
@@ -58,7 +58,7 @@ const actions: ActionTree<WebhookState, RootState> = {
     let resp;
 
     try {
-      resp = await webhookMethod({ shopifyConfigId: this.state.user.shopifyConfig })
+      resp = await webhookMethod({ shopifyConfigId: rootGetters['user/getShopifyConfigId'] })
 
       if (resp.status == 200 && !hasError(resp)) {
         showToast(translate('Webhook subscribed successfully'))
