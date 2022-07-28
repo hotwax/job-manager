@@ -398,7 +398,7 @@ const actions: ActionTree<JobState, RootState> = {
     return resp;
   },
 
-  async scheduleService({ dispatch, commit, rootGetters }, job) {
+  async scheduleService({ dispatch, commit }, job) {
     let resp;
 
     const payload = {
@@ -416,7 +416,7 @@ const actions: ActionTree<JobState, RootState> = {
         'runAsUser': 'system', //default system, but empty in run now.  TODO Need to remove this as we are using SERVICE_RUN_AS_SYSTEM, currently kept it for backward compatibility
         'recurrenceTimeZone': this.state.user.current.userTimeZone
       },
-      'shopifyConfigId': rootGetters['user/getShopifyConfigId'],
+      'shopifyConfigId': this.state.user.shopifyConfigId,
       'statusId': "SERVICE_PENDING",
       'systemJobEnumId': job.systemJobEnumId
     } as any
@@ -520,7 +520,7 @@ const actions: ActionTree<JobState, RootState> = {
     return resp;
   },
 
-  async runServiceNow({ dispatch, rootGetters }, job) {
+  async runServiceNow({ dispatch }, job) {
     let resp;
 
     const payload = {
@@ -535,7 +535,7 @@ const actions: ActionTree<JobState, RootState> = {
         'parentJobId': job.parentJobId,
         'recurrenceTimeZone': this.state.user.current.userTimeZone
       },
-      'shopifyConfigId': rootGetters['user/getShopifyConfigId'],
+      'shopifyConfigId': this.state.user.shopifyConfigId,
       'statusId': "SERVICE_PENDING",
       'systemJobEnumId': job.systemJobEnumId
     } as any
