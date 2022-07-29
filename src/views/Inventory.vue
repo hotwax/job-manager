@@ -121,7 +121,7 @@ export default defineComponent({
 
       // TODO: added this condition to not call the api when the value of the select automatically changes
       // need to handle this properly
-      if (!job || (checked && job?.status === 'SERVICE_PENDING') || (!checked && job?.status === 'SERVICE_DRAFT')) {
+      if ((checked && job?.status === 'SERVICE_PENDING') || (!checked && job?.status === 'SERVICE_DRAFT')) {
         return;
       }
 
