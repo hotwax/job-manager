@@ -119,22 +119,24 @@
               </ion-button>
             </ion-item-divider>
 
-            <ion-item-sliding v-for="batch in orderBatchJobs" :key="batch?.id" detail v-show="batch?.status === 'SERVICE_PENDING'">
-              <ion-item @click="editBatch(batch.id, batch.systemJobEnumId)" button>
-                <ion-label class="ion-text-wrap">{{ batch?.jobName }}</ion-label>
-                <ion-note slot="end">{{ batch?.runTime ? getTime(batch.runTime) : '' }}</ion-note>
-              </ion-item>
-              <ion-item-options side="start">
-                <ion-item-option @click="skipBatch(batch)" color="secondary">
-                  <ion-icon slot="icon-only" :icon="arrowRedoOutline" />
-                </ion-item-option>
-              </ion-item-options>
-              <ion-item-options side="end">
-                <ion-item-option @click="deleteBatch(batch)" color="danger">
-                  <ion-icon slot="icon-only" :icon="trash" />
-                </ion-item-option>
-              </ion-item-options>
-            </ion-item-sliding>
+            <ion-list ref="slidingOptions">
+              <ion-item-sliding v-for="batch in orderBatchJobs" :key="batch?.id" detail v-show="batch?.status === 'SERVICE_PENDING'">
+                <ion-item @click="editBatch(batch.id, batch.systemJobEnumId)" button>
+                  <ion-label class="ion-text-wrap">{{ batch?.jobName }}</ion-label>
+                  <ion-note slot="end">{{ batch?.runTime ? getTime(batch.runTime) : '' }}</ion-note>
+                </ion-item>
+                <ion-item-options side="start">
+                  <ion-item-option @click="skipBatch(batch)" color="secondary">
+                    <ion-icon slot="icon-only" :icon="arrowRedoOutline" />
+                  </ion-item-option>
+                </ion-item-options>
+                <ion-item-options side="end">
+                  <ion-item-option @click="deleteBatch(batch)" color="danger">
+                    <ion-icon slot="icon-only" :icon="trash" />
+                  </ion-item-option>
+                </ion-item-options>
+              </ion-item-sliding>
+            </ion-list>
           </ion-card>
         </section>
 
@@ -161,6 +163,7 @@ import {
   IonItemDivider,
   IonItemSliding,
   IonLabel,
+  IonList,
   IonMenuButton,
   IonNote,
   IonItemOption,
@@ -199,6 +202,7 @@ export default defineComponent({
     IonItemSliding,
     IonItemDivider,
     IonLabel,
+    IonList,
     IonMenuButton,
     IonNote,
     IonItemOption,
@@ -326,7 +330,8 @@ export default defineComponent({
                   } else {
                     showToast(translate("This job schedule cannot be skipped"));
                   }
-                })
+                });
+                (this as any).$refs.slidingOptions.$el.closeSlidingItems();
               },
             }
           ]
