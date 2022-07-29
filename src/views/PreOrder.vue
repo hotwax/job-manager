@@ -31,6 +31,10 @@
               <ion-checkbox slot="end" :checked="addPreOrderShippingDateInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_PRODR_SHPG_DTE_SHPFY'])"/>
             </ion-item>
             <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("Update shipping dates in Shopify") }}</ion-label>
+              <ion-checkbox slot="end" :checked="updatePreOrderShippingDateInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['JOB_UPD_PREORD_SKU'])"/>
+            </ion-item>
+            <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Remove shipping dates in Shopify") }}</ion-label>
               <ion-checkbox slot="end" :checked="removePreOrderShippingDateInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['REMV_PRODR_SHPG_DTE_SHPFY'])"/>
             </ion-item>
@@ -60,6 +64,10 @@
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Add shipping dates in Shopify") }}</ion-label>
               <ion-checkbox slot="end" :checked="addBackOrderShippingDateInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_BACKODR_SHPG_DTE_SHPFY'])"/>
+            </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("Update shipping dates in Shopify") }}</ion-label>
+              <ion-checkbox slot="end" :checked="updateBackOrderShippingDateInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['JOB_UPD_BACKORD_SKU'])"/>
             </ion-item>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Remove shipping dates in Shopify") }}</ion-label>
@@ -134,8 +142,9 @@ import { mapGetters } from "vuex";
 import { useRouter } from 'vue-router'
 import { alertController } from '@ionic/vue';
 import JobConfiguration from '@/components/JobConfiguration.vue'
-import { isFutureDate, prepareRuntime } from '@/utils';
+import { isFutureDate, showToast } from '@/utils';
 import emitter from '@/event-bus';
+import { translate } from '@/i18n';
 
 export default defineComponent({
   name: 'PreOrder',
@@ -179,6 +188,10 @@ export default defineComponent({
       const status = this.getJobStatus(this.jobEnums["ADD_PRODR_SHPG_DTE_SHPFY"]);
       return status && status !== "SERVICE_DRAFT";
     },
+    updatePreOrderShippingDateInShopify(): boolean {
+      const status = this.getJobStatus(this.jobEnums["JOB_UPD_PREORD_SKU"]);
+      return status && status !== "SERVICE_DRAFT";
+    },
     removePreOrderShippingDateInShopify(): boolean {
       const status = this.getJobStatus(this.jobEnums["REMV_PRODR_SHPG_DTE_SHPFY"]);
       return status && status !== "SERVICE_DRAFT";
@@ -197,6 +210,10 @@ export default defineComponent({
     },
     addBackOrderShippingDateInShopify(): boolean {
       const status = this.getJobStatus(this.jobEnums["ADD_BACKODR_SHPG_DTE_SHPFY"]);
+      return status && status !== "SERVICE_DRAFT";
+    },
+    updateBackOrderShippingDateInShopify(): boolean {
+      const status = this.getJobStatus(this.jobEnums["JOB_UPD_BACKORD_SKU"]);
       return status && status !== "SERVICE_DRAFT";
     },
     removeBackOrderShippingDateInShopify(): boolean {
@@ -224,9 +241,15 @@ export default defineComponent({
     async updateJob(checked: boolean, id: string, status = 'EVERY_15_MIN') {
       const job = this.getJob(id);
 
+      // added check that if the job is not present, then display a toast and then return
+      if (!job) {
+        showToast(translate('Configuration missing'))
+        return;
+      }
+
       // TODO: added this condition to not call the api when the value of the select automatically changes
       // need to handle this properly
-      if (!job || (checked && job?.status === 'SERVICE_PENDING') || (!checked && job?.status === 'SERVICE_DRAFT')) {
+      if ((checked && job?.status === 'SERVICE_PENDING') || (!checked && job?.status === 'SERVICE_DRAFT')) {
         return;
       }
 
@@ -240,7 +263,6 @@ export default defineComponent({
       if (!checked) {
         this.store.dispatch('job/cancelJob', job)
       } else if (job?.status === 'SERVICE_DRAFT') {
-        job.runTime = prepareRuntime(job)
         this.store.dispatch('job/scheduleService', job)
       } else if (job?.status === 'SERVICE_PENDING') {
         this.store.dispatch('job/updateJob', job)
