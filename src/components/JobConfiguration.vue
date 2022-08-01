@@ -9,7 +9,7 @@
 
       <ion-item lines="none">
         <ion-label class="ion-text-wrap">
-            <p>{{ getEnumDescription(currentJob.systemJobEnumId) }}</p>
+            <p>{{ currentJob.description }}</p>
         </ion-label>
       </ion-item>
 
@@ -132,7 +132,6 @@ export default defineComponent({
       shopifyConfigId: 'user/getShopifyConfigId',
       currentEComStore: 'user/getCurrentEComStore',
       currentJob: 'job/getCurrentJob',
-      getEnumDescription: 'job/getEnumDescription'
     }),
     generateFrequencyOptions(): any {
       const optionDefault = [{
