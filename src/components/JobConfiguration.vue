@@ -7,6 +7,12 @@
 
     <ion-list>
 
+      <ion-item lines="none">
+        <ion-label class="ion-text-wrap">
+            <p>{{ getEnumDescription(currentJob.systemJobEnumId) }}</p>
+        </ion-label>
+      </ion-item>
+
       <ion-item>
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
@@ -126,6 +132,7 @@ export default defineComponent({
       shopifyConfigId: 'user/getShopifyConfigId',
       currentEComStore: 'user/getCurrentEComStore',
       currentJob: 'job/getCurrentJob',
+      getEnumDescription: 'job/getEnumDescription'
     }),
     generateFrequencyOptions(): any {
       const optionDefault = [{
