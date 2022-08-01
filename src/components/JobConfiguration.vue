@@ -9,7 +9,7 @@
 
       <ion-item lines="none">
         <ion-label class="ion-text-wrap">
-            <p>{{ currentJob.description }}</p>
+          <p>{{ currentJob.description }}</p>
         </ion-label>
       </ion-item>
 
