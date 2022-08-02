@@ -10,9 +10,13 @@
         <ion-icon slot="start" :icon="copyOutline" />
         {{ $t("Copy details") }}
       </ion-item>
-      <ion-item @click="updatePinnedJobs(job?.systemJobEnumId)" lines="none" button>
+      <ion-item @click="updatePinnedJobs(job?.systemJobEnumId)" button>
         <ion-icon slot="start" :icon="pinOutline" />
         {{ $t("Pin job") }}
+      </ion-item>
+      <ion-item @click="updatePinnedJobs(job?.systemJobEnumId)" lines="none" button>
+        <ion-icon slot="start" :icon="flashOutline" />
+        {{ $t("Run now") }}
       </ion-item>      
     </ion-list>
   </ion-content>
@@ -29,7 +33,7 @@ import {
   popoverController
 } from "@ionic/vue";
 import { defineComponent } from "vue";
-import { copyOutline, pinOutline, timeOutline  } from 'ionicons/icons'
+import { copyOutline, flashOutline, pinOutline, timeOutline  } from 'ionicons/icons'
 import { mapGetters, useStore } from 'vuex'
 import JobHistoryModal from '@/components/JobHistoryModal.vue'
 import { Plugins } from '@capacitor/core';
@@ -97,6 +101,7 @@ export default defineComponent({
     return {
       copyOutline, 
       pinOutline,
+      flashOutline,
       store, 
       timeOutline  
     }
