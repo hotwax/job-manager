@@ -14,7 +14,7 @@
         <ion-icon slot="start" :icon="pinOutline" />
         {{ $t("Pin job") }}
       </ion-item>
-      <ion-item @click="updatePinnedJobs(job?.systemJobEnumId)" lines="none" button>
+      <ion-item @click="runJobNow(job)" lines="none" button>
         <ion-icon slot="start" :icon="flashOutline" />
         {{ $t("Run now") }}
       </ion-item>      
@@ -91,6 +91,19 @@ export default defineComponent({
       } else {
         pinnedJobs.add(enumId);
         await this.store.dispatch('user/updatePinnedJobs', { pinnedJobs: [...pinnedJobs] });
+      }
+      this.closePopover();
+    },
+    async runJobNow(job: any) {
+      if(job) {
+        const { Clipboard } = Plugins;
+        const jobDetails = `jobId: ${job.jobId}, jobName: ${this.getEnumName(job.systemJobEnumId)}, jobDescription: ${this.getEnumDescription(job.systemJobEnumId)}`;
+
+        await Clipboard.write({
+          string: jobDetails
+        }).then(() => {
+          this.store.dispatch('job/runServiceNow', job)
+        })
       }
       this.closePopover();
     }
