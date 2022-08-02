@@ -46,7 +46,6 @@ const actions: ActionTree<JobState, RootState> = {
         "systemJobEnumId_op": "not-empty"
       } as any,
       "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId", "cancelDateTime", "finishDateTime", "startDateTime" ],
-      "entityName": "JobSandbox",
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
@@ -121,7 +120,6 @@ const actions: ActionTree<JobState, RootState> = {
         "statusId_fld1_grp": "2",
       } as any,
       "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId" ],
-      "entityName": "JobSandbox",
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
@@ -190,7 +188,6 @@ const actions: ActionTree<JobState, RootState> = {
         "systemJobEnumId_op": "not-empty"
       } as any,
       "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId" ],
-      "entityName": "JobSandbox",
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
@@ -290,7 +287,6 @@ const actions: ActionTree<JobState, RootState> = {
         "productStoreId_fld0_grp": "2",
         ...payload.inputFields
       },
-      "entityName": "JobSandbox",
       "noConditionFind": "Y",
       "viewSize": (payload.inputFields?.systemJobEnumId?.length * 3)
     } as any
