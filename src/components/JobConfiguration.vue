@@ -7,6 +7,12 @@
 
     <ion-list>
 
+      <ion-item lines="none">
+        <ion-label class="ion-text-wrap">
+            <p>{{ currentJob.description }}</p>
+        </ion-label>
+      </ion-item>
+
       <ion-item>
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
