@@ -1,4 +1,6 @@
 import api from '@/api'
+import { showToast } from '@/utils';
+import { translate } from "@/i18n";
 
 const fetchShopifyWebhooks = async (payload?:  any): Promise <any>  => {
   return api({
@@ -21,11 +23,16 @@ const webhookMethods = {
 
 const subscribeWebhook = async (payload?: any, id?: string): Promise <any> => {
   const endpointUrl = webhookMethods[id as string];
-  return api ({
-    url: endpointUrl ? endpointUrl : '',
-    method: 'post',
-    data: payload
-  })
+  if(!endpointUrl) {
+    showToast(translate("Configuration missing"));
+    return;
+  } else {
+    return api ({
+      url: endpointUrl ? endpointUrl : '',
+      method: 'post',
+      data: payload
+    })
+  }
 }
 
 const unsubscribeWebhook = async (payload?: any): Promise <any> => {
