@@ -11,7 +11,7 @@ const fetchShopifyWebhooks = async (payload?:  any): Promise <any>  => {
 }
 
 // TODO: add the service endpoint for the new order webhook, cancelled order webhook, payment status webhook, order return webhook & new product webhook.
-const webhookMethods = {
+const webhookEndpointUrls = {
   'NEW_ORDERS': '',
   'CANCELLED_ORDERS': '',
   'PAYMENT_STATUS': '',
@@ -22,7 +22,7 @@ const webhookMethods = {
 } as any
 
 const subscribeWebhook = async (payload?: any, id?: string): Promise <any> => {
-  const endpointUrl = webhookMethods[id as string];
+  const endpointUrl = webhookEndpointUrls[id as string];
   if(!endpointUrl) {
     showToast(translate("Configuration missing"));
     return;
