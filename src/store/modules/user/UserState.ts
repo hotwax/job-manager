@@ -3,5 +3,5 @@ export default interface UserState {
     current: object | null;
     currentEComStore: object;
     instanceUrl: string;
-    shopifyConfig: object;
+    shopifyConfigId: string;
 }

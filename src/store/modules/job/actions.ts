@@ -46,7 +46,6 @@ const actions: ActionTree<JobState, RootState> = {
         "systemJobEnumId_op": "not-empty"
       } as any,
       "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId", "cancelDateTime", "finishDateTime", "startDateTime" ],
-      "entityName": "JobSandbox",
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
@@ -121,7 +120,6 @@ const actions: ActionTree<JobState, RootState> = {
         "statusId_fld1_grp": "2",
       } as any,
       "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId" ],
-      "entityName": "JobSandbox",
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
@@ -190,7 +188,6 @@ const actions: ActionTree<JobState, RootState> = {
         "systemJobEnumId_op": "not-empty"
       } as any,
       "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId" ],
-      "entityName": "JobSandbox",
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
@@ -290,7 +287,6 @@ const actions: ActionTree<JobState, RootState> = {
         "productStoreId_fld0_grp": "2",
         ...payload.inputFields
       },
-      "entityName": "JobSandbox",
       "noConditionFind": "Y",
       "viewSize": (payload.inputFields?.systemJobEnumId?.length * 3)
     } as any
@@ -416,7 +412,7 @@ const actions: ActionTree<JobState, RootState> = {
         'runAsUser': 'system', //default system, but empty in run now.  TODO Need to remove this as we are using SERVICE_RUN_AS_SYSTEM, currently kept it for backward compatibility
         'recurrenceTimeZone': this.state.user.current.userTimeZone
       },
-      'shopifyConfigId': this.state.user.shopifyConfig,
+      'shopifyConfigId': this.state.user.shopifyConfigId,
       'statusId': "SERVICE_PENDING",
       'systemJobEnumId': job.systemJobEnumId
     } as any
@@ -425,6 +421,11 @@ const actions: ActionTree<JobState, RootState> = {
     job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.state.user.currentEComStore.productStoreId)
     job?.priority && (payload['SERVICE_PRIORITY'] = job.priority.toString())
     job?.runTime && (payload['SERVICE_TIME'] = job.runTime.toString())
+
+    // assigning '' (empty string) to all the runtimeData properties whose value is "null"
+    job.runtimeData && Object.keys(job.runtimeData).map((key: any) => {
+      if (job.runtimeData[key] === 'null' ) job.runtimeData[key] = ''
+    })
 
     try {
       resp = await JobService.scheduleJob({ ...job.runtimeData, ...payload });
@@ -530,7 +531,7 @@ const actions: ActionTree<JobState, RootState> = {
         'parentJobId': job.parentJobId,
         'recurrenceTimeZone': this.state.user.current.userTimeZone
       },
-      'shopifyConfigId': this.state.user.shopifyConfig,
+      'shopifyConfigId': this.state.user.shopifyConfigId,
       'statusId': "SERVICE_PENDING",
       'systemJobEnumId': job.systemJobEnumId
     } as any
@@ -540,6 +541,11 @@ const actions: ActionTree<JobState, RootState> = {
     job?.priority && (payload['SERVICE_PRIORITY'] = job.priority.toString())
     job?.sinceId && (payload['sinceId'] = job.sinceId)
     job?.runTime && (payload['SERVICE_TIME'] = job.runTime.toString())
+
+    // assigning '' (empty string) to all the runtimeData properties whose value is "null"
+    job.runtimeData && Object.keys(job.runtimeData).map((key: any) => {
+      if (job.runtimeData[key] === 'null' ) job.runtimeData[key] = ''
+    })
 
     try {
       resp = await JobService.scheduleJob({ ...job.runtimeData, ...payload });
@@ -637,7 +643,6 @@ const actions: ActionTree<JobState, RootState> = {
         } as any,
         "viewSize": 1,
         "fieldList": ["systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId"],
-        "entityName": "JobSandbox",
         "noConditionFind": "Y"
       }
       resp = await JobService.fetchJobInformation(params);
