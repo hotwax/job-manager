@@ -96,14 +96,7 @@ export default defineComponent({
     },
     async runJobNow(job: any) {
       if(job) {
-        const { Clipboard } = Plugins;
-        const jobDetails = `jobId: ${job.jobId}, jobName: ${this.getEnumName(job.systemJobEnumId)}, jobDescription: ${this.getEnumDescription(job.systemJobEnumId)}`;
-
-        await Clipboard.write({
-          string: jobDetails
-        }).then(() => {
-          this.store.dispatch('job/runServiceNow', job)
-        })
+        await this.store.dispatch('job/runServiceNow', job)
       }
       this.closePopover();
     }
