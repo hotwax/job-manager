@@ -28,7 +28,7 @@ const subscribeWebhook = async (payload?: any, id?: string): Promise <any> => {
     return;
   } else {
     return api ({
-      url: endpointUrl ? endpointUrl : '',
+      url: endpointUrl,
       method: 'post',
       data: payload
     })
