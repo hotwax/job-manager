@@ -70,37 +70,31 @@
       <ion-button expand="block" @click="saveChanges()">{{ $t("Save changes") }}</ion-button>
     </div>
   </section>
-  <ion-list class="row">
-    <ion-item class="column" slot="start" @click="viewJobHistory(currentJob)" button>
+  <div class="job-actions">
+    <ion-item slot="start" @click="viewJobHistory(currentJob)" button>
       <ion-icon slot="start" :icon="timeOutline" />
       {{ $t("History") }}
     </ion-item>
-
-    <ion-item class="column" slot="end" @click="runNow(title, currentJob)" button>
+    <ion-item slot="end" @click="runNow(title, currentJob)" button>
       <ion-icon slot="start" :icon="flashOutline" />
       {{ $t("Run now") }}
     </ion-item>
-  </ion-list>
-
-  <ion-list class="row">
-    <ion-item class="column" slot="start" @click="copyJobInformation(currentJob)" button>
+    <ion-item slot="start" @click="copyJobInformation(currentJob)" button>
       <ion-icon slot="start"  :icon="copyOutline" />
       {{ $t("Copy details") }}
     </ion-item>
-
-    <ion-item class="column" slot="end" @click="updatePinnedJobs(currentJob?.systemJobEnumId)" button>
+    <ion-item slot="end" @click="updatePinnedJobs(currentJob?.systemJobEnumId)" button>
       <ion-icon slot="start" :icon="pinOutline" />
       {{ $t("Pin job") }}
       <ion-checkbox :checked="getPinnedJobs.includes(currentJob.systemJobEnumId)" slot="end"></ion-checkbox>
     </ion-item>
-  </ion-list>
+  </div>
 
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
 import {
-  alertController,
   IonBadge,
   IonButton,
   IonCheckbox,
@@ -113,6 +107,7 @@ import {
   IonModal,
   IonSelect,
   IonSelectOption,
+  alertController,
   modalController,
 } from "@ionic/vue";
 import {
@@ -403,13 +398,6 @@ ion-list {
   margin: var(--spacer-base) 0;
 }
 
-.row {
-  display: flex;
-}
-.column {
-  flex: 50%;
-}
-
 .actions > ion-button {
   margin: var(--spacer-sm);
 }
@@ -428,7 +416,19 @@ ion-list {
 
   .mobile-only {
     display: none;
-  }  
+  }
+  .job-actions {
+  margin-top: var(--spacer-sm);
+  row-gap: var(--spacer-sm);
+  display: flex;
+  flex-wrap: wrap;
+}
+.job-actions > ion-item {
+  flex-basis: 50%;
+}
+.job-actions > ion-item > ion-checkbox{
+ margin: unset;
+}
 }
 
 ion-label:nth-child(3) {
