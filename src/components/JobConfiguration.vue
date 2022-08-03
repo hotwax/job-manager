@@ -86,7 +86,7 @@
     <ion-item slot="end" @click="updatePinnedJobs(currentJob?.systemJobEnumId)" button>
       <ion-icon slot="start" :icon="pinOutline" />
       {{ $t("Pin job") }}
-      <ion-checkbox :checked="getPinnedJobs.includes(currentJob.systemJobEnumId)" slot="end"></ion-checkbox>
+      <ion-checkbox :checked="getPinnedJobs.includes(currentJob.systemJobEnumId)" slot="end" />
     </ion-item>
   </div>
 
@@ -418,17 +418,17 @@ ion-list {
     display: none;
   }
   .job-actions {
-  margin-top: var(--spacer-sm);
-  row-gap: var(--spacer-sm);
-  display: flex;
-  flex-wrap: wrap;
-}
-.job-actions > ion-item {
-  flex-basis: 50%;
-}
-.job-actions > ion-item > ion-checkbox{
- margin: unset;
-}
+    margin-top: var(--spacer-sm);
+    row-gap: var(--spacer-sm);
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .job-actions > ion-item {
+    flex-basis: 50%;
+  }
+  .job-actions > ion-item > ion-checkbox{
+    margin: unset;
+  }
 }
 
 ion-label:nth-child(3) {
