@@ -26,13 +26,12 @@ const subscribeWebhook = async (payload?: any, id?: string): Promise <any> => {
   if(!endpointUrl) {
     showToast(translate("Configuration missing"));
     return;
-  } else {
-    return api ({
-      url: endpointUrl,
-      method: 'post',
-      data: payload
-    })
   }
+  return api ({
+    url: endpointUrl,
+    method: 'post',
+    data: payload
+  })
 }
 
 const unsubscribeWebhook = async (payload?: any): Promise <any> => {
