@@ -187,7 +187,7 @@ const actions: ActionTree<JobState, RootState> = {
         "statusId": "SERVICE_PENDING",
         "systemJobEnumId_op": "not-empty"
       } as any,
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId" ],
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId" ],
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
@@ -525,7 +525,7 @@ const actions: ActionTree<JobState, RootState> = {
       'SERVICE_COUNT': '0',
       'SERVICE_TEMP_EXPR': job.jobStatus,
       'jobFields': {
-        'productStoreId': this.state.user.currentEComStore.productStoreId,
+        'productStoreId': job.status === "SERVICE_PENDING" ? job.productStoreId : this.state.user.currentEComStore.productStoreId,
         'systemJobEnumId': job.systemJobEnumId,
         'tempExprId': job.jobStatus, // Need to remove this as we are passing frequency in SERVICE_TEMP_EXPR, currently kept it for backward compatibility
         'parentJobId': job.parentJobId,
