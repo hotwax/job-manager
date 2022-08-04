@@ -82,7 +82,10 @@
             </ion-card-header>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Days") }}</ion-label>
-              <ion-input :placeholder="$t('before auto cancelation')" />
+              <ion-input :placeholder="$t('before auto cancelation')" v-model.number="autoCancelDays" type="number" />
+              <ion-button fill="clear" @click="updateProductStore(this.autoCancelDays)" slot="end">
+                {{ $t("Save") }}
+              </ion-button>
             </ion-item>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Check daily") }}</ion-label>
@@ -183,6 +186,7 @@ import JobConfiguration from '@/components/JobConfiguration.vue';
 import { DateTime } from 'luxon';
 import { hasError, isFutureDate, showToast } from '@/utils';
 import emitter from '@/event-bus';
+import { JobService } from '@/services/JobService'
 
 export default defineComponent({
   name: 'Orders',
@@ -220,7 +224,8 @@ export default defineComponent({
       currentJobStatus: '',
       freqType: '',
       isJobDetailAnimationCompleted: false,
-      isDesktop: isPlatform('desktop')
+      isDesktop: isPlatform('desktop'),
+      autoCancelDays: ''
     }
   },
   computed: {
@@ -273,6 +278,13 @@ export default defineComponent({
       } else {
         await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhook?.id, shopifyConfigId: this.shopifyConfigId })
       }
+    },
+    async updateProductStore(autoCancelDays: number){
+      const payload = {
+        'productStoreId': this.store.state.user.currentEComStore.productStoreId,
+        'daysToCancelNonPay': autoCancelDays
+      }
+      await JobService.updateProductStore(payload);
     },
     async addBatch() {
       const batchmodal = await modalController.create({

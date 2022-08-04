@@ -39,11 +39,19 @@ const fetchTemporalExpression = async (payload: any): Promise <any>  => {
   });
 }
 
+const updateProductStore = async (payload: any): Promise <any>  => {
+  return api({
+    url: "service/updateProductStore",
+    method: "post",
+    data: payload
+  });
+}
 
 export const JobService = {
   fetchJobDescription,
   fetchJobInformation,
   fetchTemporalExpression,
   updateJob,
-  scheduleJob
+  scheduleJob,
+  updateProductStore
 }
