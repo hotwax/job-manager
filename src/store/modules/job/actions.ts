@@ -537,7 +537,7 @@ const actions: ActionTree<JobState, RootState> = {
     } as any
 
     // checking if the runtimeData has productStoreId, and if present then adding it on root level
-    job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.state.user.currentEComStore.productStoreId)
+    job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = job.status === "SERVICE_PENDING" ? job.productStoreId : this.state.user.currentEComStore.productStoreId)
     job?.priority && (payload['SERVICE_PRIORITY'] = job.priority.toString())
     job?.sinceId && (payload['sinceId'] = job.sinceId)
     job?.runTime && (payload['SERVICE_TIME'] = job.runTime.toString())
