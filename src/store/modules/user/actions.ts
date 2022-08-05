@@ -63,9 +63,9 @@ const actions: ActionTree<UserState, RootState> = {
         "noConditionFind": "Y"
       }
 
-      let stores = await UserService.getEComStores(payload);
-      if(stores.status === 200 && stores.data.docs?.length > 0 && !hasError(stores)) {
-        stores = stores.data.docs;
+      const storeResp = await UserService.getEComStores(payload);
+      if(storeResp.status === 200 && storeResp.data.docs?.length > 0 && !hasError(storeResp)) {
+        const stores = storeResp.data.docs;
 
         resp.data.stores = [
           ...(stores ? stores : []),
