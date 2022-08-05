@@ -39,7 +39,7 @@ const fetchTemporalExpression = async (payload: any): Promise <any>  => {
   });
 }
 
-const updateProductStore = async (payload: any): Promise <any>  => {
+const updateAutoCancelDays = async (payload: any): Promise <any>  => {
   return api({
     url: "service/updateProductStore",
     method: "post",
@@ -47,11 +47,19 @@ const updateProductStore = async (payload: any): Promise <any>  => {
   });
 }
 
+const getAutoCancelDays = async (payload: any): Promise <any>  => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  });
+}
 export const JobService = {
   fetchJobDescription,
   fetchJobInformation,
   fetchTemporalExpression,
   updateJob,
   scheduleJob,
-  updateProductStore
+  updateAutoCancelDays,
+  getAutoCancelDays
 }

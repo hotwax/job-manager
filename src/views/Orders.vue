@@ -83,7 +83,7 @@
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Days") }}</ion-label>
               <ion-input :placeholder="$t('before auto cancelation')" v-model.number="autoCancelDays" type="number" />
-              <ion-button fill="clear" @click="updateProductStore(this.autoCancelDays)" slot="end">
+              <ion-button fill="clear" @click="updateAutoCancelDays(this.autoCancelDays)" slot="end">
                 {{ $t("Save") }}
               </ion-button>
             </ion-item>
@@ -279,12 +279,22 @@ export default defineComponent({
         await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhook?.id, shopifyConfigId: this.shopifyConfigId })
       }
     },
-    async updateProductStore(autoCancelDays: number){
+    async updateAutoCancelDays(autoCancelDays: number){
       const payload = {
         'productStoreId': this.store.state.user.currentEComStore.productStoreId,
         'daysToCancelNonPay': autoCancelDays
       }
-      await JobService.updateProductStore(payload);
+      try {
+        const resp = await JobService.updateAutoCancelDays(payload);
+        if (resp.status === 200 && !hasError(resp)) {
+          showToast(translate("Auto cancel days updated"));
+        } else {
+          showToast(translate("Unable to edit auto cancel days"));
+        }
+      } catch (err) {
+        showToast(translate('Something went wrong'))
+        console.error(err)
+      }
     },
     async addBatch() {
       const batchmodal = await modalController.create({
@@ -422,7 +432,7 @@ export default defineComponent({
       return jobAlert.present();
     }
   },
-  mounted () {
+  async mounted () {
     this.store.dispatch("job/fetchJobs", {
       "inputFields":{
         "systemJobEnumId": Object.values(this.jobEnums),
@@ -436,6 +446,17 @@ export default defineComponent({
       }
     });
     this.store.dispatch('webhook/fetchWebhooks')
+
+    const payload = {
+      "inputFields": {
+        'productStoreId': this.store.state.user.currentEComStore.productStoreId,
+      } as any,
+      "fieldList": [ 'daysToCancelNonPay' ],
+      "entityName": "ProductStore",
+      "noConditionFind": "Y"
+    }
+    const resp = await JobService.getAutoCancelDays(payload);
+    this.autoCancelDays = resp.data.docs[0].daysToCancelNonPay;
   },
   setup() {
     const store = useStore();
