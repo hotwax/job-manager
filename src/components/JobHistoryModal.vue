@@ -101,7 +101,6 @@ export default defineComponent({
             "systemJobEnumId": this.currentJob?.systemJobEnumId
           },
           "fieldList": [ "runTime", "statusId" ],
-          "entityName": "JobSandbox",
           "noConditionFind": "Y",
           "viewSize": process.env.VUE_APP_VIEW_SIZE,
           "orderBy": "runTime DESC"

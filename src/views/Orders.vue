@@ -119,22 +119,24 @@
               </ion-button>
             </ion-item-divider>
 
-            <ion-item-sliding v-for="batch in orderBatchJobs" :key="batch?.id" detail v-show="batch?.status === 'SERVICE_PENDING'">
-              <ion-item @click="editBatch(batch.id, batch.systemJobEnumId)" button>
-                <ion-label class="ion-text-wrap">{{ batch?.jobName }}</ion-label>
-                <ion-note slot="end">{{ batch?.runTime ? getTime(batch.runTime) : '' }}</ion-note>
-              </ion-item>
-              <ion-item-options side="start">
-                <ion-item-option @click="skipBatch(batch)" color="secondary">
-                  <ion-icon slot="icon-only" :icon="arrowRedoOutline" />
-                </ion-item-option>
-              </ion-item-options>
-              <ion-item-options side="end">
-                <ion-item-option @click="deleteBatch(batch)" color="danger">
-                  <ion-icon slot="icon-only" :icon="trash" />
-                </ion-item-option>
-              </ion-item-options>
-            </ion-item-sliding>
+            <ion-list ref="slidingOptions">
+              <ion-item-sliding v-for="batch in orderBatchJobs" :key="batch?.id" detail v-show="batch?.status === 'SERVICE_PENDING'">
+                <ion-item @click="editBatch(batch.id, batch.systemJobEnumId)" button>
+                  <ion-label class="ion-text-wrap">{{ batch?.jobName }}</ion-label>
+                  <ion-note slot="end">{{ batch?.runTime ? getTime(batch.runTime) : '' }}</ion-note>
+                </ion-item>
+                <ion-item-options side="start">
+                  <ion-item-option @click="skipBatch(batch)" color="secondary">
+                    <ion-icon slot="icon-only" :icon="arrowRedoOutline" />
+                  </ion-item-option>
+                </ion-item-options>
+                <ion-item-options side="end">
+                  <ion-item-option @click="deleteBatch(batch)" color="danger">
+                    <ion-icon slot="icon-only" :icon="trash" />
+                  </ion-item-option>
+                </ion-item-options>
+              </ion-item-sliding>
+            </ion-list>
           </ion-card>
         </section>
 
@@ -161,6 +163,7 @@ import {
   IonItemDivider,
   IonItemSliding,
   IonLabel,
+  IonList,
   IonMenuButton,
   IonNote,
   IonItemOption,
@@ -181,7 +184,7 @@ import { useRouter } from 'vue-router'
 import { mapGetters } from "vuex";
 import JobConfiguration from '@/components/JobConfiguration.vue';
 import { DateTime } from 'luxon';
-import { hasError, isFutureDate, showToast, prepareRuntime } from '@/utils';
+import { hasError, isFutureDate, showToast } from '@/utils';
 import emitter from '@/event-bus';
 
 export default defineComponent({
@@ -199,6 +202,7 @@ export default defineComponent({
     IonItemSliding,
     IonItemDivider,
     IonLabel,
+    IonList,
     IonMenuButton,
     IonNote,
     IonItemOption,
@@ -326,7 +330,8 @@ export default defineComponent({
                   } else {
                     showToast(translate("This job schedule cannot be skipped"));
                   }
-                })
+                });
+                (this as any).$refs.slidingOptions.$el.closeSlidingItems();
               },
             }
           ]
@@ -339,9 +344,15 @@ export default defineComponent({
     async updateJob(checked: boolean, id: string, status = 'EVERY_15_MIN') {
       const job = this.getJob(id);
 
+      // added check that if the job is not present, then display a toast and then return
+      if (!job) {
+        showToast(translate('Configuration missing'))
+        return;
+      }
+
       // TODO: added this condition to not call the api when the value of the select automatically changes
       // need to handle this properly
-      if (!job || (checked && job?.status === 'SERVICE_PENDING') || (!checked && job?.status === 'SERVICE_DRAFT')) {
+      if ((checked && job?.status === 'SERVICE_PENDING') || (!checked && job?.status === 'SERVICE_DRAFT')) {
         return;
       }
 
@@ -355,7 +366,6 @@ export default defineComponent({
       if (!checked) {
         this.store.dispatch('job/cancelJob', job)
       } else if (job?.status === 'SERVICE_DRAFT') {
-        job.runTime = prepareRuntime(job)
         this.store.dispatch('job/scheduleService', job)
       } else if (job?.status === 'SERVICE_PENDING') {
         this.store.dispatch('job/updateJob', job)

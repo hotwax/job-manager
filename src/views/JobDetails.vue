@@ -2,7 +2,7 @@
   <ion-page>
     <ion-header :translucent="true">
       <ion-toolbar>
-        <ion-back-button default-href="/" slot="start" />
+        <ion-back-button :default-href="'/' + jobCategory" slot="start" />
         <ion-title>{{ $t("Job details") }}</ion-title>
       </ion-toolbar>
     </ion-header>
