@@ -70,23 +70,23 @@
       <ion-button expand="block" @click="saveChanges()">{{ $t("Save changes") }}</ion-button>
     </div>
   </section>
-  <div class="job-actions">
-    <ion-item slot="start" @click="viewJobHistory(currentJob)" button>
+  <div class="more-actions">
+    <ion-item @click="viewJobHistory(currentJob)" button>
       <ion-icon slot="start" :icon="timeOutline" />
       {{ $t("History") }}
     </ion-item>
-    <ion-item slot="end" @click="runNow(title, currentJob)" button>
+    <ion-item @click="runNow(title, currentJob)" button>
       <ion-icon slot="start" :icon="flashOutline" />
       {{ $t("Run now") }}
     </ion-item>
-    <ion-item slot="start" @click="copyJobInformation(currentJob)" button>
+    <ion-item @click="copyJobInformation(currentJob)" button>
       <ion-icon slot="start"  :icon="copyOutline" />
       {{ $t("Copy details") }}
     </ion-item>
-    <ion-item slot="end" @click="updatePinnedJobs(currentJob?.systemJobEnumId)" button>
+    <ion-item @click="updatePinnedJobs(currentJob?.systemJobEnumId)" button>
       <ion-icon slot="start" :icon="pinOutline" />
       {{ $t("Pin job") }}
-      <ion-checkbox :checked="getPinnedJobs.includes(currentJob.systemJobEnumId)" slot="end" />
+      <ion-checkbox slot="end" :checked="getPinnedJobs.includes(currentJob.systemJobEnumId)" />
     </ion-item>
   </div>
 
@@ -417,17 +417,15 @@ ion-list {
   .mobile-only {
     display: none;
   }
-  .job-actions {
-    margin-top: var(--spacer-sm);
-    row-gap: var(--spacer-sm);
+  .more-actions {
     display: flex;
     flex-wrap: wrap;
+    align-items: end;
+    row-gap: var(--spacer-sm);
+    margin-top: var(--spacer-sm);
   }
-  .job-actions > ion-item {
+  .more-actions > ion-item {
     flex-basis: 50%;
-  }
-  .job-actions > ion-item > ion-checkbox{
-    margin: unset;
   }
 }
 
