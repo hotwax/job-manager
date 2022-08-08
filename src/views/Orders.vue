@@ -281,7 +281,7 @@ export default defineComponent({
     },
     async updateAutoCancelDays(autoCancelDays: number){
       const payload = {
-        'productStoreId': this.store.state.user.currentEComStore.productStoreId,
+        'productStoreId': this.currentEComStore.productStoreId,
         'daysToCancelNonPay': autoCancelDays
       }
       try {
@@ -449,14 +449,22 @@ export default defineComponent({
 
     const payload = {
       "inputFields": {
-        'productStoreId': this.store.state.user.currentEComStore.productStoreId,
-      } as any,
+        'productStoreId': this.currentEComStore.productStoreId,
+      },
       "fieldList": [ 'daysToCancelNonPay' ],
       "entityName": "ProductStore",
       "noConditionFind": "Y"
     }
-    const resp = await JobService.getAutoCancelDays(payload);
-    this.autoCancelDays = resp.data.docs[0].daysToCancelNonPay;
+     try {
+        const resp = await JobService.getAutoCancelDays(payload);
+        if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
+          this.autoCancelDays = resp.data.docs[0].daysToCancelNonPay;
+        } else {
+          console.error(resp)
+        }
+      } catch (err) {
+        console.error(err)
+      }
   },
   setup() {
     const store = useStore();
