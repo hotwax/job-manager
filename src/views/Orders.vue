@@ -457,7 +457,7 @@ export default defineComponent({
     }
      try {
         const resp = await JobService.getAutoCancelDays(payload);
-        if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
+        if (resp.status === 200 && !hasError(resp) && resp.data.docs?.length > 0 ) {
           this.autoCancelDays = resp.data.docs[0].daysToCancelNonPay;
         } else {
           console.error(resp)

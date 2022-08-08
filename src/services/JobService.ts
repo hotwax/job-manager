@@ -39,7 +39,7 @@ const fetchTemporalExpression = async (payload: any): Promise <any>  => {
   });
 }
 
-const updateAutoCancelDays = async (payload: any): Promise <any>  => {
+const updateAutoCancelDays = async (payload: any): Promise <any> => {
   return api({
     url: "service/updateProductStore",
     method: "post",
@@ -47,7 +47,7 @@ const updateAutoCancelDays = async (payload: any): Promise <any>  => {
   });
 }
 
-const getAutoCancelDays = async (payload: any): Promise <any>  => {
+const getAutoCancelDays = async (payload: any): Promise <any> => {
   return api({
     url: "performFind",
     method: "post",
