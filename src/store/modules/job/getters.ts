@@ -50,7 +50,10 @@ const getters: GetterTree <JobState, RootState> = {
     },
     getCurrentJob (state) {
       return state.current;
-    }
+    },
+    getMiscellaneousJobs (state){
+      return state.miscellaneous.list;
+    },
   }
 
   export default getters;

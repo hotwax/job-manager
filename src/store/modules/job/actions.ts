@@ -248,6 +248,74 @@ const actions: ActionTree<JobState, RootState> = {
       showToast(translate("Something went wrong"));
     })
   },
+  async fetchMiscellaneousJobs({ commit, dispatch, state }, payload){
+    const params = {
+      "inputFields": {
+        "enumTypeId": "MISC_SYS_JOB",
+        // "statusId": "SERVICE_MISCELLANEOUS",
+        "systemJobEnumId_op": "not-empty"
+      } as any,
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "enumName" ],
+      "noConditionFind": "Y",
+      "viewSize": payload.viewSize,
+      "viewIndex": payload.viewIndex,
+      // "orderBy": "enumName ASC"
+    }
+
+    // if(payload.systemJobEnumId && payload.systemJobEnumId.length > 0) {
+    //   params.inputFields["systemJobEnumId"] = payload.systemJobEnumId
+    //   params.inputFields["systemJobEnumId_op"] = "in"
+    // }
+    
+    if(payload.eComStoreId) {
+      params.inputFields["productStoreId"] = payload.eComStoreId
+    } else {
+      params.inputFields["productStoreId_op"] = "empty"
+    }
+
+    // if (payload.queryString) {
+    //   params.inputFields["enumName_value"] = "%"+ payload.queryString + "%"
+    //   params.inputFields["enumName_op"] = "like"
+    //   params.inputFields["enumName_ic"] = "Y"
+    //   params.inputFields["enumName_grp"] = "1" 
+    //   params.inputFields["description_value"] = "%"+ payload.queryString + "%"
+    //   params.inputFields["description_op"] = "like"
+    //   params.inputFields["description_ic"] = "Y"
+    //   params.inputFields["description_grp"] = "2"
+    // } 
+    await JobService.fetchJobInformation(params).then((resp) => {
+      if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
+        if (resp.data.docs) {
+          const total = resp.data.count;
+          let jobs = resp.data.docs.map((job: any) => {
+            return {
+              ...job,
+              'status': job?.statusId
+            }
+          })
+          if(payload.viewIndex && payload.viewIndex > 0){
+            jobs = state.miscellaneous.list.concat(resp.data.docs);
+          }
+          commit(types.JOB_MISCELLANEOUS_UPDATED, { jobs, total });
+          const tempExprList = [] as any;
+          const enumIds = [] as any;
+          resp.data.docs.map((item: any) => {
+            enumIds.push(item.systemJobEnumId);
+            tempExprList.push(item.tempExprId);
+          })
+          const tempExpr = [...new Set(tempExprList)];
+          dispatch('fetchTemporalExpression', tempExpr);
+          dispatch('fetchJobDescription', enumIds);
+        }
+      } else {
+        commit(types.JOB_MISCELLANEOUS_UPDATED, { jobs: [], total: 0 });
+      }
+    }).catch((err) => {
+      commit(types.JOB_MISCELLANEOUS_UPDATED, { jobs: [], total: 0 });
+      console.error(err);
+      showToast(translate("Something went wrong"));
+    })
+  },
   async fetchTemporalExpression({ state, commit }, tempExprIds){
     const tempIds = [] as any;
     const cachedTempExprId = Object.keys(state.temporalExp);
