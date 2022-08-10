@@ -18,6 +18,10 @@
               <ion-icon slot="end" :icon="chevronForwardOutline" />
             </ion-item>
           </ion-list>
+
+          <ion-infinite-scroll @ionInfinite="loadMoreMiscellaneousJobs($event)" threshold="100px" :disabled="!isMiscellaneousJobsScrollable">
+            <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="$t('Loading')"/>
+          </ion-infinite-scroll>
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob && Object.keys(currentJob).length">
@@ -85,6 +89,7 @@ export default defineComponent({
       miscellaneousJobs: 'job/getMiscellaneousJobs',
       getCurrentEComStore:'user/getCurrentEComStore',
       currentJob: 'job/getCurrentJob',
+      isMiscellaneousJobsScrollable: 'job/isMiscellaneousJobsScrollable'
     })
   },
   methods: {
@@ -105,6 +110,14 @@ export default defineComponent({
     },
     async getMiscellaneousJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
       await this.store.dispatch('job/fetchMiscellaneousJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex});
+    },
+    async loadMoreMiscellaneousJobs (event: any) {
+      this.getMiscellaneousJobs(
+        undefined,
+        Math.ceil(this.miscellaneousJobs.length / (process.env.VUE_APP_VIEW_SIZE as any)).toString()
+      ).then(() => {
+        event.target.complete();
+      })
     },
     timeFromNow (time: any) {
       const timeDiff = DateTime.fromMillis(time).diff(DateTime.local());
