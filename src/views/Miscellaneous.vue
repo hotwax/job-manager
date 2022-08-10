@@ -21,12 +21,13 @@
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob && Object.keys(currentJob).length">
-          <JobConfiguration :title="title" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
+          <JobConfiguration :title="title" :status="currentJobStatus" :key="currentJob"/>
         </aside>
       </main>
     </ion-content>
   </ion-page>      
 </template>
+
 <script lang="ts">
 import { DateTime } from 'luxon';
 import {
@@ -45,9 +46,8 @@ import {
   isPlatform,
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
-import { useStore } from "@/store";
 import { useRouter } from 'vue-router'
-import { mapGetters } from "vuex";
+import { mapGetters, useStore } from 'vuex'
 import emitter from '@/event-bus';
 import JobConfiguration from '@/components/JobConfiguration.vue';
 import { chevronForwardOutline } from "ionicons/icons";
@@ -74,13 +74,8 @@ export default defineComponent({
   },
   data() {
     return {
-      jobEnums: JSON.parse(process.env?.VUE_APP_ODR_JOB_ENUMS as string) as any,
-      batchJobEnums: JSON.parse(process.env?.VUE_APP_BATCH_JOB_ENUMS as string) as any,
-      jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
-      webhookEnums: JSON.parse(process.env?.VUE_APP_WEBHOOK_ENUMS as string) as any,
       title: '',
       currentJobStatus: '',
-      freqType: '',
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop')
     }
@@ -88,9 +83,6 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       miscellaneousJobs: 'job/getMiscellaneousJobs',
-      temporalExpr: 'job/getTemporalExpr',
-      getEnumDescription: 'job/getEnumDescription',
-      getEnumName: 'job/getEnumName',
       getCurrentEComStore:'user/getCurrentEComStore',
       currentJob: 'job/getCurrentJob',
     })
@@ -99,8 +91,6 @@ export default defineComponent({
     async viewJobConfiguration(job: any) {
       this.title = job.jobName
       this.currentJobStatus = job.tempExprId
-      const id = Object.entries(this.jobEnums).find((enums) => enums[1] == job.systemJobEnumId) as any
-      this.freqType = id && (Object.entries(this.jobFrequencyType).find((freq) => freq[0] == id[0]) as any)[1]
 
       await this.store.dispatch('job/updateCurrentJob', { job });
       if(!this.isDesktop && job?.jobId) {
