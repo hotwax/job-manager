@@ -35,6 +35,7 @@ import {
 import { defineComponent } from "vue";
 import { copyOutline, flashOutline, pinOutline, timeOutline  } from 'ionicons/icons'
 import { mapGetters, useStore } from 'vuex'
+import { alertController } from '@ionic/vue';
 import JobHistoryModal from '@/components/JobHistoryModal.vue'
 import { Plugins } from '@capacitor/core';
 import { showToast } from '@/utils'
@@ -95,11 +96,27 @@ export default defineComponent({
       this.closePopover();
     },
     async runJobNow(job: any) {
-      if(job) {
-        await this.store.dispatch('job/runServiceNow', job)
-      }
-      this.closePopover();
-    }
+      const alert = await alertController
+        .create({
+          header: this.$t("Run now"),
+          message: this.$t('Running this job now will not replace this job. A copy of this job will be created and run immediately.<br/><br/>You may not be able to reverse this action.'),
+          buttons: [
+            {
+              text: this.$t("Cancel"),
+              role: 'cancel',
+            },
+            {
+              text: this.$t('Run now'),
+              handler: async () => {
+                if(job) {
+                  await this.store.dispatch('job/runServiceNow', job)
+                }
+              }
+            }
+          ]
+        });
+      return alert.present();
+    },
   },
   setup() {
     const store = useStore();  
