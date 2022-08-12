@@ -29,13 +29,13 @@ import {
   IonItem,
   IonList,
   IonListHeader,
+  alertController,
   modalController,
   popoverController
 } from "@ionic/vue";
 import { defineComponent } from "vue";
 import { copyOutline, flashOutline, pinOutline, timeOutline  } from 'ionicons/icons'
 import { mapGetters, useStore } from 'vuex'
-import { alertController } from '@ionic/vue';
 import JobHistoryModal from '@/components/JobHistoryModal.vue'
 import { Plugins } from '@capacitor/core';
 import { showToast } from '@/utils'

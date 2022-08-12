@@ -531,7 +531,7 @@ const actions: ActionTree<JobState, RootState> = {
         'parentJobId': job.parentJobId,
         'recurrenceTimeZone': this.state.user.current.userTimeZone
       },
-      'shopifyConfigId': job.shopifyConfigId ? job.shopifyConfigId : this.state.user.shopifyConfigId,
+      'shopifyConfigId': job.status === "SERIVCE_PENDING" ? job.shopifyConfigId : this.state.user.shopifyConfigId,
       'statusId': "SERVICE_PENDING",
       'systemJobEnumId': job.systemJobEnumId
     } as any
