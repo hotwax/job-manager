@@ -86,7 +86,7 @@
     <ion-item @click="updatePinnedJobs(currentJob?.systemJobEnumId)" button>
       <ion-icon slot="start" :icon="pinOutline" />
       {{ $t("Pin job") }}
-      <ion-checkbox slot="end" :checked="getPinnedJobs.includes(currentJob.systemJobEnumId)" />
+      <ion-checkbox slot="end" :checked="getPinnedJobs ? getPinnedJobs.includes(currentJob.systemJobEnumId) : false" />
     </ion-item>
   </div>
 
