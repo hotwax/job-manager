@@ -12,10 +12,9 @@
         <section>
           <ion-list>
             <ion-list-header>{{ $t("Miscellaneous jobs") }}</ion-list-header>
-            <ion-item v-for="job in miscellaneousJobs" :key="job.jobId" @click="viewJobConfiguration(job)">
+            <ion-item v-for="job in miscellaneousJobs" :key="job.jobId" @click="viewJobConfiguration(job)" detail>
               <ion-label>{{ job.jobName }}</ion-label>
-              <ion-badge v-if="job.runTime" color="light">{{ timeFromNow(job.runTime)}}</ion-badge>
-              <ion-icon slot="end" :icon="chevronForwardOutline" />
+              <ion-note slot="end" v-if="job.runTime">{{ timeFromNow(job.runTime)}}</ion-note>
             </ion-item>
           </ion-list>
 
@@ -35,10 +34,8 @@
 <script lang="ts">
 import { DateTime } from 'luxon';
 import {
-  IonBadge,
   IonContent,
   IonHeader,
-  IonIcon,
   IonInfiniteScroll,
   IonInfiniteScrollContent,
   IonItem,
@@ -46,6 +43,7 @@ import {
   IonList,
   IonListHeader,
   IonMenuButton,
+  IonNote,
   IonPage,
   IonTitle,
   IonToolbar,
@@ -61,10 +59,8 @@ import { chevronForwardOutline } from "ionicons/icons";
 export default defineComponent({
   name: 'Miscellaneous',
   components: {
-    IonBadge,
     IonContent,
     IonHeader,
-    IonIcon,
     IonInfiniteScroll,
     IonInfiniteScrollContent,
     IonItem,
@@ -72,6 +68,7 @@ export default defineComponent({
     IonList,
     IonListHeader,
     IonMenuButton,
+    IonNote,
     IonPage,
     IonTitle,
     IonToolbar,
