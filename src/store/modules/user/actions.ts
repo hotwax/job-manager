@@ -131,7 +131,7 @@ const actions: ActionTree<UserState, RootState> = {
         if (resp.status === 200 && !hasError(resp) && resp.data?.docs) {
           const shopifyConfigs = resp.data.docs;
           commit(types.USER_SHOPIFY_CONFIG_LIST_UPDATED, shopifyConfigs);
-          commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, shopifyConfigs[0].shopifyConfigId);
+          commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, shopifyConfigs.length > 0 ? shopifyConfigs[0].shopifyConfigId : "");
         } else {
           console.error(resp);
           showToast(translate("Shopify configuration missing."));
