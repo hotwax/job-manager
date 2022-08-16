@@ -115,7 +115,7 @@ const actions: ActionTree<UserState, RootState> = {
     commit(types.USER_INSTANCE_URL_UPDATED, payload)
   },
 
-  async getShopifyConfig({ commit }, productStoreId) {
+  async getShopifyConfig({ commit, state }, productStoreId) {
     if (productStoreId) { 
       let resp;
       const payload = {
@@ -124,23 +124,37 @@ const actions: ActionTree<UserState, RootState> = {
         },
         "entityName": "ShopifyConfig",
         "noConditionFind": "Y",
-        "fieldList": ["shopifyConfigId"]
+        "fieldList": ["shopifyConfigId", "shopifyConfigName"]
       }
       try {
         resp = await UserService.getShopifyConfig(payload);
         if (resp.status === 200 && !hasError(resp) && resp.data?.docs) {
-          commit(types.USER_SHOPIFY_CONFIG_UPDATED, resp.data.docs?.length > 0 ? resp.data.docs[0].shopifyConfigId : "");
+          const shopifyConfigs = resp.data.docs;
+          commit(types.USER_SHOPIFY_CONFIG_LIST_UPDATED, shopifyConfigs);
+          commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, shopifyConfigs[0].shopifyConfigId);
         } else {
           console.error(resp);
-          commit(types.USER_SHOPIFY_CONFIG_UPDATED, "");
+          showToast(translate("Shopify configuration missing."));
+          commit(types.USER_SHOPIFY_CONFIG_LIST_UPDATED, {});
+          commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, "");
         }
       } catch (err) {
         console.error(err);
-        commit(types.USER_SHOPIFY_CONFIG_UPDATED, "");
+        showToast(translate("Shopify configuration missing."));
+        commit(types.USER_SHOPIFY_CONFIG_LIST_UPDATED, {});
+        commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, "");
       }
     } else {
-      commit(types.USER_SHOPIFY_CONFIG_UPDATED, "");
+      commit(types.USER_SHOPIFY_CONFIG_LIST_UPDATED, {});
+      commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, "");
     }
+  },
+
+  /**
+   * update current shopify config id
+   */
+  async setCurrentShopifyConfigId({ commit, dispatch }, id) {
+    commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, id);
   },
 
   async getEComStores(_context, payload) {
