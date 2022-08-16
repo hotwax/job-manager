@@ -430,6 +430,26 @@ export default defineComponent({
           ]
         });
       return jobAlert.present();
+    },
+    async getAutoCancelDays(){
+      const payload = {
+        "inputFields": {
+          'productStoreId': this.currentEComStore.productStoreId,
+        },
+        "fieldList": [ 'daysToCancelNonPay' ],
+        "entityName": "ProductStore",
+        "noConditionFind": "Y"
+      }
+      try {
+        const resp = await JobService.getAutoCancelDays(payload);
+        if (resp.status === 200 && !hasError(resp) && resp.data.docs?.length > 0 ) {
+          this.autoCancelDays = resp.data.docs[0].daysToCancelNonPay;
+        } else {
+          console.error(resp)
+        }
+      } catch (err) {
+        console.error(err)
+      }
     }
   },
   async mounted () {
@@ -446,25 +466,7 @@ export default defineComponent({
       }
     });
     this.store.dispatch('webhook/fetchWebhooks')
-
-    const payload = {
-      "inputFields": {
-        'productStoreId': this.currentEComStore.productStoreId,
-      },
-      "fieldList": [ 'daysToCancelNonPay' ],
-      "entityName": "ProductStore",
-      "noConditionFind": "Y"
-    }
-     try {
-        const resp = await JobService.getAutoCancelDays(payload);
-        if (resp.status === 200 && !hasError(resp) && resp.data.docs?.length > 0 ) {
-          this.autoCancelDays = resp.data.docs[0].daysToCancelNonPay;
-        } else {
-          console.error(resp)
-        }
-      } catch (err) {
-        console.error(err)
-      }
+    this.getAutoCancelDays();
   },
   setup() {
     const store = useStore();
