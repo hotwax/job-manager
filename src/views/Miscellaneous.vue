@@ -109,7 +109,7 @@ export default defineComponent({
         this.isJobDetailAnimationCompleted = true;
       }
     },
-    async getMiscellaneousJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
+    async getMiscellaneousJobs(viewSize = 20, viewIndex = '0') {
       await this.store.dispatch('job/fetchMiscellaneousJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex});
     },
     async loadMoreMiscellaneousJobs (event: any) {
