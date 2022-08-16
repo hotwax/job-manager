@@ -115,7 +115,7 @@ const actions: ActionTree<UserState, RootState> = {
     commit(types.USER_INSTANCE_URL_UPDATED, payload)
   },
 
-  async getShopifyConfig({ commit, state }, productStoreId) {
+  async getShopifyConfig({ commit }, productStoreId) {
     if (productStoreId) { 
       let resp;
       const payload = {
@@ -153,7 +153,7 @@ const actions: ActionTree<UserState, RootState> = {
   /**
    * update current shopify config id
    */
-  async setCurrentShopifyConfigId({ commit, dispatch }, id) {
+  async setCurrentShopifyConfigId({ commit }, id) {
     commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, id);
   },
 
