@@ -134,13 +134,11 @@ const actions: ActionTree<UserState, RootState> = {
           commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, shopifyConfigs.length > 0 ? shopifyConfigs[0].shopifyConfigId : "");
         } else {
           console.error(resp);
-          showToast(translate("Shopify configuration missing."));
           commit(types.USER_SHOPIFY_CONFIG_LIST_UPDATED, []);
           commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, "");
         }
       } catch (err) {
         console.error(err);
-        showToast(translate("Shopify configuration missing."));
         commit(types.USER_SHOPIFY_CONFIG_LIST_UPDATED, []);
         commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, "");
       }
