@@ -281,23 +281,27 @@ export default defineComponent({
       }
     },
     async updateAutoCancelDays(){
-      if(this.autoCancelDays != this.updatedAutoCancelDays && this.currentEComStore.productStoreId){
-        const payload = {
-          'productStoreId': this.currentEComStore.productStoreId,
-          'daysToCancelNonPay': this.updatedAutoCancelDays
-        }
-        try {
-          const resp = await JobService.updateAutoCancelDays(payload);
-          if (resp.status === 200 && !hasError(resp)) {
-            showToast(translate("Auto cancel days updated"));
-            this.autoCancelDays = this.updatedAutoCancelDays;
-          } else {
-            showToast(translate("Unable to edit auto cancel days"));
+      if(this.currentEComStore.productStoreId){
+        if(this.autoCancelDays != this.updatedAutoCancelDays){
+          const payload = {
+            'productStoreId': this.currentEComStore.productStoreId,
+            'daysToCancelNonPay': this.updatedAutoCancelDays
           }
-        } catch (err) {
-          showToast(translate('Something went wrong'))
-          console.error(err)
+          try {
+            const resp = await JobService.updateAutoCancelDays(payload);
+            if (resp.status === 200 && !hasError(resp)) {
+              showToast(translate("Auto cancel days updated"));
+              this.autoCancelDays = this.updatedAutoCancelDays;
+            } else {
+              showToast(translate("Unable to edit auto cancel days"));
+            }
+          } catch (err) {
+            showToast(translate('Something went wrong'))
+            console.error(err)
+          }
         }
+      } else {
+        showToast(translate('None product store selected.'));
       }
     },
     async addBatch() {
