@@ -82,11 +82,11 @@ const actions: ActionTree<UserState, RootState> = {
         Settings.defaultZone = resp.data.userTimeZone;
       }
       const stores = resp.data.stores
-      const userPref =  await UserService.getUserPreference({
+      const userPrefResponse =  await UserService.getUserPreference({
         'userPrefTypeId': 'SELECTED_BRAND'
       });
-      if(userPref.status === 200 && !hasError(userPref)) {
-        const userPrefStore = stores.find((store: any) => store.productStoreId === userPref.data.userPrefValue)
+      if(userPrefResponse.status === 200 && !hasError(userPrefResponse)) {
+        const userPrefStore = stores.find((store: any) => store.productStoreId === userPrefResponse.data.userPrefValue)
         commit(types.USER_CURRENT_ECOM_STORE_UPDATED, userPrefStore ? userPrefStore : stores ? stores[0]: {});
         commit(types.USER_INFO_UPDATED, resp.data);
       } else {
