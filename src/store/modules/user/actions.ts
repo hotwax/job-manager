@@ -81,8 +81,18 @@ const actions: ActionTree<UserState, RootState> = {
       if (resp.data.userTimeZone) {
         Settings.defaultZone = resp.data.userTimeZone;
       }
-      commit(types.USER_CURRENT_ECOM_STORE_UPDATED, resp.data?.stores[0]);
-      commit(types.USER_INFO_UPDATED, resp.data);
+      const stores = resp.data.stores
+      const userPrefResponse =  await UserService.getUserPreference({
+        'userPrefTypeId': 'SELECTED_BRAND'
+      });
+      if(userPrefResponse.status === 200 && !hasError(userPrefResponse)) {
+        const userPrefStore = stores.find((store: any) => store.productStoreId === userPrefResponse.data.userPrefValue)
+        commit(types.USER_CURRENT_ECOM_STORE_UPDATED, userPrefStore ? userPrefStore : stores ? stores[0]: {});
+        commit(types.USER_INFO_UPDATED, resp.data);
+      } else {
+        commit(types.USER_CURRENT_ECOM_STORE_UPDATED, stores ? stores[0]: {});
+        commit(types.USER_INFO_UPDATED, resp.data);
+      }
     }
   },
 
@@ -93,6 +103,10 @@ const actions: ActionTree<UserState, RootState> = {
     dispatch('job/clearJobState', null, { root: true });
     commit(types.USER_CURRENT_ECOM_STORE_UPDATED, payload.eComStore);
     dispatch('getShopifyConfig', payload.eComStore.productStoreId);
+    await UserService.setUserPreference({
+      'userPrefTypeId': 'SELECTED_BRAND',
+      'userPrefValue': payload.eComStore.productStoreId
+    });
   },
   /**
    * Update user timeZone
