@@ -82,8 +82,8 @@
             </ion-card-header>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Days") }}</ion-label>
-              <ion-input :placeholder="$t('before auto cancelation')" v-model.number="autoCancelDays" type="number" />
-              <ion-button fill="clear" @click="updateAutoCancelDays(this.autoCancelDays)" slot="end">
+              <ion-input :placeholder="$t('before auto cancelation')" v-model.number="updatedAutoCancelDays" type="number" />
+              <ion-button fill="clear" @click="updateAutoCancelDays()" slot="end">
                 {{ $t("Save") }}
               </ion-button>
             </ion-item>
@@ -225,7 +225,8 @@ export default defineComponent({
       freqType: '',
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
-      autoCancelDays: ''
+      autoCancelDays: '',
+      updatedAutoCancelDays: ''
     }
   },
   computed: {
@@ -279,21 +280,24 @@ export default defineComponent({
         await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhook?.id, shopifyConfigId: this.shopifyConfigId })
       }
     },
-    async updateAutoCancelDays(autoCancelDays: number){
-      const payload = {
-        'productStoreId': this.currentEComStore.productStoreId,
-        'daysToCancelNonPay': autoCancelDays
-      }
-      try {
-        const resp = await JobService.updateAutoCancelDays(payload);
-        if (resp.status === 200 && !hasError(resp)) {
-          showToast(translate("Auto cancel days updated"));
-        } else {
-          showToast(translate("Unable to edit auto cancel days"));
+    async updateAutoCancelDays(){
+      if(this.autoCancelDays != this.updatedAutoCancelDays){
+        const payload = {
+          'productStoreId': this.currentEComStore.productStoreId,
+          'daysToCancelNonPay': this.updatedAutoCancelDays
         }
-      } catch (err) {
-        showToast(translate('Something went wrong'))
-        console.error(err)
+        try {
+          const resp = await JobService.updateAutoCancelDays(payload);
+          if (resp.status === 200 && !hasError(resp)) {
+            showToast(translate("Auto cancel days updated"));
+            this.autoCancelDays = this.updatedAutoCancelDays;
+          } else {
+            showToast(translate("Unable to edit auto cancel days"));
+          }
+        } catch (err) {
+          showToast(translate('Something went wrong'))
+          console.error(err)
+        }
       }
     },
     async addBatch() {
@@ -444,6 +448,7 @@ export default defineComponent({
         const resp = await JobService.getAutoCancelDays(payload);
         if (resp.status === 200 && !hasError(resp) && resp.data.docs?.length > 0 ) {
           this.autoCancelDays = resp.data.docs[0].daysToCancelNonPay;
+          this.updatedAutoCancelDays = resp.data.docs[0].daysToCancelNonPay;
         } else {
           console.error(resp)
         }
