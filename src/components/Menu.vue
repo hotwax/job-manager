@@ -30,8 +30,8 @@
             {{ eComStore.storeName }}
           </ion-label>
           <div>
-           <ion-note slot="end">{{ userProfile?.userTimeZone }}</ion-note>    
-           <ion-note slot="end">{{ currentShopifyConfigId }}</ion-note>
+            <ion-note slot="end">{{ userProfile?.userTimeZone }}</ion-note>    
+            <ion-note slot="end">{{ currentShopifyConfigId }}</ion-note>
           </div>
         </ion-item>
       </ion-toolbar>
@@ -181,7 +181,7 @@ ion-menu.ios ion-item.selected ion-icon {
 ion-item.selected {
   --color: var(--ion-color-secondary);
 }
-ion-item > div > ion-note:first-child{
+ion-item > div > ion-note:first-child {
   display: block;
   margin-bottom: var(--spacer-lg);
   text-align: end;
