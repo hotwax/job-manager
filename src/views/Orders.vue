@@ -232,7 +232,7 @@ export default defineComponent({
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
       orderBatchJobs: "job/getOrderBatchJobs",
-      shopifyConfigId: 'user/getShopifyConfigId',
+      currentShopifyConfigId: 'user/getCurrentShopifyConfigId',
       currentEComStore: 'user/getCurrentEComStore',
       getTemporalExpr: 'job/getTemporalExpr',
       getCachedWebhook: 'webhook/getCachedWebhook'
@@ -275,7 +275,7 @@ export default defineComponent({
       if (checked) {
         await this.store.dispatch('webhook/subscribeWebhook', enumId)
       } else {
-        await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhook?.id, shopifyConfigId: this.shopifyConfigId })
+        await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhook?.id, shopifyConfigId: this.currentShopifyConfigId })
       }
     },
     async addBatch() {
