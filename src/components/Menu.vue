@@ -29,7 +29,10 @@
             <p class="overline">{{ instanceUrl }}</p>
             {{ eComStore.storeName }}
           </ion-label>
-          <ion-note slot="end">{{ userProfile?.userTimeZone }}</ion-note>
+          <div>
+           <ion-note slot="end">{{ userProfile?.userTimeZone }}</ion-note>    
+           <ion-note slot="end">{{ currentShopifyConfigId }}</ion-note>
+          </div>
         </ion-item>
       </ion-toolbar>
     </ion-footer>
@@ -83,7 +86,8 @@ export default defineComponent({
       currentFacility: 'user/getCurrentFacility',
       eComStore: 'user/getCurrentEComStore',
       instanceUrl: 'user/getInstanceUrl',
-      userProfile: 'user/getUserProfile'
+      userProfile: 'user/getUserProfile',
+      currentShopifyConfigId: 'user/getCurrentShopifyConfigId'
     })
   },
   watch:{
@@ -176,5 +180,10 @@ ion-menu.ios ion-item.selected ion-icon {
 }
 ion-item.selected {
   --color: var(--ion-color-secondary);
+}
+ion-item > div > ion-note:first-child{
+  display: block;
+  margin-bottom: var(--spacer-lg);
+  text-align: end;
 }
 </style>
