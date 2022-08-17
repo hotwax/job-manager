@@ -281,7 +281,7 @@ export default defineComponent({
       }
     },
     async updateAutoCancelDays(){
-      if(this.autoCancelDays != this.updatedAutoCancelDays){
+      if(this.autoCancelDays != this.updatedAutoCancelDays && this.currentEComStore.productStoreId){
         const payload = {
           'productStoreId': this.currentEComStore.productStoreId,
           'daysToCancelNonPay': this.updatedAutoCancelDays
@@ -471,7 +471,9 @@ export default defineComponent({
       }
     });
     this.store.dispatch('webhook/fetchWebhooks')
-    this.getAutoCancelDays();
+    if(this.currentEComStore.productStoreId){
+      this.getAutoCancelDays();
+    }
   },
   setup() {
     const store = useStore();
