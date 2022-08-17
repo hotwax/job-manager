@@ -10,9 +10,13 @@
         <ion-icon slot="start" :icon="copyOutline" />
         {{ $t("Copy details") }}
       </ion-item>
-      <ion-item @click="updatePinnedJobs(job?.systemJobEnumId)" lines="none" button>
+      <ion-item @click="updatePinnedJobs(job?.systemJobEnumId)" button>
         <ion-icon slot="start" :icon="pinOutline" />
         {{ $t("Pin job") }}
+      </ion-item>
+      <ion-item @click="runJobNow(job)" lines="none" button>
+        <ion-icon slot="start" :icon="flashOutline" />
+        {{ $t("Run now") }}
       </ion-item>      
     </ion-list>
   </ion-content>
@@ -25,11 +29,12 @@ import {
   IonItem,
   IonList,
   IonListHeader,
+  alertController,
   modalController,
   popoverController
 } from "@ionic/vue";
 import { defineComponent } from "vue";
-import { copyOutline, pinOutline, timeOutline  } from 'ionicons/icons'
+import { copyOutline, flashOutline, pinOutline, timeOutline  } from 'ionicons/icons'
 import { mapGetters, useStore } from 'vuex'
 import JobHistoryModal from '@/components/JobHistoryModal.vue'
 import { Plugins } from '@capacitor/core';
@@ -89,13 +94,36 @@ export default defineComponent({
         await this.store.dispatch('user/updatePinnedJobs', { pinnedJobs: [...pinnedJobs] });
       }
       this.closePopover();
-    }
+    },
+    async runJobNow(job: any) {
+      const alert = await alertController
+        .create({
+          header: this.$t("Run now"),
+          message: this.$t('Running this job now will not replace this job. A copy of this job will be created and run immediately.<br/><br/>You may not be able to reverse this action.'),
+          buttons: [
+            {
+              text: this.$t("Cancel"),
+              role: 'cancel',
+            },
+            {
+              text: this.$t('Run now'),
+              handler: async () => {
+                if(job) {
+                  await this.store.dispatch('job/runServiceNow', job)
+                }
+              }
+            }
+          ]
+        });
+      return alert.present();
+    },
   },
   setup() {
     const store = useStore();  
 
     return {
       copyOutline, 
+      flashOutline,
       pinOutline,
       store, 
       timeOutline  
