@@ -80,6 +80,23 @@ const associatePinnedJobPrefToUser = async (payload: any): Promise<any> => {
   });
 }
 
+const setUserPreference = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/setUserPreference",
+    method: "post",
+    data: payload
+  });
+}
+
+const getUserPreference = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/getUserPreference",
+    //TODO Due to security reasons service model of OMS 1.0 does not support sending parameters in get request that's why we use post here
+    method: "post",
+    data: payload,
+  });
+}
+
 export const UserService = {
     createPinnedJobPref,
     login,
@@ -90,5 +107,7 @@ export const UserService = {
     getPinnedJobs,
     associatePinnedJobPrefToUser,
     setUserTimeZone,
-    updatePinnedJobPref
+    updatePinnedJobPref,
+    setUserPreference,
+    getUserPreference
 }
