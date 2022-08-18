@@ -18,7 +18,7 @@
       </ion-item>
       <!-- Select shopify config -->
       <ion-item>
-        <ion-icon :icon="pinOutline" slot="start" />
+        <ion-icon :icon="basketOutline" slot="start" />
         <ion-label>{{ $t("Shopify Config") }}</ion-label>
         <ion-select interface="popover" :value="currentShopifyConfigId" @ionChange="setShopifyConfig($event)">
           <ion-select-option v-for="shopifyConfig in shopifyConfigs" :key="shopifyConfig.shopifyConfigId" :value="shopifyConfig.shopifyConfigId" >{{ shopifyConfig.shopifyConfigName }}</ion-select-option>
@@ -50,7 +50,7 @@
 <script lang="ts">
 import { IonButton, IonContent, IonHeader,IonIcon, IonItem, IonLabel, IonMenuButton, IonPage, IonSelect, IonSelectOption, IonTitle, IonToolbar, modalController } from '@ionic/vue';
 import { defineComponent } from 'vue';
-import { codeWorkingOutline, ellipsisVertical, globeOutline, personCircleOutline, storefrontOutline, timeOutline, pinOutline} from 'ionicons/icons'
+import { codeWorkingOutline, ellipsisVertical, globeOutline, personCircleOutline, storefrontOutline, timeOutline, basketOutline} from 'ionicons/icons'
 import { mapGetters, useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import TimeZoneModal from '@/views/TimezoneModal.vue';
@@ -121,7 +121,7 @@ export default defineComponent({
       store,
       timeOutline,
       router,
-      pinOutline
+      basketOutline
     }
   }
 });
