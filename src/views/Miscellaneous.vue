@@ -54,7 +54,6 @@ import { useRouter } from 'vue-router'
 import { mapGetters, useStore } from 'vuex'
 import emitter from '@/event-bus';
 import JobConfiguration from '@/components/JobConfiguration.vue';
-import { chevronForwardOutline } from "ionicons/icons";
 
 export default defineComponent({
   name: 'Miscellaneous',
@@ -130,7 +129,6 @@ export default defineComponent({
     const router = useRouter();
 
     return {
-      chevronForwardOutline,
       router,
       store,
     };
@@ -139,7 +137,7 @@ export default defineComponent({
 </script>
 
 <style scoped>
-main > section {
-  width: 423px;
-}
+  main > section {
+    width: 423px;
+  }
 </style>
