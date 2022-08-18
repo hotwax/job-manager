@@ -424,7 +424,7 @@ ion-list {
     row-gap: var(--spacer-sm);
     margin-top: var(--spacer-sm);
   }
-  .more-actions > ion-item {
+  .more-actions > * {
     flex-basis: 50%;
   }
 }
