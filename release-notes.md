@@ -1,5 +1,16 @@
+# Release 1.0.9
 
-Release 1.0.8
+## What's Changed
+* Fixed: DateTime component has different hour cycle on different devices(#2dmq8ja) by @shashwatbangar in https://github.com/hotwax/job-manager/pull/180
+* Implemented: Feature to run scheduled job right away(#364ttgf) by @shashwatbangar in https://github.com/hotwax/job-manager/pull/211
+* Implemented support to store user preference for selected product store (#2f2h8hu) by @shashwatbangar in https://github.com/hotwax/job-manager/pull/219
+* Implemented support to store user preference for selected product store (#2f2h8hu) by @rathoreprashant in https://github.com/hotwax/job-manager/pull/197
+* Implemented: Add option to select shopify config from settings page(#2q9mut9) by @disha1202 in https://github.com/hotwax/job-manager/pull/217
+
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v1.0.8...v1.0.9
+
+# Release 1.0.8
 
 ## What's Changed
 * Fixed: issue of auto cancel job check is not reflected on UI when the job is scheduled(#28u4g5n) by @ymaheshwari1 in https://github.com/hotwax/job-manager/pull/189
