@@ -82,7 +82,7 @@
             </ion-card-header>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Days") }}</ion-label>
-              <ion-input :placeholder="$t('before auto cancelation')" v-model.number="currentAutoCancelDays" type="number" />
+              <ion-input :placeholder="$t('before auto cancelation')" v-model.number="autoCancelDays" type="number" />
               <ion-button fill="clear" :disabled="autoCancelDays == currentAutoCancelDays" @click="updateAutoCancelDays()" slot="end">
                 {{ $t("Save") }}
               </ion-button>
@@ -284,13 +284,13 @@ export default defineComponent({
       if (this.currentEComStore.productStoreId) {
         const payload = {
           'productStoreId': this.currentEComStore.productStoreId,
-          'daysToCancelNonPay': this.currentAutoCancelDays
+          'daysToCancelNonPay': this.autoCancelDays
         }
         try {
           const resp = await JobService.updateAutoCancelDays(payload);
           if (resp.status === 200 && !hasError(resp)) {
             showToast(translate("Auto cancel days updated"));
-            this.autoCancelDays = this.currentAutoCancelDays;
+            this.currentAutoCancelDays = this.autoCancelDays;
           } else {
             showToast(translate("Unable to update auto cancel days"));
           }
@@ -449,8 +449,7 @@ export default defineComponent({
       try {
         const resp = await JobService.getAutoCancelDays(payload);
         if (resp.status === 200 && !hasError(resp) && resp.data.docs?.length > 0 ) {
-          this.autoCancelDays = resp.data.docs[0].daysToCancelNonPay;
-          this.currentAutoCancelDays = resp.data.docs[0].daysToCancelNonPay;
+          this.autoCancelDays = this.currentAutoCancelDays = resp.data.docs[0].daysToCancelNonPay;
         } else {
           console.error(resp)
         }
@@ -459,7 +458,7 @@ export default defineComponent({
       }
     }
   },
-  async mounted () {
+  mounted () {
     this.store.dispatch("job/fetchJobs", {
       "inputFields":{
         "systemJobEnumId": Object.values(this.jobEnums),
@@ -473,7 +472,7 @@ export default defineComponent({
       }
     });
     this.store.dispatch('webhook/fetchWebhooks')
-    if(this.currentEComStore.productStoreId){
+    if (this.currentEComStore.productStoreId) {
       this.getAutoCancelDays();
     }
   },
