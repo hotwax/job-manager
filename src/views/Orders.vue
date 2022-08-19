@@ -227,8 +227,7 @@ export default defineComponent({
       freqType: '',
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
-      autoCancelDays: '',
-      currentAutoCancelDays: ''
+      autoCancelDays: ''
     }
   },
   computed: {
@@ -292,7 +291,6 @@ export default defineComponent({
           const resp = await JobService.updateAutoCancelDays(payload);
           if (resp.status === 200 && !hasError(resp)) {
             showToast(translate("Auto cancel days updated"));
-            this.currentAutoCancelDays = this.autoCancelDays;
           } else {
             showToast(translate("Unable to update auto cancel days"));
           }
@@ -451,7 +449,7 @@ export default defineComponent({
       try {
         const resp = await JobService.getAutoCancelDays(payload);
         if (resp.status === 200 && !hasError(resp) && resp.data.docs?.length > 0 ) {
-          this.autoCancelDays = this.currentAutoCancelDays = resp.data.docs[0].daysToCancelNonPay;
+          this.autoCancelDays = resp.data.docs[0].daysToCancelNonPay;
         } else {
           console.error(resp)
         }
