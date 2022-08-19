@@ -452,9 +452,11 @@ export default defineComponent({
           this.autoCancelDays = resp.data.docs[0].daysToCancelNonPay;
         } else {
           console.error(resp)
+          this.autoCancelDays = "";
         }
       } catch (err) {
         console.error(err)
+        this.autoCancelDays = "";
       }
     }
   },
