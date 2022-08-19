@@ -83,7 +83,9 @@
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Days") }}</ion-label>
               <ion-input :placeholder="$t('before auto cancelation')" v-model.number="autoCancelDays" type="number" />
-              <ion-button fill="clear" :disabled="autoCancelDays == currentAutoCancelDays" @click="updateAutoCancelDays()" slot="end">
+              <!-- The button is enabled when we hover over the button or ion input looses focus and not when the value is changed -->
+              <!-- Todo: need to disable the button if value is unchanged -->
+              <ion-button fill="clear" @click="updateAutoCancelDays()" slot="end">
                 {{ $t("Save") }}
               </ion-button>
             </ion-item>
