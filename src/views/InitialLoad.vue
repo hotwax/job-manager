@@ -79,7 +79,7 @@ import {
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
-import { hasError, isFutureDate, showToast } from '@/utils';
+import { isFutureDate, showToast } from '@/utils';
 import emitter from '@/event-bus';
 import InitialJobConfiguration from '@/components/InitialJobConfiguration.vue';
 import { useRouter } from 'vue-router';
@@ -112,7 +112,7 @@ export default defineComponent({
       job: {} as any,
       lastShopifyOrderId: '',
       isJobDetailAnimationCompleted: false,
-      isDesktop: isPlatform('desktop'),
+      isDesktop: isPlatform('desktop')
     }
   },
   mounted () {
@@ -122,7 +122,7 @@ export default defineComponent({
         "systemJobEnumId_op": "in"
       }
     })
-    this.store.dispatch('webhook/fetchWebhooks');
+    this.store.dispatch('webhook/fetchWebhooks')
   },
   computed: {
     ...mapGetters({
@@ -163,7 +163,7 @@ export default defineComponent({
       if (job?.runTime && !isFutureDate(job?.runTime)) {
         job.runTime = ''
       }
-      
+
       if (!checked) {
         this.store.dispatch('job/cancelJob', job)
       } else if (job?.status === 'SERVICE_DRAFT') {
