@@ -110,6 +110,7 @@ export default defineComponent({
               handler: async () => {
                 if(job) {
                   await this.store.dispatch('job/runServiceNow', job)
+                  this.closePopover();
                 }
               }
             }
