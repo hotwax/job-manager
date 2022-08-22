@@ -16,6 +16,14 @@
           <ion-select-option v-for="store in (userProfile ? userProfile.stores : [])" :key="store.productStoreId" :value="store.productStoreId" >{{ store.storeName }}</ion-select-option>
         </ion-select>
       </ion-item>
+      <!-- Select shopify config -->
+      <ion-item>
+        <ion-icon :icon="globeOutline" slot="start" />
+        <ion-label>{{ $t("Shopify Config") }}</ion-label>
+        <ion-select interface="popover" :value="currentShopifyConfigId" @ionChange="setShopifyConfig($event)">
+          <ion-select-option v-for="shopifyConfig in shopifyConfigs" :key="shopifyConfig.shopifyConfigId" :value="shopifyConfig.shopifyConfigId" >{{ shopifyConfig.shopifyConfigName }}</ion-select-option>
+        </ion-select>
+      </ion-item>
       <!-- OMS information -->
       <ion-item>
         <ion-icon :icon="codeWorkingOutline" slot="start"/>
@@ -72,7 +80,9 @@ export default defineComponent({
     ...mapGetters({
       userProfile: 'user/getUserProfile',
       currentEComStore: 'user/getCurrentEComStore',
-      instanceUrl: 'user/getInstanceUrl'
+      instanceUrl: 'user/getInstanceUrl',
+      shopifyConfigs: 'user/getShopifyConfigs',
+      currentShopifyConfigId: 'user/getCurrentShopifyConfigId'
     })
   },
   methods: {
@@ -82,6 +92,9 @@ export default defineComponent({
           'eComStore': this.userProfile.stores.find((str: any) => str.productStoreId == store['detail'].value)
         })
       }
+    },
+    setShopifyConfig(event: any){
+      this.store.dispatch('user/setCurrentShopifyConfigId', event.detail.value);
     },
     async changeTimeZone() {
       const timeZoneModal = await modalController.create({

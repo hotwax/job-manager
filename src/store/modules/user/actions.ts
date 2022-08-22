@@ -84,8 +84,18 @@ const actions: ActionTree<UserState, RootState> = {
       if (resp.data.userTimeZone) {
         Settings.defaultZone = resp.data.userTimeZone;
       }
-      commit(types.USER_CURRENT_ECOM_STORE_UPDATED, resp.data?.stores[0]);
-      commit(types.USER_INFO_UPDATED, resp.data);
+      const stores = resp.data.stores
+      const userPrefResponse =  await UserService.getUserPreference({
+        'userPrefTypeId': 'SELECTED_BRAND'
+      });
+      if(userPrefResponse.status === 200 && !hasError(userPrefResponse)) {
+        const userPrefStore = stores.find((store: any) => store.productStoreId === userPrefResponse.data.userPrefValue)
+        commit(types.USER_CURRENT_ECOM_STORE_UPDATED, userPrefStore ? userPrefStore : stores ? stores[0]: {});
+        commit(types.USER_INFO_UPDATED, resp.data);
+      } else {
+        commit(types.USER_CURRENT_ECOM_STORE_UPDATED, stores ? stores[0]: {});
+        commit(types.USER_INFO_UPDATED, resp.data);
+      }
     }
   },
 
@@ -96,6 +106,10 @@ const actions: ActionTree<UserState, RootState> = {
     dispatch('job/clearJobState', null, { root: true });
     commit(types.USER_CURRENT_ECOM_STORE_UPDATED, payload.eComStore);
     dispatch('getShopifyConfig', payload.eComStore.productStoreId);
+    await UserService.setUserPreference({
+      'userPrefTypeId': 'SELECTED_BRAND',
+      'userPrefValue': payload.eComStore.productStoreId
+    });
   },
   /**
    * Update user timeZone
@@ -127,23 +141,35 @@ const actions: ActionTree<UserState, RootState> = {
         },
         "entityName": "ShopifyConfig",
         "noConditionFind": "Y",
-        "fieldList": ["shopifyConfigId"]
+        "fieldList": ["shopifyConfigId", "shopifyConfigName"]
       }
       try {
         resp = await UserService.getShopifyConfig(payload);
         if (resp.status === 200 && !hasError(resp) && resp.data?.docs) {
-          commit(types.USER_SHOPIFY_CONFIG_UPDATED, resp.data.docs?.length > 0 ? resp.data.docs[0].shopifyConfigId : "");
+          const shopifyConfigs = resp.data.docs;
+          commit(types.USER_SHOPIFY_CONFIG_LIST_UPDATED, shopifyConfigs);
+          commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, shopifyConfigs.length > 0 ? shopifyConfigs[0].shopifyConfigId : "");
         } else {
           console.error(resp);
-          commit(types.USER_SHOPIFY_CONFIG_UPDATED, "");
+          commit(types.USER_SHOPIFY_CONFIG_LIST_UPDATED, []);
+          commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, "");
         }
       } catch (err) {
         console.error(err);
-        commit(types.USER_SHOPIFY_CONFIG_UPDATED, "");
+        commit(types.USER_SHOPIFY_CONFIG_LIST_UPDATED, []);
+        commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, "");
       }
     } else {
-      commit(types.USER_SHOPIFY_CONFIG_UPDATED, "");
+      commit(types.USER_SHOPIFY_CONFIG_LIST_UPDATED, []);
+      commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, "");
     }
+  },
+
+  /**
+   * update current shopify config id
+   */
+  async setCurrentShopifyConfigId({ commit }, id) {
+    commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, id);
   },
 
   async setEComStore({ commit }, payload) {

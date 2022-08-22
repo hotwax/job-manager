@@ -25,6 +25,7 @@
         <ion-modal  :is-open="isOpen" @didDismiss="() => isOpen = false">
           <ion-content force-overscroll="false">
             <ion-datetime
+              hour-cycle="h12"
               :min="minDateTime"
               :value="currentJob?.runTime ? getDateTime(currentJob.runTime) : ''"
               @ionChange="updateRunTime($event, currentJob)"
@@ -129,7 +130,7 @@ export default defineComponent({
     ...mapGetters({
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
-      shopifyConfigId: 'user/getShopifyConfigId',
+      currentShopifyConfigId: 'user/getCurrentShopifyConfigId',
       currentEComStore: 'user/getCurrentEComStore',
       currentJob: 'job/getCurrentJob',
     }),

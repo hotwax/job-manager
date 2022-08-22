@@ -95,7 +95,7 @@ export default defineComponent({
       getJobStatus: 'job/getJobStatus',
       getTemporalExpr: 'job/getTemporalExpr',
       getJob: 'job/getJob',
-      shopifyConfigId: 'user/getShopifyConfigId',
+      currentShopifyConfigId: 'user/getCurrentShopifyConfigId',
       getCachedWebhook: 'webhook/getCachedWebhook'
     }),
     newProductsWebhook(): boolean {
@@ -142,7 +142,7 @@ export default defineComponent({
       if (checked) {
         await this.store.dispatch('webhook/subscribeWebhook', enumId)
       } else {
-        await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhook?.id, shopifyConfigId: this.shopifyConfigId })
+        await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhook?.id, shopifyConfigId: this.currentShopifyConfigId })
       }
     },
     async viewJobConfiguration(id: string, title: string, status: string) {

@@ -168,7 +168,7 @@ export default defineComponent({
     ...mapGetters({
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
-      shopifyConfigId: 'user/getShopifyConfigId',
+      currentShopifyConfigId: 'user/getCurrentShopifyConfigId',
       currentEComStore: 'user/getCurrentEComStore',
       getTemporalExpr: 'job/getTemporalExpr'
     }),
