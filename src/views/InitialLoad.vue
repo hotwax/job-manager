@@ -46,7 +46,7 @@
             </ion-item>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Upload Pending Process") }}</ion-label>
-              <ion-checkbox slot="end" :checked="processPendingUploadsOnShopifyValue" @click="updateJob($event['detail'].checked, jobEnums['UL_PRCS'])"/>
+              <ion-checkbox slot="end" :checked="processPendingUploadsOnShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['UL_PRCS'])"/>
             </ion-item>
           </ion-card>
         </section>
@@ -113,7 +113,6 @@ export default defineComponent({
       lastShopifyOrderId: '',
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
-      processPendingUploadsOnShopifyValue: false
     }
   },
   mounted () {
@@ -124,7 +123,6 @@ export default defineComponent({
       }
     })
     this.store.dispatch('webhook/fetchWebhooks');
-    this.processPendingUploadsOnShopifyValue = this.processPendingUploadsOnShopify();
   },
   computed: {
     ...mapGetters({
@@ -138,20 +136,13 @@ export default defineComponent({
       const webhookTopic = this.webhookEnums['BULK_OPERATIONS_FINISH']
       return this.getCachedWebhook[webhookTopic]
     },
-    // processPendingUploadsOnShopify(): boolean {
-    //   const status = this.getJobStatus(this.jobEnums["UL_PRCS"]);
-    //   console.log("processPendingUploadsOnShopify", status && status !== "SERVICE_DRAFT")
-    //   return status && status !== "SERVICE_DRAFT";
-    // }
+    processPendingUploadsOnShopify(): boolean {
+      const status = this.getJobStatus(this.jobEnums["UL_PRCS"]);
+      return status && status !== "SERVICE_DRAFT";
+    }
   },
   methods: {
-    processPendingUploadsOnShopify(){
-      const status = this.getJobStatus(this.jobEnums["UL_PRCS"]);
-      console.log("processPendingUploadsOnShopify", status && status !== "SERVICE_DRAFT")
-      return status && status !== "SERVICE_DRAFT";
-    },
     async updateJob(checked: boolean, id: string, status = 'EVERY_15_MIN') {
-      this.processPendingUploadsOnShopifyValue = checked;
       const job = this.getJob(id);
 
       // TODO: added this condition to not call the api when the value of the select automatically changes
@@ -161,17 +152,17 @@ export default defineComponent({
       }
 
       // added check that if the job is not present, then display a toast and then return
-      // if (!job) {
-      //   showToast(translate('Configuration missing'))
-      //   return;
-      // }
+      if (!job) {
+        showToast(translate('Configuration missing'))
+        return;
+      }
 
-      // job['jobStatus'] = status
+      job['jobStatus'] = status
 
-      // // if job runTime is not a valid date then making runTime as empty
-      // if (job?.runTime && !isFutureDate(job?.runTime)) {
-      //   job.runTime = ''
-      // }
+      // if job runTime is not a valid date then making runTime as empty
+      if (job?.runTime && !isFutureDate(job?.runTime)) {
+        job.runTime = ''
+      }
       
       if (!checked) {
         this.store.dispatch('job/cancelJob', job)
@@ -180,7 +171,6 @@ export default defineComponent({
       } else if (job?.status === 'SERVICE_PENDING') {
         this.store.dispatch('job/updateJob', job)
       }
-      console.log("value", this.processPendingUploadsOnShopifyValue)
     },
     async viewJobConfiguration(label: string, id: string) {
       this.currentSelectedJobModal = label;
