@@ -16,7 +16,7 @@
             </ion-card-header>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("BOPIS corrections") }}</ion-label>
-              <ion-toggle :checked="bopisCorrections" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, this.jobEnums['BOPIS_CORRECTION'])" />
+              <ion-toggle :checked="bopisCorrectionsValue" color="secondary" slot="end" @click="updateJob($event['detail'].checked, this.jobEnums['BOPIS_CORRECTION'])" />
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
@@ -62,7 +62,7 @@ import {
 import { defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
 import JobConfiguration from '@/components/JobConfiguration.vue'
-import { isFutureDate, showToast } from '@/utils';
+import { hasError, isFutureDate, showToast } from '@/utils';
 import emitter from '@/event-bus';
 import { useRouter } from 'vue-router'
 import { translate } from '@/i18n';
@@ -93,7 +93,8 @@ export default defineComponent({
       currentJobStatus: '',
       freqType: '',
       isJobDetailAnimationCompleted: false,
-      isDesktop: isPlatform('desktop')
+      isDesktop: isPlatform('desktop'),
+      bopisCorrectionsValue: false
     }
   },
   computed: {
@@ -111,17 +112,23 @@ export default defineComponent({
   },
   methods: {
     async updateJob(checked: boolean, id: string, status="EVERY_15_MIN") {
+      console.log(this.bopisCorrectionsValue)
+      this.bopisCorrectionsValue = !this.bopisCorrections;
       const job = this.getJob(id);
-
+      
       // added check that if the job is not present, then display a toast and then return
       if (!job) {
+        // console.log("value",this.bopisCorrectionsValue)
         showToast(translate('Configuration missing'))
+        setTimeout(() => {
+          this.bopisCorrectionsValue = this.bopisCorrections;
+        }, 1000)
         return;
       }
 
       // TODO: added this condition to not call the api when the value of the select automatically changes
       // need to handle this properly
-      if ((checked && job?.status === 'SERVICE_PENDING') || (!checked && job?.status === 'SERVICE_DRAFT')) {
+      if ((this.bopisCorrectionsValue && job?.status === 'SERVICE_PENDING') || (!this.bopisCorrectionsValue && job?.status === 'SERVICE_DRAFT')) {
         return;
       }
 
@@ -131,13 +138,31 @@ export default defineComponent({
       if (job?.runTime && !isFutureDate(job?.runTime)) {
         job.runTime = ''
       }
-
-      if (!checked) {
-        this.store.dispatch('job/cancelJob', job)
+      // console.log("this.bopisCorrections", this.bopisCorrections)
+      if (this.bopisCorrectionsValue) {
+        this.store.dispatch('job/cancelJob', job).then((resp) => {
+          if(resp.status !== 200 || hasError(resp)){
+            this.bopisCorrectionsValue = this.bopisCorrections;
+          }
+        }).catch((err: any) => {
+          this.bopisCorrectionsValue = this.bopisCorrections;
+        })
       } else if (job?.status === 'SERVICE_DRAFT') {
-        this.store.dispatch('job/scheduleService', job)
+        this.store.dispatch('job/scheduleService', job).then((resp) => {
+          if(resp.status !== 200 || hasError(resp)){
+            this.bopisCorrectionsValue = this.bopisCorrections;
+          }
+        }).catch((err: any) => {
+          this.bopisCorrectionsValue = this.bopisCorrections;
+        })
       } else if (job?.status === 'SERVICE_PENDING') {
-        this.store.dispatch('job/updateJob', job)
+        this.store.dispatch('job/updateJob', job).then((resp) => {
+          if(resp.status !== 200 || hasError(resp)){
+            this.bopisCorrectionsValue = this.bopisCorrections;
+          }
+        }).catch((err: any) => {
+          this.bopisCorrectionsValue = this.bopisCorrections;
+        })
       }
     },
     async viewJobConfiguration(id: string, title: string, status: string) {
@@ -174,6 +199,7 @@ export default defineComponent({
         "systemJobEnumId_op": "in"
       }
     });
+    this.bopisCorrectionsValue = this.bopisCorrections;
   },
   setup() {
     const store = useStore();
