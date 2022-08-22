@@ -37,12 +37,12 @@ const actions: ActionTree<UserState, RootState> = {
                 showToast(translate(resp.data._EVENT_MESSAGE_));
               }
               return resp.data;
-              } else {
-                const permissionError = 'You do not have permission to access the app.';
-                showToast(translate(permissionError));
-                console.error("error", permissionError);
-                return Promise.reject(new Error(permissionError));
-              }
+            } else {
+              const permissionError = 'You do not have permission to access the app.';
+              showToast(translate(permissionError));
+              console.error("error", permissionError);
+              return Promise.reject(new Error(permissionError));
+            }
           } else {
             commit(types.USER_TOKEN_CHANGED, { newToken: resp.data.token })
             await dispatch('getProfile')
