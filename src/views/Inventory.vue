@@ -112,13 +112,11 @@ export default defineComponent({
   },
   methods: {
     async updateJob(checked: boolean, id: string, status="EVERY_15_MIN") {
-      console.log(this.bopisCorrectionsValue)
       this.bopisCorrectionsValue = !this.bopisCorrections;
       const job = this.getJob(id);
       
       // added check that if the job is not present, then display a toast and then return
       if (!job) {
-        // console.log("value",this.bopisCorrectionsValue)
         showToast(translate('Configuration missing'))
         setTimeout(() => {
           this.bopisCorrectionsValue = this.bopisCorrections;
