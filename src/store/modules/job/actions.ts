@@ -663,6 +663,11 @@ const actions: ActionTree<JobState, RootState> = {
     } catch (err) {
       console.error(err);
     }
+  },
+  updateJobStatus({state}, {id, status}){
+    const jobId = Object.keys(state.cached).find((jobId: any) => id == jobId);
+    if(jobId)
+    state.cached[jobId].status = status;
   }
 }
 export default actions;
