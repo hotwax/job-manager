@@ -531,7 +531,7 @@ const actions: ActionTree<JobState, RootState> = {
         'parentJobId': job.parentJobId,
         'recurrenceTimeZone': this.state.user.current.userTimeZone
       },
-      'shopifyConfigId': job.status === "SERIVCE_PENDING" ? job.shopifyConfigId : this.state.user.currentShopifyConfigId,
+      'shopifyConfigId': job.status === "SERVICE_PENDING" ? job.shopifyConfigId : this.state.user.currentShopifyConfigId,
       'statusId': "SERVICE_PENDING",
       'systemJobEnumId': job.systemJobEnumId
     } as any
@@ -540,7 +540,7 @@ const actions: ActionTree<JobState, RootState> = {
     job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = job.status === "SERVICE_PENDING" ? job.productStoreId : this.state.user.currentEComStore.productStoreId)
     job?.priority && (payload['SERVICE_PRIORITY'] = job.priority.toString())
     job?.sinceId && (payload['sinceId'] = job.sinceId)
-    job?.runTime && (payload['SERVICE_TIME'] = job.runTime.toString())
+    job?.runTime && job.status !== "SERVICE_PENDING" && (payload['SERVICE_TIME'] = job.runTime.toString())
 
     // assigning '' (empty string) to all the runtimeData properties whose value is "null"
     job.runtimeData && Object.keys(job.runtimeData).map((key: any) => {
