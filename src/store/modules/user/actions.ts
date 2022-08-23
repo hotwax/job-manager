@@ -136,6 +136,7 @@ const actions: ActionTree<UserState, RootState> = {
         "inputFields": {
           "productStoreId": productStoreId,
         },
+        //TODO: Need a new entity fr fetching shopifyCongigId and shopId
         "entityName": "ShopifyConfigAndShopLocation",
         "noConditionFind": "Y",
         "fieldList": ["shopifyConfigId", "shopifyConfigName", "shopId"]
