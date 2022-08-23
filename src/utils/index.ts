@@ -133,8 +133,8 @@ const handleDateTimeInput = (dateTimeValue: any) => {
 
 const prepareRuntime = (job: any) => {
   // For job frequency everyday, set to start of next day
-  if (job.frequency === 'EVERYDAY') {
-    return DateTime.now().startOf('day').plus({days: 1});
+  if (job.jobStatus === 'EVERYDAY') {
+    return DateTime.now().startOf('day').plus({days: 1}).toMillis();
   }
 }
 
