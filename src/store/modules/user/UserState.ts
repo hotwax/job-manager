@@ -4,5 +4,5 @@ export default interface UserState {
     currentEComStore: object;
     instanceUrl: string;
     shopifyConfigs: any,
-    currentShopifyConfigId: string,
+    currentShopifyConfig: any,
 }

@@ -18,8 +18,8 @@ const getters: GetterTree <UserState, RootState> = {
     getInstanceUrl (state) {
         return state.instanceUrl;
     },
-    getCurrentShopifyConfigId (state) {
-        return state.currentShopifyConfigId;
+    getCurrentShopifyConfig (state) {
+        return state.currentShopifyConfig;
     },
     getShopifyConfigs (state) {
         return state.shopifyConfigs;

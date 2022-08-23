@@ -136,37 +136,42 @@ const actions: ActionTree<UserState, RootState> = {
         "inputFields": {
           "productStoreId": productStoreId,
         },
-        "entityName": "ShopifyConfig",
+        "entityName": "ShopifyConfigAndShopLocation",
         "noConditionFind": "Y",
-        "fieldList": ["shopifyConfigId", "shopifyConfigName"]
+        "fieldList": ["shopifyConfigId", "shopifyConfigName", "shopId"]
       }
       try {
         resp = await UserService.getShopifyConfig(payload);
         if (resp.status === 200 && !hasError(resp) && resp.data?.docs) {
-          const shopifyConfigs = resp.data.docs;
-          commit(types.USER_SHOPIFY_CONFIG_LIST_UPDATED, shopifyConfigs);
-          commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, shopifyConfigs.length > 0 ? shopifyConfigs[0].shopifyConfigId : "");
+          const shopifyConfigs = resp.data.docs.reduce((shopifyConfiguration: any, shopifyConfig: any) => {
+            shopifyConfiguration[shopifyConfig.shopifyConfigId] = shopifyConfig
+            console.log(shopifyConfiguration, shopifyConfig)
+            return shopifyConfiguration
+          }, {});
+          console.log(shopifyConfigs);
+          commit(types.USER_SHOPIFY_CONFIGS_UPDATED, shopifyConfigs);
+          commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, resp.data.docs.length > 0 ? resp.data.docs[0]: {});
         } else {
           console.error(resp);
-          commit(types.USER_SHOPIFY_CONFIG_LIST_UPDATED, []);
-          commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, "");
+          commit(types.USER_SHOPIFY_CONFIGS_UPDATED, {});
+          commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, {});
         }
       } catch (err) {
         console.error(err);
-        commit(types.USER_SHOPIFY_CONFIG_LIST_UPDATED, []);
-        commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, "");
+        commit(types.USER_SHOPIFY_CONFIGS_UPDATED, {});
+        commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, {});
       }
     } else {
-      commit(types.USER_SHOPIFY_CONFIG_LIST_UPDATED, []);
-      commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, "");
+      commit(types.USER_SHOPIFY_CONFIGS_UPDATED, {});
+      commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, {});
     }
   },
 
   /**
    * update current shopify config id
    */
-  async setCurrentShopifyConfigId({ commit }, id) {
-    commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, id);
+  async setCurrentShopifyConfig({ commit }, shopifyConfig) {
+    commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, shopifyConfig);
   },
 
   async getEComStores(_context, payload) {

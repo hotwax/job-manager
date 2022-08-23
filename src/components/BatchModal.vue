@@ -111,7 +111,7 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       getJob: 'job/getJob',
-      currentShopifyConfigId: 'user/getCurrentShopifyConfigId',
+      currentShopifyConfig: 'user/getCurrentShopifyConfig',
       currentEComStore: 'user/getCurrentEComStore',
       userProfile: "user/getUserProfile"
     }),

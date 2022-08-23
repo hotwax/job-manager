@@ -6,6 +6,7 @@ import { hasError, showToast } from '@/utils'
 import { JobService } from '@/services/JobService'
 import { translate } from '@/i18n'
 import { DateTime } from 'luxon';
+import store from '@/store'
 
 const actions: ActionTree<JobState, RootState> = {
 
@@ -185,13 +186,18 @@ const actions: ActionTree<JobState, RootState> = {
     const params = {
       "inputFields": {
         "statusId": "SERVICE_PENDING",
-        "systemJobEnumId_op": "not-empty"
+        "systemJobEnumId_op": "not-empty",
+        "shopId": ""
       } as any,
       "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runtimeDataId" ],
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
       "orderBy": "runTime ASC"
+    }
+
+    if(store.state.user.currentShopifyConfig?.shopId){
+      params.inputFields.shopId = store.state.user.currentShopifyConfig.shopId
     }
 
     if(payload.systemJobEnumId && payload.systemJobEnumId.length > 0) {
@@ -412,7 +418,7 @@ const actions: ActionTree<JobState, RootState> = {
         'runAsUser': 'system', //default system, but empty in run now.  TODO Need to remove this as we are using SERVICE_RUN_AS_SYSTEM, currently kept it for backward compatibility
         'recurrenceTimeZone': this.state.user.current.userTimeZone
       },
-      'shopifyConfigId': this.state.user.currentShopifyConfigId,
+      'shopifyConfigId': this.state.user.currentShopifyConfig.shopifyConfigId,
       'statusId': "SERVICE_PENDING",
       'systemJobEnumId': job.systemJobEnumId
     } as any
@@ -531,7 +537,7 @@ const actions: ActionTree<JobState, RootState> = {
         'parentJobId': job.parentJobId,
         'recurrenceTimeZone': this.state.user.current.userTimeZone
       },
-      'shopifyConfigId': job.status === "SERVICE_PENDING" ? job.runtimeData?.shopifyConfigId : this.state.user.currentShopifyConfigId,
+      'shopifyConfigId': job.status === "SERVICE_PENDING" ? job.runtimeData?.shopifyConfigId : this.state.user.currentShopifyConfig.shopifyConfigId,
       'statusId': "SERVICE_PENDING",
       'systemJobEnumId': job.systemJobEnumId
     } as any
