@@ -145,10 +145,8 @@ const actions: ActionTree<UserState, RootState> = {
         if (resp.status === 200 && !hasError(resp) && resp.data?.docs) {
           const shopifyConfigs = resp.data.docs.reduce((shopifyConfiguration: any, shopifyConfig: any) => {
             shopifyConfiguration[shopifyConfig.shopifyConfigId] = shopifyConfig
-            console.log(shopifyConfiguration, shopifyConfig)
             return shopifyConfiguration
           }, {});
-          console.log(shopifyConfigs);
           commit(types.USER_SHOPIFY_CONFIGS_UPDATED, shopifyConfigs);
           commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, resp.data.docs.length > 0 ? resp.data.docs[0]: {});
         } else {
