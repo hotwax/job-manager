@@ -63,7 +63,10 @@ const actions: ActionTree<UserState, RootState> = {
         "noConditionFind": "Y"
       }
 
-      await dispatch('getEComStores', payload).then((stores: any) => {
+      const storeResp = await UserService.getEComStores(payload);
+      if(storeResp.status === 200 && !hasError(storeResp) && storeResp.data.docs?.length > 0) {
+        const stores = storeResp.data.docs;
+
         resp.data.stores = [
           ...(stores ? stores : []),
           {
@@ -71,7 +74,7 @@ const actions: ActionTree<UserState, RootState> = {
             storeName: "None"
           }
         ]
-      })
+      }
       const currentProductStoreId = resp.data?.stores[0].productStoreId;
       if (currentProductStoreId) {
         dispatch('getShopifyConfig', currentProductStoreId);
@@ -167,21 +170,6 @@ const actions: ActionTree<UserState, RootState> = {
    */
   async setCurrentShopifyConfigId({ commit }, id) {
     commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, id);
-  },
-
-  async getEComStores(_context, payload) {
-    let resp;
-
-    try{
-      resp = await UserService.getEComStores(payload);
-      if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
-        const stores = resp.data.docs
-
-        return stores
-      }
-    } catch(err) {
-      console.error(err)
-    }
   },
 
   async setEComStore({ commit }, payload) {
