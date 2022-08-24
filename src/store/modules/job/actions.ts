@@ -187,7 +187,12 @@ const actions: ActionTree<JobState, RootState> = {
       "inputFields": {
         "statusId": "SERVICE_PENDING",
         "systemJobEnumId_op": "not-empty",
-        "shopId": this.state.user.currentShopifyConfig?.shopId ? store.state.user.currentShopifyConfig.shopId : "",
+        'shopId_fld0_value': store.state.user.currentShopifyConfig?.shopId,
+        'shopId_fld0_grp': "1",
+        'shopId_fld0_op': "equals",
+        'shopId_fld1_value': "",
+        'shopId_fld1_grp': "2",
+        'shopId_fld1_op': "equals",
       } as any,
       "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runtimeDataId" ],
       "noConditionFind": "Y",
