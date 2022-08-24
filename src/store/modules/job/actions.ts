@@ -419,11 +419,14 @@ const actions: ActionTree<JobState, RootState> = {
         'runAsUser': 'system', //default system, but empty in run now.  TODO Need to remove this as we are using SERVICE_RUN_AS_SYSTEM, currently kept it for backward compatibility
         'recurrenceTimeZone': this.state.user.current.userTimeZone
       },
-      'shopId': this.state.user.currentShopifyConfig?.shopId ? store.state.user.currentShopifyConfig.shopId : "",
-      'shopifyConfigId': this.state.user.currentShopifyConfig.shopifyConfigId,
       'statusId': "SERVICE_PENDING",
       'systemJobEnumId': job.systemJobEnumId
     } as any
+    
+    if(job?.runtimeData?.shopifyConfigId) {
+      payload['shopifyConfigId'] = this.state.user.currentShopifyConfig?.shopifyConfigId
+      payload['shopId'] = this.state.user.currentShopifyConfig?.shopId
+    }
 
     // checking if the runtimeData has productStoreId, and if present then adding it on root level
     job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.state.user.currentEComStore.productStoreId)
@@ -539,7 +542,7 @@ const actions: ActionTree<JobState, RootState> = {
         'parentJobId': job.parentJobId,
         'recurrenceTimeZone': this.state.user.current.userTimeZone
       },
-      'shopId': store.state.user.currentShopifyConfig?.shopId ? store.state.user.currentShopifyConfig.shopId : "",
+      'shopId': job.status === "SERVICE_PENDING" ? job.runtimeData?.shopId : this.state.user.currentShopifyConfig.shopId,
       'shopifyConfigId': job.status === "SERVICE_PENDING" ? job.runtimeData?.shopifyConfigId : this.state.user.currentShopifyConfig.shopifyConfigId,
       'statusId': "SERVICE_PENDING",
       'systemJobEnumId': job.systemJobEnumId
