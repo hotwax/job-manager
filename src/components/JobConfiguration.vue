@@ -86,7 +86,7 @@
     <ion-item @click="updatePinnedJobs(currentJob?.systemJobEnumId)" button>
       <ion-icon slot="start" :icon="pinOutline" />
       {{ $t("Pin job") }}
-      <ion-checkbox slot="end" :checked="getPinnedJobs ? getPinnedJobs.includes(currentJob.systemJobEnumId) : false" />
+      <ion-checkbox slot="end" :checked="pinnedJobs && pinnedJobs.includes(currentJob.systemJobEnumId)" />
     </ion-item>
   </div>
 
@@ -157,7 +157,7 @@ export default defineComponent({
     ...mapGetters({
       getEnumDescription: 'job/getEnumDescription',
       getEnumName: 'job/getEnumName',
-      getPinnedJobs: 'user/getPinnedJobs',
+      pinnedJobs: 'user/getPinnedJobs',
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
       shopifyConfigId: 'user/getShopifyConfigId',
@@ -362,7 +362,7 @@ export default defineComponent({
       })
     },
     async updatePinnedJobs(enumId: any) {
-      const pinnedJobs = new Set(this.getPinnedJobs);
+      const pinnedJobs = new Set(this.pinnedJobs);
       if(pinnedJobs.has(enumId)) {
         pinnedJobs.delete(enumId);
         await this.store.dispatch('user/updatePinnedJobs', { pinnedJobs: [...pinnedJobs] });
