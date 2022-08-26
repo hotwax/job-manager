@@ -71,6 +71,26 @@
       <ion-button expand="block" @click="saveChanges()">{{ $t("Save changes") }}</ion-button>
     </div>
   </section>
+  <div class="more-actions">
+    <ion-item @click="viewJobHistory(currentJob)" button>
+      <ion-icon slot="start" :icon="timeOutline" />
+      {{ $t("History") }}
+    </ion-item>
+    <ion-item @click="runNow(title, currentJob)" button>
+      <ion-icon slot="start" :icon="flashOutline" />
+      {{ $t("Run now") }}
+    </ion-item>
+    <ion-item @click="copyJobInformation(currentJob)" button>
+      <ion-icon slot="start"  :icon="copyOutline" />
+      {{ $t("Copy details") }}
+    </ion-item>
+    <ion-item @click="updatePinnedJobs(currentJob?.systemJobEnumId)" button>
+      <ion-icon slot="start" :icon="pinOutline" />
+      {{ $t("Pin job") }}
+      <ion-checkbox slot="end" :checked="pinnedJobs && pinnedJobs.includes(currentJob.systemJobEnumId)" />
+    </ion-item>
+  </div>
+
 </template>
 
 <script lang="ts">
@@ -78,6 +98,7 @@ import { defineComponent } from "vue";
 import {
   IonBadge,
   IonButton,
+  IonCheckbox,
   IonContent,
   IonDatetime,
   IonIcon,
@@ -87,15 +108,21 @@ import {
   IonModal,
   IonSelect,
   IonSelectOption,
-  alertController
+  alertController,
+  modalController,
 } from "@ionic/vue";
 import {
   calendarClearOutline,
+  flashOutline,
+  copyOutline,
   timeOutline,
   timerOutline,
   syncOutline,
-  personCircleOutline
+  personCircleOutline,
+  pinOutline,
 } from "ionicons/icons";
+import JobHistoryModal from '@/components/JobHistoryModal.vue'
+import { Plugins } from '@capacitor/core';
 import { handleDateTimeInput, showToast } from "@/utils";
 import { mapGetters, useStore } from "vuex";
 import { DateTime } from 'luxon';
@@ -116,7 +143,8 @@ export default defineComponent({
     IonList,
     IonModal,
     IonSelect,
-    IonSelectOption
+    IonSelectOption,
+    IonCheckbox
   },
   data() {
     return {
@@ -128,6 +156,9 @@ export default defineComponent({
   props: ["title", "status", "type"],
   computed: {
     ...mapGetters({
+      getEnumDescription: 'job/getEnumDescription',
+      getEnumName: 'job/getEnumName',
+      pinnedJobs: 'user/getPinnedJobs',
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
       currentShopifyConfigId: 'user/getCurrentShopifyConfigId',
@@ -287,6 +318,60 @@ export default defineComponent({
       if (job) {
         job.runTime = handleDateTimeInput(ev['detail'].value)
       }
+    },
+    async viewJobHistory(job: any) {
+      const jobHistoryModal = await modalController.create({
+        component: JobHistoryModal,
+        componentProps: { currentJob: job }
+      });
+      await jobHistoryModal.present();
+      jobHistoryModal.onDidDismiss().then(() => {
+        jobHistoryModal.dismiss({ dismissed: true });
+      })
+    },
+    async runNow(header: string, job: any) {
+      const jobAlert = await alertController
+        .create({
+          header,
+          message: this.$t('This job will be scheduled to run as soon as possible. There may not be enough time to revert this action.', {space: '<br/><br/>'}),
+          buttons: [
+            {
+              text: this.$t("Cancel"),
+              role: 'cancel',
+            },
+            {
+              text: this.$t('Run now'),
+              handler: () => {
+                if (job) {
+                  this.store.dispatch('job/runServiceNow', job)
+                }
+              }
+            }
+          ]
+        });
+
+      return jobAlert.present();
+    },
+    async copyJobInformation(job: any) {
+      const { Clipboard } = Plugins;
+      const jobDetails = `jobId: ${job.jobId}, jobName: ${this.getEnumName(job.systemJobEnumId)}, jobDescription: ${this.getEnumDescription(job.systemJobEnumId)}`;
+
+      await Clipboard.write({
+        string: jobDetails
+      }).then(() => {
+        showToast(this.$t("Copied job details to clipboard"));
+      })
+    },
+    async updatePinnedJobs(enumId: any) {
+      const pinnedJobs = new Set(this.pinnedJobs);
+      if(pinnedJobs.has(enumId)) {
+        pinnedJobs.delete(enumId);
+        await this.store.dispatch('user/updatePinnedJobs', { pinnedJobs: [...pinnedJobs] });
+        emitter.emit("pinnedJobsUpdated", enumId);
+      } else {
+        pinnedJobs.add(enumId);
+        await this.store.dispatch('user/updatePinnedJobs', { pinnedJobs: [...pinnedJobs] });
+      }
     }
   },
   setup() {
@@ -295,12 +380,15 @@ export default defineComponent({
 
     return {
       calendarClearOutline,
+      copyOutline,
+      flashOutline,
       timeOutline,
       timerOutline,
       store,
       router,
       syncOutline,
-      personCircleOutline
+      personCircleOutline,
+      pinOutline
     };
   }
 });
@@ -329,7 +417,17 @@ ion-list {
 
   .mobile-only {
     display: none;
-  }  
+  }
+  .more-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    row-gap: var(--spacer-sm);
+    margin-top: var(--spacer-sm);
+  }
+  .more-actions > * {
+    flex-basis: 50%;
+  }
 }
 
 ion-label:nth-child(3) {
