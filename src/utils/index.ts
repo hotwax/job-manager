@@ -131,4 +131,13 @@ const handleDateTimeInput = (dateTimeValue: any) => {
   return DateTime.fromISO(dateTime).toMillis()
 }
 
-export { handleDateTimeInput, showToast, hasError , parseCsv , jsonToCsv, JsonToCsvOption, isFutureDate }
+const prepareRuntime = (job: any) => {
+  // For job frequency everyday, set to start of next day
+  // It is not recommended to schedule all jobs at the start of the day as it will cause performance issues if too many jobs scheduled at the same time,
+  // understanding the risk and assuming that only limited jobs will be scheduled, we are moving ahead as per the recommendation of Aditya P.
+  if (job.jobStatus === 'EVERYDAY') {
+    return DateTime.now().startOf('day').plus({days: 1}).toMillis();
+  }
+}
+
+export { handleDateTimeInput, showToast, hasError , parseCsv , jsonToCsv, JsonToCsvOption, isFutureDate, prepareRuntime }
