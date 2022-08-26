@@ -134,7 +134,7 @@ const handleDateTimeInput = (dateTimeValue: any) => {
 const prepareRuntime = (job: any) => {
   // For job frequency everyday, set to start of next day
   // It is not recommended to schedule all jobs at the start of the day as it will cause performance issues if too many jobs scheduled at the same time,
-  // but we're assuming that we'll have only few jobs with frequency 'EVERYDAY'
+  // understanding the risk and assuming that only limited jobs will be scheduled, we are moving ahead as per the recommendation of Aditya P.
   if (job.jobStatus === 'EVERYDAY') {
     return DateTime.now().startOf('day').plus({days: 1}).toMillis();
   }
