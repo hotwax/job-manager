@@ -14,7 +14,7 @@ const mutations: MutationTree <UserState> = {
         productStoreId: "",
         storeName: "None"
       }
-      state.shopifyConfigs = {}
+      state.shopifyConfigs = []
     },
     [types.USER_INFO_UPDATED] (state, payload) {
         state.current = payload
