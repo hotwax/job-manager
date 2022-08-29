@@ -129,7 +129,7 @@ const actions: ActionTree<UserState, RootState> = {
     commit(types.USER_INSTANCE_URL_UPDATED, payload)
   },
 
-  async getShopifyConfig({ commit, state }, productStoreId) {
+  async getShopifyConfig({ commit }, productStoreId) {
     if (productStoreId) { 
       let resp;
       const payload = {
