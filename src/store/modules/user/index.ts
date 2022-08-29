@@ -11,7 +11,7 @@ const userModule: Module<UserState, RootState> = {
       token: '',
       current: null,
       instanceUrl: '',
-      shopifyConfigs: {},
+      shopifyConfigs: [],
       currentShopifyConfig: {},
       currentEComStore: {
         productStoreId: "",

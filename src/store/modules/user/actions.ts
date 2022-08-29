@@ -142,12 +142,8 @@ const actions: ActionTree<UserState, RootState> = {
       }
       try {
         resp = await UserService.getShopifyConfig(payload);
-        if (resp.status === 200 && !hasError(resp) && resp.data?.docs.length > 0) {
-          const shopifyConfigs = resp.data.docs.reduce((shopifyConfiguration: any, shopifyConfig: any) => {
-            shopifyConfiguration[shopifyConfig.shopifyConfigId] = shopifyConfig
-            return shopifyConfiguration
-          }, {});
-          commit(types.USER_SHOPIFY_CONFIGS_UPDATED, shopifyConfigs);
+        if (resp.status === 200 && !hasError(resp) && resp.data?.docs?.length > 0) {
+          commit(types.USER_SHOPIFY_CONFIGS_UPDATED, resp.data.docs);
           commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, resp.data.docs[0]);
         } else {
           console.error(resp);

@@ -94,7 +94,8 @@ export default defineComponent({
       }
     },
     setShopifyConfig(event: any){
-      this.store.dispatch('user/setCurrentShopifyConfig', this.shopifyConfigs[event.detail.value]);
+      const shopifyConfig = this.shopifyConfigs.find((shopifyConfig: any) => shopifyConfig.shopifyConfigId === event.detail.value)
+      this.store.dispatch('user/setCurrentShopifyConfig', shopifyConfig);
     },
     async changeTimeZone() {
       const timeZoneModal = await modalController.create({
