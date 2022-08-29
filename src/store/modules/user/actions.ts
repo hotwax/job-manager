@@ -147,16 +147,16 @@ const actions: ActionTree<UserState, RootState> = {
           commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, resp.data.docs[0]);
         } else {
           console.error(resp);
-          commit(types.USER_SHOPIFY_CONFIGS_UPDATED, {});
+          commit(types.USER_SHOPIFY_CONFIGS_UPDATED, []);
           commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, {});
         }
       } catch (err) {
         console.error(err);
-        commit(types.USER_SHOPIFY_CONFIGS_UPDATED, {});
+        commit(types.USER_SHOPIFY_CONFIGS_UPDATED, []);
         commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, {});
       }
     } else {
-      commit(types.USER_SHOPIFY_CONFIGS_UPDATED, {});
+      commit(types.USER_SHOPIFY_CONFIGS_UPDATED, []);
       commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, {});
     }
   },
