@@ -129,27 +129,26 @@ const actions: ActionTree<UserState, RootState> = {
     commit(types.USER_INSTANCE_URL_UPDATED, payload)
   },
 
-  async getShopifyConfig({ commit }, productStoreId) {
+  async getShopifyConfig({ commit, state }, productStoreId) {
     if (productStoreId) { 
       let resp;
       const payload = {
         "inputFields": {
           "productStoreId": productStoreId,
         },
-        //TODO: Need a new entity for fetching shopifyCongigId and shopId
-        "entityName": "ShopifyConfigAndShopLocation",
+        "entityName": "ShopifyShopAndConfig",
         "noConditionFind": "Y",
         "fieldList": ["shopifyConfigId", "shopifyConfigName", "shopId"]
       }
       try {
         resp = await UserService.getShopifyConfig(payload);
-        if (resp.status === 200 && !hasError(resp) && resp.data?.docs) {
+        if (resp.status === 200 && !hasError(resp) && resp.data?.docs.length > 0) {
           const shopifyConfigs = resp.data.docs.reduce((shopifyConfiguration: any, shopifyConfig: any) => {
             shopifyConfiguration[shopifyConfig.shopifyConfigId] = shopifyConfig
             return shopifyConfiguration
           }, {});
           commit(types.USER_SHOPIFY_CONFIGS_UPDATED, shopifyConfigs);
-          commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, resp.data.docs.length > 0 ? resp.data.docs[0]: {});
+          commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, resp.data.docs[0]);
         } else {
           console.error(resp);
           commit(types.USER_SHOPIFY_CONFIGS_UPDATED, {});

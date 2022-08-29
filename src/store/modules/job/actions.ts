@@ -190,11 +190,10 @@ const actions: ActionTree<JobState, RootState> = {
         "shopId_fld0_value": store.state.user.currentShopifyConfig?.shopId,
         "shopId_fld0_grp": "1",
         "shopId_fld0_op": "equals",
-        "shopId_fld1_value": "",
         "shopId_fld1_grp": "2",
-        "shopId_fld1_op": "equals",
+        "shopId_fld1_op": "empty",
       } as any,
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runtimeDataId" ],
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runtimeDataId", "shopId" ],
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
@@ -425,7 +424,7 @@ const actions: ActionTree<JobState, RootState> = {
     
     if(job?.runtimeData?.shopifyConfigId) {
       payload['shopifyConfigId'] = this.state.user.currentShopifyConfig?.shopifyConfigId
-      payload['shopId'] = this.state.user.currentShopifyConfig?.shopId
+      payload['jobFields']['shopId'] = this.state.user.currentShopifyConfig?.shopId
     }
 
     // checking if the runtimeData has productStoreId, and if present then adding it on root level
@@ -540,14 +539,13 @@ const actions: ActionTree<JobState, RootState> = {
         'systemJobEnumId': job.systemJobEnumId,
         'tempExprId': job.jobStatus, // Need to remove this as we are passing frequency in SERVICE_TEMP_EXPR, currently kept it for backward compatibility
         'parentJobId': job.parentJobId,
-        'recurrenceTimeZone': this.state.user.current.userTimeZone
+        'recurrenceTimeZone': this.state.user.current.userTimeZone,
+        'shopId': job.status === "SERVICE_PENDING" ? job.shopId : this.state.user.currentShopifyConfig.shopId,
       },
-      'shopId': job.status === "SERVICE_PENDING" ? job.runtimeData?.shopId : this.state.user.currentShopifyConfig.shopId,
       'shopifyConfigId': job.status === "SERVICE_PENDING" ? job.runtimeData?.shopifyConfigId : this.state.user.currentShopifyConfig.shopifyConfigId,
       'statusId': "SERVICE_PENDING",
       'systemJobEnumId': job.systemJobEnumId
     } as any
-
     // checking if the runtimeData has productStoreId, and if present then adding it on root level
     job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = job.status === "SERVICE_PENDING" ? job.productStoreId : this.state.user.currentEComStore.productStoreId)
     job?.priority && (payload['SERVICE_PRIORITY'] = job.priority.toString())
