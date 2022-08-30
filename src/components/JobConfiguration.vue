@@ -7,7 +7,7 @@
 
     <ion-list>
 
-      <ion-item lines="none">
+      <ion-item v-if="currentJob.description" lines="none">
         <ion-label class="ion-text-wrap">
           <p>{{ currentJob.description }}</p>
         </ion-label>
@@ -308,7 +308,7 @@ export default defineComponent({
 
 <style scoped>
 ion-list {
-  margin: var(--spacer-base) 0;
+  margin: 0 0 var(--spacer-base);
 }
 
 .actions > ion-button {
