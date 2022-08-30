@@ -423,8 +423,9 @@ const actions: ActionTree<JobState, RootState> = {
     } as any
     
     if(job?.runtimeData?.shopifyConfigId) {
-      payload['shopifyConfigId'] = this.state.user.currentShopifyConfig?.shopifyConfigId
-      payload['jobFields']['shopId'] = this.state.user.currentShopifyConfig?.shopId
+      const shopifyConfig = this.state.user.currentShopifyConfig
+      payload['shopifyConfigId'] = shopifyConfig?.shopifyConfigId
+      payload['jobFields']['shopId'] = shopifyConfig?.shopId
     }
 
     // checking if the runtimeData has productStoreId, and if present then adding it on root level
