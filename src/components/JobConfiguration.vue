@@ -167,6 +167,9 @@ export default defineComponent({
     }),
     generateFrequencyOptions(): any {
       const optionDefault = [{
+          "value": "EVERY_1_MIN",
+          "label": "Every 1 minute"
+        },{
           "value": "EVERY_5_MIN",
           "label": "Every 5 minutes"
         },{
