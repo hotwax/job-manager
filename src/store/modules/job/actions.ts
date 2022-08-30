@@ -81,7 +81,7 @@ const actions: ActionTree<JobState, RootState> = {
           const total = resp.data.count;
           let jobs = resp.data.docs;
           if(payload.viewIndex && payload.viewIndex > 0){
-            jobs = state.history.list.concat(resp.data.docs);
+            jobs = state.history.list.concat(jobs);
           }
           jobs.map((job: any) => {
             job['statusDesc'] = this.state.util.statusDesc[job.statusId];
@@ -155,7 +155,7 @@ const actions: ActionTree<JobState, RootState> = {
           const total = resp.data.count;
           let jobs = resp.data.docs;
           if(payload.viewIndex && payload.viewIndex > 0){
-            jobs = state.running.list.concat(resp.data.docs);
+            jobs = state.running.list.concat(jobs);
           }
           jobs.map((job: any) => {
             job['statusDesc'] = this.state.util.statusDesc[job.statusId];
@@ -226,7 +226,7 @@ const actions: ActionTree<JobState, RootState> = {
             }
           })
           if(payload.viewIndex && payload.viewIndex > 0){
-            jobs = state.pending.list.concat(resp.data.docs);
+            jobs = state.pending.list.concat(jobs);
           }
           commit(types.JOB_PENDING_UPDATED, { jobs, total });
           const tempExprList = [] as any;
