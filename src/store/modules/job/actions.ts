@@ -541,9 +541,9 @@ const actions: ActionTree<JobState, RootState> = {
         'tempExprId': job.jobStatus, // Need to remove this as we are passing frequency in SERVICE_TEMP_EXPR, currently kept it for backward compatibility
         'parentJobId': job.parentJobId,
         'recurrenceTimeZone': this.state.user.current.userTimeZone,
-        'shopId': job.status === "SERVICE_PENDING" ? job.shopId : this.state.user.currentShopifyConfig.shopId,
+        'shopId': job.runtimeData?.shopifyConfigId && job.status === "SERVICE_PENDING" ? job.shopId : this.state.user.currentShopifyConfig.shopId,
       },
-      'shopifyConfigId': job.status === "SERVICE_PENDING" ? job.runtimeData?.shopifyConfigId : this.state.user.currentShopifyConfig.shopifyConfigId,
+      'shopifyConfigId': job.runtimeData?.shopifyConfigId && job.status === "SERVICE_PENDING" ? job.runtimeData?.shopifyConfigId : this.state.user.currentShopifyConfig.shopifyConfigId,
       'statusId': "SERVICE_PENDING",
       'systemJobEnumId': job.systemJobEnumId
     } as any
