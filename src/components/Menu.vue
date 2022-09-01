@@ -28,7 +28,7 @@
           <ion-label class="ion-text-wrap">
             <p class="overline">{{ instanceUrl }}</p>
             {{ eComStore.storeName }}
-            <p>{{ currentShopifyConfigId }}</p>
+            <p>{{ currentShopifyConfig.shopifyConfigName }}</p>
           </ion-label>
           <ion-note slot="end">{{ userProfile?.userTimeZone }}</ion-note>
         </ion-item>
@@ -85,7 +85,7 @@ export default defineComponent({
       eComStore: 'user/getCurrentEComStore',
       instanceUrl: 'user/getInstanceUrl',
       userProfile: 'user/getUserProfile',
-      currentShopifyConfigId: 'user/getCurrentShopifyConfigId'
+      currentShopifyConfig: 'user/getCurrentShopifyConfig'
     })
   },
   watch:{
