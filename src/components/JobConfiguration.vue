@@ -153,6 +153,11 @@ export default defineComponent({
       minDateTime: DateTime.now().toISO()
     }
   },
+  updated() {
+    // When updating the job, the job is fetched again with the latest values
+    // Updated value should be set to instance variable jobStatus
+    this.jobStatus = this.currentJob.statusId === "SERVICE_DRAFT" ? this.currentJob.statusId : this.currentJob.tempExprId;
+  },
   props: ["title", "status", "type"],
   computed: {
     ...mapGetters({
