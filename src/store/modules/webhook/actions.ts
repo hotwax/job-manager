@@ -8,7 +8,7 @@ import { translate } from '@/i18n'
 
 const actions: ActionTree<WebhookState, RootState> = {
   async fetchWebhooks({ commit }) {
-    await WebhookService.fetchShopifyWebhooks({ shopifyConfigId: this.state.user.currentShopifyConfigId }).then(resp => {
+    await WebhookService.fetchShopifyWebhooks({ shopifyConfigId: this.state.user.currentShopifyConfig.shopifyConfigId }).then(resp => {
       if (resp.status == 200 && resp.data.webhooks?.length > 0 && !hasError(resp)) {
         const webhooks = resp.data.webhooks;
         const topics: any = {}
@@ -39,7 +39,7 @@ const actions: ActionTree<WebhookState, RootState> = {
     let resp;
 
     try {
-      resp = await WebhookService.subscribeWebhook({ shopifyConfigId: this.state.user.currentShopifyConfigId }, id)
+      resp = await WebhookService.subscribeWebhook({ shopifyConfigId: this.state.user.currentShopifyConfig.shopifyConfigId }, id)
 
       if (resp.status == 200 && !hasError(resp)) {
         showToast(translate('Webhook subscribed successfully'))

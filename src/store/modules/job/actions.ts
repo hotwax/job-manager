@@ -6,6 +6,7 @@ import { hasError, showToast } from '@/utils'
 import { JobService } from '@/services/JobService'
 import { translate } from '@/i18n'
 import { DateTime } from 'luxon';
+import store from '@/store'
 
 const actions: ActionTree<JobState, RootState> = {
 
@@ -185,9 +186,14 @@ const actions: ActionTree<JobState, RootState> = {
     const params = {
       "inputFields": {
         "statusId": "SERVICE_PENDING",
-        "systemJobEnumId_op": "not-empty"
+        "systemJobEnumId_op": "not-empty",
+        "shopId_fld0_value": store.state.user.currentShopifyConfig?.shopId,
+        "shopId_fld0_grp": "1",
+        "shopId_fld0_op": "equals",
+        "shopId_fld1_grp": "2",
+        "shopId_fld1_op": "empty",
       } as any,
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runtimeDataId", "description" ],
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runtimeDataId", "shopId", "description" ],
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
@@ -415,10 +421,15 @@ const actions: ActionTree<JobState, RootState> = {
         'runAsUser': 'system', //default system, but empty in run now.  TODO Need to remove this as we are using SERVICE_RUN_AS_SYSTEM, currently kept it for backward compatibility
         'recurrenceTimeZone': this.state.user.current.userTimeZone
       },
-      'shopifyConfigId': this.state.user.currentShopifyConfigId,
       'statusId': "SERVICE_PENDING",
       'systemJobEnumId': job.systemJobEnumId
     } as any
+    
+    if(job?.runtimeData?.shopifyConfigId) {
+      const shopifyConfig = this.state.user.currentShopifyConfig
+      payload['shopifyConfigId'] = shopifyConfig?.shopifyConfigId
+      payload['jobFields']['shopId'] = shopifyConfig?.shopId
+    }
 
     // checking if the runtimeData has productStoreId, and if present then adding it on root level
     job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.state.user.currentEComStore.productStoreId)
@@ -524,13 +535,13 @@ const actions: ActionTree<JobState, RootState> = {
         'systemJobEnumId': job.systemJobEnumId,
         'tempExprId': job.jobStatus, // Need to remove this as we are passing frequency in SERVICE_TEMP_EXPR, currently kept it for backward compatibility
         'parentJobId': job.parentJobId,
-        'recurrenceTimeZone': this.state.user.current.userTimeZone
+        'recurrenceTimeZone': this.state.user.current.userTimeZone,
+        'shopId': job.runtimeData?.shopifyConfigId && job.status === "SERVICE_PENDING" ? job.shopId : this.state.user.currentShopifyConfig.shopId,
       },
-      'shopifyConfigId': job.status === "SERVICE_PENDING" ? job.runtimeData?.shopifyConfigId : this.state.user.currentShopifyConfigId,
+      'shopifyConfigId': job.runtimeData?.shopifyConfigId && job.status === "SERVICE_PENDING" ? job.runtimeData?.shopifyConfigId : this.state.user.currentShopifyConfig.shopifyConfigId,
       'statusId': "SERVICE_PENDING",
       'systemJobEnumId': job.systemJobEnumId
     } as any
-
     // checking if the runtimeData has productStoreId, and if present then adding it on root level
     job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = job.status === "SERVICE_PENDING" ? job.productStoreId : this.state.user.currentEComStore.productStoreId)
     job?.priority && (payload['SERVICE_PRIORITY'] = job.priority.toString())

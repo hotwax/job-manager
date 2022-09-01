@@ -20,7 +20,7 @@
       <ion-item>
         <ion-icon :icon="globeOutline" slot="start" />
         <ion-label>{{ $t("Shopify Config") }}</ion-label>
-        <ion-select interface="popover" :value="currentShopifyConfigId" @ionChange="setShopifyConfig($event)">
+        <ion-select interface="popover" :value="currentShopifyConfig?.shopifyConfigId" @ionChange="setShopifyConfig($event)">
           <ion-select-option v-for="shopifyConfig in shopifyConfigs" :key="shopifyConfig.shopifyConfigId" :value="shopifyConfig.shopifyConfigId" >{{ shopifyConfig.shopifyConfigName }}</ion-select-option>
         </ion-select>
       </ion-item>
@@ -82,7 +82,7 @@ export default defineComponent({
       currentEComStore: 'user/getCurrentEComStore',
       instanceUrl: 'user/getInstanceUrl',
       shopifyConfigs: 'user/getShopifyConfigs',
-      currentShopifyConfigId: 'user/getCurrentShopifyConfigId'
+      currentShopifyConfig: 'user/getCurrentShopifyConfig'
     })
   },
   methods: {
@@ -94,7 +94,8 @@ export default defineComponent({
       }
     },
     setShopifyConfig(event: any){
-      this.store.dispatch('user/setCurrentShopifyConfigId', event.detail.value);
+      const shopifyConfig = this.shopifyConfigs.find((shopifyConfig: any) => shopifyConfig.shopifyConfigId === event.detail.value)
+      this.store.dispatch('user/setCurrentShopifyConfig', shopifyConfig);
     },
     async changeTimeZone() {
       const timeZoneModal = await modalController.create({

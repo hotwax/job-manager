@@ -166,7 +166,7 @@ export default defineComponent({
       pinnedJobs: 'user/getPinnedJobs',
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
-      currentShopifyConfigId: 'user/getCurrentShopifyConfigId',
+      currentShopifyConfig: 'user/getCurrentShopifyConfig',
       currentEComStore: 'user/getCurrentEComStore',
       currentJob: 'job/getCurrentJob',
     }),

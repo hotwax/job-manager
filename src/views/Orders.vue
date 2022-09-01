@@ -239,7 +239,7 @@ export default defineComponent({
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
       orderBatchJobs: "job/getOrderBatchJobs",
-      currentShopifyConfigId: 'user/getCurrentShopifyConfigId',
+      currentShopifyConfig: 'user/getCurrentShopifyConfig',
       currentEComStore: 'user/getCurrentEComStore',
       getTemporalExpr: 'job/getTemporalExpr',
       getCachedWebhook: 'webhook/getCachedWebhook'
@@ -282,7 +282,7 @@ export default defineComponent({
       if (checked) {
         await this.store.dispatch('webhook/subscribeWebhook', enumId)
       } else {
-        await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhook?.id, shopifyConfigId: this.currentShopifyConfigId })
+        await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhook?.id, shopifyConfigId: this.currentShopifyConfig.shopifyConfigId })
       }
     },
     async updateAutoCancelDays() {
