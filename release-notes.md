@@ -1,5 +1,37 @@
 
-Release 1.0.8
+# Release 1.0.10
+
+## What's Changed
+* Implemented functionality to save auto cancel days(#2cxr1cx) by @rathoreprashant in https://github.com/hotwax/job-manager/pull/213 & @disha1202 in https://github.com/hotwax/job-manager/pull/218
+* Fixed: the issue of service time being passed when using run now functionality for pending jobs(#2r0jq44) by @ymaheshwari1 in https://github.com/hotwax/job-manager/pull/222
+* Fixed: missing productStoreId and shopifyConfigId for Job while using runNow (#2r0jq44) by @adityasharma7 in https://github.com/hotwax/job-manager/pull/223
+* Update contribution guideline in Readme file(#2r0kmb3) by @azkyakhan in https://github.com/hotwax/job-manager/pull/224
+* Fixed: code to get 'eComStores' in 'getProfile' action instead of calling 'getEcomStores' action (#257v6ck). by @meet-aniket in https://github.com/hotwax/job-manager/pull/165, @rathoreprashant in https://github.com/hotwax/job-manager/pull/200 & @disha1202 in https://github.com/hotwax/job-manager/pull/226
+* Implemented: Code to check if user has permission to access the app(#2hr41aq) by @shashwatbangar in https://github.com/hotwax/job-manager/pull/221
+* Improved: runTime set to start of the next day for 'EVERYDAY' frequency (#2ftb2vw)  by @rathoreprashant in https://github.com/hotwax/job-manager/pull/206 & @disha1202 in https://github.com/hotwax/job-manager/pull/225
+* Implemented: Add additional job actions to job config component(#364tt29) by @disha1202 in https://github.com/hotwax/job-manager/pull/216
+* Implemented: additional job actions, to job config component (#364tt29) by @rathoreprashant in https://github.com/hotwax/job-manager/pull/212
+* Fixed: Run now functionality for the job manager is not working correctly (#2rhqqf7) by @adityasharma7 in https://github.com/hotwax/job-manager/pull/229
+* Implemented: functionality to have option to run jobs within 1 min(#2rhruw9) by @ymaheshwari1 in https://github.com/hotwax/job-manager/pull/230
+* Fixed: Not able to open job update section on Pipeline page for some jobs (#2rht6hk) by @adityasharma7 in https://github.com/hotwax/job-manager/pull/231
+
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v1.0.9...v1.0.10
+
+
+# Release 1.0.9
+
+## What's Changed
+* Fixed: DateTime component has different hour cycle on different devices(#2dmq8ja) by @shashwatbangar in https://github.com/hotwax/job-manager/pull/180
+* Implemented: Feature to run scheduled job right away(#364ttgf) by @shashwatbangar in https://github.com/hotwax/job-manager/pull/211
+* Implemented support to store user preference for selected product store (#2f2h8hu) by @shashwatbangar in https://github.com/hotwax/job-manager/pull/219
+* Implemented support to store user preference for selected product store (#2f2h8hu) by @rathoreprashant in https://github.com/hotwax/job-manager/pull/197
+* Implemented: Add option to select shopify config from settings page(#2q9mut9) by @disha1202 in https://github.com/hotwax/job-manager/pull/217
+
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v1.0.8...v1.0.9
+
+# Release 1.0.8
 
 ## What's Changed
 * Fixed: issue of auto cancel job check is not reflected on UI when the job is scheduled(#28u4g5n) by @ymaheshwari1 in https://github.com/hotwax/job-manager/pull/189
