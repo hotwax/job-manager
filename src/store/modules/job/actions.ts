@@ -82,7 +82,7 @@ const actions: ActionTree<JobState, RootState> = {
           const total = resp.data.count;
           let jobs = resp.data.docs;
           if(payload.viewIndex && payload.viewIndex > 0){
-            jobs = state.history.list.concat(resp.data.docs);
+            jobs = state.history.list.concat(jobs);
           }
           jobs.map((job: any) => {
             job['statusDesc'] = this.state.util.statusDesc[job.statusId];
@@ -156,7 +156,7 @@ const actions: ActionTree<JobState, RootState> = {
           const total = resp.data.count;
           let jobs = resp.data.docs;
           if(payload.viewIndex && payload.viewIndex > 0){
-            jobs = state.running.list.concat(resp.data.docs);
+            jobs = state.running.list.concat(jobs);
           }
           jobs.map((job: any) => {
             job['statusDesc'] = this.state.util.statusDesc[job.statusId];
@@ -193,7 +193,7 @@ const actions: ActionTree<JobState, RootState> = {
         "shopId_fld1_grp": "2",
         "shopId_fld1_op": "empty",
       } as any,
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runtimeDataId", "shopId" ],
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runtimeDataId", "shopId", "description" ],
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
@@ -232,7 +232,7 @@ const actions: ActionTree<JobState, RootState> = {
             }
           })
           if(payload.viewIndex && payload.viewIndex > 0){
-            jobs = state.pending.list.concat(resp.data.docs);
+            jobs = state.pending.list.concat(jobs);
           }
           commit(types.JOB_PENDING_UPDATED, { jobs, total });
           const tempExprList = [] as any;
@@ -387,6 +387,9 @@ const actions: ActionTree<JobState, RootState> = {
         if(jobs.status === 200 && !hasError(jobs) && jobs.data?.docs.length) {
           jobs = jobs.data?.docs;
           const job = jobs.find((job: any) => job?.jobId === payload.jobId);
+          // We are using status field everywhere so whenever we fetch job again status field needs to be updated
+          // TODO Check why status field is used instead of statusId
+          job && (job.status = job.statusId);
           commit(types.JOB_CURRENT_UPDATED, job);
         }
         showToast(translate('Service updated successfully'))
@@ -473,7 +476,7 @@ const actions: ActionTree<JobState, RootState> = {
     commit(types.JOB_UPDATED_BULK, {})
   },
 
-  async skipJob({ commit, dispatch, getters }, job) {
+  async skipJob({ state, commit, dispatch, getters }, job) {
     let skipTime = {};
     const integer1 = getters['getTemporalExpr'](job.tempExprId)?.integer1;
     const integer2 = getters['getTemporalExpr'](job.tempExprId)?.integer2
@@ -498,21 +501,9 @@ const actions: ActionTree<JobState, RootState> = {
     } as any
 
     const resp = await JobService.updateJob(payload)
-    if (resp.status === 200 && !hasError(resp) && resp.data?.successMessage) {
-      let jobs = await dispatch('fetchJobs', {
-        inputFields: {
-          'systemJobEnumId': job.systemJobEnumId,
-          'systemJobEnumId_op': 'equals'
-        }
-      })
-      if (jobs.status === 200 && !hasError(jobs) && jobs.data?.docs.length) {
-        jobs = jobs.data?.docs;
-        const currentJob = jobs.find((currentJob: any) => currentJob?.jobId === job?.jobId);
-        commit(types.JOB_CURRENT_UPDATED, currentJob);
-      }
-      commit(types.JOB_UPDATED, { job });
-    }
-
+    // Fetch and update current only when there is object in current
+    // Skip job can be performed from pipeline page too causing side effects
+    if (state.current && Object.keys(state.current).length) {
     let jobs = await dispatch('fetchJobs', {
       inputFields: {
         'systemJobEnumId': payload.systemJobEnumId,
@@ -524,6 +515,10 @@ const actions: ActionTree<JobState, RootState> = {
       const currentJob = jobs.find((currentJob: any) => currentJob?.jobId === job?.jobId);
       commit(types.JOB_CURRENT_UPDATED, currentJob);
     }
+    }
+    // This is done for batch jobs
+    commit(types.JOB_UPDATED, { job });
+
     return resp;
   },
 
@@ -608,6 +603,9 @@ const actions: ActionTree<JobState, RootState> = {
           commit(types.JOB_UPDATED, { cachedJob });
         }
 
+        // Fetch and update current only when there is object in current
+        // Cancel job can be performed from pipeline page too causing side effects
+        if (state.current && Object.keys(state.current).length) {
         let jobs = await dispatch('fetchJobs', {
           inputFields: {
             'systemJobEnumId': job.systemJobEnumId,
@@ -618,6 +616,7 @@ const actions: ActionTree<JobState, RootState> = {
           jobs = jobs.data?.docs;
           const currentJob = jobs.find((currentJob: any) => currentJob?.systemJobEnumId === job?.systemJobEnumId);
           commit(types.JOB_CURRENT_UPDATED, currentJob);
+        }
         }
         showToast(translate('Service updated successfully'))
       } else {
