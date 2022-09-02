@@ -254,6 +254,63 @@ const actions: ActionTree<JobState, RootState> = {
       showToast(translate("Something went wrong"));
     })
   },
+  async fetchMiscellaneousJobs({ commit, dispatch, state }, payload){
+    const params = {
+      "inputFields": {
+        "enumTypeId": "MISC_SYS_JOB",
+        "statusId": ["SERVICE_PENDING", "SERVICE_DRAFT"],
+        "statusId_op": "in",
+        "systemJobEnumId_op": "not-empty",
+        "shopId_fld0_value": store.state.user.currentShopifyConfig?.shopId,
+        "shopId_fld0_grp": "1",
+        "shopId_fld0_op": "equals",
+        "shopId_fld1_grp": "2",
+        "shopId_fld1_op": "empty"
+      } as any,
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runTimeDataId", "enumName", "shopId", "description" ],
+      "noConditionFind": "Y",
+      "viewSize": payload.viewSize,
+      "viewIndex": payload.viewIndex,
+    }
+    
+    if(payload.eComStoreId) {
+      params.inputFields["productStoreId"] = payload.eComStoreId
+    } else {
+      params.inputFields["productStoreId_op"] = "empty"
+    }
+
+    try {
+      const resp = await JobService.fetchJobInformation(params)
+      if (resp.status === 200 && !hasError(resp) && resp.data.docs?.length > 0) {
+        const total = resp.data.count;
+        let jobs = resp.data.docs.map((job: any) => {
+          return {
+            ...job,
+            'status': job?.statusId
+          }
+        })
+        if(payload.viewIndex && payload.viewIndex > 0){
+          jobs = state.miscellaneous.list.concat(jobs);
+        }
+        commit(types.JOB_MISCELLANEOUS_UPDATED, { jobs, total });
+        const tempExprList = [] as any;
+        const enumIds = [] as any;
+        resp.data.docs.map((item: any) => {
+          enumIds.push(item.systemJobEnumId);
+          tempExprList.push(item.tempExprId);
+        })
+        const tempExpr = [...new Set(tempExprList)];
+        dispatch('fetchTemporalExpression', tempExpr);
+        dispatch('fetchJobDescription', enumIds);
+      } else {
+        commit(types.JOB_MISCELLANEOUS_UPDATED, { jobs: [], total: 0 });
+      }
+    } catch (err) {
+      commit(types.JOB_MISCELLANEOUS_UPDATED, { jobs: [], total: 0 });
+      console.error(err);
+      showToast(translate("Something went wrong"));
+    }
+  },
   async fetchTemporalExpression({ state, commit }, tempExprIds){
     const tempIds = [] as any;
     const cachedTempExprId = Object.keys(state.temporalExp);
