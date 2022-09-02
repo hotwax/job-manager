@@ -115,13 +115,13 @@ export default defineComponent({
         this.isJobDetailAnimationCompleted = true;
       }
     },
-    async getMiscellaneousJobs(viewSize = 20, viewIndex = '0') {
+    async getMiscellaneousJobs(viewSize = 20, viewIndex = 0) {
       await this.store.dispatch('job/fetchMiscellaneousJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex});
     },
     async loadMoreMiscellaneousJobs (event: any) {
       this.getMiscellaneousJobs(
         undefined,
-        Math.ceil(this.miscellaneousJobs.length / (process.env.VUE_APP_VIEW_SIZE as any)).toString()
+        Math.ceil(this.miscellaneousJobs.length / (process.env.VUE_APP_VIEW_SIZE as any))
       ).then(() => {
         event.target.complete();
       })

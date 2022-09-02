@@ -268,7 +268,8 @@ const actions: ActionTree<JobState, RootState> = {
       params.inputFields["productStoreId_op"] = "empty"
     }
 
-    await JobService.fetchJobInformation(params).then((resp) => {
+    try {
+      const resp = await JobService.fetchJobInformation(params)
       if (resp.status === 200 && !hasError(resp) && resp.data.docs?.length > 0) {
         const total = resp.data.count;
         let jobs = resp.data.docs.map((job: any) => {
@@ -293,11 +294,11 @@ const actions: ActionTree<JobState, RootState> = {
       } else {
         commit(types.JOB_MISCELLANEOUS_UPDATED, { jobs: [], total: 0 });
       }
-    }).catch((err) => {
+    } catch (err) {
       commit(types.JOB_MISCELLANEOUS_UPDATED, { jobs: [], total: 0 });
       console.error(err);
       showToast(translate("Something went wrong"));
-    })
+    }
   },
   async fetchTemporalExpression({ state, commit }, tempExprIds){
     const tempIds = [] as any;
