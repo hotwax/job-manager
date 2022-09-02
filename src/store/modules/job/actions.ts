@@ -256,7 +256,7 @@ const actions: ActionTree<JobState, RootState> = {
         "statusId_op": "in",
         "systemJobEnumId_op": "not-empty"
       } as any,
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "enumName" ],
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "enumName", "shopId", "description" ],
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
@@ -279,7 +279,7 @@ const actions: ActionTree<JobState, RootState> = {
           }
         })
         if(payload.viewIndex && payload.viewIndex > 0){
-          jobs = state.miscellaneous.list.concat(resp.data.docs);
+          jobs = state.miscellaneous.list.concat(jobs);
         }
         commit(types.JOB_MISCELLANEOUS_UPDATED, { jobs, total });
         const tempExprList = [] as any;
