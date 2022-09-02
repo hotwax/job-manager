@@ -82,7 +82,12 @@
             </ion-card-header>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Days") }}</ion-label>
-              <ion-input :placeholder="$t('before auto cancelation')" />
+              <ion-input :placeholder="$t('before auto cancelation')" v-model.number="autoCancelDays" type="number" />
+              <!-- The button is enabled when we hover over the button or ion input looses focus and not when the value is changed -->
+              <!-- Todo: need to disable the button if value is unchanged -->
+              <ion-button fill="clear" @click="updateAutoCancelDays()" slot="end">
+                {{ $t("Save") }}
+              </ion-button>
             </ion-item>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Check daily") }}</ion-label>
@@ -184,8 +189,9 @@ import { useRouter } from 'vue-router'
 import { mapGetters } from "vuex";
 import JobConfiguration from '@/components/JobConfiguration.vue';
 import { DateTime } from 'luxon';
-import { hasError, isFutureDate, showToast } from '@/utils';
+import { hasError, isFutureDate, showToast, prepareRuntime } from '@/utils';
 import emitter from '@/event-bus';
+import { JobService } from '@/services/JobService'
 
 export default defineComponent({
   name: 'Orders',
@@ -224,7 +230,8 @@ export default defineComponent({
       currentJobStatus: '',
       freqType: '',
       isJobDetailAnimationCompleted: false,
-      isDesktop: isPlatform('desktop')
+      isDesktop: isPlatform('desktop'),
+      autoCancelDays: ''
     }
   },
   computed: {
@@ -232,7 +239,7 @@ export default defineComponent({
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
       orderBatchJobs: "job/getOrderBatchJobs",
-      shopifyConfigId: 'user/getShopifyConfigId',
+      currentShopifyConfig: 'user/getCurrentShopifyConfig',
       currentEComStore: 'user/getCurrentEComStore',
       getTemporalExpr: 'job/getTemporalExpr',
       getCachedWebhook: 'webhook/getCachedWebhook'
@@ -275,7 +282,28 @@ export default defineComponent({
       if (checked) {
         await this.store.dispatch('webhook/subscribeWebhook', enumId)
       } else {
-        await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhook?.id, shopifyConfigId: this.shopifyConfigId })
+        await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhook?.id, shopifyConfigId: this.currentShopifyConfig.shopifyConfigId })
+      }
+    },
+    async updateAutoCancelDays() {
+      if (this.currentEComStore.productStoreId) {
+        const payload = {
+          'productStoreId': this.currentEComStore.productStoreId,
+          'daysToCancelNonPay': this.autoCancelDays
+        }
+        try {
+          const resp = await JobService.updateAutoCancelDays(payload);
+          if (resp.status === 200 && !hasError(resp)) {
+            showToast(translate("Auto cancel days updated"));
+          } else {
+            showToast(translate("Unable to update auto cancel days"));
+          }
+        } catch (err) {
+          showToast(translate('Something went wrong'))
+          console.error(err)
+        }
+      } else {
+        showToast(translate('Unable to update auto cancel days. None product store selected.'));
       }
     },
     async addBatch() {
@@ -366,6 +394,7 @@ export default defineComponent({
       if (!checked) {
         this.store.dispatch('job/cancelJob', job)
       } else if (job?.status === 'SERVICE_DRAFT') {
+        job.runTime = prepareRuntime(job)
         this.store.dispatch('job/scheduleService', job)
       } else if (job?.status === 'SERVICE_PENDING') {
         this.store.dispatch('job/updateJob', job)
@@ -419,6 +448,28 @@ export default defineComponent({
           ]
         });
       return jobAlert.present();
+    },
+    async getAutoCancelDays(){
+      const payload = {
+        "inputFields": {
+          'productStoreId': this.currentEComStore.productStoreId,
+        },
+        "fieldList": [ 'daysToCancelNonPay' ],
+        "entityName": "ProductStore",
+        "noConditionFind": "Y"
+      }
+      try {
+        const resp = await JobService.getAutoCancelDays(payload);
+        if (resp.status === 200 && !hasError(resp) && resp.data.docs?.length > 0 ) {
+          this.autoCancelDays = resp.data.docs[0].daysToCancelNonPay;
+        } else {
+          console.error(resp)
+          this.autoCancelDays = "";
+        }
+      } catch (err) {
+        console.error(err)
+        this.autoCancelDays = "";
+      }
     }
   },
   mounted () {
@@ -435,6 +486,9 @@ export default defineComponent({
       }
     });
     this.store.dispatch('webhook/fetchWebhooks')
+    if (this.currentEComStore.productStoreId) {
+      this.getAutoCancelDays();
+    }
   },
   setup() {
     const store = useStore();

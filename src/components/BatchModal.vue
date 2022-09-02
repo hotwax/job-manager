@@ -37,7 +37,7 @@
     </ion-radio-group>
     <ion-item>
       <ion-label position="fixed">{{ $t("Schedule") }}</ion-label>
-      <ion-datetime :value="currentBatch?.runTime ? getDateTime(currentBatch.runTime) : ''" @ionChange="updateRunTime($event)" presentation="time" size="cover" />
+      <ion-datetime hour-cycle="h12" :value="currentBatch?.runTime ? getDateTime(currentBatch.runTime) : ''" @ionChange="updateRunTime($event)" presentation="time" size="cover" />
     </ion-item>    
     <ion-fab @click="updateJob()" vertical="bottom" horizontal="end" slot="fixed">
       <ion-fab-button>
@@ -111,7 +111,7 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       getJob: 'job/getJob',
-      shopifyConfigId: 'user/getShopifyConfigId',
+      currentShopifyConfig: 'user/getCurrentShopifyConfig',
       currentEComStore: 'user/getCurrentEComStore',
       userProfile: "user/getUserProfile"
     }),
