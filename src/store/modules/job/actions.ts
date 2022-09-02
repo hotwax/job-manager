@@ -260,9 +260,14 @@ const actions: ActionTree<JobState, RootState> = {
         "enumTypeId": "MISC_SYS_JOB",
         "statusId": ["SERVICE_PENDING", "SERVICE_DRAFT"],
         "statusId_op": "in",
-        "systemJobEnumId_op": "not-empty"
+        "systemJobEnumId_op": "not-empty",
+        "shopId_fld0_value": store.state.user.currentShopifyConfig?.shopId,
+        "shopId_fld0_grp": "1",
+        "shopId_fld0_op": "equals",
+        "shopId_fld1_grp": "2",
+        "shopId_fld1_op": "empty"
       } as any,
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "enumName", "shopId", "description" ],
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runTimeDataId", "enumName", "shopId", "description" ],
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
