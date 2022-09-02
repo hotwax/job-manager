@@ -1,3 +1,13 @@
+# Release 1.0.11
+
+## What's Changed
+* Jobs should be fetched and scheduled based upon the selected Shop(#2r65b1c) by @disha1202 in https://github.com/hotwax/job-manager/pull/228
+* Added shopify config info at menu footer(#2q9mut9) by @disha1202 in https://github.com/hotwax/job-manager/pull/220
+* Implemented: Miscellaneous page in job-manager(#364ttxy) by @shashwatbangar in https://github.com/hotwax/job-manager/pull/214
+
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v1.0.10...v1.0.11
+
 
 # Release 1.0.10
 
