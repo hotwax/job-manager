@@ -28,6 +28,7 @@
           <ion-label class="ion-text-wrap">
             <p class="overline">{{ instanceUrl }}</p>
             {{ eComStore.storeName }}
+            <p>{{ currentShopifyConfig.shopifyConfigName }}</p>
           </ion-label>
           <ion-note slot="end">{{ userProfile?.userTimeZone }}</ion-note>
         </ion-item>
@@ -53,7 +54,7 @@ import {
 } from "@ionic/vue";
 import { defineComponent, ref } from "vue";
 import { mapGetters } from "vuex";
-import { pulseOutline, calendarNumberOutline, ticketOutline, albumsOutline, shirtOutline, settings, iceCreamOutline } from "ionicons/icons";
+import { pulseOutline, calendarNumberOutline, ticketOutline, albumsOutline, shirtOutline, settings, iceCreamOutline, libraryOutline } from "ionicons/icons";
 import { useStore } from "@/store";
 export default defineComponent({
   name: "Menu",
@@ -83,7 +84,8 @@ export default defineComponent({
       currentFacility: 'user/getCurrentFacility',
       eComStore: 'user/getCurrentEComStore',
       instanceUrl: 'user/getInstanceUrl',
-      userProfile: 'user/getUserProfile'
+      userProfile: 'user/getUserProfile',
+      currentShopifyConfig: 'user/getCurrentShopifyConfig'
     })
   },
   watch:{
@@ -141,6 +143,13 @@ export default defineComponent({
         dependsOnBaseURL: false
       },
       {
+        title: "Miscellaneous",
+        url: "/miscellaneous",
+        iosIcon: libraryOutline,
+        mdIcon: libraryOutline,
+        dependsOnBaseURL: false
+      },
+      {
         title: "Settings",
         url: "/settings",
         iosIcon: settings,
@@ -161,7 +170,8 @@ export default defineComponent({
       shirtOutline,
       settings,
       iceCreamOutline,
-      store
+      store,
+      libraryOutline
     };
   },
 });
