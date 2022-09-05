@@ -167,7 +167,7 @@ const actions: ActionTree<UserState, RootState> = {
         "inputFields": {
           "productStoreId": productStoreId,
         },
-        "entityName": "ShopifyShopAdConfig",
+        "entityName": "ShopifyShopAndConfig",
         "noConditionFind": "Y",
         "fieldList": ["shopifyConfigId", "shopifyConfigName", "shopId"]
       }
