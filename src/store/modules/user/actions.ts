@@ -167,7 +167,7 @@ const actions: ActionTree<UserState, RootState> = {
         "inputFields": {
           "productStoreId": productStoreId,
         },
-        "entityName": "ShopifyShopAndConfig",
+        "entityName": "ShopifyShopAdConfig",
         "noConditionFind": "Y",
         "fieldList": ["shopifyConfigId", "shopifyConfigName", "shopId"]
       }
@@ -179,6 +179,7 @@ const actions: ActionTree<UserState, RootState> = {
         } else {
           // TODO need to remove api call for fetching fetching shopifyConfig, currently kept it for backward compatibility.
           payload["entityName"] = 'ShopifyConfig';
+          payload["fieldList"] = ["shopifyConfigId", "shopifyConfigName"]
           resp = await UserService.getShopifyConfig(payload);
           if (resp.status === 200 && !hasError(resp) && resp.data?.docs?.length > 0) {
             commit(types.USER_SHOPIFY_CONFIGS_UPDATED, resp.data.docs);
