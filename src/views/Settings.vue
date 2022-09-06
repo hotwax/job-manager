@@ -21,7 +21,7 @@
         <ion-icon :icon="basketOutline" slot="start" />
         <ion-label>{{ $t("Shopify Config") }}</ion-label>
         <ion-select interface="popover" :value="currentShopifyConfig?.shopifyConfigId" @ionChange="setShopifyConfig($event)">
-          <ion-select-option v-for="shopifyConfig in shopifyConfigs" :key="shopifyConfig.shopifyConfigId" :value="shopifyConfig.shopifyConfigId" >{{ shopifyConfig.shopifyConfigName }}</ion-select-option>
+          <ion-select-option v-for="shopifyConfig in shopifyConfigs" :key="shopifyConfig.shopifyConfigId" :value="shopifyConfig.shopifyConfigId" >{{ shopifyConfig.name ? shopifyConfig.name : shopifyConfig.shopifyConfigName }}</ion-select-option>
         </ion-select>
       </ion-item>
       <!-- OMS information -->

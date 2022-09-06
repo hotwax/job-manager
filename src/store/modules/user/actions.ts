@@ -169,7 +169,7 @@ const actions: ActionTree<UserState, RootState> = {
         },
         "entityName": "ShopifyShopAndConfig",
         "noConditionFind": "Y",
-        "fieldList": ["shopifyConfigId", "shopifyConfigName", "shopId"]
+        "fieldList": ["shopifyConfigId", "name", "shopId"]
       }
       try {
         resp = await UserService.getShopifyConfig(payload);
@@ -177,9 +177,18 @@ const actions: ActionTree<UserState, RootState> = {
           commit(types.USER_SHOPIFY_CONFIGS_UPDATED, resp.data.docs);
           commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, resp.data.docs[0]);
         } else {
-          console.error(resp);
-          commit(types.USER_SHOPIFY_CONFIGS_UPDATED, []);
-          commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, {});
+          // TODO need to remove api call for fetching fetching shopifyConfig, currently kept it for backward compatibility.
+          payload["entityName"] = 'ShopifyConfig';
+          payload["fieldList"] = ["shopifyConfigId", "shopifyConfigName", 'shopId']
+          resp = await UserService.getShopifyConfig(payload);
+          if (resp.status === 200 && !hasError(resp) && resp.data?.docs?.length > 0) {
+            commit(types.USER_SHOPIFY_CONFIGS_UPDATED, resp.data.docs);
+            commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, resp.data.docs[0]);
+          } else {
+            console.error(resp);
+            commit(types.USER_SHOPIFY_CONFIGS_UPDATED, []);
+            commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, {});
+          }
         }
       } catch (err) {
         console.error(err);

@@ -28,7 +28,7 @@
           <ion-label class="ion-text-wrap">
             <p class="overline">{{ instanceUrl }}</p>
             {{ eComStore.storeName }}
-            <p>{{ currentShopifyConfig.shopifyConfigName }}</p>
+            <p>{{ currentShopifyConfig.name ? currentShopifyConfig.name : currentShopifyConfig.shopifyConfigName }}</p>
           </ion-label>
           <ion-note slot="end">{{ userProfile?.userTimeZone }}</ion-note>
         </ion-item>
