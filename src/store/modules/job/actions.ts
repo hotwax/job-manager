@@ -267,7 +267,7 @@ const actions: ActionTree<JobState, RootState> = {
         "shopId_fld1_grp": "2",
         "shopId_fld1_op": "empty"
       } as any,
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runTimeDataId", "enumName", "shopId", "description" ],
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runtimeDataId", "enumName", "shopId", "description" ],
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
