@@ -10,6 +10,17 @@
     <ion-content>
       <main>
         <section>
+          <!-- Empty state -->
+          <div v-if="miscellaneousJobs?.length === 0">
+            <p class="ion-text-center">{{ $t("There are no jobs miscellaneous right now")}}</p>
+            <div class="ion-text-center">
+              <ion-button fill="outline" @click="refreshJobs()">
+                {{ $t('retry') }}
+                <ion-spinner v-if="isRetrying" name="crescent" />
+              </ion-button>
+            </div>
+          </div>
+
           <ion-list>
             <ion-list-header>{{ $t("Miscellaneous jobs") }}</ion-list-header>
             <ion-item v-for="job in miscellaneousJobs" :key="job.jobId" @click="viewJobConfiguration(job)" detail button>
@@ -45,6 +56,7 @@ import {
   IonMenuButton,
   IonNote,
   IonPage,
+  IonSpinner,
   IonTitle,
   IonToolbar,
   isPlatform,
@@ -70,6 +82,7 @@ export default defineComponent({
     IonMenuButton,
     IonNote,
     IonPage,
+    IonSpinner,
     IonTitle,
     IonToolbar,
     JobConfiguration
@@ -82,7 +95,8 @@ export default defineComponent({
       currentJobTitle: '',
       currentJobStatus: '',
       isJobDetailAnimationCompleted: false,
-      isDesktop: isPlatform('desktop')
+      isDesktop: isPlatform('desktop'),
+      isRetrying: false,
     }
   },
   computed: {
@@ -124,6 +138,13 @@ export default defineComponent({
         Math.ceil(this.miscellaneousJobs.length / (process.env.VUE_APP_VIEW_SIZE as any))
       ).then(() => {
         event.target.complete();
+      })
+    },
+    async refreshJobs(event: any) {
+      this.isRetrying = true;
+      this.getMiscellaneousJobs().then(() => {
+        if(event) event.target.complete();
+        this.isRetrying = false;
       })
     },
     timeFromNow (time: any) {
