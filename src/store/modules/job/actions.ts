@@ -391,60 +391,60 @@ const actions: ActionTree<JobState, RootState> = {
     }, [])
 
     // TODO Fix Indentation
-      const cached = JSON.parse(JSON.stringify(state.cached));
+    const cached = JSON.parse(JSON.stringify(state.cached));
 
-      // added condition to store multiple pending jobs in the state for order batch jobs,
-      // getting job with status Service draft as well, as this information will be needed when scheduling
-      // a new batch
-      // TODO: this needs to be updated when we will be storing the draft and pending jobs separately
-      const batchJobEnums = JSON.parse(process.env?.VUE_APP_BATCH_JOB_ENUMS as string)
-      let batchJobEnumIds = Object.values(batchJobEnums)?.map((job: any) => job.id);
-      // If query is for single systemJobEnumId only update it 
-      if (typeof payload.inputFields.systemJobEnumId === "string" && batchJobEnumIds.includes(payload.inputFields.systemJobEnumId)) {
-        batchJobEnumIds = [ payload.inputFields.systemJobEnumId ];
-      } else if (typeof payload.inputFields.systemJobEnumId === "object") {
-        batchJobEnumIds = batchJobEnumIds.filter((batchJobEnumId: any) => payload.inputFields.systemJobEnumId.includes(batchJobEnumId));
+    // added condition to store multiple pending jobs in the state for order batch jobs,
+    // getting job with status Service draft as well, as this information will be needed when scheduling
+    // a new batch
+    // TODO: this needs to be updated when we will be storing the draft and pending jobs separately
+    const batchJobEnums = JSON.parse(process.env?.VUE_APP_BATCH_JOB_ENUMS as string)
+    let batchJobEnumIds = Object.values(batchJobEnums)?.map((job: any) => job.id);
+    // If query is for single systemJobEnumId only update it 
+    if (typeof payload.inputFields.systemJobEnumId === "string" && batchJobEnumIds.includes(payload.inputFields.systemJobEnumId)) {
+      batchJobEnumIds = [ payload.inputFields.systemJobEnumId ];
+    } else if (typeof payload.inputFields.systemJobEnumId === "object") {
+      batchJobEnumIds = batchJobEnumIds.filter((batchJobEnumId: any) => payload.inputFields.systemJobEnumId.includes(batchJobEnumId));
+    }
+    batchJobEnumIds.map((batchBrokeringJobEnum: any) => {
+      cached[batchBrokeringJobEnum] = responseJobs.filter((job: any) => job.systemJobEnumId === batchBrokeringJobEnum).reduce((batchBrokeringJobs: any, job: any) => {
+        batchBrokeringJobs.push({
+          ...job,
+          id: job.jobId,
+          frequency: job.tempExprId,
+          enumId: job.systemJobEnumId,
+          status: job.statusId
+        })
+        return batchBrokeringJobs;
+      }, [])
+    })
+    
+    // added condition to store multiple pending jobs in the state for order batch jobs  
+    responseJobs.filter((job: any) => !batchJobEnumIds.includes(job.systemJobEnumId) && job.statusId === 'SERVICE_PENDING').reduce((cached: any, job: any) => {
+      cached[job.systemJobEnumId] = {
+        ...job,
+        id: job.jobId,
+        frequency: job.tempExprId,
+        enumId: job.systemJobEnumId,
+        status: job.statusId
       }
-      batchJobEnumIds.map((batchBrokeringJobEnum: any) => {
-        cached[batchBrokeringJobEnum] = responseJobs.filter((job: any) => job.systemJobEnumId === batchBrokeringJobEnum).reduce((batchBrokeringJobs: any, job: any) => {
-          batchBrokeringJobs.push({
-            ...job,
-            id: job.jobId,
-            frequency: job.tempExprId,
-            enumId: job.systemJobEnumId,
-            status: job.statusId
-          })
-          return batchBrokeringJobs;
-        }, [])
-      })
-      
-      // added condition to store multiple pending jobs in the state for order batch jobs  
-      responseJobs.filter((job: any) => !batchJobEnumIds.includes(job.systemJobEnumId) && job.statusId === 'SERVICE_PENDING').reduce((cached: any, job: any) => {
-        cached[job.systemJobEnumId] = {
-          ...job,
-          id: job.jobId,
-          frequency: job.tempExprId,
-          enumId: job.systemJobEnumId,
-          status: job.statusId
-        }
-        return cached;
-      }, cached)  
+      return cached;
+    }, cached)  
 
-      responseJobs.filter((job: any) => job.statusId === 'SERVICE_DRAFT').map((job: any) => {
-        return cached[job.systemJobEnumId] = cached[job.systemJobEnumId] ? cached[job.systemJobEnumId] : {
-          ...job,
-          id: job.jobId,
-          frequency: job.tempExprId,
-          enumId: job.systemJobEnumId,
-          status: job.statusId
-        }
-      });
+    responseJobs.filter((job: any) => job.statusId === 'SERVICE_DRAFT').map((job: any) => {
+      return cached[job.systemJobEnumId] = cached[job.systemJobEnumId] ? cached[job.systemJobEnumId] : {
+        ...job,
+        id: job.jobId,
+        frequency: job.tempExprId,
+        enumId: job.systemJobEnumId,
+        status: job.statusId
+      }
+    });
 
-      // fetching temp expressions
-      const tempExpr = Object.values(cached).map((job: any) => job.tempExprId)
-      await dispatch('fetchTemporalExpression', tempExpr)
+    // fetching temp expressions
+    const tempExpr = Object.values(cached).map((job: any) => job.tempExprId)
+    await dispatch('fetchTemporalExpression', tempExpr)
 
-      commit(types.JOB_UPDATED_BULK, cached);
+    commit(types.JOB_UPDATED_BULK, cached);
     return resp;
   },
   async updateJob ({ commit, dispatch }, job) {
