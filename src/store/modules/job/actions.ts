@@ -352,12 +352,11 @@ const actions: ActionTree<JobState, RootState> = {
     const fetchJobRequests = [];
     let params = {
       "inputFields": {
-        "statusId_value": "SERVICE_DRAFT",
-        "statusId_op": "equals",
+        "statusId": "SERVICE_DRAFT",
         "shopId_fld0_value": this.state.user.currentShopifyConfig?.shopId,
-        "shopId_fld0_grp": "3",
+        "shopId_fld0_grp": "1",
         "shopId_fld0_op": "equals",
-        "shopId_fld1_grp": "4",
+        "shopId_fld1_grp": "2",
         "shopId_fld1_op": "empty",
         ...payload.inputFields
       },
@@ -376,10 +375,8 @@ const actions: ActionTree<JobState, RootState> = {
     params =  JSON.parse(JSON.stringify(params));
 
     // Fetching pending jobs
-    params.inputFields['statusId_value'] = "SERVICE_PENDING";
-    params.inputFields['statusId_op'] = "equals";
-    params.inputFields['productStoreId_value'] = this.state.user.currentEComStore.productStoreId;
-    params.inputFields['productStoreId_op'] = "equals";
+    params.inputFields.statusId = "SERVICE_PENDING";
+    params.inputFields.productStoreId = this.state.user.currentEComStore.productStoreId;
     fetchJobRequests.push(JobService.fetchJobInformation(params).catch((err) => {
       return err;
     }))
