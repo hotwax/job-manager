@@ -21,17 +21,19 @@
             </div>
           </div>
 
-          <ion-list>
-            <ion-list-header>{{ $t("Miscellaneous jobs") }}</ion-list-header>
-            <ion-item v-for="job in miscellaneousJobs" :key="job.jobId" @click="viewJobConfiguration(job)" detail button>
-              <ion-label>{{ job.jobName }}</ion-label>
-              <ion-note slot="end">{{ getJobRuntime(job) }}</ion-note>
-            </ion-item>
-          </ion-list>
+          <div v-else>
+            <ion-list>
+              <ion-list-header>{{ $t("Miscellaneous jobs") }}</ion-list-header>
+              <ion-item v-for="job in miscellaneousJobs" :key="job.jobId" @click="viewJobConfiguration(job)" detail button>
+                <ion-label>{{ job.jobName }}</ion-label>
+                <ion-note slot="end">{{ getJobRuntime(job) }}</ion-note>
+              </ion-item>
+            </ion-list>
 
-          <ion-infinite-scroll @ionInfinite="loadMoreMiscellaneousJobs($event)" threshold="100px" :disabled="!isMiscellaneousJobsScrollable">
-            <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="$t('Loading')"/>
-          </ion-infinite-scroll>
+            <ion-infinite-scroll @ionInfinite="loadMoreMiscellaneousJobs($event)" threshold="100px" :disabled="!isMiscellaneousJobsScrollable">
+              <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="$t('Loading')"/>
+            </ion-infinite-scroll>
+          </div>
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob && Object.keys(currentJob).length">
