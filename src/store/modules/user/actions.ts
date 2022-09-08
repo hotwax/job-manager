@@ -204,12 +204,9 @@ const actions: ActionTree<UserState, RootState> = {
   /**
    * update current shopify config id
    */
-  async setCurrentShopifyConfig({ commit }, shopifyConfig) {
+  async setCurrentShopifyConfig({ commit, dispatch }, shopifyConfig) {
     commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, shopifyConfig);
-  },
-
-  async setEComStore({ commit }, payload) {
-    commit(types.USER_CURRENT_ECOM_STORE_UPDATED, payload.store);
+    dispatch('job/clearJobState', null, { root: true });
   },
 
   /**
