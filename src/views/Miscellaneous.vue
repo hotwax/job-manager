@@ -12,7 +12,7 @@
         <section>
           <!-- Empty state -->
           <div v-if="miscellaneousJobs?.length === 0">
-            <p class="ion-text-center">{{ $t("There are no jobs miscellaneous right now")}}</p>
+            <p class="ion-text-center">{{ $t("There are no miscellaneous jobs right now")}}</p>
             <div class="ion-text-center">
               <ion-button fill="outline" @click="refreshJobs()">
                 {{ $t('retry') }}
