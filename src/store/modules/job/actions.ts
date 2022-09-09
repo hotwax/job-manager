@@ -278,12 +278,6 @@ const actions: ActionTree<JobState, RootState> = {
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
     }
-    
-    if(payload.eComStoreId) {
-      params.inputFields["productStoreId"] = payload.eComStoreId
-    } else {
-      params.inputFields["productStoreId_op"] = "empty"
-    }
 
     try {
       const resp = await JobService.fetchJobInformation(params)
