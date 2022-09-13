@@ -167,7 +167,6 @@ export default defineComponent({
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
       currentEComStore: 'user/getCurrentEComStore',
       currentJob: 'job/getCurrentJob',
-      userProfile: "user/getUserProfile"
     }),
     generateFrequencyOptions(): any {
       const optionDefault = [{
@@ -323,9 +322,9 @@ export default defineComponent({
     },
     updateRunTime(ev: CustomEvent, job: any) {
       if (job) {
-        const currTime = DateTime.now().setZone(this.userProfile.userTimeZone).toMillis();
+        const currTime = DateTime.now().toMillis();
         const setTime = DateTime.fromISO(ev['detail'].value).toMillis();
-        
+
         if(setTime > currTime) {
           job.runTime = handleDateTimeInput(ev['detail'].value);
         } else {
