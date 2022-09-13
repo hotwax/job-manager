@@ -32,7 +32,7 @@
           </ion-content>
         </ion-modal>
       </ion-item>
-      
+
       <ion-item>
         <ion-icon slot="start" :icon="timerOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Schedule") }}</ion-label>
