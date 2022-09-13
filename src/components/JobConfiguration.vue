@@ -26,14 +26,13 @@
           <ion-content force-overscroll="false">
             <ion-datetime
               hour-cycle="h12"
-              :min="minDateTime"
               :value="currentJob?.runTime ? getDateTime(currentJob.runTime) : ''"
               @ionChange="updateRunTime($event, currentJob)"
             />
           </ion-content>
         </ion-modal>
       </ion-item>
-
+      
       <ion-item>
         <ion-icon slot="start" :icon="timerOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Schedule") }}</ion-label>
@@ -150,7 +149,6 @@ export default defineComponent({
     return {
       isOpen: false,
       jobStatus: this.status,
-      minDateTime: DateTime.now().toISO()
     }
   },
   updated() {
@@ -169,6 +167,7 @@ export default defineComponent({
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
       currentEComStore: 'user/getCurrentEComStore',
       currentJob: 'job/getCurrentJob',
+      userProfile: "user/getUserProfile"
     }),
     generateFrequencyOptions(): any {
       const optionDefault = [{
@@ -324,7 +323,14 @@ export default defineComponent({
     },
     updateRunTime(ev: CustomEvent, job: any) {
       if (job) {
-        job.runTime = handleDateTimeInput(ev['detail'].value)
+        const currTime = DateTime.now().setZone(this.userProfile.userTimeZone).toMillis();
+        const setTime = DateTime.fromISO(ev['detail'].value).toMillis();
+        
+        if(setTime > currTime) {
+          job.runTime = handleDateTimeInput(ev['detail'].value);
+        } else {
+          showToast(translate("Provide a future date and time."))
+        }
       }
     },
     async viewJobHistory(job: any) {
