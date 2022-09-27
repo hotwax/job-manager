@@ -452,6 +452,12 @@ export default defineComponent({
     fetchJobs(){
       this.store.dispatch("job/fetchJobs", {
         "inputFields":{
+          "systemJobEnumId": Object.values(this.jobEnums),
+          "systemJobEnumId_op": "in"
+        }
+      });
+      this.store.dispatch("job/fetchJobs", {
+        "inputFields":{
           "systemJobEnumId": Object.values(this.batchJobEnums).map((jobEnum: any) => jobEnum.id),
           "systemJobEnumId_op": "in"
         }
