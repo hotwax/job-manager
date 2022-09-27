@@ -502,7 +502,7 @@ export default defineComponent({
         event: ev,
         componentProps: { job }
       });
-        return popover.present()
+      return popover.present()
     },
     async cancelJob(job: any){
       const alert = await alertController
@@ -530,7 +530,8 @@ export default defineComponent({
       this.title = this.getEnumName(job.systemJobEnumId)
       this.currentJobStatus = job.tempExprId
       const id = Object.entries(this.jobEnums).find((enums) => enums[1] == job.systemJobEnumId) as any
-      this.freqType = id && (Object.entries(this.jobFrequencyType).find((freq) => freq[0] == id[0]) as any)[1]
+      const appFreqType =  id && (Object.entries(this.jobFrequencyType).find((freq) => freq[0] == id[0]) as any)
+      this.freqType = appFreqType ? appFreqType[1] : "default"
 
       await this.store.dispatch('job/updateCurrentJob', { job });
       if(!this.isDesktop && job?.jobId) {

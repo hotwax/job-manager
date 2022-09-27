@@ -16,10 +16,14 @@ const getters: GetterTree <UserState, RootState> = {
         return state.current
     },
     getInstanceUrl (state) {
-        return state.instanceUrl;
+        const baseUrl = process.env.VUE_APP_BASE_URL;
+        return baseUrl ? baseUrl : state.instanceUrl;
     },
-    getShopifyConfigId (state) {
-        return state.shopifyConfig;
+    getCurrentShopifyConfig (state) {
+        return state.currentShopifyConfig;
+    },
+    getShopifyConfigs (state) {
+        return state.shopifyConfigs;
     },
     getCurrentEComStore(state) {
         return state.currentEComStore

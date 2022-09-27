@@ -30,6 +30,7 @@
             <ion-select interface="popover" :value="eComStore.productStoreId" @ionChange="setEComStore($event)">
               <ion-select-option v-for="store in (userProfile ? userProfile.stores : [])" :key="store.productStoreId" :value="store.productStoreId" >{{ store.storeName }}</ion-select-option>
             </ion-select>
+            <p>{{ currentShopifyConfig.name ? currentShopifyConfig.name : currentShopifyConfig.shopifyConfigName }}</p>
           </ion-label>
           <ion-note slot="end">{{ userProfile?.userTimeZone }}</ion-note>
         </ion-item>
@@ -57,7 +58,7 @@ import {
 } from "@ionic/vue";
 import { defineComponent, ref } from "vue";
 import { mapGetters } from "vuex";
-import { pulseOutline, calendarNumberOutline, ticketOutline, albumsOutline, shirtOutline, settings, iceCreamOutline } from "ionicons/icons";
+import { pulseOutline, calendarNumberOutline, ticketOutline, albumsOutline, shirtOutline, settings, iceCreamOutline, libraryOutline } from "ionicons/icons";
 import { useStore } from "@/store";
 import emitter from "@/event-bus"
 export default defineComponent({
@@ -90,7 +91,8 @@ export default defineComponent({
       currentFacility: 'user/getCurrentFacility',
       eComStore: 'user/getCurrentEComStore',
       instanceUrl: 'user/getInstanceUrl',
-      userProfile: 'user/getUserProfile'
+      userProfile: 'user/getUserProfile',
+      currentShopifyConfig: 'user/getCurrentShopifyConfig'
     })
   },
   methods: {
@@ -158,6 +160,13 @@ export default defineComponent({
         dependsOnBaseURL: false
       },
       {
+        title: "Miscellaneous",
+        url: "/miscellaneous",
+        iosIcon: libraryOutline,
+        mdIcon: libraryOutline,
+        dependsOnBaseURL: false
+      },
+      {
         title: "Settings",
         url: "/settings",
         iosIcon: settings,
@@ -178,7 +187,8 @@ export default defineComponent({
       shirtOutline,
       settings,
       iceCreamOutline,
-      store
+      store,
+      libraryOutline
     };
   },
 });
