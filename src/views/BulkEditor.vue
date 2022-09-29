@@ -11,71 +11,65 @@
       <section>
         <ion-card>
           <ion-card-header>
-            <ion-card-subtitle>{{ $t("Product Store") }}</ion-card-subtitle>
+            <ion-card-subtitle class="overline">{{ $t("Product Store") }}</ion-card-subtitle>
             <ion-card-title>{{ $t("Stores") }}</ion-card-title>
           </ion-card-header>
+          <ion-item>
+            <ion-label>Store 1</ion-label>
+            <ion-checkbox />
+          </ion-item>
+          <ion-item>
+            <ion-label>Store 2</ion-label>
+            <ion-checkbox />
+          </ion-item>
+          <ion-item>
+            <ion-label>Store 3</ion-label>
+            <ion-checkbox />
+          </ion-item>
           <ion-card-content>
-            <ion-item>
-              <ion-label>Store 1</ion-label>
-              <ion-checkbox />
-            </ion-item>
-            <ion-item>
-              <ion-label>Store 2</ion-label>
-              <ion-checkbox />
-            </ion-item>
-            <ion-item>
-              <ion-label>Store 3</ion-label>
-              <ion-checkbox />
-            </ion-item>
-            <ion-item lines="none">
-              <ion-label color="medium" class="ion-text-wrap">{{ $t("A store repesents a company or a unique catalog of products. If your OMS is connected to multiple eCommerce stores sellling different collections of products, you may have multiple Product Stores set up in HotWax Commerce.") }}</ion-label>
-            </ion-item>
+            {{ $t("A store repesents a company or a unique catalog of products. If your OMS is connected to multiple eCommerce stores sellling different collections of products, you may have multiple Product Stores set up in HotWax Commerce.") }}
           </ion-card-content>
-        </ion-card>  
+        </ion-card> 
             
         <ion-card>
           <ion-card-header>
-            <ion-card-subtitle>{{ $t("Shop Config") }}</ion-card-subtitle>
+            <ion-card-subtitle class="overline">{{ $t("Shop Config") }}</ion-card-subtitle>
             <ion-card-title>{{ $t("eCommerce") }}</ion-card-title>
           </ion-card-header>
+          <ion-item>
+            <ion-label>eCommerce 1</ion-label>
+            <ion-checkbox />
+          </ion-item>
+          <ion-item>
+            <ion-label>eCommerce 2</ion-label>
+            <ion-checkbox />
+          </ion-item>
+          <ion-item>
+            <ion-label>eCommerce 3</ion-label>
+            <ion-checkbox />
+          </ion-item>
           <ion-card-content>
-            <ion-item>
-              <ion-label>eCommerce 1</ion-label>
-              <ion-checkbox />
-            </ion-item>
-            <ion-item>
-              <ion-label>eCommerce 2</ion-label>
-              <ion-checkbox />
-            </ion-item>
-            <ion-item>
-              <ion-label>eCommerce 3</ion-label>
-              <ion-checkbox />
-            </ion-item>
-            <ion-item lines="none">
-              <ion-label color="medium" class="ion-text-wrap">{{ $t("eCommerce stores are directly connected to one Shop Configs. If your OMS is connected to multiple eCommerce stores selling the same catalog operating as one Company, you may have multiple Shop Configs for the selected Product Store.") }}</ion-label>
-            </ion-item>
+            {{ $t("eCommerce stores are directly connected to one Shop Configs. If your OMS is connected to multiple eCommerce stores selling the same catalog operating as one Company, you may have multiple Shop Configs for the selected Product Store.") }}
           </ion-card-content>
         </ion-card>   
            
         <ion-card>
           <ion-card-header>
-            <ion-card-subtitle>{{ $t("Shop Config") }}</ion-card-subtitle>
+            <ion-card-subtitle class="overline">{{ $t("Shop Config") }}</ion-card-subtitle>
             <ion-card-title>{{ $t("Scheduler") }}</ion-card-title>
           </ion-card-header>
+          <ion-item>
+            <ion-icon slot="start" :icon="timeOutline" />
+            <ion-label>{{ $t("Run time") }}</ion-label>
+            <ion-label slot="end">3:00 PM EST</ion-label>
+          </ion-item>
+          <ion-item>
+            <ion-icon slot="start" :icon="timerOutline" />
+            <ion-label>{{ $t("Schedule") }}</ion-label>
+            <ion-select interface="popover"></ion-select>
+          </ion-item>
           <ion-card-content>
-            <ion-item>
-              <ion-icon slot="start" :icon="timeOutline" />
-              <ion-label>{{ $t("Run time") }}</ion-label>
-              <ion-label slot="end">3:00 PM EST</ion-label>
-            </ion-item>
-            <ion-item>
-              <ion-icon slot="start" :icon="timerOutline" />
-              <ion-label>{{ $t("Schedule") }}</ion-label>
-              <ion-select interface="popover"></ion-select>
-            </ion-item>
-            <ion-item lines="none">
-              <ion-label color="medium">description</ion-label>
-            </ion-item>
+            description 
           </ion-card-content>
         </ion-card>
       </section>
@@ -205,6 +199,6 @@ section {
 }
 
 ion-button {
-  margin: var(--spacer-xs);
+  margin: var(--spacer-base) var(--spacer-xs);
 }
 </style>
