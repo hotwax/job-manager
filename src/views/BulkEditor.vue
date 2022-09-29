@@ -84,6 +84,7 @@
         <ion-icon slot="start" :icon="addOutline" />
         {{ $t("select jobs") }}
       </ion-button>
+
       <section>
         <ion-card>
           <ion-item lines="none">
@@ -119,7 +120,6 @@
           <ion-icon :icon="iceCreamOutline" />
         </ion-fab-button>
       </ion-fab>
-
     </ion-content>
   </ion-page>
 </template>
