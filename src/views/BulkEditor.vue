@@ -93,7 +93,7 @@
             </ion-label>  
           </ion-item>
           <ion-item-divider>
-            {{ $t("parameter") }}
+            {{ $t("Parameters") }}
           </ion-item-divider>
           <ion-item>
               <ion-label>{{ $t("Store") }}</ion-label>
