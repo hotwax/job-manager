@@ -61,7 +61,14 @@
           <ion-item>
             <ion-icon slot="start" :icon="timeOutline" />
             <ion-label>{{ $t("Run time") }}</ion-label>
-            <ion-label slot="end">3:00 PM EST</ion-label>
+            <ion-label class="ion-text-wrap" @click="() => isOpenGlobal = true" slot="end">{{ $t('Select run time') }}</ion-label>
+            <ion-modal  :is-open="isOpenGlobal" @didDismiss="() => isOpenGlobal = false">
+              <ion-content force-overscroll="false">
+                <ion-datetime
+                  hour-cycle="h12"
+                />
+              </ion-content>
+            </ion-modal>
           </ion-item>
           <ion-item>
             <ion-icon slot="start" :icon="timerOutline" />
@@ -102,7 +109,14 @@
           </ion-item>
           <ion-item>
             <ion-label>{{ $t("Run time") }}</ion-label>
-            <ion-label slot="end">3:00 PM EST</ion-label>
+            <ion-label class="ion-text-wrap" @click="() => isOpen = true" slot="end">{{ $t('Select run time') }}</ion-label>
+            <ion-modal  :is-open="isOpen" @didDismiss="() => isOpen = false">
+              <ion-content force-overscroll="false">
+                <ion-datetime
+                  hour-cycle="h12"
+                />
+              </ion-content>
+            </ion-modal>
           </ion-item>
           <ion-item>
             <ion-label>{{ $t("Schedule") }}</ion-label>
@@ -133,6 +147,7 @@ import {
   IonCardSubtitle,
   IonCheckbox,
   IonContent,
+  IonDatetime,
   IonFab,
   IonFabButton,
   IonHeader,
@@ -141,6 +156,7 @@ import {
   IonItemDivider,
   IonLabel,
   IonMenuButton,
+  IonModal,
   IonNote,
   IonPage,
   IonSelect,
@@ -165,6 +181,7 @@ export default defineComponent({
     IonCardSubtitle,
     IonCheckbox,
     IonContent,
+    IonDatetime,
     IonFab,
     IonFabButton,
     IonHeader,
@@ -173,12 +190,19 @@ export default defineComponent({
     IonItemDivider,
     IonLabel,
     IonMenuButton,
+    IonModal,
     IonNote,
     IonPage,
     IonSelect,
     IonSelectOption,
     IonTitle,
     IonToolbar
+  },
+  data(){
+    return {
+      isOpenGlobal: false,
+      isOpen: false
+    }
   },
   setup() {
     const store = useStore();
@@ -205,5 +229,11 @@ section {
 
 ion-button {
   margin: var(--spacer-base) var(--spacer-xs);
+}
+
+ion-modal {
+  --width: 290px;
+  --height: 385px;
+  --border-radius: 8px;
 }
 </style>
