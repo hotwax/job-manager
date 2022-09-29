@@ -66,7 +66,9 @@
           <ion-item>
             <ion-icon slot="start" :icon="timerOutline" />
             <ion-label>{{ $t("Schedule") }}</ion-label>
-            <ion-select interface="popover"></ion-select>
+            <ion-select interface="popover">
+              <ion-select-option>Every 5 minutes</ion-select-option>
+            </ion-select>
           </ion-item>
           <ion-card-content>
             description 
@@ -91,8 +93,8 @@
             {{ $t("Parameters") }}
           </ion-item-divider>
           <ion-item>
-              <ion-label>{{ $t("Store") }}</ion-label>
-              <ion-note slot="end">2 {{ $t("stores selected") }}</ion-note>
+            <ion-label>{{ $t("Store") }}</ion-label>
+            <ion-note slot="end">2 {{ $t("stores selected") }}</ion-note>
           </ion-item>
           <ion-item>
             <ion-label>{{ $t("eCommerce") }}</ion-label>
@@ -104,7 +106,9 @@
           </ion-item>
           <ion-item>
             <ion-label>{{ $t("Schedule") }}</ion-label>
-            <ion-select interface="popover" :placeholder='$t("Bulk schedule")'></ion-select>
+            <ion-select interface="popover" :placeholder='$t("Bulk schedule")'>
+              <ion-select-option value="Every 5 minutes">Every 5 minutes</ion-select-option>
+            </ion-select>
           </ion-item>
         </ion-card>
       </section>
@@ -172,6 +176,7 @@ export default defineComponent({
     IonNote,
     IonPage,
     IonSelect,
+    IonSelectOption,
     IonTitle,
     IonToolbar
   },
