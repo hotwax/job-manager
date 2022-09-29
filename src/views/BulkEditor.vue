@@ -71,7 +71,7 @@
             <ion-item>
               <ion-icon slot="start" :icon="timerOutline" />
               <ion-label>{{ $t("Schedule") }}</ion-label>
-              <ion-select value="Every 5 minutes"></ion-select>
+              <ion-select interface="popover"></ion-select>
             </ion-item>
             <ion-item lines="none">
               <ion-label color="medium">description</ion-label>
@@ -109,8 +109,7 @@
           </ion-item>
           <ion-item>
             <ion-label>{{ $t("Schedule") }}</ion-label>
-            <ion-select placeholder="Bulk schedule" >
-            </ion-select>
+            <ion-select interface="popover" :placeholder='$t("Bulk schedule")'></ion-select>
           </ion-item>
         </ion-card>
       </section>
@@ -136,6 +135,8 @@ import {
   IonCardSubtitle,
   IonCheckbox,
   IonContent,
+  IonFab,
+  IonFabButton,
   IonHeader,
   IonIcon,
   IonItem,
@@ -166,6 +167,8 @@ export default defineComponent({
     IonCardSubtitle,
     IonCheckbox,
     IonContent,
+    IonFab,
+    IonFabButton,
     IonHeader,
     IonIcon,
     IonItem,

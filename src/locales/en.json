@@ -24,6 +24,8 @@
   "Before importing historical orders in bulk, make sure all products are set up or else order import will not run correctly.": "Before importing historical orders in bulk, make sure all products are set up or else order import will not run correctly.",
   "Blank": "Blank",
   "BOPIS corrections": "BOPIS corrections",
+  "Bulk editor": "Bulk editor",
+  "Bulk schedule": "Bulk schedule",
   "Brokering queue": "Brokering queue",
   "By default only open and unshipped orders will be imported.": "By default only open and unshipped orders will be imported.",
   "Cancel": "Cancel",
