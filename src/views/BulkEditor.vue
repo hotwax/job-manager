@@ -14,18 +14,21 @@
             <ion-card-subtitle class="overline">{{ $t("Product Store") }}</ion-card-subtitle>
             <ion-card-title>{{ $t("Stores") }}</ion-card-title>
           </ion-card-header>
-          <ion-item>
-            <ion-label>Store 1</ion-label>
-            <ion-checkbox />
-          </ion-item>
-          <ion-item>
-            <ion-label>Store 2</ion-label>
-            <ion-checkbox />
-          </ion-item>
-          <ion-item>
-            <ion-label>Store 3</ion-label>
-            <ion-checkbox />
-          </ion-item>
+          <ion-list>
+            <ion-item>
+              <ion-label>Store 1</ion-label>
+              <ion-checkbox slot="end" />
+            </ion-item>
+            <ion-item>
+              <ion-label>Store 2</ion-label>
+              <ion-checkbox slot="end" />
+            </ion-item>
+            <ion-item>
+              <ion-label>Store 3</ion-label>
+              <ion-checkbox slot="end" />
+            </ion-item>
+          </ion-list>
+          
           <ion-card-content>
             {{ $t("A store repesents a company or a unique catalog of products. If your OMS is connected to multiple eCommerce stores sellling different collections of products, you may have multiple Product Stores set up in HotWax Commerce.") }}
           </ion-card-content>
@@ -36,18 +39,21 @@
             <ion-card-subtitle class="overline">{{ $t("Shop Config") }}</ion-card-subtitle>
             <ion-card-title>{{ $t("eCommerce") }}</ion-card-title>
           </ion-card-header>
-          <ion-item>
-            <ion-label>eCommerce 1</ion-label>
-            <ion-checkbox />
-          </ion-item>
-          <ion-item>
-            <ion-label>eCommerce 2</ion-label>
-            <ion-checkbox />
-          </ion-item>
-          <ion-item>
-            <ion-label>eCommerce 3</ion-label>
-            <ion-checkbox />
-          </ion-item>
+          <ion-list>
+            <ion-item>
+              <ion-label>eCommerce 1</ion-label>
+              <ion-checkbox slot="end" />
+            </ion-item>
+            <ion-item>
+              <ion-label>eCommerce 2</ion-label>
+              <ion-checkbox slot="end" />
+            </ion-item>
+            <ion-item>
+              <ion-label>eCommerce 3</ion-label>
+              <ion-checkbox slot="end" />
+            </ion-item>
+          </ion-list>
+          
           <ion-card-content>
             {{ $t("eCommerce stores are directly connected to one Shop Configs. If your OMS is connected to multiple eCommerce stores selling the same catalog operating as one Company, you may have multiple Shop Configs for the selected Product Store.") }}
           </ion-card-content>
@@ -221,19 +227,13 @@ export default defineComponent({
 </script>
 
 <style scoped>
-section {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  align-items: start;
-}
-
-ion-button {
-  margin: var(--spacer-base) var(--spacer-xs);
-}
-
-ion-modal {
-  --width: 290px;
-  --height: 385px;
-  --border-radius: 8px;
-}
+  section {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    align-items: start;
+  }
+  
+  ion-button {
+    margin: var(--spacer-base) var(--spacer-xs);
+  }
 </style>

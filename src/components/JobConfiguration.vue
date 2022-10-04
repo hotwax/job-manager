@@ -442,9 +442,4 @@ ion-label:nth-child(3) {
   cursor: pointer;
 }
 
-ion-modal {
-  --width: 290px;
-  --height: 385px;
-  --border-radius: 8px;
-}
 </style>
