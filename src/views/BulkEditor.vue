@@ -68,7 +68,7 @@
             <ion-icon slot="start" :icon="timeOutline" />
             <ion-label>{{ $t("Run time") }}</ion-label>
             <ion-label class="ion-text-wrap" @click="() => isOpenGlobal = true" slot="end">{{ $t('Select run time') }}</ion-label>
-            <ion-modal  :is-open="isOpenGlobal" @didDismiss="() => isOpenGlobal = false">
+            <ion-modal class="date-time-modal" :is-open="isOpenGlobal" @didDismiss="() => isOpenGlobal = false">
               <ion-content force-overscroll="false">
                 <ion-datetime
                   hour-cycle="h12"
@@ -116,7 +116,7 @@
           <ion-item>
             <ion-label>{{ $t("Run time") }}</ion-label>
             <ion-label class="ion-text-wrap" @click="() => isOpen = true" slot="end">{{ $t('Select run time') }}</ion-label>
-            <ion-modal  :is-open="isOpen" @didDismiss="() => isOpen = false">
+            <ion-modal class="date-time-modal" :is-open="isOpen" @didDismiss="() => isOpen = false">
               <ion-content force-overscroll="false">
                 <ion-datetime
                   hour-cycle="h12"
