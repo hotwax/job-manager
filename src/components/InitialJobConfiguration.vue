@@ -51,7 +51,7 @@
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
         <ion-label @click="() => isOpen = true" slot="end">{{ currentJob?.runTime ? getTime(currentJob.runTime) : $t('Select run time') }}</ion-label>
-        <ion-modal :is-open="isOpen" @didDismiss="() => isOpen = false">
+        <ion-modal class="date-time-modal" :is-open="isOpen" @didDismiss="() => isOpen = false">
           <ion-content force-overscroll="false">
             <ion-datetime
               hour-cycle="h12"
@@ -260,11 +260,5 @@ ion-item:nth-child(2) > ion-label:nth-child(3) {
   .mobile-only {
     display: none;
   }  
-}
-
-ion-modal {
-  --width: 290px;
-  --height: 385px;
-  --border-radius: 8px;
 }
 </style>
