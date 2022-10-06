@@ -42,7 +42,6 @@ const actions: ActionTree<JobState, RootState> = {
   async fetchJobHistory({ commit, dispatch, state }, payload){ 
     const params = {
       "inputFields": {
-        "statusId": ["SERVICE_CANCELLED", "SERVICE_CRASHED", "SERVICE_FAILED", "SERVICE_FINISHED"],
         "statusId_op": "in",
         "systemJobEnumId_op": "not-empty",
         "shopId_fld0_value": store.state.user.currentShopifyConfig?.shopId,
@@ -51,11 +50,17 @@ const actions: ActionTree<JobState, RootState> = {
         "shopId_fld1_grp": "2",
         "shopId_fld1_op": "empty"
       } as any,
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId", "cancelDateTime", "finishDateTime", "startDateTime" ],
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId", "cancelDateTime", "finishDateTime", "startDateTime" , "enumTypeId" ],
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
       "orderBy": "runTime DESC"
+    }
+
+    if(payload.statusId && (payload.statusId.length >= 3 || payload.statusId.length == 0)) {
+      params.inputFields["statusId"] = ["SERVICE_CANCELLED", "SERVICE_CRASHED", "SERVICE_FAILED", "SERVICE_FINISHED"];
+    } else {
+      params.inputFields["statusId"] = payload.statusId;
     }
 
     if(payload.systemJobEnumId && payload.systemJobEnumId.length > 0) {
@@ -69,6 +74,11 @@ const actions: ActionTree<JobState, RootState> = {
       params.inputFields["productStoreId_op"] = "empty"
     }
 
+    if(payload.enumTypeId && payload.enumTypeId.length > 0) {
+      params.inputFields["enumTypeId"] = payload.enumTypeId;
+      params.inputFields["enumTypeId_op"] = "in"
+    } 
+    
     if (payload.queryString) {
       params.inputFields["enumName_value"] = "%"+ payload.queryString + "%"
       params.inputFields["enumName_op"] = "like"
@@ -126,7 +136,7 @@ const actions: ActionTree<JobState, RootState> = {
         "shopId_fld1_grp": "2",
         "shopId_fld1_op": "empty"
       } as any,
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId" ],
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId", "enumTypeId" ],
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
@@ -143,6 +153,11 @@ const actions: ActionTree<JobState, RootState> = {
     } else {
       params.inputFields["productStoreId_op"] = "empty"
     }
+
+    if(payload.enumTypeId && payload.enumTypeId.length > 0) {
+      params.inputFields["enumTypeId"] = payload.enumTypeId;
+      params.inputFields["enumTypeId_op"] = "in"
+    } 
 
     if (payload.queryString) {
       params.inputFields["enumName_value"] = "%"+ payload.queryString + "%"
@@ -199,7 +214,7 @@ const actions: ActionTree<JobState, RootState> = {
         "shopId_fld1_grp": "2",
         "shopId_fld1_op": "empty",
       } as any,
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runtimeDataId", "shopId", "description" ],
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runtimeDataId", "shopId", "description", "enumTypeId" ],
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
@@ -216,6 +231,11 @@ const actions: ActionTree<JobState, RootState> = {
     } else {
       params.inputFields["productStoreId_op"] = "empty"
     }
+
+    if(payload.enumTypeId && payload.enumTypeId.length > 0) {
+      params.inputFields["enumTypeId"] = payload.enumTypeId;
+      params.inputFields["enumTypeId_op"] = "in"
+    } 
 
     if (payload.queryString) {
       params.inputFields["enumName_value"] = "%"+ payload.queryString + "%"
@@ -751,6 +771,9 @@ const actions: ActionTree<JobState, RootState> = {
     } catch (err) {
       console.error(err);
     }
+  },
+  setPipelineFilters({ commit }, filters) {
+    commit(types.JOB_PIPELINE_FILTERS_UPDATED, { filters });
   }
 }
 export default actions;
