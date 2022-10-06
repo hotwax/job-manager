@@ -100,14 +100,12 @@ export default defineComponent({
         statusId: "SERVICE_CANCELLED",
         iosIcon: banOutline,
         mdIcon: banOutline,
-
       },
       {
         name: "Failed",
         statusId: "SERVICE_FAILED",
         iosIcon: closeOutline,
         mdIcon: closeOutline,
-
       },
     ];
     const categoryFilters = [
