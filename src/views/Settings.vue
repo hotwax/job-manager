@@ -89,17 +89,13 @@ export default defineComponent({
     setEComStore(store: any) {
       if(this.userProfile) {
         const productStoreId = store['detail'].value
-        this.store.dispatch('user/setEcomStore', {
-          'productStoreId' : productStoreId ? productStoreId : {}
-        })
+        this.store.dispatch('user/setEcomStore', { 'productStoreId': productStoreId })
       }
     },
     setShopifyConfig(event: any){
       // const currentShopifyConfig = this.shopifyConfigs.find((shopifyConfig: any) => shopifyConfig.shopifyConfigId === event.detail.value);
       const shopifyConfigId = event.detail.value;
-      this.store.dispatch('user/setCurrentShopifyConfig', {
-        'shopifyConfig' : shopifyConfigId ? shopifyConfigId : {}
-      });
+      this.store.dispatch('user/setCurrentShopifyConfig', { 'shopifyConfigId': shopifyConfigId });
     },
     async changeTimeZone() {
       const timeZoneModal = await modalController.create({
