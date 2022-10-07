@@ -42,6 +42,7 @@ const actions: ActionTree<JobState, RootState> = {
   async fetchJobHistory({ commit, dispatch, state }, payload){ 
     const params = {
       "inputFields": {
+        "statusId": ["SERVICE_CANCELLED", "SERVICE_CRASHED", "SERVICE_FAILED", "SERVICE_FINISHED"],
         "statusId_op": "in",
         "systemJobEnumId_op": "not-empty",
         "shopId_fld0_value": store.state.user.currentShopifyConfig?.shopId,
@@ -57,11 +58,9 @@ const actions: ActionTree<JobState, RootState> = {
       "orderBy": "runTime DESC"
     }
 
-    if(payload.statusId && (payload.statusId.length >= 3 || payload.statusId.length == 0)) {
-      params.inputFields["statusId"] = ["SERVICE_CANCELLED", "SERVICE_CRASHED", "SERVICE_FAILED", "SERVICE_FINISHED"];
-    } else {
+    if(payload.statusId.length > 0) {
       params.inputFields["statusId"] = payload.statusId;
-    }
+    } 
 
     if(payload.systemJobEnumId && payload.systemJobEnumId.length > 0) {
       params.inputFields["systemJobEnumId"] = payload.systemJobEnumId

@@ -56,34 +56,34 @@
 
 <script lang="ts">
 import {
+  IonCheckbox,
   IonContent,
   IonHeader,
+  IonIcon,
+  IonItem,
+  IonLabel,
   IonList,
   IonMenu,
   IonTitle,
-  IonToolbar,
-  IonLabel,
-  IonItem,
-  IonIcon,
-  IonCheckbox
+  IonToolbar
 } from "@ionic/vue";
 import { defineComponent } from "vue";
-import { pulseOutline, calendarNumberOutline, ticketOutline, albumsOutline, shirtOutline, settings, iceCreamOutline, libraryOutline, checkmarkDoneOutline, banOutline, closeOutline, compassOutline, sendOutline, filterOutline } from "ionicons/icons";
+import { albumsOutline, banOutline, calendarNumberOutline, checkmarkDoneOutline, closeOutline, compassOutline, filterOutline, iceCreamOutline, libraryOutline, pulseOutline, sendOutline, settings, shirtOutline, ticketOutline } from "ionicons/icons";
 import { mapGetters, useStore } from 'vuex'
 
 export default defineComponent({
   name: "Menu",
   components: {
+    IonCheckbox,
     IonContent,
     IonHeader,
+    IonIcon,
+    IonItem,
+    IonLabel,
     IonList,
     IonMenu,
     IonTitle,
-    IonToolbar,
-    IonLabel,
-    IonItem,
-    IonIcon,
-    IonCheckbox
+    IonToolbar
   },
   props: ["segmentSelected", "queryString", "selectedPinnedJobs"],
   setup() {
@@ -146,28 +146,28 @@ export default defineComponent({
         enumTypeId: "PRODUCT_SYS_JOB"
       },
       {
-        name: "Miscalleneous",
+        name: "Miscellaneous",
         iosIcon: libraryOutline,
         mdIcon: libraryOutline,
         enumTypeId: "MISC_SYS_JOB"
       },
     ];
     return {
-      pulseOutline,
-      calendarNumberOutline,
-      ticketOutline,
       albumsOutline,
-      shirtOutline,
-      settings,
-      iceCreamOutline,
-      store,
-      filterOutline,
-      libraryOutline,
-      checkmarkDoneOutline,
       banOutline,
-      closeOutline,
-      statusFilters,
+      calendarNumberOutline,
+      checkmarkDoneOutline,
       categoryFilters,
+      closeOutline,
+      filterOutline,
+      iceCreamOutline,
+      libraryOutline,
+      pulseOutline,
+      settings,
+      shirtOutline,
+      statusFilters,
+      store,
+      ticketOutline
     };
   },
   data() {
@@ -194,10 +194,8 @@ export default defineComponent({
     },
     applyStatusFilters(filter: any) {
       const index = (this as any).selectedStatusFilters.indexOf(filter.statusId);
-      if ((this as any).selectedStatusFilters.includes(filter.statusId)) {
-        if (index != -1) {
-          (this as any).selectedStatusFilters.splice(index, 1)
-        }
+      if (index != -1) {
+        (this as any).selectedStatusFilters.splice(index, 1)
       } else {
         (this as any).selectedStatusFilters.push(filter.statusId)
       }
@@ -206,10 +204,8 @@ export default defineComponent({
     },
     applyCategoryFilters(filter: any) {
       const index = (this as any).selectedCategoryFilters.indexOf(filter.enumTypeId);
-      if ((this as any).selectedCategoryFilters.includes(filter.enumTypeId)) {
-        if (index != -1) {
-          (this as any).selectedCategoryFilters.splice(index, 1)
-        }
+      if (index != -1) {
+        (this as any).selectedCategoryFilters.splice(index, 1)
       } else {
         (this as any).selectedCategoryFilters.push(filter.enumTypeId)
       }
@@ -218,10 +214,8 @@ export default defineComponent({
     },
     applyPinnedJobFilters(jobEnumId: any) {
       const index = (this as any).selectedPinnedJobs.indexOf(jobEnumId);
-      if ((this as any).selectedPinnedJobs.includes(jobEnumId) || !this.getPinnedJobs.includes(jobEnumId)) {
-        if (index != -1) {
-          (this as any).selectedPinnedJobs.splice(index, 1)
-        }
+      if (index != -1) {
+        (this as any).selectedPinnedJobs.splice(index, 1)
       } else {
         (this as any).selectedPinnedJobs.push(jobEnumId)
       }
@@ -241,14 +235,9 @@ export default defineComponent({
   watch: {
     segmentSelected(val) {
       if (val) {
-        console.log('segment',this.getPipelineFilters);
         this.handleSegmentChange();
       }
     }
   }
 });
 </script>
-
-<style scoped>
-
-</style>
