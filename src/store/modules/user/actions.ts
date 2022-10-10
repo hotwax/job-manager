@@ -133,13 +133,11 @@ const actions: ActionTree<UserState, RootState> = {
   async setEcomStore({ state, commit, dispatch }, payload) {
     dispatch('job/clearJobState', null, { root: true });
     let productStore = payload.productStore;
-    if(productStore) {
-      commit(types.USER_CURRENT_ECOM_STORE_UPDATED, productStore);
-    } else {
+    if(!productStore) {
       productStore = this.state.user.current.stores.find((store: any) => store.productStoreId === payload.productStoreId);
-      commit(types.USER_CURRENT_ECOM_STORE_UPDATED, productStore);
     }
-
+    
+    commit(types.USER_CURRENT_ECOM_STORE_UPDATED, productStore);
     dispatch('getShopifyConfig',  productStore.productStoreId);
     await UserService.setUserPreference({
       'userPrefTypeId': 'SELECTED_BRAND',
