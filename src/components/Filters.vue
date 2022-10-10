@@ -16,7 +16,7 @@
               </p>
             </ion-label>
           </ion-item>
-          <ion-item button v-for="(filter, index) in statusFilters" :key="index" @click="applyStatusFilters(filter)">
+          <ion-item button v-for="(filter, index) in statusFilters" :key="index" @click="handleFilterApply(filter, type='statusFilter')">
             <ion-icon slot="start" :ios="filter.iosIcon" :md="filter.mdIcon" />
             <ion-label>{{ $t(filter.name) }}</ion-label>
             <ion-checkbox slot="end" :checked="selectedStatusFilters.includes(filter.statusId)" />
@@ -30,7 +30,7 @@
             </p>
           </ion-label>
         </ion-item>
-        <ion-item button v-for="(filter, index) in categoryFilters" :key="index" @click="applyCategoryFilters(filter)">
+        <ion-item button v-for="(filter, index) in categoryFilters" :key="index" @click="handleFilterApply(filter, type='categoryFilter')">
           <ion-icon slot="start" :ios="filter.iosIcon" :md="filter.mdIcon" />
           <ion-label>{{ $t(filter.name) }}</ion-label>
           <ion-checkbox slot="end" :checked="selectedCategoryFilters.includes(filter.enumTypeId)" />
@@ -44,7 +44,7 @@
               </p>
             </ion-label>
           </ion-item>
-          <ion-item button v-for="(job, index) in getPinnedJobs" :key="index" @click="applyPinnedJobFilters(job)">
+          <ion-item button v-for="(job, index) in getPinnedJobs" :key="index" @click="handleFilterApply(job, type='pinnedFilter')">
             <ion-label>{{ getEnumName(job) }}</ion-label>
             <ion-checkbox slot="end" :checked="selectedPinnedJobs.includes(job)" />
           </ion-item>
@@ -192,40 +192,27 @@ export default defineComponent({
       this.segmentSelected === 'running' ? this.getFilteredRunningJobs() :
       this.getFilteredJobHistory();
     },
-    handleFilterApply(filter: any) {
-      if(filter.statusId) {
-        const index = (this as any).selectedStatusFilters.indexOf(filter.statusId);
-        if (index != -1) {
-          (this as any).selectedStatusFilters.splice(index, 1)
-        } else {
-          (this as any).selectedStatusFilters.push(filter.statusId)
-        }
-      } else if(filter.enumTypeId) {
-        const index = (this as any).selectedCategoryFilters.indexOf(filter.enumTypeId);
-        if (index != -1) {
-          (this as any).selectedCategoryFilters.splice(index, 1)
-        } else {
-          (this as any).selectedCategoryFilters.push(filter.enumTypeId)
-        }
-      } else {
-        const index = (this as any).selectedPinnedJobs.indexOf(filter);
-        if (index != -1) {
-          (this as any).selectedPinnedJobs.splice(index, 1)
-        } else {
-          (this as any).selectedPinnedJobs.push(filter)
-        }
+    handleFilterChange(filterArray: any, filterProperty: any) {
+      // check if the filter is being applied, 
+      // if not - apply, if already there - remove.
+      filterArray.includes(filterProperty) 
+      ? filterArray.splice(filterArray.indexOf(filterProperty), 1) 
+      : filterArray.push(filterProperty);
+    },
+    handleFilterApply(filter: any, type: any) {
+      switch (type) {
+        case 'statusFilter':
+          this.handleFilterChange(this.selectedStatusFilters, filter.statusId);
+          break;
+        case 'categoryFilter':
+          this.handleFilterChange(this.selectedCategoryFilters, filter.enumTypeId);
+          break;
+        case 'pinnedFilter':
+          this.handleFilterChange(this.selectedPinnedJobs, filter);
+          break;
       }
-      this.store.dispatch('job/setPipelineFilters', { status: this.selectedStatusFilters, category: this.selectedCategoryFilters});
+      this.store.dispatch('job/setPipelineFilters', { status: this.selectedStatusFilters, category: this.selectedCategoryFilters });
       this.handleSegmentChange();
-    },
-    applyStatusFilters(filter: any) {
-      this.handleFilterApply(filter);
-    },
-    applyCategoryFilters(filter: any) {
-      this.handleFilterApply(filter);
-    },
-    applyPinnedJobFilters(filter: any) {
-      this.handleFilterApply(filter);
     },
     async getFilteredPendingJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
       await this.store.dispatch('job/fetchPendingJobs', { eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, enumTypeId: this.selectedCategoryFilters, systemJobEnumId: this.selectedPinnedJobs, statusId: this.selectedStatusFilters });
