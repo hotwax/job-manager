@@ -130,20 +130,20 @@ const actions: ActionTree<UserState, RootState> = {
   /**
    * update current eComStore information
    */
-  async setEcomStore({ commit, dispatch, getters }, payload) {
+  async setEcomStore({ state, commit, dispatch }, payload) {
     dispatch('job/clearJobState', null, { root: true });
-    let productStore;
-
-    if(payload.productStore) {
-      commit(types.USER_CURRENT_ECOM_STORE_UPDATED, payload.productStore);
+    let productStore = payload.productStore;
+    if(productStore) {
+      commit(types.USER_CURRENT_ECOM_STORE_UPDATED, productStore);
     } else {
-      productStore = getters.getUserProfile.stores.find((store: any) => store.productStoreId === payload.productStoreId);
+      productStore = this.state.user.current.stores.find((store: any) => store.productStoreId === payload.productStoreId);
+      commit(types.USER_CURRENT_ECOM_STORE_UPDATED, productStore);
     }
-    
-    dispatch('getShopifyConfig', productStore ? productStore.productStoreId : payload.productStore.productStoreId);
+
+    dispatch('getShopifyConfig',  productStore.productStoreId);
     await UserService.setUserPreference({
       'userPrefTypeId': 'SELECTED_BRAND',
-      'userPrefValue': productStore ? productStore.productStoreId : payload.productStore.productStoreId
+      'userPrefValue': productStore.productStoreId
     });
   },
   /**
@@ -212,14 +212,12 @@ const actions: ActionTree<UserState, RootState> = {
    * update current shopify config id
    */
   async setCurrentShopifyConfig({ commit, dispatch, state }, payload) {
-    if(payload.shopifyConfig) {
-      commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, payload.shopifyConfig);
-    } else {
-      const shopifyConfigs = state.shopifyConfigs;
-      const currentShopifyConfig = shopifyConfigs.find((configs: any) => configs.shopifyConfigId === payload.shopifyConfigId)
-      commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, currentShopifyConfig);
+    let currentShopifyConfig = payload.shopifyConfig;
+    if(!currentShopifyConfig) {
+      currentShopifyConfig = state.shopifyConfigs.find((configs: any) => configs.shopifyConfigId === payload.shopifyConfigId)
     }
 
+    commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, currentShopifyConfig ? currentShopifyConfig : {});
     dispatch('job/clearJobState', null, { root: true });    
   },
 
