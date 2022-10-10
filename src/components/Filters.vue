@@ -172,6 +172,7 @@ export default defineComponent({
   },
   data() {
     return {
+      type: '',
       selectedFilters: {} as any,
       selectedStatusFilters: [] as Array<string>,
       selectedCategoryFilters: [] as Array<string>,
