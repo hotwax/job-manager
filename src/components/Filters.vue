@@ -192,35 +192,40 @@ export default defineComponent({
       this.segmentSelected === 'running' ? this.getFilteredRunningJobs() :
       this.getFilteredJobHistory();
     },
-    applyStatusFilters(filter: any) {
-      const index = (this as any).selectedStatusFilters.indexOf(filter.statusId);
-      if (index != -1) {
-        (this as any).selectedStatusFilters.splice(index, 1)
+    handleFilterApply(filter: any) {
+      if(filter.statusId) {
+        const index = (this as any).selectedStatusFilters.indexOf(filter.statusId);
+        if (index != -1) {
+          (this as any).selectedStatusFilters.splice(index, 1)
+        } else {
+          (this as any).selectedStatusFilters.push(filter.statusId)
+        }
+      } else if(filter.enumTypeId) {
+        const index = (this as any).selectedCategoryFilters.indexOf(filter.enumTypeId);
+        if (index != -1) {
+          (this as any).selectedCategoryFilters.splice(index, 1)
+        } else {
+          (this as any).selectedCategoryFilters.push(filter.enumTypeId)
+        }
       } else {
-        (this as any).selectedStatusFilters.push(filter.statusId)
+        const index = (this as any).selectedPinnedJobs.indexOf(filter);
+        if (index != -1) {
+          (this as any).selectedPinnedJobs.splice(index, 1)
+        } else {
+          (this as any).selectedPinnedJobs.push(filter)
+        }
       }
       this.store.dispatch('job/setPipelineFilters', { status: this.selectedStatusFilters, category: this.selectedCategoryFilters});
       this.handleSegmentChange();
+    },
+    applyStatusFilters(filter: any) {
+      this.handleFilterApply(filter);
     },
     applyCategoryFilters(filter: any) {
-      const index = (this as any).selectedCategoryFilters.indexOf(filter.enumTypeId);
-      if (index != -1) {
-        (this as any).selectedCategoryFilters.splice(index, 1)
-      } else {
-        (this as any).selectedCategoryFilters.push(filter.enumTypeId)
-      }
-      this.store.dispatch('job/setPipelineFilters', { status: this.selectedStatusFilters, category: this.selectedCategoryFilters});
-      this.handleSegmentChange();
+      this.handleFilterApply(filter);
     },
-    applyPinnedJobFilters(jobEnumId: any) {
-      const index = (this as any).selectedPinnedJobs.indexOf(jobEnumId);
-      if (index != -1) {
-        (this as any).selectedPinnedJobs.splice(index, 1)
-      } else {
-        (this as any).selectedPinnedJobs.push(jobEnumId)
-      }
-      this.store.dispatch('job/setPipelineFilters', { status: this.selectedStatusFilters, category: this.selectedCategoryFilters});
-      this.handleSegmentChange();
+    applyPinnedJobFilters(filter: any) {
+      this.handleFilterApply(filter);
     },
     async getFilteredPendingJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
       await this.store.dispatch('job/fetchPendingJobs', { eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, enumTypeId: this.selectedCategoryFilters, systemJobEnumId: this.selectedPinnedJobs, statusId: this.selectedStatusFilters });
