@@ -38,17 +38,17 @@
             <ion-card-header>
               <ion-card-title>{{ $t("More jobs") }}</ion-card-title>
             </ion-card-header>
-            <ion-item button @click="viewJobConfiguration('HARD_SYNC', 'Hard sync', getJobStatus(this.jobEnums['HARD_SYNC']))" detail>
+            <ion-item button @click="viewJobConfiguration('INVENTORY_SYS_JOB', 'Inventory', getJobStatus(this.jobEnums['INVENTORY_SYS_JOB']))" detail>
               <ion-label class="ion-text-wrap">{{ $t("Inventory") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('HARD_SYNC') }}</ion-label>
+              <ion-label slot="end">{{ getTemporalExpression('INVENTORY_SYS_JOB') }}</ion-label>
             </ion-item>
-            <ion-item button @click="viewJobConfiguration('HARD_SYNC', 'Hard sync', getJobStatus(this.jobEnums['HARD_SYNC']))" detail>
+            <ion-item button @click="viewJobConfiguration('INVENTORY_SYS_JOB', 'Inventory cost', getJobStatus(this.jobEnums['INVENTORY_SYS_JOB']))" detail>
               <ion-label class="ion-text-wrap">{{ $t("Inventory cost") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('HARD_SYNC') }}</ion-label>
+              <ion-label slot="end">{{ getTemporalExpression('INVENTORY_SYS_JOB') }}</ion-label>
             </ion-item>
-            <ion-item button @click="viewJobConfiguration('HARD_SYNC', 'Hard sync', getJobStatus(this.jobEnums['HARD_SYNC']))" detail>
+            <ion-item button @click="viewJobConfiguration('INVENTORY_SYS_JOB', 'Landed inventory cost', getJobStatus(this.jobEnums['INVENTORY_SYS_JOB']))" detail>
               <ion-label class="ion-text-wrap">{{ $t("Landed inventory cost") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('HARD_SYNC') }}</ion-label>
+              <ion-label slot="end">{{ getTemporalExpression('INVENTORY_SYS_JOB') }}</ion-label>
             </ion-item>
           </ion-card>
         </section>
@@ -80,10 +80,11 @@ import {
 import { defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
 import JobConfiguration from '@/components/JobConfiguration.vue'
-import { isFutureDate, showToast, prepareRuntime } from '@/utils';
+import { isFutureDate, showToast, prepareRuntime, hasError } from '@/utils';
 import emitter from '@/event-bus';
 import { useRouter } from 'vue-router'
 import { translate } from '@/i18n';
+import { JobService } from '@/services/JobService'
 
 export default defineComponent({
   name: 'Inventory',
@@ -111,7 +112,8 @@ export default defineComponent({
       currentJobStatus: '',
       freqType: '',
       isJobDetailAnimationCompleted: false,
-      isDesktop: isPlatform('desktop')
+      isDesktop: isPlatform('desktop'),
+      moreInventoryJobs: {} as any
     }
   },
   computed: {
@@ -184,6 +186,44 @@ export default defineComponent({
       return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
         this.$t('Disabled')
+    },
+    async getMoreInventoryJobs() {
+      const params = {
+        "inputFields": {
+          "enumTypeId": "INVENTORY_SYS_JOB",
+        } as any
+      }
+
+      try {
+        const resp = await JobService.fetchJobInformation(params)
+        console.log(resp)
+        if (resp.status === 200 && !hasError(resp) && resp.data.docs?.length > 0) {
+          const jobs = resp.data.docs.map((job: any) => {
+            return {
+              ...job,
+              'status': job?.statusId
+            }
+          })
+          console.log(jobs)
+
+          // this.moreInventoryJobs = jobs;
+          // const tempExprList = [] as any;
+          // const enumIds = [] as any;
+          // resp.data.docs.map((item: any) => {
+          //   enumIds.push(item.systemJobEnumId);
+          //   tempExprList.push(item.tempExprId);
+          // })
+          // const tempExpr = [...new Set(tempExprList)];
+          // dispatch('fetchTemporalExpression', tempExpr);
+          // dispatch('fetchJobDescription', enumIds);
+        } else {
+          // commit(types.JOB_MISCELLANEOUS_UPDATED, { jobs: [], total: 0 });
+        }
+      } catch (err) {
+        // commit(types.JOB_MISCELLANEOUS_UPDATED, { jobs: [], total: 0 });
+        console.error(err);
+        showToast(translate("Something went wrong"));
+      }
     }
   },
   mounted () {
@@ -193,6 +233,7 @@ export default defineComponent({
         "systemJobEnumId_op": "in"
       }
     });
+    this.getMoreInventoryJobs();
   },
   setup() {
     const store = useStore();
