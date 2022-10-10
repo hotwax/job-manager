@@ -216,7 +216,7 @@ const actions: ActionTree<UserState, RootState> = {
     }
 
     commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, shopifyConfig ? shopifyConfig : {});
-    dispatch('job/clearJobState', null, { root: true });    
+    dispatch('job/clearJobState', null, { root: true });
   },
 
   /**
