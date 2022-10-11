@@ -40,6 +40,7 @@
               <ion-toggle slot="end" :checked="deleteProductsWebhook" @ionChange="updateWebhook($event['detail'].checked, 'DELETE_PRODUCTS')" color="secondary" />
             </ion-item>
           </ion-card>
+          <MoreJobs :moreJobs="moreJobs" />
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
@@ -72,6 +73,7 @@ import JobConfiguration from '@/components/JobConfiguration.vue'
 import { isFutureDate } from '@/utils';
 import emitter from '@/event-bus';
 import { useRouter } from 'vue-router'
+import MoreJobs from '@/components/MoreJobs.vue'
 
 export default defineComponent({
   name: 'Product',
@@ -88,7 +90,8 @@ export default defineComponent({
     IonTitle,
     IonToolbar,
     IonToggle,
-    JobConfiguration
+    JobConfiguration,
+    MoreJobs
   },
   computed: {
     ...mapGetters({
