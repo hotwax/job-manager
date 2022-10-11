@@ -33,24 +33,7 @@
               </ion-label>
             </ion-item>
           </ion-card>
-
-          <ion-card>
-            <ion-card-header>
-              <ion-card-title>{{ $t("More jobs") }}</ion-card-title>
-            </ion-card-header>
-            <ion-item button @click="viewJobConfiguration('INVENTORY_SYS_JOB', 'Inventory', getJobStatus(this.jobEnums['INVENTORY_SYS_JOB']))" detail>
-              <ion-label class="ion-text-wrap">{{ $t("Inventory") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('INVENTORY_SYS_JOB') }}</ion-label>
-            </ion-item>
-            <ion-item button @click="viewJobConfiguration('INVENTORY_SYS_JOB', 'Inventory cost', getJobStatus(this.jobEnums['INVENTORY_SYS_JOB']))" detail>
-              <ion-label class="ion-text-wrap">{{ $t("Inventory cost") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('INVENTORY_SYS_JOB') }}</ion-label>
-            </ion-item>
-            <ion-item button @click="viewJobConfiguration('INVENTORY_SYS_JOB', 'Landed inventory cost', getJobStatus(this.jobEnums['INVENTORY_SYS_JOB']))" detail>
-              <ion-label class="ion-text-wrap">{{ $t("Landed inventory cost") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('INVENTORY_SYS_JOB') }}</ion-label>
-            </ion-item>
-          </ion-card>
+          <MoreJobs :moreJobs="moreJobs" />
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
@@ -85,6 +68,7 @@ import emitter from '@/event-bus';
 import { useRouter } from 'vue-router'
 import { translate } from '@/i18n';
 import { JobService } from '@/services/JobService'
+import MoreJobs from '@/components/MoreJobs.vue';
 
 export default defineComponent({
   name: 'Inventory',
@@ -101,7 +85,8 @@ export default defineComponent({
     IonTitle,
     IonToggle,
     IonToolbar,
-    JobConfiguration
+    JobConfiguration,
+    MoreJobs
   },
   data() {
     return {
@@ -113,7 +98,7 @@ export default defineComponent({
       freqType: '',
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
-      moreInventoryJobs: {} as any
+      moreJobs: {} as any
     }
   },
   computed: {
@@ -190,37 +175,25 @@ export default defineComponent({
     async getMoreInventoryJobs() {
       const params = {
         "inputFields": {
-          "enumTypeId": "INVENTORY_SYS_JOB",
-        } as any
+          "enumtypeId": "INVENTORY_SYS_JOB",
+        } as any,
+        "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runtimeDataId", "enumName", "shopId", "description" ],
+        "noConditionFind": "Y",
+        "viewSize": process.env.VUE_APP_VIEW_SIZE,
+        "viewIndex": 0,
       }
 
       try {
         const resp = await JobService.fetchJobInformation(params)
-        console.log(resp)
         if (resp.status === 200 && !hasError(resp) && resp.data.docs?.length > 0) {
-          const jobs = resp.data.docs.map((job: any) => {
+          this.moreJobs = resp.data.docs.map((job: any) => {
             return {
               ...job,
               'status': job?.statusId
             }
           })
-          console.log(jobs)
-
-          // this.moreInventoryJobs = jobs;
-          // const tempExprList = [] as any;
-          // const enumIds = [] as any;
-          // resp.data.docs.map((item: any) => {
-          //   enumIds.push(item.systemJobEnumId);
-          //   tempExprList.push(item.tempExprId);
-          // })
-          // const tempExpr = [...new Set(tempExprList)];
-          // dispatch('fetchTemporalExpression', tempExpr);
-          // dispatch('fetchJobDescription', enumIds);
-        } else {
-          // commit(types.JOB_MISCELLANEOUS_UPDATED, { jobs: [], total: 0 });
         }
       } catch (err) {
-        // commit(types.JOB_MISCELLANEOUS_UPDATED, { jobs: [], total: 0 });
         console.error(err);
         showToast(translate("Something went wrong"));
       }
