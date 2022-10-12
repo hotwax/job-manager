@@ -99,7 +99,8 @@ export default defineComponent({
       getTemporalExpr: 'job/getTemporalExpr',
       getJob: 'job/getJob',
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
-      getCachedWebhook: 'webhook/getCachedWebhook'
+      getCachedWebhook: 'webhook/getCachedWebhook',
+      moreJobs: 'job/getMoreJobs'
     }),
     newProductsWebhook(): boolean {
       const webhookTopic = this.webhookEnums['NEW_PRODUCTS']
@@ -173,7 +174,17 @@ export default defineComponent({
       return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
         this.$t('Disabled')
+    },
+    async getMoreProductJobs() {
+      await this.store.dispatch("job/fetchMoreJobs", {
+        "inputFields":{
+          "enumTypeId": "ORDER_SYS_JOB",
+        } as any
+      });
     }
+  },
+  created() {
+    this.getMoreProductJobs();
   },
   setup() {
     const customPopoverOptions: any = {

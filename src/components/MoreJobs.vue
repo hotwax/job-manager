@@ -4,15 +4,15 @@
       <ion-card-header>
         <ion-card-title>{{ $t("More jobs") }}</ion-card-title>
       </ion-card-header>
-      <ion-item v-for="job in moreJobs" :key="job" button @click="viewJobConfiguration(job)" detail>
+      <ion-item v-for="job in moreJobs" :key="job" @click="viewJobConfiguration(job)" detail button>
         <ion-label class="ion-text-wrap">{{ job.jobName }}</ion-label>
-        <ion-label slot="end">{{ getTemporalExpression('INVENTORY_SYS_JOB') }}</ion-label>
+        <ion-label slot="end">{{ getTemporalExpression('ORDER_SYS_JOB') }}</ion-label>
       </ion-item>
     </ion-card>
   </section>
 
-  <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
-    <JobConfiguration :title="title" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
+  <aside class="desktop-only" v-if="isDesktop" v-show="moreJobs">
+    <JobConfiguration :title="title" :status="currentJobStatus" :type="freqType" :key="moreJobs"/>
   </aside>
 </template>
 
@@ -28,10 +28,8 @@ import {
 import { defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
 import JobConfiguration from '@/components/JobConfiguration.vue'
-import { isFutureDate, showToast, prepareRuntime } from '@/utils';
 import emitter from '@/event-bus';
 import { useRouter } from 'vue-router'
-import { translate } from '@/i18n';
 
 export default defineComponent({
   name: 'Inventory',
@@ -47,12 +45,11 @@ export default defineComponent({
     return {
       jobEnums: JSON.parse(process.env?.VUE_APP_INV_JOB_ENUMS as string) as any,
       jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
-      currentJob: '' as any,
-      title: 'Hard sync',
+      title: '',
       currentJobStatus: '',
       freqType: '',
       isJobDetailAnimationCompleted: false,
-      isDesktop: isPlatform('desktop'),
+      isDesktop: isPlatform('desktop')
     }
   },
   props: ["moreJobs"],
@@ -62,22 +59,23 @@ export default defineComponent({
       getJob: 'job/getJob',
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
       currentEComStore: 'user/getCurrentEComStore',
-      getTemporalExpr: 'job/getTemporalExpr'
+      getTemporalExpr: 'job/getTemporalExpr',
+      getEnumName: 'job/getEnumName',
     })
   },
   methods: {
     async viewJobConfiguration(job: any) {
-      this.title = job.jobName
+      this.title = job.enumName || this.getEnumName(job.systemJobEnumId)
       this.currentJobStatus = job.tempExprId
       const id = Object.entries(this.jobEnums).find((enums) => enums[1] == job.systemJobEnumId) as any
       const appFreqType =  id && (Object.entries(this.jobFrequencyType).find((freq) => freq[0] == id[0]) as any)
       this.freqType = appFreqType ? appFreqType[1] : "default"
       await this.store.dispatch('job/updateCurrentJob', { job });
-      if(!this.isDesktop && job?.jobId) {
-        this.router.push({name: 'JobDetails', params: { title: this.title, jobId: job?.jobId, category: "inventory"}});
+
+      if(!this.isDesktop && job) {
+        this.router.push({name: 'JobDetails', params: { title: this.title, jobId: job.jobId, category: "orders"}});
         return;
       }
-
       if (job && !this.isJobDetailAnimationCompleted) {
         emitter.emit('playAnimation');
         this.isJobDetailAnimationCompleted = true;

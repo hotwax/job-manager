@@ -143,6 +143,7 @@
               </ion-item-sliding>
             </ion-list>
           </ion-card>
+          <MoreJobs :moreJobs="moreJobs" />
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
@@ -192,6 +193,7 @@ import { DateTime } from 'luxon';
 import { hasError, isFutureDate, showToast, prepareRuntime } from '@/utils';
 import emitter from '@/event-bus';
 import { JobService } from '@/services/JobService'
+import MoreJobs from '@/components/MoreJobs.vue';
 
 export default defineComponent({
   name: 'Orders',
@@ -217,8 +219,9 @@ export default defineComponent({
     IonTitle,
     IonToggle,
     IonToolbar,
-    JobConfiguration
-  },
+    JobConfiguration,
+    MoreJobs
+},
   data() {
     return {
       jobEnums: JSON.parse(process.env?.VUE_APP_ODR_JOB_ENUMS as string) as any,
@@ -242,7 +245,8 @@ export default defineComponent({
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
       currentEComStore: 'user/getCurrentEComStore',
       getTemporalExpr: 'job/getTemporalExpr',
-      getCachedWebhook: 'webhook/getCachedWebhook'
+      getCachedWebhook: 'webhook/getCachedWebhook',
+      moreJobs: 'job/getMoreJobs'
     }),
     promiseDateChanges(): boolean {
       const status = this.getJobStatus(this.jobEnums['NTS_PRMS_DT_CHNG']);
@@ -470,7 +474,17 @@ export default defineComponent({
         console.error(err)
         this.autoCancelDays = "";
       }
+    },
+    async getMoreOrdersJobs() {
+      await this.store.dispatch("job/fetchMoreJobs", {
+        "inputFields":{
+          "enumTypeId": "ORDER_SYS_JOB",
+        } as any
+      });
     }
+  },
+  created() {
+    this.getMoreOrdersJobs();
   },
   mounted () {
     this.store.dispatch("job/fetchJobs", {

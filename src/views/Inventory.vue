@@ -97,8 +97,7 @@ export default defineComponent({
       currentJobStatus: '',
       freqType: '',
       isJobDetailAnimationCompleted: false,
-      isDesktop: isPlatform('desktop'),
-      moreJobs: {} as any
+      isDesktop: isPlatform('desktop')
     }
   },
   computed: {
@@ -107,7 +106,8 @@ export default defineComponent({
       getJob: 'job/getJob',
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
       currentEComStore: 'user/getCurrentEComStore',
-      getTemporalExpr: 'job/getTemporalExpr'
+      getTemporalExpr: 'job/getTemporalExpr',
+      moreJobs: 'job/getMoreJobs'
     }),
     bopisCorrections(): boolean {
       const status = this.getJobStatus(this.jobEnums["BOPIS_CORRECTION"]);
@@ -173,31 +173,15 @@ export default defineComponent({
         this.$t('Disabled')
     },
     async getMoreInventoryJobs() {
-      const params = {
-        "inputFields": {
-          "enumtypeId": "INVENTORY_SYS_JOB",
-        } as any,
-        "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runtimeDataId", "enumName", "shopId", "description" ],
-        "noConditionFind": "Y",
-        "viewSize": process.env.VUE_APP_VIEW_SIZE,
-        "viewIndex": 0,
-      }
-
-      try {
-        const resp = await JobService.fetchJobInformation(params)
-        if (resp.status === 200 && !hasError(resp) && resp.data.docs?.length > 0) {
-          this.moreJobs = resp.data.docs.map((job: any) => {
-            return {
-              ...job,
-              'status': job?.statusId
-            }
-          })
-        }
-      } catch (err) {
-        console.error(err);
-        showToast(translate("Something went wrong"));
-      }
+      await this.store.dispatch("job/fetchMoreJobs", {
+        "inputFields":{
+          "enumTypeId": "ORDER_SYS_JOB",
+        } as any
+      });
     }
+  },
+  created() {
+    this.getMoreInventoryJobs();
   },
   mounted () {
     this.store.dispatch("job/fetchJobs", {
@@ -206,7 +190,6 @@ export default defineComponent({
         "systemJobEnumId_op": "in"
       }
     });
-    this.getMoreInventoryJobs();
   },
   setup() {
     const store = useStore();

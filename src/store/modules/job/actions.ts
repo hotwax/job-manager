@@ -751,6 +751,35 @@ const actions: ActionTree<JobState, RootState> = {
     } catch (err) {
       console.error(err);
     }
+  },
+  async fetchMoreJobs({ commit }, payload) {
+    const params = {
+      "inputFields": {
+        ...payload.inputFields
+      } as any,
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runtimeDataId", "enumName", "shopId", "description" ],
+      "noConditionFind": "Y",
+      "viewSize": process.env.VUE_APP_VIEW_SIZE,
+      "viewIndex": 0,
+    }
+
+    try {
+      const resp = await JobService.fetchJobInformation(params)
+      if (resp.status === 200 && !hasError(resp) && resp.data.docs?.length > 0) {
+        const moreJobs = resp.data.docs.map((job: any) => {
+          return {
+            ...job,
+            'status': job?.statusId
+          }
+        })
+        commit(types.JOB_MORE_UPDATED, moreJobs);
+      } else {
+        commit(types.JOB_MORE_UPDATED, { jobs: [], total: 0 });
+      }
+    } catch (err) {
+      console.error(err);
+      showToast(translate("Something went wrong"));
+    }
   }
 }
 export default actions;

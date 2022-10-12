@@ -57,6 +57,9 @@ const getters: GetterTree <JobState, RootState> = {
     isMiscellaneousJobsScrollable: (state) => {
       return state.miscellaneous.list?.length > 0 && state.miscellaneous.list?.length < state.miscellaneous.total
     },
+    getMoreJobs (state){
+      return state.more.list;
+    },
   }
 
   export default getters;

@@ -109,6 +109,7 @@
               <ion-label class="ion-text-wrap"><p>{{ $t("Re-allocation will re-calculate promise dates on all pre-orders based on upcoming inventory from purchase orders. Promise dates that were manually adjusted will be overriden.") }}</p></ion-label>
             </ion-item>
           </ion-card> 
+          <MoreJobs :moreJobs="moreJobs" />
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
@@ -145,6 +146,7 @@ import JobConfiguration from '@/components/JobConfiguration.vue'
 import { isFutureDate, showToast, prepareRuntime } from '@/utils';
 import emitter from '@/event-bus';
 import { translate } from '@/i18n';
+import MoreJobs from '@/components/MoreJobs.vue';
 
 export default defineComponent({
   name: 'PreOrder',
@@ -162,15 +164,17 @@ export default defineComponent({
     IonPage,
     IonTitle,
     IonToolbar,
-    JobConfiguration
-  },
+    JobConfiguration,
+    MoreJobs
+},
   computed: {
     ...mapGetters({
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
       currentEComStore: 'user/getCurrentEComStore',
-      getTemporalExpr: 'job/getTemporalExpr'
+      getTemporalExpr: 'job/getTemporalExpr',
+      moreJobs: 'job/getMoreJobs'
     }),
     preOrderManageCatalog(): boolean {
       const status = this.getJobStatus(this.jobEnums["PRE_ORDER_CTLG"]);
@@ -318,7 +322,17 @@ export default defineComponent({
       return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
         this.$t('Disabled')
+    },
+    async getMorePreOrderJobs() {
+      await this.store.dispatch("job/fetchMoreJobs", {
+        "inputFields":{
+          "enumTypeId": "ORDER_SYS_JOB",
+        } as any
+      });
     }
+  },
+  created() {
+    this.getMorePreOrderJobs();
   },
   mounted () {
     this.store.dispatch("job/fetchJobs", {
