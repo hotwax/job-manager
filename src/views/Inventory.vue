@@ -63,11 +63,10 @@ import {
 import { defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
 import JobConfiguration from '@/components/JobConfiguration.vue'
-import { isFutureDate, showToast, prepareRuntime, hasError } from '@/utils';
+import { isFutureDate, showToast, prepareRuntime } from '@/utils';
 import emitter from '@/event-bus';
 import { useRouter } from 'vue-router'
 import { translate } from '@/i18n';
-import { JobService } from '@/services/JobService'
 import MoreJobs from '@/components/MoreJobs.vue';
 
 export default defineComponent({
