@@ -1,15 +1,13 @@
 <template>
-  <section>
-    <ion-card>
-      <ion-card-header>
-        <ion-card-title>{{ $t("More jobs") }}</ion-card-title>
-      </ion-card-header>
-      <ion-item v-for="job in moreJobs" :key="job" @click="viewJobConfiguration(job)" detail button>
-        <ion-label class="ion-text-wrap">{{ job.jobName }}</ion-label>
-        <ion-label slot="end">{{ getTemporalExpression('ORDER_SYS_JOB') }}</ion-label>
-      </ion-item>
-    </ion-card>
-  </section>
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>{{ $t("More jobs") }}</ion-card-title>
+    </ion-card-header>
+    <ion-item v-for="job in moreJobs" :key="job" @click="viewJobConfiguration(job)" detail button>
+      <ion-label class="ion-text-wrap">{{ job.jobName }}</ion-label>
+      <ion-label slot="end">{{ getTemporalExpression('ORDER_SYS_JOB') }}</ion-label>
+    </ion-item>
+  </ion-card>
 
   <aside class="desktop-only" v-if="isDesktop" v-show="moreJobs">
     <JobConfiguration :title="title" :status="currentJobStatus" :type="freqType" :key="moreJobs"/>
