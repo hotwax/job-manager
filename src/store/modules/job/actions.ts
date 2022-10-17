@@ -776,7 +776,7 @@ const actions: ActionTree<JobState, RootState> = {
       payload.status.includes(payload.filter.statusId) 
       ? payload.status.splice(payload.status.indexOf(payload.filter.statusId), 1) 
       : payload.status.push(payload.filter.statusId);
-    } else if(payload.type === 'statusFIlter') {
+    } else if(payload.type === 'categoryFilter') {
       payload.category.includes(payload.filter.enumTypeId) 
       ? payload.category.splice(payload.category.indexOf(payload.filter.enumTypeId), 1) 
       : payload.category.push(payload.filter.enumTypeId);
