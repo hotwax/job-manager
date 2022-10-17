@@ -8,10 +8,10 @@
       <ion-label slot="end">{{ getTemporalExpression('ORDER_SYS_JOB') }}</ion-label>
     </ion-item>
   </ion-card>
-
+<!-- 
   <aside class="desktop-only" v-if="isDesktop" v-show="moreJobs">
     <JobConfiguration :title="title" :status="currentJobStatus" :type="freqType" :key="moreJobs"/>
-  </aside>
+  </aside> -->
 </template>
 
 <script lang="ts">
@@ -25,7 +25,7 @@ import {
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
-import JobConfiguration from '@/components/JobConfiguration.vue'
+// import JobConfiguration from '@/components/JobConfiguration.vue'
 import emitter from '@/event-bus';
 import { useRouter } from 'vue-router'
 
@@ -37,7 +37,7 @@ export default defineComponent({
     IonCardTitle,
     IonItem,
     IonLabel,
-    JobConfiguration
+    // JobConfiguration
   },
   data() {
     return {
@@ -64,20 +64,21 @@ export default defineComponent({
   methods: {
     async viewJobConfiguration(job: any) {
       this.title = job.enumName || this.getEnumName(job.systemJobEnumId)
-      this.currentJobStatus = job.tempExprId
-      const id = Object.entries(this.jobEnums).find((enums) => enums[1] == job.systemJobEnumId) as any
-      const appFreqType =  id && (Object.entries(this.jobFrequencyType).find((freq) => freq[0] == id[0]) as any)
-      this.freqType = appFreqType ? appFreqType[1] : "default"
-      await this.store.dispatch('job/updateCurrentJob', { job });
+      // this.currentJobStatus = job.tempExprId
+      // const id = Object.entries(this.jobEnums).find((enums) => enums[1] == job.systemJobEnumId) as any
+      // const appFreqType =  id && (Object.entries(this.jobFrequencyType).find((freq) => freq[0] == id[0]) as any)
+      // this.freqType = appFreqType ? appFreqType[1] : "default"
+      // await this.store.dispatch('job/updateCurrentJob', { job });
 
       if(!this.isDesktop && job) {
-        this.router.push({name: 'JobDetails', params: { title: this.title, jobId: job.jobId, category: "orders"}});
+        // this.router.push({name: 'JobDetails', params: { title: this.title, jobId: job.jobId, category: "orders"}});
+        emitter.emit('showJobConfigurationForMoreJobs', {jobId: job.jobId, jobTitle: this.title, jobStatus: job.status});
         return;
       }
-      if (job && !this.isJobDetailAnimationCompleted) {
-        emitter.emit('playAnimation');
-        this.isJobDetailAnimationCompleted = true;
-      }
+      // if (job && !this.isJobDetailAnimationCompleted) {
+      //   emitter.emit('playAnimation');
+      //   this.isJobDetailAnimationCompleted = true;
+      // }
     },
     getTemporalExpression(enumId: string) {
       return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?

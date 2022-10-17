@@ -189,6 +189,9 @@ export default defineComponent({
         "systemJobEnumId_op": "in"
       }
     });
+    emitter.on('showJobConfigurationForMoreJobs', (payload) => {
+      this.viewJobConfiguration(payload.jobId, payload.jobTitle, payload.jobStatus);
+    })
   },
   setup() {
     const store = useStore();
