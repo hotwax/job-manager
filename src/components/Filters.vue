@@ -190,7 +190,7 @@ export default defineComponent({
       this.segmentSelected === 'running' ? this.getFilteredRunningJobs() :
       this.getFilteredJobHistory();
     },
-    handleFilterChange(filterArray: any, filterProperty: any) {
+    handleFilterChange(filterArray: Array<string>, filterProperty: any) {
       // check if the filter is being applied, 
       // if not - apply, if already there - remove.
       filterArray.includes(filterProperty) 
