@@ -101,8 +101,8 @@ export default defineComponent({
         this.store.dispatch('user/setEcomStore', {
           'eComStore': this.userProfile.stores.find((store: any) => store.productStoreId === event['detail'].value)
         })
+        emitter.emit("productStoreChanged")
       }
-      emitter.emit("productStoreChanged")
     },
   },
   watch:{
