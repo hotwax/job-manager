@@ -46,8 +46,8 @@ const mutations: MutationTree <JobState> = {
         state.miscellaneous.total = payload.total;
     },
     [types.JOB_PIPELINE_FILTERS_UPDATED] (state, payload){
-        state.pipelineFilters.category = payload.filters.category;
-        state.pipelineFilters.status = payload.filters.status;
+        state.pipelineFilters.category = payload.category;
+        state.pipelineFilters.status = payload.status;
     }
 }
 export default mutations;

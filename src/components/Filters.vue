@@ -173,15 +173,12 @@ export default defineComponent({
   data() {
     return {
       type: '',
-      selectedFilters: {} as any,
       selectedStatusFilters: [] as Array<string>,
       selectedCategoryFilters: [] as Array<string>,
     }
   },
   computed: {
     ...mapGetters({
-      getPipelineFilters: 'job/getPipelineFilters',
-      getEnumDescription: 'job/getEnumDescription',
       getEnumName: 'job/getEnumName',
       getCurrentEComStore: 'user/getCurrentEComStore',
       getPinnedJobs: 'user/getPinnedJobs',
@@ -201,18 +198,10 @@ export default defineComponent({
       : filterArray.push(filterProperty);
     },
     handleFilterApply(filter: any, type: any) {
-      switch (type) {
-        case 'statusFilter':
-          this.handleFilterChange(this.selectedStatusFilters, filter.statusId);
-          break;
-        case 'categoryFilter':
-          this.handleFilterChange(this.selectedCategoryFilters, filter.enumTypeId);
-          break;
-        case 'pinnedFilter':
-          this.handleFilterChange(this.selectedPinnedJobs, filter);
-          break;
+      if(type === 'pinnedFilter') {
+        this.handleFilterChange(this.selectedPinnedJobs, filter);
       }
-      this.store.dispatch('job/setPipelineFilters', { status: this.selectedStatusFilters, category: this.selectedCategoryFilters });
+      this.store.dispatch('job/setPipelineFilters', { status: this.selectedStatusFilters, category: this.selectedCategoryFilters, type, filter });
       this.handleSegmentChange();
     },
     async getFilteredPendingJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
