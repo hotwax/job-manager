@@ -38,18 +38,20 @@
             <ion-card-header>
               <ion-card-title>{{ $t("More jobs") }}</ion-card-title>
             </ion-card-header>
-            <ion-item button @click="viewJobConfiguration('HARD_SYNC', 'Hard sync', getJobStatus(this.jobEnums['HARD_SYNC']))" detail>
-              <ion-label class="ion-text-wrap">{{ $t("Inventory") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('HARD_SYNC') }}</ion-label>
-            </ion-item>
-            <ion-item button @click="viewJobConfiguration('HARD_SYNC', 'Hard sync', getJobStatus(this.jobEnums['HARD_SYNC']))" detail>
-              <ion-label class="ion-text-wrap">{{ $t("Inventory cost") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('HARD_SYNC') }}</ion-label>
-            </ion-item>
-            <ion-item button @click="viewJobConfiguration('HARD_SYNC', 'Hard sync', getJobStatus(this.jobEnums['HARD_SYNC']))" detail>
-              <ion-label class="ion-text-wrap">{{ $t("Landed inventory cost") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('HARD_SYNC') }}</ion-label>
-            </ion-item>
+            <ion-list>
+              <ion-item button @click="viewJobConfiguration('HARD_SYNC', 'Hard sync', getJobStatus(this.jobEnums['HARD_SYNC']))" detail>
+                <ion-label class="ion-text-wrap">{{ $t("Inventory") }}</ion-label>
+                <ion-label slot="end">{{ getTemporalExpression('HARD_SYNC') }}</ion-label>
+              </ion-item>
+              <ion-item button @click="viewJobConfiguration('HARD_SYNC', 'Hard sync', getJobStatus(this.jobEnums['HARD_SYNC']))" detail>
+                <ion-label class="ion-text-wrap">{{ $t("Inventory cost") }}</ion-label>
+                <ion-label slot="end">{{ getTemporalExpression('HARD_SYNC') }}</ion-label>
+              </ion-item>
+              <ion-item button @click="viewJobConfiguration('HARD_SYNC', 'Hard sync', getJobStatus(this.jobEnums['HARD_SYNC']))" detail>
+                <ion-label class="ion-text-wrap">{{ $t("Landed inventory cost") }}</ion-label>
+                <ion-label slot="end">{{ getTemporalExpression('HARD_SYNC') }}</ion-label>
+              </ion-item>
+            </ion-list>
           </ion-card>
         </section>
 
