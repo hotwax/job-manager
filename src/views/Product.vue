@@ -132,6 +132,14 @@ export default defineComponent({
       }
     });
     this.store.dispatch('webhook/fetchWebhooks')
+    emitter.on('showJobConfigurationForMoreJobs', (payload) => {
+      this.viewJobConfiguration(payload.jobId, payload.jobTitle, payload.jobStatus, payload.job);
+    })
+  },
+  unmounted() {
+    emitter.off('showJobConfigurationForMoreJobs', (payload) => {
+      this.viewJobConfiguration(payload.jobId, payload.title, payload.jobStatus, payload.job);
+    });
   },
   methods: {
     async updateWebhook(checked: boolean, enumId: string) {
@@ -149,8 +157,8 @@ export default defineComponent({
         await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhook?.id, shopifyConfigId: this.currentShopifyConfig.shopifyConfigId })
       }
     },
-    async viewJobConfiguration(id: string, title: string, status: string) {
-      this.currentJob = this.getJob(this.jobEnums[id])
+    async viewJobConfiguration(id: string, title: string, status: string, job?: any) {
+      this.currentJob = job || this.getJob(this.jobEnums[id])
       this.title = title
       this.currentJobStatus = status
       this.freqType = id && this.jobFrequencyType[id]
@@ -178,7 +186,7 @@ export default defineComponent({
     async getMoreProductJobs() {
       await this.store.dispatch("job/fetchMoreJobs", {
         "inputFields":{
-          "enumTypeId": "ORDER_SYS_JOB",
+          "enumTypeId": "MISC_SYS_JOB",
         } as any
       });
     }

@@ -404,8 +404,8 @@ export default defineComponent({
         this.store.dispatch('job/updateJob', job)
       }
     },
-    async viewJobConfiguration(id: string, title: string, status: string) {
-      this.currentJob = this.getJob(this.jobEnums[id])
+    async viewJobConfiguration(id: string, title: string, status: string, job?: any) {
+      this.currentJob = job || this.getJob(this.jobEnums[id])
       this.title = title
       this.currentJobStatus = status
       this.freqType = id && this.jobFrequencyType[id]
@@ -503,6 +503,14 @@ export default defineComponent({
     if (this.currentEComStore.productStoreId) {
       this.getAutoCancelDays();
     }
+    emitter.on('showJobConfigurationForMoreJobs', (payload) => {
+      this.viewJobConfiguration(payload.jobId, payload.jobTitle, payload.jobStatus, payload.job);
+    })
+  },
+  unmounted() {
+    emitter.off('showJobConfigurationForMoreJobs', (payload) => {
+      this.viewJobConfiguration(payload.jobId, payload.jobTitle, payload.jobStatus, payload.job);
+    });
   },
   setup() {
     const store = useStore();

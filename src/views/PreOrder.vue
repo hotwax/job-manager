@@ -297,8 +297,8 @@ export default defineComponent({
 
       return jobAlert.present();
     },
-    async viewJobConfiguration(id: string, title: string, status: string) {
-      this.currentJob = this.getJob(this.jobEnums[id])
+    async viewJobConfiguration(id: string, title: string, status: string, job?: any) {
+      this.currentJob = job || this.getJob(this.jobEnums[id])
       this.title = title
       this.currentJobStatus = status
       this.freqType = id && this.jobFrequencyType[id]
@@ -326,7 +326,7 @@ export default defineComponent({
     async getMorePreOrderJobs() {
       await this.store.dispatch("job/fetchMoreJobs", {
         "inputFields":{
-          "enumTypeId": "ORDER_SYS_JOB",
+          "enumTypeId": "MISC_SYS_JOB",
         } as any
       });
     }
@@ -340,6 +340,14 @@ export default defineComponent({
         "systemJobEnumId": Object.values(this.jobEnums),
         "systemJobEnumId_op": "in"
       }
+    });
+    emitter.on('showJobConfigurationForMoreJobs', (payload) => {
+      this.viewJobConfiguration(payload.jobId, payload.jobTitle, payload.jobStatus, payload.job);
+    })
+  },
+  unmounted() {
+    emitter.off('showJobConfigurationForMoreJobs', (payload) => {
+      this.viewJobConfiguration(payload.jobId, payload.title, payload.jobStatus, payload.job);
     });
   },
   setup() {
