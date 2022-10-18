@@ -326,13 +326,10 @@ export default defineComponent({
     async getMorePreOrderJobs() {
       await this.store.dispatch("job/fetchMoreJobs", {
         "inputFields":{
-          "enumTypeId": "MISC_SYS_JOB",
+          "enumTypeId": "PRE_ORD_SYS_JOB",
         } as any
       });
     }
-  },
-  created() {
-    this.getMorePreOrderJobs();
   },
   mounted () {
     this.store.dispatch("job/fetchJobs", {
@@ -341,6 +338,7 @@ export default defineComponent({
         "systemJobEnumId_op": "in"
       }
     });
+    this.getMorePreOrderJobs();
     emitter.on('showJobConfigurationForMoreJobs', (payload) => {
       this.viewJobConfiguration(payload.jobId, payload.jobTitle, payload.jobStatus, payload.job);
     })

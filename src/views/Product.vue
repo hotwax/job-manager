@@ -132,6 +132,7 @@ export default defineComponent({
       }
     });
     this.store.dispatch('webhook/fetchWebhooks')
+    this.getMoreProductJobs();
     emitter.on('showJobConfigurationForMoreJobs', (payload) => {
       this.viewJobConfiguration(payload.jobId, payload.jobTitle, payload.jobStatus, payload.job);
     })
@@ -186,13 +187,10 @@ export default defineComponent({
     async getMoreProductJobs() {
       await this.store.dispatch("job/fetchMoreJobs", {
         "inputFields":{
-          "enumTypeId": "MISC_SYS_JOB",
+          "enumTypeId": "PRODUCT_SYS_JOB",
         } as any
       });
     }
-  },
-  created() {
-    this.getMoreProductJobs();
   },
   setup() {
     const customPopoverOptions: any = {

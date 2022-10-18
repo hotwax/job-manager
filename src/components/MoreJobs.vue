@@ -3,9 +3,9 @@
     <ion-card-header>
       <ion-card-title>{{ $t("More jobs") }}</ion-card-title>
     </ion-card-header>
-    <ion-item v-for="job in moreJobs" :key="job" @click="viewJobConfiguration(job)" detail button>
+    <ion-item v-for="job in moreJobs" :key="job.jobId" @click="viewJobConfiguration(job)" detail button>
       <ion-label class="ion-text-wrap">{{ job.jobName }}</ion-label>
-      <ion-label slot="end">{{ getTemporalExpression('ORDER_SYS_JOB') }}</ion-label>
+      <ion-label slot="end">{{ getTemporalExpression(job.enumTypeId) }}</ion-label>
     </ion-item>
   </ion-card>
 </template>
@@ -36,7 +36,6 @@ export default defineComponent({
   data() {
     return {
       jobEnums: JSON.parse(process.env?.VUE_APP_INV_JOB_ENUMS as string) as any,
-      jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
       title: '',
       currentJobStatus: '',
       freqType: '',

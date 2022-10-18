@@ -483,9 +483,6 @@ export default defineComponent({
       });
     }
   },
-  created() {
-    this.getMoreOrdersJobs();
-  },
   mounted () {
     this.store.dispatch("job/fetchJobs", {
       "inputFields":{
@@ -503,6 +500,7 @@ export default defineComponent({
     if (this.currentEComStore.productStoreId) {
       this.getAutoCancelDays();
     }
+    this.getMoreOrdersJobs();
     emitter.on('showJobConfigurationForMoreJobs', (payload) => {
       this.viewJobConfiguration(payload.jobId, payload.jobTitle, payload.jobStatus, payload.job);
     })

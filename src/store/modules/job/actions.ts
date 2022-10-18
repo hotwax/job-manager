@@ -757,7 +757,7 @@ const actions: ActionTree<JobState, RootState> = {
       "inputFields": {
         ...payload.inputFields
       } as any,
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runtimeDataId", "enumName", "shopId", "description" ],
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runtimeDataId", "enumName", "shopId", "description", "enumTypeId" ],
       "noConditionFind": "Y",
       "viewSize": process.env.VUE_APP_VIEW_SIZE,
       "viewIndex": 0,

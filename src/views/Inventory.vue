@@ -174,13 +174,10 @@ export default defineComponent({
     async getMoreInventoryJobs() {
       await this.store.dispatch("job/fetchMoreJobs", {
         "inputFields":{
-          "enumTypeId": "ORDER_SYS_JOB",
+          "enumTypeId": "INVENTORY_SYS_JOB",
         } as any
       });
     }
-  },
-  created() {
-    this.getMoreInventoryJobs();
   },
   mounted () {
     this.store.dispatch("job/fetchJobs", {
@@ -189,6 +186,7 @@ export default defineComponent({
         "systemJobEnumId_op": "in"
       }
     });
+    this.getMoreInventoryJobs();
     emitter.on('showJobConfigurationForMoreJobs', (payload) => {
       this.viewJobConfiguration(payload.jobId, payload.jobTitle, payload.jobStatus, payload.job);
     })
