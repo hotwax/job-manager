@@ -176,7 +176,7 @@ export default defineComponent({
         "inputFields":{
           "enumTypeId": "INVENTORY_SYS_JOB",
         } as any,
-        "viewSize": process.env.VUE_APP_VIEW_SIZE
+        "viewSize": 30
       });
     }
   },

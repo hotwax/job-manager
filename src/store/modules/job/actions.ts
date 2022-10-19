@@ -772,7 +772,7 @@ const actions: ActionTree<JobState, RootState> = {
             'status': job?.statusId
           }
         })
-        commit(types.JOB_MORE_UPDATED, moreJobs);
+        commit(types.JOB_MORE_UPDATED, { jobs: moreJobs, total: moreJobs.length });
       } else {
         commit(types.JOB_MORE_UPDATED, { jobs: [], total: 0 });
       }

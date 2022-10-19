@@ -1,12 +1,14 @@
 <template>
-  <ion-card>
+  <ion-card v-if="jobs.length">
     <ion-card-header>
       <ion-card-title>{{ $t("More jobs") }}</ion-card-title>
     </ion-card-header>
-    <ion-item v-for="job in jobs" :key="job.jobId" @click="viewJobConfiguration(job)" detail button>
-      <ion-label class="ion-text-wrap">{{ job.jobName }}</ion-label>
-      <ion-label slot="end">{{ getTemporalExpression(job.enumTypeId) }}</ion-label>
-    </ion-item>
+    <ion-list>
+      <ion-item v-for="job in jobs" :key="job.jobId" @click="viewJobConfiguration(job)" detail button>
+        <ion-label class="ion-text-wrap">{{ job.jobName }}</ion-label>
+        <ion-label slot="end">{{ getTemporalExpression(job.enumTypeId) }}</ion-label>
+      </ion-item>
+    </ion-list>
   </ion-card>
 </template>
 
@@ -17,6 +19,7 @@ import {
   IonCardTitle,
   IonItem,
   IonLabel,
+  IonList
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
@@ -31,6 +34,7 @@ export default defineComponent({
     IonCardTitle,
     IonItem,
     IonLabel,
+    IonList
   },
   data() {
     return {
