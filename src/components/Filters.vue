@@ -16,7 +16,7 @@
               </p>
             </ion-label>
           </ion-item>
-          <ion-item button v-for="(filter, index) in statusFilters" :key="index" @click="handleFilterApply(filter, type='statusFilter')">
+          <ion-item button v-for="(filter, index) in statusFilters" :key="index" @click="handleFilterApply(filter, 'statusFilter')">
             <ion-icon slot="start" :ios="filter.iosIcon" :md="filter.mdIcon" />
             <ion-label>{{ $t(filter.name) }}</ion-label>
             <ion-checkbox slot="end" :checked="selectedStatusFilters.includes(filter.statusId)" />
@@ -31,7 +31,7 @@
               </p>
             </ion-label>
           </ion-item>
-          <ion-item button v-for="(filter, index) in categoryFilters" :key="index" @click="handleFilterApply(filter, type='categoryFilter')">
+          <ion-item button v-for="(filter, index) in categoryFilters" :key="index" @click="handleFilterApply(filter, 'categoryFilter')">
             <ion-icon slot="start" :ios="filter.iosIcon" :md="filter.mdIcon" />
             <ion-label>{{ $t(filter.name) }}</ion-label>
             <ion-checkbox slot="end" :checked="selectedCategoryFilters.includes(filter.enumTypeId)" />
