@@ -23,18 +23,20 @@
           </ion-item>
         </section>
 
-        <ion-item>
-          <ion-label class="ion-text-wrap">
-            <p>
-              {{ $t("Category") }}
-            </p>
-          </ion-label>
-        </ion-item>
-        <ion-item button v-for="(filter, index) in categoryFilters" :key="index" @click="handleFilterApply(filter, type='categoryFilter')">
-          <ion-icon slot="start" :ios="filter.iosIcon" :md="filter.mdIcon" />
-          <ion-label>{{ $t(filter.name) }}</ion-label>
-          <ion-checkbox slot="end" :checked="selectedCategoryFilters.includes(filter.enumTypeId)" />
-        </ion-item>
+        <section>
+            <ion-item>
+            <ion-label class="ion-text-wrap">
+              <p>
+                {{ $t("Category") }}
+              </p>
+            </ion-label>
+          </ion-item>
+          <ion-item button v-for="(filter, index) in categoryFilters" :key="index" @click="handleFilterApply(filter, type='categoryFilter')">
+            <ion-icon slot="start" :ios="filter.iosIcon" :md="filter.mdIcon" />
+            <ion-label>{{ $t(filter.name) }}</ion-label>
+            <ion-checkbox slot="end" :checked="selectedCategoryFilters.includes(filter.enumTypeId)" />
+          </ion-item>
+        </section>
 
         <section v-if="getPinnedJobs.length > 0">
           <ion-item>
@@ -44,7 +46,7 @@
               </p>
             </ion-label>
           </ion-item>
-          <ion-item button v-for="(job, index) in getPinnedJobs" :key="index" @click="handleFilterApply(job, type='pinnedFilter')">
+          <ion-item button v-for="(job, index) in getPinnedJobs" :key="index" @click="handleFilterApply(job, 'pinnedFilter')">
             <ion-label>{{ getEnumName(job) }}</ion-label>
             <ion-checkbox slot="end" :checked="selectedPinnedJobs.includes(job)" />
           </ion-item>
@@ -172,7 +174,6 @@ export default defineComponent({
   },
   data() {
     return {
-      type: '',
       selectedStatusFilters: [] as Array<string>,
       selectedCategoryFilters: [] as Array<string>,
     }
