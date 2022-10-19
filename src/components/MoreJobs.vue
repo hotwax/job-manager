@@ -3,7 +3,7 @@
     <ion-card-header>
       <ion-card-title>{{ $t("More jobs") }}</ion-card-title>
     </ion-card-header>
-    <ion-item v-for="job in moreJobs" :key="job.jobId" @click="viewJobConfiguration(job)" detail button>
+    <ion-item v-for="job in jobs" :key="job.jobId" @click="viewJobConfiguration(job)" detail button>
       <ion-label class="ion-text-wrap">{{ job.jobName }}</ion-label>
       <ion-label slot="end">{{ getTemporalExpression(job.enumTypeId) }}</ion-label>
     </ion-item>
@@ -17,7 +17,6 @@ import {
   IonCardTitle,
   IonItem,
   IonLabel,
-  isPlatform,
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
@@ -35,15 +34,10 @@ export default defineComponent({
   },
   data() {
     return {
-      jobEnums: JSON.parse(process.env?.VUE_APP_INV_JOB_ENUMS as string) as any,
       title: '',
-      currentJobStatus: '',
-      freqType: '',
-      isJobDetailAnimationCompleted: false,
-      isDesktop: isPlatform('desktop')
     }
   },
-  props: ["moreJobs"],
+  props: ["jobs", "jobEnums"],
   computed: {
     ...mapGetters({
       getJobStatus: 'job/getJobStatus',

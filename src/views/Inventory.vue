@@ -33,7 +33,7 @@
               </ion-label>
             </ion-item>
           </ion-card>
-          <MoreJobs :moreJobs="moreJobs" />
+          <MoreJobs :jobs="moreJobs" :jobEnums="jobEnums" />
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
