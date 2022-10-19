@@ -199,7 +199,7 @@ export default defineComponent({
       ? filterArray.splice(filterArray.indexOf(filterProperty), 1) 
       : filterArray.push(filterProperty);
     },
-    handleFilterApply(filter: any, type: any) {
+    handleFilterApply(filter: any, type: string) {
       if(type === 'pinnedFilter') {
         this.handleFilterChange(this.selectedPinnedJobs, filter);
       }
