@@ -479,7 +479,8 @@ export default defineComponent({
       await this.store.dispatch("job/fetchMoreJobs", {
         "inputFields":{
           "enumTypeId": "ORDER_SYS_JOB",
-        } as any
+        } as any,
+        "viewSize": process.env.VUE_APP_VIEW_SIZE
       });
     }
   },

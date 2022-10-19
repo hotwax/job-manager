@@ -759,7 +759,7 @@ const actions: ActionTree<JobState, RootState> = {
       } as any,
       "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runtimeDataId", "enumName", "shopId", "description", "enumTypeId" ],
       "noConditionFind": "Y",
-      "viewSize": process.env.VUE_APP_VIEW_SIZE,
+      "viewSize": payload.viewSize,
       "viewIndex": 0,
     }
 
