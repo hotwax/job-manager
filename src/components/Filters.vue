@@ -187,12 +187,7 @@ export default defineComponent({
     })
   },
   methods: {
-    handleSegmentChange() {
-      this.segmentSelected === 'pending' ? this.getFilteredPendingJobs() :
-      this.segmentSelected === 'running' ? this.getFilteredRunningJobs() :
-      this.getFilteredJobHistory();
-    },
-    handleFilterChange(filterArray: Array<string>, filterProperty: any) {
+    updatePinnedJobs(filterArray: Array<string>, filterProperty: any) {
       // check if the filter is being applied, 
       // if not - apply, if already there - remove.
       filterArray.includes(filterProperty) 
@@ -201,10 +196,12 @@ export default defineComponent({
     },
     handleFilterApply(filter: any, type: string) {
       if(type === 'pinnedFilter') {
-        this.handleFilterChange(this.selectedPinnedJobs, filter);
+        this.updatePinnedJobs(this.selectedPinnedJobs, filter);
       }
       this.store.dispatch('job/setPipelineFilters', { status: this.selectedStatusFilters, category: this.selectedCategoryFilters, type, filter });
-      this.handleSegmentChange();
+      this.segmentSelected === 'pending' ? this.getFilteredPendingJobs() :
+      this.segmentSelected === 'running' ? this.getFilteredRunningJobs() :
+      this.getFilteredJobHistory();
     },
     async getFilteredPendingJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
       await this.store.dispatch('job/fetchPendingJobs', { eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, enumTypeId: this.selectedCategoryFilters, systemJobEnumId: this.selectedPinnedJobs, statusId: this.selectedStatusFilters });
@@ -216,12 +213,5 @@ export default defineComponent({
       await this.store.dispatch('job/fetchJobHistory', { eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, enumTypeId: this.selectedCategoryFilters, systemJobEnumId: this.selectedPinnedJobs, statusId: this.selectedStatusFilters });
     },
   },
-  watch: {
-    segmentSelected(val) {
-      if (val) {
-        this.handleSegmentChange();
-      }
-    }
-  }
 });
 </script>

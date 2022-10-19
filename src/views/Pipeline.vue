@@ -16,7 +16,7 @@
       <div>
         <ion-searchbar :placeholder="$t('Search jobs')" @ionClear="queryString = ''; segmentSelected === 'pending' ? getPendingJobs() : ( segmentSelected === 'running' ? getRunningJobs() : getJobHistory())" v-model="queryString" @keyup.enter="queryString = $event.target.value; segmentSelected === 'pending' ? getPendingJobs() : ( segmentSelected === 'running' ? getRunningJobs() : getJobHistory())" />
 
-        <ion-segment v-model="segmentSelected">
+        <ion-segment v-model="segmentSelected" @ionChange="segmentChanged">
           <ion-segment-button value="pending">
             <ion-label>{{ $t("Pending") }}</ion-label>
           </ion-segment-button>
@@ -470,7 +470,12 @@ export default defineComponent({
         });
       }
     },
-
+    segmentChanged (e: CustomEvent) {
+      this.segmentSelected = e.detail.value
+      this.segmentSelected === 'pending' ? this.getPendingJobs():
+      this.segmentSelected === 'running' ? this.getRunningJobs():
+      this.getJobHistory();
+    },
     async skipJob (job: any) {
       const alert = await alertController
         .create({
