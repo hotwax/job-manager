@@ -784,11 +784,19 @@ const actions: ActionTree<JobState, RootState> = {
         const morePendingJobs = moreJobs.filter((job: any) => job.statusId === "SERVICE_PENDING")
         const moreDraftJobs = moreJobs.filter((job: any) => job.statusId === "SERVICE_DRAFT")
 
-        commit(types.JOB_MORE_PENDING_UPDATED, { jobs: morePendingJobs, total: morePendingJobs.length });
-        commit(types.JOB_MORE_DRAFT_UPDATED, { jobs: moreDraftJobs, total: moreDraftJobs.length });
+        commit(types.JOB_MORE_UPDATED, {
+          pendingJobs: morePendingJobs,
+          pendingTotal: morePendingJobs.length,
+          draftJobs: moreDraftJobs,
+          draftTotal: moreDraftJobs.length,
+        });
       } else {
-        commit(types.JOB_MORE_PENDING_UPDATED, { jobs: [], total: 0 });
-        commit(types.JOB_MORE_DRAFT_UPDATED, { jobs: [], total: 0 });
+        commit(types.JOB_MORE_UPDATED, {
+          pendingJobs: [],
+          pendingTotal: 0,
+          draftJobs: [],
+          draftTotal: 0,
+        });
       }
     } catch (err) {
       console.error(err);
