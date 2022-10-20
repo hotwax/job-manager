@@ -58,7 +58,7 @@ const getters: GetterTree <JobState, RootState> = {
       return state.miscellaneous.list?.length > 0 && state.miscellaneous.list?.length < state.miscellaneous.total
     },
     getMoreJobs (state){
-      return state.more.list;
+      return state.more.morePending.list ? state.more.morePending.list : state.more.moreDraft.list;
     },
   }
 

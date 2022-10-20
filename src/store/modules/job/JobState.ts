@@ -17,8 +17,14 @@ export default interface JobState {
       total: 0
     }
     more: {
-      list: any,
-      total: 0
+      morePending: {
+        list: any,
+        total: 0
+      }
+      moreDraft: {
+        list: any,
+        total: 0
+      }
     }
     current: any;
     temporalExp: any;

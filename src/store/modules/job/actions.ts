@@ -755,12 +755,20 @@ const actions: ActionTree<JobState, RootState> = {
   async fetchMoreJobs({ commit }, payload) {
     const params = {
       "inputFields": {
-        ...payload.inputFields
+        "enumTypeId": payload.inputFields.enumTypeId,
+        "statusId": payload.inputFields.statusId,
+        "statusId_op": "in",
+        "systemJobEnumId_op": "not-empty",
+        "shopId_fld0_value": store.state.user.currentShopifyConfig?.shopId,
+        "shopId_fld0_grp": "1",
+        "shopId_fld0_op": "equals",
+        "shopId_fld1_grp": "2",
+        "shopId_fld1_op": "empty"
       } as any,
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runtimeDataId", "enumName", "shopId", "description", "enumTypeId" ],
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runtimeDataId", "enumName", "shopId", "description" ],
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
-      "viewIndex": 0,
+      "viewIndex": payload.viewIndex,
     }
 
     try {
@@ -772,9 +780,15 @@ const actions: ActionTree<JobState, RootState> = {
             'status': job?.statusId
           }
         })
-        commit(types.JOB_MORE_UPDATED, { jobs: moreJobs, total: moreJobs.length });
+
+        const morePendingJobs = moreJobs.filter((job: any) => job.statusId === "SERVICE_PENDING")
+        const moreDraftJobs = moreJobs.filter((job: any) => job.statusId === "SERVICE_DRAFT")
+
+        commit(types.JOB_MORE_PENDING_UPDATED, { jobs: morePendingJobs, total: morePendingJobs.length });
+        commit(types.JOB_MORE_DRAFT_UPDATED, { jobs: moreDraftJobs, total: moreDraftJobs.length });
       } else {
-        commit(types.JOB_MORE_UPDATED, { jobs: [], total: 0 });
+        commit(types.JOB_MORE_PENDING_UPDATED, { jobs: [], total: 0 });
+        commit(types.JOB_MORE_DRAFT_UPDATED, { jobs: [], total: 0 });
       }
     } catch (err) {
       console.error(err);

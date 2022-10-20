@@ -109,7 +109,7 @@
               <ion-label class="ion-text-wrap"><p>{{ $t("Re-allocation will re-calculate promise dates on all pre-orders based on upcoming inventory from purchase orders. Promise dates that were manually adjusted will be overriden.") }}</p></ion-label>
             </ion-item>
           </ion-card> 
-          <MoreJobs :jobs="moreJobs" :jobEnums="jobEnums" />
+          <MoreJobs v-if="moreJobs.length" :jobs="moreJobs" :jobEnums="jobEnums" />
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
@@ -329,7 +329,8 @@ export default defineComponent({
           "enumTypeId": "PRE_ORD_SYS_JOB",
           "statusId": ["SERVICE_DRAFT", "SERVICE_PENDING"]
         },
-        "viewSize": 30
+        "viewSize": 30,
+        "viewIndex": 0
       });
     }
   },

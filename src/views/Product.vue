@@ -40,7 +40,7 @@
               <ion-toggle slot="end" :checked="deleteProductsWebhook" @ionChange="updateWebhook($event['detail'].checked, 'DELETE_PRODUCTS')" color="secondary" />
             </ion-item>
           </ion-card>
-          <MoreJobs :jobs="moreJobs" :jobEnums="jobEnums" />
+          <MoreJobs v-if="moreJobs.length" :jobs="moreJobs" :jobEnums="jobEnums" />
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
@@ -190,7 +190,8 @@ export default defineComponent({
           "enumTypeId": "PRODUCT_SYS_JOB",
           "statusId": ["SERVICE_DRAFT", "SERVICE_PENDING"]
         },
-        "viewSize": 30
+        "viewSize": 30,
+        "viewIndex": 0
       });
     }
   },

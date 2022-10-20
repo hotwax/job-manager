@@ -1,5 +1,5 @@
 <template>
-  <ion-card v-if="jobs.length">
+  <ion-card>
     <ion-card-header>
       <ion-card-title>{{ $t("More jobs") }}</ion-card-title>
     </ion-card-header>

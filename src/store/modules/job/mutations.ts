@@ -45,9 +45,13 @@ const mutations: MutationTree <JobState> = {
         state.miscellaneous.list = payload.jobs;
         state.miscellaneous.total = payload.total;
     },
-    [types.JOB_MORE_UPDATED] (state, payload){
-        state.more.list = payload.jobs;
-        state.more.total = payload.total;
+    [types.JOB_MORE_PENDING_UPDATED] (state, payload){
+        state.more.morePending.list = payload.jobs;
+        state.more.morePending.total = payload.total;
+    },
+    [types.JOB_MORE_DRAFT_UPDATED] (state, payload){
+        state.more.moreDraft.list = payload.jobs;
+        state.more.moreDraft.total = payload.total;
     }
 }
 export default mutations;
