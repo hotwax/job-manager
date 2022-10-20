@@ -27,7 +27,7 @@ import emitter from '@/event-bus';
 import { useRouter } from 'vue-router'
 
 export default defineComponent({
-  name: 'Inventory',
+  name: 'MoreJobs',
   components: {
     IonCard,
     IonCardHeader,
