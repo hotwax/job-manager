@@ -7,6 +7,8 @@ import PreOrder from '@/views/PreOrder.vue'
 import Orders from '@/views/Orders.vue'
 import JobDetails from '@/views/JobDetails.vue'
 import InitialLoad from '@/views/InitialLoad.vue'
+import Miscellaneous from '@/views/Miscellaneous.vue'
+import BulkEditor from '@/views/BulkEditor.vue'
 import Login from '@/views/Login.vue'
 import Settings from "@/views/Settings.vue"
 import store from '@/store'
@@ -72,6 +74,18 @@ const routes: Array<RouteRecordRaw> = [
     path: '/initial-load',
     name: 'InitialLoad',
     component: InitialLoad,
+    beforeEnter: authGuard
+  },
+  {  
+    path: '/miscellaneous',
+    name: 'Miscellaneous',
+    component: Miscellaneous,
+    beforeEnter: authGuard
+  },
+  {  
+    path: '/bulk-editor',
+    name: 'BulkEditor',
+    component: BulkEditor,
     beforeEnter: authGuard
   },
   {

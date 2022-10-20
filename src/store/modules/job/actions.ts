@@ -6,6 +6,7 @@ import { hasError, showToast } from '@/utils'
 import { JobService } from '@/services/JobService'
 import { translate } from '@/i18n'
 import { DateTime } from 'luxon';
+import store from '@/store'
 
 const actions: ActionTree<JobState, RootState> = {
 
@@ -43,10 +44,14 @@ const actions: ActionTree<JobState, RootState> = {
       "inputFields": {
         "statusId": ["SERVICE_CANCELLED", "SERVICE_CRASHED", "SERVICE_FAILED", "SERVICE_FINISHED"],
         "statusId_op": "in",
-        "systemJobEnumId_op": "not-empty"
+        "systemJobEnumId_op": "not-empty",
+        "shopId_fld0_value": store.state.user.currentShopifyConfig?.shopId,
+        "shopId_fld0_grp": "1",
+        "shopId_fld0_op": "equals",
+        "shopId_fld1_grp": "2",
+        "shopId_fld1_op": "empty"
       } as any,
       "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId", "cancelDateTime", "finishDateTime", "startDateTime" ],
-      "entityName": "JobSandbox",
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
@@ -82,7 +87,7 @@ const actions: ActionTree<JobState, RootState> = {
           const total = resp.data.count;
           let jobs = resp.data.docs;
           if(payload.viewIndex && payload.viewIndex > 0){
-            jobs = state.history.list.concat(resp.data.docs);
+            jobs = state.history.list.concat(jobs);
           }
           jobs.map((job: any) => {
             job['statusDesc'] = this.state.util.statusDesc[job.statusId];
@@ -113,15 +118,15 @@ const actions: ActionTree<JobState, RootState> = {
     const params = {
       "inputFields": {
         "systemJobEnumId_op": "not-empty",
-        "statusId_fld0_value": "SERVICE_RUNNING",
-        "statusId_fld0_op": "equals",
-        "statusId_fld0_grp": "1",
-        "statusId_fld1_value": "SERVICE_QUEUED",
-        "statusId_fld1_op": "equals",
-        "statusId_fld1_grp": "2",
+        "statusId": ["SERVICE_RUNNING", "SERVICE_QUEUED"],
+        "statusId_op": "in",
+        "shopId_fld0_value": store.state.user.currentShopifyConfig?.shopId,
+        "shopId_fld0_grp": "1",
+        "shopId_fld0_op": "equals",
+        "shopId_fld1_grp": "2",
+        "shopId_fld1_op": "empty"
       } as any,
       "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId" ],
-      "entityName": "JobSandbox",
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
@@ -157,7 +162,7 @@ const actions: ActionTree<JobState, RootState> = {
           const total = resp.data.count;
           let jobs = resp.data.docs;
           if(payload.viewIndex && payload.viewIndex > 0){
-            jobs = state.running.list.concat(resp.data.docs);
+            jobs = state.running.list.concat(jobs);
           }
           jobs.map((job: any) => {
             job['statusDesc'] = this.state.util.statusDesc[job.statusId];
@@ -187,10 +192,14 @@ const actions: ActionTree<JobState, RootState> = {
     const params = {
       "inputFields": {
         "statusId": "SERVICE_PENDING",
-        "systemJobEnumId_op": "not-empty"
+        "systemJobEnumId_op": "not-empty",
+        "shopId_fld0_value": store.state.user.currentShopifyConfig?.shopId,
+        "shopId_fld0_grp": "1",
+        "shopId_fld0_op": "equals",
+        "shopId_fld1_grp": "2",
+        "shopId_fld1_op": "empty",
       } as any,
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId" ],
-      "entityName": "JobSandbox",
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runtimeDataId", "shopId", "description" ],
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
@@ -229,7 +238,7 @@ const actions: ActionTree<JobState, RootState> = {
             }
           })
           if(payload.viewIndex && payload.viewIndex > 0){
-            jobs = state.pending.list.concat(resp.data.docs);
+            jobs = state.pending.list.concat(jobs);
           }
           commit(types.JOB_PENDING_UPDATED, { jobs, total });
           const tempExprList = [] as any;
@@ -250,6 +259,57 @@ const actions: ActionTree<JobState, RootState> = {
       console.error(err);
       showToast(translate("Something went wrong"));
     })
+  },
+  async fetchMiscellaneousJobs({ commit, dispatch, state }, payload){
+    const params = {
+      "inputFields": {
+        "enumTypeId": "MISC_SYS_JOB",
+        "statusId": ["SERVICE_PENDING", "SERVICE_DRAFT"],
+        "statusId_op": "in",
+        "systemJobEnumId_op": "not-empty",
+        "shopId_fld0_value": store.state.user.currentShopifyConfig?.shopId,
+        "shopId_fld0_grp": "1",
+        "shopId_fld0_op": "equals",
+        "shopId_fld1_grp": "2",
+        "shopId_fld1_op": "empty"
+      } as any,
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runtimeDataId", "enumName", "shopId", "description" ],
+      "noConditionFind": "Y",
+      "viewSize": payload.viewSize,
+      "viewIndex": payload.viewIndex,
+    }
+
+    try {
+      const resp = await JobService.fetchJobInformation(params)
+      if (resp.status === 200 && !hasError(resp) && resp.data.docs?.length > 0) {
+        const total = resp.data.count;
+        let jobs = resp.data.docs.map((job: any) => {
+          return {
+            ...job,
+            'status': job?.statusId
+          }
+        })
+        if(payload.viewIndex && payload.viewIndex > 0){
+          jobs = state.miscellaneous.list.concat(jobs);
+        }
+        commit(types.JOB_MISCELLANEOUS_UPDATED, { jobs, total });
+        const tempExprList = [] as any;
+        const enumIds = [] as any;
+        resp.data.docs.map((item: any) => {
+          enumIds.push(item.systemJobEnumId);
+          tempExprList.push(item.tempExprId);
+        })
+        const tempExpr = [...new Set(tempExprList)];
+        dispatch('fetchTemporalExpression', tempExpr);
+        dispatch('fetchJobDescription', enumIds);
+      } else {
+        commit(types.JOB_MISCELLANEOUS_UPDATED, { jobs: [], total: 0 });
+      }
+    } catch (err) {
+      commit(types.JOB_MISCELLANEOUS_UPDATED, { jobs: [], total: 0 });
+      console.error(err);
+      showToast(translate("Something went wrong"));
+    }
   },
   async fetchTemporalExpression({ state, commit }, tempExprIds){
     const tempIds = [] as any;
@@ -277,20 +337,23 @@ const actions: ActionTree<JobState, RootState> = {
   },
   
   async fetchJobs ({ state, commit, dispatch }, payload) {
-    const params = {
+    // We are fetching the draft and pending jobs separately as we could only have single OR condition in query
+    // Earlier we were having ORing on status only, but now we want to add condition for shopId as well
+    // Instead of complicating the query, we have made 2 separate call with status conditions and merged them
+
+
+    // Fetching the draft jobs first
+    const fetchJobRequests = [];
+    let params = {
       "inputFields": {
-        "statusId_fld0_value": "SERVICE_DRAFT",
-        "statusId_fld0_op": "equals",
-        "statusId_fld0_grp": "1",
-        "statusId_fld1_value": "SERVICE_PENDING",
-        "statusId_fld1_op": "equals",
-        "statusId_fld1_grp": "2",
-        "productStoreId_fld0_value": this.state.user.currentEComStore.productStoreId,
-        "productStoreId_fld0_op": "equals",
-        "productStoreId_fld0_grp": "2",
+        "statusId": "SERVICE_DRAFT",
+        "shopId_fld0_value": this.state.user.currentShopifyConfig?.shopId,
+        "shopId_fld0_grp": "1",
+        "shopId_fld0_op": "equals",
+        "shopId_fld1_grp": "2",
+        "shopId_fld1_op": "empty",
         ...payload.inputFields
       },
-      "entityName": "JobSandbox",
       "noConditionFind": "Y",
       "viewSize": (payload.inputFields?.systemJobEnumId?.length * 3)
     } as any
@@ -298,64 +361,81 @@ const actions: ActionTree<JobState, RootState> = {
     if (payload?.orderBy) {
       params['orderBy'] = payload.orderBy
     }
-    const resp = await JobService.fetchJobInformation(params)
+    fetchJobRequests.push(JobService.fetchJobInformation(params).catch((err) => {
+      return err;
+    }))
 
-    if (resp.status === 200 && !hasError(resp) && resp.data.docs) {
-      const cached = JSON.parse(JSON.stringify(state.cached));
+    // Deep cloning in order to avoid mutating the same reference causing side effects
+    params =  JSON.parse(JSON.stringify(params));
 
-      // added condition to store multiple pending jobs in the state for order batch jobs,
-      // getting job with status Service draft as well, as this information will be needed when scheduling
-      // a new batch
-      // TODO: this needs to be updated when we will be storing the draft and pending jobs separately
-      const batchJobEnums = JSON.parse(process.env?.VUE_APP_BATCH_JOB_ENUMS as string)
-      let batchJobEnumIds = Object.values(batchJobEnums)?.map((job: any) => job.id);
-      // If query is for single systemJobEnumId only update it 
-      if (typeof payload.inputFields.systemJobEnumId === "string" && batchJobEnumIds.includes(payload.inputFields.systemJobEnumId)) {
-        batchJobEnumIds = [ payload.inputFields.systemJobEnumId ];
-      } else if (typeof payload.inputFields.systemJobEnumId === "object") {
-        batchJobEnumIds = batchJobEnumIds.filter((batchJobEnumId: any) => payload.inputFields.systemJobEnumId.includes(batchJobEnumId));
-      }
-      batchJobEnumIds.map((batchBrokeringJobEnum: any) => {
-        cached[batchBrokeringJobEnum] = resp.data.docs.filter((job: any) => job.systemJobEnumId === batchBrokeringJobEnum).reduce((batchBrokeringJobs: any, job: any) => {
-          batchBrokeringJobs.push({
-            ...job,
-            id: job.jobId,
-            frequency: job.tempExprId,
-            enumId: job.systemJobEnumId,
-            status: job.statusId
-          })
-          return batchBrokeringJobs;
-        }, [])
-      })
-      
-      // added condition to store multiple pending jobs in the state for order batch jobs  
-      resp.data.docs.filter((job: any) => !batchJobEnumIds.includes(job.systemJobEnumId) && job.statusId === 'SERVICE_PENDING').reduce((cached: any, job: any) => {
-        cached[job.systemJobEnumId] = {
-          ...job,
-          id: job.jobId,
-          frequency: job.tempExprId,
-          enumId: job.systemJobEnumId,
-          status: job.statusId
-        }
-        return cached;
-      }, cached)  
+    // Fetching pending jobs
+    params.inputFields.statusId = "SERVICE_PENDING";
+    params.inputFields.productStoreId = this.state.user.currentEComStore.productStoreId;
+    fetchJobRequests.push(JobService.fetchJobInformation(params).catch((err) => {
+      return err;
+    }))
 
-      resp.data.docs.filter((job: any) => job.statusId === 'SERVICE_DRAFT').map((job: any) => {
-        return cached[job.systemJobEnumId] = cached[job.systemJobEnumId] ? cached[job.systemJobEnumId] : {
-          ...job,
-          id: job.jobId,
-          frequency: job.tempExprId,
-          enumId: job.systemJobEnumId,
-          status: job.statusId
-        }
-      });
+    const resp = await Promise.all(fetchJobRequests)
+    const responseJobs = resp.reduce((responseJobs: any, response: any) => {
+      response.status === 200 && !hasError(response) && response.data.docs && (responseJobs = [...responseJobs, ...response.data.docs]);
+      return responseJobs;
+    }, [])
 
-      // fetching temp expressions
-      const tempExpr = Object.values(cached).map((job: any) => job.tempExprId)
-      await dispatch('fetchTemporalExpression', tempExpr)
+    // TODO Fix Indentation
+    const cached = JSON.parse(JSON.stringify(state.cached));
 
-      commit(types.JOB_UPDATED_BULK, cached);
+    // added condition to store multiple pending jobs in the state for order batch jobs,
+    // getting job with status Service draft as well, as this information will be needed when scheduling
+    // a new batch
+    // TODO: this needs to be updated when we will be storing the draft and pending jobs separately
+    const batchJobEnums = JSON.parse(process.env?.VUE_APP_BATCH_JOB_ENUMS as string)
+    let batchJobEnumIds = Object.values(batchJobEnums)?.map((job: any) => job.id);
+    // If query is for single systemJobEnumId only update it 
+    if (typeof payload.inputFields.systemJobEnumId === "string" && batchJobEnumIds.includes(payload.inputFields.systemJobEnumId)) {
+      batchJobEnumIds = [ payload.inputFields.systemJobEnumId ];
+    } else if (typeof payload.inputFields.systemJobEnumId === "object") {
+      batchJobEnumIds = batchJobEnumIds.filter((batchJobEnumId: any) => payload.inputFields.systemJobEnumId.includes(batchJobEnumId));
     }
+    batchJobEnumIds.map((batchBrokeringJobEnum: any) => {
+      cached[batchBrokeringJobEnum] = responseJobs.filter((job: any) => job.systemJobEnumId === batchBrokeringJobEnum).reduce((batchBrokeringJobs: any, job: any) => {
+        batchBrokeringJobs.push({
+          ...job,
+          id: job.jobId,
+          frequency: job.tempExprId,
+          enumId: job.systemJobEnumId,
+          status: job.statusId
+        })
+        return batchBrokeringJobs;
+      }, [])
+    })
+    
+    // added condition to store multiple pending jobs in the state for order batch jobs  
+    responseJobs.filter((job: any) => !batchJobEnumIds.includes(job.systemJobEnumId) && job.statusId === 'SERVICE_PENDING').reduce((cached: any, job: any) => {
+      cached[job.systemJobEnumId] = {
+        ...job,
+        id: job.jobId,
+        frequency: job.tempExprId,
+        enumId: job.systemJobEnumId,
+        status: job.statusId
+      }
+      return cached;
+    }, cached)  
+
+    responseJobs.filter((job: any) => job.statusId === 'SERVICE_DRAFT').map((job: any) => {
+      return cached[job.systemJobEnumId] = cached[job.systemJobEnumId] ? cached[job.systemJobEnumId] : {
+        ...job,
+        id: job.jobId,
+        frequency: job.tempExprId,
+        enumId: job.systemJobEnumId,
+        status: job.statusId
+      }
+    });
+
+    // fetching temp expressions
+    const tempExpr = Object.values(cached).map((job: any) => job.tempExprId)
+    await dispatch('fetchTemporalExpression', tempExpr)
+
+    commit(types.JOB_UPDATED_BULK, cached);
     return resp;
   },
   async updateJob ({ commit, dispatch }, job) {
@@ -385,6 +465,9 @@ const actions: ActionTree<JobState, RootState> = {
         if(jobs.status === 200 && !hasError(jobs) && jobs.data?.docs.length) {
           jobs = jobs.data?.docs;
           const job = jobs.find((job: any) => job?.jobId === payload.jobId);
+          // We are using status field everywhere so whenever we fetch job again status field needs to be updated
+          // TODO Check why status field is used instead of statusId
+          job && (job.status = job.statusId);
           commit(types.JOB_CURRENT_UPDATED, job);
         }
         showToast(translate('Service updated successfully'))
@@ -406,24 +489,35 @@ const actions: ActionTree<JobState, RootState> = {
       'SERVICE_NAME': job.serviceName,
       'SERVICE_COUNT': '0',
       'SERVICE_TEMP_EXPR': job.jobStatus,
+      'SERVICE_RUN_AS_SYSTEM':'Y',
       'jobFields': {
         'productStoreId': this.state.user.currentEComStore.productStoreId,
         'systemJobEnumId': job.systemJobEnumId,
         'tempExprId': job.jobStatus, // Need to remove this as we are passing frequency in SERVICE_TEMP_EXPR, currently kept it for backward compatibility
         'maxRecurrenceCount': '-1',
         'parentJobId': job.parentJobId,
-        'runAsUser': 'system', // default system, but empty in run now
+        'runAsUser': 'system', //default system, but empty in run now.  TODO Need to remove this as we are using SERVICE_RUN_AS_SYSTEM, currently kept it for backward compatibility
         'recurrenceTimeZone': this.state.user.current.userTimeZone
       },
-      'shopifyConfigId': this.state.user.shopifyConfig,
       'statusId': "SERVICE_PENDING",
       'systemJobEnumId': job.systemJobEnumId
     } as any
+    
+    if(job?.runtimeData?.shopifyConfigId) {
+      const shopifyConfig = this.state.user.currentShopifyConfig
+      payload['shopifyConfigId'] = shopifyConfig?.shopifyConfigId
+      payload['jobFields']['shopId'] = shopifyConfig?.shopId
+    }
 
     // checking if the runtimeData has productStoreId, and if present then adding it on root level
     job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.state.user.currentEComStore.productStoreId)
     job?.priority && (payload['SERVICE_PRIORITY'] = job.priority.toString())
     job?.runTime && (payload['SERVICE_TIME'] = job.runTime.toString())
+
+    // assigning '' (empty string) to all the runtimeData properties whose value is "null"
+    job.runtimeData && Object.keys(job.runtimeData).map((key: any) => {
+      if (job.runtimeData[key] === 'null' ) job.runtimeData[key] = ''
+    })
 
     try {
       resp = await JobService.scheduleJob({ ...job.runtimeData, ...payload });
@@ -460,7 +554,7 @@ const actions: ActionTree<JobState, RootState> = {
     commit(types.JOB_UPDATED_BULK, {})
   },
 
-  async skipJob({ commit, dispatch, getters }, job) {
+  async skipJob({ state, commit, dispatch, getters }, job) {
     let skipTime = {};
     const integer1 = getters['getTemporalExpr'](job.tempExprId)?.integer1;
     const integer2 = getters['getTemporalExpr'](job.tempExprId)?.integer2
@@ -485,21 +579,9 @@ const actions: ActionTree<JobState, RootState> = {
     } as any
 
     const resp = await JobService.updateJob(payload)
-    if (resp.status === 200 && !hasError(resp) && resp.data?.successMessage) {
-      let jobs = await dispatch('fetchJobs', {
-        inputFields: {
-          'systemJobEnumId': job.systemJobEnumId,
-          'systemJobEnumId_op': 'equals'
-        }
-      })
-      if (jobs.status === 200 && !hasError(jobs) && jobs.data?.docs.length) {
-        jobs = jobs.data?.docs;
-        const currentJob = jobs.find((currentJob: any) => currentJob?.jobId === job?.jobId);
-        commit(types.JOB_CURRENT_UPDATED, currentJob);
-      }
-      commit(types.JOB_UPDATED, { job });
-    }
-
+    // Fetch and update current only when there is object in current
+    // Skip job can be performed from pipeline page too causing side effects
+    if (state.current && Object.keys(state.current).length) {
     let jobs = await dispatch('fetchJobs', {
       inputFields: {
         'systemJobEnumId': payload.systemJobEnumId,
@@ -511,6 +593,10 @@ const actions: ActionTree<JobState, RootState> = {
       const currentJob = jobs.find((currentJob: any) => currentJob?.jobId === job?.jobId);
       commit(types.JOB_CURRENT_UPDATED, currentJob);
     }
+    }
+    // This is done for batch jobs
+    commit(types.JOB_UPDATED, { job });
+
     return resp;
   },
 
@@ -523,22 +609,27 @@ const actions: ActionTree<JobState, RootState> = {
       'SERVICE_COUNT': '0',
       'SERVICE_TEMP_EXPR': job.jobStatus,
       'jobFields': {
-        'productStoreId': this.state.user.currentEComStore.productStoreId,
+        'productStoreId': job.status === "SERVICE_PENDING" ? job.productStoreId : this.state.user.currentEComStore.productStoreId,
         'systemJobEnumId': job.systemJobEnumId,
         'tempExprId': job.jobStatus, // Need to remove this as we are passing frequency in SERVICE_TEMP_EXPR, currently kept it for backward compatibility
         'parentJobId': job.parentJobId,
-        'recurrenceTimeZone': this.state.user.current.userTimeZone
+        'recurrenceTimeZone': this.state.user.current.userTimeZone,
+        'shopId': job.runtimeData?.shopifyConfigId && job.status === "SERVICE_PENDING" ? job.shopId : this.state.user.currentShopifyConfig.shopId,
       },
-      'shopifyConfigId': this.state.user.shopifyConfig,
+      'shopifyConfigId': job.runtimeData?.shopifyConfigId && job.status === "SERVICE_PENDING" ? job.runtimeData?.shopifyConfigId : this.state.user.currentShopifyConfig.shopifyConfigId,
       'statusId': "SERVICE_PENDING",
       'systemJobEnumId': job.systemJobEnumId
     } as any
-
     // checking if the runtimeData has productStoreId, and if present then adding it on root level
-    job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.state.user.currentEComStore.productStoreId)
+    job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = job.status === "SERVICE_PENDING" ? job.productStoreId : this.state.user.currentEComStore.productStoreId)
     job?.priority && (payload['SERVICE_PRIORITY'] = job.priority.toString())
     job?.sinceId && (payload['sinceId'] = job.sinceId)
-    job?.runTime && (payload['SERVICE_TIME'] = job.runTime.toString())
+    job?.runTime && job.status !== "SERVICE_PENDING" && (payload['SERVICE_TIME'] = job.runTime.toString())
+
+    // assigning '' (empty string) to all the runtimeData properties whose value is "null"
+    job.runtimeData && Object.keys(job.runtimeData).map((key: any) => {
+      if (job.runtimeData[key] === 'null' ) job.runtimeData[key] = ''
+    })
 
     try {
       resp = await JobService.scheduleJob({ ...job.runtimeData, ...payload });
@@ -590,6 +681,9 @@ const actions: ActionTree<JobState, RootState> = {
           commit(types.JOB_UPDATED, { cachedJob });
         }
 
+        // Fetch and update current only when there is object in current
+        // Cancel job can be performed from pipeline page too causing side effects
+        if (state.current && Object.keys(state.current).length) {
         let jobs = await dispatch('fetchJobs', {
           inputFields: {
             'systemJobEnumId': job.systemJobEnumId,
@@ -600,6 +694,7 @@ const actions: ActionTree<JobState, RootState> = {
           jobs = jobs.data?.docs;
           const currentJob = jobs.find((currentJob: any) => currentJob?.systemJobEnumId === job?.systemJobEnumId);
           commit(types.JOB_CURRENT_UPDATED, currentJob);
+        }
         }
         showToast(translate('Service updated successfully'))
       } else {
@@ -635,8 +730,7 @@ const actions: ActionTree<JobState, RootState> = {
           "jobId": payload?.jobId
         } as any,
         "viewSize": 1,
-        "fieldList": ["systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId"],
-        "entityName": "JobSandbox",
+        "fieldList": ["systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "description"],
         "noConditionFind": "Y"
       }
       resp = await JobService.fetchJobInformation(params);

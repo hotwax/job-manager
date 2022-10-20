@@ -19,10 +19,37 @@ const actions: ActionTree<UserState, RootState> = {
       const resp = await UserService.login(username, password)
       if (resp.status === 200 && resp.data) {
         if (resp.data.token) {
+          const permissionId = process.env.VUE_APP_PERMISSION_ID;
+          if (permissionId) {
+            const checkPermissionResponse = await UserService.checkPermission({
+              data: {
+                permissionId
+              },
+              headers: {
+                Authorization:  'Bearer ' + resp.data.token,
+                'Content-Type': 'application/json'
+              }
+            });
+
+            if (checkPermissionResponse.status === 200 && !hasError(checkPermissionResponse) && checkPermissionResponse.data && checkPermissionResponse.data.hasPermission) {
+              commit(types.USER_TOKEN_CHANGED, { newToken: resp.data.token })
+              dispatch('getProfile')
+              if (resp.data._EVENT_MESSAGE_ && resp.data._EVENT_MESSAGE_.startsWith("Alert:")) {
+              // TODO Internationalise text
+                showToast(translate(resp.data._EVENT_MESSAGE_));
+              }
+              return resp.data;
+            } else {
+              const permissionError = 'You do not have permission to access the app.';
+              showToast(translate(permissionError));
+              console.error("error", permissionError);
+              return Promise.reject(new Error(permissionError));
+            }
+          } else {
             commit(types.USER_TOKEN_CHANGED, { newToken: resp.data.token })
             await dispatch('getProfile')
-            dispatch('getShopifyConfig')
             return resp.data;
+          }
         } else if (hasError(resp)) {
           showToast(translate('Sorry, your username or password is incorrect. Please try again.'));
           console.error("error", resp.data._ERROR_MESSAGE_);
@@ -68,7 +95,10 @@ const actions: ActionTree<UserState, RootState> = {
       }
       const userProfile = resp.data;
 
-      await dispatch('getEComStores', payload).then((stores: any) => {
+      const storeResp = await UserService.getEComStores(payload);
+      if(storeResp.status === 200 && !hasError(storeResp) && storeResp.data.docs?.length > 0) {
+        const stores = storeResp.data.docs;
+
         userProfile.stores = [
           ...(stores ? stores : []),
           {
@@ -76,24 +106,48 @@ const actions: ActionTree<UserState, RootState> = {
             storeName: "None"
           }
         ]
-      })
+      }
+      const currentProductStoreId = resp.data?.stores[0].productStoreId;
+      if (currentProductStoreId) {
+        dispatch('getShopifyConfig', currentProductStoreId);
+      }
 
       this.dispatch('util/getServiceStatusDesc')
       if (userProfile.userTimeZone) {
         Settings.defaultZone = userProfile.userTimeZone;
       }
       defineAbilityForUser(userProfile)
-      commit(types.USER_CURRENT_ECOM_STORE_UPDATED, userProfile?.stores[0]);
-      commit(types.USER_INFO_UPDATED, userProfile);
+      const stores = userProfile.stores
+      const userPrefResponse =  await UserService.getUserPreference({
+        'userPrefTypeId': 'SELECTED_BRAND'
+      });
+      if(userPrefResponse.status === 200 && !hasError(userPrefResponse)) {
+        const userPrefStore = stores.find((store: any) => store.productStoreId === userPrefResponse.data.userPrefValue)
+        commit(types.USER_CURRENT_ECOM_STORE_UPDATED, userPrefStore ? userPrefStore : stores ? stores[0]: {});
+        commit(types.USER_INFO_UPDATED, userProfile);
+      } else {
+        commit(types.USER_CURRENT_ECOM_STORE_UPDATED, stores ? stores[0]: {});
+        commit(types.USER_INFO_UPDATED, userProfile);
+      }
     }
   },
 
   /**
    * update current eComStore information
    */
-  async setEcomStore({ commit, dispatch }, payload) {
+  async setEcomStore({ state, commit, dispatch }, payload) {
     dispatch('job/clearJobState', null, { root: true });
-    commit(types.USER_CURRENT_ECOM_STORE_UPDATED, payload.eComStore);
+    let productStore = payload.productStore;
+    if(!productStore) {
+      productStore = this.state.user.current.stores.find((store: any) => store.productStoreId === payload.productStoreId);
+    }
+    
+    commit(types.USER_CURRENT_ECOM_STORE_UPDATED, productStore);
+    dispatch('getShopifyConfig',  productStore.productStoreId);
+    await UserService.setUserPreference({
+      'userPrefTypeId': 'SELECTED_BRAND',
+      'userPrefValue': productStore.productStoreId
+    });
   },
   /**
    * Update user timeZone
@@ -116,34 +170,58 @@ const actions: ActionTree<UserState, RootState> = {
     commit(types.USER_INSTANCE_URL_UPDATED, payload)
   },
 
-  async getShopifyConfig({ commit }) {
-    const resp = await UserService.getShopifyConfig({
-      "entityName": "ShopifyConfig",
-      "noConditionFind": "Y"
-    })
-
-    if (resp.status === 200 && !hasError(resp)) {
-      commit(types.USER_SHOPIFY_CONFIG_UPDATED, resp.data.docs?.length > 0 ? resp.data.docs[0].shopifyConfigId : {});
-    }
-  },
-
-  async getEComStores(_context, payload) {
-    let resp;
-
-    try{
-      resp = await UserService.getEComStores(payload);
-      if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
-        const stores = resp.data.docs
-
-        return stores
+  async getShopifyConfig({ commit }, productStoreId) {
+    if (productStoreId) { 
+      let resp;
+      const payload = {
+        "inputFields": {
+          "productStoreId": productStoreId,
+        },
+        "entityName": "ShopifyShopAndConfig",
+        "noConditionFind": "Y",
+        "fieldList": ["shopifyConfigId", "name", "shopId"]
       }
-    } catch(err) {
-      console.error(err)
+      try {
+        resp = await UserService.getShopifyConfig(payload);
+        if (resp.status === 200 && !hasError(resp) && resp.data?.docs?.length > 0) {
+          commit(types.USER_SHOPIFY_CONFIGS_UPDATED, resp.data.docs);
+          commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, resp.data.docs[0]);
+        } else {
+          // TODO need to remove api call for fetching fetching shopifyConfig, currently kept it for backward compatibility.
+          payload["entityName"] = 'ShopifyConfig';
+          payload["fieldList"] = ["shopifyConfigId", "shopifyConfigName", 'shopId']
+          resp = await UserService.getShopifyConfig(payload);
+          if (resp.status === 200 && !hasError(resp) && resp.data?.docs?.length > 0) {
+            commit(types.USER_SHOPIFY_CONFIGS_UPDATED, resp.data.docs);
+            commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, resp.data.docs[0]);
+          } else {
+            console.error(resp);
+            commit(types.USER_SHOPIFY_CONFIGS_UPDATED, []);
+            commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, {});
+          }
+        }
+      } catch (err) {
+        console.error(err);
+        commit(types.USER_SHOPIFY_CONFIGS_UPDATED, []);
+        commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, {});
+      }
+    } else {
+      commit(types.USER_SHOPIFY_CONFIGS_UPDATED, []);
+      commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, {});
     }
   },
 
-  async setEComStore({ commit }, payload) {
-    commit(types.USER_CURRENT_ECOM_STORE_UPDATED, payload.store);
+  /**
+   * update current shopify config id
+   */
+  async setCurrentShopifyConfig({ commit, dispatch, state }, payload) {
+    let shopifyConfig = payload.shopifyConfig;
+    if(!shopifyConfig) {
+      shopifyConfig = state.shopifyConfigs.find((configs: any) => configs.shopifyConfigId === payload.shopifyConfigId)
+    }
+
+    commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, shopifyConfig ? shopifyConfig : {});
+    dispatch('job/clearJobState', null, { root: true });
   },
 
   /**

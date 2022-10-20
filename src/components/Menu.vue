@@ -10,6 +10,7 @@
       <ion-list>
         <ion-menu-toggle auto-hide="false" v-for="(page, index) in appPages" :key="index">
           <ion-item
+            v-if="page.url"
             button
             @click="selectedIndex = index"
             router-direction="root"
@@ -19,6 +20,9 @@
             <ion-icon slot="start" :ios="page.iosIcon" :md="page.mdIcon" />
             <ion-label>{{ $t(page.title) }}</ion-label>
           </ion-item>
+          <ion-item-divider color="light" v-else>
+            <ion-label color="medium">{{ $t(page.title) }}</ion-label>
+          </ion-item-divider> 
         </ion-menu-toggle>
       </ion-list>
     </ion-content>
@@ -28,6 +32,7 @@
           <ion-label class="ion-text-wrap">
             <p class="overline">{{ instanceUrl }}</p>
             {{ eComStore.storeName }}
+            <p>{{ currentShopifyConfig.name ? currentShopifyConfig.name : currentShopifyConfig.shopifyConfigName }}</p>
           </ion-label>
           <ion-note slot="end">{{ userProfile?.userTimeZone }}</ion-note>
         </ion-item>
@@ -43,6 +48,7 @@ import {
   IonHeader,
   IonIcon,
   IonItem,
+  IonItemDivider,
   IonLabel,
   IonList,
   IonMenu,
@@ -53,7 +59,7 @@ import {
 } from "@ionic/vue";
 import { defineComponent, ref } from "vue";
 import { mapGetters } from "vuex";
-import { pulseOutline, calendarNumberOutline, ticketOutline, albumsOutline, shirtOutline, settings, iceCreamOutline } from "ionicons/icons";
+import { pulseOutline, calendarNumberOutline, terminalOutline, ticketOutline, albumsOutline, shirtOutline, settings, iceCreamOutline, libraryOutline } from "ionicons/icons";
 import { useStore } from "@/store";
 export default defineComponent({
   name: "Menu",
@@ -63,6 +69,7 @@ export default defineComponent({
     IonHeader,
     IonIcon,
     IonItem,
+    IonItemDivider,
     IonLabel,
     IonList,
     IonMenu,
@@ -83,7 +90,8 @@ export default defineComponent({
       currentFacility: 'user/getCurrentFacility',
       eComStore: 'user/getCurrentEComStore',
       instanceUrl: 'user/getInstanceUrl',
-      userProfile: 'user/getUserProfile'
+      userProfile: 'user/getUserProfile',
+      currentShopifyConfig: 'user/getCurrentShopifyConfig'
     })
   },
   watch:{
@@ -141,6 +149,23 @@ export default defineComponent({
         dependsOnBaseURL: false
       },
       {
+        title: "Miscellaneous",
+        url: "/miscellaneous",
+        iosIcon: libraryOutline,
+        mdIcon: libraryOutline,
+        dependsOnBaseURL: false
+      },
+      {
+        title: "Bulk editor"
+      },
+      {
+        title: "Schedule in bulk",
+        url: "/bulk-editor",
+        iosIcon: terminalOutline,
+        mdIcon: terminalOutline,
+        dependsOnBaseURL: false
+      },
+      {
         title: "Settings",
         url: "/settings",
         iosIcon: settings,
@@ -156,12 +181,14 @@ export default defineComponent({
       appPages,
       pulseOutline, 
       calendarNumberOutline, 
+      terminalOutline,
       ticketOutline, 
       albumsOutline, 
       shirtOutline,
       settings,
       iceCreamOutline,
-      store
+      store,
+      libraryOutline
     };
   },
 });

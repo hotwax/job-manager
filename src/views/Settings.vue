@@ -11,9 +11,17 @@
       <!-- Select eCom store -->
       <ion-item>
         <ion-icon :icon="globeOutline" slot="start" />
-        <ion-label>{{$t("Shop")}}</ion-label>
+        <ion-label>{{$t("eCom Store")}}</ion-label>
         <ion-select interface="popover" :value="currentEComStore.productStoreId" @ionChange="setEComStore($event)">
           <ion-select-option v-for="store in (userProfile ? userProfile.stores : [])" :key="store.productStoreId" :value="store.productStoreId" >{{ store.storeName }}</ion-select-option>
+        </ion-select>
+      </ion-item>
+      <!-- Select shopify config -->
+      <ion-item>
+        <ion-icon :icon="basketOutline" slot="start" />
+        <ion-label>{{ $t("Shopify Config") }}</ion-label>
+        <ion-select interface="popover" :value="currentShopifyConfig?.shopifyConfigId" @ionChange="setShopifyConfig($event)">
+          <ion-select-option v-for="shopifyConfig in shopifyConfigs" :key="shopifyConfig.shopifyConfigId" :value="shopifyConfig.shopifyConfigId" >{{ shopifyConfig.name ? shopifyConfig.name : shopifyConfig.shopifyConfigName }}</ion-select-option>
         </ion-select>
       </ion-item>
       <!-- OMS information -->
@@ -42,7 +50,7 @@
 <script lang="ts">
 import { IonButton, IonContent, IonHeader,IonIcon, IonItem, IonLabel, IonMenuButton, IonPage, IonSelect, IonSelectOption, IonTitle, IonToolbar, modalController } from '@ionic/vue';
 import { defineComponent } from 'vue';
-import { codeWorkingOutline, ellipsisVertical, globeOutline, personCircleOutline, storefrontOutline, timeOutline} from 'ionicons/icons'
+import { codeWorkingOutline, ellipsisVertical, globeOutline, personCircleOutline, storefrontOutline, timeOutline, basketOutline} from 'ionicons/icons'
 import { mapGetters, useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import TimeZoneModal from '@/views/TimezoneModal.vue';
@@ -72,16 +80,19 @@ export default defineComponent({
     ...mapGetters({
       userProfile: 'user/getUserProfile',
       currentEComStore: 'user/getCurrentEComStore',
-      instanceUrl: 'user/getInstanceUrl'
+      instanceUrl: 'user/getInstanceUrl',
+      shopifyConfigs: 'user/getShopifyConfigs',
+      currentShopifyConfig: 'user/getCurrentShopifyConfig'
     })
   },
   methods: {
-    setEComStore(store: any) {
+    setEComStore(event: any) {
       if(this.userProfile) {
-        this.store.dispatch('user/setEcomStore', {
-          'eComStore': this.userProfile.stores.find((str: any) => str.productStoreId == store['detail'].value)
-        })
+        this.store.dispatch('user/setEcomStore', { 'productStoreId': event.detail.value })
       }
+    },
+    setShopifyConfig(event: any){
+      this.store.dispatch('user/setCurrentShopifyConfig', { 'shopifyConfigId': event.detail.value });
     },
     async changeTimeZone() {
       const timeZoneModal = await modalController.create({
@@ -107,7 +118,8 @@ export default defineComponent({
       storefrontOutline,
       store,
       timeOutline,
-      router
+      router,
+      basketOutline
     }
   }
 });

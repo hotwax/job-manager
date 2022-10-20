@@ -3,8 +3,8 @@ import api from '@/api'
 const fetchJobInformation = async (payload: any): Promise <any>  => {
   return api({
     url: "/findJobs",
-    method: "post",
-    data: payload
+    method: "get",
+    params: payload
   });
 }
 const fetchJobDescription = async (payload: any): Promise <any>  => {
@@ -39,11 +39,27 @@ const fetchTemporalExpression = async (payload: any): Promise <any>  => {
   });
 }
 
+const updateAutoCancelDays = async (payload: any): Promise <any> => {
+  return api({
+    url: "service/updateProductStore",
+    method: "post",
+    data: payload
+  });
+}
 
+const getAutoCancelDays = async (payload: any): Promise <any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  });
+}
 export const JobService = {
   fetchJobDescription,
   fetchJobInformation,
   fetchTemporalExpression,
   updateJob,
-  scheduleJob
+  scheduleJob,
+  updateAutoCancelDays,
+  getAutoCancelDays
 }

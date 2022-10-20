@@ -1,6 +1,6 @@
 {
   "name": "job-manager",
-  "version": "1.0.6",
+  "version": "1.0.11",
   "private": true,
   "description": "Job Manager App",
   "scripts": {
@@ -17,9 +17,9 @@
     "@capacitor/ios": "^2.4.7",
     "@casl/ability": "^5.4.4",
     "@casl/vue": "^2.1.2",
-    "@ionic/core": "^6.0.1",
-    "@ionic/vue": "^6.0.1",
-    "@ionic/vue-router": "^6.0.1",
+    "@ionic/core": "6.1.15",
+    "@ionic/vue": "6.1.15",
+    "@ionic/vue-router": "6.1.15",
     "@types/file-saver": "^2.0.4",
     "@types/papaparse": "^5.3.1",
     "axios": "^0.21.1",
@@ -29,6 +29,7 @@
     "http-status-codes": "^2.1.4",
     "luxon": "^2.3.0",
     "mitt": "^2.1.0",
+    "qs": "^6.10.3",
     "register-service-worker": "^1.7.1",
     "vue": "^3.2.26",
     "vue-i18n": "^9.0.0",
