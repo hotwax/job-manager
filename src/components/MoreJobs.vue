@@ -55,6 +55,7 @@ export default defineComponent({
   methods: {
     async viewJobConfiguration(job: any) {
       job.enumName = job.enumName || this.getEnumName(job.systemJobEnumId)
+      this.title = this.getEnumName(job.systemJobEnumId)
       emitter.emit('showJobConfigurationForMoreJobs', {jobId: job.jobId, jobTitle: this.title, jobStatus: job.status, job: job});
       return;
     },
