@@ -186,6 +186,9 @@ export default defineComponent({
       pinnedJobs: 'user/getPinnedJobs',
     })
   },
+  unmounted() {
+    Object.assign(this.store.state.job.pipelineFilters, { status: [], category: [] })
+  },
   methods: {
     updatePinnedJobs(filterArray: Array<string>, filterProperty: any) {
       // check if the filter is being applied, 
