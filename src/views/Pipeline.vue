@@ -370,7 +370,7 @@ export default defineComponent({
       isHistoryJobsScrollable: 'job/isHistoryJobsScrollable',
       getPinnedJobs: 'user/getPinnedJobs',
       currentJob: 'job/getCurrentJob',
-      getPipelineFilters: 'job/getPipelineFilters',
+      pipelineFilters: 'job/getPipelineFilters',
     })
   },
   methods : {
@@ -498,13 +498,13 @@ export default defineComponent({
       return alert.present();
     },
     async getPendingJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
-      await this.store.dispatch('job/fetchPendingJobs', { eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, systemJobEnumId: this.selectedPinnedJobs, enumTypeId: this.getPipelineFilters.category, statusId: this.getPipelineFilters.status });
+      await this.store.dispatch('job/fetchPendingJobs', { eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, systemJobEnumId: this.selectedPinnedJobs, enumTypeId: this.pipelineFilters.category, statusId: this.pipelineFilters.status });
     },
     async getRunningJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
-      await this.store.dispatch('job/fetchRunningJobs', { eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, systemJobEnumId: this.selectedPinnedJobs, enumTypeId: this.getPipelineFilters.category, statusId: this.getPipelineFilters.status });
+      await this.store.dispatch('job/fetchRunningJobs', { eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, systemJobEnumId: this.selectedPinnedJobs, enumTypeId: this.pipelineFilters.category, statusId: this.pipelineFilters.status });
     },
     async getJobHistory(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
-      await this.store.dispatch('job/fetchJobHistory', { eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, systemJobEnumId: this.selectedPinnedJobs, enumTypeId: this.getPipelineFilters.category, statusId: this.getPipelineFilters.status});
+      await this.store.dispatch('job/fetchJobHistory', { eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, systemJobEnumId: this.selectedPinnedJobs, enumTypeId: this.pipelineFilters.category, statusId: this.pipelineFilters.status});
     },
     async openJobActions(job: any, ev: Event) {
       const popover = await popoverController.create({

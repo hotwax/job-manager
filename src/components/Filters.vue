@@ -39,7 +39,7 @@
           </ion-item>
         </section>
 
-        <section v-if="getPinnedJobs.length > 0">
+        <section v-if="pinnedJobs.length > 0">
           <ion-item>
             <ion-label class="ion-text-wrap">
               <p>
@@ -47,7 +47,7 @@
               </p>
             </ion-label>
           </ion-item>
-          <ion-item button v-for="(job, index) in getPinnedJobs" :key="index" @click="handleFilterApply(job, 'pinnedFilter')">
+          <ion-item button v-for="(job, index) in pinnedJobs" :key="index" @click="handleFilterApply(job, 'pinnedFilter')">
             <ion-label>{{ getEnumName(job) }}</ion-label>
             <ion-checkbox slot="end" :checked="selectedPinnedJobs.includes(job)" />
           </ion-item>
@@ -75,7 +75,7 @@ import { albumsOutline, banOutline, calendarNumberOutline, checkmarkDoneOutline,
 import { mapGetters, useStore } from 'vuex'
 
 export default defineComponent({
-  name: "Menu",
+  name: "Filters",
   components: {
     IonCheckbox,
     IonContent,
@@ -182,8 +182,8 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       getEnumName: 'job/getEnumName',
-      getCurrentEComStore: 'user/getCurrentEComStore',
-      getPinnedJobs: 'user/getPinnedJobs',
+      currentEComStore: 'user/getCurrentEComStore',
+      pinnedJobs: 'user/getPinnedJobs',
     })
   },
   methods: {
@@ -204,13 +204,13 @@ export default defineComponent({
       this.getFilteredJobHistory();
     },
     async getFilteredPendingJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
-      await this.store.dispatch('job/fetchPendingJobs', { eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, enumTypeId: this.selectedCategoryFilters, systemJobEnumId: this.selectedPinnedJobs, statusId: this.selectedStatusFilters });
+      await this.store.dispatch('job/fetchPendingJobs', { eComStoreId: this.currentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, enumTypeId: this.selectedCategoryFilters, systemJobEnumId: this.selectedPinnedJobs, statusId: this.selectedStatusFilters });
     },
     async getFilteredRunningJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
-      await this.store.dispatch('job/fetchRunningJobs', { eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, enumTypeId: this.selectedCategoryFilters, systemJobEnumId: this.selectedPinnedJobs, statusId: this.selectedStatusFilters });
+      await this.store.dispatch('job/fetchRunningJobs', { eComStoreId: this.currentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, enumTypeId: this.selectedCategoryFilters, systemJobEnumId: this.selectedPinnedJobs, statusId: this.selectedStatusFilters });
     },
     async getFilteredJobHistory(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
-      await this.store.dispatch('job/fetchJobHistory', { eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, enumTypeId: this.selectedCategoryFilters, systemJobEnumId: this.selectedPinnedJobs, statusId: this.selectedStatusFilters });
+      await this.store.dispatch('job/fetchJobHistory', { eComStoreId: this.currentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, enumTypeId: this.selectedCategoryFilters, systemJobEnumId: this.selectedPinnedJobs, statusId: this.selectedStatusFilters });
     },
   },
 });

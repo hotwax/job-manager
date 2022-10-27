@@ -781,7 +781,7 @@ const actions: ActionTree<JobState, RootState> = {
       ? payload.category.splice(payload.category.indexOf(payload.filter.enumTypeId), 1) 
       : payload.category.push(payload.filter.enumTypeId);
     } 
-    commit(types.JOB_PIPELINE_FILTERS_UPDATED,  payload);
+    commit(types.JOB_PIPELINE_FILTERS_UPDATED, payload);
   }
 }
 export default actions;
