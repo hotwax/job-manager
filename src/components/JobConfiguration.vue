@@ -25,7 +25,7 @@
         <ion-modal  :is-open="isOpen" @didDismiss="() => isOpen = false">
           <ion-content force-overscroll="false">
             <ion-datetime
-              hour-cycle="h12"
+              hour-cycle="h23"
               :value="runTime ? getDateTime(runTime) : ''"
               @ionChange="updateRunTime($event, currentJob)"
               :show-default-buttons="true"
@@ -331,7 +331,7 @@ export default defineComponent({
         const setTime = handleDateTimeInput(ev['detail'].value);
         
         if(setTime > currTime) {
-          this.runTime = handleDateTimeInput(ev['detail'].value);
+          this.runTime = setTime;
         } else {
           showToast(translate("Provide a future date and time"))
         }
@@ -454,7 +454,7 @@ ion-label:nth-child(3) {
 
 ion-modal {
   --width: 290px;
-  --height: 385px;
+  --height: 440px;
   --border-radius: 8px;
 }
 </style>
