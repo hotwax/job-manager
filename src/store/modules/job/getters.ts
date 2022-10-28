@@ -58,11 +58,16 @@ const getters: GetterTree <JobState, RootState> = {
       return state.miscellaneous.list?.length > 0 && state.miscellaneous.list?.length < state.miscellaneous.total
     },
     getMoreJobs (state){
-      const draftOnlyMoreJobs = state.more.moreDraft.list.filter((job: any) => {
-        return state.more.moreDraft.list[job.systemJobEnumId] !== state.more.morePending.list[job.systemJobEnumId]
-      })
-      const allMoreJobs = [...state.more.morePending.list, ...draftOnlyMoreJobs]
-      return allMoreJobs
+      const allMoreJobs = state.more.draft.list.reduce((jobs: any, draftJob: any) => {
+        state.more.pending.list.find((pendingJob: any) => {
+          if(draftJob.systemJobEnumId !== pendingJob.systemJobEnumId ) {
+            jobs.push(draftJob);
+          }
+          return jobs;
+        })
+        return jobs
+      }, [])
+      return [...state.pending.list ,...allMoreJobs];
     },
   }
 

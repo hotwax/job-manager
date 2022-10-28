@@ -26,11 +26,11 @@ const jobModule: Module<JobState, RootState> = {
         total: 0
       },
       more: {
-        morePending: {
+        pending: {
           list: [],
           total: 0
         },
-        moreDraft: {
+        draft: {
           list: [],
           total: 0
         },

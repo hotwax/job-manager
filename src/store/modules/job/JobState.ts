@@ -17,11 +17,11 @@ export default interface JobState {
       total: 0
     }
     more: {
-      morePending: {
+      pending: {
         list: any,
         total: 0
       }
-      moreDraft: {
+      draft: {
         list: any,
         total: 0
       }
