@@ -37,7 +37,7 @@
     </ion-radio-group>
     <ion-item>
       <ion-label position="fixed">{{ $t("Schedule") }}</ion-label>
-      <ion-datetime hour-cycle="h12" :value="currentBatch?.runTime ? getDateTime(currentBatch.runTime) : ''" @ionChange="updateRunTime($event)" presentation="time" size="cover" />
+      <ion-datetime show-default-buttons hour-cycle="h12" :value="currentBatch?.runTime ? getDateTime(currentBatch.runTime) : ''" @ionChange="updateRunTime($event)" presentation="time" size="cover" />
     </ion-item>    
     <ion-fab @click="updateJob()" vertical="bottom" horizontal="end" slot="fixed">
       <ion-fab-button>
