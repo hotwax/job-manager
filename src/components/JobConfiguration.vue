@@ -24,7 +24,8 @@
         <!-- <ion-button id="open-run-time-modal" size="small" fill="outline" color="medium" v-show="!currentJob?.runTime">{{ $t("Select run time") }}</ion-button> -->
         <ion-modal class="date-time-modal" :is-open="isOpen" @didDismiss="() => isOpen = false">
           <ion-content force-overscroll="false">
-            <ion-datetime
+            <ion-datetime          
+              show-default-buttons
               hour-cycle="h12"
               :min="minDateTime"
               :value="currentJob?.runTime ? getDateTime(currentJob.runTime) : ''"
