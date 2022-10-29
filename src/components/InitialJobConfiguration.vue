@@ -20,6 +20,7 @@
         <ion-modal :is-open="isOpen" @didDismiss="() => isOpen = false">
           <ion-content force-overscroll="false">
             <ion-datetime
+              show-default-buttons
               hour-cycle="h12"
               :min="minDateTime"
               :value="currentJob?.runTime ? getDateTime(currentJob.runTime) : ''"
@@ -53,7 +54,8 @@
         <ion-label @click="() => isOpen = true" slot="end">{{ currentJob?.runTime ? getTime(currentJob.runTime) : $t('Select run time') }}</ion-label>
         <ion-modal class="date-time-modal" :is-open="isOpen" @didDismiss="() => isOpen = false">
           <ion-content force-overscroll="false">
-            <ion-datetime
+            <ion-datetime          
+              show-default-buttons
               hour-cycle="h12"
               :min="minDateTime"
               :value="currentJob?.runTime ? getDateTime(currentJob?.runTime) : ''"
