@@ -67,8 +67,7 @@ const getters: GetterTree <JobState, RootState> = {
         })
         return jobs;
       }, [])
-      // return [...state.more.pending.list, ...draftOnlyJobs];
-      return draftOnlyJobs.length ? [...state.more.pending.list, ...draftOnlyJobs] : [...state.more.pending.list]
+      return [...state.more.pending.list, ...draftOnlyJobs];
     },
   }
 
