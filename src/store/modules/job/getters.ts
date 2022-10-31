@@ -59,12 +59,16 @@ const getters: GetterTree <JobState, RootState> = {
     },
     getMoreJobs (state){
       const draftOnlyJobs = state.more.draft.list.reduce((jobs: any, draftJob: any) => {
+        let isJobPendingAndDraft = false;
         state.more.pending.list.find((pendingJob: any) => {
-          if(draftJob.systemJobEnumId !== pendingJob.systemJobEnumId ) {
-            jobs.push(draftJob);
+          if(draftJob.systemJobEnumId === pendingJob.systemJobEnumId ) {
+            isJobPendingAndDraft = true;
+            return jobs;
           }
-          return jobs;
         })
+        if(!isJobPendingAndDraft) {
+          jobs.push(draftJob)
+        }
         return jobs;
       }, [])
       return [...state.more.pending.list, ...draftOnlyJobs];
