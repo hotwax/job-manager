@@ -6,7 +6,7 @@
     <ion-list>
       <ion-item v-for="job in jobs" :key="job.jobId" @click="viewJobConfiguration(job)" detail button>
         <ion-label class="ion-text-wrap">{{ job.jobName }}</ion-label>
-        <ion-label slot="end">{{ getTemporalExpression(job.enumTypeId) }}</ion-label>
+        <ion-label slot="end">{{ job.statusId === "SERVICE_PENDING" ? getDate(job.runTime) : getTemporalExpression(job.enumTypeId) }}</ion-label>
       </ion-item>
     </ion-list>
   </ion-card>
@@ -25,6 +25,7 @@ import { defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
 import emitter from '@/event-bus';
 import { useRouter } from 'vue-router'
+import { DateTime } from 'luxon';
 
 export default defineComponent({
   name: 'MoreJobs',
@@ -54,16 +55,18 @@ export default defineComponent({
   },
   methods: {
     async viewJobConfiguration(job: any) {
-      job.enumName = job.enumName || this.getEnumName(job.systemJobEnumId)
       this.title = this.getEnumName(job.systemJobEnumId)
-      emitter.emit('showJobConfigurationForMoreJobs', {jobId: job.jobId, jobTitle: this.title, jobStatus: job.status, job: job});
+      emitter.emit('showJobConfigurationForMoreJobs', {jobId: job.jobId, jobTitle: this.title, jobStatus: job.status, job});
       return;
     },
     getTemporalExpression(enumId: string) {
       return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
         this.$t('Disabled')
-    }
+    },
+    getDate (runTime: any) {
+      return DateTime.fromMillis(runTime).toLocaleString(DateTime.DATE_MED);
+    },
   },
   mounted () {
     this.store.dispatch("job/fetchJobs", {
