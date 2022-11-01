@@ -187,7 +187,7 @@ export default defineComponent({
     })
   },
   unmounted() {
-    Object.assign(this.store.state.job.pipelineFilters, { status: [], category: [] })
+    this.store.dispatch('job/clearPipelineFilters', { status: [], category: [] });
   },
   methods: {
     updatePinnedJobs(filterArray: Array<string>, filterProperty: any) {

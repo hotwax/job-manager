@@ -782,6 +782,9 @@ const actions: ActionTree<JobState, RootState> = {
       : payload.category.push(payload.filter.enumTypeId);
     } 
     commit(types.JOB_PIPELINE_FILTERS_UPDATED, payload);
+  },
+  clearPipelineFilters({ commit }, payload) {
+    commit(types.JOB_PIPELINE_FILTERS_UPDATED, payload);
   }
 }
 export default actions;
