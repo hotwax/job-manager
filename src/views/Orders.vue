@@ -501,13 +501,13 @@ export default defineComponent({
       this.getAutoCancelDays();
     }
     this.fetchMoreJobs();
-    emitter.on('showJobConfigurationForMoreJobs', (payload) => {
-      this.viewJobConfiguration(payload.jobId, payload.jobTitle, payload.jobStatus, payload.job);
+    emitter.on('showJobConfigurationForMoreJobs', (job) => {
+      this.viewJobConfiguration(job.jobId, job.jobTitle, job.jobStatus, job);
     })
   },
   unmounted() {
-    emitter.off('showJobConfigurationForMoreJobs', (payload) => {
-      this.viewJobConfiguration(payload.jobId, payload.jobTitle, payload.jobStatus, payload.job);
+    emitter.off('showJobConfigurationForMoreJobs', (job) => {
+      this.viewJobConfiguration(job.jobId, job.jobTitle, job.jobStatus, job.job);
     });
   },
   setup() {
