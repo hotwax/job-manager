@@ -300,6 +300,7 @@ export default defineComponent({
     async updateJob() {
       const job = this.currentJob;
       job['jobStatus'] = this.jobStatus !== 'SERVICE_DRAFT' ? this.jobStatus : 'HOURLY';
+      job.runTime = this.runTime;
 
       if (job?.statusId === 'SERVICE_DRAFT') {
         this.store.dispatch('job/scheduleService', job).then((job: any) => {

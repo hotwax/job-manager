@@ -187,6 +187,7 @@ export default defineComponent({
 
       job['sinceId'] = this.lastShopifyOrderId
       job['jobStatus'] = job.tempExprId
+      job.runTime = this.runTime;
 
       // if job runTime is not a valid date then making runTime as empty
       if (job?.runTime && !isFutureDate(job?.runTime)) {
