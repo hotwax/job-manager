@@ -475,7 +475,7 @@ export default defineComponent({
         this.autoCancelDays = "";
       }
     },
-    async getMoreOrdersJobs() {
+    async fetchMoreJobs() {
       await this.store.dispatch("job/fetchMoreJobs", {
         "inputFields":{
           "enumTypeId": "ORDER_SYS_JOB",
@@ -500,7 +500,7 @@ export default defineComponent({
     if (this.currentEComStore.productStoreId) {
       this.getAutoCancelDays();
     }
-    this.getMoreOrdersJobs();
+    this.fetchMoreJobs();
     emitter.on('showJobConfigurationForMoreJobs', (payload) => {
       this.viewJobConfiguration(payload.jobId, payload.jobTitle, payload.jobStatus, payload.job);
     })

@@ -323,7 +323,7 @@ export default defineComponent({
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
         this.$t('Disabled')
     },
-    async getMorePreOrderJobs() {
+    async fetchMoreJobs() {
       await this.store.dispatch("job/fetchMoreJobs", {
         "inputFields":{
           "enumTypeId": "PRE_ORD_SYS_JOB",
@@ -338,7 +338,7 @@ export default defineComponent({
         "systemJobEnumId_op": "in"
       }
     });
-    this.getMorePreOrderJobs();
+    this.fetchMoreJobs();
     emitter.on('showJobConfigurationForMoreJobs', (payload) => {
       this.viewJobConfiguration(payload.jobId, payload.jobTitle, payload.jobStatus, payload.job);
     })

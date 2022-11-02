@@ -132,7 +132,7 @@ export default defineComponent({
       }
     });
     this.store.dispatch('webhook/fetchWebhooks')
-    this.getMoreProductJobs();
+    this.fetchMoreJobs();
     emitter.on('showJobConfigurationForMoreJobs', (payload) => {
       this.viewJobConfiguration(payload.jobId, payload.jobTitle, payload.jobStatus, payload.job);
     })
@@ -184,7 +184,7 @@ export default defineComponent({
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
         this.$t('Disabled')
     },
-    async getMoreProductJobs() {
+    async fetchMoreJobs() {
       await this.store.dispatch("job/fetchMoreJobs", {
         "inputFields":{
           "enumTypeId": "PRODUCT_SYS_JOB",
