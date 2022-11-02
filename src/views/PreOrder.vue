@@ -327,10 +327,7 @@ export default defineComponent({
       await this.store.dispatch("job/fetchMoreJobs", {
         "inputFields":{
           "enumTypeId": "PRE_ORD_SYS_JOB",
-          "statusId": ["SERVICE_DRAFT", "SERVICE_PENDING"]
         },
-        "viewSize": 30,
-        "viewIndex": 0
       });
     }
   },

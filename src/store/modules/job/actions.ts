@@ -756,7 +756,7 @@ const actions: ActionTree<JobState, RootState> = {
     const params = {
       "inputFields": {
         "enumTypeId": payload.inputFields.enumTypeId,
-        "statusId": payload.inputFields.statusId,
+        "statusId": ["SERVICE_DRAFT", "SERVICE_PENDING"],
         "statusId_op": "in",
         "systemJobEnumId_op": "not-empty",
         "shopId_fld0_value": store.state.user.currentShopifyConfig?.shopId,
@@ -767,8 +767,8 @@ const actions: ActionTree<JobState, RootState> = {
       } as any,
       "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runtimeDataId", "enumName", "shopId", "description" ],
       "noConditionFind": "Y",
-      "viewSize": payload.viewSize,
-      "viewIndex": payload.viewIndex,
+      "viewSize": 30, // as we've not implemented infiniteScroll in moreJobs, we are passing viewSize hardcodedly as 30
+      "viewIndex": 0
     }
 
     try {
