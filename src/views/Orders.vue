@@ -507,7 +507,7 @@ export default defineComponent({
   },
   unmounted() {
     emitter.off('showJobConfigurationForMoreJobs', (job) => {
-      this.viewJobConfiguration(job.jobId, job.jobTitle, job.jobStatus, job.job);
+      this.viewJobConfiguration(job.jobId, job.jobTitle, job.jobStatus, job);
     });
   },
   setup() {
