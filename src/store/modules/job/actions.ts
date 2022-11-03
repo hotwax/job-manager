@@ -753,10 +753,11 @@ const actions: ActionTree<JobState, RootState> = {
     }
   },
   async fetchMoreJobs({ commit }, payload) {
-    const params = {
+    const fetchJobRequests = [];
+    let params = {
       "inputFields": {
         "enumTypeId": payload.inputFields.enumTypeId,
-        "statusId": ["SERVICE_DRAFT", "SERVICE_PENDING"],
+        "statusId": ["SERVICE_DRAFT"],
         "statusId_op": "in",
         "systemJobEnumId_op": "not-empty",
         "shopId_fld0_value": store.state.user.currentShopifyConfig?.shopId,
@@ -771,16 +772,28 @@ const actions: ActionTree<JobState, RootState> = {
       "viewIndex": 0
     }
 
-    try {
-      const resp = await JobService.fetchJobInformation(params)
-      if (resp.status === 200 && !hasError(resp) && resp.data.docs?.length > 0) {
-        const moreJobs = resp.data.docs.map((job: any) => {
-          return {
-            ...job,
-            'status': job?.statusId
-          }
-        })
+    fetchJobRequests.push(JobService.fetchJobInformation(params).catch((err) => {
+      return err;
+    }))
 
+    // Deep cloning in order to avoid mutating the same reference causing side effects
+    params =  JSON.parse(JSON.stringify(params));
+
+    // Fetching pending jobs
+    params.inputFields.statusId = ["SERVICE_PENDING"];
+    params.inputFields.productStoreId = this.state.user.currentEComStore.productStoreId;
+    fetchJobRequests.push(JobService.fetchJobInformation(params).catch((err) => {
+      return err;
+    }))
+
+    try {
+      const resp = await Promise.all(fetchJobRequests)
+      const moreJobs = resp.reduce((responseJobs: any, response: any) => {
+        response.status === 200 && !hasError(response) && response.data.docs && (responseJobs = [...responseJobs, ...response.data.docs]);
+        return responseJobs;
+      }, [])
+
+      if(moreJobs.length) {
         const morePendingJobs = moreJobs.filter((job: any) => job.statusId === "SERVICE_PENDING")
         const moreDraftJobs = moreJobs.filter((job: any) => job.statusId === "SERVICE_DRAFT")
 
