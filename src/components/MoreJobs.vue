@@ -56,7 +56,8 @@ export default defineComponent({
   methods: {
     async viewJobConfiguration(job: any) {
       this.title = this.getEnumName(job.systemJobEnumId)
-      emitter.emit('showJobConfigurationForMoreJobs', {jobId: job.jobId, jobTitle: this.title, jobStatus: job.status, job});
+      job.jobTitle = this.title;
+      emitter.emit('showJobConfigurationForMoreJobs', job);
       return;
     },
     getTemporalExpression(enumId: string) {
