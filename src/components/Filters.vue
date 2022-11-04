@@ -39,7 +39,7 @@
           </ion-item>
         </section>
 
-        <section v-if="pinnedJobs.length > 0">
+        <section v-if="pinnedJobs && pinnedJobs.length > 0">
           <ion-item>
             <ion-label class="ion-text-wrap">
               <p>
