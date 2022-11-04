@@ -16,10 +16,10 @@
               </p>
             </ion-label>
           </ion-item>
-          <ion-item button v-for="(filter, index) in statusFilters" :key="index" @click="applyFilter(filter, 'statusFilter')">
+          <ion-item button v-for="(filter, index) in statusFilters" :key="index" @click="applyFilter(filter.statusId, 'status')">
             <ion-icon slot="start" :ios="filter.iosIcon" :md="filter.mdIcon" />
             <ion-label>{{ $t(filter.name) }}</ion-label>
-            <ion-checkbox slot="end" :checked="selectedStatusFilters.includes(filter.statusId)" />
+            <ion-checkbox slot="end" :checked="pipelineFilters.status.includes(filter.statusId)" />
           </ion-item>
         </section>
 
@@ -32,10 +32,10 @@
             </ion-label>
           </ion-item>
           <ion-item button v-for="(filter, index) in categoryFilters" :key="index"
-            @click="applyFilter(filter, 'categoryFilter')">
+            @click="applyFilter(filter.enumTypeId, 'category')">
             <ion-icon slot="start" :ios="filter.iosIcon" :md="filter.mdIcon" />
             <ion-label>{{ $t(filter.name) }}</ion-label>
-            <ion-checkbox slot="end" :checked="selectedCategoryFilters.includes(filter.enumTypeId)" />
+            <ion-checkbox slot="end" :checked="pipelineFilters.category.includes(filter.enumTypeId)" />
           </ion-item>
         </section>
 
@@ -173,17 +173,12 @@ export default defineComponent({
       ticketOutline
     };
   },
-  data() {
-    return {
-      selectedStatusFilters: [] as Array<string>,
-      selectedCategoryFilters: [] as Array<string>,
-    }
-  },
   computed: {
     ...mapGetters({
       getEnumName: 'job/getEnumName',
       currentEComStore: 'user/getCurrentEComStore',
       pinnedJobs: 'user/getPinnedJobs',
+      pipelineFilters: 'job/getPipelineFilters'
     })
   },
   unmounted() {
@@ -197,23 +192,24 @@ export default defineComponent({
       ? filterArray.splice(filterArray.indexOf(filterProperty), 1) 
       : filterArray.push(filterProperty);
     },
-    applyFilter(filter: any, type: string) {
+    applyFilter(value: any, type: string) {
       if(type === 'pinnedFilter') {
-        this.updatePinnedJobs(this.selectedPinnedJobs, filter);
+        this.updatePinnedJobs(this.selectedPinnedJobs, value);
+      } else {
+        this.store.dispatch('job/setPipelineFilters', { type, value });
       }
-      this.store.dispatch('job/setPipelineFilters', { status: this.selectedStatusFilters, category: this.selectedCategoryFilters, type, filter });
       this.segmentSelected === 'pending' ? this.getFilteredPendingJobs() :
       this.segmentSelected === 'running' ? this.getFilteredRunningJobs() :
       this.getFilteredJobHistory();
     },
     async getFilteredPendingJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
-      await this.store.dispatch('job/fetchPendingJobs', { eComStoreId: this.currentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, enumTypeId: this.selectedCategoryFilters, systemJobEnumId: this.selectedPinnedJobs, statusId: this.selectedStatusFilters });
+      await this.store.dispatch('job/fetchPendingJobs', { eComStoreId: this.currentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, enumTypeId: this.pipelineFilters.category, systemJobEnumId: this.selectedPinnedJobs, statusId: this.pipelineFilters.status });
     },
     async getFilteredRunningJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
-      await this.store.dispatch('job/fetchRunningJobs', { eComStoreId: this.currentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, enumTypeId: this.selectedCategoryFilters, systemJobEnumId: this.selectedPinnedJobs, statusId: this.selectedStatusFilters });
+      await this.store.dispatch('job/fetchRunningJobs', { eComStoreId: this.currentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, enumTypeId: this.pipelineFilters.category, systemJobEnumId: this.selectedPinnedJobs, statusId: this.pipelineFilters.status });
     },
     async getFilteredJobHistory(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
-      await this.store.dispatch('job/fetchJobHistory', { eComStoreId: this.currentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, enumTypeId: this.selectedCategoryFilters, systemJobEnumId: this.selectedPinnedJobs, statusId: this.selectedStatusFilters });
+      await this.store.dispatch('job/fetchJobHistory', { eComStoreId: this.currentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, enumTypeId: this.pipelineFilters.category, systemJobEnumId: this.selectedPinnedJobs, statusId: this.pipelineFilters.status });
     },
   },
 });
