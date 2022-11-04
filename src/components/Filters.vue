@@ -16,7 +16,7 @@
               </p>
             </ion-label>
           </ion-item>
-          <ion-item button v-for="(filter, index) in statusFilters" :key="index" @click="handleFilterApply(filter, 'statusFilter')">
+          <ion-item button v-for="(filter, index) in statusFilters" :key="index" @click="applyFilter(filter, 'statusFilter')">
             <ion-icon slot="start" :ios="filter.iosIcon" :md="filter.mdIcon" />
             <ion-label>{{ $t(filter.name) }}</ion-label>
             <ion-checkbox slot="end" :checked="selectedStatusFilters.includes(filter.statusId)" />
@@ -32,7 +32,7 @@
             </ion-label>
           </ion-item>
           <ion-item button v-for="(filter, index) in categoryFilters" :key="index"
-            @click="handleFilterApply(filter, 'categoryFilter')">
+            @click="applyFilter(filter, 'categoryFilter')">
             <ion-icon slot="start" :ios="filter.iosIcon" :md="filter.mdIcon" />
             <ion-label>{{ $t(filter.name) }}</ion-label>
             <ion-checkbox slot="end" :checked="selectedCategoryFilters.includes(filter.enumTypeId)" />
@@ -47,7 +47,7 @@
               </p>
             </ion-label>
           </ion-item>
-          <ion-item button v-for="(job, index) in pinnedJobs" :key="index" @click="handleFilterApply(job, 'pinnedFilter')">
+          <ion-item button v-for="(job, index) in pinnedJobs" :key="index" @click="applyFilter(job, 'pinnedFilter')">
             <ion-label>{{ getEnumName(job) }}</ion-label>
             <ion-checkbox slot="end" :checked="selectedPinnedJobs.includes(job)" />
           </ion-item>
@@ -197,7 +197,7 @@ export default defineComponent({
       ? filterArray.splice(filterArray.indexOf(filterProperty), 1) 
       : filterArray.push(filterProperty);
     },
-    handleFilterApply(filter: any, type: string) {
+    applyFilter(filter: any, type: string) {
       if(type === 'pinnedFilter') {
         this.updatePinnedJobs(this.selectedPinnedJobs, filter);
       }
