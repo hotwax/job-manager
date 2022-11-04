@@ -79,15 +79,9 @@ const actions: ActionTree<JobState, RootState> = {
     } 
     
     if (payload.queryString) {
-      params.inputFields["enumName_value"] = "%"+ payload.queryString + "%"
-      params.inputFields["enumName_op"] = "like"
-      params.inputFields["enumName_ic"] = "Y"
-      params.inputFields["enumName_ic"] = "Y"
-      params.inputFields["enumName_grp"] = "1" 
-      params.inputFields["description_value"] = "%"+ payload.queryString + "%"
-      params.inputFields["description_op"] = "like"
+      params.inputFields["description_value"] = payload.queryString
+      params.inputFields["description_op"] = "contains"
       params.inputFields["description_ic"] = "Y"
-      params.inputFields["description_grp"] = "2"
     } 
 
     await JobService.fetchJobInformation(params).then((resp) => {
@@ -159,15 +153,9 @@ const actions: ActionTree<JobState, RootState> = {
     } 
 
     if (payload.queryString) {
-      params.inputFields["enumName_value"] = "%"+ payload.queryString + "%"
-      params.inputFields["jobName_op"] = "like"
-      params.inputFields["jobName_ic"] = "Y"
-      params.inputFields["enumName_ic"] = "Y"
-      params.inputFields["enumName_grp"] = "1" 
-      params.inputFields["description_value"] = "%"+ payload.queryString + "%"
-      params.inputFields["description_op"] = "like"
+      params.inputFields["description_value"] = payload.queryString
+      params.inputFields["description_op"] = "contains"
       params.inputFields["description_ic"] = "Y"
-      params.inputFields["description_grp"] = "2"
     } 
 
     await JobService.fetchJobInformation(params).then((resp) => {
@@ -237,15 +225,10 @@ const actions: ActionTree<JobState, RootState> = {
     } 
 
     if (payload.queryString) {
-      params.inputFields["enumName_value"] = "%"+ payload.queryString + "%"
-      params.inputFields["enumName_op"] = "like"
-      params.inputFields["enumName_ic"] = "Y"
-      params.inputFields["enumName_grp"] = "1" 
-      params.inputFields["description_value"] = "%"+ payload.queryString + "%"
-      params.inputFields["description_op"] = "like"
+      params.inputFields["description_value"] = payload.queryString
+      params.inputFields["description_op"] = "contains"
       params.inputFields["description_ic"] = "Y"
-      params.inputFields["description_grp"] = "2"
-    } 
+    }
     await JobService.fetchJobInformation(params).then((resp) => {
       if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
         if (resp.data.docs) {
