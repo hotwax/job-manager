@@ -183,10 +183,3 @@ export default defineComponent({
   },
 });
 </script>
-<style>
-  ion-modal {
-    --width: 290px;
-    --height: 440px;
-    --border-radius: 8px;
-  }
-</style>
