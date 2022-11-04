@@ -1,3 +1,26 @@
+# Release 1.1.0
+## What's Changed
+* Updated logic to fetch shopify config using fallback api for backward compatibility(#2r65b1c) by @disha1202 in https://github.com/hotwax/job-manager/pull/234
+* Fixed: shop should be honored while fetching jobs (#2te9p7v) by @adityasharma7 in https://github.com/hotwax/job-manager/pull/236
+* Improved: shop grp to be initially from 1 sequence and simlified query (#2te9p7v) by @adityasharma7 in https://github.com/hotwax/job-manager/pull/237
+* Improved: Code to display message on miscellaneous page when no jobs found(#364ttxy) by @shashwatbangar in https://github.com/hotwax/job-manager/pull/235
+* Improved: Add a message on miscellaneous page when no jobs found(#2t2wdhn) by @shashwatbangar in https://github.com/hotwax/job-manager/pull/239
+* Fixed: error in console due to empty shopify configuration on logout(#2tky1f3) by @disha1202 in https://github.com/hotwax/job-manager/pull/238
+* Implemented static UI for bulk editors page(#2vjxd96) by @disha1202 in https://github.com/hotwax/job-manager/pull/244
+* Refactored: setEcomStore and setShopifyConfig actions to accept ID. (#2tzh44d) by @k2maan in https://github.com/hotwax/job-manager/pull/241
+* Implemented: Validation to set only future date and time on setting runtime. (#2tzb5w4) by @k2maan in https://github.com/hotwax/job-manager/pull/240
+* Upgraded version of ionic to 6.1.15(#2uaz29u) by @disha1202 in https://github.com/hotwax/job-manager/pull/248
+* Fixed: used console.error instead of console.log  by @divyanshugour in https://github.com/hotwax/job-manager/pull/252
+* Implemented: Validation to set only future date and time on setting job runtime. (#2tzb5w4) by @k2maan in https://github.com/hotwax/job-manager/pull/255
+* Fixed: runTime being set to current time while setting/updating time (#266) by @adityasharma7 in https://github.com/hotwax/job-manager/pull/267
+* Refactored: removed extra API call when setting the same timezone again from the settings page. (#2yma7df) by @k2maan in https://github.com/hotwax/job-manager/pull/265
+
+## New Contributors
+* @k2maan made their first contribution in https://github.com/hotwax/job-manager/pull/241
+* @divyanshugour made their first contribution in https://github.com/hotwax/job-manager/pull/252
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v1.0.11...v1.1.0
+
 # Release 1.0.11
 
 ## What's Changed
