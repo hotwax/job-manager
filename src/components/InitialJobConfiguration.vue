@@ -262,5 +262,11 @@ ion-item:nth-child(2) > ion-label:nth-child(3) {
   .mobile-only {
     display: none;
   }  
+
+  ion-modal {
+    --width: 290px;
+    --height: 440px;
+    --border-radius: 8px;
+  }
 }
 </style>

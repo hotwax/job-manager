@@ -240,4 +240,10 @@ export default defineComponent({
   ion-button {
     margin: var(--spacer-base) var(--spacer-xs);
   }
+
+  ion-modal {
+    --width: 290px;
+    --height: 440px;
+    --border-radius: 8px;
+  }
 </style>
