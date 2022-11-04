@@ -170,7 +170,4 @@ export default defineComponent({
 </script>
 
 <style scoped>
-  main > section {
-    width: 423px;
-  }
 </style>
