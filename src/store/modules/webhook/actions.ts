@@ -29,7 +29,7 @@ const actions: ActionTree<WebhookState, RootState> = {
         showToast(translate("Webhook unsubscribed successfully"));
       }
     } catch(err) {
-      console.log(err)
+      console.error(err)
       showToast(translate("Something went wrong"));
     } finally {
       dispatch('fetchWebhooks')

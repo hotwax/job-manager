@@ -10,6 +10,7 @@
       <ion-list>
         <ion-menu-toggle auto-hide="false" v-for="(page, index) in appPages" :key="index">
           <ion-item
+            v-if="page.url"
             button
             @click="selectedIndex = index"
             router-direction="root"
@@ -19,6 +20,9 @@
             <ion-icon slot="start" :ios="page.iosIcon" :md="page.mdIcon" />
             <ion-label>{{ $t(page.title) }}</ion-label>
           </ion-item>
+          <ion-item-divider color="light" v-else>
+            <ion-label color="medium">{{ $t(page.title) }}</ion-label>
+          </ion-item-divider> 
         </ion-menu-toggle>
       </ion-list>
     </ion-content>
@@ -44,6 +48,7 @@ import {
   IonHeader,
   IonIcon,
   IonItem,
+  IonItemDivider,
   IonLabel,
   IonList,
   IonMenu,
@@ -54,7 +59,7 @@ import {
 } from "@ionic/vue";
 import { defineComponent, ref } from "vue";
 import { mapGetters } from "vuex";
-import { pulseOutline, calendarNumberOutline, ticketOutline, albumsOutline, shirtOutline, settings, iceCreamOutline, libraryOutline } from "ionicons/icons";
+import { pulseOutline, calendarNumberOutline, terminalOutline, ticketOutline, albumsOutline, shirtOutline, settings, iceCreamOutline, libraryOutline } from "ionicons/icons";
 import { useStore } from "@/store";
 export default defineComponent({
   name: "Menu",
@@ -64,6 +69,7 @@ export default defineComponent({
     IonHeader,
     IonIcon,
     IonItem,
+    IonItemDivider,
     IonLabel,
     IonList,
     IonMenu,
@@ -149,6 +155,16 @@ export default defineComponent({
         mdIcon: libraryOutline,
         dependsOnBaseURL: false
       },
+      /* {
+        title: "Bulk editor"
+      },
+      {
+        title: "Schedule in bulk",
+        url: "/bulk-editor",
+        iosIcon: terminalOutline,
+        mdIcon: terminalOutline,
+        dependsOnBaseURL: false
+      }, */
       {
         title: "Settings",
         url: "/settings",
@@ -165,6 +181,7 @@ export default defineComponent({
       appPages,
       pulseOutline, 
       calendarNumberOutline, 
+      terminalOutline,
       ticketOutline, 
       albumsOutline, 
       shirtOutline,

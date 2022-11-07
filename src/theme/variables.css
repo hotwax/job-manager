@@ -287,6 +287,12 @@ aside {
   display: unset;
 }
 
+.date-time-modal {
+  --width: 290px;
+  --height: 385px;
+  --border-radius: 8px;
+}
+
 @media (min-width: 991px) {
   main {
     display: flex;

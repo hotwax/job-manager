@@ -130,26 +130,34 @@ const actions: ActionTree<UserState, RootState> = {
   /**
    * update current eComStore information
    */
-  async setEcomStore({ commit, dispatch }, payload) {
+  async setEcomStore({ state, commit, dispatch }, payload) {
     dispatch('job/clearJobState', null, { root: true });
-    commit(types.USER_CURRENT_ECOM_STORE_UPDATED, payload.eComStore);
-    dispatch('getShopifyConfig', payload.eComStore.productStoreId);
+    let productStore = payload.productStore;
+    if(!productStore) {
+      productStore = this.state.user.current.stores.find((store: any) => store.productStoreId === payload.productStoreId);
+    }
+    
+    commit(types.USER_CURRENT_ECOM_STORE_UPDATED, productStore);
+    dispatch('getShopifyConfig',  productStore.productStoreId);
     await UserService.setUserPreference({
       'userPrefTypeId': 'SELECTED_BRAND',
-      'userPrefValue': payload.eComStore.productStoreId
+      'userPrefValue': productStore.productStoreId
     });
   },
   /**
    * Update user timeZone
    */
   async setUserTimeZone ( { state, commit }, payload) {
-    const resp = await UserService.setUserTimeZone(payload)
-    if (resp.status === 200 && !hasError(resp)) {
-      const current: any = state.current;
-      current.userTimeZone = payload.tzId;
-      commit(types.USER_INFO_UPDATED, current);
-      Settings.defaultZone = current.userTimeZone;
-      showToast(translate("Time zone updated successfully"));
+    const current: any = state.current;
+    // if set the same timezone again, no API call should happen
+    if(current.userTimeZone !== payload.tzId) {
+      const resp = await UserService.setUserTimeZone(payload)
+      if (resp.status === 200 && !hasError(resp)) {
+        current.userTimeZone = payload.tzId;
+        commit(types.USER_INFO_UPDATED, current);
+        Settings.defaultZone = current.userTimeZone;
+        showToast(translate("Time zone updated successfully"));
+      }
     }
   },
 
@@ -204,7 +212,12 @@ const actions: ActionTree<UserState, RootState> = {
   /**
    * update current shopify config id
    */
-  async setCurrentShopifyConfig({ commit, dispatch }, shopifyConfig) {
+  async setCurrentShopifyConfig({ commit, dispatch, state }, payload) {
+    let shopifyConfig = payload.shopifyConfig;
+    if(!shopifyConfig) {
+      shopifyConfig = state.shopifyConfigs.find((configs: any) => configs.shopifyConfigId === payload.shopifyConfigId)
+    }
+
     commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, shopifyConfig ? shopifyConfig : {});
     dispatch('job/clearJobState', null, { root: true });
   },
