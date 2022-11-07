@@ -15,6 +15,9 @@
       "hosting": {
         "job-manager-dev": [
           "job-manager-dev"
+        ],
+        "job-manager-uat": [
+          "job-manager-uat"
         ]
       }
     }
