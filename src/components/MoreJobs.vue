@@ -6,7 +6,7 @@
     <ion-list>
       <ion-item v-for="job in jobs" :key="job.jobId" @click="viewJobConfiguration(job)" detail button>
         <ion-label class="ion-text-wrap">{{ job.jobName }}</ion-label>
-        <ion-label slot="end">{{ job.statusId === "SERVICE_PENDING" ? getDate(job.runTime) : getTemporalExpression(job.enumTypeId) }}</ion-label>
+        <ion-label slot="end">{{ job.statusId === "SERVICE_PENDING" ? getDate(job.runTime) : getTemporalExpression(job.tempExprId) }}</ion-label>
       </ion-item>
     </ion-list>
   </ion-card>
@@ -49,7 +49,7 @@ export default defineComponent({
       getJob: 'job/getJob',
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
       currentEComStore: 'user/getCurrentEComStore',
-      getTemporalExpr: 'job/getTemporalExpr',
+      temporalExpr: 'job/getTemporalExpr',
       getEnumName: 'job/getEnumName',
     })
   },
@@ -60,10 +60,8 @@ export default defineComponent({
       emitter.emit('showJobConfigurationForMoreJobs', job);
       return;
     },
-    getTemporalExpression(enumId: string) {
-      return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
-        this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
-        this.$t('Disabled')
+    getTemporalExpression(tempExprId: string) {
+      return this.temporalExpr(tempExprId)?.description ? this.temporalExpr(tempExprId)?.description : this.$t('Disabled')
     },
     getDate (runTime: any) {
       return DateTime.fromMillis(runTime).toLocaleString(DateTime.DATE_MED);
