@@ -38,6 +38,11 @@ const jobModule: Module<JobState, RootState> = {
       temporalExp: [],
       enumIds: {},
       current: {},
+      pipelineFilters: {
+        status: [],
+        category: [],
+        enum: [],
+      },
     },
     getters,
     actions,
