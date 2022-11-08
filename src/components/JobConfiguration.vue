@@ -16,7 +16,7 @@
       <ion-item>
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
-        <ion-label class="ion-text-wrap" @click="() => isOpen = true" slot="end">{{ currentJob?.runTime ? getTime(currentJob.runTime) : $t('Select run time') }}</ion-label>
+        <ion-label class="ion-text-wrap" @click="() => isOpen = true" slot="end">{{ runTime ? getTime(runTime) : $t('Select run time') }}</ion-label>
         <!-- TODO: display a button when we are not having a runtime and open the datetime component
         on click of that button
         Currently, when mapping the same datetime component for label and button so it's not working so for
@@ -26,10 +26,10 @@
           <ion-content force-overscroll="false">
             <ion-datetime          
               show-default-buttons
-              hour-cycle="h12"
-              :min="minDateTime"
-              :value="currentJob?.runTime ? getDateTime(currentJob.runTime) : ''"
+              hour-cycle="h23"
+              :value="runTime ? getDateTime(runTime) : ''"
               @ionChange="updateRunTime($event, currentJob)"
+              :show-default-buttons="true"
             />
           </ion-content>
         </ion-modal>
@@ -151,8 +151,11 @@ export default defineComponent({
     return {
       isOpen: false,
       jobStatus: this.status,
-      minDateTime: DateTime.now().toISO()
+      runTime: '' as any,
     }
+  },
+  mounted() {
+    this.runTime = this.currentJob?.runTime 
   },
   updated() {
     // When updating the job, the job is fetched again with the latest values
@@ -298,6 +301,7 @@ export default defineComponent({
     async updateJob() {
       const job = this.currentJob;
       job['jobStatus'] = this.jobStatus !== 'SERVICE_DRAFT' ? this.jobStatus : 'HOURLY';
+      job.runTime = this.runTime;
 
       if (job?.statusId === 'SERVICE_DRAFT') {
         this.store.dispatch('job/scheduleService', job).then((job: any) => {
@@ -325,7 +329,14 @@ export default defineComponent({
     },
     updateRunTime(ev: CustomEvent, job: any) {
       if (job) {
-        job.runTime = handleDateTimeInput(ev['detail'].value)
+        const currTime = DateTime.now().toMillis();
+        const setTime = handleDateTimeInput(ev['detail'].value);
+        
+        if(setTime > currTime) {
+          this.runTime = setTime;
+        } else {
+          showToast(translate("Provide a future date and time"))
+        }
       }
     },
     async viewJobHistory(job: any) {

@@ -155,7 +155,7 @@ export default defineComponent({
         mdIcon: libraryOutline,
         dependsOnBaseURL: false
       },
-      {
+      /* {
         title: "Bulk editor"
       },
       {
@@ -164,7 +164,7 @@ export default defineComponent({
         iosIcon: terminalOutline,
         mdIcon: terminalOutline,
         dependsOnBaseURL: false
-      },
+      }, */
       {
         title: "Settings",
         url: "/settings",
