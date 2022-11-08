@@ -755,18 +755,16 @@ const actions: ActionTree<JobState, RootState> = {
     }
   },
   setPipelineFilters({ commit, state }, payload) {
-    const filter = (state.pipelineFilters as any)[payload.type]
-    filter.includes(payload.value) 
-    ? filter.splice(filter.indexOf(payload.value), 1) 
-    : filter.push(payload.value);
+    const pipelineFilters = JSON.parse(JSON.stringify(state.pipelineFilters));
+    const pipelineFilter = (pipelineFilters as any)[payload.type]
+    pipelineFilter.includes(payload.value) 
+    ? pipelineFilter.splice(pipelineFilter.indexOf(payload.value), 1) 
+    : pipelineFilter.push(payload.value);
 
-    // we need to send the updated filters to the mutation
-    // hence, we update the payload.value as filters
-    payload.value = filter
-    commit(types.JOB_PIPELINE_FILTERS_UPDATED, payload);
+    commit(types.JOB_PIPELINE_FILTERS_UPDATED, { pipelineFilters });
   },
-  clearPipelineFilters({ commit }, payload) {
-    commit(types.JOB_PIPELINE_FILTERS_CLEARED, payload);
+  clearPipelineFilters({ commit }) {
+    commit(types.JOB_PIPELINE_FILTERS_CLEARED);
   }
 }
 export default actions;

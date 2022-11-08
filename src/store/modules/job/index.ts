@@ -31,6 +31,7 @@ const jobModule: Module<JobState, RootState> = {
       pipelineFilters: {
         status: [],
         category: [],
+        enum: [],
       },
     },
     getters,

@@ -1,6 +1,6 @@
 <template>
   <ion-page>
-    <Filters content-id="filter-content" :segmentSelected="segmentSelected" :queryString="queryString" :selectedPinnedJobs="selectedPinnedJobs" />
+    <Filters content-id="filter-content" :segmentSelected="segmentSelected" :queryString="queryString" />
 
     <ion-header :translucent="true">
       <ion-toolbar>
@@ -375,14 +375,14 @@ export default defineComponent({
   },
   methods : {
     isPinnedJobSelected(jobEnumId: any) {
-      return (this as any).selectedPinnedJobs.some((jobId: any) =>  jobId === jobEnumId );
+      return (this as any).pipelineFilters.enum.some((jobId: any) =>  jobId === jobEnumId );
     },
     updateSelectedPinnedJob(jobEnumId: any) {
-      const index = (this as any).selectedPinnedJobs.indexOf(jobEnumId);
-      if ((this as any).selectedPinnedJobs.includes(jobEnumId) || !this.getPinnedJobs.includes(jobEnumId)) {
-        if (index != -1) (this as any).selectedPinnedJobs.splice(index, 1)
+      const index = (this as any).pipelineFilters.enum.indexOf(jobEnumId);
+      if ((this as any).pipelineFilters.enum.includes(jobEnumId) || !this.getPinnedJobs.includes(jobEnumId)) {
+        if (index != -1) (this as any).pipelineFilters.enum.splice(index, 1)
       } else {
-        (this as any).selectedPinnedJobs.push(jobEnumId)
+        (this as any).pipelineFilters.enum.push(jobEnumId)
       }
 
       this.segmentSelected === 'pending' ? this.getPendingJobs():
@@ -498,13 +498,13 @@ export default defineComponent({
       return alert.present();
     },
     async getPendingJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
-      await this.store.dispatch('job/fetchPendingJobs', { eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, systemJobEnumId: this.selectedPinnedJobs, enumTypeId: this.pipelineFilters.category, statusId: this.pipelineFilters.status });
+      await this.store.dispatch('job/fetchPendingJobs', { eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, systemJobEnumId: this.pipelineFilters.enum, enumTypeId: this.pipelineFilters.category, statusId: this.pipelineFilters.status });
     },
     async getRunningJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
-      await this.store.dispatch('job/fetchRunningJobs', { eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, systemJobEnumId: this.selectedPinnedJobs, enumTypeId: this.pipelineFilters.category, statusId: this.pipelineFilters.status });
+      await this.store.dispatch('job/fetchRunningJobs', { eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, systemJobEnumId: this.pipelineFilters.enum, enumTypeId: this.pipelineFilters.category, statusId: this.pipelineFilters.status });
     },
     async getJobHistory(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
-      await this.store.dispatch('job/fetchJobHistory', { eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, systemJobEnumId: this.selectedPinnedJobs, enumTypeId: this.pipelineFilters.category, statusId: this.pipelineFilters.status});
+      await this.store.dispatch('job/fetchJobHistory', { eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, systemJobEnumId: this.pipelineFilters.enum, enumTypeId: this.pipelineFilters.category, statusId: this.pipelineFilters.status});
     },
     async openJobActions(job: any, ev: Event) {
       const popover = await popoverController.create({

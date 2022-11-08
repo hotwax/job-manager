@@ -34,15 +34,15 @@
           </ion-item>
         </section>
 
-        <section v-if="pinnedJobs && pinnedJobs.length > 0">
+        <section v-if="pinnedJobs && pinnedJobs.length">
           <ion-item>
             <ion-label class="ion-text-wrap">
               <p>{{ $t("Pinned") }}</p>
             </ion-label>
           </ion-item>
-          <ion-item button v-for="(job, index) in pinnedJobs" :key="index" @click="applyFilter(job, 'pinnedFilter')">
+          <ion-item button v-for="(job, index) in pinnedJobs" :key="index" @click="applyFilter(job, 'enum')">
             <ion-label>{{ getEnumName(job) }}</ion-label>
-            <ion-checkbox slot="end" :checked="selectedPinnedJobs.includes(job)" />
+            <ion-checkbox slot="end" :checked="pipelineFilters.enum.includes(job)" />
           </ion-item>
         </section>
       </ion-list>
@@ -81,7 +81,7 @@ export default defineComponent({
     IonTitle,
     IonToolbar
   },
-  props: ["segmentSelected", "queryString", "selectedPinnedJobs"],
+  props: ["segmentSelected", "queryString"],
   setup() {
     const store = useStore();
     const statusFilters = [
@@ -175,34 +175,24 @@ export default defineComponent({
     })
   },
   unmounted() {
-    this.store.dispatch('job/clearPipelineFilters', { status: [], category: [] });
+    this.store.dispatch('job/clearPipelineFilters');
   },
   methods: {
-    updatePinnedJobs(filterArray: Array<string>, filterProperty: any) {
-      // check if the filter is being applied, 
-      // if not - apply, if already there - remove.
-      filterArray.includes(filterProperty) 
-      ? filterArray.splice(filterArray.indexOf(filterProperty), 1) 
-      : filterArray.push(filterProperty);
-    },
     applyFilter(value: any, type: string) {
-      if(type === 'pinnedFilter') {
-        this.updatePinnedJobs(this.selectedPinnedJobs, value);
-      } else {
-        this.store.dispatch('job/setPipelineFilters', { type, value });
-      }
+      this.store.dispatch('job/setPipelineFilters', { type, value });
+
       this.segmentSelected === 'pending' ? this.getFilteredPendingJobs() :
       this.segmentSelected === 'running' ? this.getFilteredRunningJobs() :
       this.getFilteredJobHistory();
     },
     async getFilteredPendingJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
-      await this.store.dispatch('job/fetchPendingJobs', { eComStoreId: this.currentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, enumTypeId: this.pipelineFilters.category, systemJobEnumId: this.selectedPinnedJobs, statusId: this.pipelineFilters.status });
+      await this.store.dispatch('job/fetchPendingJobs', { eComStoreId: this.currentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, enumTypeId: this.pipelineFilters.category, systemJobEnumId: this.pipelineFilters.enum, statusId: this.pipelineFilters.status });
     },
     async getFilteredRunningJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
-      await this.store.dispatch('job/fetchRunningJobs', { eComStoreId: this.currentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, enumTypeId: this.pipelineFilters.category, systemJobEnumId: this.selectedPinnedJobs, statusId: this.pipelineFilters.status });
+      await this.store.dispatch('job/fetchRunningJobs', { eComStoreId: this.currentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, enumTypeId: this.pipelineFilters.category, systemJobEnumId: this.pipelineFilters.enum, statusId: this.pipelineFilters.status });
     },
     async getFilteredJobHistory(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
-      await this.store.dispatch('job/fetchJobHistory', { eComStoreId: this.currentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, enumTypeId: this.pipelineFilters.category, systemJobEnumId: this.selectedPinnedJobs, statusId: this.pipelineFilters.status });
+      await this.store.dispatch('job/fetchJobHistory', { eComStoreId: this.currentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, enumTypeId: this.pipelineFilters.category, systemJobEnumId: this.pipelineFilters.enum, statusId: this.pipelineFilters.status });
     },
   },
 });

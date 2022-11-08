@@ -22,5 +22,6 @@ export default interface JobState {
     pipelineFilters: {
       status: any,
       category: any,
+      enum: any
     }
 }
