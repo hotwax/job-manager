@@ -50,6 +50,16 @@ const mutations: MutationTree <JobState> = {
         state.more.pending.total = payload.pendingTotal;
         state.more.draft.list = payload.draftJobs;
         state.more.draft.total = payload.draftTotal;
+    },
+    [types.JOB_PIPELINE_FILTERS_UPDATED] (state, payload){
+        state.pipelineFilters = payload.pipelineFilters;
+    },
+    [types.JOB_PIPELINE_FILTERS_CLEARED] (state, payload){
+        state.pipelineFilters = {
+            status: [],
+            category: [],
+            enum: []
+        }
     }
 }
 export default mutations;

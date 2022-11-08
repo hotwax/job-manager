@@ -64,6 +64,9 @@ const getters: GetterTree <JobState, RootState> = {
         return jobs;
       }, [])
     },
+    getPipelineFilters: (state) => {
+      return state.pipelineFilters;
+    },
   }
 
   export default getters;
