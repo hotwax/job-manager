@@ -133,10 +133,14 @@ export default defineComponent({
     });
     this.store.dispatch('webhook/fetchWebhooks')
     this.fetchMoreJobs();
-    emitter.on('showJobConfiguration', this.updateJobCofigurationVisibility)
+    emitter.on('viewJobConfiguration', (payload) => {
+      this.viewJobConfiguration(payload.jobId, payload.jobTitle, payload.statusId, payload.job)
+    })
   },
   unmounted() {
-    emitter.off('showJobConfiguration', this.updateJobCofigurationVisibility)
+    emitter.off('viewJobConfiguration', (payload) => {
+      this.viewJobConfiguration(payload.jobId, payload.jobTitle, payload.statusId, payload.job)
+    })
   },
   methods: {
     async updateWebhook(checked: boolean, enumId: string) {
@@ -186,9 +190,6 @@ export default defineComponent({
           "enumTypeId": "PRODUCT_SYS_JOB",
         },
       });
-    },
-    updateJobCofigurationVisibility(job: any) {
-      this.viewJobConfiguration(job.jobId, job.jobTitle, job.statusId, job);
     }
   },
   setup() {
