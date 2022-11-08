@@ -11,9 +11,7 @@
         <section v-if="segmentSelected === 'history'">
           <ion-item>
             <ion-label class="ion-text-wrap">
-              <p>
-                {{ $t("Status") }}
-              </p>
+              <p>{{ $t("Status") }}</p>
             </ion-label>
           </ion-item>
           <ion-item button v-for="(filter, index) in statusFilters" :key="index" @click="applyFilter(filter.statusId, 'status')">
@@ -26,13 +24,10 @@
         <section>
           <ion-item>
             <ion-label class="ion-text-wrap">
-              <p>
-                {{ $t("Category") }}
-              </p>
+              <p>{{ $t("Category") }}</p>
             </ion-label>
           </ion-item>
-          <ion-item button v-for="(filter, index) in categoryFilters" :key="index"
-            @click="applyFilter(filter.enumTypeId, 'category')">
+          <ion-item button v-for="(filter, index) in categoryFilters" :key="index" @click="applyFilter(filter.enumTypeId, 'category')">
             <ion-icon slot="start" :ios="filter.iosIcon" :md="filter.mdIcon" />
             <ion-label>{{ $t(filter.name) }}</ion-label>
             <ion-checkbox slot="end" :checked="pipelineFilters.category.includes(filter.enumTypeId)" />
@@ -42,9 +37,7 @@
         <section v-if="pinnedJobs && pinnedJobs.length > 0">
           <ion-item>
             <ion-label class="ion-text-wrap">
-              <p>
-                {{ $t("Pinned") }}
-              </p>
+              <p>{{ $t("Pinned") }}</p>
             </ion-label>
           </ion-item>
           <ion-item button v-for="(job, index) in pinnedJobs" :key="index" @click="applyFilter(job, 'pinnedFilter')">
