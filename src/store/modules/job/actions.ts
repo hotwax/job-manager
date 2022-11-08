@@ -741,7 +741,6 @@ const actions: ActionTree<JobState, RootState> = {
       "inputFields": {
         "enumTypeId": payload.inputFields.enumTypeId,
         "statusId": ["SERVICE_DRAFT"],
-        "statusId_op": "in",
         "systemJobEnumId_op": "not-empty",
         "shopId_fld0_value": store.state.user.currentShopifyConfig?.shopId,
         "shopId_fld0_grp": "1",

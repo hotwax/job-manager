@@ -37,11 +37,6 @@ export default defineComponent({
     IonLabel,
     IonList
   },
-  data() {
-    return {
-      title: '',
-    }
-  },
   props: ["jobs", "jobEnums"],
   computed: {
     ...mapGetters({
@@ -55,8 +50,7 @@ export default defineComponent({
   },
   methods: {
     async viewJobConfiguration(job: any) {
-      this.title = this.getEnumName(job.systemJobEnumId)
-      job.jobTitle = this.title;
+      job.jobTitle = this.getEnumName(job.systemJobEnumId)
       emitter.emit('showJobConfigurationForMoreJobs', job);
       return;
     },
