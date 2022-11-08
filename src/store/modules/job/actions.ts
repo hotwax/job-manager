@@ -759,7 +759,7 @@ const actions: ActionTree<JobState, RootState> = {
     let params = {
       "inputFields": {
         "enumTypeId": payload.inputFields.enumTypeId,
-        "statusId": ["SERVICE_DRAFT"],
+        "statusId": "SERVICE_DRAFT",
         "systemJobEnumId_op": "not-empty",
         "shopId_fld0_value": store.state.user.currentShopifyConfig?.shopId,
         "shopId_fld0_grp": "1",
@@ -781,7 +781,7 @@ const actions: ActionTree<JobState, RootState> = {
     params =  JSON.parse(JSON.stringify(params));
 
     // Fetching pending jobs
-    params.inputFields.statusId = ["SERVICE_PENDING"];
+    params.inputFields.statusId = "SERVICE_PENDING";
     params.inputFields.productStoreId = this.state.user.currentEComStore.productStoreId;
     fetchJobRequests.push(JobService.fetchJobInformation(params).catch((err) => {
       return err;

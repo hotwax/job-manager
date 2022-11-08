@@ -177,6 +177,9 @@ export default defineComponent({
           "enumTypeId": "INVENTORY_SYS_JOB",
         },
       });
+    },
+    updateJobCofigurationVisibility(job: any) {
+      this.viewJobConfiguration(job.jobId, job.jobTitle, job.statusId, job);
     }
   },
   mounted () {
@@ -187,14 +190,10 @@ export default defineComponent({
       }
     });
     this.fetchMoreJobs();
-    emitter.on('showJobConfiguration', (job) => {
-      this.viewJobConfiguration(job.jobId, job.jobTitle, job.statusId, job);
-    })
+    emitter.on('showJobConfiguration', this.updateJobCofigurationVisibility)
   },
   unmounted() {
-    emitter.off('showJobConfiguration', (job) => {
-      this.viewJobConfiguration(job.jobId, job.jobTitle, job.statusId, job);
-    });
+    emitter.off('showJobConfiguration', this.updateJobCofigurationVisibility)
   },
   setup() {
     const store = useStore();
