@@ -8,7 +8,7 @@
         <ion-title>{{ $t("Pipeline") }}</ion-title>
         <ion-buttons slot="end">
           <ion-menu-button menu="end">
-            <ion-icon :icon="filterOutline" :color="updateFilterIcon() ? 'secondary' : ''" />
+            <ion-icon :icon="filterOutline" :color="((isFilterApplied && segmentSelected === 'history') || (isCategoryOrEnumFilterApplied && segmentSelected !== 'history')) ? 'secondary' : ''" />
           </ion-menu-button>
         </ion-buttons>
       </ion-toolbar>
@@ -370,6 +370,8 @@ export default defineComponent({
       getPinnedJobs: 'user/getPinnedJobs',
       currentJob: 'job/getCurrentJob',
       pipelineFilters: 'job/getPipelineFilters',
+      isFilterApplied: 'job/isFilterApplied',
+      isCategoryOrEnumFilterApplied: 'job/isCategoryOrEnumFilterApplied',
     })
   },
   methods : {
@@ -474,7 +476,6 @@ export default defineComponent({
       this.segmentSelected === 'pending' ? this.getPendingJobs():
       this.segmentSelected === 'running' ? this.getRunningJobs():
       this.getJobHistory();
-      this.updateFilterIcon();
     },
     async skipJob (job: any) {
       const alert = await alertController
@@ -572,16 +573,6 @@ export default defineComponent({
         this.getPendingJobs();
       }
     },
-    updateFilterIcon() {
-      const isFilterApplied = this.pipelineFilters.status?.length > 0 || this.pipelineFilters.category?.length > 0 || this.pipelineFilters.enum?.length > 0
-      const isCategoryOrEnumFilterApplied = this.pipelineFilters.category?.length > 0 || this.pipelineFilters.enum?.length > 0
-
-      if((isFilterApplied && this.segmentSelected === 'history') || (isCategoryOrEnumFilterApplied && this.segmentSelected !== 'history')) {
-        return true;
-      } else {
-        return false;
-      }
-    }
   },
   async created() {
     this.getPendingJobs();
