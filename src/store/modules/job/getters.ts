@@ -60,6 +60,12 @@ const getters: GetterTree <JobState, RootState> = {
     getPipelineFilters: (state) => {
       return state.pipelineFilters;
     },
+    // isHistoryFilterApplied (state) {
+    //   return state.pipelineFilters.status?.length > 0 || state.pipelineFilters.category?.length || state.pipelineFilters.enum?.length
+    // },
+    // isFilterApplied (state) {
+    //   return state.pipelineFilters.status?.length > 0 || state.pipelineFilters.category?.length || state.pipelineFilters.enum?.length
+    // }
   }
 
   export default getters;
