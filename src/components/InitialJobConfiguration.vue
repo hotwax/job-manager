@@ -24,7 +24,6 @@
               hour-cycle="h23"
               :value="runTime ? getDateTime(runTime) : ''"
               @ionChange="updateRunTime($event, currentJob)"
-              :show-default-buttons="true"
             />
           </ion-content>
         </ion-modal>
