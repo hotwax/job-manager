@@ -14,11 +14,11 @@
             <ion-card-header>
               <ion-card-title>{{ $t("Sync") }}</ion-card-title>
             </ion-card-header>
-            <ion-item button @click="viewJobConfiguration('IMP_PRDTS', 'Import products', getJobStatus(this.jobEnums['IMP_PRDTS']))" detail>
+            <ion-item button @click="viewJobConfiguration({ id: 'IMP_PRDTS', title: 'Import products', status: getJobStatus(jobEnums['IMP_PRDTS'])})" detail>
               <ion-label class="ion-text-wrap">{{ $t("Import products") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_PRDTS') }}</ion-label>
             </ion-item>
-            <ion-item button @click="viewJobConfiguration('SYNC_PRDTS', 'Sync products', getJobStatus(this.jobEnums['SYNC_PRDTS']))" detail>
+            <ion-item button @click="viewJobConfiguration({ id: 'SYNC_PRDTS', title: 'Sync products', status: getJobStatus(jobEnums['SYNC_PRDTS'])})" detail>
               <ion-label class="ion-text-wrap">{{ $t("Sync products") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('SYNC_PRDTS') }} </ion-label>
             </ion-item>
@@ -133,14 +133,10 @@ export default defineComponent({
     });
     this.store.dispatch('webhook/fetchWebhooks')
     this.fetchMoreJobs();
-    emitter.on('viewJobConfiguration', (payload) => {
-      this.viewJobConfiguration(payload.jobId, payload.jobTitle, payload.statusId, payload.job)
-    })
+    emitter.on('viewJobConfiguration', this.viewJobConfiguration)
   },
   unmounted() {
-    emitter.off('viewJobConfiguration', (payload) => {
-      this.viewJobConfiguration(payload.jobId, payload.jobTitle, payload.statusId, payload.job)
-    })
+    emitter.off('viewJobConfiguration', this.viewJobConfiguration)
   },
   methods: {
     async updateWebhook(checked: boolean, enumId: string) {
@@ -158,11 +154,11 @@ export default defineComponent({
         await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhook?.id, shopifyConfigId: this.currentShopifyConfig.shopifyConfigId })
       }
     },
-    async viewJobConfiguration(id: string, title: string, status: string, job?: any) {
-      this.currentJob = job || this.getJob(this.jobEnums[id])
-      this.title = title
-      this.currentJobStatus = status
-      this.freqType = id && this.jobFrequencyType[id]
+    async viewJobConfiguration(jobInformation: any) {
+      this.currentJob = jobInformation.job || this.getJob(this.jobEnums[jobInformation.id])
+      this.title = jobInformation.title
+      this.currentJobStatus = jobInformation.status
+      this.freqType = jobInformation.id && this.jobFrequencyType[jobInformation.id]
 
       await this.store.dispatch('job/updateCurrentJob', { job: this.currentJob });
       if(!this.isDesktop && this.currentJob) {

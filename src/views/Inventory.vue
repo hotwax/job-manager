@@ -23,7 +23,7 @@
                 <p>{{ $t("When using HotWax BOPIS, Shopify isn't aware of the actual inventory consumed. HotWax will automatically restore inventory automatically reduced by Shopify and deduct inventory from the correct store to maintain inventory accuracy.") }}</p>
               </ion-label>
             </ion-item>
-            <ion-item button @click="viewJobConfiguration('HARD_SYNC', 'Hard sync', getJobStatus(this.jobEnums['HARD_SYNC']))" detail>
+            <ion-item button @click="viewJobConfiguration({ id: 'HARD_SYNC', title: 'Hard sync', status: getJobStatus(jobEnums['HARD_SYNC'])})" detail>
               <ion-label class="ion-text-wrap">{{ $t("Hard sync") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('HARD_SYNC') }}</ion-label>
             </ion-item>
@@ -145,11 +145,11 @@ export default defineComponent({
         this.store.dispatch('job/updateJob', job)
       }
     },
-    async viewJobConfiguration(id: string, title: string, status: string, job?: any) {
-      this.currentJob = job || this.getJob(this.jobEnums[id])
-      this.title = title
-      this.currentJobStatus = status
-      this.freqType = id && this.jobFrequencyType[id]
+    async viewJobConfiguration(jobInformation: any) {
+      this.currentJob = jobInformation.job || this.getJob(this.jobEnums[jobInformation.id])
+      this.title = jobInformation.title
+      this.currentJobStatus = jobInformation.status
+      this.freqType = jobInformation.id && this.jobFrequencyType[jobInformation.id]
 
       await this.store.dispatch('job/updateCurrentJob', { job: this.currentJob });
       if(!this.isDesktop && this.currentJob) {
@@ -187,14 +187,10 @@ export default defineComponent({
       }
     });
     this.fetchMoreJobs();
-    emitter.on('viewJobConfiguration', (payload) => {
-      this.viewJobConfiguration(payload.jobId, payload.jobTitle, payload.statusId, payload.job)
-    })
+    emitter.on('viewJobConfiguration', this.viewJobConfiguration)
   },
   unmounted() {
-    emitter.off('viewJobConfiguration', (payload) => {
-      this.viewJobConfiguration(payload.jobId, payload.jobTitle, payload.statusId, payload.job)
-    })
+    emitter.off('viewJobConfiguration', this.viewJobConfiguration)
   },
   setup() {
     const store = useStore();

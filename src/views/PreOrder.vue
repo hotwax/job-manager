@@ -297,11 +297,11 @@ export default defineComponent({
 
       return jobAlert.present();
     },
-    async viewJobConfiguration(id: string, title: string, status: string, job?: any) {
-      this.currentJob = job || this.getJob(this.jobEnums[id])
-      this.title = title
-      this.currentJobStatus = status
-      this.freqType = id && this.jobFrequencyType[id]
+    async viewJobConfiguration(jobInformation: any) {
+      this.currentJob = jobInformation.job || this.getJob(this.jobEnums[jobInformation.id])
+      this.title = jobInformation.title
+      this.currentJobStatus = jobInformation.status
+      this.freqType = jobInformation.id && this.jobFrequencyType[jobInformation.id]
 
       await this.store.dispatch('job/updateCurrentJob', { job: this.currentJob });
       if(!this.isDesktop) {
@@ -339,14 +339,10 @@ export default defineComponent({
       }
     });
     this.fetchMoreJobs();
-    emitter.on('viewJobConfiguration', (payload) => {
-      this.viewJobConfiguration(payload.jobId, payload.jobTitle, payload.statusId, payload.job)
-    })
+    emitter.on('viewJobConfiguration', this.viewJobConfiguration)
   },
   unmounted() {
-    emitter.off('viewJobConfiguration', (payload) => {
-      this.viewJobConfiguration(payload.jobId, payload.jobTitle, payload.statusId, payload.job)
-    })
+    emitter.on('viewJobConfiguration', this.viewJobConfiguration)
   },
   setup() {
     const store = useStore();
