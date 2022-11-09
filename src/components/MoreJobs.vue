@@ -52,7 +52,6 @@ export default defineComponent({
     async viewJobConfiguration(job: any) {
       job.jobTitle = this.getEnumName(job.systemJobEnumId)
       emitter.emit('viewJobConfiguration', {jobId: job.jobId, jobTitle: job.jobTitle, statusId: job.statusId, job});
-      return;
     },
     getTemporalExpression(tempExprId: string) {
       return this.temporalExpr(tempExprId)?.description ? this.temporalExpr(tempExprId)?.description : this.$t('Disabled')
