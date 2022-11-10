@@ -8,7 +8,7 @@
         <ion-title>{{ $t("Pipeline") }}</ion-title>
         <ion-buttons slot="end">
           <ion-menu-button menu="end">
-            <ion-icon :icon="filterOutline" :color="((isFilterApplied && segmentSelected === 'history') || (isCategoryOrEnumFilterApplied && segmentSelected !== 'history')) ? 'secondary' : ''" />
+            <ion-icon :icon="filterOutline" :color="updateFilterIcon" />
           </ion-menu-button>
         </ion-buttons>
       </ion-toolbar>
@@ -372,7 +372,14 @@ export default defineComponent({
       pipelineFilters: 'job/getPipelineFilters',
       isFilterApplied: 'job/isFilterApplied',
       isCategoryOrEnumFilterApplied: 'job/isCategoryOrEnumFilterApplied',
-    })
+    }),
+    updateFilterIcon: function() {
+      const pipelineFilters = JSON.parse(JSON.stringify(this.pipelineFilters));
+      if(this.segmentSelected !== 'history') {
+        delete pipelineFilters.status;
+      } 
+      return Object.values(pipelineFilters as any).some((filters: any) => filters?.length > 0) ? 'secondary' : '';
+    },
   },
   methods : {
     isPinnedJobSelected(jobEnumId: any) {
