@@ -8,7 +8,7 @@
         <ion-title>{{ $t("Pipeline") }}</ion-title>
         <ion-buttons slot="end">
           <ion-menu-button menu="end">
-            <ion-icon :icon="filterOutline" />
+            <ion-icon :icon="filterOutline" :color="filterIconColor" />
           </ion-menu-button>
         </ion-buttons>
       </ion-toolbar>
@@ -338,7 +338,6 @@ export default defineComponent({
 },
   data() {
     return {
-      selectedPinnedJobs:[],
       jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
       jobEnums: {
         ...JSON.parse(process.env?.VUE_APP_ODR_JOB_ENUMS as string) as any,
@@ -371,7 +370,14 @@ export default defineComponent({
       getPinnedJobs: 'user/getPinnedJobs',
       currentJob: 'job/getCurrentJob',
       pipelineFilters: 'job/getPipelineFilters',
-    })
+    }),
+    filterIconColor: function() {
+      const pipelineFilters = JSON.parse(JSON.stringify(this.pipelineFilters));
+      if(this.segmentSelected !== 'history') {
+        delete pipelineFilters.status;
+      } 
+      return Object.values(pipelineFilters).some((filter: any) => filter.length > 0) ? 'secondary' : '';
+    },
   },
   methods : {
     isPinnedJobSelected(jobEnumId: any) {
@@ -571,7 +577,7 @@ export default defineComponent({
         }
         this.getPendingJobs();
       }
-    }
+    },
   },
   async created() {
     this.getPendingJobs();
