@@ -376,7 +376,7 @@ export default defineComponent({
       if(this.segmentSelected !== 'history') {
         delete pipelineFilters.status;
       } 
-      return Object.values(pipelineFilters as any).some((filters: any) => filters?.length > 0) ? 'secondary' : '';
+      return Object.values(pipelineFilters).some((filter: any) => filter.length > 0) ? 'secondary' : '';
     },
   },
   methods : {
