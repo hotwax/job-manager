@@ -1,9 +1,16 @@
 <template>
   <ion-page>
+    <Filters content-id="filter-content" :segmentSelected="segmentSelected" :queryString="queryString" />
+
     <ion-header :translucent="true">
       <ion-toolbar>
         <ion-menu-button slot="start" />
         <ion-title>{{ $t("Pipeline") }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-menu-button menu="end">
+            <ion-icon :icon="filterOutline" :color="filterIconColor" />
+          </ion-menu-button>
+        </ion-buttons>
       </ion-toolbar>
 
       <div>
@@ -23,7 +30,7 @@
       </div>
     </ion-header>
 
-    <ion-content>
+    <ion-content id="filter-content">
       <main>
         <section v-if="segmentSelected === 'pending'">
           <!-- Empty state -->
@@ -284,10 +291,11 @@ import {
   IonSpinner,
   isPlatform,
   modalController,
-  popoverController
+  popoverController,
+  IonButtons
 } from "@ionic/vue";
 import JobConfiguration from '@/components/JobConfiguration.vue'
-import { closeCircleOutline, codeWorkingOutline, copyOutline, ellipsisVerticalOutline, pinOutline, refreshOutline, timeOutline, timerOutline } from "ionicons/icons";
+import { closeCircleOutline, codeWorkingOutline, copyOutline, ellipsisVerticalOutline, filterOutline, pinOutline, refreshOutline, timeOutline, timerOutline } from "ionicons/icons";
 import emitter from '@/event-bus';
 import JobHistoryModal from '@/components/JobHistoryModal.vue';
 import { Plugins } from '@capacitor/core';
@@ -295,7 +303,7 @@ import { showToast } from '@/utils'
 import JobActionsPopover from '@/components/JobActionsPopover.vue'
 import { useAbility } from '@casl/vue';
 import { SUBJECTS, ACTIONS } from '@/authorization'
-
+import Filters from '@/components/Filters.vue';
 
 export default defineComponent({
   name: "Pipeline",
@@ -326,11 +334,12 @@ export default defineComponent({
     IonSegment,
     IonSegmentButton,
     IonSpinner,
-    JobConfiguration
-  },
+    IonButtons,
+    JobConfiguration,
+    Filters
+},
   data() {
     return {
-      selectedPinnedJobs:[],
       jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
       jobEnums: {
         ...JSON.parse(process.env?.VUE_APP_ODR_JOB_ENUMS as string) as any,
@@ -362,18 +371,26 @@ export default defineComponent({
       isHistoryJobsScrollable: 'job/isHistoryJobsScrollable',
       getPinnedJobs: 'user/getPinnedJobs',
       currentJob: 'job/getCurrentJob',
-    })
+      pipelineFilters: 'job/getPipelineFilters',
+    }),
+    filterIconColor: function() {
+      const pipelineFilters = JSON.parse(JSON.stringify(this.pipelineFilters));
+      if(this.segmentSelected !== 'history') {
+        delete pipelineFilters.status;
+      } 
+      return Object.values(pipelineFilters).some((filter: any) => filter.length > 0) ? 'secondary' : '';
+    },
   },
   methods : {
     isPinnedJobSelected(jobEnumId: any) {
-      return (this as any).selectedPinnedJobs.some((jobId: any) =>  jobId === jobEnumId );
+      return (this as any).pipelineFilters.enum.some((jobId: any) =>  jobId === jobEnumId );
     },
     updateSelectedPinnedJob(jobEnumId: any) {
-      const index = (this as any).selectedPinnedJobs.indexOf(jobEnumId);
-      if ((this as any).selectedPinnedJobs.includes(jobEnumId) || !this.getPinnedJobs.includes(jobEnumId)) {
-        if (index != -1) (this as any).selectedPinnedJobs.splice(index, 1)
+      const index = (this as any).pipelineFilters.enum.indexOf(jobEnumId);
+      if ((this as any).pipelineFilters.enum.includes(jobEnumId) || !this.getPinnedJobs.includes(jobEnumId)) {
+        if (index != -1) (this as any).pipelineFilters.enum.splice(index, 1)
       } else {
-        (this as any).selectedPinnedJobs.push(jobEnumId)
+        (this as any).pipelineFilters.enum.push(jobEnumId)
       }
 
       this.segmentSelected === 'pending' ? this.getPendingJobs():
@@ -461,7 +478,6 @@ export default defineComponent({
         });
       }
     },
-
     segmentChanged (e: CustomEvent) {
       this.segmentSelected = e.detail.value
       this.segmentSelected === 'pending' ? this.getPendingJobs():
@@ -490,13 +506,13 @@ export default defineComponent({
       return alert.present();
     },
     async getPendingJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
-      await this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, systemJobEnumId: this.selectedPinnedJobs});
+      await this.store.dispatch('job/fetchPendingJobs', { eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, systemJobEnumId: this.pipelineFilters.enum, enumTypeId: this.pipelineFilters.category, statusId: this.pipelineFilters.status });
     },
     async getRunningJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
-      await this.store.dispatch('job/fetchRunningJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, systemJobEnumId: this.selectedPinnedJobs});
+      await this.store.dispatch('job/fetchRunningJobs', { eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, systemJobEnumId: this.pipelineFilters.enum, enumTypeId: this.pipelineFilters.category, statusId: this.pipelineFilters.status });
     },
     async getJobHistory(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
-      await this.store.dispatch('job/fetchJobHistory', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, systemJobEnumId: this.selectedPinnedJobs});
+      await this.store.dispatch('job/fetchJobHistory', { eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, systemJobEnumId: this.pipelineFilters.enum, enumTypeId: this.pipelineFilters.category, statusId: this.pipelineFilters.status});
     },
     async openJobActions(job: any, ev: Event) {
       const popover = await popoverController.create({
@@ -563,7 +579,7 @@ export default defineComponent({
         }
         this.getPendingJobs();
       }
-    }
+    },
   },
   async created() {
     this.getPendingJobs();
@@ -602,7 +618,8 @@ export default defineComponent({
       timeOutline,
       timerOutline,
       segmentSelected,
-      router
+      router,
+      filterOutline
     };
   }
 });

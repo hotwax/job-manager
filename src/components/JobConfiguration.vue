@@ -24,11 +24,11 @@
         <!-- <ion-button id="open-run-time-modal" size="small" fill="outline" color="medium" v-show="!currentJob?.runTime">{{ $t("Select run time") }}</ion-button> -->
         <ion-modal class="date-time-modal" :is-open="isOpen" @didDismiss="() => isOpen = false">
           <ion-content force-overscroll="false">
-            <ion-datetime
+            <ion-datetime          
+              show-default-buttons
               hour-cycle="h23"
               :value="runTime ? getDateTime(runTime) : ''"
               @ionChange="updateRunTime($event, currentJob)"
-              :show-default-buttons="true"
             />
           </ion-content>
         </ion-modal>
@@ -300,6 +300,7 @@ export default defineComponent({
     async updateJob() {
       const job = this.currentJob;
       job['jobStatus'] = this.jobStatus !== 'SERVICE_DRAFT' ? this.jobStatus : 'HOURLY';
+      job.runTime = this.runTime;
 
       if (job?.statusId === 'SERVICE_DRAFT') {
         this.store.dispatch('job/scheduleService', job).then((job: any) => {
@@ -451,7 +452,6 @@ ion-list {
 ion-label:nth-child(3) {
   cursor: pointer;
 }
-
 
 ion-modal {
   --width: 290px;

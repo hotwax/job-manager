@@ -70,7 +70,8 @@
             <ion-label class="ion-text-wrap" @click="() => isOpenGlobal = true" slot="end">{{ $t('Select run time') }}</ion-label>
             <ion-modal class="date-time-modal" :is-open="isOpenGlobal" @didDismiss="() => isOpenGlobal = false">
               <ion-content force-overscroll="false">
-                <ion-datetime
+                <ion-datetime            
+                  show-default-buttons
                   hour-cycle="h12"
                 />
               </ion-content>
@@ -118,7 +119,8 @@
             <ion-label class="ion-text-wrap" @click="() => isOpen = true" slot="end">{{ $t('Select run time') }}</ion-label>
             <ion-modal class="date-time-modal" :is-open="isOpen" @didDismiss="() => isOpen = false">
               <ion-content force-overscroll="false">
-                <ion-datetime
+                <ion-datetime              
+                  show-default-buttons
                   hour-cycle="h12"
                 />
               </ion-content>
@@ -237,5 +239,11 @@ export default defineComponent({
   
   ion-button {
     margin: var(--spacer-base) var(--spacer-xs);
+  }
+
+  ion-modal {
+    --width: 290px;
+    --height: 440px;
+    --border-radius: 8px;
   }
 </style>

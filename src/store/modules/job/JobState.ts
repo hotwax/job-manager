@@ -19,4 +19,9 @@ export default interface JobState {
     current: any;
     temporalExp: any;
     enumIds: any;
+    pipelineFilters: {
+      status: any,
+      category: any,
+      enum: any
+    }
 }
