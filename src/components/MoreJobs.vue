@@ -6,7 +6,7 @@
     <ion-list>
       <ion-item v-for="job in jobs" :key="job.jobId" @click="viewJobConfiguration(job)" detail button>
         <ion-label class="ion-text-wrap">{{ job.jobName }}</ion-label>
-        <ion-label slot="end">{{ job.statusId === "SERVICE_PENDING" ? getDate(job.runTime) : getTemporalExpression(job.tempExprId) }}</ion-label>
+        <ion-label slot="end">{{ job.statusId === "SERVICE_PENDING" ? temporalExpr(job.tempExprId)?.description : $t('Disabled') }}</ion-label>
       </ion-item>
     </ion-list>
   </ion-card>
@@ -52,9 +52,6 @@ export default defineComponent({
     async viewJobConfiguration(job: any) {
       job.jobTitle = this.getEnumName(job.systemJobEnumId)
       emitter.emit('viewJobConfiguration', {jobId: job.jobId, jobTitle: job.jobTitle, statusId: job.statusId, job});
-    },
-    getTemporalExpression(tempExprId: string) {
-      return this.temporalExpr(tempExprId)?.description ? this.temporalExpr(tempExprId)?.description : this.$t('Disabled')
     },
     getDate (runTime: any) {
       return DateTime.fromMillis(runTime).toLocaleString(DateTime.DATE_MED);
