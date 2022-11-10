@@ -370,8 +370,6 @@ export default defineComponent({
       getPinnedJobs: 'user/getPinnedJobs',
       currentJob: 'job/getCurrentJob',
       pipelineFilters: 'job/getPipelineFilters',
-      isFilterApplied: 'job/isFilterApplied',
-      isCategoryOrEnumFilterApplied: 'job/isCategoryOrEnumFilterApplied',
     }),
     updateFilterIcon: function() {
       const pipelineFilters = JSON.parse(JSON.stringify(this.pipelineFilters));
