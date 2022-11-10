@@ -8,7 +8,7 @@
         <ion-title>{{ $t("Pipeline") }}</ion-title>
         <ion-buttons slot="end">
           <ion-menu-button menu="end">
-            <ion-icon :icon="filterOutline" :color="updateFilterIcon" />
+            <ion-icon :icon="filterOutline" :color="filterIconColor" />
           </ion-menu-button>
         </ion-buttons>
       </ion-toolbar>
@@ -371,7 +371,7 @@ export default defineComponent({
       currentJob: 'job/getCurrentJob',
       pipelineFilters: 'job/getPipelineFilters',
     }),
-    updateFilterIcon: function() {
+    filterIconColor: function() {
       const pipelineFilters = JSON.parse(JSON.stringify(this.pipelineFilters));
       if(this.segmentSelected !== 'history') {
         delete pipelineFilters.status;
