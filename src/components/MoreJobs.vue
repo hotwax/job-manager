@@ -57,14 +57,6 @@ export default defineComponent({
       return DateTime.fromMillis(runTime).toLocaleString(DateTime.DATE_MED);
     },
   },
-  mounted () {
-    this.store.dispatch("job/fetchJobs", {
-      "inputFields":{
-        "systemJobEnumId": Object.values(this.jobEnums),
-        "systemJobEnumId_op": "in"
-      }
-    });
-  },
   setup() {
     const store = useStore();
     const router = useRouter();
