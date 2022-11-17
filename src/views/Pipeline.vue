@@ -443,17 +443,14 @@ export default defineComponent({
       this.isRetrying = isRetrying;
       if(this.segmentSelected === 'pending') {
         this.getPendingJobs().then(() => {
-          if(event) event.target.complete();
           this.isRetrying = false;
         });
       } else if(this.segmentSelected === 'running') {
         this.getRunningJobs().then(() => {
-          if(event) event.target.complete();
           this.isRetrying = false;
         });
       } else {
         this.getJobHistory().then(() => {
-          if(event) event.target.complete();
           this.isRetrying = false;
         });
       }

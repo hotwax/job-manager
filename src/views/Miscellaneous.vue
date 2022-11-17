@@ -47,6 +47,7 @@
 <script lang="ts">
 import { DateTime } from 'luxon';
 import {
+  IonButton,
   IonContent,
   IonHeader,
   IonInfiniteScroll,
@@ -73,6 +74,7 @@ import { isFutureDate } from '@/utils';
 export default defineComponent({
   name: 'Miscellaneous',
   components: {
+    IonButton,
     IonContent,
     IonHeader,
     IonInfiniteScroll,
@@ -145,7 +147,6 @@ export default defineComponent({
     async refreshJobs(event: any) {
       this.isRetrying = true;
       this.getMiscellaneousJobs().then(() => {
-        if(event) event.target.complete();
         this.isRetrying = false;
       })
     },
