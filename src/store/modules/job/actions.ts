@@ -754,6 +754,69 @@ const actions: ActionTree<JobState, RootState> = {
       console.error(err);
     }
   },
+  async fetchMoreJobs({ commit }, payload) {
+    const fetchJobRequests = [];
+    let params = {
+      "inputFields": {
+        "enumTypeId": payload.inputFields.enumTypeId,
+        "statusId": "SERVICE_DRAFT",
+        "systemJobEnumId_op": "not-empty",
+        "shopId_fld0_value": store.state.user.currentShopifyConfig?.shopId,
+        "shopId_fld0_grp": "1",
+        "shopId_fld0_op": "equals",
+        "shopId_fld1_grp": "2",
+        "shopId_fld1_op": "empty"
+      } as any,
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runtimeDataId", "enumName", "shopId", "description" ],
+      "noConditionFind": "Y",
+      "viewSize": 30, // as we've not implemented infiniteScroll in moreJobs, we are passing viewSize hardcodedly as 30
+      "viewIndex": 0
+    }
+
+    fetchJobRequests.push(JobService.fetchJobInformation(params).catch((err) => {
+      return err;
+    }))
+
+    // Deep cloning in order to avoid mutating the same reference causing side effects
+    params =  JSON.parse(JSON.stringify(params));
+
+    // Fetching pending jobs
+    params.inputFields.statusId = "SERVICE_PENDING";
+    params.inputFields.productStoreId = this.state.user.currentEComStore.productStoreId;
+    fetchJobRequests.push(JobService.fetchJobInformation(params).catch((err) => {
+      return err;
+    }))
+
+    try {
+      const resp = await Promise.all(fetchJobRequests)
+      const moreJobs = resp.reduce((responseJobs: any, response: any) => {
+        response.status === 200 && !hasError(response) && response.data.docs && (responseJobs = [...responseJobs, ...response.data.docs]);
+        return responseJobs;
+      }, [])
+
+      if(moreJobs.length) {
+        const morePendingJobs = moreJobs.filter((job: any) => job.statusId === "SERVICE_PENDING")
+        const moreDraftJobs = moreJobs.filter((job: any) => job.statusId === "SERVICE_DRAFT")
+
+        commit(types.JOB_MORE_UPDATED, {
+          pendingJobs: morePendingJobs,
+          pendingTotal: morePendingJobs.length,
+          draftJobs: moreDraftJobs,
+          draftTotal: moreDraftJobs.length,
+        });
+      } else {
+        commit(types.JOB_MORE_UPDATED, {
+          pendingJobs: [],
+          pendingTotal: 0,
+          draftJobs: [],
+          draftTotal: 0,
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      showToast(translate("Something went wrong"));
+    }
+  },
   setPipelineFilters({ commit, state }, payload) {
     const pipelineFilters = JSON.parse(JSON.stringify(state.pipelineFilters));
     const pipelineFilter = (pipelineFilters as any)[payload.type]

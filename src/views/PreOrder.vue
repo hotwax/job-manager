@@ -109,6 +109,7 @@
               <ion-label class="ion-text-wrap"><p>{{ $t("Re-allocation will re-calculate promise dates on all pre-orders based on upcoming inventory from purchase orders. Promise dates that were manually adjusted will be overriden.") }}</p></ion-label>
             </ion-item>
           </ion-card> 
+          <MoreJobs v-if="moreJobs.length" :jobs="moreJobs" :jobEnums="jobEnums" />
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
@@ -145,6 +146,7 @@ import JobConfiguration from '@/components/JobConfiguration.vue'
 import { isFutureDate, showToast, prepareRuntime } from '@/utils';
 import emitter from '@/event-bus';
 import { translate } from '@/i18n';
+import MoreJobs from '@/components/MoreJobs.vue';
 
 export default defineComponent({
   name: 'PreOrder',
@@ -162,15 +164,17 @@ export default defineComponent({
     IonPage,
     IonTitle,
     IonToolbar,
-    JobConfiguration
-  },
+    JobConfiguration,
+    MoreJobs
+},
   computed: {
     ...mapGetters({
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
       currentEComStore: 'user/getCurrentEComStore',
-      getTemporalExpr: 'job/getTemporalExpr'
+      getTemporalExpr: 'job/getTemporalExpr',
+      moreJobs: 'job/getMoreJobs'
     }),
     preOrderManageCatalog(): boolean {
       const status = this.getJobStatus(this.jobEnums["PRE_ORDER_CTLG"]);
@@ -293,11 +297,11 @@ export default defineComponent({
 
       return jobAlert.present();
     },
-    async viewJobConfiguration(id: string, title: string, status: string) {
-      this.currentJob = this.getJob(this.jobEnums[id])
-      this.title = title
-      this.currentJobStatus = status
-      this.freqType = id && this.jobFrequencyType[id]
+    async viewJobConfiguration(jobInformation: any) {
+      this.currentJob = jobInformation.job || this.getJob(this.jobEnums[jobInformation.id])
+      this.title = jobInformation.title
+      this.currentJobStatus = jobInformation.status
+      this.freqType = jobInformation.id && this.jobFrequencyType[jobInformation.id]
 
       await this.store.dispatch('job/updateCurrentJob', { job: this.currentJob });
       if(!this.isDesktop) {
@@ -318,6 +322,13 @@ export default defineComponent({
       return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
         this.$t('Disabled')
+    },
+    async fetchMoreJobs() {
+      await this.store.dispatch("job/fetchMoreJobs", {
+        "inputFields":{
+          "enumTypeId": "PRE_ORD_SYS_JOB",
+        },
+      });
     }
   },
   mounted () {
@@ -327,6 +338,11 @@ export default defineComponent({
         "systemJobEnumId_op": "in"
       }
     });
+    this.fetchMoreJobs();
+    emitter.on('viewJobConfiguration', this.viewJobConfiguration)
+  },
+  unmounted() {
+    emitter.on('viewJobConfiguration', this.viewJobConfiguration)
   },
   setup() {
     const store = useStore();

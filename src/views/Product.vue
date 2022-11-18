@@ -14,11 +14,11 @@
             <ion-card-header>
               <ion-card-title>{{ $t("Sync") }}</ion-card-title>
             </ion-card-header>
-            <ion-item button @click="viewJobConfiguration('IMP_PRDTS', 'Import products', getJobStatus(this.jobEnums['IMP_PRDTS']))" detail>
+            <ion-item button @click="viewJobConfiguration({ id: 'IMP_PRDTS', title: 'Import products', status: getJobStatus(jobEnums['IMP_PRDTS'])})" detail>
               <ion-label class="ion-text-wrap">{{ $t("Import products") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_PRDTS') }}</ion-label>
             </ion-item>
-            <ion-item button @click="viewJobConfiguration('SYNC_PRDTS', 'Sync products', getJobStatus(this.jobEnums['SYNC_PRDTS']))" detail>
+            <ion-item button @click="viewJobConfiguration({ id: 'SYNC_PRDTS', title: 'Sync products', status: getJobStatus(jobEnums['SYNC_PRDTS'])})" detail>
               <ion-label class="ion-text-wrap">{{ $t("Sync products") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('SYNC_PRDTS') }} </ion-label>
             </ion-item>
@@ -40,6 +40,7 @@
               <ion-toggle slot="end" :checked="deleteProductsWebhook" @ionChange="updateWebhook($event['detail'].checked, 'DELETE_PRODUCTS')" color="secondary" />
             </ion-item>
           </ion-card>
+          <MoreJobs v-if="moreJobs.length" :jobs="moreJobs" :jobEnums="jobEnums" />
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
@@ -72,6 +73,7 @@ import JobConfiguration from '@/components/JobConfiguration.vue'
 import { isFutureDate } from '@/utils';
 import emitter from '@/event-bus';
 import { useRouter } from 'vue-router'
+import MoreJobs from '@/components/MoreJobs.vue'
 
 export default defineComponent({
   name: 'Product',
@@ -88,7 +90,8 @@ export default defineComponent({
     IonTitle,
     IonToolbar,
     IonToggle,
-    JobConfiguration
+    JobConfiguration,
+    MoreJobs
   },
   computed: {
     ...mapGetters({
@@ -96,7 +99,8 @@ export default defineComponent({
       getTemporalExpr: 'job/getTemporalExpr',
       getJob: 'job/getJob',
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
-      getCachedWebhook: 'webhook/getCachedWebhook'
+      getCachedWebhook: 'webhook/getCachedWebhook',
+      moreJobs: 'job/getMoreJobs'
     }),
     newProductsWebhook(): boolean {
       const webhookTopic = this.webhookEnums['NEW_PRODUCTS']
@@ -128,6 +132,11 @@ export default defineComponent({
       }
     });
     this.store.dispatch('webhook/fetchWebhooks')
+    this.fetchMoreJobs();
+    emitter.on('viewJobConfiguration', this.viewJobConfiguration)
+  },
+  unmounted() {
+    emitter.off('viewJobConfiguration', this.viewJobConfiguration)
   },
   methods: {
     async updateWebhook(checked: boolean, enumId: string) {
@@ -145,11 +154,11 @@ export default defineComponent({
         await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhook?.id, shopifyConfigId: this.currentShopifyConfig.shopifyConfigId })
       }
     },
-    async viewJobConfiguration(id: string, title: string, status: string) {
-      this.currentJob = this.getJob(this.jobEnums[id])
-      this.title = title
-      this.currentJobStatus = status
-      this.freqType = id && this.jobFrequencyType[id]
+    async viewJobConfiguration(jobInformation: any) {
+      this.currentJob = jobInformation.job || this.getJob(this.jobEnums[jobInformation.id])
+      this.title = jobInformation.title
+      this.currentJobStatus = jobInformation.status
+      this.freqType = jobInformation.id && this.jobFrequencyType[jobInformation.id]
 
       await this.store.dispatch('job/updateCurrentJob', { job: this.currentJob });
       if(!this.isDesktop && this.currentJob) {
@@ -170,6 +179,13 @@ export default defineComponent({
       return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
         this.$t('Disabled')
+    },
+    async fetchMoreJobs() {
+      await this.store.dispatch("job/fetchMoreJobs", {
+        "inputFields":{
+          "enumTypeId": "PRODUCT_SYS_JOB",
+        },
+      });
     }
   },
   setup() {

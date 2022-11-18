@@ -57,6 +57,18 @@ const getters: GetterTree <JobState, RootState> = {
     isMiscellaneousJobsScrollable: (state) => {
       return state.miscellaneous.list?.length > 0 && state.miscellaneous.list?.length < state.miscellaneous.total
     },
+    getMoreJobs (state){
+      let jobs = state.more.draft.list.reduce((jobs: any, draftJob: any) => {
+        jobs[draftJob.systemJobEnumId] = draftJob;
+        return jobs;
+      }, {})
+      jobs = state.more.pending.list.reduce((jobs: any, pendingJob: any) => {
+        jobs[pendingJob.systemJobEnumId] = pendingJob;
+        return jobs;
+      }, jobs)
+
+      return Object.values(jobs)
+    },
     getPipelineFilters: (state) => {
       return state.pipelineFilters;
     },
