@@ -357,7 +357,7 @@ const actions: ActionTree<JobState, RootState> = {
         ...payload.inputFields
       },
       "noConditionFind": "Y",
-      "viewSize": ((payload.inputFields?.systemJobEnumId?.length * 3) || 0) + 30
+      "viewSize": (payload.inputFields?.systemJobEnumId?.length * 3) || 30
     } as any
 
     if (payload?.orderBy) {

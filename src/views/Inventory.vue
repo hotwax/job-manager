@@ -33,7 +33,7 @@
               </ion-label>
             </ion-item>
           </ion-card>
-          <MoreJobs v-if="getMoreJobs(jobEnums, 'INVENTORY_SYS_JOB').length" :jobs="getMoreJobs(jobEnums, 'INVENTORY_SYS_JOB')" :jobEnums="jobEnums" />
+          <MoreJobs v-if="getMoreJobs(jobEnums, enumTypeId).length" :jobs="getMoreJobs(jobEnums, enumTypeId)" :jobEnums="jobEnums" />
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
@@ -96,7 +96,8 @@ export default defineComponent({
       currentJobStatus: '',
       freqType: '',
       isJobDetailAnimationCompleted: false,
-      isDesktop: isPlatform('desktop')
+      isDesktop: isPlatform('desktop'),
+      enumTypeId: 'INVENTORY_SYS_JOB'
     }
   },
   computed: {

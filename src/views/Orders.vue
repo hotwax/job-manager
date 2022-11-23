@@ -143,7 +143,7 @@
               </ion-item-sliding>
             </ion-list>
           </ion-card>
-          <MoreJobs v-if="getMoreJobs(jobEnums, 'ORDER_SYS_JOB').length" :jobs="getMoreJobs(jobEnums, 'ORDER_SYS_JOB')" :jobEnums="jobEnums" />
+          <MoreJobs v-if="getMoreJobs(jobEnums, enumTypeId).length" :jobs="getMoreJobs(jobEnums, enumTypeId)" :jobEnums="jobEnums" />
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
@@ -234,7 +234,8 @@ export default defineComponent({
       freqType: '',
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
-      autoCancelDays: ''
+      autoCancelDays: '',
+      enumTypeId: 'ORDER_SYS_JOB'
     }
   },
   computed: {
@@ -495,7 +496,6 @@ export default defineComponent({
     if (this.currentEComStore.productStoreId) {
       this.getAutoCancelDays();
     }
-    // this.moreJobs = this.getMoreJobs(this.jobEnums, "ORDER_SYS_JOB");
     emitter.on('viewJobConfiguration', this.viewJobConfiguration)
   },
   unmounted() {

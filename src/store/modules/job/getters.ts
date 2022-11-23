@@ -60,11 +60,11 @@ const getters: GetterTree <JobState, RootState> = {
     getMoreJobs: (state) => (jobEnums: any, enumTypeId: string): any => {
       const orderJobEnumIds = Object.values(jobEnums) as any;
 
-      return Object.keys(state.cached).reduce((orders: any, enumId: any) => {
-        if(orderJobEnumIds.indexOf(enumId) === -1 && state.cached[enumId]?.enumTypeId === enumTypeId) {
-          orders.push(state.cached[enumId])
+      return Object.keys(state.cached).reduce((jobs: any, enumId: string) => {
+        if(!orderJobEnumIds.includes(enumId) && state.cached[enumId]?.enumTypeId === enumTypeId) {
+          jobs.push(state.cached[enumId])
         }
-        return orders
+        return jobs
       }, [])
     },
     getPipelineFilters: (state) => {
