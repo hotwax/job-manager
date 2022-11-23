@@ -109,7 +109,7 @@
               <ion-label class="ion-text-wrap"><p>{{ $t("Re-allocation will re-calculate promise dates on all pre-orders based on upcoming inventory from purchase orders. Promise dates that were manually adjusted will be overriden.") }}</p></ion-label>
             </ion-item>
           </ion-card> 
-          <MoreJobs v-if="moreJobs.length" :jobs="moreJobs" :jobEnums="jobEnums" />
+          <MoreJobs v-if="getMoreJobs(jobEnums, 'PRE_ORD_SYS_JOB').length" :jobs="getMoreJobs(jobEnums, 'PRE_ORD_SYS_JOB')" :jobEnums="jobEnums" />
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
@@ -238,7 +238,7 @@ export default defineComponent({
       currentJobStatus: '',
       freqType: '',
       isJobDetailAnimationCompleted: false,
-      isDesktop: isPlatform('desktop')
+      isDesktop: isPlatform('desktop'),
     }
   },
   methods: {
@@ -323,22 +323,16 @@ export default defineComponent({
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
         this.$t('Disabled')
     },
-    async fetchMoreJobs() {
-      await this.store.dispatch("job/fetchMoreJobs", {
-        "inputFields":{
-          "enumTypeId": "PRE_ORD_SYS_JOB",
-        },
-      });
+    getMoreJobs(jobEnums: any, enumTypeId: string) {
+      return this.moreJobs(jobEnums, enumTypeId);
     }
   },
   mounted () {
     this.store.dispatch("job/fetchJobs", {
       "inputFields":{
-        "systemJobEnumId": Object.values(this.jobEnums),
-        "systemJobEnumId_op": "in"
+        "enumTypeId": "PRE_ORD_SYS_JOB"
       }
     });
-    this.fetchMoreJobs();
     emitter.on('viewJobConfiguration', this.viewJobConfiguration)
   },
   unmounted() {

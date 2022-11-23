@@ -5,7 +5,7 @@
     </ion-card-header>
     <ion-list>
       <ion-item v-for="job in jobs" :key="job.jobId" @click="viewJobConfiguration(job)" detail button>
-        <ion-label class="ion-text-wrap">{{ job.jobName }}</ion-label>
+        <ion-label class="ion-text-wrap">{{ job.enumName || job.jobName }}</ion-label>
         <ion-label slot="end">{{ job.statusId === "SERVICE_PENDING" ? temporalExpr(job.tempExprId)?.description : $t('Disabled') }}</ion-label>
       </ion-item>
     </ion-list>

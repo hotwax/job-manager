@@ -16,16 +16,6 @@ export default interface JobState {
       list: any,
       total: 0
     }
-    more: {
-      pending: {
-        list: any,
-        total: 0
-      }
-      draft: {
-        list: any,
-        total: 0
-      }
-    }
     current: any;
     temporalExp: any;
     enumIds: any;

@@ -40,7 +40,7 @@
               <ion-toggle slot="end" :checked="deleteProductsWebhook" @ionChange="updateWebhook($event['detail'].checked, 'DELETE_PRODUCTS')" color="secondary" />
             </ion-item>
           </ion-card>
-          <MoreJobs v-if="moreJobs.length" :jobs="moreJobs" :jobEnums="jobEnums" />
+          <MoreJobs v-if="getMoreJobs(jobEnums, 'PRODUCT_SYS_JOB').length" :jobs="getMoreJobs(jobEnums, 'PRODUCT_SYS_JOB').length" :jobEnums="jobEnums" />
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
@@ -127,12 +127,10 @@ export default defineComponent({
   mounted () {
     this.store.dispatch("job/fetchJobs", {
       "inputFields":{
-        "systemJobEnumId": Object.values(this.jobEnums),
-        "systemJobEnumId_op": "in"
+        "enumTypeId": "PRODUCT_SYS_JOB"
       }
     });
     this.store.dispatch('webhook/fetchWebhooks')
-    this.fetchMoreJobs();
     emitter.on('viewJobConfiguration', this.viewJobConfiguration)
   },
   unmounted() {
@@ -180,12 +178,8 @@ export default defineComponent({
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
         this.$t('Disabled')
     },
-    async fetchMoreJobs() {
-      await this.store.dispatch("job/fetchMoreJobs", {
-        "inputFields":{
-          "enumTypeId": "PRODUCT_SYS_JOB",
-        },
-      });
+    getMoreJobs(jobEnums: any, enumTypeId: string) {
+      return this.moreJobs(jobEnums, enumTypeId);
     }
   },
   setup() {

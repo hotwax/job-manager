@@ -143,7 +143,7 @@
               </ion-item-sliding>
             </ion-list>
           </ion-card>
-          <MoreJobs v-if="moreJobs.length" :jobs="moreJobs" :jobEnums="jobEnums" />
+          <MoreJobs v-if="getMoreJobs(jobEnums, 'ORDER_SYS_JOB').length" :jobs="getMoreJobs(jobEnums, 'ORDER_SYS_JOB')" :jobEnums="jobEnums" />
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
@@ -475,19 +475,14 @@ export default defineComponent({
         this.autoCancelDays = "";
       }
     },
-    async fetchMoreJobs() {
-      await this.store.dispatch("job/fetchMoreJobs", {
-        "inputFields":{
-          "enumTypeId": "ORDER_SYS_JOB",
-        },
-      });
+    getMoreJobs(jobEnums: any, enumTypeId: string) {
+      return this.moreJobs(jobEnums, enumTypeId);
     }
   },
   mounted () {
     this.store.dispatch("job/fetchJobs", {
       "inputFields":{
-        "systemJobEnumId": Object.values(this.jobEnums),
-        "systemJobEnumId_op": "in"
+        "enumTypeId": "ORDER_SYS_JOB"
       }
     });
     this.store.dispatch("job/fetchJobs", {
@@ -500,7 +495,7 @@ export default defineComponent({
     if (this.currentEComStore.productStoreId) {
       this.getAutoCancelDays();
     }
-    this.fetchMoreJobs();
+    // this.moreJobs = this.getMoreJobs(this.jobEnums, "ORDER_SYS_JOB");
     emitter.on('viewJobConfiguration', this.viewJobConfiguration)
   },
   unmounted() {
