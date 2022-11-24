@@ -143,7 +143,7 @@
               </ion-item-sliding>
             </ion-list>
           </ion-card>
-          <MoreJobs v-if="moreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId).length" :jobs="moreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId)" />
+          <MoreJobs v-if="getMoreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId).length" :jobs="getMoreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId)" />
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
@@ -248,7 +248,7 @@ export default defineComponent({
       currentEComStore: 'user/getCurrentEComStore',
       getTemporalExpr: 'job/getTemporalExpr',
       getCachedWebhook: 'webhook/getCachedWebhook',
-      moreJobs: 'job/getMoreJobs'
+      getMoreJobs: 'job/getMoreJobs'
     }),
     promiseDateChanges(): boolean {
       const status = this.getJobStatus(this.jobEnums['NTS_PRMS_DT_CHNG']);
