@@ -478,7 +478,7 @@ export default defineComponent({
       }
     },
     getMoreJobs(jobEnums: any, enumTypeId: string) {
-      jobEnums = {...jobEnums, ...this.initialJobEnums}
+      jobEnums = {...jobEnums, ...this.initialLoadJobEnums}
       return this.moreJobs(jobEnums, enumTypeId);
     }
   },

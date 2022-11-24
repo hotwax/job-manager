@@ -181,7 +181,7 @@ export default defineComponent({
         this.$t('Disabled')
     },
     getMoreJobs(jobEnums: any, enumTypeId: string) {
-      jobEnums = {...jobEnums, ...this.initialJobEnums}
+      jobEnums = {...jobEnums, ...this.initialLoadJobEnums}
       return this.moreJobs(jobEnums, enumTypeId);
     }
   },
