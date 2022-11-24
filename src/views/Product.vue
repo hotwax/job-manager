@@ -122,7 +122,8 @@ export default defineComponent({
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
       webhookEnums: JSON.parse(process.env?.VUE_APP_WEBHOOK_ENUMS as string) as any,
-      enumTypeId: 'PRODUCT_SYS_JOB'
+      enumTypeId: 'PRODUCT_SYS_JOB',
+      initialJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any
     }
   },
   mounted () {
@@ -180,6 +181,7 @@ export default defineComponent({
         this.$t('Disabled')
     },
     getMoreJobs(jobEnums: any, enumTypeId: string) {
+      jobEnums = {...jobEnums, ...this.initialJobEnums}
       return this.moreJobs(jobEnums, enumTypeId);
     }
   },

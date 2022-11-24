@@ -235,7 +235,8 @@ export default defineComponent({
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
       autoCancelDays: '',
-      enumTypeId: 'ORDER_SYS_JOB'
+      enumTypeId: 'ORDER_SYS_JOB',
+      initialJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any
     }
   },
   computed: {
@@ -477,6 +478,7 @@ export default defineComponent({
       }
     },
     getMoreJobs(jobEnums: any, enumTypeId: string) {
+      jobEnums = {...jobEnums, ...this.initialJobEnums}
       return this.moreJobs(jobEnums, enumTypeId);
     }
   },
