@@ -37,7 +37,7 @@ export default defineComponent({
     IonLabel,
     IonList
   },
-  props: ["jobs", "jobEnums"],
+  props: ["jobs"],
   computed: {
     ...mapGetters({
       getJobStatus: 'job/getJobStatus',

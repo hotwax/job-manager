@@ -40,7 +40,7 @@
               <ion-toggle slot="end" :checked="deleteProductsWebhook" @ionChange="updateWebhook($event['detail'].checked, 'DELETE_PRODUCTS')" color="secondary" />
             </ion-item>
           </ion-card>
-          <MoreJobs v-if="getMoreJobs(jobEnums, enumTypeId).length" :jobs="getMoreJobs(jobEnums, enumTypeId).length" :jobEnums="jobEnums" />
+          <MoreJobs v-if="moreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId).length" :jobs="moreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId).length" />
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
@@ -179,10 +179,6 @@ export default defineComponent({
       return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
         this.$t('Disabled')
-    },
-    getMoreJobs(jobEnums: any, enumTypeId: string) {
-      jobEnums = {...jobEnums, ...this.initialLoadJobEnums}
-      return this.moreJobs(jobEnums, enumTypeId);
     }
   },
   setup() {

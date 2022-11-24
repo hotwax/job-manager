@@ -143,7 +143,7 @@
               </ion-item-sliding>
             </ion-list>
           </ion-card>
-          <MoreJobs v-if="getMoreJobs(jobEnums, enumTypeId).length" :jobs="getMoreJobs(jobEnums, enumTypeId)" :jobEnums="jobEnums" />
+          <MoreJobs v-if="moreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId).length" :jobs="moreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId)" />
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
@@ -476,10 +476,6 @@ export default defineComponent({
         console.error(err)
         this.autoCancelDays = "";
       }
-    },
-    getMoreJobs(jobEnums: any, enumTypeId: string) {
-      jobEnums = {...jobEnums, ...this.initialLoadJobEnums}
-      return this.moreJobs(jobEnums, enumTypeId);
     }
   },
   mounted () {

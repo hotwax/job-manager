@@ -109,7 +109,7 @@
               <ion-label class="ion-text-wrap"><p>{{ $t("Re-allocation will re-calculate promise dates on all pre-orders based on upcoming inventory from purchase orders. Promise dates that were manually adjusted will be overriden.") }}</p></ion-label>
             </ion-item>
           </ion-card> 
-          <MoreJobs v-if="getMoreJobs(jobEnums, enumTypeId).length" :jobs="getMoreJobs(jobEnums, enumTypeId)" :jobEnums="jobEnums" />
+          <MoreJobs v-if="moreJobs(jobEnums, enumTypeId).length" :jobs="moreJobs(jobEnums, enumTypeId)" />
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
@@ -323,9 +323,6 @@ export default defineComponent({
       return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
         this.$t('Disabled')
-    },
-    getMoreJobs(jobEnums: any, enumTypeId: string) {
-      return this.moreJobs(jobEnums, enumTypeId);
     }
   },
   mounted () {

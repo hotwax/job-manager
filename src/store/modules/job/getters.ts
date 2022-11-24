@@ -61,7 +61,7 @@ const getters: GetterTree <JobState, RootState> = {
       const orderJobEnumIds = Object.values(jobEnums) as any;
 
       return Object.keys(state.cached).reduce((jobs: any, enumId: string) => {
-        if(!orderJobEnumIds.includes(enumId) && state.cached[enumId]?.enumTypeId === enumTypeId) {
+        if(state.cached[enumId]?.enumTypeId === enumTypeId && !orderJobEnumIds.includes(enumId)) {
           jobs.push(state.cached[enumId])
         }
         return jobs
