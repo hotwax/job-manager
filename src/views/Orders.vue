@@ -236,7 +236,7 @@ export default defineComponent({
       isDesktop: isPlatform('desktop'),
       autoCancelDays: '',
       enumTypeId: 'ORDER_SYS_JOB',
-      initialJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any
+      initialLoadJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any
     }
   },
   computed: {
