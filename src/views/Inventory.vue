@@ -149,7 +149,7 @@ export default defineComponent({
     async viewJobConfiguration(jobInformation: any) {
       this.currentJob = jobInformation.job || this.getJob(this.jobEnums[jobInformation.id])
       this.title = jobInformation.title ? jobInformation.title : (jobInformation.job.enumName || jobInformation.job.jobName)
-      this.currentJobStatus = jobInformation.status
+      this.currentJobStatus = jobInformation.status ? jobInformation.status : jobInformation.job.statusId === 'SERVICE_DRAFT' ? 'SERVICE_DRAFT' : jobInformation.job.frequency;
       this.freqType = jobInformation.id && this.jobFrequencyType[jobInformation.id]
 
       await this.store.dispatch('job/updateCurrentJob', { job: this.currentJob });
