@@ -40,7 +40,7 @@
               <ion-toggle slot="end" :checked="deleteProductsWebhook" @ionChange="updateWebhook($event['detail'].checked, 'DELETE_PRODUCTS')" color="secondary" />
             </ion-item>
           </ion-card>
-          <MoreJobs v-if="moreJobs.length" :jobs="moreJobs" :jobEnums="jobEnums" />
+          <MoreJobs v-if="getMoreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId).length" :jobs="getMoreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId).length" />
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
@@ -100,7 +100,7 @@ export default defineComponent({
       getJob: 'job/getJob',
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
       getCachedWebhook: 'webhook/getCachedWebhook',
-      moreJobs: 'job/getMoreJobs'
+      getMoreJobs: 'job/getMoreJobs'
     }),
     newProductsWebhook(): boolean {
       const webhookTopic = this.webhookEnums['NEW_PRODUCTS']
@@ -122,17 +122,17 @@ export default defineComponent({
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
       webhookEnums: JSON.parse(process.env?.VUE_APP_WEBHOOK_ENUMS as string) as any,
+      enumTypeId: 'PRODUCT_SYS_JOB',
+      initialLoadJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any
     }
   },
   mounted () {
     this.store.dispatch("job/fetchJobs", {
       "inputFields":{
-        "systemJobEnumId": Object.values(this.jobEnums),
-        "systemJobEnumId_op": "in"
+        "enumTypeId": "PRODUCT_SYS_JOB"
       }
     });
     this.store.dispatch('webhook/fetchWebhooks')
-    this.fetchMoreJobs();
     emitter.on('viewJobConfiguration', this.viewJobConfiguration)
   },
   unmounted() {
@@ -179,13 +179,6 @@ export default defineComponent({
       return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
         this.$t('Disabled')
-    },
-    async fetchMoreJobs() {
-      await this.store.dispatch("job/fetchMoreJobs", {
-        "inputFields":{
-          "enumTypeId": "PRODUCT_SYS_JOB",
-        },
-      });
     }
   },
   setup() {

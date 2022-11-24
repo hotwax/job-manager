@@ -33,7 +33,7 @@
               </ion-label>
             </ion-item>
           </ion-card>
-          <MoreJobs v-if="moreJobs.length" :jobs="moreJobs" :jobEnums="jobEnums" />
+          <MoreJobs v-if="getMoreJobs(jobEnums, enumTypeId).length" :jobs="getMoreJobs(jobEnums, enumTypeId)" />
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
@@ -96,7 +96,8 @@ export default defineComponent({
       currentJobStatus: '',
       freqType: '',
       isJobDetailAnimationCompleted: false,
-      isDesktop: isPlatform('desktop')
+      isDesktop: isPlatform('desktop'),
+      enumTypeId: 'INVENTORY_SYS_JOB'
     }
   },
   computed: {
@@ -106,7 +107,7 @@ export default defineComponent({
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
       currentEComStore: 'user/getCurrentEComStore',
       getTemporalExpr: 'job/getTemporalExpr',
-      moreJobs: 'job/getMoreJobs'
+      getMoreJobs: 'job/getMoreJobs'
     }),
     bopisCorrections(): boolean {
       const status = this.getJobStatus(this.jobEnums["BOPIS_CORRECTION"]);
@@ -170,23 +171,14 @@ export default defineComponent({
       return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
         this.$t('Disabled')
-    },
-    async fetchMoreJobs() {
-      await this.store.dispatch("job/fetchMoreJobs", {
-        "inputFields":{
-          "enumTypeId": "INVENTORY_SYS_JOB",
-        },
-      });
     }
   },
   mounted () {
     this.store.dispatch("job/fetchJobs", {
       "inputFields":{
-        "systemJobEnumId": Object.values(this.jobEnums),
-        "systemJobEnumId_op": "in"
+        "enumTypeId": "INVENTORY_SYS_JOB"
       }
     });
-    this.fetchMoreJobs();
     emitter.on('viewJobConfiguration', this.viewJobConfiguration)
   },
   unmounted() {

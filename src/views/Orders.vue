@@ -143,7 +143,7 @@
               </ion-item-sliding>
             </ion-list>
           </ion-card>
-          <MoreJobs v-if="moreJobs.length" :jobs="moreJobs" :jobEnums="jobEnums" />
+          <MoreJobs v-if="getMoreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId).length" :jobs="getMoreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId)" />
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
@@ -234,7 +234,9 @@ export default defineComponent({
       freqType: '',
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
-      autoCancelDays: ''
+      autoCancelDays: '',
+      enumTypeId: 'ORDER_SYS_JOB',
+      initialLoadJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any
     }
   },
   computed: {
@@ -246,7 +248,7 @@ export default defineComponent({
       currentEComStore: 'user/getCurrentEComStore',
       getTemporalExpr: 'job/getTemporalExpr',
       getCachedWebhook: 'webhook/getCachedWebhook',
-      moreJobs: 'job/getMoreJobs'
+      getMoreJobs: 'job/getMoreJobs'
     }),
     promiseDateChanges(): boolean {
       const status = this.getJobStatus(this.jobEnums['NTS_PRMS_DT_CHNG']);
@@ -474,20 +476,12 @@ export default defineComponent({
         console.error(err)
         this.autoCancelDays = "";
       }
-    },
-    async fetchMoreJobs() {
-      await this.store.dispatch("job/fetchMoreJobs", {
-        "inputFields":{
-          "enumTypeId": "ORDER_SYS_JOB",
-        },
-      });
     }
   },
   mounted () {
     this.store.dispatch("job/fetchJobs", {
       "inputFields":{
-        "systemJobEnumId": Object.values(this.jobEnums),
-        "systemJobEnumId_op": "in"
+        "enumTypeId": "ORDER_SYS_JOB"
       }
     });
     this.store.dispatch("job/fetchJobs", {
@@ -500,7 +494,6 @@ export default defineComponent({
     if (this.currentEComStore.productStoreId) {
       this.getAutoCancelDays();
     }
-    this.fetchMoreJobs();
     emitter.on('viewJobConfiguration', this.viewJobConfiguration)
   },
   unmounted() {

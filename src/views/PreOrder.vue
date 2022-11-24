@@ -109,7 +109,7 @@
               <ion-label class="ion-text-wrap"><p>{{ $t("Re-allocation will re-calculate promise dates on all pre-orders based on upcoming inventory from purchase orders. Promise dates that were manually adjusted will be overriden.") }}</p></ion-label>
             </ion-item>
           </ion-card> 
-          <MoreJobs v-if="moreJobs.length" :jobs="moreJobs" :jobEnums="jobEnums" />
+          <MoreJobs v-if="getMoreJobs(jobEnums, enumTypeId).length" :jobs="getMoreJobs(jobEnums, enumTypeId)" />
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
@@ -174,7 +174,7 @@ export default defineComponent({
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
       currentEComStore: 'user/getCurrentEComStore',
       getTemporalExpr: 'job/getTemporalExpr',
-      moreJobs: 'job/getMoreJobs'
+      getMoreJobs: 'job/getMoreJobs'
     }),
     preOrderManageCatalog(): boolean {
       const status = this.getJobStatus(this.jobEnums["PRE_ORDER_CTLG"]);
@@ -238,7 +238,8 @@ export default defineComponent({
       currentJobStatus: '',
       freqType: '',
       isJobDetailAnimationCompleted: false,
-      isDesktop: isPlatform('desktop')
+      isDesktop: isPlatform('desktop'),
+      enumTypeId: 'PRE_ORD_SYS_JOB'
     }
   },
   methods: {
@@ -322,23 +323,14 @@ export default defineComponent({
       return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
         this.$t('Disabled')
-    },
-    async fetchMoreJobs() {
-      await this.store.dispatch("job/fetchMoreJobs", {
-        "inputFields":{
-          "enumTypeId": "PRE_ORD_SYS_JOB",
-        },
-      });
     }
   },
   mounted () {
     this.store.dispatch("job/fetchJobs", {
       "inputFields":{
-        "systemJobEnumId": Object.values(this.jobEnums),
-        "systemJobEnumId_op": "in"
+        "enumTypeId": "PRE_ORD_SYS_JOB"
       }
     });
-    this.fetchMoreJobs();
     emitter.on('viewJobConfiguration', this.viewJobConfiguration)
   },
   unmounted() {
