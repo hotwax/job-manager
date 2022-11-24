@@ -1,3 +1,15 @@
+# Release 1.2.0
+## What's Changed
+* Implemented: filters on pipeline page (#2uw73h5) by @k2maan in https://github.com/hotwax/job-manager/pull/246 and @shashwatbangar in https://github.com/hotwax/job-manager/pull/272
+* Feature: Add confirmation buttons to date pickers by @franciscoemanuel in https://github.com/hotwax/job-manager/pull/256 and @k2maan in https://github.com/hotwax/job-manager/pull/269
+* Fixed build fail by removing 'show-default-buttons = true' error in InititalJobConfiguration and JobConfiguration (#2zb7dhk) by @k2maan in https://github.com/hotwax/job-manager/pull/277
+* Upgraded Ionic to 6.2(#2w9wz26) by @disha1202 in https://github.com/hotwax/job-manager/pull/273
+* Implemented filter icon color update based on the type of filters applied and the segment selected (#2zb6ver) by @k2maan in https://github.com/hotwax/job-manager/pull/278
+
+## New Contributors
+* @franciscoemanuel made their first contribution in https://github.com/hotwax/job-manager/pull/256
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v1.1.0...v1.2.0
 # Release 1.1.0
 ## What's Changed
 * Updated logic to fetch shopify config using fallback api for backward compatibility(#2r65b1c) by @disha1202 in https://github.com/hotwax/job-manager/pull/234
