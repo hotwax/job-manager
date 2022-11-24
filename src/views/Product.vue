@@ -156,7 +156,7 @@ export default defineComponent({
     },
     async viewJobConfiguration(jobInformation: any) {
       this.currentJob = jobInformation.job || this.getJob(this.jobEnums[jobInformation.id])
-      this.title = jobInformation.title
+      this.title = jobInformation.title ? jobInformation.title : (jobInformation.job.enumName || jobInformation.job.jobName)
       this.currentJobStatus = jobInformation.status
       this.freqType = jobInformation.id && this.jobFrequencyType[jobInformation.id]
 
