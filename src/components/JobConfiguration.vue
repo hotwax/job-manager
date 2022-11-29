@@ -1,7 +1,7 @@
 <template>
   <section>
     <ion-item lines="none">
-      <h1>{{ $t(title) }}</h1>
+      <h1>{{ title ? $t(title) : '' }}</h1>
       <ion-badge slot="end" color="dark" v-if="currentJob?.runTime && currentJob.statusId !== 'SERVICE_DRAFT'">{{ $t("running") }} {{ timeTillJob(currentJob.runTime) }}</ion-badge>
     </ion-item>
 
@@ -16,18 +16,18 @@
       <ion-item>
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
-        <ion-label class="ion-text-wrap" @click="() => isOpen = true" slot="end">{{ currentJob?.runTime ? getTime(currentJob.runTime) : $t('Select run time') }}</ion-label>
+        <ion-label class="ion-text-wrap" @click="() => isOpen = true" slot="end">{{ runTime ? getTime(runTime) : $t('Select run time') }}</ion-label>
         <!-- TODO: display a button when we are not having a runtime and open the datetime component
         on click of that button
         Currently, when mapping the same datetime component for label and button so it's not working so for
         now commented the button and added a fallback string -->
         <!-- <ion-button id="open-run-time-modal" size="small" fill="outline" color="medium" v-show="!currentJob?.runTime">{{ $t("Select run time") }}</ion-button> -->
-        <ion-modal  :is-open="isOpen" @didDismiss="() => isOpen = false">
+        <ion-modal class="date-time-modal" :is-open="isOpen" @didDismiss="() => isOpen = false">
           <ion-content force-overscroll="false">
-            <ion-datetime
-              hour-cycle="h12"
-              :min="minDateTime"
-              :value="currentJob?.runTime ? getDateTime(currentJob.runTime) : ''"
+            <ion-datetime          
+              show-default-buttons
+              hour-cycle="h23"
+              :value="runTime ? getDateTime(runTime) : ''"
               @ionChange="updateRunTime($event, currentJob)"
             />
           </ion-content>
@@ -150,8 +150,11 @@ export default defineComponent({
     return {
       isOpen: false,
       jobStatus: this.status,
-      minDateTime: DateTime.now().toISO()
+      runTime: '' as any,
     }
+  },
+  mounted() {
+    this.runTime = this.currentJob?.runTime 
   },
   updated() {
     // When updating the job, the job is fetched again with the latest values
@@ -297,6 +300,7 @@ export default defineComponent({
     async updateJob() {
       const job = this.currentJob;
       job['jobStatus'] = this.jobStatus !== 'SERVICE_DRAFT' ? this.jobStatus : 'HOURLY';
+      job.runTime = this.runTime;
 
       if (job?.statusId === 'SERVICE_DRAFT') {
         this.store.dispatch('job/scheduleService', job).then((job: any) => {
@@ -324,7 +328,14 @@ export default defineComponent({
     },
     updateRunTime(ev: CustomEvent, job: any) {
       if (job) {
-        job.runTime = handleDateTimeInput(ev['detail'].value)
+        const currTime = DateTime.now().toMillis();
+        const setTime = handleDateTimeInput(ev['detail'].value);
+        
+        if(setTime > currTime) {
+          this.runTime = setTime;
+        } else {
+          showToast(translate("Provide a future date and time"))
+        }
       }
     },
     async viewJobHistory(job: any) {
@@ -444,7 +455,7 @@ ion-label:nth-child(3) {
 
 ion-modal {
   --width: 290px;
-  --height: 385px;
+  --height: 440px;
   --border-radius: 8px;
 }
 </style>

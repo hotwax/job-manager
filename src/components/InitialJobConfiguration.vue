@@ -16,13 +16,13 @@
       <ion-item>
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
-        <ion-label class="ion-text-wrap" @click="() => isOpen = true" slot="end">{{ currentJob?.runTime ? getTime(currentJob?.runTime) : $t('Select run time') }}</ion-label>
+        <ion-label class="ion-text-wrap" @click="() => isOpen = true" slot="end">{{ runTime ? getTime(runTime) : $t('Select run time') }}</ion-label>
         <ion-modal :is-open="isOpen" @didDismiss="() => isOpen = false">
           <ion-content force-overscroll="false">
             <ion-datetime
-              hour-cycle="h12"
-              :min="minDateTime"
-              :value="currentJob?.runTime ? getDateTime(currentJob.runTime) : ''"
+              show-default-buttons
+              hour-cycle="h23"
+              :value="runTime ? getDateTime(runTime) : ''"
               @ionChange="updateRunTime($event, currentJob)"
             />
           </ion-content>
@@ -51,9 +51,10 @@
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
         <ion-label @click="() => isOpen = true" slot="end">{{ currentJob?.runTime ? getTime(currentJob.runTime) : $t('Select run time') }}</ion-label>
-        <ion-modal :is-open="isOpen" @didDismiss="() => isOpen = false">
+        <ion-modal class="date-time-modal" :is-open="isOpen" @didDismiss="() => isOpen = false">
           <ion-content force-overscroll="false">
-            <ion-datetime
+            <ion-datetime          
+              show-default-buttons
               hour-cycle="h12"
               :min="minDateTime"
               :value="currentJob?.runTime ? getDateTime(currentJob?.runTime) : ''"
@@ -121,7 +122,7 @@ import {
 import { mapGetters, useStore } from "vuex";
 import { translate } from "@/i18n";
 import { DateTime } from 'luxon';
-import { handleDateTimeInput,isFutureDate } from '@/utils';
+import { handleDateTimeInput,isFutureDate, showToast } from '@/utils';
 
 export default defineComponent({
   name: "InitialJobConfiguration",
@@ -143,8 +144,12 @@ export default defineComponent({
       isOpen: false,
       lastShopifyOrderId: this.shopifyOrderId,
       minDateTime: DateTime.now().toISO(),
-      jobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any
+      jobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
+      runTime: '' as any,
     }
+  },
+  mounted() {
+    this.runTime = this.currentJob?.runTime 
   },
   props: ['type', 'shopifyOrderId'],
   computed: {
@@ -183,6 +188,7 @@ export default defineComponent({
 
       job['sinceId'] = this.lastShopifyOrderId
       job['jobStatus'] = job.tempExprId
+      job.runTime = this.runTime;
 
       // if job runTime is not a valid date then making runTime as empty
       if (job?.runTime && !isFutureDate(job?.runTime)) {
@@ -207,7 +213,14 @@ export default defineComponent({
     },
     updateRunTime(ev: CustomEvent, job: any) {
       if (job) {
-        job.runTime = handleDateTimeInput(ev['detail'].value)
+        const currTime = DateTime.now().toMillis();
+        const setTime = handleDateTimeInput(ev['detail'].value);
+        
+        if(setTime > currTime) {
+          this.runTime = setTime;
+        } else {
+          showToast(translate("Provide a future date and time"))
+        }
       }
     }
   },
@@ -260,11 +273,17 @@ ion-item:nth-child(2) > ion-label:nth-child(3) {
   .mobile-only {
     display: none;
   }  
+
+  ion-modal {
+    --width: 290px;
+    --height: 440px;
+    --border-radius: 8px;
+  }
 }
 
 ion-modal {
   --width: 290px;
-  --height: 385px;
+  --height: 440px;
   --border-radius: 8px;
 }
 </style>

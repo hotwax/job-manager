@@ -51,12 +51,16 @@ const actions: ActionTree<JobState, RootState> = {
         "shopId_fld1_grp": "2",
         "shopId_fld1_op": "empty"
       } as any,
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId", "cancelDateTime", "finishDateTime", "startDateTime" ],
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId", "cancelDateTime", "finishDateTime", "startDateTime" , "enumTypeId" ],
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
       "orderBy": "runTime DESC"
     }
+
+    if(payload.statusId.length > 0) {
+      params.inputFields["statusId"] = payload.statusId;
+    } 
 
     if(payload.systemJobEnumId && payload.systemJobEnumId.length > 0) {
       params.inputFields["systemJobEnumId"] = payload.systemJobEnumId
@@ -69,16 +73,15 @@ const actions: ActionTree<JobState, RootState> = {
       params.inputFields["productStoreId_op"] = "empty"
     }
 
+    if(payload.enumTypeId && payload.enumTypeId.length > 0) {
+      params.inputFields["enumTypeId"] = payload.enumTypeId;
+      params.inputFields["enumTypeId_op"] = "in"
+    } 
+    
     if (payload.queryString) {
-      params.inputFields["enumName_value"] = "%"+ payload.queryString + "%"
-      params.inputFields["enumName_op"] = "like"
-      params.inputFields["enumName_ic"] = "Y"
-      params.inputFields["enumName_ic"] = "Y"
-      params.inputFields["enumName_grp"] = "1" 
-      params.inputFields["description_value"] = "%"+ payload.queryString + "%"
-      params.inputFields["description_op"] = "like"
+      params.inputFields["description_value"] = payload.queryString
+      params.inputFields["description_op"] = "contains"
       params.inputFields["description_ic"] = "Y"
-      params.inputFields["description_grp"] = "2"
     } 
 
     await JobService.fetchJobInformation(params).then((resp) => {
@@ -126,7 +129,7 @@ const actions: ActionTree<JobState, RootState> = {
         "shopId_fld1_grp": "2",
         "shopId_fld1_op": "empty"
       } as any,
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId" ],
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId", "enumTypeId" ],
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
@@ -144,16 +147,15 @@ const actions: ActionTree<JobState, RootState> = {
       params.inputFields["productStoreId_op"] = "empty"
     }
 
+    if(payload.enumTypeId && payload.enumTypeId.length > 0) {
+      params.inputFields["enumTypeId"] = payload.enumTypeId;
+      params.inputFields["enumTypeId_op"] = "in"
+    } 
+
     if (payload.queryString) {
-      params.inputFields["enumName_value"] = "%"+ payload.queryString + "%"
-      params.inputFields["jobName_op"] = "like"
-      params.inputFields["jobName_ic"] = "Y"
-      params.inputFields["enumName_ic"] = "Y"
-      params.inputFields["enumName_grp"] = "1" 
-      params.inputFields["description_value"] = "%"+ payload.queryString + "%"
-      params.inputFields["description_op"] = "like"
+      params.inputFields["description_value"] = payload.queryString
+      params.inputFields["description_op"] = "contains"
       params.inputFields["description_ic"] = "Y"
-      params.inputFields["description_grp"] = "2"
     } 
 
     await JobService.fetchJobInformation(params).then((resp) => {
@@ -199,7 +201,7 @@ const actions: ActionTree<JobState, RootState> = {
         "shopId_fld1_grp": "2",
         "shopId_fld1_op": "empty",
       } as any,
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runtimeDataId", "shopId", "description" ],
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runtimeDataId", "shopId", "description", "enumTypeId" ],
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
@@ -217,16 +219,16 @@ const actions: ActionTree<JobState, RootState> = {
       params.inputFields["productStoreId_op"] = "empty"
     }
 
-    if (payload.queryString) {
-      params.inputFields["enumName_value"] = "%"+ payload.queryString + "%"
-      params.inputFields["enumName_op"] = "like"
-      params.inputFields["enumName_ic"] = "Y"
-      params.inputFields["enumName_grp"] = "1" 
-      params.inputFields["description_value"] = "%"+ payload.queryString + "%"
-      params.inputFields["description_op"] = "like"
-      params.inputFields["description_ic"] = "Y"
-      params.inputFields["description_grp"] = "2"
+    if(payload.enumTypeId && payload.enumTypeId.length > 0) {
+      params.inputFields["enumTypeId"] = payload.enumTypeId;
+      params.inputFields["enumTypeId_op"] = "in"
     } 
+
+    if (payload.queryString) {
+      params.inputFields["description_value"] = payload.queryString
+      params.inputFields["description_op"] = "contains"
+      params.inputFields["description_ic"] = "Y"
+    }
     await JobService.fetchJobInformation(params).then((resp) => {
       if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
         if (resp.data.docs) {
@@ -355,7 +357,7 @@ const actions: ActionTree<JobState, RootState> = {
         ...payload.inputFields
       },
       "noConditionFind": "Y",
-      "viewSize": (payload.inputFields?.systemJobEnumId?.length * 3)
+      "viewSize": (payload.inputFields?.systemJobEnumId?.length * 3) || 50
     } as any
 
     if (payload?.orderBy) {
@@ -751,6 +753,18 @@ const actions: ActionTree<JobState, RootState> = {
     } catch (err) {
       console.error(err);
     }
+  },
+  setPipelineFilters({ commit, state }, payload) {
+    const pipelineFilters = JSON.parse(JSON.stringify(state.pipelineFilters));
+    const pipelineFilter = (pipelineFilters as any)[payload.type]
+    pipelineFilter.includes(payload.value) 
+    ? pipelineFilter.splice(pipelineFilter.indexOf(payload.value), 1) 
+    : pipelineFilter.push(payload.value);
+
+    commit(types.JOB_PIPELINE_FILTERS_UPDATED, { pipelineFilters });
+  },
+  clearPipelineFilters({ commit }) {
+    commit(types.JOB_PIPELINE_FILTERS_CLEARED);
   }
 }
 export default actions;

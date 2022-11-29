@@ -23,7 +23,7 @@
                 <p>{{ $t("When using HotWax BOPIS, Shopify isn't aware of the actual inventory consumed. HotWax will automatically restore inventory automatically reduced by Shopify and deduct inventory from the correct store to maintain inventory accuracy.") }}</p>
               </ion-label>
             </ion-item>
-            <ion-item button @click="viewJobConfiguration('HARD_SYNC', 'Hard sync', getJobStatus(this.jobEnums['HARD_SYNC']))" detail>
+            <ion-item button @click="viewJobConfiguration({ id: 'HARD_SYNC', title: 'Hard sync', status: getJobStatus(jobEnums['HARD_SYNC'])})" detail>
               <ion-label class="ion-text-wrap">{{ $t("Hard sync") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('HARD_SYNC') }}</ion-label>
             </ion-item>
@@ -33,6 +33,7 @@
               </ion-label>
             </ion-item>
           </ion-card>
+          <MoreJobs v-if="getMoreJobs(jobEnums, enumTypeId).length" :jobs="getMoreJobs(jobEnums, enumTypeId)" />
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
@@ -66,6 +67,7 @@ import { isFutureDate, showToast, prepareRuntime } from '@/utils';
 import emitter from '@/event-bus';
 import { useRouter } from 'vue-router'
 import { translate } from '@/i18n';
+import MoreJobs from '@/components/MoreJobs.vue';
 
 export default defineComponent({
   name: 'Inventory',
@@ -82,7 +84,8 @@ export default defineComponent({
     IonTitle,
     IonToggle,
     IonToolbar,
-    JobConfiguration
+    JobConfiguration,
+    MoreJobs
   },
   data() {
     return {
@@ -93,7 +96,8 @@ export default defineComponent({
       currentJobStatus: '',
       freqType: '',
       isJobDetailAnimationCompleted: false,
-      isDesktop: isPlatform('desktop')
+      isDesktop: isPlatform('desktop'),
+      enumTypeId: 'INVENTORY_SYS_JOB'
     }
   },
   computed: {
@@ -102,7 +106,8 @@ export default defineComponent({
       getJob: 'job/getJob',
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
       currentEComStore: 'user/getCurrentEComStore',
-      getTemporalExpr: 'job/getTemporalExpr'
+      getTemporalExpr: 'job/getTemporalExpr',
+      getMoreJobs: 'job/getMoreJobs'
     }),
     bopisCorrections(): boolean {
       const status = this.getJobStatus(this.jobEnums["BOPIS_CORRECTION"]);
@@ -141,11 +146,11 @@ export default defineComponent({
         this.store.dispatch('job/updateJob', job)
       }
     },
-    async viewJobConfiguration(id: string, title: string, status: string) {
-      this.currentJob = this.getJob(this.jobEnums[id])
-      this.title = title
-      this.currentJobStatus = status
-      this.freqType = id && this.jobFrequencyType[id]
+    async viewJobConfiguration(jobInformation: any) {
+      this.currentJob = jobInformation.job || this.getJob(this.jobEnums[jobInformation.id])
+      this.title = jobInformation.title ? jobInformation.title : (jobInformation.job.enumName || jobInformation.job.jobName)
+      this.currentJobStatus = jobInformation.status;
+      this.freqType = jobInformation.id && this.jobFrequencyType[jobInformation.id]
 
       await this.store.dispatch('job/updateCurrentJob', { job: this.currentJob });
       if(!this.isDesktop && this.currentJob) {
@@ -179,9 +184,16 @@ export default defineComponent({
   mounted () {
     this.fetchJobs();
     emitter.on("productStoreChanged", this.fetchJobs);
+    this.store.dispatch("job/fetchJobs", {
+      "inputFields":{
+        "enumTypeId": "INVENTORY_SYS_JOB"
+      }
+    });
+    emitter.on('viewJobConfiguration', this.viewJobConfiguration)
   },
-  unmounted(){
+  unmounted() {
     emitter.off("productStoreChanged", this.fetchJobs);
+    emitter.off('viewJobConfiguration', this.viewJobConfiguration)
   },
   setup() {
     const store = useStore();
