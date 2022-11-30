@@ -1,7 +1,7 @@
 {
     "hosting": [
         {
-          "target": "hotwax-job-manager",
+          "target": "prod",
           "public": "dist",
           "ignore": [
             "firebase.json",
@@ -15,7 +15,7 @@
 
         },
         {
-          "target": "job-manager-dev",
+          "target": "dev",
           "public": "dist",
           "ignore": [
             "firebase.json",
@@ -28,7 +28,7 @@
           }]
         },
         {
-          "target": "job-manager-uat",
+          "target": "uat",
           "public": "dist",
           "ignore": [
             "firebase.json",
