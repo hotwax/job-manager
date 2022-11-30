@@ -327,19 +327,14 @@ export default defineComponent({
     fetchJobs(){
       this.store.dispatch("job/fetchJobs", {
         "inputFields":{
-          "systemJobEnumId": Object.values(this.jobEnums),
-          "systemJobEnumId_op": "in"
+          "enumTypeId": "PRE_ORD_SYS_JOB"
         }
       });
     }
   },
   mounted () {
+    this.fetchJobs();
     emitter.on("productStoreChanged", this.fetchJobs);
-    this.store.dispatch("job/fetchJobs", {
-      "inputFields":{
-        "enumTypeId": "PRE_ORD_SYS_JOB"
-      }
-    });
     emitter.on('viewJobConfiguration', this.viewJobConfiguration)
   },
   unmounted() {

@@ -127,12 +127,8 @@ export default defineComponent({
     }
   },
   mounted () {
+    this.fetchJobs();
     emitter.on("productStoreChanged", this.fetchJobs);
-    this.store.dispatch("job/fetchJobs", {
-      "inputFields":{
-        "enumTypeId": "PRODUCT_SYS_JOB"
-      }
-    });
     this.store.dispatch('webhook/fetchWebhooks')
     emitter.on('viewJobConfiguration', this.viewJobConfiguration)
   },
@@ -185,8 +181,7 @@ export default defineComponent({
     fetchJobs(){
       this.store.dispatch("job/fetchJobs", {
         "inputFields":{
-          "systemJobEnumId": Object.values(this.jobEnums),
-          "systemJobEnumId_op": "in"
+          "enumTypeId": "PRODUCT_SYS_JOB"
         }
       });
       this.store.dispatch('webhook/fetchWebhooks')

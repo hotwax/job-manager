@@ -103,11 +103,8 @@ export default defineComponent({
   },
   methods: {
     setEComStore(event: CustomEvent) {
-      console.log('userProfile', this.userProfile.stores)
       if(this.userProfile) {
-        this.store.dispatch('user/setEcomStore', {
-          'eComStore': this.userProfile.stores.find((store: any) => store.productStoreId === event['detail'].value)
-        })
+        this.store.dispatch('user/setEcomStore', { 'productStoreId': event.detail.value })
         emitter.emit("productStoreChanged")
       }
     },
