@@ -97,18 +97,6 @@
             </ion-item>
           </ion-card>
 
-          <ion-card>
-            <ion-card-header>
-              <ion-card-title>{{ $t("Re-allocate pre-orders") }}</ion-card-title>
-            </ion-card-header>
-            <ion-item>
-              <ion-label class="ion-text-wrap">{{ $t("Allocation") }}</ion-label>
-              <ion-button fill="outline" color="danger" slot="end" @click="runJob('Re-allocate pre-orders', jobEnums['REALLOC_PRODR'])">{{ $t("Run reallocation") }}</ion-button>
-            </ion-item>
-            <ion-item lines="none">
-              <ion-label class="ion-text-wrap"><p>{{ $t("Re-allocation will re-calculate promise dates on all pre-orders based on upcoming inventory from purchase orders. Promise dates that were manually adjusted will be overriden.") }}</p></ion-label>
-            </ion-item>
-          </ion-card> 
           <MoreJobs v-if="getMoreJobs(jobEnums, enumTypeId).length" :jobs="getMoreJobs(jobEnums, enumTypeId)" />
         </section>
 
