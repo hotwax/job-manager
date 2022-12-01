@@ -31,12 +31,18 @@
         <ion-item lines="none">
           <ion-label class="ion-text-wrap">
             <p class="overline">{{ instanceUrl }}</p>
-            <ion-select interface="popover" :value="eComStore.productStoreId" @ionChange="setEComStore($event)">
-              <ion-select-option v-for="store in (userProfile?.stores ? userProfile.stores : [])" :key="store.productStoreId" :value="store.productStoreId" >{{ store.storeName }}</ion-select-option>
-            </ion-select>
-            <p>{{ currentShopifyConfig.name ? currentShopifyConfig.name : currentShopifyConfig.shopifyConfigName }}</p>
           </ion-label>
           <ion-note slot="end">{{ userProfile?.userTimeZone }}</ion-note>
+        </ion-item>
+        <ion-item lines="none">
+          <ion-select interface="popover" :value="eComStore.productStoreId" @ionChange="setEComStore($event)">
+            <ion-select-option v-for="store in (userProfile?.stores ? userProfile.stores : [])" :key="store.productStoreId" :value="store.productStoreId" >{{ store.storeName }}</ion-select-option>
+          </ion-select>
+        </ion-item>
+        <ion-item lines="none">
+          <ion-label class="ion-text-wrap">
+            <p>{{ currentShopifyConfig.name ? currentShopifyConfig.name : currentShopifyConfig.shopifyConfigName }}</p>
+          </ion-label>
         </ion-item>
       </ion-toolbar>
     </ion-footer>
@@ -102,9 +108,9 @@ export default defineComponent({
     })
   },
   methods: {
-    setEComStore(event: CustomEvent) {
+    async setEComStore(event: CustomEvent) {
       if(this.userProfile) {
-        this.store.dispatch('user/setEcomStore', { 'productStoreId': event.detail.value })
+        await this.store.dispatch('user/setEcomStore', { 'productStoreId': event.detail.value })
         emitter.emit("productStoreChanged")
       }
     },
