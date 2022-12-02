@@ -6,17 +6,17 @@
   "targets": {
     "digital-commerce-71eb8": {
       "hosting": {
-        "hotwax-job-manager": [
+        "prod": [
           "hotwax-job-manager"
         ]
       }
     },
     "hotwax-digital-commerce": {
       "hosting": {
-        "job-manager-dev": [
+        "dev": [
           "job-manager-dev"
         ],
-        "job-manager-uat": [
+        "uat": [
           "job-manager-uat"
         ]
       }
