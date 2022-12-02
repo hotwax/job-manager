@@ -47,6 +47,7 @@
 <script lang="ts">
 import { DateTime } from 'luxon';
 import {
+  IonButton,
   IonContent,
   IonHeader,
   IonInfiniteScroll,
@@ -73,6 +74,7 @@ import { isFutureDate } from '@/utils';
 export default defineComponent({
   name: 'Miscellaneous',
   components: {
+    IonButton,
     IonContent,
     IonHeader,
     IonInfiniteScroll,
@@ -94,6 +96,7 @@ export default defineComponent({
   },
   data() {
     return {
+      currentJob: '' as any,
       currentJobTitle: '',
       currentJobStatus: '',
       isJobDetailAnimationCompleted: false,
@@ -105,7 +108,6 @@ export default defineComponent({
     ...mapGetters({
       miscellaneousJobs: 'job/getMiscellaneousJobs',
       getCurrentEComStore:'user/getCurrentEComStore',
-      currentJob: 'job/getCurrentJob',
       isMiscellaneousJobsScrollable: 'job/isMiscellaneousJobsScrollable'
     })
   },
@@ -120,7 +122,7 @@ export default defineComponent({
         job.runTime = ''
       }
 
-      await this.store.dispatch('job/updateCurrentJob', { job });
+      await this.store.dispatch('job/updateCurrentJob', { job: this.currentJob });
       if(!this.isDesktop && job?.jobId) {
         this.router.push({name: 'JobDetails', params: { title: this.currentJobTitle, jobId: job?.jobId, category: "miscellaneous"}});
         return;
@@ -142,7 +144,7 @@ export default defineComponent({
         event.target.complete();
       })
     },
-    async refreshJobs(event: any) {
+    async refreshJobs(event?: any) {
       this.isRetrying = true;
       this.getMiscellaneousJobs().then(() => {
         if(event) event.target.complete();
@@ -168,6 +170,3 @@ export default defineComponent({
   },
 })
 </script>
-
-<style scoped>
-</style>
