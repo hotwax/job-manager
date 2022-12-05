@@ -5,4 +5,5 @@ export default interface UserState {
     instanceUrl: string;
     shopifyConfigs: any,
     currentShopifyConfig: any,
+    preferredDateTimeFormat: string;
 }

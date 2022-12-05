@@ -30,6 +30,9 @@ const getters: GetterTree <UserState, RootState> = {
     },
     getPinnedJobs(state) {
         return state.current ? (state.current as any)['pinnedJobs']?.jobs : []
+    },
+    getDateTimeFormat (state) {
+        return state.preferredDateTimeFormat;
     }
 }
 export default getters;
