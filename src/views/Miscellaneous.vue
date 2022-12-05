@@ -144,7 +144,7 @@ export default defineComponent({
         event.target.complete();
       })
     },
-    async refreshJobs(event: any) {
+    async refreshJobs() {
       this.isRetrying = true;
       this.getMiscellaneousJobs().then(() => {
         this.isRetrying = false;

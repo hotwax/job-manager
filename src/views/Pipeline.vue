@@ -459,6 +459,7 @@ export default defineComponent({
     },
     async refreshJobs(event: any, isRetrying = false ) {
       this.isRetrying = isRetrying;
+      console.log(this.isRetrying);
       if(this.segmentSelected === 'pending') {
         this.getPendingJobs().then(() => {
           this.isRetrying = false;
