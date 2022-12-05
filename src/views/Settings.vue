@@ -46,6 +46,45 @@
             <ion-icon slot="end" :icon="openOutline" />
           </ion-button>
         </ion-card>
+
+        <ion-card>
+          <ion-card-header>
+            <ion-card-subtitle>
+              {{ $t("Product Store") }}
+            </ion-card-subtitle>
+            <ion-card-title>
+              {{ $t("Store") }}
+            </ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            {{ $t('A store repesents a company or a unique catalog of products. If your OMS is connected to multiple eCommerce stores sellling different collections of products, you may have multiple Product Stores set up in HotWax Commerce.') }}
+          </ion-card-content>
+          <ion-item lines="none">
+            <ion-label> {{ $t("Select store") }} </ion-label>
+            <ion-select interface="popover" :value="currentEComStore.productStoreId" @ionChange="setEComStore($event)">
+              <ion-select-option v-for="store in (userProfile ? userProfile.stores : [])" :key="store.productStoreId" :value="store.productStoreId" >{{ store.storeName }}</ion-select-option>
+            </ion-select>
+          </ion-item>
+        </ion-card>
+        <ion-card>
+          <ion-card-header>
+            <ion-card-subtitle>
+              {{ $t("Shopify Config") }}
+            </ion-card-subtitle>
+            <ion-card-title>
+              {{ $t("eCommerce") }}
+            </ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            {{ $t('eCommerce stores are directly connected to one Shop Configs. If your OMS is connected to multiple eCommerce stores selling the same catalog operating as one Company, you may have multiple Shop Configs for the selected Product Store.') }}
+          </ion-card-content>
+          <ion-item lines="none">
+            <ion-label>{{ $t("Select eCommerce") }}</ion-label>
+            <ion-select interface="popover" :value="currentShopifyConfig?.shopifyConfigId" @ionChange="setShopifyConfig($event)">
+              <ion-select-option v-for="shopifyConfig in shopifyConfigs" :key="shopifyConfig.shopifyConfigId" :value="shopifyConfig.shopifyConfigId" >{{ shopifyConfig.name ? shopifyConfig.name : shopifyConfig.shopifyConfigName }}</ion-select-option>
+            </ion-select>
+          </ion-item>
+        </ion-card>
       </section>
       <hr />
       <h1>{{ $t('App') }}</h1>
@@ -101,7 +140,7 @@
 </template>
 
 <script lang="ts">
-import { IonAvatar, IonBadge, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonContent, IonHeader,IonIcon, IonItem, IonInput, IonLabel, IonMenuButton, IonPage, IonTitle, IonToolbar, modalController } from '@ionic/vue';
+import { IonAvatar, IonBadge, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonContent, IonHeader,IonIcon, IonItem, IonInput, IonLabel, IonMenuButton, IonPage, IonSelect, IonSelectOption, IonTitle, IonToolbar, modalController } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { codeWorkingOutline, ellipsisVertical, personCircleOutline, openOutline, saveOutline, timeOutline } from 'ionicons/icons'
 import { mapGetters, useStore } from 'vuex';
@@ -129,6 +168,8 @@ export default defineComponent({
     IonLabel,
     IonMenuButton,
     IonPage, 
+    IonSelect,
+    IonSelectOption,
     IonTitle, 
     IonToolbar,
     Image
