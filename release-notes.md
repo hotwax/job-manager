@@ -1,3 +1,20 @@
+# Release 1.3.0
+## What's Changed
+* Implemented: Functionality to fetch more jobs on all pages(#2vjxdha)  by @shashwatbangar in https://github.com/hotwax/job-manager/pull/274
+* Added support to alias specific instance URL with environment configuration(#30dkjp1) by @disha1202 in https://github.com/hotwax/job-manager/pull/280
+* Bump axios from 0.21.1 to 0.21.4 by @dependabot in https://github.com/hotwax/job-manager/pull/287
+* Fixed: Jobs repeatation in moreJobs sections on all pages(#2vjxdha) by @shashwatbangar in https://github.com/hotwax/job-manager/pull/296
+* Fixed: Title show in jobConfiguration component (#2vjxdha) by @shashwatbangar in https://github.com/hotwax/job-manager/pull/297
+* Fixed: Job runtime not set on jobConfiguration page in case of moreJobs(#2vjxdha) by @shashwatbangar in https://github.com/hotwax/job-manager/pull/299
+* Fixed: Removed PO reallocation job from UI(#32129kj) by @shashwatbangar in https://github.com/hotwax/job-manager/pull/301
+* Fixed: Jobs list do not reset on Miscellaneous page(#31v8g4k) by @shashwatbangar in https://github.com/hotwax/job-manager/pull/300
+
+## New Contributors
+* @dependabot made their first contribution in https://github.com/hotwax/job-manager/pull/287
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v1.2.0...v1.3.0
+
+
 # Release 1.2.0
 ## What's Changed
 * Implemented: filters on pipeline page (#2uw73h5) by @k2maan in https://github.com/hotwax/job-manager/pull/246 and @shashwatbangar in https://github.com/hotwax/job-manager/pull/272
