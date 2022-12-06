@@ -14,7 +14,7 @@
           <div v-if="miscellaneousJobs?.length === 0">
             <p class="ion-text-center">{{ $t("There are no miscellaneous jobs right now")}}</p>
             <div class="ion-text-center">
-              <ion-button fill="outline" @click="refreshJobs(undefined)">
+              <ion-button fill="outline" @click="refreshJobs()">
                 {{ $t('retry') }}
                 <ion-spinner v-if="isRetrying" name="crescent" />
               </ion-button>
