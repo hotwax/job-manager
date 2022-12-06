@@ -14,7 +14,7 @@
           <div v-if="miscellaneousJobs?.length === 0">
             <p class="ion-text-center">{{ $t("There are no miscellaneous jobs right now")}}</p>
             <div class="ion-text-center">
-              <ion-button fill="outline" @click="refreshJobs()">
+              <ion-button fill="outline" @click="refreshJobs(undefined)">
                 {{ $t('retry') }}
                 <ion-spinner v-if="isRetrying" name="crescent" />
               </ion-button>
@@ -96,6 +96,7 @@ export default defineComponent({
   },
   data() {
     return {
+      currentJob: '' as any,
       currentJobTitle: '',
       currentJobStatus: '',
       isJobDetailAnimationCompleted: false,
@@ -107,7 +108,6 @@ export default defineComponent({
     ...mapGetters({
       miscellaneousJobs: 'job/getMiscellaneousJobs',
       getCurrentEComStore:'user/getCurrentEComStore',
-      currentJob: 'job/getCurrentJob',
       isMiscellaneousJobsScrollable: 'job/isMiscellaneousJobsScrollable'
     })
   },
@@ -122,7 +122,7 @@ export default defineComponent({
         job.runTime = ''
       }
 
-      await this.store.dispatch('job/updateCurrentJob', { job });
+      await this.store.dispatch('job/updateCurrentJob', { job: this.currentJob });
       if(!this.isDesktop && job?.jobId) {
         this.router.push({name: 'JobDetails', params: { title: this.currentJobTitle, jobId: job?.jobId, category: "miscellaneous"}});
         return;
@@ -144,9 +144,10 @@ export default defineComponent({
         event.target.complete();
       })
     },
-    async refreshJobs() {
+    async refreshJobs(event?: any) {
       this.isRetrying = true;
       this.getMiscellaneousJobs().then(() => {
+        if(event) event.target.complete();
         this.isRetrying = false;
       })
     },
