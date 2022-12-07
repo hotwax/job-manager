@@ -14,20 +14,13 @@
             <ion-card-subtitle class="overline">{{ $t("Product Store") }}</ion-card-subtitle>
             <ion-card-title>{{ $t("Stores") }}</ion-card-title>
           </ion-card-header>
-          <ion-list>
-            <ion-item>
-              <ion-label>Store 1</ion-label>
-              <ion-checkbox slot="end" />
-            </ion-item>
-            <ion-item>
-              <ion-label>Store 2</ion-label>
-              <ion-checkbox slot="end" />
-            </ion-item>
-            <ion-item>
-              <ion-label>Store 3</ion-label>
-              <ion-checkbox slot="end" />
-            </ion-item>
-          </ion-list>
+          
+          <ion-item>
+            <ion-select interface="popover" :value="currentEComStore.productStoreId" @ionChange="setEComStore($event)">
+              <ion-select-option v-for="store in (userProfile ? userProfile.stores : [])" :key="store.productStoreId"
+                :value="store.productStoreId">{{ store.storeName }}</ion-select-option>
+            </ion-select>
+          </ion-item>
           
           <ion-card-content>
             {{ $t("A store repesents a company or a unique catalog of products. If your OMS is connected to multiple eCommerce stores sellling different collections of products, you may have multiple Product Stores set up in HotWax Commerce.") }}
@@ -39,21 +32,12 @@
             <ion-card-subtitle class="overline">{{ $t("Shop Config") }}</ion-card-subtitle>
             <ion-card-title>{{ $t("eCommerce") }}</ion-card-title>
           </ion-card-header>
-          <ion-list>
-            <ion-item>
-              <ion-label>eCommerce 1</ion-label>
-              <ion-checkbox slot="end" />
-            </ion-item>
-            <ion-item>
-              <ion-label>eCommerce 2</ion-label>
-              <ion-checkbox slot="end" />
-            </ion-item>
-            <ion-item>
-              <ion-label>eCommerce 3</ion-label>
-              <ion-checkbox slot="end" />
-            </ion-item>
-          </ion-list>
           
+          <ion-item button v-for="shopifyConfig in shopifyConfigsForEComStore" :key="shopifyConfig?.shopifyConfigId" :value="shopifyConfig?.shopifyConfigId">
+            <ion-label>{{ shopifyConfig.name ? shopifyConfig.name : shopifyConfig.shopifyConfigName }}</ion-label>
+            <ion-checkbox slot="end" />
+          </ion-item>
+            
           <ion-card-content>
             {{ $t("eCommerce stores are directly connected to one Shop Configs. If your OMS is connected to multiple eCommerce stores selling the same catalog operating as one Company, you may have multiple Shop Configs for the selected Product Store.") }}
           </ion-card-content>
@@ -90,8 +74,8 @@
         </ion-card>
       </section>
         
-      <ion-button fill="outline">
-        <ion-icon slot="start" :icon="addOutline" />
+      <ion-button fill="outline" @click="selectJobs()">
+        <ion-icon slot="start" :icon="addOutline" @click="selectJobs" />
         {{ $t("select jobs") }}
       </ion-button>
 
@@ -163,7 +147,6 @@ import {
   IonItem,
   IonItemDivider,
   IonLabel,
-  IonList,
   IonMenuButton,
   IonModal,
   IonNote,
@@ -172,11 +155,15 @@ import {
   IonSelectOption,
   IonTitle,
   IonToolbar,
+  modalController
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
-import { useStore } from 'vuex';
+import { mapGetters, useStore } from 'vuex';
 import { addOutline, iceCreamOutline, timeOutline, timerOutline } from 'ionicons/icons';
 import { useRouter } from 'vue-router';
+import SelectJobsModal from '@/views/SelectJobsModal.vue';
+import { UserService } from '@/services/UserService'
+import { hasError } from '@/utils'
 
 export default defineComponent({
   name: 'InitialLoad',
@@ -198,7 +185,6 @@ export default defineComponent({
     IonItem,
     IonItemDivider,
     IonLabel,
-    IonList,
     IonMenuButton,
     IonModal,
     IonNote,
@@ -211,8 +197,16 @@ export default defineComponent({
   data(){
     return {
       isOpenGlobal: false,
-      isOpen: false
+      isOpen: false,
+      selectedShopifyConfigs: [],
+      shopifyConfigsForEComStore: [] as any,
     }
+  },
+  computed: {
+    ...mapGetters({
+      userProfile: 'user/getUserProfile',
+      currentEComStore: 'user/getCurrentEComStore',
+    })
   },
   setup() {
     const store = useStore();
@@ -225,6 +219,55 @@ export default defineComponent({
       router,
       timeOutline,
       timerOutline
+    }
+  },
+  mounted() {
+    this.store.dispatch("job/fetchAllJobs", {
+      "inputFields":{
+        "enumTypeParentId":'SYSTEM_JOB',
+      }
+    })
+
+    // On initial load, show the currently set store's configs.
+    this.setEComStore(this.currentEComStore.productStoreId);
+  },
+  methods: {
+    async setEComStore(event: any) {
+      console.log(this.currentEComStore.productStoreId)
+      const productStoreId = event?.detail?.value ? event?.detail?.value : event;
+      if (this.userProfile) {
+        if (productStoreId) {
+          let resp;
+          const payload = {
+            "inputFields": {
+              "productStoreId": productStoreId,
+            },
+            "entityName": "ShopifyShopAndConfig",
+            "noConditionFind": "Y",
+            "fieldList": ["shopifyConfigId", "name", "shopId"]
+          }
+          try {
+            resp = await UserService.getShopifyConfig(payload);
+            if (resp.status === 200 && !hasError(resp) && resp.data?.docs?.length > 0) {
+              this.shopifyConfigsForEComStore = resp.data.docs;
+            } else {
+              console.log('yes')
+              this.shopifyConfigsForEComStore = [];
+            }
+          } catch (err) {
+            console.error(err);
+          }
+        } else {
+          this.shopifyConfigsForEComStore = [];
+        }
+      }
+    },
+
+    async selectJobs() {
+      const selectJobsModal = await modalController.create({
+        component: SelectJobsModal,
+      });
+      return selectJobsModal.present();
     }
   }
 });
