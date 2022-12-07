@@ -15,7 +15,7 @@ import { loadingController } from '@ionic/vue';
 import { mapGetters, useStore } from 'vuex';
 import emitter from "@/event-bus"
 import { Settings } from 'luxon'
-import { defineAbilityForUser } from '@/authorization'
+import { initUserPermissions } from '@/authorization'
 export default defineComponent({
   name: 'App',
   components: {
@@ -92,7 +92,7 @@ export default defineComponent({
       Settings.defaultZone = this.userProfile.userTimeZone;
     }
     // When the app resumes, set permission for the current user
-    defineAbilityForUser(this.userProfile);
+    initUserPermissions(this.userProfile);
   },
   unmounted() {
     emitter.off('presentLoader', this.presentLoader);

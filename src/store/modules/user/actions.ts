@@ -6,7 +6,7 @@ import * as types from './mutation-types'
 import { hasError, showToast } from '@/utils'
 import { translate } from '@/i18n'
 import { Settings } from 'luxon'
-import { defineAbilityForUser, resetAbility } from '@/authorization'
+import { initUserPermissions, resetPermissions } from '@/authorization'
 
 
 const actions: ActionTree<UserState, RootState> = {
@@ -75,7 +75,7 @@ const actions: ActionTree<UserState, RootState> = {
     // TODO add any other tasks if need
     dispatch('job/clearJobState', null, { root: true });
     commit(types.USER_END_SESSION)
-    resetAbility();
+    resetPermissions();
   },
 
   /**
@@ -116,7 +116,7 @@ const actions: ActionTree<UserState, RootState> = {
       if (userProfile.userTimeZone) {
         Settings.defaultZone = userProfile.userTimeZone;
       }
-      defineAbilityForUser(userProfile)
+      initUserPermissions(userProfile)
       const stores = userProfile.stores
       const userPrefResponse =  await UserService.getUserPreference({
         'userPrefTypeId': 'SELECTED_BRAND'
