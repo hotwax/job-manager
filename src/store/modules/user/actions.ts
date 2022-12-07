@@ -32,7 +32,6 @@ const actions: ActionTree<UserState, RootState> = {
             if (checkPermissionResponse.status === 200 && !hasError(checkPermissionResponse) && checkPermissionResponse.data && checkPermissionResponse.data.hasPermission) {
               commit(types.USER_TOKEN_CHANGED, { newToken: resp.data.token })
               dispatch('getProfile')
-              dispatch('setDateTimeFormat', process.env.VUE_APP_DATE_FORMAT ? process.env.VUE_APP_DATE_FORMAT : 'MM/dd/yyyy');
               if (resp.data._EVENT_MESSAGE_ && resp.data._EVENT_MESSAGE_.startsWith("Alert:")) {
               // TODO Internationalise text
                 showToast(translate(resp.data._EVENT_MESSAGE_));
@@ -47,7 +46,6 @@ const actions: ActionTree<UserState, RootState> = {
           } else {
             commit(types.USER_TOKEN_CHANGED, { newToken: resp.data.token })
             await dispatch('getProfile')
-            dispatch('setDateTimeFormat', process.env.VUE_APP_DATE_FORMAT ? process.env.VUE_APP_DATE_FORMAT : 'MM/dd/yyyy');
             return resp.data;
           }
         } else if (hasError(resp)) {
@@ -170,9 +168,6 @@ const actions: ActionTree<UserState, RootState> = {
     commit(types.USER_INSTANCE_URL_UPDATED, payload)
   },
 
-  setDateTimeFormat ({ commit }, payload) {
-    commit(types.USER_DATETIME_FORMAT_UPDATED, payload)
-  },
 
   async getShopifyConfig({ commit }, productStoreId) {
     if (productStoreId) { 

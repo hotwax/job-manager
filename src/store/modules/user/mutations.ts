@@ -30,9 +30,6 @@ const mutations: MutationTree <UserState> = {
     },
     [types.USER_CURRENT_ECOM_STORE_UPDATED] (state, payload) {
         state.currentEComStore = payload;
-    },
-    [types.USER_DATETIME_FORMAT_UPDATED] (state, payload) {
-        state.preferredDateTimeFormat = payload;
     }
 }
 export default mutations;

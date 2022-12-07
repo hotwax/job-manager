@@ -106,54 +106,24 @@
             <ion-button @click="changeTimeZone()" slot="end" fill="outline" color="dark">{{ $t("Change") }}</ion-button>
           </ion-item>
         </ion-card>
-        <ion-card>
-          <ion-card-header>
-            <ion-card-subtitle>
-              {{ $t("File upload")}}
-            </ion-card-subtitle>
-            <ion-card-title>
-              {{ $t("Date Format") }}
-            </ion-card-title>
-          </ion-card-header>
-
-          <ion-card-content>
-            {{ $t('Enter a custom date time format that you want to use when uploading documents to HotWax Commerce.') }}
-            <p>{{ $t('Luxon date time formats can be found') }} <a href="https://moment.github.io/luxon/#/formatting?id=presets">{{ $t("here") }}</a></p>
-          </ion-card-content>
-          <ion-item>
-            <ion-input clear-input='true' @keyup.enter="dateTimeFormat = $event.target.value; parse()" v-model="dateTimeFormat" :value="dateTimeFormat" />
-          </ion-item>
-          <ion-item>
-            <ion-label>{{ sampleDateTime }}</ion-label>
-            <ion-badge color="warning">
-              <ion-label>{{ $t("Sample") }}</ion-label>
-            </ion-badge>
-          </ion-item>
-          <ion-button fill="clear" @click="updateDateTimeFormat()">
-            {{ $t("Save") }}
-            <ion-icon slot="end" :icon="saveOutline" />
-          </ion-button>
-        </ion-card>
       </section>
     </ion-content>
   </ion-page>
 </template>
 
 <script lang="ts">
-import { IonAvatar, IonBadge, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonContent, IonHeader,IonIcon, IonItem, IonInput, IonLabel, IonMenuButton, IonPage, IonSelect, IonSelectOption, IonTitle, IonToolbar, modalController } from '@ionic/vue';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonContent, IonHeader,IonIcon, IonItem, IonLabel, IonMenuButton, IonPage, IonSelect, IonSelectOption, IonTitle, IonToolbar, modalController } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { codeWorkingOutline, ellipsisVertical, personCircleOutline, openOutline, saveOutline, timeOutline } from 'ionicons/icons'
 import { mapGetters, useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import TimeZoneModal from '@/views/TimezoneModal.vue';
-import { DateTime } from 'luxon';
 import Image from '@/components/Image.vue'
 
 export default defineComponent({
   name: 'Settings',
   components: {
     IonAvatar,
-    IonBadge,
     IonButton, 
     IonCard,
     IonCardContent,
@@ -163,7 +133,6 @@ export default defineComponent({
     IonContent, 
     IonHeader, 
     IonIcon,
-    IonInput,
     IonItem, 
     IonLabel,
     IonMenuButton,
@@ -177,8 +146,6 @@ export default defineComponent({
   data() {
     return {
       baseURL: process.env.VUE_APP_BASE_URL,
-      sampleDateTime: '',
-      dateTimeFormat: ''
     };
   },
   computed: {
@@ -188,12 +155,7 @@ export default defineComponent({
       instanceUrl: 'user/getInstanceUrl',
       shopifyConfigs: 'user/getShopifyConfigs',
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
-      currentDateTimeFormat: 'user/getDateTimeFormat'
     })
-  },
-  mounted(){
-    this.dateTimeFormat = this.currentDateTimeFormat
-    this.parse();
   },
   methods: {
     setEComStore(event: any) {
@@ -215,14 +177,8 @@ export default defineComponent({
         this.router.push('/login');
       })
     },
-    parse(){
-      this.sampleDateTime = DateTime.now().toFormat(this.dateTimeFormat);
-    },
     goToOms(){
       window.location.href = this.instanceUrl.startsWith('http') ? this.instanceUrl.replace('api/', "") : `https://${this.instanceUrl}.hotwax.io/`;
-    },
-    updateDateTimeFormat(){
-      this.store.dispatch('user/setDateTimeFormat', this.dateTimeFormat);
     },
   },
   setup(){

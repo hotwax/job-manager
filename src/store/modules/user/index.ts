@@ -17,7 +17,6 @@ const userModule: Module<UserState, RootState> = {
         productStoreId: "",
         storeName: "None"
       },
-      preferredDateTimeFormat: ''
     },
     getters,
     actions,
