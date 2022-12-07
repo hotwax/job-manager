@@ -31,10 +31,18 @@
         <ion-item lines="none">
           <ion-label class="ion-text-wrap">
             <p class="overline">{{ instanceUrl }}</p>
-            {{ eComStore.storeName }}
-            <p>{{ currentShopifyConfig.name ? currentShopifyConfig.name : currentShopifyConfig.shopifyConfigName }}</p>
           </ion-label>
           <ion-note slot="end">{{ userProfile?.userTimeZone }}</ion-note>
+        </ion-item>
+        <ion-item lines="none">
+          <ion-select interface="popover" :value="eComStore.productStoreId" @ionChange="setEComStore($event)">
+            <ion-select-option v-for="store in (userProfile?.stores ? userProfile.stores : [])" :key="store.productStoreId" :value="store.productStoreId" >{{ store.storeName }}</ion-select-option>
+          </ion-select>
+        </ion-item>
+        <ion-item lines="none">
+          <ion-label class="ion-text-wrap">
+            <p>{{ currentShopifyConfig.name ? currentShopifyConfig.name : currentShopifyConfig.shopifyConfigName }}</p>
+          </ion-label>
         </ion-item>
       </ion-toolbar>
     </ion-footer>
@@ -54,6 +62,8 @@ import {
   IonMenu,
   IonMenuToggle,
   IonNote,
+  IonSelect,
+  IonSelectOption,
   IonTitle,
   IonToolbar
 } from "@ionic/vue";
@@ -61,6 +71,7 @@ import { defineComponent, ref } from "vue";
 import { mapGetters } from "vuex";
 import { pulseOutline, calendarNumberOutline, terminalOutline, ticketOutline, albumsOutline, shirtOutline, settings, iceCreamOutline, libraryOutline } from "ionicons/icons";
 import { useStore } from "@/store";
+import emitter from "@/event-bus"
 export default defineComponent({
   name: "Menu",
   components: {
@@ -75,6 +86,8 @@ export default defineComponent({
     IonMenu,
     IonMenuToggle,
     IonNote,
+    IonSelect,
+    IonSelectOption,
     IonTitle,
     IonToolbar
   },
@@ -93,6 +106,14 @@ export default defineComponent({
       userProfile: 'user/getUserProfile',
       currentShopifyConfig: 'user/getCurrentShopifyConfig'
     })
+  },
+  methods: {
+    async setEComStore(event: CustomEvent) {
+      if(this.userProfile) {
+        await this.store.dispatch('user/setEcomStore', { 'productStoreId': event.detail.value })
+        emitter.emit("productStoreChanged")
+      }
+    },
   },
   watch:{
     $route (to) {
