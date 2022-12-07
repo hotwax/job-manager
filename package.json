@@ -16,7 +16,7 @@
     "@capacitor/core": "^2.4.7",
     "@capacitor/ios": "^2.4.7",
     "@casl/ability": "^5.4.4",
-    "@casl/vue": "^2.1.2",
+    "@casl/vue": "^2.2.0",
     "@ionic/core": "6.2.9",
     "@ionic/vue": "6.2.9",
     "@ionic/vue-router": "6.2.9",
