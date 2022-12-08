@@ -115,14 +115,12 @@ export default defineComponent({
       isDesktop: isPlatform('desktop')
     }
   },
-  mounted () {
-    this.store.dispatch("job/fetchJobs", {
-      "inputFields":{
-        "systemJobEnumId": Object.values(this.jobEnums),
-        "systemJobEnumId_op": "in"
-      }
-    })
-    this.store.dispatch('webhook/fetchWebhooks')
+  mounted() {
+    this.fetchJobs();
+    emitter.on("productStoreChanged", this.fetchJobs);
+  },
+  unmounted() {
+    emitter.off("productStoreChanged", this.fetchJobs);
   },
   computed: {
     ...mapGetters({
@@ -194,6 +192,15 @@ export default defineComponent({
         emitter.emit('playAnimation');
         this.isJobDetailAnimationCompleted = true;
       }
+    },
+    fetchJobs(){
+      this.store.dispatch("job/fetchJobs", {
+        "inputFields":{
+          "systemJobEnumId": Object.values(this.jobEnums),
+          "systemJobEnumId_op": "in"
+        }
+      })
+      this.store.dispatch('webhook/fetchWebhooks')
     },
     async updateWebhook(checked: boolean, enumId: string) {
       const webhook = this.getCachedWebhook[this.webhookEnums[enumId]]

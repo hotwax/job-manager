@@ -127,15 +127,13 @@ export default defineComponent({
     }
   },
   mounted () {
-    this.store.dispatch("job/fetchJobs", {
-      "inputFields":{
-        "enumTypeId": "PRODUCT_SYS_JOB"
-      }
-    });
+    this.fetchJobs();
+    emitter.on("productStoreChanged", this.fetchJobs);
     this.store.dispatch('webhook/fetchWebhooks')
     emitter.on('viewJobConfiguration', this.viewJobConfiguration)
   },
   unmounted() {
+    emitter.off("productStoreChanged", this.fetchJobs);
     emitter.off('viewJobConfiguration', this.viewJobConfiguration)
   },
   methods: {
@@ -179,6 +177,14 @@ export default defineComponent({
       return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
         this.$t('Disabled')
+    },
+    fetchJobs(){
+      this.store.dispatch("job/fetchJobs", {
+        "inputFields":{
+          "enumTypeId": "PRODUCT_SYS_JOB"
+        }
+      });
+      this.store.dispatch('webhook/fetchWebhooks')
     }
   },
   setup() {

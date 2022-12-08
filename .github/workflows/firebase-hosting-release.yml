@@ -27,6 +27,6 @@ jobs:
         env:
           HOTWAX_PUBLIC_SECRET: ${{ secrets.HOTWAX_PUBLIC_SECRET }}
       - name: Deploy
-        run: firebase deploy --token "$HOTWAX_PUBLIC_SECRET" -m "Deploying via GitHub actions"  --only hosting:job-manager-uat
+        run: firebase deploy --token "$HOTWAX_PUBLIC_SECRET" -m "Deploying via GitHub actions"  --only hosting:uat
         env:
           HOTWAX_PUBLIC_SECRET: ${{ secrets.HOTWAX_PUBLIC_SECRET }}

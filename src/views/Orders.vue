@@ -455,6 +455,23 @@ export default defineComponent({
         });
       return jobAlert.present();
     },
+    fetchJobs(){
+      this.store.dispatch("job/fetchJobs", {
+        "inputFields": {
+          "enumTypeId": "ORDER_SYS_JOB"
+        }
+      });
+      this.store.dispatch("job/fetchJobs", {
+        "inputFields": {
+          "systemJobEnumId": Object.values(this.batchJobEnums).map((jobEnum: any) => jobEnum.id),
+          "systemJobEnumId_op": "in"
+        }
+      });
+      this.store.dispatch('webhook/fetchWebhooks')
+      if (this.currentEComStore.productStoreId) {
+        this.getAutoCancelDays();
+      }
+    },
     async getAutoCancelDays(){
       const payload = {
         "inputFields": {
@@ -479,24 +496,12 @@ export default defineComponent({
     }
   },
   mounted () {
-    this.store.dispatch("job/fetchJobs", {
-      "inputFields":{
-        "enumTypeId": "ORDER_SYS_JOB"
-      }
-    });
-    this.store.dispatch("job/fetchJobs", {
-      "inputFields":{
-        "systemJobEnumId": Object.values(this.batchJobEnums).map((jobEnum: any) => jobEnum.id),
-        "systemJobEnumId_op": "in"
-      }
-    });
-    this.store.dispatch('webhook/fetchWebhooks')
-    if (this.currentEComStore.productStoreId) {
-      this.getAutoCancelDays();
-    }
+    this.fetchJobs();
+    emitter.on("productStoreChanged", this.fetchJobs);
     emitter.on('viewJobConfiguration', this.viewJobConfiguration)
   },
   unmounted() {
+    emitter.off("productStoreChanged", this.fetchJobs);
     emitter.off('viewJobConfiguration', this.viewJobConfiguration)
   },
   setup() {
