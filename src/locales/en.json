@@ -57,7 +57,7 @@
   "Don't cancel": "Don't cancel",
   "Don't skip": "Don't skip",
   "eCommerce": "eCommerce",
-  "eCommerce stores are directly connected to one Shop Configs. If your OMS is connected to multiple eCommerce stores selling the same catalog operating as one Company, you may have multiple Shop Configs for the selected Product Store.": "eCommerce stores are directly connected to one Shop Configs. If your OMS is connected to multiple eCommerce stores selling the same catalog operating as one Company, you may have multiple Shop Configs for the selected Product Store.",
+  "eCommerce stores are directly connected to one Shop Config. If your OMS is connected to multiple eCommerce stores selling the same catalog operating as one Company, you may have multiple Shop Configs for the selected Product Store.": "eCommerce stores are directly connected to one Shop Config. If your OMS is connected to multiple eCommerce stores selling the same catalog operating as one Company, you may have multiple Shop Configs for the selected Product Store.",
   "Enter a custom date time format that you want to use when uploading documents to HotWax Commerce.": "Enter a custom date time format that you want to use when uploading documents to HotWax Commerce.",
   "Every day": "Every day",
   "Every 6 hours": "Every 6 hours",
