@@ -33,9 +33,9 @@
             <ion-card-title>{{ $t("eCommerce") }}</ion-card-title>
           </ion-card-header>
           
-          <ion-item button v-for="shopifyConfig in shopifyConfigsForEComStore" :key="shopifyConfig?.shopifyConfigId" :value="shopifyConfig?.shopifyConfigId">
+          <ion-item button v-for="shopifyConfig in shopifyConfigsForEComStore" :key="shopifyConfig?.shopifyConfigId" :value="shopifyConfig?.shopifyConfigId" @click="selectShopifyConifg(shopifyConfig.shopId)">
             <ion-label>{{ shopifyConfig.name ? shopifyConfig.name : shopifyConfig.shopifyConfigName }}</ion-label>
-            <ion-checkbox slot="end" />
+            <ion-checkbox slot="end" :checked="selectedShopifyConfigs.includes(shopifyConfig.shopId)"/>
           </ion-item>
             
           <ion-card-content>
@@ -163,7 +163,8 @@ import { addOutline, iceCreamOutline, timeOutline, timerOutline } from 'ionicons
 import { useRouter } from 'vue-router';
 import SelectJobsModal from '@/views/SelectJobsModal.vue';
 import { UserService } from '@/services/UserService'
-import { hasError } from '@/utils'
+import { hasError, showToast } from '@/utils'
+import { translate } from '@/i18n'
 
 export default defineComponent({
   name: 'InitialLoad',
@@ -198,7 +199,8 @@ export default defineComponent({
     return {
       isOpenGlobal: false,
       isOpen: false,
-      selectedShopifyConfigs: [],
+      selectedEComStoreId: '',
+      selectedShopifyConfigs: [] as Array<string>,
       shopifyConfigsForEComStore: [] as any,
     }
   },
@@ -206,6 +208,7 @@ export default defineComponent({
     ...mapGetters({
       userProfile: 'user/getUserProfile',
       currentEComStore: 'user/getCurrentEComStore',
+      currentShopifyConfig: 'user/getCurrentShopifyConfig',
     })
   },
   setup() {
@@ -222,25 +225,19 @@ export default defineComponent({
     }
   },
   mounted() {
-    this.store.dispatch("job/fetchAllJobs", {
-      "inputFields":{
-        "enumTypeParentId":'SYSTEM_JOB',
-      }
-    })
-
     // On initial load, show the currently set store's configs.
     this.setEComStore(this.currentEComStore.productStoreId);
+    this.selectedShopifyConfigs.push(this.currentShopifyConfig.shopId)
   },
   methods: {
     async setEComStore(event: any) {
-      console.log(this.currentEComStore.productStoreId)
-      const productStoreId = event?.detail?.value ? event?.detail?.value : event;
+      this.selectedEComStoreId = event?.detail?.value ? event?.detail?.value : event;
       if (this.userProfile) {
-        if (productStoreId) {
+        if (this.selectedEComStoreId) {
           let resp;
           const payload = {
             "inputFields": {
-              "productStoreId": productStoreId,
+              "productStoreId": this.selectedEComStoreId,
             },
             "entityName": "ShopifyShopAndConfig",
             "noConditionFind": "Y",
@@ -251,7 +248,6 @@ export default defineComponent({
             if (resp.status === 200 && !hasError(resp) && resp.data?.docs?.length > 0) {
               this.shopifyConfigsForEComStore = resp.data.docs;
             } else {
-              console.log('yes')
               this.shopifyConfigsForEComStore = [];
             }
           } catch (err) {
@@ -263,9 +259,19 @@ export default defineComponent({
       }
     },
 
+    selectShopifyConifg(shopifyConfigId: string) {
+      this.selectedShopifyConfigs.includes(shopifyConfigId)
+      ? this.selectedShopifyConfigs.splice(this.selectedShopifyConfigs.indexOf(shopifyConfigId), 1)
+      : this.selectedShopifyConfigs.push(shopifyConfigId);
+    },
+    
     async selectJobs() {
       const selectJobsModal = await modalController.create({
         component: SelectJobsModal,
+        componentProps: {
+          eComStoreId: this.selectedEComStoreId,
+          shopifyConfigs: this.selectedShopifyConfigs,
+        }
       });
       return selectJobsModal.present();
     }

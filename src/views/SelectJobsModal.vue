@@ -18,7 +18,7 @@
           <h2>{{ job.jobName }}</h2>
           <!-- <p>{{ job.jobId }}</p> -->
         </ion-label>
-        <ion-icon color="success" :icon="checkmarkCircle" />
+        <ion-icon />
         <ion-button>{{ $t("Add to Bulk Scheduler") }}</ion-button>
       </ion-item>
     </ion-list>
@@ -71,6 +71,7 @@ export default defineComponent({
     IonTitle,
     IonToolbar,
   },
+  props: ["eComStoreId", "shopifyConfigs"],
   data() {
     return {
       queryString: '',
@@ -100,9 +101,10 @@ export default defineComponent({
           "description_value": this.queryString,
           "description_op": "contains",
           "description_ic": "Y",
-          "shopId_fld0_value": this.currentShopifyConfig?.shopId,
+          "productStoreId": this.eComStoreId,
+          "shopId_fld0_value": this.shopifyConfigs,
           "shopId_fld0_grp": "1",
-          "shopId_fld0_op": "equals",
+          "shopId_fld0_op": "in",
           "shopId_fld1_grp": "2",
           "shopId_fld1_op": "empty"
         } as any,
@@ -127,8 +129,8 @@ export default defineComponent({
         } else {
           this.isScrollable = false;
         }
-      } catch (error) {
-        console.error(error);
+      } catch (err) {
+        console.error(err);
         showToast(translate("Something went wrong"));
       }
     },
