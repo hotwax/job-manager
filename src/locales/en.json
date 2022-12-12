@@ -1,8 +1,10 @@
 {
   "A store repesents a company or a unique catalog of products. If your OMS is connected to multiple eCommerce stores sellling different collections of products, you may have multiple Product Stores set up in HotWax Commerce.": "A store repesents a company or a unique catalog of products. If your OMS is connected to multiple eCommerce stores sellling different collections of products, you may have multiple Product Stores set up in HotWax Commerce.",
   "Add": "Add",
+  "Add jobs": "Add jobs",
   "Add shipping dates in Shopify": "Add shipping dates in Shopify",
   "Add tags in Shopify": "Add tags in Shopify",
+  "Add to Bulk Scheduler": "Add to Bulk Scheduler",
   "Are you sure you want to change the time zone to?": "Are you sure you want to change the time zone to?",
   "Adjustments": "Adjustments",
   "Are you sure you want to save these changes?": "Are you sure you want to save these changes?",
