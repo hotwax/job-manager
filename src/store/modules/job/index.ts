@@ -33,6 +33,8 @@ const jobModule: Module<JobState, RootState> = {
         category: [],
         enum: [],
       },
+      bulk: [],
+      bulkEnums: {},
     },
     getters,
     actions,

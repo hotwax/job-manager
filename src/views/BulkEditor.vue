@@ -79,44 +79,8 @@
         {{ $t("select jobs") }}
       </ion-button>
 
-      <section>
-        <ion-card>
-          <ion-item lines="none">
-            <ion-label>
-              Job enum name
-              <p>enum description</p>
-            </ion-label>  
-          </ion-item>
-          <ion-item-divider>
-            {{ $t("Parameters") }}
-          </ion-item-divider>
-          <ion-item>
-            <ion-label>{{ $t("Store") }}</ion-label>
-            <ion-note slot="end">2 {{ $t("stores selected") }}</ion-note>
-          </ion-item>
-          <ion-item>
-            <ion-label>{{ $t("eCommerce") }}</ion-label>
-            <ion-badge color="danger">{{ $t("no eCommerce selected") }}</ion-badge>
-          </ion-item>
-          <ion-item>
-            <ion-label>{{ $t("Run time") }}</ion-label>
-            <ion-label class="ion-text-wrap" @click="() => isOpen = true" slot="end">{{ $t('Select run time') }}</ion-label>
-            <ion-modal class="date-time-modal" :is-open="isOpen" @didDismiss="() => isOpen = false">
-              <ion-content force-overscroll="false">
-                <ion-datetime              
-                  show-default-buttons
-                  hour-cycle="h12"
-                />
-              </ion-content>
-            </ion-modal>
-          </ion-item>
-          <ion-item>
-            <ion-label>{{ $t("Schedule") }}</ion-label>
-            <ion-select interface="popover" :placeholder='$t("Bulk schedule")'>
-              <ion-select-option value="Every 5 minutes">Every 5 minutes</ion-select-option>
-            </ion-select>
-          </ion-item>
-        </ion-card>
+      <section class="section-grid">
+        <JobConfigurationForBulkScheduler />
       </section>
 
       <ion-fab vertical="bottom" horizontal="end" slot="fixed">
@@ -130,7 +94,6 @@
 
 <script lang="ts">
 import {
-  IonBadge,
   IonButton,
   IonCard,
   IonCardContent,
@@ -145,11 +108,9 @@ import {
   IonHeader,
   IonIcon,
   IonItem,
-  IonItemDivider,
   IonLabel,
   IonMenuButton,
   IonModal,
-  IonNote,
   IonPage,
   IonSelect,
   IonSelectOption,
@@ -165,11 +126,12 @@ import SelectJobsModal from '@/views/SelectJobsModal.vue';
 import { UserService } from '@/services/UserService'
 import { hasError, showToast } from '@/utils'
 import { translate } from '@/i18n'
+import JobConfigurationForBulkScheduler from '@/components/JobConfigurationForBulkScheduler.vue'
+
 
 export default defineComponent({
-  name: 'InitialLoad',
+  name: 'BulkEditor',
   components: {
-    IonBadge,
     IonButton,
     IonCard,
     IonCardContent,
@@ -184,16 +146,15 @@ export default defineComponent({
     IonHeader,
     IonIcon,
     IonItem,
-    IonItemDivider,
     IonLabel,
     IonMenuButton,
     IonModal,
-    IonNote,
     IonPage,
     IonSelect,
     IonSelectOption,
     IonTitle,
-    IonToolbar
+    IonToolbar,
+    JobConfigurationForBulkScheduler
   },
   data(){
     return {
@@ -209,6 +170,7 @@ export default defineComponent({
       userProfile: 'user/getUserProfile',
       currentEComStore: 'user/getCurrentEComStore',
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
+      bulkJobs: 'job/getBulkJobs'
     })
   },
   setup() {
@@ -294,5 +256,9 @@ export default defineComponent({
     --width: 290px;
     --height: 440px;
     --border-radius: 8px;
+  }
+
+  .section-grid {
+    grid-template-columns: repeat(auto-fill, 325px);
   }
 </style>

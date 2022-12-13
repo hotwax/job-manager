@@ -14,12 +14,11 @@
     
     <ion-list v-for="job in jobs" :key="job.jobId">
       <ion-item lines="none">
-        <ion-label>
+        <ion-label Class="ion-text-wrap">
           <h2>{{ job.jobName }}</h2>
-          <!-- <p>{{ job.jobId }}</p> -->
         </ion-label>
-        <ion-icon />
-        <ion-button>{{ $t("Add to Bulk Scheduler") }}</ion-button>
+        <ion-icon v-if="isJobAddedToBulkScheduler(job.jobId)"  color="success" :icon="checkmarkCircle" />
+        <ion-button v-else fill="outline" @click="addToBulkScheduler(job)">{{ $t("Add") }}</ion-button>
       </ion-item>
     </ion-list>
 
@@ -82,6 +81,7 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
+      isJobAddedToBulkScheduler: 'job/isJobAddedToBulkScheduler',
     })
   },
   methods: {
@@ -108,7 +108,7 @@ export default defineComponent({
           "shopId_fld1_grp": "2",
           "shopId_fld1_op": "empty"
         } as any,
-        "fieldList": ["systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId", "cancelDateTime", "finishDateTime", "startDateTime", "enumTypeId"],
+        "fieldList": ["systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId", "cancelDateTime", "finishDateTime", "startDateTime", "enumTypeId", "description"],
         "noConditionFind": "Y",
         "viewSize": viewSize,
         "viewIndex": viewIndex,
@@ -142,13 +142,11 @@ export default defineComponent({
         event.target.complete();
       })
     },
+    addToBulkScheduler(job: any) {
+      this.store.dispatch('job/addJobToBulkScheduler', job);
+    },
     closeModal() {
       modalController.dismiss({ dismissed: true });
-    },
-    selectSearchBarText(event: any) {
-      event.target.getInputElement().then((element: any) => {
-        element.select();
-      })
     },
   },
   setup() {

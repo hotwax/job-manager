@@ -70,6 +70,12 @@ const getters: GetterTree <JobState, RootState> = {
     getPipelineFilters: (state) => {
       return state.pipelineFilters;
     },
+    getBulkJobs: (state) => {
+      return state.bulk;
+    },
+    isJobAddedToBulkScheduler: (state, getters, rootState, rootGetters) => (jobId: string) => {
+      return rootGetters['job/getBulkJobs'].some((job: any) => job.jobId === jobId);
+    }
   }
 
   export default getters;

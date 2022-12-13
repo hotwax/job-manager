@@ -23,5 +23,7 @@ export default interface JobState {
       status: any,
       category: any,
       enum: any
-    }
+    },
+    bulk: any,
+    bulkEnums: any,
 }

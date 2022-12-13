@@ -54,6 +54,9 @@ const mutations: MutationTree <JobState> = {
             category: [],
             enum: []
         }
+    },
+    [types.JOB_BULK_JOBS_UPDATED] (state, payload){
+        state.bulk.push(payload)
     }
 }
 export default mutations;

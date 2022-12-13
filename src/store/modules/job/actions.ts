@@ -765,6 +765,9 @@ const actions: ActionTree<JobState, RootState> = {
   },
   clearPipelineFilters({ commit }) {
     commit(types.JOB_PIPELINE_FILTERS_CLEARED);
+  },
+  addJobToBulkScheduler({ commit }, payload) {
+    commit(types.JOB_BULK_JOBS_UPDATED, payload);
   }
 }
 export default actions;
