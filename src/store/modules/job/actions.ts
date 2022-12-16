@@ -768,6 +768,79 @@ const actions: ActionTree<JobState, RootState> = {
   },
   addJobToBulkScheduler({ commit }, payload) {
     commit(types.JOB_BULK_JOBS_UPDATED, payload);
+  },
+  async scheduleBulkJobs({ commit, state, dispatch }, payload) {
+    Promise.all(payload.jobs.map(async (job: any) => {
+      const params = {
+        'JOB_NAME': job.jobName,
+        'SERVICE_NAME': job.serviceName,
+        'SERVICE_COUNT': '0',
+        'SERVICE_TEMP_EXPR': payload.frequency,
+        'SERVICE_RUN_AS_SYSTEM': 'Y',
+        'jobFields': {
+          'productStoreId': payload.eComStoreId,
+          'systemJobEnumId': job.systemJobEnumId,
+          'tempExprId': payload.frequency, // Need to remove this as we are passing frequency in SERVICE_TEMP_EXPR, currently kept it for backward compatibility
+          'maxRecurrenceCount': '-1',
+          'parentJobId': job.parentJobId,
+          'runAsUser': 'system', //default system, but empty in run now.  TODO Need to remove this as we are using SERVICE_RUN_AS_SYSTEM, currently kept it for backward compatibility
+          'recurrenceTimeZone': this.state.user.current.userTimeZone
+        },
+        'statusId': "SERVICE_PENDING",
+        'systemJobEnumId': job.systemJobEnumId
+      } as any
+
+
+      if (job?.runtimeData?.shopifyConfigId) {
+        const shopifyConfig = this.state.user.shopifyConfigs.find((config: any) => {
+          return config.shopId === payload.shopifyConfigs[0]
+        })
+
+        params['shopifyConfigId'] = shopifyConfig.shopifyConfigId
+        params['jobFields']['shopId'] = payload.shopifyConfigs[0]
+      }
+
+      // checking if the runtimeData has productStoreId, and if present then adding it on root level
+      job?.runtimeData?.productStoreId?.length >= 0 && (params['productStoreId'] = payload.eComStoreId)
+      job?.priority && (params['SERVICE_PRIORITY'] = job.priority.toString())
+      job?.runTime && (params['SERVICE_TIME'] = job.runTime.toString())
+
+      // assigning '' (empty string) to all the runtimeData properties whose value is "null"
+      job.runtimeData && Object.keys(job.runtimeData).map((key: any) => {
+        if (job.runtimeData[key] === 'null') job.runtimeData[key] = ''
+      })
+
+      const resp = await JobService.scheduleJob({ ...job.runtimeData, ...params });
+      if (resp.status == 200 && !hasError(resp)) {
+        const jobs = await dispatch('fetchJobs', {
+          inputFields: {
+            'systemJobEnumId': payload.systemJobEnumId,
+            'systemJobEnumId_op': 'equals',
+            'statusId': "SERVICE_PENDING",
+            'statusId_op': 'equals'
+          },
+          orderBy: "runTime ASC"
+        })
+        if (jobs.status === 200 && !hasError(jobs) && jobs.data?.docs?.length) {
+          const job = jobs.data?.docs[0];
+          commit(types.JOB_CURRENT_UPDATED, job);
+        }
+        console.log(params);
+        showToast(translate('Scheduled'))
+        return Promise.resolve(resp);
+      } else {
+        showToast(translate('Something went wrong'))
+        return Promise.reject(resp);
+      }
+    }))
+  },
+  setTimeForBulkJobs({ commit, state }, setTime) {
+    if(state.bulk?.length > 0) {
+      const bulkJobs = JSON.parse(JSON.stringify(state.bulk)).forEach((job: any) => {
+        console.log(job)
+      });
+      commit(types.JOB_BULK_JOBS_UPDATED, bulkJobs);
+    }
   }
 }
 export default actions;

@@ -34,7 +34,6 @@ const jobModule: Module<JobState, RootState> = {
         enum: [],
       },
       bulk: [],
-      bulkEnums: {},
     },
     getters,
     actions,

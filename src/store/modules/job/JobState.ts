@@ -25,5 +25,4 @@ export default interface JobState {
       enum: any
     },
     bulk: any,
-    bulkEnums: any,
 }

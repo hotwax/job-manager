@@ -10,14 +10,15 @@
     </ion-toolbar>
   </ion-header>
   <ion-content>
-    <ion-searchbar v-model="queryString" :placeholder="$t('Search jobs')" @keyup.enter="queryString = $event.target.value; search($event)" />
-    
+    <ion-searchbar v-model="queryString" :placeholder="$t('Search jobs')"
+      @keyup.enter="queryString = $event.target.value; search($event)" />
+
     <ion-list v-for="job in jobs" :key="job.jobId">
       <ion-item lines="none">
         <ion-label Class="ion-text-wrap">
           <h2>{{ job.jobName }}</h2>
         </ion-label>
-        <ion-icon v-if="isJobAddedToBulkScheduler(job.jobId)"  color="success" :icon="checkmarkCircle" />
+        <ion-icon v-if="isJobAddedToBulkScheduler(job.jobId)" color="success" :icon="checkmarkCircle" />
         <ion-button v-else fill="outline" @click="addToBulkScheduler(job)">{{ $t("Add") }}</ion-button>
       </ion-item>
     </ion-list>
@@ -92,43 +93,84 @@ export default defineComponent({
     async getJobs(vSize?: any, vIndex?: any) {
       const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
       const viewIndex = vIndex ? vIndex : 0;
+      // const params = {
+      //   "inputFields": {
+      //     "enumTypeParentId": "SYSTEM_JOB",
+      //     "statusId": ["SERVICE_DRAFT", "SERVICE_PENDING"],
+      //     "statusId_op": "in",
+      //     "systemJobEnumId_op": "not-empty",
+      //     "description_value": this.queryString,
+      //     "description_op": "contains",
+      //     "description_ic": "Y",
+      //     "shopId_fld0_value": this.shopifyConfigs,
+      //     "shopId_fld0_grp": "1",
+      //     "shopId_fld0_op": "in",
+      //     "shopId_fld1_grp": "2",
+      //     "shopId_fld1_op": "empty"
+      //   } as any,
+      //   "fieldList": ["systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId", "cancelDateTime", "finishDateTime", "startDateTime", "enumTypeId", "description", "runtimeDataId"],
+      //   "noConditionFind": "Y",
+      //   "viewSize": viewSize,
+      //   "viewIndex": viewIndex,
+      //   "orderBy": "runTime DESC"
+      // }
+
+      const fetchJobRequests = [];
       const params = {
         "inputFields": {
           "enumTypeParentId": "SYSTEM_JOB",
-          "statusId": ["SERVICE_DRAFT", "SERVICE_PENDING"],
-          "statusId_op": "in",
+          "statusId": "SERVICE_DRAFT",
           "systemJobEnumId_op": "not-empty",
           "description_value": this.queryString,
           "description_op": "contains",
+          "productStoreId": "",
           "description_ic": "Y",
-          "productStoreId": this.eComStoreId,
           "shopId_fld0_value": this.shopifyConfigs,
           "shopId_fld0_grp": "1",
-          "shopId_fld0_op": "in",
+          "shopId_fld0_op": "equals",
           "shopId_fld1_grp": "2",
-          "shopId_fld1_op": "empty"
-        } as any,
-        "fieldList": ["systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId", "cancelDateTime", "finishDateTime", "startDateTime", "enumTypeId", "description"],
+          "shopId_fld1_op": "empty",
+        },
+        "fieldList": ["systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId", "cancelDateTime", "finishDateTime", "startDateTime", "enumTypeId", "description", "runtimeDataId"],
         "noConditionFind": "Y",
         "viewSize": viewSize,
         "viewIndex": viewIndex,
         "orderBy": "runTime DESC"
       }
 
+      fetchJobRequests.push(JobService.fetchJobInformation(params).catch((err) => {
+        return err;
+      }))
+
+      // Deep cloning in order to avoid mutating the same reference causing side effects
+      // params = JSON.parse(JSON.stringify(params));
+
+      // // Fetching pending jobs
+      // params.inputFields.statusId = "SERVICE_PENDING";
+      // params.inputFields.productStoreId = this.eComStoreId;
+
+      // fetchJobRequests.push(JobService.fetchJobInformation(params).catch((err) => {
+      //   return err;
+      // }))
+
       try {
-        const resp = await JobService.fetchJobInformation(params)
-        if (resp.status === 200 && !hasError(resp) && resp.data.docs?.length > 0) {
-          const data = resp.data.docs.map((job: any) => {
-            return {
-              ...job,
-              'status': job?.statusId
-            }
-          })
-          this.jobs = viewIndex === 0 ? data : [...this.jobs, ...data];
-          this.isScrollable = (this.jobs.length % (process.env.VUE_APP_VIEW_SIZE as any)) === 0;
-        } else {
-          this.isScrollable = false;
-        }
+        const resp = await Promise.all(fetchJobRequests)
+        const responseJobs = resp.reduce((responseJobs: any, response: any) => {
+          response.status === 200 && !hasError(response) && response.data.docs && (responseJobs = [...responseJobs, ...response.data.docs]);
+          return responseJobs;
+        }, [])
+
+        responseJobs.map((job: any) => {
+          return {
+            ...job,
+            'status': job?.statusId
+          }
+        })
+        this.jobs = viewIndex === 0 ? (responseJobs) : [...this.jobs, ...responseJobs];
+        this.isScrollable = (this.jobs.length % (process.env.VUE_APP_VIEW_SIZE as any)) === 0;
+
+        // else         
+        // this.isScrollable = false;
       } catch (err) {
         console.error(err);
         showToast(translate("Something went wrong"));

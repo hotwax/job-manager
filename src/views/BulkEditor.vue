@@ -51,12 +51,14 @@
           <ion-item>
             <ion-icon slot="start" :icon="timeOutline" />
             <ion-label>{{ $t("Run time") }}</ion-label>
-            <ion-label class="ion-text-wrap" @click="() => isOpenGlobal = true" slot="end">{{ $t('Select run time') }}</ion-label>
+            <ion-label class="ion-text-wrap" @click="() => isOpenGlobal = true" slot="end">{{ runTime ? getTime(runTime) : $t('Select run time') }}</ion-label>
             <ion-modal class="date-time-modal" :is-open="isOpenGlobal" @didDismiss="() => isOpenGlobal = false">
               <ion-content force-overscroll="false">
                 <ion-datetime            
-                  show-default-buttons
-                  hour-cycle="h12"
+                  show-default-buttons 
+                  hour-cycle="h23" 
+                  :value="runTime ? getDateTime(runTime) : ''" 
+                  @ionChange="updateRunTime($event)" 
                 />
               </ion-content>
             </ion-modal>
@@ -64,8 +66,8 @@
           <ion-item>
             <ion-icon slot="start" :icon="timerOutline" />
             <ion-label>{{ $t("Schedule") }}</ion-label>
-            <ion-select interface="popover">
-              <ion-select-option>Every 5 minutes</ion-select-option>
+            <ion-select :interface-options="customPopoverOptions" interface="popover" :placeholder='$t("Schedule")' @ionChange="frequency = $event['detail'].value">
+              <ion-select-option v-for="freq in generateFrequencyOptions" :key="freq.value" :value="freq.value">{{ $t(freq.label) }}</ion-select-option>
             </ion-select>
           </ion-item>
           <ion-card-content>
@@ -79,12 +81,12 @@
         {{ $t("select jobs") }}
       </ion-button>
 
-      <section class="section-grid">
-        <JobConfigurationForBulkScheduler />
+      <section>
+        <JobConfigurationForBulkScheduler :job="job" v-for="job in bulkJobs" :key="job.jobId"/>
       </section>
 
       <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-        <ion-fab-button>
+        <ion-fab-button @click="saveChanges()">
           <ion-icon :icon="iceCreamOutline" />
         </ion-fab-button>
       </ion-fab>
@@ -116,6 +118,7 @@ import {
   IonSelectOption,
   IonTitle,
   IonToolbar,
+  alertController,
   modalController
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
@@ -124,10 +127,10 @@ import { addOutline, iceCreamOutline, timeOutline, timerOutline } from 'ionicons
 import { useRouter } from 'vue-router';
 import SelectJobsModal from '@/views/SelectJobsModal.vue';
 import { UserService } from '@/services/UserService'
-import { hasError, showToast } from '@/utils'
+import { hasError, showToast, handleDateTimeInput } from '@/utils'
 import { translate } from '@/i18n'
 import JobConfigurationForBulkScheduler from '@/components/JobConfigurationForBulkScheduler.vue'
-
+import { DateTime } from 'luxon';
 
 export default defineComponent({
   name: 'BulkEditor',
@@ -163,6 +166,8 @@ export default defineComponent({
       selectedEComStoreId: '',
       selectedShopifyConfigs: [] as Array<string>,
       shopifyConfigsForEComStore: [] as any,
+      runTime: '' as any,
+      frequency: '',
     }
   },
   computed: {
@@ -171,7 +176,51 @@ export default defineComponent({
       currentEComStore: 'user/getCurrentEComStore',
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
       bulkJobs: 'job/getBulkJobs'
-    })
+    }),
+    generateFrequencyOptions(): any {
+      const optionDefault = [{
+          "value": "EVERY_1_MIN",
+          "label": "Every 1 minute"
+        },{
+          "value": "EVERY_5_MIN",
+          "label": "Every 5 minutes"
+        },{
+          "value": "EVERY_15_MIN",
+          "label": "Every 15 minutes"
+        },{
+          "value": "EVERY_30_MIN",
+          "label": "Every 30 minutes"
+        },{
+          "value": "HOURLY",
+          "label": "Hourly"
+        },{
+          "value": "EVERY_6_HOUR",
+          "label": "Every 6 hours"
+        },{
+          "value": "EVERYDAY",
+          "label": "Every day"
+        }
+      ]
+
+      const slow = [{
+          "value": "HOURLY",
+          "label": "Hourly"
+        },{
+          "value": "EVERY_6_HOUR",
+          "label": "Every 6 hours"
+        },{
+          "value": "EVERYDAY",
+          "label": "Every day"
+        }
+      ]
+      return (this as any).type === 'slow' ? slow : optionDefault;
+    },
+    customPopoverOptions() {
+      return {
+        header: (this as any).title,
+        showBackdrop: false
+      }
+    }
   },
   setup() {
     const store = useStore();
@@ -192,6 +241,27 @@ export default defineComponent({
     this.selectedShopifyConfigs.push(this.currentShopifyConfig.shopId)
   },
   methods: {
+    async saveChanges() {
+      const alert = await alertController
+        .create({
+          header: this.$t('Save changes'),
+          message: this.$t('Are you sure you want to schedule these jobs?'),
+          buttons: [{
+            text: this.$t('No'),
+            role: 'cancel'
+          }, {
+            text: this.$t('Yes'),
+            handler: () => {
+              this.schedule();
+            }
+          }]
+        });
+      return alert.present();
+    },
+    schedule() {
+      const jobs = this.bulkJobs.map((job: any) => { return {...job, runTime: this.runTime} });
+      this.store.dispatch('job/scheduleBulkJobs', { jobs, eComStoreId: this.selectedEComStoreId, shopifyConfigs: this.selectedShopifyConfigs, frequency: this.frequency })
+    },
     async setEComStore(event: any) {
       this.selectedEComStoreId = event?.detail?.value ? event?.detail?.value : event;
       if (this.userProfile) {
@@ -236,7 +306,26 @@ export default defineComponent({
         }
       });
       return selectJobsModal.present();
-    }
+    },
+    getDateTime(time: any) {
+      return DateTime.fromMillis(time).toISO()
+    },
+    updateRunTime(ev: CustomEvent) {
+      if (this.bulkJobs) {
+        const currTime = DateTime.now().toMillis();
+        const setTime = handleDateTimeInput(ev['detail'].value);
+        
+        if(setTime > currTime) {
+          this.runTime = setTime;
+          this.store.dispatch('job/setTimeForBulkJobs', setTime);
+        } else {
+          showToast(translate("Provide a future date and time"));
+        }
+      }
+    },
+    getTime (time: any) {
+      return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
+    },
   }
 });
 </script>
@@ -256,9 +345,5 @@ export default defineComponent({
     --width: 290px;
     --height: 440px;
     --border-radius: 8px;
-  }
-
-  .section-grid {
-    grid-template-columns: repeat(auto-fill, 325px);
   }
 </style>
