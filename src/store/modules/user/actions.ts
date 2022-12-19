@@ -142,7 +142,7 @@ const actions: ActionTree<UserState, RootState> = {
       productStore = this.state.user.current.stores.find((store: any) => store.productStoreId === payload.productStoreId);
     }
     commit(types.USER_CURRENT_ECOM_STORE_UPDATED, productStore);
-    dispatch('getShopifyConfig',  productStore.productStoreId);
+    await dispatch('getShopifyConfig',  productStore.productStoreId);
     await UserService.setUserPreference({
       'userPrefTypeId': 'SELECTED_BRAND',
       'userPrefValue': productStore.productStoreId
@@ -171,6 +171,7 @@ const actions: ActionTree<UserState, RootState> = {
   setUserInstanceUrl ({ commit }, payload){
     commit(types.USER_INSTANCE_URL_UPDATED, payload)
   },
+
 
   async getShopifyConfig({ commit }, productStoreId) {
     if (productStoreId) { 
