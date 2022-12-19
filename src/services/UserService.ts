@@ -108,6 +108,13 @@ const getUserPreference = async (payload: any): Promise<any> => {
     data: payload,
   });
 }
+const getUserPermissions = async (payload: any): Promise<any> => {
+  return api({
+    url: "getPermissions",
+    method: "post",
+    data: payload
+  });
+}
 
 export const UserService = {
     createPinnedJobPref,
@@ -122,5 +129,6 @@ export const UserService = {
     updatePinnedJobPref,
     setUserPreference,
     getUserPreference,
-    checkPermission
+    checkPermission,
+    getUserPermissions
 }

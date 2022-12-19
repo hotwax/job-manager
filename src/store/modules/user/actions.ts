@@ -6,7 +6,7 @@ import * as types from './mutation-types'
 import { hasError, showToast } from '@/utils'
 import { translate } from '@/i18n'
 import { Settings } from 'luxon'
-import { initUserPermissions, resetPermissions } from '@/authorization'
+import { prepareAppPermissions, resetPermissions, setPermissions } from '@/authorization'
 
 
 const actions: ActionTree<UserState, RootState> = {
@@ -48,6 +48,7 @@ const actions: ActionTree<UserState, RootState> = {
           } else {
             commit(types.USER_TOKEN_CHANGED, { newToken: resp.data.token })
             await dispatch('getProfile')
+            await dispatch("getUserPermissions");
             return resp.data;
           }
         } else if (hasError(resp)) {
@@ -116,7 +117,6 @@ const actions: ActionTree<UserState, RootState> = {
       if (userProfile.userTimeZone) {
         Settings.defaultZone = userProfile.userTimeZone;
       }
-      initUserPermissions(userProfile)
       const stores = userProfile.stores
       const userPrefResponse =  await UserService.getUserPreference({
         'userPrefTypeId': 'SELECTED_BRAND'
@@ -307,6 +307,64 @@ const actions: ActionTree<UserState, RootState> = {
           }
         }
       }
+    } catch(error) {
+      console.error(error);
+    }
+    return resp;
+  },
+  /**
+   * Get user pemissions
+   */
+  async getUserPermissions({ commit, state }) {
+    let resp;
+    const user = state?.current as any
+    // TODO Make it configurable from the environment variables.
+    // Though this might not be an server specific configuration, 
+    // we will be adding it to environment variable for easy configuration at app level
+    const viewSize = 200;
+    user.permissions = [];
+
+    try{
+      const params = {
+        "viewIndex": 0,
+        viewSize,
+      }
+      resp = await UserService.getUserPermissions(params);
+      if(resp.status === 200 && resp.data.docs?.length && !hasError(resp)) {
+        let serverPermissions = resp.data.docs.map((permission: any) => permission.permissionId);
+        const total = resp.data.count;
+        let appPermissions = prepareAppPermissions(serverPermissions)
+        const remainingPermissions = total - serverPermissions.length;
+        if (remainingPermissions > 0) {
+          // We need to get all the remaining permissions
+          const apiCallsNeeded = Math.floor(remainingPermissions / viewSize) + ( remainingPermissions % viewSize != 0 ? 1 : 0);
+          const responses = await Promise.all([...Array(apiCallsNeeded).keys()].map(async (index: any) => {
+            const response = await UserService.getUserPermissions({
+              "viewIndex": index + 1,
+              viewSize,
+            });
+            if(response.status === 200 && !hasError(response)){
+              return Promise.resolve(response);
+              } else {
+              return Promise.reject(response);
+              }
+          }))
+          const isCompleteResponse = !responses.some((response: any) => response.status !== 200 || hasError(response)); 
+          // TODO Implement code to restrict user to login if all permissions are not received.
+          // If partial permissions are received and we still allow user to login, some of the functionality might not work related to the permissions missed.
+          // This will leave user into an uncertainity. It is better to get them all or nothing. 
+          if (isCompleteResponse) {
+            appPermissions = responses.reduce((appPermissions: any, response: any) => {
+              serverPermissions = response.data.docs.map((permission: any) => permission.permissionId);
+              appPermissions.push(...prepareAppPermissions(serverPermissions));
+              return appPermissions;
+            }, appPermissions)
+          }
+        }
+        user.permissions = appPermissions;
+        setPermissions(appPermissions);
+      }
+      commit(types.USER_INFO_UPDATED, user);
     } catch(error) {
       console.error(error);
     }

@@ -15,7 +15,7 @@ import { loadingController } from '@ionic/vue';
 import { mapGetters, useStore } from 'vuex';
 import emitter from "@/event-bus"
 import { Settings } from 'luxon'
-import { initUserPermissions } from '@/authorization'
+import { setPermissions } from '@/authorization'
 export default defineComponent({
   name: 'App',
   components: {
@@ -87,12 +87,13 @@ export default defineComponent({
     emitter.on('dismissLoader', this.dismissLoader);
     emitter.on('playAnimation', this.playAnimation);
     // Handles case when user resumes or reloads the app
-    // Luxon timezzone should be set with the user's selected timezone
-    if (this.userProfile && this.userProfile.userTimeZone) {
-      Settings.defaultZone = this.userProfile.userTimeZone;
+    if (this.userProfile) {
+      // Luxon timezone should be set with the user's selected timezone
+      this.userProfile.userTimeZone && (Settings.defaultZone = this.userProfile.userTimeZone);
+      // When the app resumes, set permission for the current user
+      setPermissions(this.userProfile.permissions);
+
     }
-    // When the app resumes, set permission for the current user
-    initUserPermissions(this.userProfile);
   },
   unmounted() {
     emitter.off('presentLoader', this.presentLoader);
@@ -101,7 +102,6 @@ export default defineComponent({
   },
   setup(){
     const store = useStore();
-
     return {
       store,
     }
