@@ -12,11 +12,11 @@ const fetchShopifyWebhooks = async (payload?:  any): Promise <any>  => {
 
 // TODO: add the service endpoint for the new order webhook, cancelled order webhook, payment status webhook, order return webhook & new product webhook.
 const webhookEndpointUrls = {
-  'NEW_ORDERS': '',
-  'CANCELLED_ORDERS': '',
+  'NEW_ORDERS': 'service/subscribeOrderCreateWebhook',
+  'CANCELLED_ORDERS': 'service/subscribeOrderCancelWebhook',
   'PAYMENT_STATUS': '',
-  'RETURNS': '',
-  'NEW_PRODUCTS': '',
+  'RETURNS': 'service/subscribeOrderReturnWebhook',
+  'NEW_PRODUCTS': 'service/subscribeProductCreateWebhook',
   'DELETE_PRODUCTS': 'service/subscribeProductDeleteWebhook',
   'BULK_OPERATIONS_FINISH': 'service/subscribeFileStatusUpdateWebhook'
 } as any
