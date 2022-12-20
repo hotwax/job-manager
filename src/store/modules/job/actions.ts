@@ -777,13 +777,13 @@ const actions: ActionTree<JobState, RootState> = {
         'JOB_NAME': job.jobName,
         'SERVICE_NAME': job.serviceName,
         'SERVICE_COUNT': '0',
-        'SERVICE_TIME': payload.setTime,
-        'SERVICE_TEMP_EXPR': payload.frequency,
+        'SERVICE_TIME': job.setTime,
+        'SERVICE_TEMP_EXPR': job.frequency,
         'SERVICE_RUN_AS_SYSTEM': 'Y',
         'jobFields': {
           'productStoreId': payload.eComStoreId,
           'systemJobEnumId': job.systemJobEnumId,
-          'tempExprId': payload.frequency, // Need to remove this as we are passing frequency in SERVICE_TEMP_EXPR, currently kept it for backward compatibility
+          'tempExprId': job.frequency, // Need to remove this as we are passing frequency in SERVICE_TEMP_EXPR, currently kept it for backward compatibility
           'maxRecurrenceCount': '-1',
           'parentJobId': job.parentJobId,
           'runAsUser': 'system', //default system, but empty in run now.  TODO Need to remove this as we are using SERVICE_RUN_AS_SYSTEM, currently kept it for backward compatibility
@@ -837,14 +837,28 @@ const actions: ActionTree<JobState, RootState> = {
       return showToast(translate('Something went wrong'))
     })
   },
-  setGlobalRunTime({ commit, state }, setTime) {
-    commit(types.JOB_BULK_JOBS_TIME_UPDATED, setTime);
-    const bulkJobs = JSON.parse(JSON.stringify(state.bulk)).map((job: any) => ({ ...job, setTime: state.globalRunTime }));
+  setRunTime({ commit, state }, payload) {
+    let bulkJobs;
+    if (payload.global) {
+      commit(types.JOB_BULK_JOBS_TIME_UPDATED, payload.setTime);
+      bulkJobs = JSON.parse(JSON.stringify(state.bulk)).map((job: any) => ({ ...job, setTime: state.globalRunTime }));
+    } else {
+      bulkJobs = JSON.parse(JSON.stringify(state.bulk)).forEach((job: any) => {
+        if (job.jobId === payload.jobId) job.setTime = payload.setTime;
+      });
+    }
     commit(types.JOB_BULK_JOBS_UPDATED, bulkJobs);
   },
-  setGlobalFreq({ commit, state }, frequency) {
-    commit(types.JOB_BULK_JOBS_FREQ_UPDATED, frequency);
-    const bulkJobs = JSON.parse(JSON.stringify(state.bulk)).map((job: any) => ({ ...job, frequency: state.globalFreq }));
+  setFrequency({ commit, state }, payload) {
+    let bulkJobs;
+    if (payload.global) {
+      commit(types.JOB_BULK_JOBS_FREQ_UPDATED, payload.frequency);
+      bulkJobs = JSON.parse(JSON.stringify(state.bulk)).map((job: any) => ({ ...job, frequency: state.globalFreq }));
+    } else {
+      bulkJobs = JSON.parse(JSON.stringify(state.bulk)).forEach((job: any) => {
+        if (job.jobId === payload.jobId) job.frequency = payload.frequency;
+      });
+    }
     commit(types.JOB_BULK_JOBS_UPDATED, bulkJobs);
   }
 }

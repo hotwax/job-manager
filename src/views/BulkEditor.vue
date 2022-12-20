@@ -66,7 +66,7 @@
           <ion-item>
             <ion-icon slot="start" :icon="timerOutline" />
             <ion-label>{{ $t("Schedule") }}</ion-label>
-            <ion-select :interface-options="customPopoverOptions" interface="popover" :placeholder='$t("Schedule")' @ionChange=setFrequency($event)>
+            <ion-select interface="popover" :placeholder='$t("Schedule")' @ionChange=setFrequency($event)>
               <ion-select-option v-for="freq in generateFrequencyOptions" :key="freq.value" :value="freq.value">{{ $t(freq.label) }}</ion-select-option>
             </ion-select>
           </ion-item>
@@ -82,7 +82,7 @@
       </ion-button>
 
       <section>
-        <JobConfigurationForBulkScheduler :job="job" v-for="job in bulkJobs" :key="job.jobId"/>
+        <JobConfigurationForBulkScheduler :job="job" v-for="job in bulkJobs" :key="job.jobId" :shopifyConfigs="selectedShopifyConfigs"/>
       </section>
 
       <ion-fab vertical="bottom" horizontal="end" slot="fixed">
@@ -175,7 +175,9 @@ export default defineComponent({
       userProfile: 'user/getUserProfile',
       currentEComStore: 'user/getCurrentEComStore',
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
-      bulkJobs: 'job/getBulkJobs'
+      bulkJobs: 'job/getBulkJobs',
+      globalRunTime: 'job/getGlobalRunTime',
+      globalFreq: 'job/getGlobalFreq'
     }),
     generateFrequencyOptions(): any {
       const optionDefault = [{
@@ -202,25 +204,8 @@ export default defineComponent({
         }
       ]
 
-      const slow = [{
-          "value": "HOURLY",
-          "label": "Hourly"
-        },{
-          "value": "EVERY_6_HOUR",
-          "label": "Every 6 hours"
-        },{
-          "value": "EVERYDAY",
-          "label": "Every day"
-        }
-      ]
-      return (this as any).type === 'slow' ? slow : optionDefault;
+      return optionDefault;
     },
-    customPopoverOptions() {
-      return {
-        header: (this as any).title,
-        showBackdrop: false
-      }
-    }
   },
   setup() {
     const store = useStore();
@@ -260,7 +245,8 @@ export default defineComponent({
     },
     schedule() {
       const jobs = this.bulkJobs.map((job: any) => { return {...job, runTime: this.runTime} });
-      this.store.dispatch('job/scheduleBulkJobs', { jobs, eComStoreId: this.selectedEComStoreId, shopifyConfigs: this.selectedShopifyConfigs, frequency: this.frequency })
+      console.log("this.globalRunTime", this.globalRunTime)
+      this.store.dispatch('job/scheduleBulkJobs', { jobs, eComStoreId: this.selectedEComStoreId, shopifyConfigs: this.selectedShopifyConfigs, frequency: this.globalFreq, setTime: this.globalRunTime })
     },
     async setEComStore(event: any, initial: boolean) {
       initial ? (this.selectedEComStoreId = event) : (this.selectedEComStoreId = event?.detail?.value)
@@ -316,7 +302,7 @@ export default defineComponent({
         const setTime = handleDateTimeInput(ev['detail'].value);
         if(setTime > currTime) {
           this.runTime = setTime;
-          this.store.dispatch('job/setGlobalRunTime', setTime);
+          this.store.dispatch('job/setRunTime', { setTime, global: true });
         } else {
           showToast(translate("Provide a future date and time"));
         }
@@ -324,7 +310,7 @@ export default defineComponent({
     },
     setFrequency(ev: CustomEvent) {
       this.frequency = ev['detail'].value;
-      this.store.dispatch('job/setGlobalFreq', this.frequency);
+      this.store.dispatch('job/setFrequency', { frequency: this.frequency, global: true });
     },
     getTime (time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);

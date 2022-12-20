@@ -15,7 +15,7 @@
     </ion-item>
     <ion-item>
       <ion-label>{{ $t("eCommerce") }}</ion-label>
-      <ion-badge color="danger">{{ $t("no eCommerce selected") }}</ion-badge>
+      <ion-badge :color="shopifyConfigs?.length > 0 ? '' : 'danger'">{{ $t("eCommerce selected", {count: shopifyConfigs.length}) }}</ion-badge>
     </ion-item>
     <ion-item>
       <ion-label>{{ $t("Run time") }}</ion-label>
@@ -33,7 +33,7 @@
     </ion-item>
     <ion-item>
       <ion-label>{{ $t("Schedule") }}</ion-label>
-      <ion-select :interface-options="customPopoverOptions" :value="job.frequency" interface="popover" :placeholder='$t("Bulk schedule")'>
+      <ion-select :interface-options="customPopoverOptions" :value="job.frequency" interface="popover" :placeholder='$t("Bulk schedule")' @ionChange='setFrequency($event, job)'>
         <ion-select-option v-for="freq in generateFrequencyOptions" :key="freq.value" :value="freq.value">{{ $t(freq.label) }}</ion-select-option>
       </ion-select>
     </ion-item>
@@ -43,14 +43,17 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import {
+  IonBadge,
+  IonCard,
   IonContent,
   IonDatetime,
   IonItem,
+  IonItemDivider,
   IonLabel,
+  IonNote,
   IonModal,
   IonSelect,
   IonSelectOption,
-  alertController,
 } from "@ionic/vue";
 import {
   calendarClearOutline,
@@ -71,11 +74,15 @@ import { translate } from '@/i18n'
 export default defineComponent({
   name: "JobConfigurationForBulkScheduler",
   components: {
+    IonBadge,
+    IonCard,
     IonContent,
     IonDatetime,
     IonItem,
+    IonItemDivider,
     IonLabel,
     IonModal,
+    IonNote,
     IonSelect,
     IonSelectOption,
   },
@@ -84,9 +91,10 @@ export default defineComponent({
       isOpenGlobal: false,
       isOpen: false,
       runTime: '' as any,
+      frequency: '' as any,
     }
   },
-  props: ["job", "selectedEComStore", "selectedShopifyConfigs"],
+  props: ["job", "shopifyConfigs"],
   computed: {
     ...mapGetters({
       bulkJobs: 'job/getBulkJobs',
@@ -118,22 +126,11 @@ export default defineComponent({
         }
       ]
 
-      const slow = [{
-          "value": "HOURLY",
-          "label": "Hourly"
-        },{
-          "value": "EVERY_6_HOUR",
-          "label": "Every 6 hours"
-        },{
-          "value": "EVERYDAY",
-          "label": "Every day"
-        }
-      ]
-      return (this as any).type === 'slow' ? slow : optionDefault;
+      return optionDefault;
     },
     customPopoverOptions() {
       return {
-        header: (this as any).title,
+        header: (this as any).job.jobName,
         showBackdrop: false
       }
     }
@@ -150,10 +147,16 @@ export default defineComponent({
         if(setTime > currTime) {
           this.runTime = setTime;
           job.setTime = setTime;
+          this.store.dispatch('job/setRunTime', { setTime, jobId: job.jobId, global: false });
         } else {
           showToast(translate("Provide a future date and time"));
         }
       }
+    },
+    setFrequency(ev: CustomEvent, job: any) {
+      this.frequency = ev['detail'].value;
+      this.store.dispatch('job/setGlobalFreq', this.frequency);
+      this.store.dispatch('job/setRunTime', { frequency: this.frequency, jobId: job.jobId, global: false });
     },
     getTime (time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
