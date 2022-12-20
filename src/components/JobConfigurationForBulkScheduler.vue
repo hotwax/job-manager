@@ -19,7 +19,7 @@
     </ion-item>
     <ion-item>
       <ion-label>{{ $t("Run time") }}</ion-label>
-      <ion-label class="ion-text-wrap" @click="() => isOpen = true" slot="end">{{ job.setTime ? getDateTime(job.setTime) : $t('Select run time') }}</ion-label>
+      <ion-label class="ion-text-wrap" @click="() => isOpen = true" slot="end">{{ job.setTime ? getTime(job.setTime) : $t('Select run time') }}</ion-label>
       <ion-modal class="date-time-modal" :is-open="isOpen" @didDismiss="() => isOpen = false">
         <ion-content force-overscroll="false">
           <ion-datetime 
@@ -90,8 +90,6 @@ export default defineComponent({
     return {
       isOpenGlobal: false,
       isOpen: false,
-      runTime: '' as any,
-      frequency: '' as any,
     }
   },
   props: ["job", "shopifyConfigs"],
@@ -145,7 +143,6 @@ export default defineComponent({
         const setTime = handleDateTimeInput(ev['detail'].value);
         
         if(setTime > currTime) {
-          this.runTime = setTime;
           job.setTime = setTime;
           this.store.dispatch('job/setRunTime', { setTime, jobId: job.jobId, global: false });
         } else {
@@ -154,9 +151,7 @@ export default defineComponent({
       }
     },
     setFrequency(ev: CustomEvent, job: any) {
-      this.frequency = ev['detail'].value;
-      this.store.dispatch('job/setGlobalFreq', this.frequency);
-      this.store.dispatch('job/setRunTime', { frequency: this.frequency, jobId: job.jobId, global: false });
+      this.store.dispatch('job/setFrequency', { frequency: ev['detail'].value, jobId: job.jobId, global: false });
     },
     getTime (time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);

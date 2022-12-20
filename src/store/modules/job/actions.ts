@@ -777,7 +777,7 @@ const actions: ActionTree<JobState, RootState> = {
         'JOB_NAME': job.jobName,
         'SERVICE_NAME': job.serviceName,
         'SERVICE_COUNT': '0',
-        'SERVICE_TIME': job.setTime,
+        'SERVICE_TIME': job.setTime.toString(),
         'SERVICE_TEMP_EXPR': job.frequency,
         'SERVICE_RUN_AS_SYSTEM': 'Y',
         'jobFields': {
@@ -793,7 +793,6 @@ const actions: ActionTree<JobState, RootState> = {
         'systemJobEnumId': job.systemJobEnumId
       } as any
 
-
       if (job?.runtimeData?.shopifyConfigId) {
         const shopifyConfig = this.state.user.shopifyConfigs.find((config: any) => {
           return config.shopId === payload.shopifyConfigs[0]
@@ -806,7 +805,6 @@ const actions: ActionTree<JobState, RootState> = {
       // checking if the runtimeData has productStoreId, and if present then adding it on root level
       job?.runtimeData?.productStoreId?.length >= 0 && (params['productStoreId'] = payload.eComStoreId)
       job?.priority && (params['SERVICE_PRIORITY'] = job.priority.toString())
-      job?.runTime && (params['SERVICE_TIME'] = job.runTime.toString())
 
       // assigning '' (empty string) to all the runtimeData properties whose value is "null"
       job.runtimeData && Object.keys(job.runtimeData).map((key: any) => {
@@ -843,8 +841,11 @@ const actions: ActionTree<JobState, RootState> = {
       commit(types.JOB_BULK_JOBS_TIME_UPDATED, payload.setTime);
       bulkJobs = JSON.parse(JSON.stringify(state.bulk)).map((job: any) => ({ ...job, setTime: state.globalRunTime }));
     } else {
-      bulkJobs = JSON.parse(JSON.stringify(state.bulk)).forEach((job: any) => {
-        if (job.jobId === payload.jobId) job.setTime = payload.setTime;
+      bulkJobs = JSON.parse(JSON.stringify(state.bulk));
+      bulkJobs.forEach((job: any) => {
+        if (job.jobId === payload.jobId) {
+          job.setTime = payload.setTime;
+        }
       });
     }
     commit(types.JOB_BULK_JOBS_UPDATED, bulkJobs);
@@ -855,8 +856,11 @@ const actions: ActionTree<JobState, RootState> = {
       commit(types.JOB_BULK_JOBS_FREQ_UPDATED, payload.frequency);
       bulkJobs = JSON.parse(JSON.stringify(state.bulk)).map((job: any) => ({ ...job, frequency: state.globalFreq }));
     } else {
-      bulkJobs = JSON.parse(JSON.stringify(state.bulk)).forEach((job: any) => {
-        if (job.jobId === payload.jobId) job.frequency = payload.frequency;
+      bulkJobs = JSON.parse(JSON.stringify(state.bulk));
+      bulkJobs.forEach((job: any) => {
+        if (job.jobId === payload.jobId) {
+          job.frequency = payload.frequency;
+        }
       });
     }
     commit(types.JOB_BULK_JOBS_UPDATED, bulkJobs);

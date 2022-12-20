@@ -244,9 +244,7 @@ export default defineComponent({
       return alert.present();
     },
     schedule() {
-      const jobs = this.bulkJobs.map((job: any) => { return {...job, runTime: this.runTime} });
-      console.log("this.globalRunTime", this.globalRunTime)
-      this.store.dispatch('job/scheduleBulkJobs', { jobs, eComStoreId: this.selectedEComStoreId, shopifyConfigs: this.selectedShopifyConfigs, frequency: this.globalFreq, setTime: this.globalRunTime })
+      this.store.dispatch('job/scheduleBulkJobs', { jobs: this.bulkJobs, eComStoreId: this.selectedEComStoreId, shopifyConfigs: this.selectedShopifyConfigs })
     },
     async setEComStore(event: any, initial: boolean) {
       initial ? (this.selectedEComStoreId = event) : (this.selectedEComStoreId = event?.detail?.value)
