@@ -6,7 +6,7 @@
           <ion-icon slot="icon-only" :icon="closeOutline" />
         </ion-button>
       </ion-buttons>
-      <ion-title>{{ $t("Add jobs") }}</ion-title>
+      <ion-title>{{ $t("Select jobs") }}</ion-title>
     </ion-toolbar>
   </ion-header>
   <ion-content>
@@ -93,7 +93,6 @@ export default defineComponent({
     async getJobs(vSize?: any, vIndex?: any) {
       const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
       const viewIndex = vIndex ? vIndex : 0;
-      const fetchJobRequests = [];
       const params = {
         "inputFields": {
           "enumTypeParentId": "SYSTEM_JOB",
@@ -116,41 +115,17 @@ export default defineComponent({
         "orderBy": "runTime DESC"
       }
 
-      fetchJobRequests.push(JobService.fetchJobInformation(params).catch((err) => {
-        return err;
-      }))
-
-      // Deep cloning in order to avoid mutating the same reference causing side effects
-      // params = JSON.parse(JSON.stringify(params));
-
-      // // Fetching pending jobs
-      // params.inputFields.statusId = "SERVICE_PENDING";
-      // params.inputFields.productStoreId = this.eComStoreId;
-
-      // fetchJobRequests.push(JobService.fetchJobInformation(params).catch((err) => {
-      //   return err;
-      // }))
-
       try {
-        const resp = await Promise.all(fetchJobRequests)
-        const responseJobs = resp.reduce((responseJobs: any, response: any) => {
-          response.status === 200 && !hasError(response) && response.data.docs && (responseJobs = [...responseJobs, ...response.data.docs]);
-          return responseJobs;
-        }, [])
-
-        responseJobs.map((job: any) => {
-          return {
-            ...job,
-            'status': job?.statusId
-          }
-        })
-        this.jobs = viewIndex === 0 ? (responseJobs) : [...this.jobs, ...responseJobs];
-        this.isScrollable = (this.jobs.length % (process.env.VUE_APP_VIEW_SIZE as any)) === 0;
-
-        // else         
-        // this.isScrollable = false;
-      } catch (err) {
-        console.error(err);
+        const resp = await JobService.fetchJobInformation(params)
+        if (resp.status === 200 && !hasError(resp) && resp.data.docs?.length > 0) {
+          const data = resp.data.docs.map((job: any) => ({ ...job, 'status': job?.statusId }))
+          this.jobs = viewIndex === 0 ? data : [...this.jobs, ...data];
+          this.isScrollable = (this.jobs.length % (process.env.VUE_APP_VIEW_SIZE as any)) === 0;
+        } else {
+          this.isScrollable = false;
+        }
+      } catch (error) {
+        console.error(error);
         showToast(translate("Something went wrong"));
       }
     },
@@ -163,7 +138,7 @@ export default defineComponent({
       })
     },
     addToBulkScheduler(job: any) {
-      this.store.dispatch('job/addJobToBulkScheduler', job);
+      this.store.dispatch('job/addToBulkScheduler', job);
     },
     closeModal() {
       modalController.dismiss({ dismissed: true });

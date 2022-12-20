@@ -16,7 +16,7 @@
           </ion-card-header>
           
           <ion-item>
-            <ion-select interface="popover" :value="currentEComStore.productStoreId" @ionChange="setEComStore($event)">
+            <ion-select interface="popover" :value="selectedEComStoreId" @ionChange="setEComStore($event, false)">
               <ion-select-option v-for="store in (userProfile ? userProfile.stores : [])" :key="store.productStoreId"
                 :value="store.productStoreId">{{ store.storeName }}</ion-select-option>
             </ion-select>
@@ -164,7 +164,7 @@ export default defineComponent({
       isOpenGlobal: false,
       isOpen: false,
       selectedEComStoreId: '',
-      selectedShopifyConfigs: [] as Array<string>,
+      selectedShopifyConfigs: [] as Array<string>, // shopifyConfigs for which the user wants to schedule jobs
       shopifyConfigsForEComStore: [] as any,
       runTime: '' as any,
       frequency: '',
@@ -237,7 +237,7 @@ export default defineComponent({
   },
   mounted() {
     // On initial load, show the currently set store's configs.
-    this.setEComStore(this.currentEComStore.productStoreId);
+    this.setEComStore(this.currentEComStore.productStoreId, true);
     this.selectedShopifyConfigs.push(this.currentShopifyConfig.shopId)
   },
   methods: {
@@ -262,8 +262,8 @@ export default defineComponent({
       const jobs = this.bulkJobs.map((job: any) => { return {...job, runTime: this.runTime} });
       this.store.dispatch('job/scheduleBulkJobs', { jobs, eComStoreId: this.selectedEComStoreId, shopifyConfigs: this.selectedShopifyConfigs, frequency: this.frequency })
     },
-    async setEComStore(event: any) {
-      this.selectedEComStoreId = event?.detail?.value ? event?.detail?.value : event;
+    async setEComStore(event: any, initial: boolean) {
+      initial ? (this.selectedEComStoreId = event) : (this.selectedEComStoreId = event?.detail?.value)
       if (this.userProfile) {
         if (this.selectedEComStoreId) {
           let resp;

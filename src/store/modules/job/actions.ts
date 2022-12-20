@@ -766,7 +766,7 @@ const actions: ActionTree<JobState, RootState> = {
   clearPipelineFilters({ commit }) {
     commit(types.JOB_PIPELINE_FILTERS_CLEARED);
   },
-  addJobToBulkScheduler({ commit, state }, payload) {
+  addToBulkScheduler({ commit, state }, payload) {
     payload.setTime = state.globalRunTime;
     payload.frequency = state.globalFreq;
     commit(types.JOB_BULK_JOBS_UPDATED, payload);
@@ -812,7 +812,6 @@ const actions: ActionTree<JobState, RootState> = {
       job.runtimeData && Object.keys(job.runtimeData).map((key: any) => {
         if (job.runtimeData[key] === 'null') job.runtimeData[key] = ''
       })
-
       const resp = await JobService.scheduleJob({ ...job.runtimeData, ...params });
       if (resp.status == 200 && !hasError(resp)) {
         const jobs = await dispatch('fetchJobs', {
@@ -828,13 +827,15 @@ const actions: ActionTree<JobState, RootState> = {
           const job = jobs.data?.docs[0];
           commit(types.JOB_CURRENT_UPDATED, job);
         }
-        showToast(translate('Scheduled'))
         return Promise.resolve(resp);
       } else {
-        showToast(translate('Something went wrong'))
         return Promise.reject(resp);
       }
-    }))
+    })).then(() => {
+      return showToast(translate('Services have been scheduled in bulk'))
+    }).catch(() => {
+      return showToast(translate('Something went wrong'))
+    })
   },
   setGlobalRunTime({ commit, state }, setTime) {
     commit(types.JOB_BULK_JOBS_TIME_UPDATED, setTime);
