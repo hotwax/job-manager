@@ -66,7 +66,7 @@
           <ion-item>
             <ion-icon slot="start" :icon="timerOutline" />
             <ion-label>{{ $t("Schedule") }}</ion-label>
-            <ion-select :interface-options="customPopoverOptions" interface="popover" :placeholder='$t("Schedule")' @ionChange="frequency = $event['detail'].value">
+            <ion-select :interface-options="customPopoverOptions" interface="popover" :placeholder='$t("Schedule")' @ionChange=setFrequency($event)>
               <ion-select-option v-for="freq in generateFrequencyOptions" :key="freq.value" :value="freq.value">{{ $t(freq.label) }}</ion-select-option>
             </ion-select>
           </ion-item>
@@ -314,14 +314,17 @@ export default defineComponent({
       if (this.bulkJobs) {
         const currTime = DateTime.now().toMillis();
         const setTime = handleDateTimeInput(ev['detail'].value);
-        
         if(setTime > currTime) {
           this.runTime = setTime;
-          this.store.dispatch('job/setTimeForBulkJobs', setTime);
+          this.store.dispatch('job/setGlobalRunTime', setTime);
         } else {
           showToast(translate("Provide a future date and time"));
         }
       }
+    },
+    setFrequency(ev: CustomEvent) {
+      this.frequency = ev['detail'].value;
+      this.store.dispatch('job/setGlobalFreq', this.frequency);
     },
     getTime (time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);

@@ -34,6 +34,8 @@ const jobModule: Module<JobState, RootState> = {
         enum: [],
       },
       bulk: [],
+      globalRunTime: '',
+      globalFreq: '',
     },
     getters,
     actions,

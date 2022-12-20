@@ -766,7 +766,9 @@ const actions: ActionTree<JobState, RootState> = {
   clearPipelineFilters({ commit }) {
     commit(types.JOB_PIPELINE_FILTERS_CLEARED);
   },
-  addJobToBulkScheduler({ commit }, payload) {
+  addJobToBulkScheduler({ commit, state }, payload) {
+    payload.setTime = state.globalRunTime;
+    payload.frequency = state.globalFreq;
     commit(types.JOB_BULK_JOBS_UPDATED, payload);
   },
   async scheduleBulkJobs({ commit, state, dispatch }, payload) {
@@ -775,6 +777,7 @@ const actions: ActionTree<JobState, RootState> = {
         'JOB_NAME': job.jobName,
         'SERVICE_NAME': job.serviceName,
         'SERVICE_COUNT': '0',
+        'SERVICE_TIME': payload.setTime,
         'SERVICE_TEMP_EXPR': payload.frequency,
         'SERVICE_RUN_AS_SYSTEM': 'Y',
         'jobFields': {
@@ -825,7 +828,6 @@ const actions: ActionTree<JobState, RootState> = {
           const job = jobs.data?.docs[0];
           commit(types.JOB_CURRENT_UPDATED, job);
         }
-        console.log(params);
         showToast(translate('Scheduled'))
         return Promise.resolve(resp);
       } else {
@@ -834,13 +836,15 @@ const actions: ActionTree<JobState, RootState> = {
       }
     }))
   },
-  setTimeForBulkJobs({ commit, state }, setTime) {
-    if(state.bulk?.length > 0) {
-      const bulkJobs = JSON.parse(JSON.stringify(state.bulk)).forEach((job: any) => {
-        console.log(job)
-      });
-      commit(types.JOB_BULK_JOBS_UPDATED, bulkJobs);
-    }
+  setGlobalRunTime({ commit, state }, setTime) {
+    commit(types.JOB_BULK_JOBS_TIME_UPDATED, setTime);
+    const bulkJobs = JSON.parse(JSON.stringify(state.bulk)).map((job: any) => ({ ...job, setTime: state.globalRunTime }));
+    commit(types.JOB_BULK_JOBS_UPDATED, bulkJobs);
+  },
+  setGlobalFreq({ commit, state }, frequency) {
+    commit(types.JOB_BULK_JOBS_FREQ_UPDATED, frequency);
+    const bulkJobs = JSON.parse(JSON.stringify(state.bulk)).map((job: any) => ({ ...job, frequency: state.globalFreq }));
+    commit(types.JOB_BULK_JOBS_UPDATED, bulkJobs);
   }
 }
 export default actions;

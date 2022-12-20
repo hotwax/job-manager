@@ -19,13 +19,13 @@
     </ion-item>
     <ion-item>
       <ion-label>{{ $t("Run time") }}</ion-label>
-      <ion-label class="ion-text-wrap" @click="() => isOpen = true" slot="end">{{ runTime ? getTime(runTime) : $t('Select run time') }}</ion-label>
+      <ion-label class="ion-text-wrap" @click="() => isOpen = true" slot="end">{{ job.setTime ? getDateTime(job.setTime) : $t('Select run time') }}</ion-label>
       <ion-modal class="date-time-modal" :is-open="isOpen" @didDismiss="() => isOpen = false">
         <ion-content force-overscroll="false">
           <ion-datetime 
             show-default-buttons 
             hour-cycle="h23" 
-            :value="runTime ? getDateTime(runTime) : ''" 
+            :value="job.setTime ? getDateTime(job.setTime) : ''" 
             @ionChange="updateRunTime($event, job)" 
           />
         </ion-content>
@@ -33,7 +33,7 @@
     </ion-item>
     <ion-item>
       <ion-label>{{ $t("Schedule") }}</ion-label>
-      <ion-select :interface-options="customPopoverOptions" interface="popover" :placeholder='$t("Bulk schedule")'>
+      <ion-select :interface-options="customPopoverOptions" :value="job.frequency" interface="popover" :placeholder='$t("Bulk schedule")'>
         <ion-select-option v-for="freq in generateFrequencyOptions" :key="freq.value" :value="freq.value">{{ $t(freq.label) }}</ion-select-option>
       </ion-select>
     </ion-item>
@@ -89,7 +89,9 @@ export default defineComponent({
   props: ["job", "selectedEComStore", "selectedShopifyConfigs"],
   computed: {
     ...mapGetters({
-      bulkJobs: 'job/getBulkJobs'
+      bulkJobs: 'job/getBulkJobs',
+      globalRunTime: 'job/getGlobalRunTime',
+      globalFreq: 'job/getGlobalFreq'
     }),
     generateFrequencyOptions(): any {
       const optionDefault = [{
@@ -147,7 +149,7 @@ export default defineComponent({
         
         if(setTime > currTime) {
           this.runTime = setTime;
-          // this.store.dispatch('job/setTimeForBulkJob', job.jobId);
+          job.setTime = setTime;
         } else {
           showToast(translate("Provide a future date and time"));
         }

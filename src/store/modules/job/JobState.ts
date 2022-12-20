@@ -25,4 +25,6 @@ export default interface JobState {
       enum: any
     },
     bulk: any,
+    globalRunTime: any,
+    globalFreq: any,
 }

@@ -93,28 +93,6 @@ export default defineComponent({
     async getJobs(vSize?: any, vIndex?: any) {
       const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
       const viewIndex = vIndex ? vIndex : 0;
-      // const params = {
-      //   "inputFields": {
-      //     "enumTypeParentId": "SYSTEM_JOB",
-      //     "statusId": ["SERVICE_DRAFT", "SERVICE_PENDING"],
-      //     "statusId_op": "in",
-      //     "systemJobEnumId_op": "not-empty",
-      //     "description_value": this.queryString,
-      //     "description_op": "contains",
-      //     "description_ic": "Y",
-      //     "shopId_fld0_value": this.shopifyConfigs,
-      //     "shopId_fld0_grp": "1",
-      //     "shopId_fld0_op": "in",
-      //     "shopId_fld1_grp": "2",
-      //     "shopId_fld1_op": "empty"
-      //   } as any,
-      //   "fieldList": ["systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId", "cancelDateTime", "finishDateTime", "startDateTime", "enumTypeId", "description", "runtimeDataId"],
-      //   "noConditionFind": "Y",
-      //   "viewSize": viewSize,
-      //   "viewIndex": viewIndex,
-      //   "orderBy": "runTime DESC"
-      // }
-
       const fetchJobRequests = [];
       const params = {
         "inputFields": {
