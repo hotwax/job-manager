@@ -1,6 +1,7 @@
 import api from '@/api'
 import { showToast } from '@/utils';
 import { translate } from "@/i18n";
+import store from '@/store';
 
 const fetchShopifyWebhooks = async (payload?:  any): Promise <any>  => {
   return api({
@@ -10,26 +11,57 @@ const fetchShopifyWebhooks = async (payload?:  any): Promise <any>  => {
   });
 }
 
-// TODO: add the service endpoint for the new order webhook, cancelled order webhook, payment status webhook, order return webhook & new product webhook.
-const webhookEndpointUrls = {
-  'NEW_ORDERS': 'service/subscribeOrderCreateWebhook',
-  'CANCELLED_ORDERS': 'service/subscribeOrderCancelWebhook',
-  'PAYMENT_STATUS': '',
-  'RETURNS': 'service/subscribeOrderReturnWebhook',
-  'NEW_PRODUCTS': 'service/subscribeProductCreateWebhook',
-  'DELETE_PRODUCTS': 'service/subscribeProductDeleteWebhook',
-  'BULK_OPERATIONS_FINISH': 'service/subscribeFileStatusUpdateWebhook'
+const webhookParameters = {
+  'NEW_ORDERS': {
+    'topic': 'orders/create',
+    'endpointUrl': '' 
+  },
+  'CANCELLED_ORDERS': {
+    'topic': 'orders/cancelled',
+    'endpointUrl': ''
+  },
+  'PAYMENT_STATUS': {
+    'topic': '',
+    'endpointUrl': ''
+  },
+  'RETURNS': {
+    'topic': '',
+    'endpointUrl': ''
+  },
+  'NEW_PRODUCTS': {
+    'topic': 'products/create',
+    'endpointUrl': ''
+  },
+  'DELETE_PRODUCTS': {
+    'topic': 'products/delete',
+    'endpointUrl': 'deleteProductFromShopify'
+  },
+  'BULK_OPERATIONS_FINISH': {
+    'topic': 'bulk_operations/finish',
+    'endpointUrl': 'uploadedFileStatusUpdateFromShopify'
+  },
+  'INVENTORY_LEVEL_UPDATE': {
+    'topic': 'inventory_levels/update',
+    'endpointUrl': 'inventoryLevelUpdateFromShopify'
+  },
+  'ORDER_PAID': {
+    'topic': 'orders/paid',
+    'endpointUrl': 'orderPaidNotificationFromShopify'
+  }
 } as any
 
 const subscribeWebhook = async (payload?: any, id?: string): Promise <any> => {
-  const endpointUrl = webhookEndpointUrls[id as string];
-  if(!endpointUrl) {
+  let baseURL = store.getters['user/getInstanceUrl'];
+  baseURL = baseURL && baseURL.startsWith('http') ? baseURL : `https://${baseURL}.hotwax.io/api/`;
+
+  if(endpointUrl) {
     showToast(translate("Configuration missing"));
     return;
   }
   return api ({
-    url: endpointUrl,
+    url: 'service/subscribeShopifyWebhook',
     method: 'post',
+    baseURL: baseURL,
     data: payload
   })
 }
