@@ -16,7 +16,7 @@
           </ion-card-header>
           
           <ion-item>
-            <ion-select interface="popover" :value="selectedEComStoreId" @ionChange="setEComStore($event, false)">
+            <ion-select interface="popover" :value="selectedEComStoreId" @ionChange="setEComStore($event)">
               <ion-select-option v-for="store in (userProfile ? userProfile.stores : [])" :key="store.productStoreId"
                 :value="store.productStoreId">{{ store.storeName }}</ion-select-option>
             </ion-select>
@@ -82,7 +82,7 @@
       </ion-button>
 
       <section>
-        <JobConfigurationForBulkScheduler :job="job" v-for="job in bulkJobs" :key="job.jobId" :shopifyConfigs="selectedShopifyConfigs"/>
+        <JobConfigurationForBulkScheduler :job="job" v-for="job in bulkJobs" :key="job.jobId" :shopifyConfigs="selectedShopifyConfigs" :selectedEComStoreId="selectedEComStoreId"/>
       </section>
 
       <ion-fab vertical="bottom" horizontal="end" slot="fixed">
@@ -177,7 +177,8 @@ export default defineComponent({
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
       bulkJobs: 'job/getBulkJobs',
       globalRunTime: 'job/getGlobalRunTime',
-      globalFreq: 'job/getGlobalFreq'
+      globalFreq: 'job/getGlobalFreq',
+      shopifyConfigs: 'user/getShopifyConfigs',
     }),
     generateFrequencyOptions(): any {
       const optionDefault = [{
@@ -222,7 +223,8 @@ export default defineComponent({
   },
   mounted() {
     // On initial load, show the currently set store's configs.
-    this.setEComStore(this.currentEComStore.productStoreId, true);
+    this.shopifyConfigsForEComStore = this.shopifyConfigs;
+    this.selectedEComStoreId = this.currentEComStore.productStoreId;
     this.selectedShopifyConfigs.push(this.currentShopifyConfig.shopId)
   },
   methods: {
@@ -246,32 +248,34 @@ export default defineComponent({
     schedule() {
       this.store.dispatch('job/scheduleBulkJobs', { jobs: this.bulkJobs, eComStoreId: this.selectedEComStoreId, shopifyConfigs: this.selectedShopifyConfigs })
     },
-    async setEComStore(event: any, initial: boolean) {
-      initial ? (this.selectedEComStoreId = event) : (this.selectedEComStoreId = event?.detail?.value)
-      if (this.userProfile) {
-        if (this.selectedEComStoreId) {
-          let resp;
-          const payload = {
-            "inputFields": {
-              "productStoreId": this.selectedEComStoreId,
-            },
-            "entityName": "ShopifyShopAndConfig",
-            "noConditionFind": "Y",
-            "fieldList": ["shopifyConfigId", "name", "shopId"]
-          }
-          try {
-            resp = await UserService.getShopifyConfig(payload);
-            if (resp.status === 200 && !hasError(resp) && resp.data?.docs?.length > 0) {
-              this.shopifyConfigsForEComStore = resp.data.docs;
-            } else {
-              this.shopifyConfigsForEComStore = [];
-            }
-          } catch (err) {
-            console.error(err);
-          }
-        } else {
-          this.shopifyConfigsForEComStore = [];
+    async setEComStore(event: any) {
+      this.selectedEComStoreId = event?.detail?.value
+      if (this.selectedEComStoreId) {
+        let resp;
+        const payload = {
+          "inputFields": {
+            "productStoreId": this.selectedEComStoreId,
+          },
+          "entityName": "ShopifyShopAndConfig",
+          "noConditionFind": "Y",
+          "fieldList": ["shopifyConfigId", "name", "shopId"]
         }
+        try {
+          resp = await UserService.getShopifyConfig(payload);
+          if (resp.status === 200 && !hasError(resp) && resp.data?.docs?.length > 0) {
+            this.shopifyConfigsForEComStore = resp.data.docs;
+          } else {
+            this.shopifyConfigsForEComStore = [];
+            this.selectedShopifyConfigs = [];
+          }
+        } catch (err) {
+          this.shopifyConfigsForEComStore = [];
+          this.selectedShopifyConfigs = [];
+          console.error(err);
+        }
+      } else {
+        this.shopifyConfigsForEComStore = [];
+        this.selectedShopifyConfigs = [];
       }
     },
 

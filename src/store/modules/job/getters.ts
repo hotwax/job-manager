@@ -71,16 +71,16 @@ const getters: GetterTree <JobState, RootState> = {
       return state.pipelineFilters;
     },
     getBulkJobs: (state) => {
-      return state.bulk;
+      return state.bulk.jobs;
     },
     isJobAddedToBulkScheduler: (state, getters, rootState, rootGetters) => (jobId: string) => {
       return rootGetters['job/getBulkJobs'].some((job: any) => job.jobId === jobId);
     },
     getGlobalRunTime: (state) => {
-      return state.globalRunTime;
+      return state.bulk.globalRunTime;
     },
     getGlobalFreq: (state) => {
-      return state.globalFreq;
+      return state.bulk.globalFreq;
     }
   }
 
