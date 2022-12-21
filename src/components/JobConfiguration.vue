@@ -57,8 +57,8 @@
 
     <div class="actions desktop-only">
       <div>
-        <ion-button size="small" fill="outline" color="medium" :disabled="currentJob.statusId === 'SERVICE_DRAFT'" @click="skipJob(currentJob)">{{ $t("Skip once") }}</ion-button>
-        <ion-button size="small" fill="outline" color="danger" :disabled="currentJob.statusId === 'SERVICE_DRAFT'" @click="cancelJob(currentJob)">{{ $t("Disable") }}</ion-button>
+        <ion-button size="small" fill="outline" color="medium" :disabled="status === 'SERVICE_DRAFT'" @click="skipJob(currentJob)">{{ $t("Skip once") }}</ion-button>
+        <ion-button size="small" fill="outline" color="danger" :disabled="status === 'SERVICE_DRAFT'" @click="cancelJob(currentJob)">{{ $t("Disable") }}</ion-button>
       </div>
       <div>
         <ion-button size="small" fill="outline" @click="saveChanges()">{{ $t("Save changes") }}</ion-button>
@@ -160,7 +160,6 @@ export default defineComponent({
     // When updating the job, the job is fetched again with the latest values
     // Updated value should be set to instance variable jobStatus
     this.jobStatus = this.currentJob.statusId === "SERVICE_DRAFT" ? this.currentJob.statusId : this.currentJob.tempExprId;
-    this.runTime = this.currentJob?.runTime ? this.currentJob?.runTime : ''
   },
   props: ["title", "status", "type"],
   computed: {
