@@ -13,49 +13,51 @@ const fetchShopifyWebhooks = async (payload?:  any): Promise <any>  => {
 const webhookParameters = {
   'NEW_ORDERS': {
     'topic': 'orders/create',
-    'endpointUrl': '' 
+    'endpoint': ''
   },
   'CANCELLED_ORDERS': {
     'topic': 'orders/cancelled',
-    'endpointUrl': ''
+    'endpoint': ''
   },
   'PAYMENT_STATUS': {
     'topic': '',
-    'endpointUrl': ''
+    'endpoint': ''
   },
   'RETURNS': {
     'topic': '',
-    'endpointUrl': ''
+    'endpoint': ''
   },
   'NEW_PRODUCTS': {
     'topic': 'products/create',
-    'endpointUrl': ''
+    'endpoint': ''
   },
   'DELETE_PRODUCTS': {
     'topic': 'products/delete',
-    'endpointUrl': 'deleteProductFromShopify'
+    'endpoint': 'deleteProductFromShopify'
   },
   'BULK_OPERATIONS_FINISH': {
     'topic': 'bulk_operations/finish',
-    'endpointUrl': 'uploadedFileStatusUpdateFromShopify'
+    'endpoint': 'uploadedFileStatusUpdateFromShopify'
   },
   'INVENTORY_LEVEL_UPDATE': {
     'topic': 'inventory_levels/update',
-    'endpointUrl': 'inventoryLevelUpdateFromShopify'
+    'endpoint': 'inventoryLevelUpdateFromShopify'
   },
   'ORDER_PAID': {
     'topic': 'orders/paid',
-    'endpointUrl': 'orderPaidNotificationFromShopify'
+    'endpoint': 'orderPaidNotificationFromShopify'
   }
 } as any
 
-const subscribeWebhook = async (payload?: any): Promise <any> => {
-  const endpointUrl = webhookParameters[payload.topic as string].endpointUrl;
-  if(!endpointUrl) {
+const subscribeWebhook = async (payload?: any, id?: string): Promise <any> => {
+  const topic = webhookParameters[id as string].topic;
+  const endpoint = webhookParameters[id as string].endpoint;
+  if(!endpoint) {
     showToast(translate("Configuration missing"));
     return;
   }
-  payload['endpointUrl'] = endpointUrl;
+  payload['topic'] = topic;
+  payload['endpoint'] = endpoint;
 
   return api ({
     url: 'service/subscribeShopifyWebhook',
