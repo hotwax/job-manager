@@ -458,7 +458,7 @@ const actions: ActionTree<JobState, RootState> = {
     try {
       resp = await JobService.updateJob(payload)
       if (resp.status === 200 && !hasError(resp) && resp.data.successMessage) {
-        let jobs = await dispatch('fetchJobs', {
+        const jobs = await dispatch('fetchJobs', {
           inputFields: {
             'systemJobEnumId': payload.systemJobEnumId,
             'systemJobEnumId_op': 'equals'
