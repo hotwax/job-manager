@@ -464,11 +464,11 @@ const actions: ActionTree<JobState, RootState> = {
             'systemJobEnumId_op': 'equals'
           }
         })
-        const job = jobs.find((job: any) => job?.jobId === payload.jobId);
-        if(job.status === 200 && !hasError(job) && job.data?.docs.length) {
+        const updatedJob = jobs.find((job: any) => job?.jobId === payload.jobId);
+        if(updatedJob.status === 200 && !hasError(updatedJob) && updatedJob.data?.docs.length) {
           // We are using status field everywhere so whenever we fetch job again status field needs to be updated
           // TODO Check why status field is used instead of statusId
-          commit(types.JOB_CURRENT_UPDATED, job.data.docs[0]);
+          commit(types.JOB_CURRENT_UPDATED, updatedJob.data.docs[0]);
         }
         showToast(translate('Service updated successfully'))
       } else {
@@ -532,9 +532,9 @@ const actions: ActionTree<JobState, RootState> = {
           },
           orderBy: "runTime ASC"
         })
-        const job = jobs[0];
-        if(job.status === 200 && !hasError(job) && job.data?.docs?.length) {
-          commit(types.JOB_CURRENT_UPDATED, job.data?.docs[0]);
+        const scheduledJob = jobs[0];
+        if(scheduledJob.status === 200 && !hasError(scheduledJob) && scheduledJob.data?.docs?.length) {
+          commit(types.JOB_CURRENT_UPDATED, scheduledJob.data?.docs[0]);
           return job;
         }
       } else {
