@@ -772,6 +772,8 @@ const actions: ActionTree<JobState, RootState> = {
     commit(types.JOB_BULK_JOBS_UPDATED, payload);
   },
   async scheduleBulkJobs({ commit, state, dispatch }, payload) {
+    // when scheduling the same job multiple times through bulk editor
+    // the next jobs scheduled do not include shopId and configId.
     const jobParams = [] as any;
     payload.shopifyConfigs.map((shopId: string) => {
       return payload.jobs.map((job: any) => {

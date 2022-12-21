@@ -86,7 +86,7 @@
       </section>
 
       <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-        <ion-fab-button @click="saveChanges()">
+        <ion-fab-button @click="saveChanges()" :disabled="bulkJobs?.length === 0">
           <ion-icon :icon="iceCreamOutline" />
         </ion-fab-button>
       </ion-fab>
