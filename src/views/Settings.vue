@@ -8,57 +8,128 @@
     </ion-header>
     
     <ion-content>
-      <!-- Select eCom store -->
-      <ion-item>
-        <ion-icon :icon="globeOutline" slot="start" />
-        <ion-label>{{$t("eCom Store")}}</ion-label>
-        <ion-select interface="popover" :value="currentEComStore.productStoreId" @ionChange="setEComStore($event)">
-          <ion-select-option v-for="store in (userProfile ? userProfile.stores : [])" :key="store.productStoreId" :value="store.productStoreId" >{{ store.storeName }}</ion-select-option>
-        </ion-select>
-      </ion-item>
-      <!-- Select shopify config -->
-      <ion-item>
-        <ion-icon :icon="basketOutline" slot="start" />
-        <ion-label>{{ $t("Shopify Config") }}</ion-label>
-        <ion-select interface="popover" :value="currentShopifyConfig?.shopifyConfigId" @ionChange="setShopifyConfig($event)">
-          <ion-select-option v-for="shopifyConfig in shopifyConfigs" :key="shopifyConfig.shopifyConfigId" :value="shopifyConfig.shopifyConfigId" >{{ shopifyConfig.name ? shopifyConfig.name : shopifyConfig.shopifyConfigName }}</ion-select-option>
-        </ion-select>
-      </ion-item>
-      <!-- OMS information -->
-      <ion-item>
-        <ion-icon :icon="codeWorkingOutline" slot="start"/>
-        <ion-label>{{ $t("OMS") }}</ion-label>
-        <p slot="end">{{ baseURL ? baseURL : instanceUrl }}</p>
-      </ion-item>
-         
-      <ion-item>
-        <ion-icon :icon="timeOutline" slot="start"/>
-        <ion-label> {{ userProfile && userProfile.userTimeZone ? userProfile.userTimeZone : '-' }} </ion-label>
-        <ion-button @click="changeTimeZone()" slot="end" fill="outline" color="dark">{{ $t("Change") }}</ion-button>
-      </ion-item>
+      <div class="user-profile">
+        <ion-card>
+          <ion-item lines="full">
+            <ion-avatar slot="start" v-if="userProfile?.partyImageUrl">
+              <Image :src="userProfile.partyImageUrl"/>
+            </ion-avatar>
+            <ion-label>
+              {{ userProfile?.partyName }}
+              <p>{{ userProfile?.userLoginId }}</p>
+            </ion-label>
+          </ion-item>
+          <ion-button fill="outline" color="danger" @click="logout()">{{ $t("Logout") }}</ion-button>
+          <!-- Commenting this code as we currently do not have reset password functionality -->
+          <!-- <ion-button fill="outline" color="medium">{{ $t("Reset password") }}</ion-button> -->
+        </ion-card>
+      </div>
 
-      <!-- Profile of user logged in -->
-      <ion-item>
-        <ion-icon :icon="personCircleOutline" slot="start" />
-        <ion-label>{{ userProfile !== null ? userProfile.partyName : '' }}</ion-label>
-        <ion-button slot="end" fill="outline" color="dark" @click="logout()">{{ $t("Logout") }}</ion-button>
-      </ion-item>
+      <h1>{{ $t('OMS') }}</h1>
+      <section>
+        <ion-card>
+          <ion-card-header>
+            <ion-card-subtitle>
+              {{ $t("OMS instance") }}
+            </ion-card-subtitle>
+            <ion-card-title>
+              {{ instanceUrl }}
+            </ion-card-title>
+          </ion-card-header>
+
+          <ion-card-content>
+            {{ $t('This is the name of the OMS you are connected to right now. Make sure that you are connected to the right instance before proceeding.') }}
+          </ion-card-content>
+
+          <ion-button @click="goToOms" fill="clear">
+            {{ $t('Go to OMS') }}
+            <ion-icon slot="end" :icon="openOutline" />
+          </ion-button>
+        </ion-card>
+
+        <ion-card>
+          <ion-card-header>
+            <ion-card-subtitle>
+              {{ $t("Product Store") }}
+            </ion-card-subtitle>
+            <ion-card-title>
+              {{ $t("Store") }}
+            </ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            {{ $t('A store repesents a company or a unique catalog of products. If your OMS is connected to multiple eCommerce stores sellling different collections of products, you may have multiple Product Stores set up in HotWax Commerce.') }}
+          </ion-card-content>
+          <ion-item lines="none">
+            <ion-label> {{ $t("Select store") }} </ion-label>
+            <ion-select interface="popover" :value="currentEComStore.productStoreId" @ionChange="setEComStore($event)">
+              <ion-select-option v-for="store in (userProfile ? userProfile.stores : [])" :key="store.productStoreId" :value="store.productStoreId" >{{ store.storeName }}</ion-select-option>
+            </ion-select>
+          </ion-item>
+        </ion-card>
+        <ion-card>
+          <ion-card-header>
+            <ion-card-subtitle>
+              {{ $t("Shopify Config") }}
+            </ion-card-subtitle>
+            <ion-card-title>
+              {{ $t("eCommerce") }}
+            </ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            {{ $t('eCommerce stores are directly connected to one Shop Config. If your OMS is connected to multiple eCommerce stores selling the same catalog operating as one Company, you may have multiple Shop Configs for the selected Product Store.') }}
+          </ion-card-content>
+          <ion-item lines="none">
+            <ion-label>{{ $t("Select eCommerce") }}</ion-label>
+            <ion-select interface="popover" :value="currentShopifyConfig?.shopifyConfigId" @ionChange="setShopifyConfig($event)">
+              <ion-select-option v-for="shopifyConfig in shopifyConfigs" :key="shopifyConfig.shopifyConfigId" :value="shopifyConfig.shopifyConfigId" >{{ shopifyConfig.name ? shopifyConfig.name : shopifyConfig.shopifyConfigName }}</ion-select-option>
+            </ion-select>
+          </ion-item>
+        </ion-card>
+      </section>
+      <hr />
+      <h1>{{ $t('App') }}</h1>
+
+      <section>
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>
+              {{ $t('Timezone') }}
+            </ion-card-title>
+          </ion-card-header>
+
+          <ion-card-content>
+            {{ $t('The timezone you select is used to ensure automations you schedule are always accurate to the time you select.') }}
+          </ion-card-content>
+
+          <ion-item lines="none">
+            <ion-label> {{ userProfile && userProfile.userTimeZone ? userProfile.userTimeZone : '-' }} </ion-label>
+            <ion-button @click="changeTimeZone()" slot="end" fill="outline" color="dark">{{ $t("Change") }}</ion-button>
+          </ion-item>
+        </ion-card>
+      </section>
     </ion-content>
   </ion-page>
 </template>
 
 <script lang="ts">
-import { IonButton, IonContent, IonHeader,IonIcon, IonItem, IonLabel, IonMenuButton, IonPage, IonSelect, IonSelectOption, IonTitle, IonToolbar, modalController } from '@ionic/vue';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonContent, IonHeader,IonIcon, IonItem, IonLabel, IonMenuButton, IonPage, IonSelect, IonSelectOption, IonTitle, IonToolbar, modalController } from '@ionic/vue';
 import { defineComponent } from 'vue';
-import { codeWorkingOutline, ellipsisVertical, globeOutline, personCircleOutline, storefrontOutline, timeOutline, basketOutline} from 'ionicons/icons'
+import { codeWorkingOutline, ellipsisVertical, personCircleOutline, openOutline, saveOutline, timeOutline } from 'ionicons/icons'
 import { mapGetters, useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import TimeZoneModal from '@/views/TimezoneModal.vue';
+import Image from '@/components/Image.vue'
 
 export default defineComponent({
   name: 'Settings',
   components: {
+    IonAvatar,
     IonButton, 
+    IonCard,
+    IonCardContent,
+    IonCardHeader,
+    IonCardSubtitle,
+    IonCardTitle,
     IonContent, 
     IonHeader, 
     IonIcon,
@@ -66,14 +137,15 @@ export default defineComponent({
     IonLabel,
     IonMenuButton,
     IonPage, 
-    IonSelect, 
+    IonSelect,
     IonSelectOption,
     IonTitle, 
-    IonToolbar
+    IonToolbar,
+    Image
   },
   data() {
     return {
-      baseURL: process.env.VUE_APP_BASE_URL
+      baseURL: process.env.VUE_APP_BASE_URL,
     };
   },
   computed: {
@@ -82,7 +154,7 @@ export default defineComponent({
       currentEComStore: 'user/getCurrentEComStore',
       instanceUrl: 'user/getInstanceUrl',
       shopifyConfigs: 'user/getShopifyConfigs',
-      currentShopifyConfig: 'user/getCurrentShopifyConfig'
+      currentShopifyConfig: 'user/getCurrentShopifyConfig',
     })
   },
   methods: {
@@ -104,7 +176,10 @@ export default defineComponent({
       this.store.dispatch('user/logout').then(() => {
         this.router.push('/login');
       })
-    }
+    },
+    goToOms(){
+      window.open(this.instanceUrl.startsWith('http') ? this.instanceUrl.replace('api/', "") : `https://${this.instanceUrl}.hotwax.io/`, '_blank', 'noopener, noreferrer');
+    },
   },
   setup(){
     const store = useStore();
@@ -113,14 +188,34 @@ export default defineComponent({
     return {
       codeWorkingOutline,
       ellipsisVertical,
-      globeOutline,
       personCircleOutline,
-      storefrontOutline,
       store,
       timeOutline,
       router,
-      basketOutline
+      openOutline,
+      saveOutline,
     }
   }
 });
 </script>
+
+<style scoped>
+  ion-card > ion-button {
+    margin: var(--spacer-xs);
+  }
+  h1 {
+    padding: var(--spacer-xs) 10px 0;
+  }
+  section {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    align-items: start;
+  }
+  .user-profile {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  }
+  hr {
+    border-top: 1px solid var(--ion-color-medium);
+  }
+</style>
