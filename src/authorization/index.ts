@@ -17,7 +17,6 @@ const ability = build();
 export default ability;
 
 
-
 /**
  * 
  * @param serverPermissions 
@@ -29,7 +28,8 @@ const prepareAppPermissions = (serverPermissions: any) => {
         return serverPermissionsInput;
     }, {})
     const permissions = Object.keys(permissionRules).reduce((permissions: any, rule: any) => {
-        if (getEvaluator(permissionRules[rule])(serverPermissionsInput)) {
+        const permissionRule = permissionRules[rule];
+        if (!permissionRule || (permissionRule&& getEvaluator(permissionRule)(serverPermissionsInput))) {
             permissions.push(rule);
         }
         return permissions;
@@ -51,17 +51,14 @@ const setPermissions = (permissions: any) => ability.update(permissions);
 /**
  * 
  */
-const resetPermissions = () => {
-    setPermissions([]);
-}
+const resetPermissions = () => setPermissions([]);
+
 
 /**
  * 
  * @param permission 
  * @returns 
  */
-const hasPermission = (permission: string) => {
-    return ability.can(permission);
-}
+const hasPermission = (permission: string) => ability.can(permission);
 
 export { Action, hasPermission, prepareAppPermissions, resetPermissions, setPermissions};

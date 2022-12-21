@@ -323,9 +323,9 @@ const actions: ActionTree<UserState, RootState> = {
     // Though this might not be an server specific configuration, 
     // we will be adding it to environment variable for easy configuration at app level
     const viewSize = 200;
-    user.permissions = [];
+    let appPermissions = [] as any;
 
-    try{
+    try {
       const params = {
         "viewIndex": 0,
         viewSize,
@@ -334,7 +334,6 @@ const actions: ActionTree<UserState, RootState> = {
       if(resp.status === 200 && resp.data.docs?.length && !hasError(resp)) {
         let serverPermissions = resp.data.docs.map((permission: any) => permission.permissionId);
         const total = resp.data.count;
-        let appPermissions = prepareAppPermissions(serverPermissions)
         const remainingPermissions = total - serverPermissions.length;
         if (remainingPermissions > 0) {
           // We need to get all the remaining permissions
@@ -355,16 +354,16 @@ const actions: ActionTree<UserState, RootState> = {
           // If partial permissions are received and we still allow user to login, some of the functionality might not work related to the permissions missed.
           // This will leave user into an uncertainity. It is better to get them all or nothing. 
           if (isCompleteResponse) {
-            appPermissions = responses.reduce((appPermissions: any, response: any) => {
-              serverPermissions = response.data.docs.map((permission: any) => permission.permissionId);
-              appPermissions.push(...prepareAppPermissions(serverPermissions));
-              return appPermissions;
-            }, appPermissions)
+            serverPermissions = responses.reduce((serverPermissions: any, response: any) => {
+              serverPermissions.push(...response.data.docs.map((permission: any) => permission.permissionId));
+              return serverPermissions;
+            }, serverPermissions)
           }
         }
-        user.permissions = appPermissions;
-        setPermissions(appPermissions);
+        appPermissions = prepareAppPermissions(serverPermissions);
       }
+      user.permissions = appPermissions;
+      setPermissions(appPermissions);
       commit(types.USER_INFO_UPDATED, user);
     } catch(error) {
       console.error(error);

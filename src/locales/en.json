@@ -226,5 +226,6 @@
   "Upload Pending Process": "Upload Pending Process",
   "Update shipping dates in Shopify": "Update shipping dates in Shopify",
   "When importing historical completed orders, this should be turned off.": "When importing historical completed orders, this should be turned off.",
-  "When using HotWax BOPIS, Shopify isn't aware of the actual inventory consumed. HotWax will automatically restore inventory automatically reduced by Shopify and deduct inventory from the correct store to maintain inventory accuracy.": "When using HotWax BOPIS, Shopify isn't aware of the actual inventory consumed. HotWax will automatically restore inventory automatically reduced by Shopify and deduct inventory from the correct store to maintain inventory accuracy."
+  "When using HotWax BOPIS, Shopify isn't aware of the actual inventory consumed. HotWax will automatically restore inventory automatically reduced by Shopify and deduct inventory from the correct store to maintain inventory accuracy.": "When using HotWax BOPIS, Shopify isn't aware of the actual inventory consumed. HotWax will automatically restore inventory automatically reduced by Shopify and deduct inventory from the correct store to maintain inventory accuracy.",
+  "You do not have permission to access this page": "You do not have permission to access this page"
 }
