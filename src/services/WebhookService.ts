@@ -50,18 +50,17 @@ const webhookParameters = {
   }
 } as any
 
-const subscribeWebhook = async (payload?: any, id?: string): Promise <any> => {
-  let baseURL = store.getters['user/getInstanceUrl'];
-  baseURL = baseURL && baseURL.startsWith('http') ? baseURL : `https://${baseURL}.hotwax.io/api/`;
-
-  if(endpointUrl) {
+const subscribeWebhook = async (payload?: any): Promise <any> => {
+  const endpointUrl = webhookParameters[payload.topic as string].endpointUrl;
+  if(!endpointUrl) {
     showToast(translate("Configuration missing"));
     return;
   }
+  payload['endpointUrl'] = endpointUrl;
+
   return api ({
     url: 'service/subscribeShopifyWebhook',
     method: 'post',
-    baseURL: baseURL,
     data: payload
   })
 }
