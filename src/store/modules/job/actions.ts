@@ -458,17 +458,19 @@ const actions: ActionTree<JobState, RootState> = {
     try {
       resp = await JobService.updateJob(payload)
       if (resp.status === 200 && !hasError(resp) && resp.data.successMessage) {
-        const jobs = await dispatch('fetchJobs', {
+        let jobs = await dispatch('fetchJobs', {
           inputFields: {
             'systemJobEnumId': payload.systemJobEnumId,
             'systemJobEnumId_op': 'equals'
           }
         })
-        const job = jobs.find((job: any) => job?.jobId === payload.jobId);
-        if(job.status === 200 && !hasError(job) && job.data?.docs.length) {
+        if(jobs.status === 200 && !hasError(jobs) && jobs.data?.docs.length) {
+          jobs = jobs.data?.docs;
+          const job = jobs.find((job: any) => job?.jobId === payload.jobId);
           // We are using status field everywhere so whenever we fetch job again status field needs to be updated
           // TODO Check why status field is used instead of statusId
-          commit(types.JOB_CURRENT_UPDATED, job.data.docs[0]);
+          job && (job.status = job.statusId);
+          commit(types.JOB_CURRENT_UPDATED, job);
         }
         showToast(translate('Service updated successfully'))
       } else {
@@ -532,9 +534,9 @@ const actions: ActionTree<JobState, RootState> = {
           },
           orderBy: "runTime ASC"
         })
-        const job = jobs[0];
-        if(job.status === 200 && !hasError(job) && job.data?.docs?.length) {
-          commit(types.JOB_CURRENT_UPDATED, job.data?.docs[0]);
+        if(jobs.status === 200 && !hasError(jobs) && jobs.data?.docs?.length) {
+          const job = jobs.data?.docs[0];
+          commit(types.JOB_CURRENT_UPDATED, job);
           return job;
         }
       } else {
@@ -684,15 +686,16 @@ const actions: ActionTree<JobState, RootState> = {
         // Fetch and update current only when there is object in current
         // Cancel job can be performed from pipeline page too causing side effects
         if (state.current && Object.keys(state.current).length) {
-        const jobs = await dispatch('fetchJobs', {
+        let jobs = await dispatch('fetchJobs', {
           inputFields: {
             'systemJobEnumId': job.systemJobEnumId,
             'systemJobEnumId_op': 'equals'
           }
         })
-        const disabledJob = jobs[0];
-        if (disabledJob.status === 200 && !hasError(disabledJob) && disabledJob.data?.docs.length) {
-          commit(types.JOB_CURRENT_UPDATED, disabledJob);
+        if (jobs.status === 200 && !hasError(jobs) && jobs.data?.docs.length) {
+          jobs = jobs.data?.docs;
+          const currentJob = jobs.find((currentJob: any) => currentJob?.systemJobEnumId === job?.systemJobEnumId);
+          commit(types.JOB_CURRENT_UPDATED, currentJob);
         }
         }
         showToast(translate('Service updated successfully'))
