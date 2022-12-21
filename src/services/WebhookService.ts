@@ -1,7 +1,6 @@
 import api from '@/api'
 import { showToast } from '@/utils';
 import { translate } from "@/i18n";
-import store from '@/store';
 
 const fetchShopifyWebhooks = async (payload?:  any): Promise <any>  => {
   return api({
