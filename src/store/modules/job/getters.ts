@@ -77,10 +77,10 @@ const getters: GetterTree <JobState, RootState> = {
       return rootGetters['job/getBulkJobs'].some((job: any) => job.jobId === jobId);
     },
     getGlobalRunTime: (state) => {
-      return state.bulk.globalRunTime;
+      return state.bulk.setTime;
     },
     getGlobalFreq: (state) => {
-      return state.bulk.globalFreq;
+      return state.bulk.frequency;
     },
   }
 

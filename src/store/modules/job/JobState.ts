@@ -26,7 +26,7 @@ export default interface JobState {
     },
     bulk: {
       jobs: any,
-      globalRunTime: any,
-      globalFreq: any,
+      setTime: any,
+      frequency: any,
     },
 }

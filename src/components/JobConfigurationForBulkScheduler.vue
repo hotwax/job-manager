@@ -97,8 +97,6 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       bulkJobs: 'job/getBulkJobs',
-      globalRunTime: 'job/getGlobalRunTime',
-      globalFreq: 'job/getGlobalFreq',
       userProfile: 'user/getUserProfile',
     }),
     getEComsStoreName() {
@@ -149,14 +147,14 @@ export default defineComponent({
         
         if(setTime > currTime) {
           job.setTime = setTime;
-          this.store.dispatch('job/setRunTime', { setTime, jobId: job.jobId, global: false });
+          this.store.dispatch('job/setBulkJobData', { value: setTime, type: 'setTime', jobId: job.jobId, global: false });
         } else {
           showToast(translate("Provide a future date and time"));
         }
       }
     },
     setFrequency(ev: CustomEvent, job: any) {
-      this.store.dispatch('job/setFrequency', { frequency: ev['detail'].value, jobId: job.jobId, global: false });
+      this.store.dispatch('job/setBulkJobData', { value: ev['detail'].value, jobId: job.jobId, global: false });
     },
     getTime (time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
