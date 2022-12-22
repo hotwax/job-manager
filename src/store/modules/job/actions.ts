@@ -837,36 +837,6 @@ const actions: ActionTree<JobState, RootState> = {
       })
     })
   },
-  // setRunTime({ commit, state }, payload) {
-  //   let bulkJobs;
-  //   if (payload.global) {
-  //     commit(types.JOB_BULK_JOBS_TIME_UPDATED, payload.setTime);
-  //     bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs)).map((job: any) => ({ ...job, setTime: state.bulk.setTime }));
-  //   } else {
-  //     bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs));
-  //     bulkJobs.forEach((job: any) => {
-  //       if (job.jobId === payload.jobId) {
-  //         job.setTime = payload.setTime;
-  //       }
-  //     });
-  //   }
-  //   commit(types.JOB_BULK_JOBS_UPDATED, bulkJobs);
-  // },
-  // setFrequency({ commit, state }, payload) {
-  //   let bulkJobs;
-  //   if (payload.global) {
-  //     commit(types.JOB_BULK_JOBS_FREQ_UPDATED, payload.frequency);
-  //     bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs)).map((job: any) => ({ ...job, frequency: state.bulk.frequency }));
-  //   } else {
-  //     bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs));
-  //     bulkJobs.forEach((job: any) => {
-  //       if (job.jobId === payload.jobId) {
-  //         job.frequency = payload.frequency;
-  //       }
-  //     });
-  //   }
-  //   commit(types.JOB_BULK_JOBS_UPDATED, bulkJobs);
-  // },
   setBulkJobData({ commit, state }, payload) {
     let bulkJobs;
     const value = payload.value;
