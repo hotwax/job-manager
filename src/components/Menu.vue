@@ -35,13 +35,21 @@
           <ion-note slot="end">{{ userProfile?.userTimeZone }}</ion-note>
         </ion-item>
         <ion-item lines="none">
-          <ion-select interface="popover" :value="eComStore.productStoreId" @ionChange="setEComStore($event)">
+          <ion-select v-if="userProfile?.stores.length > 2" interface="popover" :value="eComStore.productStoreId" @ionChange="setEComStore($event)">
             <ion-select-option v-for="store in (userProfile?.stores ? userProfile.stores : [])" :key="store.productStoreId" :value="store.productStoreId" >{{ store.storeName }}</ion-select-option>
           </ion-select>
+          <ion-label v-else class="ion-text-wrap">
+            {{ currentEComStore.storeName }}
+          </ion-label>
         </ion-item>
         <ion-item lines="none">
-          <ion-label class="ion-text-wrap">
-            <p>{{ currentShopifyConfig.name ? currentShopifyConfig.name : currentShopifyConfig.shopifyConfigName }}</p>
+          <ion-select v-if="shopifyConfigs.length > 1 && userProfile?.stores.length <= 2" interface="popover" :value="currentShopifyConfig?.shopifyConfigId" @ionChange="('sad')">
+            <ion-select-option v-for="shopifyConfig in shopifyConfigs" :key="shopifyConfig.shopifyConfigId" :value="shopifyConfig.shopifyConfigId" >{{ shopifyConfig.name ? shopifyConfig.name : shopifyConfig.shopifyConfigName }}</ion-select-option>
+          </ion-select>
+          <ion-label v-else class="ion-text-wrap">
+           <p>
+             {{ currentShopifyConfig.name ? currentShopifyConfig.name : currentShopifyConfig.shopifyConfigName }}
+           </p> 
           </ion-label>
         </ion-item>
       </ion-toolbar>
@@ -104,7 +112,9 @@ export default defineComponent({
       eComStore: 'user/getCurrentEComStore',
       instanceUrl: 'user/getInstanceUrl',
       userProfile: 'user/getUserProfile',
-      currentShopifyConfig: 'user/getCurrentShopifyConfig'
+      currentShopifyConfig: 'user/getCurrentShopifyConfig',
+      currentEComStore: 'user/getCurrentEComStore',
+      shopifyConfigs: 'user/getShopifyConfigs',
     })
   },
   methods: {
