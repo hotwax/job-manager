@@ -56,7 +56,10 @@ const mutations: MutationTree <JobState> = {
         }
     },
     [types.JOB_BULK_JOBS_UPDATED] (state, payload){
-        Array.isArray(payload) ? state.bulk.jobs = payload : state.bulk.jobs.push(payload);
+        state.bulk.jobs = payload;
+    },
+    [types.JOB_BULK_JOB_ADDED] (state, payload){
+        state.bulk.jobs.push(payload);
     },
     [types.JOB_BULK_JOBS_DATA_UPDATED] (state, payload) {
         (state.bulk as any)[payload.type] = payload.value;
