@@ -11,11 +11,11 @@
     </ion-item-divider>
     <ion-item>
       <ion-label>{{ $t("Store") }}</ion-label>
-      <ion-note slot="end">{{ getEComsStoreName }}</ion-note>
+      <ion-note slot="end">{{ getEComStoreName }}</ion-note>
     </ion-item>
     <ion-item>
       <ion-label>{{ $t("eCommerce") }}</ion-label>
-      <ion-badge :color="shopifyConfigs?.length > 0 ? '' : 'danger'">{{ shopifyConfigs?.length === 0 ? $t("No eCommerce selected") : $t("eCommerce selected", {count: shopifyConfigs.length})}}</ion-badge>
+      <ion-badge :color="selectedShopifyConfigs?.length > 0 ? '' : 'danger'">{{ selectedShopifyConfigs?.length === 0 ? $t("no eCommerce selected") : $t("eCommerce selected", {count: selectedShopifyConfigs.length})}}</ion-badge>
     </ion-item>
     <ion-item>
       <ion-label>{{ $t("Run time") }}</ion-label>
@@ -88,18 +88,17 @@ export default defineComponent({
   },
   data() {
     return {
-      isOpenGlobal: false,
       isOpen: false,
       eComStore: '',
     }
   },
-  props: ["job", "shopifyConfigs", "selectedEComStoreId"],
+  props: ["job", "selectedShopifyConfigs", "selectedEComStoreId"],
   computed: {
     ...mapGetters({
       bulkJobs: 'job/getBulkJobs',
       userProfile: 'user/getUserProfile',
     }),
-    getEComsStoreName() {
+    getEComStoreName() {
       return this.userProfile.stores.find((store: any) => store.productStoreId === this.selectedEComStoreId).storeName;
     },
     generateFrequencyOptions(): any {

@@ -55,13 +55,13 @@ const mutations: MutationTree <JobState> = {
             enum: []
         }
     },
-    [types.JOB_BULK_JOBS_UPDATED] (state, payload){
+    [types.JOB_BULK_UPDATED] (state, payload){
         state.bulk.jobs = payload;
     },
-    [types.JOB_BULK_JOB_ADDED] (state, payload){
+    [types.JOB_ADDED_TO_BULK] (state, payload){
         state.bulk.jobs.push(payload);
     },
-    [types.JOB_BULK_JOBS_DATA_UPDATED] (state, payload) {
+    [types.JOB_BULK_DATA_UPDATED] (state, payload) {
         (state.bulk as any)[payload.type] = payload.value;
     }
 }

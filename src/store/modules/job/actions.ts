@@ -769,7 +769,7 @@ const actions: ActionTree<JobState, RootState> = {
   addToBulkScheduler({ commit, state }, payload) {
     payload.setTime = state.bulk.setTime;
     payload.frequency = state.bulk.frequency;
-    commit(types.JOB_BULK_JOB_ADDED, payload);
+    commit(types.JOB_ADDED_TO_BULK, payload);
   },
   async scheduleBulkJobs({ commit }, payload) {
     // when scheduling the same job multiple times through bulk editor
@@ -837,16 +837,16 @@ const actions: ActionTree<JobState, RootState> = {
     })
   },
   setBulkJobData({ commit, state }, payload) {
-    let bulkJobs;
+    let bulkJobs = [];
     const value = payload.value, type = payload.type;
     if (payload.global) {
-      commit(types.JOB_BULK_JOBS_DATA_UPDATED, { type, value });
+      commit(types.JOB_BULK_DATA_UPDATED, { type, value });
       bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs)).map((job: any) => ({ ...job, [type]: (state.bulk as any)[type] }));
     } else {
       bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs));
       bulkJobs.forEach((job: any) => { if (job.jobId === payload.jobId) { job[type] = value }});
     }
-    commit(types.JOB_BULK_JOBS_UPDATED, bulkJobs);
+    commit(types.JOB_BULK_UPDATED, bulkJobs);
   }
 }
 export default actions;

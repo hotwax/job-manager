@@ -77,12 +77,12 @@
       </section>
         
       <ion-button fill="outline" @click="selectJobs()">
-        <ion-icon slot="start" :icon="addOutline" @click="selectJobs" />
+        <ion-icon slot="start" :icon="addOutline"/>
         {{ $t("select jobs") }}
       </ion-button>
 
       <section>
-        <JobConfigurationForBulkScheduler :job="job" v-for="job in bulkJobs" :key="job.jobId" :shopifyConfigs="selectedShopifyConfigs" :selectedEComStoreId="selectedEComStoreId"/>
+        <JobConfigurationForBulkScheduler :job="job" v-for="job in bulkJobs" :key="job.jobId" :selectedShopifyConfigs="selectedShopifyConfigs" :selectedEComStoreId="selectedEComStoreId"/>
       </section>
 
       <ion-fab vertical="bottom" horizontal="end" slot="fixed">
@@ -264,8 +264,8 @@ export default defineComponent({
             this.shopifyConfigsForEComStore = resp.data.docs;
           } else {
             this.shopifyConfigsForEComStore = [];
-            this.selectedShopifyConfigs = [];
           }
+          this.selectedShopifyConfigs = [];
         } catch (err) {
           this.shopifyConfigsForEComStore = [];
           this.selectedShopifyConfigs = [];

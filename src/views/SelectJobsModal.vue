@@ -10,8 +10,7 @@
     </ion-toolbar>
   </ion-header>
   <ion-content>
-    <ion-searchbar v-model="queryString" :placeholder="$t('Search jobs')"
-      @keyup.enter="queryString = $event.target.value; search($event)" />
+    <ion-searchbar v-model="queryString" :placeholder="$t('Search jobs')" @keyup.enter="queryString = $event.target.value; search($event)" />
 
     <ion-list v-for="job in jobs" :key="job.jobId">
       <ion-item lines="none">
@@ -104,7 +103,7 @@ export default defineComponent({
           "description_ic": "Y",
           "shopId_fld0_value": this.shopifyConfigs,
           "shopId_fld0_grp": "1",
-          "shopId_fld0_op": "equals",
+          "shopId_fld0_op": "in",
           "shopId_fld1_grp": "2",
           "shopId_fld1_op": "empty",
         },
