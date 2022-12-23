@@ -15,7 +15,8 @@
     </ion-item>
     <ion-item>
       <ion-label>{{ $t("eCommerce") }}</ion-label>
-      <ion-badge :color="selectedShopifyConfigs?.length > 0 ? '' : 'danger'">{{ selectedShopifyConfigs?.length === 0 ? $t("no eCommerce selected") : $t("eCommerce selected", {count: selectedShopifyConfigs.length})}}</ion-badge>
+      <ion-badge v-if="selectedShopifyConfigs.length === 0" color="danger">{{ $t("no eCommerce selected") }}</ion-badge>
+      <ion-note v-else slot="end">{{ getShopifyConfigNames }}</ion-note>
     </ion-item>
     <ion-item>
       <ion-label>{{ $t("Run time") }}</ion-label>
@@ -100,7 +101,6 @@ export default defineComponent({
   data() {
     return {
       isOpen: false,
-      eComStore: '',
     }
   },
   props: ["job", "selectedShopifyConfigs", "selectedEComStoreId"],
@@ -108,9 +108,14 @@ export default defineComponent({
     ...mapGetters({
       bulkJobs: 'job/getBulkJobs',
       userProfile: 'user/getUserProfile',
+      shopifyConfigs: 'user/getShopifyConfigs',
     }),
     getEComStoreName() {
       return this.userProfile.stores.find((store: any) => store.productStoreId === this.selectedEComStoreId).storeName;
+    },
+    getShopifyConfigNames() {
+      // find matching shopifyConfig objects and return their names 
+      return this.shopifyConfigs.filter((config: any) => this.selectedShopifyConfigs.includes(config.shopId)).map((config: any) => config.name).join(', ');
     },
     generateFrequencyOptions(): any {
       const optionDefault = [{

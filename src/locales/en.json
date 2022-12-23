@@ -57,7 +57,6 @@
   "Don't cancel": "Don't cancel",
   "Don't skip": "Don't skip",
   "eCommerce": "eCommerce",
-  "eCommerce selected": "{count} eCommerce selected",
   "eCommerce stores are directly connected to one Shop Config. If your OMS is connected to multiple eCommerce stores selling the same catalog operating as one Company, you may have multiple Shop Configs for the selected Product Store.": "eCommerce stores are directly connected to one Shop Config. If your OMS is connected to multiple eCommerce stores selling the same catalog operating as one Company, you may have multiple Shop Configs for the selected Product Store.",
   "Failed to schedule service(s)": "Failed to schedule {count} service(s)",
   "Every day": "Every day",
