@@ -775,6 +775,7 @@ const actions: ActionTree<JobState, RootState> = {
     // when scheduling the same job multiple times through bulk editor
     // the next jobs scheduled do not include shopId and configId.
     const jobParams = [] as any;
+    let failedJobs = 0;
     payload.shopifyConfigs.map((shopId: string) => {
       return payload.jobs.map((job: any) => {
         const params = {
@@ -826,12 +827,13 @@ const actions: ActionTree<JobState, RootState> = {
         dispatch('removeBulkJob', param.jobId);
         return Promise.resolve(resp);
        } else {
+        failedJobs++;
         return Promise.reject(resp);
        }
     })).then((resps: any) => {
       resps.some((resp: any) => {
         if(resp.status === "rejected") {
-          return showToast(translate('Something went wrong'))
+          return showToast(translate("Failed to schedule service(s)", {count: failedJobs}))
         } else {
           return showToast(translate('Services have been scheduled'))
         }
