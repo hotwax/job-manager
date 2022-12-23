@@ -771,7 +771,7 @@ const actions: ActionTree<JobState, RootState> = {
     payload.frequency = state.bulk.frequency;
     commit(types.JOB_ADDED_TO_BULK, payload);
   },
-  async scheduleBulkJobs({ commit }, payload) {
+  async scheduleBulkJobs({ dispatch }, payload) {
     // when scheduling the same job multiple times through bulk editor
     // the next jobs scheduled do not include shopId and configId.
     const jobParams = [] as any;
@@ -815,13 +815,15 @@ const actions: ActionTree<JobState, RootState> = {
         job.runtimeData && Object.keys(job.runtimeData).map((key: any) => {
           if (job.runtimeData[key] === 'null') job.runtimeData[key] = ''
         })
-        jobParams.push({ ...job.runtimeData, ...params });
+        jobParams.push({ ...job.runtimeData, ...params, jobId: job.jobId });
       })
     })
 
     Promise.allSettled(jobParams.map(async (param: any) => {
       const resp: any = await JobService.scheduleJob(param);
       if(resp.status === 200 && !hasError(resp)){
+        // Removing the scheduled job
+        dispatch('removeBulkJob', param.jobId);
         return Promise.resolve(resp);
        } else {
         return Promise.reject(resp);
@@ -846,6 +848,10 @@ const actions: ActionTree<JobState, RootState> = {
       bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs));
       bulkJobs.forEach((job: any) => { if (job.jobId === payload.jobId) { job[type] = value }});
     }
+    commit(types.JOB_BULK_UPDATED, bulkJobs);
+  },
+  removeBulkJob({ commit, state }, jobId) {
+    const bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs)).filter((job: any) => !(job.jobId === jobId));
     commit(types.JOB_BULK_UPDATED, bulkJobs);
   }
 }

@@ -37,6 +37,12 @@
         <ion-select-option v-for="freq in generateFrequencyOptions" :key="freq.value" :value="freq.value">{{ $t(freq.label) }}</ion-select-option>
       </ion-select>
     </ion-item>
+    <div class="actions">
+        <ion-button size="small" fill="outline" color="danger" @click="removeJob(job.jobId)">
+          <ion-icon slot="start" :icon="closeOutline"/>
+          {{ $t("Remove") }}
+        </ion-button>
+    </div>
   </ion-card>
 </template>
 
@@ -44,9 +50,11 @@
 import { defineComponent } from "vue";
 import {
   IonBadge,
+  IonButton,
   IonCard,
   IonContent,
   IonDatetime,
+  IonIcon,
   IonItem,
   IonItemDivider,
   IonLabel,
@@ -64,6 +72,7 @@ import {
   syncOutline,
   personCircleOutline,
   pinOutline,
+  closeOutline
 } from "ionicons/icons";
 import { mapGetters, useStore } from "vuex";
 import { useRouter } from "vue-router";
@@ -75,9 +84,11 @@ export default defineComponent({
   name: "JobConfigurationForBulkScheduler",
   components: {
     IonBadge,
+    IonButton,
     IonCard,
     IonContent,
     IonDatetime,
+    IonIcon,
     IonItem,
     IonItemDivider,
     IonLabel,
@@ -152,11 +163,15 @@ export default defineComponent({
         }
       }
     },
-    setFrequency(ev: CustomEvent, job: any) {
-      this.store.dispatch('job/setBulkJobData', { value: ev['detail'].value, jobId: job.jobId, global: false });
+    async setFrequency(ev: CustomEvent, job: any) {
+      job.frequency = ev['detail'].value;
+      await this.store.dispatch('job/setBulkJobData', { value: ev['detail'].value, jobId: job.jobId, global: false });
     },
     getTime (time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
+    },
+    removeJob(jobId: any) {
+      this.store.dispatch('job/removeBulkJob', jobId);
     },
   },
   setup() {
@@ -173,7 +188,8 @@ export default defineComponent({
       router,
       syncOutline,
       personCircleOutline,
-      pinOutline
+      pinOutline,
+      closeOutline
     };
   }
 });
@@ -183,5 +199,9 @@ ion-modal {
   --width: 290px;
   --height: 440px;
   --border-radius: 8px;
+}
+
+.actions > ion-button {
+  margin: var(--spacer-sm);
 }
 </style>
