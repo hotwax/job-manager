@@ -43,7 +43,7 @@
           </ion-label>
         </ion-item>
         <ion-item lines="none">
-          <ion-select v-if="shopifyConfigs.length > 1 && userProfile?.stores.length <= 2" interface="popover" :value="currentShopifyConfig?.shopifyConfigId" @ionChange="('sad')">
+          <ion-select v-if="shopifyConfigs.length > 1 && userProfile?.stores.length <= 2" interface="popover" :value="currentShopifyConfig?.shopifyConfigId" @ionChange="setShopifyConfig($event)">
             <ion-select-option v-for="shopifyConfig in shopifyConfigs" :key="shopifyConfig.shopifyConfigId" :value="shopifyConfig.shopifyConfigId" >{{ shopifyConfig.name ? shopifyConfig.name : shopifyConfig.shopifyConfigName }}</ion-select-option>
           </ion-select>
           <ion-label v-else class="ion-text-wrap">
@@ -121,8 +121,12 @@ export default defineComponent({
     async setEComStore(event: CustomEvent) {
       if(this.userProfile) {
         await this.store.dispatch('user/setEcomStore', { 'productStoreId': event.detail.value })
-        emitter.emit("productStoreChanged")
+        emitter.emit("productStoreOrConfigChanged")
       }
+    },
+    async setShopifyConfig(event: CustomEvent){
+      await this.store.dispatch('user/setCurrentShopifyConfig', { 'shopifyConfigId': event.detail.value });
+      emitter.emit("productStoreOrConfigChanged")
     },
   },
   watch:{
