@@ -34,8 +34,8 @@
           </ion-label>
           <ion-note slot="end">{{ userProfile?.userTimeZone }}</ion-note>
         </ion-item>
-        <ion-item v-if="userProfile?.stores.length > 2" lines="none">
-          <ion-select  interface="popover" :value="eComStore.productStoreId" @ionChange="setEComStore($event)">
+        <ion-item v-if="userProfile?.stores?.length > 2" lines="none">
+          <ion-select interface="popover" :value="eComStore.productStoreId" @ionChange="setEComStore($event)">
             <ion-select-option v-for="store in (userProfile?.stores ? userProfile.stores : [])" :key="store.productStoreId" :value="store.productStoreId" >{{ store.storeName }}</ion-select-option>
           </ion-select>
         </ion-item>
@@ -51,9 +51,7 @@
         </ion-item>
         <ion-item v-else lines="none">
           <ion-label class="ion-text-wrap">
-           <p>
-             {{ currentShopifyConfig.name ? currentShopifyConfig.name : currentShopifyConfig.shopifyConfigName }}
-           </p> 
+           <p>{{ currentShopifyConfig.name ? currentShopifyConfig.name : currentShopifyConfig.shopifyConfigName }}</p> 
           </ion-label>
         </ion-item>
       </ion-toolbar>
@@ -123,10 +121,8 @@ export default defineComponent({
   },
   methods: {
     async setEComStore(event: CustomEvent) {
-      if(this.userProfile) {
-        await this.store.dispatch('user/setEcomStore', { 'productStoreId': event.detail.value })
-        emitter.emit("productStoreOrConfigChanged")
-      }
+      await this.store.dispatch('user/setEcomStore', { 'productStoreId': event.detail.value })
+      emitter.emit("productStoreOrConfigChanged")
     },
     async setShopifyConfig(event: CustomEvent){
       await this.store.dispatch('user/setCurrentShopifyConfig', { 'shopifyConfigId': event.detail.value });
