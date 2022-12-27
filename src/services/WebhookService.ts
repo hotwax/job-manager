@@ -49,9 +49,9 @@ const webhookParameters = {
   }
 } as any
 
-const subscribeWebhook = async (payload?: any, id?: string): Promise <any> => {
-  const topic = webhookParameters[id as string].topic;
-  const endpoint = webhookParameters[id as string].endpoint;
+const subscribeWebhook = async (payload: any, id: string): Promise <any> => {
+  const topic = webhookParameters[id].topic;
+  const endpoint = webhookParameters[id].endpoint;
   if(!endpoint) {
     showToast(translate("Configuration missing"));
     return;
