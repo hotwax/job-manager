@@ -684,16 +684,15 @@ const actions: ActionTree<JobState, RootState> = {
         // Fetch and update current only when there is object in current
         // Cancel job can be performed from pipeline page too causing side effects
         if (state.current && Object.keys(state.current).length) {
-        let jobs = await dispatch('fetchJobs', {
+        const jobs = await dispatch('fetchJobs', {
           inputFields: {
             'systemJobEnumId': job.systemJobEnumId,
             'systemJobEnumId_op': 'equals'
           }
         })
-        if (jobs.status === 200 && !hasError(jobs) && jobs.data?.docs.length) {
-          jobs = jobs.data?.docs;
-          const currentJob = jobs.find((currentJob: any) => currentJob?.systemJobEnumId === job?.systemJobEnumId);
-          commit(types.JOB_CURRENT_UPDATED, currentJob);
+        const disabledJob = jobs[0];
+        if (disabledJob.status === 200 && !hasError(disabledJob) && disabledJob.data?.docs.length) {
+          commit(types.JOB_CURRENT_UPDATED, disabledJob);
         }
         }
         showToast(translate('Service updated successfully'))
