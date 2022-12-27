@@ -121,6 +121,9 @@ export default defineComponent({
           this.jobs = viewIndex === 0 ? data : [...this.jobs, ...data];
           this.isScrollable = (this.jobs.length % (process.env.VUE_APP_VIEW_SIZE as any)) === 0;
         } else {
+          if(this.jobs.length === 0) {
+            showToast(translate("No jobs found"));
+          }
           this.isScrollable = false;
         }
       } catch (error) {
