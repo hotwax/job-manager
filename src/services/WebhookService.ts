@@ -1,6 +1,7 @@
 import api from '@/api'
 import { showToast } from '@/utils';
 import { translate } from "@/i18n";
+import store from '@/store';
 
 const fetchShopifyWebhooks = async (payload?:  any): Promise <any>  => {
   return api({
@@ -13,23 +14,23 @@ const fetchShopifyWebhooks = async (payload?:  any): Promise <any>  => {
 const webhookParameters = {
   'NEW_ORDERS': {
     'topic': 'orders/create',
-    'endpoint': ''
+    'endpoint': 'createOrderShopifyWebhook'
   },
   'CANCELLED_ORDERS': {
     'topic': 'orders/cancelled',
-    'endpoint': ''
+    'endpoint': 'cancelOrderShopifyWebhook'
   },
   'PAYMENT_STATUS': {
-    'topic': '',
-    'endpoint': ''
+    'topic': 'orders/paid',
+    'endpoint': 'orderPaidNotificationFromShopify'
   },
   'RETURNS': {
-    'topic': '',
-    'endpoint': ''
+    'topic': 'refunds/create',
+    'endpoint': 'returnOrderShopifyWebhook'
   },
   'NEW_PRODUCTS': {
     'topic': 'products/create',
-    'endpoint': ''
+    'endpoint': 'createProductShopifyWebhook'
   },
   'DELETE_PRODUCTS': {
     'topic': 'products/delete',
@@ -50,14 +51,18 @@ const webhookParameters = {
 } as any
 
 const subscribeWebhook = async (payload: any, id: string): Promise <any> => {
-  const topic = webhookParameters[id].topic;
-  const endpoint = webhookParameters[id].endpoint;
+  let baseURL = store.getters['user/getInstanceUrl'];
+  baseURL = baseURL && baseURL.startsWith('http') ? baseURL : `https://${baseURL}.hotwax.io/api/`;
+
+  const webhookParameter = webhookParameters[id]
+  const topic = webhookParameter.topic;
+  const endpoint = webhookParameter.endpoint;
   if(!endpoint) {
     showToast(translate("Configuration missing"));
     return;
   }
   payload['topic'] = topic;
-  payload['endpoint'] = endpoint;
+  payload['endpoint'] = baseURL + 'shopify/' + endpoint;
 
   return api ({
     url: 'service/subscribeShopifyWebhook',
