@@ -15,7 +15,6 @@ import { loadingController } from '@ionic/vue';
 import { mapGetters, useStore } from 'vuex';
 import emitter from "@/event-bus"
 import { Settings } from 'luxon'
-import { setPermissions } from '@/authorization'
 export default defineComponent({
   name: 'App',
   components: {
@@ -90,9 +89,6 @@ export default defineComponent({
     if (this.userProfile) {
       // Luxon timezone should be set with the user's selected timezone
       this.userProfile.userTimeZone && (Settings.defaultZone = this.userProfile.userTimeZone);
-      // When the app resumes, set permission for the current user
-      setPermissions(this.userProfile.permissions);
-
     }
   },
   unmounted() {

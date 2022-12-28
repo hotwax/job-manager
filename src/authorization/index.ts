@@ -46,7 +46,11 @@ const prepareAppPermissions = (serverPermissions: any) => {
  * @param permissions 
  * @returns 
  */
-const setPermissions = (permissions: any) => ability.update(permissions);
+const setPermissions = (permissions: any) => {
+    // If the user has passed undefined or null, it should not break the code
+    if (!permissions) permissions = [];
+    return ability.update(permissions)
+};
 
 /**
  * 
