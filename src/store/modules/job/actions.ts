@@ -464,11 +464,11 @@ const actions: ActionTree<JobState, RootState> = {
             'systemJobEnumId_op': 'equals'
           }
         })
-        const updatedJob = jobs.find((job: any) => job?.jobId === payload.jobId);
-        if(updatedJob.status === 200 && !hasError(updatedJob) && updatedJob.data?.docs.length) {
+        const responseJob = jobs.find((job: any) => job?.jobId === payload.jobId);
+        if(responseJob.status === 200 && !hasError(responseJob) && responseJob.data?.docs.length) {
           // We are using status field everywhere so whenever we fetch job again status field needs to be updated
           // TODO Check why status field is used instead of statusId
-          commit(types.JOB_CURRENT_UPDATED, updatedJob.data.docs[0]);
+          commit(types.JOB_CURRENT_UPDATED, responseJob.data.docs[0]);
         }
         showToast(translate('Service updated successfully'))
       } else {
@@ -532,9 +532,9 @@ const actions: ActionTree<JobState, RootState> = {
           },
           orderBy: "runTime ASC"
         })
-        const scheduledJob = jobs[0];
-        if(scheduledJob.status === 200 && !hasError(scheduledJob) && scheduledJob.data?.docs?.length) {
-          commit(types.JOB_CURRENT_UPDATED, scheduledJob.data?.docs[0]);
+        const responseJob = jobs[0];
+        if(responseJob.status === 200 && !hasError(responseJob) && responseJob.data?.docs?.length) {
+          commit(types.JOB_CURRENT_UPDATED, responseJob.data?.docs[0]);
           return job;
         }
       } else {
@@ -690,9 +690,9 @@ const actions: ActionTree<JobState, RootState> = {
             'systemJobEnumId_op': 'equals'
           }
         })
-        const disabledJob = jobs[0];
-        if (disabledJob.status === 200 && !hasError(disabledJob) && disabledJob.data?.docs.length) {
-          commit(types.JOB_CURRENT_UPDATED, disabledJob);
+        const responseJob = jobs[0];
+        if (responseJob.status === 200 && !hasError(responseJob) && responseJob.data?.docs.length) {
+          commit(types.JOB_CURRENT_UPDATED, responseJob);
         }
         }
         showToast(translate('Service updated successfully'))
