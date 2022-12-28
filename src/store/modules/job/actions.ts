@@ -458,19 +458,17 @@ const actions: ActionTree<JobState, RootState> = {
     try {
       resp = await JobService.updateJob(payload)
       if (resp.status === 200 && !hasError(resp) && resp.data.successMessage) {
-        let jobs = await dispatch('fetchJobs', {
+        const jobs = await dispatch('fetchJobs', {
           inputFields: {
             'systemJobEnumId': payload.systemJobEnumId,
             'systemJobEnumId_op': 'equals'
           }
         })
-        if(jobs.status === 200 && !hasError(jobs) && jobs.data?.docs.length) {
-          jobs = jobs.data?.docs;
-          const job = jobs.find((job: any) => job?.jobId === payload.jobId);
+        const fetchJobsResponse = jobs.find((job: any) => job?.jobId === payload.jobId);
+        if(fetchJobsResponse.status === 200 && !hasError(fetchJobsResponse) && fetchJobsResponse.data?.docs.length) {
           // We are using status field everywhere so whenever we fetch job again status field needs to be updated
           // TODO Check why status field is used instead of statusId
-          job && (job.status = job.statusId);
-          commit(types.JOB_CURRENT_UPDATED, job);
+          commit(types.JOB_CURRENT_UPDATED, fetchJobsResponse.data.docs[0]);
         }
         showToast(translate('Service updated successfully'))
       } else {
@@ -534,9 +532,9 @@ const actions: ActionTree<JobState, RootState> = {
           },
           orderBy: "runTime ASC"
         })
-        if(jobs.status === 200 && !hasError(jobs) && jobs.data?.docs?.length) {
-          const job = jobs.data?.docs[0];
-          commit(types.JOB_CURRENT_UPDATED, job);
+        const fetchJobsResponse = jobs[0];
+        if(fetchJobsResponse.status === 200 && !hasError(fetchJobsResponse) && fetchJobsResponse.data?.docs?.length) {
+          commit(types.JOB_CURRENT_UPDATED, fetchJobsResponse.data?.docs[0]);
           return job;
         }
       } else {
@@ -686,16 +684,15 @@ const actions: ActionTree<JobState, RootState> = {
         // Fetch and update current only when there is object in current
         // Cancel job can be performed from pipeline page too causing side effects
         if (state.current && Object.keys(state.current).length) {
-        let jobs = await dispatch('fetchJobs', {
+        const jobs = await dispatch('fetchJobs', {
           inputFields: {
             'systemJobEnumId': job.systemJobEnumId,
             'systemJobEnumId_op': 'equals'
           }
         })
-        if (jobs.status === 200 && !hasError(jobs) && jobs.data?.docs.length) {
-          jobs = jobs.data?.docs;
-          const currentJob = jobs.find((currentJob: any) => currentJob?.systemJobEnumId === job?.systemJobEnumId);
-          commit(types.JOB_CURRENT_UPDATED, currentJob);
+        const fetchJobsResponse = jobs[0];
+        if (fetchJobsResponse.status === 200 && !hasError(fetchJobsResponse) && fetchJobsResponse.data?.docs.length) {
+          commit(types.JOB_CURRENT_UPDATED, fetchJobsResponse);
         }
         }
         showToast(translate('Service updated successfully'))

@@ -61,7 +61,7 @@ const actions: ActionTree<UserState, RootState> = {
         console.error("error", resp.data._ERROR_MESSAGE_);
         return Promise.reject(new Error(resp.data._ERROR_MESSAGE_));
       }
-    } catch (err) {
+    } catch (err: any) {
       showToast(translate('Something went wrong'));
       console.error("error", err);
       return Promise.reject(new Error(err))
@@ -135,7 +135,7 @@ const actions: ActionTree<UserState, RootState> = {
   /**
    * update current eComStore information
    */
-  async setEcomStore({ state, commit, dispatch }, payload) {
+  async setEcomStore({ commit, dispatch }, payload) {
     dispatch('job/clearJobState', null, { root: true });
     let productStore = payload.productStore;
     if(!productStore) {
