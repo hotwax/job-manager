@@ -34,6 +34,7 @@
           </ion-label>
           <ion-note slot="end">{{ userProfile?.userTimeZone }}</ion-note>
         </ion-item>
+        <!-- showing product stores only when there are multiple options to choose from. -->
         <ion-item v-if="userProfile?.stores?.length > 2" lines="none">
           <ion-select interface="popover" :value="eComStore.productStoreId" @ionChange="setEComStore($event)">
             <ion-select-option v-for="store in (userProfile?.stores ? userProfile.stores : [])" :key="store.productStoreId" :value="store.productStoreId" >{{ store.storeName }}</ion-select-option>
@@ -44,6 +45,9 @@
             {{ currentEComStore.storeName }}
           </ion-label>
         </ion-item>
+        <!-- similarly, showing shopify configs only when there are multiple options to choose from 
+        but if both product store and config have multiple options, then only option to choose
+        product store will be visible -->
         <ion-item v-if="shopifyConfigs.length > 1 && userProfile?.stores.length < 3" lines="none">
           <ion-select interface="popover" :value="currentShopifyConfig?.shopifyConfigId" @ionChange="setShopifyConfig($event)">
             <ion-select-option v-for="shopifyConfig in shopifyConfigs" :key="shopifyConfig.shopifyConfigId" :value="shopifyConfig.shopifyConfigId" >{{ shopifyConfig.name ? shopifyConfig.name : shopifyConfig.shopifyConfigName }}</ion-select-option>
