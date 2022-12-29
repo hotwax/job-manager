@@ -127,7 +127,7 @@ export default defineComponent({
         name: "Brokering",
         iosIcon: compassOutline,
         mdIcon: compassOutline,
-        enumTypeId: "BROKERING_SYS_JOB"
+        enumTypeId: "BROKER_SYS_JOB"
       },
       {
         name: "Fulfillment",
