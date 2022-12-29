@@ -767,32 +767,29 @@ const actions: ActionTree<JobState, RootState> = {
     commit(types.JOB_PIPELINE_FILTERS_CLEARED);
   },
   addToBulkScheduler({ commit, state }, payload) {
-    const jobEnumTypeMappings = JSON.parse(process.env?.VUE_APP_JOB_ENUM_TYPE as string);
-    let jobEnumType = '';
-    
-    // finding the matching enum object from env based on the enumTypeId
-    Object.keys(jobEnumTypeMappings).forEach((enumType: string) => {
-      if(enumType === payload.enumTypeId) jobEnumType = jobEnumTypeMappings[enumType];
-    })
-    
-    let appJobId = '', freqType = '';
-    if(jobEnumType) {
-      const jobFrequencyType = JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string);
-      const enums = JSON.parse(process.env?.[jobEnumType] as string)
-
-      Object.keys(enums).forEach((enumId: string) => {
-        if(enums[enumId] === payload.jobId) appJobId = enumId;
-      })
-
-      Object.keys(jobFrequencyType).forEach((jobId: string) => {
-        if(jobId === appJobId) freqType = jobFrequencyType[jobId];
-      })
-
-      payload.freqType = freqType;
-      if(freqType === 'slow') 
-        showToast(translate("This job has slow frequency type, hence, maxmimum frequency will be set automatically"))
+    const enums = {
+      ...JSON.parse(process.env?.VUE_APP_ODR_JOB_ENUMS as string) as any,
+      ...JSON.parse(process.env?.VUE_APP_PRODR_JOB_ENUMS as string) as any,
+      ...JSON.parse(process.env?.VUE_APP_PRD_JOB_ENUMS as string) as any,
+      ...JSON.parse(process.env?.VUE_APP_INV_JOB_ENUMS as string) as any,
+      ...JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
     }
     
+    let appJobId = '', freqType = '';
+    Object.keys(enums).forEach((jobId: string) => {
+      if(enums[jobId] === payload.jobId) appJobId = jobId;
+    })
+
+    const jobFrequencyType = JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string);
+    Object.keys(jobFrequencyType).forEach((jobId: string) => {
+      if(jobId === appJobId) freqType = jobFrequencyType[jobId];
+    })
+
+    if(freqType) {
+      payload.freqType = freqType;
+      if(freqType === 'slow') showToast(translate("This job has slow frequency type, hence, maxmimum frequency will be set automatically"))
+    }
+
     payload.setTime = state.bulk.setTime;
     payload.frequency = state.bulk.frequency;
     commit(types.JOB_ADDED_TO_BULK, payload);
