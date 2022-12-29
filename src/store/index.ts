@@ -42,7 +42,8 @@ const store = createStore<RootState>({
     },
 })
 
-setPermissions(store?.state?.user?.current?.permissions);
+// const permissions = store.getters['user/getUserPermissions'];
+setPermissions(store.getters['user/getUserPermissions']);
 
 export default store
 export function useStore(): typeof store {

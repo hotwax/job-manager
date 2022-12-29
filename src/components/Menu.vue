@@ -111,7 +111,7 @@ export default defineComponent({
   },
   methods: {
     async setEComStore(event: CustomEvent) {
-      if(this.userProfile) {
+      if(this.userProfile && this.eComStore?.productStoreId !== event.detail.value) {
         await this.store.dispatch('user/setEcomStore', { 'productStoreId': event.detail.value })
         emitter.emit("productStoreChanged")
       }

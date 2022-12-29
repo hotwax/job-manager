@@ -33,6 +33,7 @@ const actions: ActionTree<UserState, RootState> = {
 
             if (checkPermissionResponse.status === 200 && !hasError(checkPermissionResponse) && checkPermissionResponse.data && checkPermissionResponse.data.hasPermission) {
               commit(types.USER_TOKEN_CHANGED, { newToken: resp.data.token })
+              dispatch("getUserPermissions");
               dispatch('getProfile')
               if (resp.data._EVENT_MESSAGE_ && resp.data._EVENT_MESSAGE_.startsWith("Alert:")) {
               // TODO Internationalise text
@@ -47,8 +48,8 @@ const actions: ActionTree<UserState, RootState> = {
             }
           } else {
             commit(types.USER_TOKEN_CHANGED, { newToken: resp.data.token })
-            await dispatch('getProfile')
-            await dispatch("getUserPermissions");
+            dispatch("getUserPermissions");
+            dispatch('getProfile')
             return resp.data;
           }
         } else if (hasError(resp)) {
@@ -234,6 +235,7 @@ const actions: ActionTree<UserState, RootState> = {
   async getPinnedJobs({ commit, state }) {
     let resp;
     const user = state?.current as any
+    console.log("user", user);
 
     try{
       const params = {
@@ -318,7 +320,6 @@ const actions: ActionTree<UserState, RootState> = {
    */
   async getUserPermissions({ commit, state }) {
     let resp;
-    const user = state?.current as any
     // TODO Make it configurable from the environment variables.
     // Though this might not be an server specific configuration, 
     // we will be adding it to environment variable for easy configuration at app level
@@ -349,24 +350,38 @@ const actions: ActionTree<UserState, RootState> = {
               return Promise.reject(response);
               }
           }))
-          const isCompleteResponse = !responses.some((response: any) => response.status !== 200 || hasError(response)); 
-          // TODO Implement code to restrict user to login if all permissions are not received.
-          // If partial permissions are received and we still allow user to login, some of the functionality might not work related to the permissions missed.
-          // This will leave user into an uncertainity. It is better to get them all or nothing. 
-          if (isCompleteResponse) {
-            serverPermissions = responses.reduce((serverPermissions: any, response: any) => {
-              serverPermissions.push(...response.data.docs.map((permission: any) => permission.permissionId));
-              return serverPermissions;
-            }, serverPermissions)
+          const permissionResponses = {
+            success: [],
+            failed: []
           }
+          responses.reduce((permissionResponses: any, permissionResponse: any) => {
+            if (permissionResponse.status !== 200 || hasError(permissionResponse) || !permissionResponse.data?.docs) {
+              permissionResponses.failed.push(permissionResponse);
+            } else {
+              permissionResponses.success.push(permissionResponse);
+            }
+            return permissionResponses;
+          }, permissionResponses)
+
+          serverPermissions = permissionResponses.success.reduce((serverPermissions: any, response: any) => {
+            serverPermissions.push(...response.data.docs.map((permission: any) => permission.permissionId));
+            return serverPermissions;
+          }, serverPermissions)
+
+          // If partial permissions are received and we still allow user to login, some of the functionality might not work related to the permissions missed.
+          // Show toast to user intimiting about the failure
+          // Allow user to login
+          // TODO Implement Retry or improve experience with show in progress icon and allowing login only if all the data related to user profile is fetched.
+          if (permissionResponses.failed.length > 0) showToast(translate("Something went wrong while getting complete user profile. Try login again for smoother experience."));
         }
         appPermissions = prepareAppPermissions(serverPermissions);
       }
-      user.permissions = appPermissions;
       setPermissions(appPermissions);
-      commit(types.USER_INFO_UPDATED, user);
-    } catch(error) {
+      commit(types.USER_PERMISSIONS_UPDATED, appPermissions);
+      return appPermissions;
+    } catch(error: any) {
       console.error(error);
+      showToast(translate("Something went wrong while getting complete user profile. Try login again for smoother experience."));
     }
     return resp;
   }

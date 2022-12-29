@@ -12,6 +12,9 @@ const getters: GetterTree <UserState, RootState> = {
     getUserToken (state) {
         return state.token
     },
+    getUserPermissions (state) {
+        return state.permissions;
+    },
     getUserProfile (state) {
         return state.current
     },
