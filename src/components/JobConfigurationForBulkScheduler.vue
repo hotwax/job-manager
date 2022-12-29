@@ -39,10 +39,10 @@
       </ion-select>
     </ion-item>
     <div class="actions">
-        <ion-button size="small" fill="outline" color="danger" @click="removeJob(job.jobId)">
-          <ion-icon slot="start" :icon="closeOutline"/>
-          {{ $t("Remove") }}
-        </ion-button>
+      <ion-button size="small" fill="outline" color="danger" @click="removeJob(job.jobId)">
+        <ion-icon slot="start" :icon="closeOutline"/>
+        {{ $t("Remove") }}
+      </ion-button>
     </div>
   </ion-card>
 </template>
@@ -76,7 +76,6 @@ import {
   closeOutline
 } from "ionicons/icons";
 import { mapGetters, useStore } from "vuex";
-import { useRouter } from "vue-router";
 import { handleDateTimeInput, showToast } from "@/utils";
 import { DateTime } from 'luxon';
 import { translate } from '@/i18n'
@@ -142,7 +141,18 @@ export default defineComponent({
         }
       ]
 
-      return optionDefault;
+      const slow = [{
+          "value": "HOURLY",
+          "label": "Hourly"
+        },{
+          "value": "EVERY_6_HOUR",
+          "label": "Every 6 hours"
+        },{
+          "value": "EVERYDAY",
+          "label": "Every day"
+        }
+      ]
+      return (this as any).job.freqType === 'slow' ? slow : optionDefault;
     },
     customPopoverOptions() {
       return {
@@ -170,7 +180,7 @@ export default defineComponent({
     },
     async setFrequency(ev: CustomEvent, job: any) {
       job.frequency = ev['detail'].value;
-      await this.store.dispatch('job/setBulkJobData', { value: ev['detail'].value, jobId: job.jobId, global: false });
+      await this.store.dispatch('job/setBulkJobData', { value: ev['detail'].value, type: 'frequency', jobId: job.jobId, global: false });
     },
     getTime (time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
@@ -181,7 +191,6 @@ export default defineComponent({
   },
   setup() {
     const store = useStore();
-    const router = useRouter();
 
     return {
       calendarClearOutline,
@@ -190,7 +199,6 @@ export default defineComponent({
       timeOutline,
       timerOutline,
       store,
-      router,
       syncOutline,
       personCircleOutline,
       pinOutline,

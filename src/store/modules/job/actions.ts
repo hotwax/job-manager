@@ -767,6 +767,32 @@ const actions: ActionTree<JobState, RootState> = {
     commit(types.JOB_PIPELINE_FILTERS_CLEARED);
   },
   addToBulkScheduler({ commit, state }, payload) {
+    const jobEnumTypeMappings = JSON.parse(process.env?.VUE_APP_JOB_ENUM_TYPE as string);
+    let jobEnumType = '';
+    
+    // finding the matching enum object from env based on the enumTypeId
+    Object.keys(jobEnumTypeMappings).forEach((enumType: string) => {
+      if(enumType === payload.enumTypeId) jobEnumType = jobEnumTypeMappings[enumType];
+    })
+    
+    let appJobId = '', freqType = '';
+    if(jobEnumType) {
+      const jobFrequencyType = JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string);
+      const enums = JSON.parse(process.env?.[jobEnumType] as string)
+
+      Object.keys(enums).forEach((enumId: string) => {
+        if(enums[enumId] === payload.jobId) appJobId = enumId;
+      })
+
+      Object.keys(jobFrequencyType).forEach((jobId: string) => {
+        if(jobId === appJobId) freqType = jobFrequencyType[jobId];
+      })
+
+      payload.freqType = freqType;
+      if(freqType === 'slow') 
+        showToast(translate("This job has slow frequency type, hence, maxmimum frequency will be set automatically"))
+    }
+    
     payload.setTime = state.bulk.setTime;
     payload.frequency = state.bulk.frequency;
     commit(types.JOB_ADDED_TO_BULK, payload);
@@ -826,10 +852,10 @@ const actions: ActionTree<JobState, RootState> = {
         // Removing the scheduled job
         dispatch('removeBulkJob', param.jobId);
         return Promise.resolve(resp);
-       } else {
+      } else {
         failedJobs++;
         return Promise.reject(resp);
-       }
+      }
     })).then((resps: any) => {
       resps.some((resp: any) => {
         if(resp.status === "rejected") {
@@ -841,13 +867,19 @@ const actions: ActionTree<JobState, RootState> = {
     })
   },
   setBulkJobData({ commit, state }, payload) {
-    let bulkJobs = [];
+    let bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs));
     const value = payload.value, type = payload.type;
     if (payload.global) {
       commit(types.JOB_BULK_DATA_UPDATED, { type, value });
-      bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs)).map((job: any) => ({ ...job, [type]: (state.bulk as any)[type] }));
+      bulkJobs = bulkJobs.map((job: any) => {
+        // handling special case for slow frequency jobs
+        if (type === 'frequency' && job.freqType === 'slow') {
+          showToast(translate("Some jobs have slow frequency type, hence, maximum frequency will be set automatically"))
+          return ({...job, [type]: 'EVERYDAY'})
+        }
+        else return ({ ...job, [type]: (state.bulk as any)[type] })
+      });
     } else {
-      bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs));
       bulkJobs.forEach((job: any) => { if (job.jobId === payload.jobId) { job[type] = value }});
     }
     commit(types.JOB_BULK_UPDATED, bulkJobs);

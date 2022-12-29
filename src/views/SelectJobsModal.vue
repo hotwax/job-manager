@@ -10,9 +10,13 @@
     </ion-toolbar>
   </ion-header>
   <ion-content>
-    <ion-searchbar v-model="queryString" :placeholder="$t('Search jobs')" @keyup.enter="queryString = $event.target.value; search($event)" />
+    <ion-searchbar v-model="queryString" :placeholder="$t('Search jobs')" @keyup.enter="search($event)" />
 
-    <ion-list v-for="job in jobs" :key="job.jobId">
+    <div v-if="jobs.length === 0" class="ion-text-center">
+      <p>{{ $t("No jobs found") }}</p>
+    </div>
+    
+    <ion-list v-else v-for="job in jobs" :key="job.jobId">
       <ion-item lines="none">
         <ion-label Class="ion-text-wrap">
           <h2>{{ job.jobName }}</h2>
@@ -76,6 +80,7 @@ export default defineComponent({
       queryString: '',
       jobs: [] as any,
       isScrollable: true,
+      jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
     }
   },
   computed: {
@@ -86,8 +91,8 @@ export default defineComponent({
   },
   methods: {
     async search(event: any) {
-      this.queryString = event.target.value;
-      this.getJobs();
+      this.queryString = event.target.value.trim();
+      if(this.queryString.length > 0) this.getJobs();
     },
     async getJobs(vSize?: any, vIndex?: any) {
       const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
@@ -121,9 +126,7 @@ export default defineComponent({
           this.jobs = viewIndex === 0 ? data : [...this.jobs, ...data];
           this.isScrollable = (this.jobs.length % (process.env.VUE_APP_VIEW_SIZE as any)) === 0;
         } else {
-          if(this.jobs.length === 0) {
-            showToast(translate("No jobs found"));
-          }
+          if (viewIndex === 0) this.jobs.length = 0;
           this.isScrollable = false;
         }
       } catch (error) {
