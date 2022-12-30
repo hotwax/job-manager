@@ -782,9 +782,7 @@ const actions: ActionTree<JobState, RootState> = {
     })
 
     const jobFrequencyType = JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string);
-    Object.keys(jobFrequencyType).forEach((jobId: string) => {
-      if(jobId === appJobId) freqType = jobFrequencyType[jobId];
-    })
+    freqType = jobFrequencyType[appJobId];
 
     if(freqType) {
       payload.freqType = freqType;
@@ -873,9 +871,11 @@ const actions: ActionTree<JobState, RootState> = {
         // handling special case for slow frequency jobs
         if (type === 'frequency' && job.freqType === 'slow') {
           showToast(translate("Some jobs have slow frequency type, hence, feasible frequency will be set automatically"))
+          // If user sets a valid slow frequency, we set honour it else maximum frequency is set
           return ["HOURLY", "EVERY_6_HOUR", "EVERYDAY"].includes(value) ? ({...job, [type]: value}) : ({...job, [type]: 'EVERYDAY'})
+        } else {
+          return ({ ...job, [type]: (state.bulk as any)[type] })
         }
-        else return ({ ...job, [type]: (state.bulk as any)[type] })
       });
     } else {
       bulkJobs.forEach((job: any) => { if (job.jobId === payload.jobId) { job[type] = value }});
@@ -883,7 +883,8 @@ const actions: ActionTree<JobState, RootState> = {
     commit(types.JOB_BULK_UPDATED, bulkJobs);
   },
   removeBulkJob({ commit, state }, jobId) {
-    const bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs)).filter((job: any) => !(job.jobId === jobId));
+    // Updating bulk jobs in state by removing the given job using jobId 
+    const bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs)).filter((job: any) => (job.jobId !== jobId));
     commit(types.JOB_BULK_UPDATED, bulkJobs);
   }
 }
