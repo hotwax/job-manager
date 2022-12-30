@@ -787,11 +787,11 @@ const actions: ActionTree<JobState, RootState> = {
 
     if(freqType) {
       payload.freqType = freqType;
-      if(freqType === 'slow') showToast(translate("This job has slow frequency type, hence, maxmimum frequency will be set automatically"))
+      if(freqType === 'slow') showToast(translate("This job has slow frequency type, hence, feasible frequency will be set automatically"))
     }
-
+    // TODO: find a better solution instead of hardcoding 'EVERYDAY'
     payload.setTime = state.bulk.setTime;
-    payload.frequency = state.bulk.frequency;
+    payload.frequency = (state.bulk.frequency && freqType === 'slow') ? 'EVERYDAY' : state.bulk.frequency;
     commit(types.JOB_ADDED_TO_BULK, payload);
   },
   async scheduleBulkJobs({ dispatch }, payload) {
@@ -871,8 +871,8 @@ const actions: ActionTree<JobState, RootState> = {
       bulkJobs = bulkJobs.map((job: any) => {
         // handling special case for slow frequency jobs
         if (type === 'frequency' && job.freqType === 'slow') {
-          showToast(translate("Some jobs have slow frequency type, hence, maximum frequency will be set automatically"))
-          return ({...job, [type]: 'EVERYDAY'})
+          showToast(translate("Some jobs have slow frequency type, hence, feasible frequency will be set automatically"))
+          return ["HOURLY", "EVERY_6_HOUR", "EVERYDAY"].includes(value) ? ({...job, [type]: value}) : ({...job, [type]: 'EVERYDAY'})
         }
         else return ({ ...job, [type]: (state.bulk as any)[type] })
       });
