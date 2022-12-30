@@ -103,8 +103,8 @@ const setUserPreference = async (payload: any): Promise<any> => {
 const getUserPreference = async (payload: any): Promise<any> => {
   return api({
     url: "service/getUserPreference",
-    method: "get",
-    params: payload,
+    method: "post",
+    data: payload,
   });
 }
 
