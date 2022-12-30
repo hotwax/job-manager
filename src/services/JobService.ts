@@ -50,8 +50,8 @@ const updateAutoCancelDays = async (payload: any): Promise <any> => {
 const getAutoCancelDays = async (payload: any): Promise <any> => {
   return api({
     url: "performFind",
-    method: "post",
-    data: payload
+    method: "get",
+    params: payload
   });
 }
 export const JobService = {
