@@ -67,7 +67,7 @@
             <ion-icon slot="start" :icon="timerOutline" />
             <ion-label>{{ $t("Schedule") }}</ion-label>
             <ion-select interface="popover" :value="globalFreq" :placeholder='$t("Schedule")' @ionChange=setFrequency($event)>
-              <ion-select-option v-for="freq in generateFrequencyOptions" :key="freq.value" :value="freq.value">{{ $t(freq.label) }}</ion-select-option>
+              <ion-select-option v-for="freq in generateFrequencyOptions()" :key="freq.value" :value="freq.value">{{ $t(freq.label) }}</ion-select-option>
             </ion-select>
           </ion-item>
           <ion-card-content>
@@ -127,7 +127,7 @@ import { addOutline, iceCreamOutline, timeOutline, timerOutline } from 'ionicons
 import { useRouter } from 'vue-router';
 import SelectJobsModal from '@/views/SelectJobsModal.vue';
 import { UserService } from '@/services/UserService'
-import { hasError, showToast, handleDateTimeInput } from '@/utils'
+import { hasError, showToast, handleDateTimeInput, generateFrequencyOptions } from '@/utils'
 import { translate } from '@/i18n'
 import JobConfigurationForBulkScheduler from '@/components/JobConfigurationForBulkScheduler.vue'
 import { DateTime } from 'luxon';
@@ -178,33 +178,6 @@ export default defineComponent({
       globalFreq: 'job/getGlobalFreq',
       shopifyConfigs: 'user/getShopifyConfigs',
     }),
-    generateFrequencyOptions(): any {
-      const optionDefault = [{
-          "value": "EVERY_1_MIN",
-          "label": "Every 1 minute"
-        },{
-          "value": "EVERY_5_MIN",
-          "label": "Every 5 minutes"
-        },{
-          "value": "EVERY_15_MIN",
-          "label": "Every 15 minutes"
-        },{
-          "value": "EVERY_30_MIN",
-          "label": "Every 30 minutes"
-        },{
-          "value": "HOURLY",
-          "label": "Hourly"
-        },{
-          "value": "EVERY_6_HOUR",
-          "label": "Every 6 hours"
-        },{
-          "value": "EVERYDAY",
-          "label": "Every day"
-        }
-      ]
-
-      return optionDefault;
-    },
   },
   setup() {
     const store = useStore();
@@ -216,7 +189,8 @@ export default defineComponent({
       store,
       router,
       timeOutline,
-      timerOutline
+      timerOutline,
+      generateFrequencyOptions
     }
   },
   mounted() {
@@ -265,16 +239,14 @@ export default defineComponent({
           } else {
             this.shopifyConfigsForEComStore = [];
           }
-          this.selectedShopifyConfigs = [];
         } catch (err) {
           this.shopifyConfigsForEComStore = [];
-          this.selectedShopifyConfigs = [];
           console.error(err);
         }
       } else {
         this.shopifyConfigsForEComStore = [];
-        this.selectedShopifyConfigs = [];
       }
+      this.selectedShopifyConfigs = [];
     },
 
     updateSelectedShopifyConfigsgit (shopifyConfigId: string) {

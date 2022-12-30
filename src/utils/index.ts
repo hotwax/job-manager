@@ -140,7 +140,7 @@ const prepareRuntime = (job: any) => {
   }
 }
 
-const generateFrequencyOptions = (type: string) => {
+const generateFrequencyOptions = (type?: string) => {
   const optionDefault = [{
       "value": "EVERY_1_MIN",
       "label": "Every 1 minute"

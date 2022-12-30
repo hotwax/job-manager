@@ -150,8 +150,6 @@ export default defineComponent({
     removeJob(jobId: any) {
       this.store.dispatch('job/removeBulkJob', jobId);
     },
-    // need to make the imported method a part of the vue instance
-    generateFrequencyOptions,
   },
   setup() {
     const store = useStore();
@@ -166,7 +164,8 @@ export default defineComponent({
       syncOutline,
       personCircleOutline,
       pinOutline,
-      closeOutline
+      closeOutline,
+      generateFrequencyOptions
     };
   }
 });
