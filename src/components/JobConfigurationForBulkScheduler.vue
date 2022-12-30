@@ -35,7 +35,7 @@
     <ion-item>
       <ion-label>{{ $t("Schedule") }}</ion-label>
       <ion-select :interface-options="customPopoverOptions" :value="job.frequency" interface="popover" :placeholder='$t("Bulk schedule")' @ionChange='setFrequency($event, job)'>
-        <ion-select-option v-for="freq in generateFrequencyOptions" :key="freq.value" :value="freq.value">{{ $t(freq.label) }}</ion-select-option>
+        <ion-select-option v-for="freq in generateFrequencyOptions(job.freqType)" :key="freq.value" :value="freq.value">{{ $t(freq.label) }}</ion-select-option>
       </ion-select>
     </ion-item>
     <div class="actions">
@@ -76,7 +76,7 @@ import {
   closeOutline
 } from "ionicons/icons";
 import { mapGetters, useStore } from "vuex";
-import { handleDateTimeInput, showToast } from "@/utils";
+import { handleDateTimeInput, showToast, generateFrequencyOptions } from "@/utils";
 import { DateTime } from 'luxon';
 import { translate } from '@/i18n'
 
@@ -116,44 +116,6 @@ export default defineComponent({
       // find matching shopifyConfig objects and return their names 
       return this.shopifyConfigs.filter((config: any) => this.selectedShopifyConfigs.includes(config.shopId)).map((config: any) => config.name).join(', ');
     },
-    generateFrequencyOptions(): any {
-      const optionDefault = [{
-          "value": "EVERY_1_MIN",
-          "label": "Every 1 minute"
-        },{
-          "value": "EVERY_5_MIN",
-          "label": "Every 5 minutes"
-        },{
-          "value": "EVERY_15_MIN",
-          "label": "Every 15 minutes"
-        },{
-          "value": "EVERY_30_MIN",
-          "label": "Every 30 minutes"
-        },{
-          "value": "HOURLY",
-          "label": "Hourly"
-        },{
-          "value": "EVERY_6_HOUR",
-          "label": "Every 6 hours"
-        },{
-          "value": "EVERYDAY",
-          "label": "Every day"
-        }
-      ]
-
-      const slow = [{
-          "value": "HOURLY",
-          "label": "Hourly"
-        },{
-          "value": "EVERY_6_HOUR",
-          "label": "Every 6 hours"
-        },{
-          "value": "EVERYDAY",
-          "label": "Every day"
-        }
-      ]
-      return (this as any).job.freqType === 'slow' ? slow : optionDefault;
-    },
     customPopoverOptions() {
       return {
         header: (this as any).job.jobName,
@@ -188,6 +150,8 @@ export default defineComponent({
     removeJob(jobId: any) {
       this.store.dispatch('job/removeBulkJob', jobId);
     },
+    // need to make the imported method a part of the vue instance
+    generateFrequencyOptions,
   },
   setup() {
     const store = useStore();

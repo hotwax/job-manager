@@ -794,8 +794,8 @@ const actions: ActionTree<JobState, RootState> = {
     commit(types.JOB_ADDED_TO_BULK, payload);
   },
   async scheduleBulkJobs({ dispatch }, payload) {
-    // when scheduling the same job multiple times through bulk editor
-    // the next jobs scheduled do not include shopId and configId.
+    // TODO: handle case for bulk jobs which are already scheduled. 
+    // As of now, the job will get scheduled again even if it is pending
     const jobParams = [] as any;
     let failedJobs = 0;
     payload.shopifyConfigs.map((shopId: string) => {
@@ -871,7 +871,7 @@ const actions: ActionTree<JobState, RootState> = {
         // handling special case for slow frequency jobs
         if (type === 'frequency' && job.freqType === 'slow') {
           showToast(translate("Some jobs have slow frequency type, hence, feasible frequency will be set automatically"))
-          // If user sets a valid slow frequency, we set honour it else maximum frequency is set
+          // If user sets a valid slow frequency, we honour it else maximum frequency is set
           return ["HOURLY", "EVERY_6_HOUR", "EVERYDAY"].includes(value) ? ({...job, [type]: value}) : ({...job, [type]: 'EVERYDAY'})
         } else {
           return ({ ...job, [type]: (state.bulk as any)[type] })

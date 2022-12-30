@@ -33,7 +33,7 @@
             <ion-card-title>{{ $t("eCommerce") }}</ion-card-title>
           </ion-card-header>
           
-          <ion-item button v-for="shopifyConfig in shopifyConfigsForEComStore" :key="shopifyConfig?.shopifyConfigId" :value="shopifyConfig?.shopifyConfigId" @click="updateSelectedShopifyConfigs(shopifyConfig.shopId)">
+          <ion-item button v-for="shopifyConfig in shopifyConfigsForEComStore" :key="shopifyConfig?.shopifyConfigId" :value="shopifyConfig?.shopifyConfigId" @click="updateSelectedShopifyConfigsgit (shopifyConfig.shopId)">
             <ion-label>{{ shopifyConfig.name ? shopifyConfig.name : shopifyConfig.shopifyConfigName }}</ion-label>
             <ion-checkbox slot="end" :checked="selectedShopifyConfigs.includes(shopifyConfig.shopId)"/>
           </ion-item>
@@ -277,7 +277,7 @@ export default defineComponent({
       }
     },
 
-    updateSelectedShopifyConfigs(shopifyConfigId: string) {
+    updateSelectedShopifyConfigsgit (shopifyConfigId: string) {
       this.selectedShopifyConfigs.includes(shopifyConfigId)
       ? this.selectedShopifyConfigs.splice(this.selectedShopifyConfigs.indexOf(shopifyConfigId), 1)
       : this.selectedShopifyConfigs.push(shopifyConfigId);
