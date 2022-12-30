@@ -99,7 +99,7 @@ export default defineComponent({
       const viewIndex = vIndex ? vIndex : 0;
       const params = {
         "inputFields": {
-          // "enumTypeParentId": "SYSTEM_JOB",
+          "enumTypeParentId": "SYSTEM_JOB",
           "statusId": "SERVICE_DRAFT",
           "systemJobEnumId_op": "not-empty",
           "description_value": this.queryString,

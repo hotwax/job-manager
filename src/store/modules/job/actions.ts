@@ -554,6 +554,7 @@ const actions: ActionTree<JobState, RootState> = {
     commit(types.JOB_HISTORY_UPDATED, {jobs: [], total: 0});
     commit(types.JOB_RUNNING_UPDATED, {jobs: [], total: 0});
     commit(types.JOB_UPDATED_BULK, {})
+    commit(types.JOB_BULK_CLEARED)
   },
 
   async skipJob({ state, commit, dispatch, getters }, job) {
