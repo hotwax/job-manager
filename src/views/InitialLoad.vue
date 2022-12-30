@@ -117,10 +117,10 @@ export default defineComponent({
   },
   mounted() {
     this.fetchJobs();
-    emitter.on("productStoreChanged", this.fetchJobs);
+    emitter.on("productStoreOrConfigChanged", this.fetchJobs);
   },
   unmounted() {
-    emitter.off("productStoreChanged", this.fetchJobs);
+    emitter.off("productStoreOrConfigChanged", this.fetchJobs);
   },
   computed: {
     ...mapGetters({
