@@ -48,7 +48,7 @@ const actions: ActionTree<WebhookState, RootState> = {
         console.error(resp)
       }
     } catch (err) {
-      showToast(translate('Something went wrong'))
+      showToast(translate('Something went wrong. Unable to subscribe webhook'))
       console.error(err);
     } finally {
       await dispatch('fetchWebhooks')
