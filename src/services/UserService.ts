@@ -102,8 +102,8 @@ const setUserPreference = async (payload: any): Promise<any> => {
 
 const getUserPreference = async (payload: any): Promise<any> => {
   return api({
-    //TODO Due to security reasons service model of OMS 1.0 does not support sending parameters in get request that's why we use post here
     url: "service/getUserPreference",
+    //TODO Due to security reasons service model of OMS 1.0 does not support sending parameters in get request that's why we use post here
     method: "post",
     data: payload,
   });
