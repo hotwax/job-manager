@@ -48,7 +48,7 @@
         <!-- similarly, showing shopify configs only when there are multiple options to choose from 
         but if both product store and config have multiple options, then only option to choose
         product store will be visible -->
-        <ion-item v-if="shopifyConfigs.length > 1 && userProfile?.stores.length < 3" lines="none">
+        <ion-item v-if="shopifyConfigs?.length > 1 && userProfile?.stores?.length < 3" lines="none">
           <ion-select interface="popover" :value="currentShopifyConfig?.shopifyConfigId" @ionChange="setShopifyConfig($event)">
             <ion-select-option v-for="shopifyConfig in shopifyConfigs" :key="shopifyConfig.shopifyConfigId" :value="shopifyConfig.shopifyConfigId" >{{ shopifyConfig.name ? shopifyConfig.name : shopifyConfig.shopifyConfigName }}</ion-select-option>
           </ion-select>
