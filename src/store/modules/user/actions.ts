@@ -12,7 +12,7 @@ import { prepareAppPermissions, resetPermissions, setPermissions } from '@/autho
 const actions: ActionTree<UserState, RootState> = {
 
   /**
-   * 
+   *  Login user
    * @param param0 state context
    * @param param1 payload: object { username, password }
    * @returns Promise
@@ -20,7 +20,6 @@ const actions: ActionTree<UserState, RootState> = {
   async login ({ commit, dispatch }, { username, password }) {
     try {
       const resp = await UserService.login(username, password);
-      console.log("resp", resp);
       // Further we will have only response having 2xx status
       // https://axios-http.com/docs/handling_errors
       // We haven't customized validateStatus method and default behaviour is for all status other than 2xx
@@ -28,7 +27,8 @@ const actions: ActionTree<UserState, RootState> = {
 
 
       /* ---- Guard clauses starts here --- */
-      // Know more here: https://learningactors.com/javascript-guard-clauses-how-you-can-refactor-conditional-logic/
+      // Know about Guard clauses here: https://learningactors.com/javascript-guard-clauses-how-you-can-refactor-conditional-logic/
+      // https://medium.com/@scadge/if-statements-design-guard-clauses-might-be-all-you-need-67219a1a981a
 
 
       // If we have any error most possible reason is incorrect credentials.
@@ -43,7 +43,7 @@ const actions: ActionTree<UserState, RootState> = {
 
       // Checking if the user has permission to access the app
       const permissionId = process.env.VUE_APP_PERMISSION_ID;
-      // If there is no configuration, the permission check if not yet enabled
+      // If there is no configuration, the permission check is not enabled
       if (permissionId) {
         // As the token is not yet set in the state passing token headers explicitly
         // TODO Abstract this out, how token is handled should be part of the method not the callee
@@ -69,8 +69,8 @@ const actions: ActionTree<UserState, RootState> = {
 
       commit(types.USER_TOKEN_CHANGED, { newToken: token })
       // TODO Refactor to fetch permission and profile data before the successful login
-      dispatch("getUserPermissions");
-      dispatch('getProfile')
+      await dispatch("getUserPermissions");
+      await dispatch('getProfile')
       // Handling case for warnings like password may expire in few days
       if (resp.data._EVENT_MESSAGE_ && resp.data._EVENT_MESSAGE_.startsWith("Alert:")) {
       // TODO Internationalise text
@@ -334,7 +334,7 @@ const actions: ActionTree<UserState, RootState> = {
   /**
    * Get user pemissions
    */
-  async getUserPermissions({ commit, state }) {
+  async getUserPermissions({ commit }) {
     let resp;
     // TODO Make it configurable from the environment variables.
     // Though this might not be an server specific configuration, 
