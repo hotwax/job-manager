@@ -12,62 +12,78 @@ import { prepareAppPermissions, resetPermissions, setPermissions } from '@/autho
 const actions: ActionTree<UserState, RootState> = {
 
   /**
- * Login user and return token
- */
+   * 
+   * @param param0 state context
+   * @param param1 payload: object { username, password }
+   * @returns Promise
+   */
   async login ({ commit, dispatch }, { username, password }) {
     try {
-      const resp = await UserService.login(username, password)
-      if (resp.status === 200 && resp.data) {
-        if (resp.data.token) {
-          const permissionId = process.env.VUE_APP_PERMISSION_ID;
-          if (permissionId) {
-            const checkPermissionResponse = await UserService.checkPermission({
-              data: {
-                permissionId
-              },
-              headers: {
-                Authorization:  'Bearer ' + resp.data.token,
-                'Content-Type': 'application/json'
-              }
-            });
+      const resp = await UserService.login(username, password);
+      console.log("resp", resp);
+      // Further we will have only response having 2xx status
+      // https://axios-http.com/docs/handling_errors
+      // We haven't customized validateStatus method and default behaviour is for all status other than 2xx
+      // TODO Check if we need to handle all 2xx status other than 200
 
-            if (checkPermissionResponse.status === 200 && !hasError(checkPermissionResponse) && checkPermissionResponse.data && checkPermissionResponse.data.hasPermission) {
-              commit(types.USER_TOKEN_CHANGED, { newToken: resp.data.token })
-              dispatch("getUserPermissions");
-              dispatch('getProfile')
-              if (resp.data._EVENT_MESSAGE_ && resp.data._EVENT_MESSAGE_.startsWith("Alert:")) {
-              // TODO Internationalise text
-                showToast(translate(resp.data._EVENT_MESSAGE_));
-              }
-              return resp.data;
-            } else {
-              const permissionError = 'You do not have permission to access the app.';
-              showToast(translate(permissionError));
-              console.error("error", permissionError);
-              return Promise.reject(new Error(permissionError));
-            }
-          } else {
-            commit(types.USER_TOKEN_CHANGED, { newToken: resp.data.token })
-            dispatch("getUserPermissions");
-            dispatch('getProfile')
-            return resp.data;
-          }
-        } else if (hasError(resp)) {
-          showToast(translate('Sorry, your username or password is incorrect. Please try again.'));
-          console.error("error", resp.data._ERROR_MESSAGE_);
-          return Promise.reject(new Error(resp.data._ERROR_MESSAGE_));
-        }
-      } else {
-        showToast(translate('Something went wrong'));
+
+      /* ---- Guard clauses starts here --- */
+      // Know more here: https://learningactors.com/javascript-guard-clauses-how-you-can-refactor-conditional-logic/
+
+
+      // If we have any error most possible reason is incorrect credentials.
+      if (hasError(resp)) {
+        showToast(translate('Sorry, your username or password is incorrect. Please try again.'));
         console.error("error", resp.data._ERROR_MESSAGE_);
         return Promise.reject(new Error(resp.data._ERROR_MESSAGE_));
       }
+
+      const token = resp.data.token;
+
+
+      // Checking if the user has permission to access the app
+      const permissionId = process.env.VUE_APP_PERMISSION_ID;
+      // If there is no configuration, the permission check if not yet enabled
+      if (permissionId) {
+        // As the token is not yet set in the state passing token headers explicitly
+        // TODO Abstract this out, how token is handled should be part of the method not the callee
+        const checkPermissionResponse = await UserService.checkPermission({
+          data: {
+            permissionId
+          },
+          headers: {
+            Authorization:  'Bearer ' + token,
+            'Content-Type': 'application/json'
+          }
+        });
+        // If there are any errors or permission check fails do not allow user to login
+        if (hasError(checkPermissionResponse) || !checkPermissionResponse?.data?.hasPermission) {
+          const permissionError = 'You do not have permission to access the app.';
+          showToast(translate(permissionError));
+          console.error("error", permissionError);
+          return Promise.reject(new Error(permissionError));
+        }
+      }
+
+      /*  ---- Guard clauses ends here --- */
+
+      commit(types.USER_TOKEN_CHANGED, { newToken: token })
+      // TODO Refactor to fetch permission and profile data before the successful login
+      dispatch("getUserPermissions");
+      dispatch('getProfile')
+      // Handling case for warnings like password may expire in few days
+      if (resp.data._EVENT_MESSAGE_ && resp.data._EVENT_MESSAGE_.startsWith("Alert:")) {
+      // TODO Internationalise text
+        showToast(translate(resp.data._EVENT_MESSAGE_));
+      }
+
     } catch (err: any) {
+      // If any of the API call in try block has status code other than 2xx it will be handled in common catch block.
+      // TODO Check if handling of specific status codes is required.
       showToast(translate('Something went wrong'));
       console.error("error", err);
       return Promise.reject(new Error(err))
     }
-    // return resp
   },
 
   /**
