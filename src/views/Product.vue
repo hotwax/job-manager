@@ -128,12 +128,12 @@ export default defineComponent({
   },
   mounted () {
     this.fetchJobs();
-    emitter.on("productStoreChanged", this.fetchJobs);
+    emitter.on("productStoreOrConfigChanged", this.fetchJobs);
     this.store.dispatch('webhook/fetchWebhooks')
     emitter.on('viewJobConfiguration', this.viewJobConfiguration)
   },
   unmounted() {
-    emitter.off("productStoreChanged", this.fetchJobs);
+    emitter.off("productStoreOrConfigChanged", this.fetchJobs);
     emitter.off('viewJobConfiguration', this.viewJobConfiguration)
   },
   methods: {

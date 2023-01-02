@@ -591,11 +591,11 @@ export default defineComponent({
     await this.store.dispatch('job/updateCurrentJob', { job: {} });
   },
   mounted(){
-    emitter.on("productStoreChanged", this.refreshJobs);
+    emitter.on("productStoreOrConfigChanged", this.refreshJobs);
     emitter.on("pinnedJobsUpdated", (this as any).updateSelectedPinnedJob);
   },
   unmounted(){
-    emitter.off("productStoreChanged", this.refreshJobs);
+    emitter.off("productStoreOrConfigChanged", this.refreshJobs);
     emitter.off('jobUpdated', this.updateJobs);
     emitter.off("pinnedJobsUpdated", (this as any).updateSelectedPinnedJob);
   },

@@ -47,24 +47,24 @@ const setUserTimeZone = async (payload: any): Promise <any>  => {
 const getShopifyConfig = async (payload: any): Promise <any>  => {
   return api({
     url: "performFind",
-    method: "post",
-    data: payload
+    method: "get",
+    params: payload
   });
 }
 
 const getEComStores = async (payload: any): Promise<any> => {
   return api({
     url: "performFind",
-    method: "post",
-    data: payload
+    method: "get",
+    params: payload
   });
 }
 
 const getPinnedJobs = async (payload: any): Promise<any> => {
   return api({
     url: "performFind",
-    method: "post",
-    data: payload
+    method: "get",
+    params: payload
   });
 }
 
