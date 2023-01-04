@@ -6,7 +6,7 @@ import * as types from './mutation-types'
 import { hasError, showToast } from '@/utils'
 import { translate } from '@/i18n'
 import { Settings } from 'luxon'
-import { prepareAppPermissions, resetPermissions, setPermissions } from '@/authorization'
+import { getServerPermissionsFromRules, prepareAppPermissions, resetPermissions, setPermissions } from '@/authorization'
 
 
 const actions: ActionTree<UserState, RootState> = {
@@ -40,24 +40,26 @@ const actions: ActionTree<UserState, RootState> = {
 
       const token = resp.data.token;
 
+      // Getting the permissions list from server
+      const permissionId = process.env.VUE_APP_PERMISSION_ID;
+      // Prepare permissions list
+      const serverPermissionsFromRules = getServerPermissionsFromRules();
+      if (permissionId) serverPermissionsFromRules.push(permissionId);
+
+      const serverPermissions = await UserService.getUserPermissions({
+        permissionIds: serverPermissionsFromRules
+      }, token);
+      const appPermissions = prepareAppPermissions(serverPermissions);
+
 
       // Checking if the user has permission to access the app
-      const permissionId = process.env.VUE_APP_PERMISSION_ID;
       // If there is no configuration, the permission check is not enabled
       if (permissionId) {
         // As the token is not yet set in the state passing token headers explicitly
         // TODO Abstract this out, how token is handled should be part of the method not the callee
-        const checkPermissionResponse = await UserService.checkPermission({
-          data: {
-            permissionId
-          },
-          headers: {
-            Authorization:  'Bearer ' + token,
-            'Content-Type': 'application/json'
-          }
-        });
+        const hasPermission = appPermissions.some((appPermissionId: any) => appPermissionId === permissionId );
         // If there are any errors or permission check fails do not allow user to login
-        if (hasError(checkPermissionResponse) || !checkPermissionResponse?.data?.hasPermission) {
+        if (hasPermission) {
           const permissionError = 'You do not have permission to access the app.';
           showToast(translate(permissionError));
           console.error("error", permissionError);
@@ -67,10 +69,10 @@ const actions: ActionTree<UserState, RootState> = {
 
       /*  ---- Guard clauses ends here --- */
 
+      setPermissions(appPermissions);
       commit(types.USER_TOKEN_CHANGED, { newToken: token })
-      // TODO Refactor to fetch permission and profile data before the successful login
-      await dispatch("getUserPermissions");
-      await dispatch('getProfile')
+      commit(types.USER_PERMISSIONS_UPDATED, appPermissions);
+      dispatch('getProfile')
       // Handling case for warnings like password may expire in few days
       if (resp.data._EVENT_MESSAGE_ && resp.data._EVENT_MESSAGE_.startsWith("Alert:")) {
       // TODO Internationalise text
@@ -334,7 +336,7 @@ const actions: ActionTree<UserState, RootState> = {
   /**
    * Get user pemissions
    */
-  async getUserPermissions({ commit }) {
+  /* async getUserPermissions({ commit }) {
     let resp;
     // TODO Make it configurable from the environment variables.
     // Though this might not be an server specific configuration, 
@@ -400,7 +402,7 @@ const actions: ActionTree<UserState, RootState> = {
       showToast(translate("Something went wrong while getting complete user profile. Try login again for smoother experience."));
     }
     return resp;
-  }
+  } */
 }
 
 export default actions;

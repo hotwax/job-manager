@@ -1,5 +1,6 @@
 import {  AbilityBuilder, PureAbility } from '@casl/ability';
-import { getEvaluator } from 'boon-js';
+import { getEvaluator, parse } from 'boon-js';
+import { Tokens } from 'boon-js/lib/types'
 import Action from './Actions';
 import permissionRules from './Rules'
 
@@ -17,6 +18,27 @@ const ability = build();
 export default ability;
 
 
+const getServerPermissionsFromRules = () => {
+    // Iterate for each rule
+    const permissions = Object.keys(permissionRules).reduce((permissions: any, rule: any) => {
+        const permissionRule = permissionRules[rule];
+        // some rules may be empty, no permission is required from server
+        if (permissionRule) {
+            // Each rule may have multiple permissions along with operators
+            const tokens = parse(permissionRule);
+            permissions = tokens.reduce((permissions: any, token: any) => {
+                // Token object with name as identifier has permissionId 
+                if (Tokens.IDENTIFIER === token.name) {
+                    permissions.push(token.value);
+                }
+                return permissions;
+            }, permissions)
+        }
+        return permissions;
+    }, [])
+    return permissions;
+}
+
 /**
  * 
  * @param serverPermissions 
@@ -29,7 +51,7 @@ const prepareAppPermissions = (serverPermissions: any) => {
     }, {})
     const permissions = Object.keys(permissionRules).reduce((permissions: any, rule: any) => {
         const permissionRule = permissionRules[rule];
-        if (!permissionRule || (permissionRule&& getEvaluator(permissionRule)(serverPermissionsInput))) {
+        if (!permissionRule || (permissionRule && getEvaluator(permissionRule)(serverPermissionsInput))) {
             permissions.push(rule);
         }
         return permissions;
@@ -65,4 +87,4 @@ const resetPermissions = () => setPermissions([]);
  */
 const hasPermission = (permission: string) => ability.can(permission);
 
-export { Action, hasPermission, prepareAppPermissions, resetPermissions, setPermissions};
+export { Action, getServerPermissionsFromRules, hasPermission, prepareAppPermissions, resetPermissions, setPermissions};
