@@ -67,7 +67,7 @@ const mutations: MutationTree <JobState> = {
     [types.JOB_BULK_CLEARED] (state) {
         state.bulk = {
             jobs: [],
-            setTime: '',
+            runtime: '',
             frequency: ''
         }
     }

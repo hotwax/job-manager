@@ -776,21 +776,26 @@ const actions: ActionTree<JobState, RootState> = {
       ...JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
     }
     
-    let appJobId = '', freqType = '';
+    let appJobEnumId = '', freqType = '';
     Object.keys(enums).forEach((jobId: string) => {
-      if(enums[jobId] === payload.jobId) appJobId = jobId;
+      if(enums[jobId] === payload.jobId) appJobEnumId = jobId;
     })
 
     const jobFrequencyType = JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string);
-    freqType = jobFrequencyType[appJobId];
+    freqType = jobFrequencyType[appJobEnumId];
 
+    payload.frequency = state.bulk.frequency;
     if(freqType) {
       payload.freqType = freqType;
-      if(freqType === 'slow') showToast(translate("This job has slow frequency type, hence, feasible frequency will be set automatically"))
+      // set slow frequency only if global frequency is set
+      if(freqType === 'slow' && state.bulk.frequency) {
+        // TODO: find a better solution instead of hardcoding 'EVERYDAY'
+        payload.frequency = 'EVERYDAY';
+        showToast(translate("This job has slow frequency type, hence, feasible frequency will be set automatically"))
+      }
     }
     // TODO: find a better solution instead of hardcoding 'EVERYDAY'
-    payload.setTime = state.bulk.setTime;
-    payload.frequency = (state.bulk.frequency && freqType === 'slow') ? 'EVERYDAY' : state.bulk.frequency;
+    payload.setTime = state.bulk.runtime;    
     commit(types.JOB_ADDED_TO_BULK, payload);
   },
   async scheduleBulkJobs({ dispatch }, payload) {
@@ -804,7 +809,7 @@ const actions: ActionTree<JobState, RootState> = {
           'JOB_NAME': job.jobName,
           'SERVICE_NAME': job.serviceName,
           'SERVICE_COUNT': '0',
-          'SERVICE_TIME': job.setTime.toString(),
+          'SERVICE_TIME': job.runtime.toString(),
           'SERVICE_TEMP_EXPR': job.frequency,
           'SERVICE_RUN_AS_SYSTEM': 'Y',
           'jobFields': {

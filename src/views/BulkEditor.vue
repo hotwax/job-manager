@@ -33,7 +33,7 @@
             <ion-card-title>{{ $t("eCommerce") }}</ion-card-title>
           </ion-card-header>
           
-          <ion-item button v-for="shopifyConfig in shopifyConfigsForEComStore" :key="shopifyConfig?.shopifyConfigId" :value="shopifyConfig?.shopifyConfigId" @click="updateSelectedShopifyConfigsgit (shopifyConfig.shopId)">
+          <ion-item button v-for="shopifyConfig in shopifyConfigsForEComStore" :key="shopifyConfig?.shopifyConfigId" :value="shopifyConfig?.shopifyConfigId" @click="updateSelectedShopifyConfigs (shopifyConfig.shopId)">
             <ion-label>{{ shopifyConfig.name ? shopifyConfig.name : shopifyConfig.shopifyConfigName }}</ion-label>
             <ion-checkbox slot="end" :checked="selectedShopifyConfigs.includes(shopifyConfig.shopId)"/>
           </ion-item>
@@ -222,6 +222,7 @@ export default defineComponent({
     },
     async setEComStore(event: any) {
       this.selectedEComStoreId = event?.detail?.value
+      let shopifyConfigsForEComStore = [];
       if (this.selectedEComStoreId) {
         let resp;
         const payload = {
@@ -235,21 +236,15 @@ export default defineComponent({
         try {
           resp = await UserService.getShopifyConfig(payload);
           if (resp.status === 200 && !hasError(resp) && resp.data?.docs?.length > 0) {
-            this.shopifyConfigsForEComStore = resp.data.docs;
-          } else {
-            this.shopifyConfigsForEComStore = [];
+            shopifyConfigsForEComStore = resp.data.docs;
           }
         } catch (err) {
-          this.shopifyConfigsForEComStore = [];
           console.error(err);
         }
-      } else {
-        this.shopifyConfigsForEComStore = [];
       }
-      this.selectedShopifyConfigs = [];
+      this.selectedShopifyConfigs = shopifyConfigsForEComStore;
     },
-
-    updateSelectedShopifyConfigsgit (shopifyConfigId: string) {
+    updateSelectedShopifyConfigs (shopifyConfigId: string) {
       this.selectedShopifyConfigs.includes(shopifyConfigId)
       ? this.selectedShopifyConfigs.splice(this.selectedShopifyConfigs.indexOf(shopifyConfigId), 1)
       : this.selectedShopifyConfigs.push(shopifyConfigId);
@@ -273,7 +268,7 @@ export default defineComponent({
         const currTime = DateTime.now().toMillis();
         const setTime = handleDateTimeInput(ev['detail'].value);
         if(setTime > currTime) {
-          this.store.dispatch('job/setBulkJobData', { value: setTime, type: 'setTime', global: true });
+          this.store.dispatch('job/setBulkJobData', { value: setTime, type: 'runtime', global: true });
         } else {
           showToast(translate("Provide a future date and time"));
         }

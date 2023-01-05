@@ -11,22 +11,22 @@
     </ion-item-divider>
     <ion-item>
       <ion-label>{{ $t("Store") }}</ion-label>
-      <ion-note slot="end">{{ getEComStoreName }}</ion-note>
+      <ion-note slot="end">{{ eComStoreName }}</ion-note>
     </ion-item>
     <ion-item>
       <ion-label>{{ $t("eCommerce") }}</ion-label>
       <ion-badge v-if="selectedShopifyConfigs.length === 0" color="danger">{{ $t("no eCommerce selected") }}</ion-badge>
-      <ion-note v-else slot="end">{{ getShopifyConfigNames }}</ion-note>
+      <ion-note v-else slot="end">{{ shopifyConfigNames }}</ion-note>
     </ion-item>
     <ion-item>
       <ion-label>{{ $t("Run time") }}</ion-label>
-      <ion-label class="ion-text-wrap" @click="() => isOpen = true" slot="end">{{ job.setTime ? getTime(job.setTime) : $t('Select run time') }}</ion-label>
+      <ion-label class="ion-text-wrap" @click="() => isOpen = true" slot="end">{{ job.runtime ? getTime(job.runtime) : $t('Select run time') }}</ion-label>
       <ion-modal class="date-time-modal" :is-open="isOpen" @didDismiss="() => isOpen = false">
         <ion-content force-overscroll="false">
           <ion-datetime 
             show-default-buttons 
             hour-cycle="h23" 
-            :value="job.setTime ? getDateTime(job.setTime) : ''" 
+            :value="job.runtime ? getDateTime(job.runtime) : ''" 
             @ionChange="updateRunTime($event, job)" 
           />
         </ion-content>
@@ -109,10 +109,10 @@ export default defineComponent({
       userProfile: 'user/getUserProfile',
       shopifyConfigs: 'user/getShopifyConfigs',
     }),
-    getEComStoreName() {
+    eComStoreName() {
       return this.userProfile.stores.find((store: any) => store.productStoreId === this.selectedEComStoreId).storeName;
     },
-    getShopifyConfigNames() {
+    shopifyConfigNames() {
       // find matching shopifyConfig objects and return their names 
       return this.shopifyConfigs.filter((config: any) => this.selectedShopifyConfigs.includes(config.shopId)).map((config: any) => config.name).join(', ');
     },
@@ -133,8 +133,8 @@ export default defineComponent({
         const setTime = handleDateTimeInput(ev['detail'].value);
         
         if(setTime > currTime) {
-          job.setTime = setTime;
-          this.store.dispatch('job/setBulkJobData', { value: setTime, type: 'setTime', jobId: job.jobId, global: false });
+          job.runtime = setTime;
+          this.store.dispatch('job/setBulkJobData', { value: setTime, type: 'runtime', jobId: job.jobId, global: false });
         } else {
           showToast(translate("Provide a future date and time"));
         }

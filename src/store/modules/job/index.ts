@@ -35,7 +35,7 @@ const jobModule: Module<JobState, RootState> = {
       },
       bulk: {
         jobs: [],
-        setTime: '',
+        runtime: '',
         frequency: '',
       },
     },
