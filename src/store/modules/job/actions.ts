@@ -858,19 +858,13 @@ const actions: ActionTree<JobState, RootState> = {
         return Promise.reject(resp);
       }
     })).then((resps: any) => {
-      resps.forEach((resp: any) => {
-        console.log(resp);
-        if(resp.status === "rejected") {
-          failedFlag = true;
-        }
-      })
+      failedFlag = resps.some((resp: any) => resp.status === "rejected");
+      if(failedFlag) {
+        return showToast(translate("Failed to schedule service(s)", {count: failedJobs}))
+      } else {
+        return showToast(translate('Services have been scheduled'))
+      }
     })
-
-    if(failedFlag) {
-      return showToast(translate("Failed to schedule service(s)", {count: failedJobs}))
-    } else {
-      return showToast(translate('Services have been scheduled'))
-    }
   },
   setBulkJobGlobalRuntime({ commit, state }, payload) {
     let bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs));
