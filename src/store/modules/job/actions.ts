@@ -842,7 +842,7 @@ const actions: ActionTree<JobState, RootState> = {
         job.runtimeData && Object.keys(job.runtimeData).map((key: any) => {
           if (job.runtimeData[key] === 'null') job.runtimeData[key] = ''
         })
-        jobParams.push({ ...job.runtimeData, ...params, jobId: job.jobId });
+        jobParams.push({ ...job.runtimeData, ...params });
       })
     })
 
@@ -851,7 +851,7 @@ const actions: ActionTree<JobState, RootState> = {
       const resp: any = await JobService.scheduleJob(param);
       if(resp.status === 200 && !hasError(resp)){
         // Removing the scheduled job
-        dispatch('removeBulkJob', param.jobId);
+        dispatch('removeBulkJob', param.systemJobEnumId);
         return Promise.resolve(resp);
       } else {
         failedJobs++;
@@ -897,9 +897,9 @@ const actions: ActionTree<JobState, RootState> = {
     bulkJobs.forEach((job: any) => { if (job.jobId === payload.jobId) { job.frequency = payload.frequency }});
     commit(types.JOB_BULK_UPDATED, bulkJobs);
   },
-  removeBulkJob({ commit, state }, jobId) {
+  removeBulkJob({ commit, state }, systemJobEnumId) {
     // Updating bulk jobs in state by removing the given job using jobId 
-    const bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs)).filter((job: any) => (job.jobId !== jobId));
+    const bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs)).filter((job: any) => (job.systemJobEnumId !== systemJobEnumId));
     commit(types.JOB_BULK_UPDATED, bulkJobs);
   }
 }
