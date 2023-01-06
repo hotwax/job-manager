@@ -2,7 +2,7 @@ import { ActionTree } from 'vuex'
 import RootState from '@/store/RootState'
 import JobState from './JobState'
 import * as types from './mutation-types'
-import { hasError, showToast } from '@/utils'
+import { hasError, showToast, generateFrequencyOptions } from '@/utils'
 import { JobService } from '@/services/JobService'
 import { translate } from '@/i18n'
 import { DateTime } from 'luxon';
@@ -776,9 +776,9 @@ const actions: ActionTree<JobState, RootState> = {
       ...JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
     }
     
-    let appJobEnumId = '', freqType = '';
-    Object.keys(enums).forEach((jobId: string) => {
-      if(enums[jobId] === payload.jobId) appJobEnumId = jobId;
+    let appJobEnumId = '' as any, freqType = '';
+    appJobEnumId = Object.keys(enums).find((jobId: string) => {
+      if(enums[jobId] === payload.jobId) return jobId;
     })
 
     const jobFrequencyType = JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string);
@@ -787,16 +787,15 @@ const actions: ActionTree<JobState, RootState> = {
     payload.frequency = state.bulk.frequency;
     if(freqType) {
       payload.freqType = freqType;
-      // set slow frequency only if global frequency is set
-      if(freqType === 'slow' && state.bulk.frequency) {
-        // TODO: find a better solution instead of hardcoding 'EVERYDAY'
-        payload.frequency = 'EVERYDAY';
-        showToast(translate("This job has slow frequency type, hence, feasible frequency will be set automatically"))
-      }
+      if(freqType === 'slow') showToast(translate("This job has slow frequency type, hence, feasible frequency will be set automatically"))
     }
-    // TODO: find a better solution instead of hardcoding 'EVERYDAY'
-    payload.setTime = state.bulk.runtime;    
-    commit(types.JOB_ADDED_TO_BULK, payload);
+    payload.runtime = state.bulk.runtime;
+    // set the maximum slow frequency for slow type jobs if global frequnecy is set
+    payload.frequency = (state.bulk.frequency && freqType === 'slow') ? (generateFrequencyOptions('slow') as any).pop().value : state.bulk.frequency;
+    
+    const bulk = JSON.parse(JSON.stringify(state.bulk.jobs));
+    bulk.push(payload)
+    commit(types.JOB_BULK_UPDATED, bulk);
   },
   async scheduleBulkJobs({ dispatch }, payload) {
     // TODO: handle case for bulk jobs which are already scheduled. 
@@ -847,6 +846,7 @@ const actions: ActionTree<JobState, RootState> = {
       })
     })
 
+    let failedFlag = false;
     Promise.allSettled(jobParams.map(async (param: any) => {
       const resp: any = await JobService.scheduleJob(param);
       if(resp.status === 200 && !hasError(resp)){
@@ -858,33 +858,49 @@ const actions: ActionTree<JobState, RootState> = {
         return Promise.reject(resp);
       }
     })).then((resps: any) => {
-      resps.some((resp: any) => {
+      resps.forEach((resp: any) => {
+        console.log(resp);
         if(resp.status === "rejected") {
-          return showToast(translate("Failed to schedule service(s)", {count: failedJobs}))
-        } else {
-          return showToast(translate('Services have been scheduled'))
+          failedFlag = true;
         }
       })
     })
-  },
-  setBulkJobData({ commit, state }, payload) {
-    let bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs));
-    const value = payload.value, type = payload.type;
-    if (payload.global) {
-      commit(types.JOB_BULK_DATA_UPDATED, { type, value });
-      bulkJobs = bulkJobs.map((job: any) => {
-        // handling special case for slow frequency jobs
-        if (type === 'frequency' && job.freqType === 'slow') {
-          showToast(translate("Some jobs have slow frequency type, hence, feasible frequency will be set automatically"))
-          // If user sets a valid slow frequency, we honour it else maximum frequency is set
-          return ["HOURLY", "EVERY_6_HOUR", "EVERYDAY"].includes(value) ? ({...job, [type]: value}) : ({...job, [type]: 'EVERYDAY'})
-        } else {
-          return ({ ...job, [type]: (state.bulk as any)[type] })
-        }
-      });
+
+    if(failedFlag) {
+      return showToast(translate("Failed to schedule service(s)", {count: failedJobs}))
     } else {
-      bulkJobs.forEach((job: any) => { if (job.jobId === payload.jobId) { job[type] = value }});
+      return showToast(translate('Services have been scheduled'))
     }
+  },
+  setBulkJobGlobalRuntime({ commit, state }, payload) {
+    let bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs));
+    commit(types.JOB_BULK_DATA_UPDATED, { value: payload.runtime, type: 'runtime' });
+    bulkJobs = bulkJobs.map((job: any) => ({ ...job, runtime: state.bulk.runtime }));
+    commit(types.JOB_BULK_UPDATED, bulkJobs);
+  },
+  setBulkJobGlobalFrequency({ commit, state }, payload) {
+    let bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs));
+    commit(types.JOB_BULK_DATA_UPDATED, { value: payload.frequency, type: 'frequency' });
+    bulkJobs = bulkJobs.map((job: any) => {
+      if(job.freqType === 'slow') {
+        showToast(translate("Some jobs have slow frequency type, hence, feasible frequency will be set automatically"))
+        // If user sets a valid slow frequency, we honour it else maximum frequency is set
+        const slowFreqs = generateFrequencyOptions('slow').map((obj: any) => obj.value)
+        return slowFreqs.includes(payload.frequency) ? ({ ...job, frequency: state.bulk.frequency }) : ({ ...job, frequency: slowFreqs.pop() })
+      } else {
+        return ({ ...job, frequency: state.bulk.frequency })
+      }
+    });
+    commit(types.JOB_BULK_UPDATED, bulkJobs);
+  },
+  setBulkJobRuntime({ commit, state }, payload) {
+    const bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs));
+    bulkJobs.forEach((job: any) => { if (job.jobId === payload.jobId) { job.runtime = payload.runtime }});
+    commit(types.JOB_BULK_UPDATED, bulkJobs);
+  },
+  setBulkJobFrequency({commit, state}, payload) {
+    const bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs));
+    bulkJobs.forEach((job: any) => { if (job.jobId === payload.jobId) { job.frequency = payload.frequency }});
     commit(types.JOB_BULK_UPDATED, bulkJobs);
   },
   removeBulkJob({ commit, state }, jobId) {

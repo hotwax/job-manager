@@ -134,7 +134,7 @@ export default defineComponent({
         
         if(setTime > currTime) {
           job.runtime = setTime;
-          this.store.dispatch('job/setBulkJobData', { value: setTime, type: 'runtime', jobId: job.jobId, global: false });
+          this.store.dispatch('job/setBulkJobRuntime', { runtime: setTime, jobId: job.jobId });
         } else {
           showToast(translate("Provide a future date and time"));
         }
@@ -142,7 +142,7 @@ export default defineComponent({
     },
     async setFrequency(ev: CustomEvent, job: any) {
       job.frequency = ev['detail'].value;
-      await this.store.dispatch('job/setBulkJobData', { value: ev['detail'].value, type: 'frequency', jobId: job.jobId, global: false });
+      await this.store.dispatch('job/setBulkJobFrequency', { frequency: ev['detail'].value, jobId: job.jobId });
     },
     getTime (time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);

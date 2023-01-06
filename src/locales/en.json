@@ -7,6 +7,7 @@
   "Are you sure you want to change the time zone to?": "Are you sure you want to change the time zone to?",
   "Adjustments": "Adjustments",
   "Are you sure you want to save these changes?": "Are you sure you want to save these changes?",
+  "Are you sure you want to schedule these jobs?": "Are you sure you want to schedule these jobs?",
   "Auto cancelations": "Auto cancelations",
   "Auto cancel days updated": "Auto cancel days updated",
   "Import all products from Shopify. Make sure you run this before importing orders in bulk during intial setup.": "Import all products from Shopify. Make sure you run this before importing orders in bulk during intial setup.",
@@ -102,6 +103,7 @@
   "New broker run": "New broker run",
   "New orders": "New orders",
   "New products": "New products",
+  "No": "No",
   "no eCommerce selected": "no eCommerce selected",
   "No jobs found": "No jobs found",
   "No jobs have run yet": "No jobs have run yet",
@@ -233,5 +235,6 @@
   "Upload Pending Process": "Upload Pending Process",
   "Update shipping dates in Shopify": "Update shipping dates in Shopify",
   "When importing historical completed orders, this should be turned off.": "When importing historical completed orders, this should be turned off.",
-  "When using HotWax BOPIS, Shopify isn't aware of the actual inventory consumed. HotWax will automatically restore inventory automatically reduced by Shopify and deduct inventory from the correct store to maintain inventory accuracy.": "When using HotWax BOPIS, Shopify isn't aware of the actual inventory consumed. HotWax will automatically restore inventory automatically reduced by Shopify and deduct inventory from the correct store to maintain inventory accuracy."
+  "When using HotWax BOPIS, Shopify isn't aware of the actual inventory consumed. HotWax will automatically restore inventory automatically reduced by Shopify and deduct inventory from the correct store to maintain inventory accuracy.": "When using HotWax BOPIS, Shopify isn't aware of the actual inventory consumed. HotWax will automatically restore inventory automatically reduced by Shopify and deduct inventory from the correct store to maintain inventory accuracy.",
+  "Yes": "Yes"
 }

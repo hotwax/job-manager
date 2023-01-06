@@ -76,7 +76,7 @@ const getters: GetterTree <JobState, RootState> = {
     isJobAddedToBulkScheduler: (state) => (jobId: string) => {
       return state.bulk.jobs.some((job: any) => job.jobId === jobId);
     },
-    getGlobalRunTime: (state) => {
+    getGlobalRuntime: (state) => {
       return state.bulk.runtime;
     },
     getGlobalFreq: (state) => {
