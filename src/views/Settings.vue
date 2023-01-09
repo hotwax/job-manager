@@ -87,6 +87,11 @@
         </ion-card>
       </section>
       <hr />
+
+      <div class="app-info">
+        <h4>{{ "Version: " + appVersion }}</h4>
+        <h4>{{ "Built: " + getDateTime(appInfo.builtTime) }}</h4>
+      </div>
       <h1>{{ $t('App') }}</h1>
 
       <section>
@@ -119,6 +124,7 @@ import { mapGetters, useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import TimeZoneModal from '@/views/TimezoneModal.vue';
 import Image from '@/components/Image.vue'
+import { DateTime } from 'luxon';
 
 export default defineComponent({
   name: 'Settings',
@@ -146,6 +152,8 @@ export default defineComponent({
   data() {
     return {
       baseURL: process.env.VUE_APP_BASE_URL,
+      appInfo: (process.env.VUE_APP_VERSION_INFO ? JSON.parse(process.env.VUE_APP_VERSION_INFO) : {}) as any,
+      appVersion: ""
     };
   },
   computed: {
@@ -156,6 +164,9 @@ export default defineComponent({
       shopifyConfigs: 'user/getShopifyConfigs',
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
     })
+  },
+  mounted() {
+    this.appVersion = this.appInfo.version;
   },
   methods: {
     setEComStore(event: any) {
@@ -180,6 +191,9 @@ export default defineComponent({
     goToOms(){
       window.open(this.instanceUrl.startsWith('http') ? this.instanceUrl.replace('api/', "") : `https://${this.instanceUrl}.hotwax.io/`, '_blank', 'noopener, noreferrer');
     },
+    getDateTime(time: any) {
+      return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
+    }
   },
   setup(){
     const store = useStore();
@@ -217,5 +231,15 @@ export default defineComponent({
   }
   hr {
     border-top: 1px solid var(--ion-color-medium);
+  }
+
+  .app-info {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--spacer-xs) 10px 0px;
+  }
+
+  .app-info > h4 {
+    margin: 0;
   }
 </style>
