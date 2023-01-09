@@ -14,10 +14,10 @@
             <ion-avatar slot="start" v-if="userProfile?.partyImageUrl">
               <Image :src="userProfile.partyImageUrl"/>
             </ion-avatar>
-            <ion-label>
-              {{ userProfile?.partyName }}
-              <p>{{ userProfile?.userLoginId }}</p>
-            </ion-label>
+            <ion-card-header>
+              <ion-card-subtitle>{{ userProfile?.userLoginId }}</ion-card-subtitle>
+              <ion-card-title>{{ userProfile?.partyName }}</ion-card-title>
+            </ion-card-header>
           </ion-item>
           <ion-button fill="outline" color="danger" @click="logout()">{{ $t("Logout") }}</ion-button>
           <!-- Commenting this code as we currently do not have reset password functionality -->
@@ -25,7 +25,9 @@
         </ion-card>
       </div>
 
-      <h1>{{ $t('OMS') }}</h1>
+      <div class="section-header">
+        <h1>{{ $t('OMS') }}</h1>
+      </div>
       <section>
         <ion-card>
           <ion-card-header>
@@ -88,11 +90,13 @@
       </section>
       <hr />
 
-      <div class="app-info">
-        <h4>{{ "Version: " + appVersion }}</h4>
-        <h4>{{ "Built: " + getDateTime(appInfo.builtTime) }}</h4>
+      <div class="section-header">
+        <h1>
+          {{ $t('App') }}
+          <p class="overline" >{{ "Version: " + appVersion }}</p>
+        </h1>
+        <p class="overline">{{ "Built: " + getDateTime(appInfo.builtTime) }}</p>
       </div>
-      <h1>{{ $t('App') }}</h1>
 
       <section>
         <ion-card>
@@ -217,9 +221,6 @@ export default defineComponent({
   ion-card > ion-button {
     margin: var(--spacer-xs);
   }
-  h1 {
-    padding: var(--spacer-xs) 10px 0;
-  }
   section {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -233,13 +234,10 @@ export default defineComponent({
     border-top: 1px solid var(--ion-color-medium);
   }
 
-  .app-info {
+  .section-header {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     padding: var(--spacer-xs) 10px 0px;
-  }
-
-  .app-info > h4 {
-    margin: 0;
   }
 </style>
