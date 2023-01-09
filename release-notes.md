@@ -1,3 +1,13 @@
+# Release 1.5.0
+
+## What's Changed
+* Improved Menu footer by providing option to change shopifyConfig. (#85zrgqc2a) by @k2maan in https://github.com/hotwax/job-manager/pull/324
+* Implemented: Added missing webhook service endpoints(#85zrgg8kw) by @shashwatbangar in https://github.com/hotwax/job-manager/pull/317
+* Implemented: Used HTTP get method for all the API calls to fetch data(#85zrh15tj) by @shashwatbangar in https://github.com/hotwax/job-manager/pull/336
+
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v1.4.0...v1.5.0
+
 # Release 1.4.0
 
 ## What's Changed
