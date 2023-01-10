@@ -170,7 +170,7 @@ export default defineComponent({
     })
   },
   mounted() {
-    this.appVersion = this.appInfo.version;
+    this.appVersion = this.appInfo.branch ? (this.appInfo.branch + "-" + this.appInfo.revision) : this.appInfo.tag;
   },
   methods: {
     setEComStore(event: any) {
