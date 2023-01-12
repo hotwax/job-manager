@@ -10,4 +10,5 @@ export default {
     "APP_BULK_EDITOR_VIEW": "",
     "APP_JOB_SKIP": "",
     "APP_JOB_CANCEL": "",
+    "APP_WEBHOOK_UPDATE": "",
 } as any

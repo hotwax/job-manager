@@ -17,7 +17,7 @@ const actions: ActionTree<UserState, RootState> = {
    * @param param1 payload: object { username, password }
    * @returns Promise
    */
-  async login ({ commit, dispatch }, { username, password }) {
+  async login({ commit }, { username, password }) {
     try {
       const resp = await UserService.login(username, password);
       // Further we will have only response having 2xx status
@@ -67,12 +67,46 @@ const actions: ActionTree<UserState, RootState> = {
         }
       }
 
+      const userProfile = await UserService.getUserProfile(token);
+      userProfile.stores = await UserService.getEComStores(token);
+
+      // In Job Manager application, we have jobs which may not be associated with any product store
+      userProfile.stores.push({
+        productStoreId: "",
+        storeName: "None"
+      })
+      let preferredStore = userProfile.stores[0]
+
+      const preferredStoreId =  await UserService.getPreferredStore(token);
+      if (preferredStoreId) {
+        const store = userProfile.stores.find((store: any) => store.productStoreId === preferredStoreId);
+        store && (preferredStore = store)
+      }
+
+      const shopifyConfigs =  await UserService.getShopifyConfig(preferredStore.productStoreId, token);
+      // TODO store and get preferred config
+      let currentShopifyConfig =  {};
+      shopifyConfigs.length > 0 && (currentShopifyConfig = shopifyConfigs[0])
+
       /*  ---- Guard clauses ends here --- */
 
       setPermissions(appPermissions);
-      commit(types.USER_TOKEN_CHANGED, { newToken: token })
+      if (userProfile.userTimeZone) {
+        Settings.defaultZone = userProfile.userTimeZone;
+      }
+
+      // TODO user single mutation
+      commit(types.USER_CURRENT_ECOM_STORE_UPDATED, preferredStore);
+      commit(types.USER_INFO_UPDATED, userProfile);
+      commit(types.USER_SHOPIFY_CONFIGS_UPDATED, shopifyConfigs);
+      commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, currentShopifyConfig);
       commit(types.USER_PERMISSIONS_UPDATED, appPermissions);
-      dispatch('getProfile')
+      commit(types.USER_TOKEN_CHANGED, { newToken: token })
+
+      // Getting service status description
+      // TODO check if we could move it to logic for fetching jobs
+      this.dispatch('util/getServiceStatusDesc')
+      
       // Handling case for warnings like password may expire in few days
       if (resp.data._EVENT_MESSAGE_ && resp.data._EVENT_MESSAGE_.startsWith("Alert:")) {
       // TODO Internationalise text
@@ -82,7 +116,7 @@ const actions: ActionTree<UserState, RootState> = {
     } catch (err: any) {
       // If any of the API call in try block has status code other than 2xx it will be handled in common catch block.
       // TODO Check if handling of specific status codes is required.
-      showToast(translate('Something went wrong'));
+      showToast(translate('Something went wrong while login. Contact administrator'));
       console.error("error", err);
       return Promise.reject(new Error(err))
     }
@@ -96,59 +130,6 @@ const actions: ActionTree<UserState, RootState> = {
     dispatch('job/clearJobState', null, { root: true });
     commit(types.USER_END_SESSION)
     resetPermissions();
-  },
-
-  /**
-   * Get User profile
-   */
-  async getProfile ({ commit, dispatch }) {
-    const resp = await UserService.getProfile()
-    if (resp.status === 200) {
-      const payload = {
-        "inputFields": {
-          "storeName_op": "not-empty"
-        },
-        "fieldList": ["productStoreId", "storeName"],
-        "entityName": "ProductStore",
-        "distinct": "Y",
-        "noConditionFind": "Y"
-      }
-      const userProfile = resp.data;
-
-      const storeResp = await UserService.getEComStores(payload);
-      if(storeResp.status === 200 && !hasError(storeResp) && storeResp.data.docs?.length > 0) {
-        const stores = storeResp.data.docs;
-
-        userProfile.stores = [
-          ...(stores ? stores : []),
-          {
-            productStoreId: "",
-            storeName: "None"
-          }
-        ]
-      }
-      const currentProductStoreId = resp.data?.stores[0].productStoreId;
-      if (currentProductStoreId) {
-        dispatch('getShopifyConfig', currentProductStoreId);
-      }
-
-      this.dispatch('util/getServiceStatusDesc')
-      if (userProfile.userTimeZone) {
-        Settings.defaultZone = userProfile.userTimeZone;
-      }
-      const stores = userProfile.stores
-      const userPrefResponse =  await UserService.getUserPreference({
-        'userPrefTypeId': 'SELECTED_BRAND'
-      });
-      if(userPrefResponse.status === 200 && !hasError(userPrefResponse)) {
-        const userPrefStore = stores.find((store: any) => store.productStoreId === userPrefResponse.data.userPrefValue)
-        commit(types.USER_CURRENT_ECOM_STORE_UPDATED, userPrefStore ? userPrefStore : stores ? stores[0]: {});
-        commit(types.USER_INFO_UPDATED, userProfile);
-      } else {
-        commit(types.USER_CURRENT_ECOM_STORE_UPDATED, stores ? stores[0]: {});
-        commit(types.USER_INFO_UPDATED, userProfile);
-      }
-    }
   },
 
   /**
@@ -193,41 +174,21 @@ const actions: ActionTree<UserState, RootState> = {
 
 
   async getShopifyConfig({ commit }, productStoreId) {
-    if (productStoreId) { 
-      let resp;
-      const payload = {
-        "inputFields": {
-          "productStoreId": productStoreId,
-        },
-        "entityName": "ShopifyShopAndConfig",
-        "noConditionFind": "Y",
-        "fieldList": ["shopifyConfigId", "name", "shopId"]
-      }
-      try {
-        resp = await UserService.getShopifyConfig(payload);
-        if (resp.status === 200 && !hasError(resp) && resp.data?.docs?.length > 0) {
-          commit(types.USER_SHOPIFY_CONFIGS_UPDATED, resp.data.docs);
-          commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, resp.data.docs[0]);
-        } else {
-          // TODO need to remove api call for fetching fetching shopifyConfig, currently kept it for backward compatibility.
-          payload["entityName"] = 'ShopifyConfig';
-          payload["fieldList"] = ["shopifyConfigId", "shopifyConfigName", 'shopId']
-          resp = await UserService.getShopifyConfig(payload);
-          if (resp.status === 200 && !hasError(resp) && resp.data?.docs?.length > 0) {
-            commit(types.USER_SHOPIFY_CONFIGS_UPDATED, resp.data.docs);
-            commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, resp.data.docs[0]);
-          } else {
-            console.error(resp);
-            commit(types.USER_SHOPIFY_CONFIGS_UPDATED, []);
-            commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, {});
-          }
-        }
-      } catch (err) {
-        console.error(err);
-        commit(types.USER_SHOPIFY_CONFIGS_UPDATED, []);
-        commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, {});
-      }
-    } else {
+    if (!productStoreId) {
+      commit(types.USER_SHOPIFY_CONFIGS_UPDATED, []);
+      commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, {});
+      console.warn("No productStoreId provided for fetching shopify config. Setting initial values");
+    }
+
+    try {      
+      const shopifyConfigs =  await UserService.getShopifyConfig(productStoreId);
+        // TODO store and get preferred config
+      let currentShopifyConfig =  {};
+      shopifyConfigs.length > 0 && (currentShopifyConfig = shopifyConfigs[0])
+      commit(types.USER_SHOPIFY_CONFIGS_UPDATED, shopifyConfigs);
+      commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, currentShopifyConfig);
+    } catch (err) {
+      console.error(err);
       commit(types.USER_SHOPIFY_CONFIGS_UPDATED, []);
       commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, {});
     }
@@ -333,76 +294,6 @@ const actions: ActionTree<UserState, RootState> = {
     }
     return resp;
   },
-  /**
-   * Get user pemissions
-   */
-  /* async getUserPermissions({ commit }) {
-    let resp;
-    // TODO Make it configurable from the environment variables.
-    // Though this might not be an server specific configuration, 
-    // we will be adding it to environment variable for easy configuration at app level
-    const viewSize = 200;
-    let appPermissions = [] as any;
-
-    try {
-      const params = {
-        "viewIndex": 0,
-        viewSize,
-      }
-      resp = await UserService.getUserPermissions(params);
-      if(resp.status === 200 && resp.data.docs?.length && !hasError(resp)) {
-        let serverPermissions = resp.data.docs.map((permission: any) => permission.permissionId);
-        const total = resp.data.count;
-        const remainingPermissions = total - serverPermissions.length;
-        if (remainingPermissions > 0) {
-          // We need to get all the remaining permissions
-          const apiCallsNeeded = Math.floor(remainingPermissions / viewSize) + ( remainingPermissions % viewSize != 0 ? 1 : 0);
-          const responses = await Promise.all([...Array(apiCallsNeeded).keys()].map(async (index: any) => {
-            const response = await UserService.getUserPermissions({
-              "viewIndex": index + 1,
-              viewSize,
-            });
-            if(response.status === 200 && !hasError(response)){
-              return Promise.resolve(response);
-              } else {
-              return Promise.reject(response);
-              }
-          }))
-          const permissionResponses = {
-            success: [],
-            failed: []
-          }
-          responses.reduce((permissionResponses: any, permissionResponse: any) => {
-            if (permissionResponse.status !== 200 || hasError(permissionResponse) || !permissionResponse.data?.docs) {
-              permissionResponses.failed.push(permissionResponse);
-            } else {
-              permissionResponses.success.push(permissionResponse);
-            }
-            return permissionResponses;
-          }, permissionResponses)
-
-          serverPermissions = permissionResponses.success.reduce((serverPermissions: any, response: any) => {
-            serverPermissions.push(...response.data.docs.map((permission: any) => permission.permissionId));
-            return serverPermissions;
-          }, serverPermissions)
-
-          // If partial permissions are received and we still allow user to login, some of the functionality might not work related to the permissions missed.
-          // Show toast to user intimiting about the failure
-          // Allow user to login
-          // TODO Implement Retry or improve experience with show in progress icon and allowing login only if all the data related to user profile is fetched.
-          if (permissionResponses.failed.length > 0) showToast(translate("Something went wrong while getting complete user profile. Try login again for smoother experience."));
-        }
-        appPermissions = prepareAppPermissions(serverPermissions);
-      }
-      setPermissions(appPermissions);
-      commit(types.USER_PERMISSIONS_UPDATED, appPermissions);
-      return appPermissions;
-    } catch(error: any) {
-      console.error(error);
-      showToast(translate("Something went wrong while getting complete user profile. Try login again for smoother experience."));
-    }
-    return resp;
-  } */
 }
 
 export default actions;

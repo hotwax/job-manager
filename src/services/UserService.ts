@@ -25,12 +25,6 @@ const checkPermission = async (payload: any): Promise <any>  => {
   });
 }
 
-const getProfile = async (): Promise <any>  => {
-    return api({
-      url: "user-profile", 
-      method: "get",
-    });
-}
 const getAvailableTimeZones = async (): Promise <any>  => {
   return api({
     url: "getAvailableTimeZones",
@@ -46,20 +40,64 @@ const setUserTimeZone = async (payload: any): Promise <any>  => {
   });
 }
 
-const getShopifyConfig = async (payload: any): Promise <any>  => {
-  return api({
+const getShopifyConfig = async (productStoreId: any, token?: any): Promise <any>  => {
+  const params = {
+    "inputFields": {
+      "productStoreId": productStoreId,
+    },
+    "entityName": "ShopifyShopAndConfig",
+    "noConditionFind": "Y",
+    "fieldList": ["shopifyConfigId", "name", "shopId"]
+  }
+  const payload = {
     url: "performFind",
     method: "get",
-    params: payload
-  });
+    params,
+  } as any;
+
+  // Handled the case when getting config during the login action
+  // We haven't set the token in store till all the essential information is gattered during login
+  if (token) {
+    payload.baseURL = store.getters['user/getBaseUrl'];
+    payload.headers = {
+      Authorization:  'Bearer ' + token,
+      'Content-Type': 'application/json'
+    }
+  }
+  const resp = await client(payload);
+  if (hasError(resp)) {
+    return Promise.reject(resp);
+  } else {
+    return Promise.resolve(resp.data.docs);
+  }
 }
 
-const getEComStores = async (payload: any): Promise<any> => {
-  return api({
+const getEComStores = async (token: any): Promise<any> => {
+  const params = {
+    "inputFields": {
+      "storeName_op": "not-empty"
+    },
+    "fieldList": ["productStoreId", "storeName"],
+    "entityName": "ProductStore",
+    "distinct": "Y",
+    "noConditionFind": "Y"
+  }
+  const baseURL = store.getters['user/getBaseUrl'];
+  const resp = await client({
     url: "performFind",
     method: "get",
-    params: payload
+    baseURL,
+    params,
+    headers: {
+      Authorization:  'Bearer ' + token,
+      'Content-Type': 'application/json'
+    }
   });
+  if (hasError(resp)) {
+    return Promise.reject(resp);
+  } else {
+    return Promise.resolve(resp.data.docs);
+  }
 }
 
 const getPinnedJobs = async (payload: any): Promise<any> => {
@@ -100,6 +138,28 @@ const setUserPreference = async (payload: any): Promise<any> => {
     method: "post",
     data: payload
   });
+}
+
+const getPreferredStore = async (token: any): Promise<any> => {
+  const baseURL = store.getters['user/getBaseUrl'];
+  const resp = await client({
+    url: "service/getUserPreference",
+    //TODO Due to security reasons service model of OMS 1.0 does not support sending parameters in get request that's why we use post here
+    method: "post",
+    baseURL,
+    headers: {
+      Authorization:  'Bearer ' + token,
+      'Content-Type': 'application/json'
+    },
+    data: {
+      'userPrefTypeId': 'SELECTED_BRAND'
+    },
+  });
+  if (hasError(resp)) {
+    return Promise.reject(resp);
+  } else {
+    return Promise.resolve(resp.data.userPrefValue);
+  }
 }
 
 const getUserPreference = async (payload: any): Promise<any> => {
@@ -192,12 +252,35 @@ const getUserPermissions = async (payload: any, token: any): Promise<any> => {
     }
 }
 const getPermissions = async (payload: any): Promise<any> => {
-  let baseURL = store.getters['user/getInstanceUrl'];
-  baseURL = baseURL && baseURL.startsWith('http') ? baseURL : `https://${baseURL}.hotwax.io/api/`;
+  const baseURL = store.getters['user/getBaseUrl'];
   return client({
     url: "getPermissions",
     method: "post",
-    baseURL: baseURL,
+    baseURL,
+    ...payload
+  });
+}
+const getUserProfile = async (token: any): Promise<any> => {
+  try {
+    const resp = await getProfile({
+      headers: {
+        Authorization:  'Bearer ' + token,
+        'Content-Type': 'application/json'
+      }
+    });
+    if(hasError(resp)) return Promise.reject("Error getting user profile");
+    return Promise.resolve(resp.data)
+  } catch(error: any) {
+    console.error(error);
+    return Promise.reject(error)
+  }
+}
+const getProfile = async (payload: any): Promise <any>  => {
+  const baseURL = store.getters['user/getBaseUrl'];
+  return client({
+    url: "user-profile",
+    method: "get",
+    baseURL,
     ...payload
   });
 }
@@ -211,6 +294,8 @@ export const UserService = {
     getProfile,
     getShopifyConfig,
     getPinnedJobs,
+    getPreferredStore,
+    getUserProfile,
     associatePinnedJobPrefToUser,
     setUserTimeZone,
     updatePinnedJobPref,
