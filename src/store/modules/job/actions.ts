@@ -800,8 +800,8 @@ const actions: ActionTree<JobState, RootState> = {
     const jobParams = [] as any;
     let failedJobs = 0;
     payload.shopifyConfigs.map((shopId: string) => {
-      return payload.jobs.map((job: any) => {
-        const params = {
+      return payload.jobs.reduce((params: any, job: any) => {
+        params = {
           'JOB_NAME': job.jobName,
           'SERVICE_NAME': job.serviceName,
           'SERVICE_COUNT': '0',
@@ -840,7 +840,7 @@ const actions: ActionTree<JobState, RootState> = {
           if (job.runtimeData[key] === 'null') job.runtimeData[key] = ''
         })
         jobParams.push({ ...job.runtimeData, ...params });
-      })
+      }, {})
     })
 
     let failedFlag = false;
@@ -859,7 +859,7 @@ const actions: ActionTree<JobState, RootState> = {
       if(failedFlag) {
         return showToast(translate("Failed to schedule service(s)", {count: failedJobs}))
       } else {
-        return showToast(translate('Services have been scheduled'))
+        return showToast(translate('Services have been scheduled in bulk'))
       }
     })
   },
