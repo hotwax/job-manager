@@ -322,12 +322,12 @@ export default defineComponent({
   },
   mounted () {
     this.fetchJobs();
-    emitter.on("productStoreChanged", this.fetchJobs);
+    emitter.on("productStoreOrConfigChanged", this.fetchJobs);
     emitter.on('viewJobConfiguration', this.viewJobConfiguration)
   },
   unmounted() {
     emitter.on('viewJobConfiguration', this.viewJobConfiguration)
-    emitter.off("productStoreChanged", this.fetchJobs);
+    emitter.off("productStoreOrConfigChanged", this.fetchJobs);
   },
   setup() {
     const store = useStore();

@@ -1,3 +1,26 @@
+# Release 1.5.0
+
+## What's Changed
+* Improved Menu footer by providing option to change shopifyConfig. (#85zrgqc2a) by @k2maan in https://github.com/hotwax/job-manager/pull/324
+* Implemented: Added missing webhook service endpoints(#85zrgg8kw) by @shashwatbangar in https://github.com/hotwax/job-manager/pull/317
+* Implemented: Used HTTP get method for all the API calls to fetch data(#85zrh15tj) by @shashwatbangar in https://github.com/hotwax/job-manager/pull/336
+
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v1.4.0...v1.5.0
+
+# Release 1.4.0
+
+## What's Changed
+* Added shop selector to menu footer (#2a7ymj3) by @k2maan in https://github.com/hotwax/job-manager/pull/283, @Mayank909 in https://github.com/hotwax/job-manager/pull/135, and @disha1202 in https://github.com/hotwax/job-manager/pull/243
+* Fixed jobs not appearing after store change from Menu footer (#2a7ymj3) by @k2maan in https://github.com/hotwax/job-manager/pull/310
+* Implemented: Updated UI of settings page(#32j3r6t) by @shashwatbangar in https://github.com/hotwax/job-manager/pull/309
+* Fixed: issue of brokering filter not working by updating the enumTypeId for brokering jobs(#85zrgnpuc) by @ymaheshwari1 in https://github.com/hotwax/job-manager/pull/320
+* Fixed: Jobs getting scheduled multiple times(#32qywdd) by @shashwatbangar in https://github.com/hotwax/job-manager/pull/315
+* Fixed: build issue due to eslint version mismatch in dependencies(#85zrh0bwu) by @ymaheshwari1 in https://github.com/hotwax/job-manager/pull/327
+
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v1.3.0...v1.4.0
+
 # Release 1.3.0
 ## What's Changed
 * Implemented: Functionality to fetch more jobs on all pages(#2vjxdha)  by @shashwatbangar in https://github.com/hotwax/job-manager/pull/274
