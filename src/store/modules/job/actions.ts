@@ -774,9 +774,7 @@ const actions: ActionTree<JobState, RootState> = {
     }
     
     let appJobEnumId = '' as any, freqType = '';
-    appJobEnumId = Object.keys(enums).find((jobId: string) => {
-      if(enums[jobId] === payload.jobId) return jobId;
-    })
+    appJobEnumId = Object.keys(enums).find((jobId: string) => { enums[jobId] === payload.jobId })
 
     const jobFrequencyType = JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string);
     freqType = jobFrequencyType[appJobEnumId];
@@ -843,7 +841,6 @@ const actions: ActionTree<JobState, RootState> = {
       }, {})
     })
 
-    let failedFlag = false;
     Promise.allSettled(jobParams.map(async (param: any) => {
       const resp: any = await JobService.scheduleJob(param);
       if(resp.status === 200 && !hasError(resp)){
@@ -855,8 +852,7 @@ const actions: ActionTree<JobState, RootState> = {
         return Promise.reject(resp);
       }
     })).then((resps: any) => {
-      failedFlag = resps.some((resp: any) => resp.status === "rejected");
-      if(failedFlag) {
+      if(failedJobs > 0) {
         return showToast(translate("Failed to schedule service(s)", {count: failedJobs}))
       } else {
         return showToast(translate('Services have been scheduled in bulk'))
