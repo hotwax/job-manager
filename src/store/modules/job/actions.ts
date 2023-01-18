@@ -661,12 +661,8 @@ const actions: ActionTree<JobState, RootState> = {
     let resp;
 
     try {
-      resp = await JobService.updateJob({
-        jobId: job.jobId,
-        systemJobEnumId: job.systemJobEnumId,
-        statusId: "SERVICE_CANCELLED",
-        recurrenceTimeZone: this.state.user.current.userTimeZone,
-        cancelDateTime: DateTime.now().toMillis()
+      resp = await JobService.cancelJob({
+        jobId: job.jobId
       });
       if (resp.status == 200 && !hasError(resp)) {
         // TODO: When we are trying to cancel the job from pipeline page those jobs are not in the cached state, so we need to

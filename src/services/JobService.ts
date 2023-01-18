@@ -54,6 +54,15 @@ const getAutoCancelDays = async (payload: any): Promise <any> => {
     params: payload
   });
 }
+
+const cancelJob = async (payload: any): Promise <any> => {
+  return api({
+    url: "service/cancelScheduledJob",
+    method: "post",
+    data: payload
+  });
+}
+
 export const JobService = {
   fetchJobDescription,
   fetchJobInformation,
@@ -61,5 +70,6 @@ export const JobService = {
   updateJob,
   scheduleJob,
   updateAutoCancelDays,
-  getAutoCancelDays
+  getAutoCancelDays,
+  cancelJob
 }
