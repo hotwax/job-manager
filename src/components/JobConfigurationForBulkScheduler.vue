@@ -20,13 +20,13 @@
     </ion-item>
     <ion-item>
       <ion-label>{{ $t("Run time") }}</ion-label>
-      <ion-label class="ion-text-wrap" @click="() => isDateTimeModalOpen = true" slot="end">{{ job.runtime ? getTime(job.runtime) : $t('Select run time') }}</ion-label>
+      <ion-label class="ion-text-wrap" @click="() => isDateTimeModalOpen = true" slot="end">{{ job.runTime ? getTime(job.runTime) : $t('Select run time') }}</ion-label>
       <ion-modal class="date-time-modal" :is-open="isDateTimeModalOpen" @didDismiss="() => isDateTimeModalOpen = false">
         <ion-content force-overscroll="false">
           <ion-datetime 
             show-default-buttons 
             hour-cycle="h23" 
-            :value="job.runtime ? getDateTime(job.runtime) : ''" 
+            :value="job.runTime ? getDateTime(job.runTime) : ''" 
             @ionChange="updateRunTime($event)" 
           />
         </ion-content>

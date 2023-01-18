@@ -780,7 +780,7 @@ const actions: ActionTree<JobState, RootState> = {
       payload.freqType = freqType;
       if(freqType === 'slow') showToast(translate("This job has slow frequency type, hence, feasible frequency will be set automatically"))
     }
-    payload.runtime = state.bulk.runtime;
+    payload.runTime = state.bulk.runtime;
     // set the maximum slow frequency for slow type jobs if global frequnecy is set
     payload.frequency = (state.bulk.frequency && freqType === 'slow') ? (generateFrequencyOptions('slow') as any).pop().value : state.bulk.frequency;
     
@@ -799,7 +799,7 @@ const actions: ActionTree<JobState, RootState> = {
           'JOB_NAME': job.jobName,
           'SERVICE_NAME': job.serviceName,
           'SERVICE_COUNT': '0',
-          'SERVICE_TIME': job.runtime.toString(),
+          'SERVICE_TIME': job.runTime.toString(),
           'SERVICE_TEMP_EXPR': job.frequency,
           'SERVICE_RUN_AS_SYSTEM': 'Y',
           'jobFields': {
@@ -860,7 +860,7 @@ const actions: ActionTree<JobState, RootState> = {
   setBulkJobGlobalRuntime({ commit, state }, payload) {
     const bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs));
     commit(types.JOB_BULK_RUNTIME_UPDATED, { runtime: payload.runtime });
-    bulkJobs.forEach((job: any) => { job.runtime = state.bulk.runtime });
+    bulkJobs.forEach((job: any) => { job.runTime = state.bulk.runtime });
     commit(types.JOB_BULK_UPDATED, bulkJobs);
   },
   setBulkJobGlobalFrequency({ commit, state }, payload) {
@@ -884,7 +884,7 @@ const actions: ActionTree<JobState, RootState> = {
   },
   setBulkJobRuntime({ commit, state }, payload) {
     const bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs));
-    bulkJobs.forEach((job: any) => { if (job.jobId === payload.jobId) { job.runtime = payload.runtime }});
+    bulkJobs.forEach((job: any) => { if (job.jobId === payload.jobId) { job.runTime = payload.runtime }});
     commit(types.JOB_BULK_UPDATED, bulkJobs);
   },
   setBulkJobFrequency({commit, state}, payload) {

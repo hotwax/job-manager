@@ -122,7 +122,11 @@ export default defineComponent({
       try {
         const resp = await JobService.fetchJobInformation(params)
         if (resp.status === 200 && !hasError(resp) && resp.data.docs?.length > 0) {
-          const data = resp.data.docs.map((job: any) => ({ ...job, 'status': job?.statusId }))
+          const data = resp.data.docs.map((job: any) => {
+            job.status = job.statusId;
+            delete job.runTime;
+            return job;
+          })
           this.jobs = viewIndex === 0 ? data : [...this.jobs, ...data];
           this.isScrollable = (this.jobs.length % (process.env.VUE_APP_VIEW_SIZE as any)) === 0;
         } else {
