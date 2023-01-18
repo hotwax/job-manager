@@ -862,14 +862,14 @@ const actions: ActionTree<JobState, RootState> = {
     }
   },
   setBulkJobGlobalRuntime({ commit, state }, payload) {
-    let bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs));
-    commit(types.JOB_BULK_DATA_UPDATED, { value: payload.runtime, type: 'runtime' });
-    bulkJobs = bulkJobs.map((job: any) => ({ ...job, runtime: state.bulk.runtime }));
+    const bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs));
+    commit(types.JOB_BULK_RUNTIME_UPDATED, { runtime: payload.runtime });
+    bulkJobs.forEach((job: any) => { job.runtime = state.bulk.runtime });
     commit(types.JOB_BULK_UPDATED, bulkJobs);
   },
   setBulkJobGlobalFrequency({ commit, state }, payload) {
     let bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs));
-    commit(types.JOB_BULK_DATA_UPDATED, { value: payload.frequency, type: 'frequency' });
+    commit(types.JOB_BULK_FREQUENCY_UPDATED, { frequency: payload.frequency });
     const hasSlowJob = bulkJobs.some((job: any) => job.freqType === 'slow');
     let slowFreqs = [];
     let slowFrequency = payload.frequency;
@@ -881,9 +881,8 @@ const actions: ActionTree<JobState, RootState> = {
       }
     }
     bulkJobs = bulkJobs.map((job: any) => {
-      let frequency = payload.frequency;
-      if(job.freqType === 'slow') frequency = slowFrequency;
-      return { ...job, frequency }
+      job.frequency = job.freqType === 'slow' ? slowFrequency : payload.frequency;
+      return job;
     });
     commit(types.JOB_BULK_UPDATED, bulkJobs);
   },
