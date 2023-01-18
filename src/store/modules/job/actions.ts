@@ -798,8 +798,8 @@ const actions: ActionTree<JobState, RootState> = {
     const jobParams = [] as any;
     let failedJobs = 0;
     payload.shopifyConfigs.reduce((jobParams: any, shopId: string) => {
-      return payload.jobs.reduce((params: any, job: any) => {
-        params = {
+      return payload.jobs.reduce((jobParams: any, job: any) => {
+        const params = {
           'JOB_NAME': job.jobName,
           'SERVICE_NAME': job.serviceName,
           'SERVICE_COUNT': '0',
@@ -837,7 +837,8 @@ const actions: ActionTree<JobState, RootState> = {
         job.runtimeData && Object.keys(job.runtimeData).map((key: any) => {
           if (job.runtimeData[key] === 'null') job.runtimeData[key] = ''
         })
-        return jobParams.push({ ...job.runtimeData, ...params });
+        jobParams.push({ ...job.runtimeData, ...params });
+        return jobParams;
       }, jobParams)
     }, jobParams)
 
@@ -852,14 +853,13 @@ const actions: ActionTree<JobState, RootState> = {
         failedJobs++;
         return Promise.reject(resp);
       }
-    })).then(() => {
-      dispatch('removeBulkJobs', scheduledJobs);
-      if(failedJobs > 0) {
-        return showToast(translate("Failed to schedule service(s)", {count: failedJobs}))
-      } else {
-        return showToast(translate('Services have been scheduled in bulk'))
-      }
-    })
+    }))
+    dispatch('removeBulkJobs', scheduledJobs);
+    if(failedJobs > 0) {
+      return showToast(translate("Failed to schedule service(s)", {count: failedJobs}))
+    } else {
+      return showToast(translate('Services have been scheduled in bulk'))
+    }
   },
   setBulkJobGlobalRuntime({ commit, state }, payload) {
     let bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs));
