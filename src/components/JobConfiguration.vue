@@ -154,7 +154,7 @@ export default defineComponent({
     }
   },
   mounted() {
-    this.runTime = this.currentJob?.statusId === "SERVICE_DRAFT" ? "" : this.currentJob?.runTime;
+    this.runTime = this.currentJob?.runTime 
   },
   updated() {
     // When updating the job, the job is fetched again with the latest values
