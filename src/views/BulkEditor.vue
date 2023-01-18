@@ -162,7 +162,6 @@ export default defineComponent({
   data(){
     return {
       isDateTimeModalOpen: false,
-      isOpen: false,
       selectedEComStoreId: '',
       selectedShopifyConfigs: [] as Array<string>, // shopifyConfigs for which the user wants to schedule jobs
       shopifyConfigsForEComStore: [] as any,

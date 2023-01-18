@@ -20,21 +20,21 @@
     </ion-item>
     <ion-item>
       <ion-label>{{ $t("Run time") }}</ion-label>
-      <ion-label class="ion-text-wrap" @click="() => isOpen = true" slot="end">{{ job.runtime ? getTime(job.runtime) : $t('Select run time') }}</ion-label>
-      <ion-modal class="date-time-modal" :is-open="isOpen" @didDismiss="() => isOpen = false">
+      <ion-label class="ion-text-wrap" @click="() => isDateTimeModalOpen = true" slot="end">{{ job.runtime ? getTime(job.runtime) : $t('Select run time') }}</ion-label>
+      <ion-modal class="date-time-modal" :is-open="isDateTimeModalOpen" @didDismiss="() => isDateTimeModalOpen = false">
         <ion-content force-overscroll="false">
           <ion-datetime 
             show-default-buttons 
             hour-cycle="h23" 
             :value="job.runtime ? getDateTime(job.runtime) : ''" 
-            @ionChange="updateRunTime($event, job)" 
+            @ionChange="updateRunTime($event)" 
           />
         </ion-content>
       </ion-modal>
     </ion-item>
     <ion-item>
       <ion-label>{{ $t("Schedule") }}</ion-label>
-      <ion-select :interface-options="customPopoverOptions" :value="job.frequency" interface="popover" :placeholder='$t("Bulk schedule")' @ionChange='setFrequency($event, job)'>
+      <ion-select :interface-options="customPopoverOptions" :value="job.frequency" interface="popover" :placeholder='$t("Bulk schedule")' @ionChange='setFrequency($event)'>
         <ion-select-option v-for="freq in generateFrequencyOptions(job.freqType)" :key="freq.value" :value="freq.value">{{ $t(freq.label) }}</ion-select-option>
       </ion-select>
     </ion-item>
@@ -99,7 +99,7 @@ export default defineComponent({
   },
   data() {
     return {
-      isOpen: false,
+      isDateTimeModalOpen: false,
     }
   },
   props: ["job", "selectedShopifyConfigs", "selectedEComStoreId"],
@@ -127,22 +127,19 @@ export default defineComponent({
     getDateTime(time: any) {
       return DateTime.fromMillis(time).toISO()
     },
-    updateRunTime(ev: CustomEvent, job: any) {
-      if (job) {
-        const currTime = DateTime.now().toMillis();
-        const setTime = handleDateTimeInput(ev['detail'].value);
-        
-        if(setTime > currTime) {
-          job.runtime = setTime;
-          this.store.dispatch('job/setBulkJobRuntime', { runtime: setTime, jobId: job.jobId });
-        } else {
-          showToast(translate("Provide a future date and time"));
-        }
+    updateRunTime(ev: CustomEvent) {
+      const currTime = DateTime.now().toMillis();
+      const setTime = handleDateTimeInput(ev['detail'].value);
+      
+      if(setTime > currTime) {
+        this.store.dispatch('job/setBulkJobRuntime', { runtime: setTime, jobId: this.job.jobId });
+      } else {
+        showToast(translate("Provide a future date and time"));
       }
     },
-    async setFrequency(ev: CustomEvent, job: any) {
-      job.frequency = ev['detail'].value;
-      await this.store.dispatch('job/setBulkJobFrequency', { frequency: ev['detail'].value, jobId: job.jobId });
+    async setFrequency(ev: CustomEvent) {
+      const frequency = ev['detail'].value;
+      await this.store.dispatch('job/setBulkJobFrequency', { frequency: frequency, jobId: this.job.jobId });
     },
     getTime (time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
