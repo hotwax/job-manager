@@ -33,7 +33,7 @@
             <ion-card-title>{{ $t("eCommerce") }}</ion-card-title>
           </ion-card-header>
           
-          <ion-item button v-for="shopifyConfig in shopifyConfigsForEComStore" :key="shopifyConfig?.shopifyConfigId" :value="shopifyConfig?.shopifyConfigId" @click="updateSelectedShopifyConfigs (shopifyConfig.shopId)">
+          <ion-item button v-for="shopifyConfig in shopifyConfigsForEComStore" :key="shopifyConfig?.shopifyConfigId" :value="shopifyConfig?.shopifyConfigId" @click="updateSelectedShopifyConfigs(shopifyConfig.shopId)">
             <ion-label>{{ shopifyConfig.name ? shopifyConfig.name : shopifyConfig.shopifyConfigName }}</ion-label>
             <ion-checkbox slot="end" :checked="selectedShopifyConfigs.includes(shopifyConfig.shopId)"/>
           </ion-item>
@@ -51,8 +51,8 @@
           <ion-item>
             <ion-icon slot="start" :icon="timeOutline" />
             <ion-label>{{ $t("Run time") }}</ion-label>
-            <ion-label class="ion-text-wrap" @click="() => isOpenGlobal = true" slot="end">{{ globalRuntime ? getTime(globalRuntime) : $t('Select run time') }}</ion-label>
-            <ion-modal class="date-time-modal" :is-open="isOpenGlobal" @didDismiss="() => isOpenGlobal = false">
+            <ion-label class="ion-text-wrap" @click="() => isDateTimeModalOpen = true" slot="end">{{ globalRuntime ? getTime(globalRuntime) : $t('Select run time') }}</ion-label>
+            <ion-modal class="date-time-modal" :is-open="isDateTimeModalOpen" @didDismiss="() => isDateTimeModalOpen = false">
               <ion-content force-overscroll="false">
                 <ion-datetime            
                   show-default-buttons 
@@ -161,7 +161,7 @@ export default defineComponent({
   },
   data(){
     return {
-      isOpenGlobal: false,
+      isDateTimeModalOpen: false,
       isOpen: false,
       selectedEComStoreId: '',
       selectedShopifyConfigs: [] as Array<string>, // shopifyConfigs for which the user wants to schedule jobs
@@ -222,7 +222,7 @@ export default defineComponent({
     },
     async setEComStore(event: any) {
       this.selectedEComStoreId = event?.detail?.value
-      let shopifyConfigsForEComStore = [];
+      this.shopifyConfigsForEComStore = [];
       if (this.selectedEComStoreId) {
         let resp;
         const payload = {
@@ -236,13 +236,17 @@ export default defineComponent({
         try {
           resp = await UserService.getShopifyConfig(payload);
           if (resp.status === 200 && !hasError(resp) && resp.data?.docs?.length > 0) {
-            shopifyConfigsForEComStore = resp.data.docs;
+            this.shopifyConfigsForEComStore = resp.data.docs;
+          } else {
+            this.shopifyConfigsForEComStore = [];
           }
         } catch (err) {
           console.error(err);
         }
+      } else {
+        this.shopifyConfigsForEComStore = [];
       }
-      this.selectedShopifyConfigs = shopifyConfigsForEComStore;
+      this.selectedShopifyConfigs = [];
     },
     updateSelectedShopifyConfigs (shopifyConfigId: string) {
       this.selectedShopifyConfigs.includes(shopifyConfigId)

@@ -774,7 +774,7 @@ const actions: ActionTree<JobState, RootState> = {
     }
     
     let appJobEnumId = '' as any, freqType = '';
-    appJobEnumId = Object.keys(enums).find((jobId: string) => { enums[jobId] === payload.jobId })
+    appJobEnumId = Object.keys(enums).find((jobId: string) => enums[jobId] === payload.jobId)
 
     const jobFrequencyType = JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string);
     freqType = jobFrequencyType[appJobEnumId];
@@ -788,16 +788,16 @@ const actions: ActionTree<JobState, RootState> = {
     // set the maximum slow frequency for slow type jobs if global frequnecy is set
     payload.frequency = (state.bulk.frequency && freqType === 'slow') ? (generateFrequencyOptions('slow') as any).pop().value : state.bulk.frequency;
     
-    const bulk = JSON.parse(JSON.stringify(state.bulk.jobs));
-    bulk.push(payload)
-    commit(types.JOB_BULK_UPDATED, bulk);
+    const bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs));
+    bulkJobs.push(payload)
+    commit(types.JOB_BULK_UPDATED, bulkJobs);
   },
   async scheduleBulkJobs({ dispatch }, payload) {
     // TODO: handle case for bulk jobs which are already scheduled. 
     // As of now, the job will get scheduled again even if it is pending
     const jobParams = [] as any;
     let failedJobs = 0;
-    payload.shopifyConfigs.map((shopId: string) => {
+    payload.shopifyConfigs.reduce((jobParams: any, shopId: string) => {
       return payload.jobs.reduce((params: any, job: any) => {
         params = {
           'JOB_NAME': job.jobName,
@@ -837,21 +837,23 @@ const actions: ActionTree<JobState, RootState> = {
         job.runtimeData && Object.keys(job.runtimeData).map((key: any) => {
           if (job.runtimeData[key] === 'null') job.runtimeData[key] = ''
         })
-        jobParams.push({ ...job.runtimeData, ...params });
-      }, {})
-    })
+        return jobParams.push({ ...job.runtimeData, ...params });
+      }, jobParams)
+    }, jobParams)
 
-    Promise.allSettled(jobParams.map(async (param: any) => {
+    const scheduledJobs = [] as Array<string>;
+    await Promise.allSettled(jobParams.map(async (param: any) => {
       const resp: any = await JobService.scheduleJob(param);
       if(resp.status === 200 && !hasError(resp)){
         // Removing the scheduled job
-        dispatch('removeBulkJob', param.systemJobEnumId);
+        scheduledJobs.push(param.systemJobEnumId);
         return Promise.resolve(resp);
       } else {
         failedJobs++;
         return Promise.reject(resp);
       }
-    })).then((resps: any) => {
+    })).then(() => {
+      dispatch('removeBulkJobs', scheduledJobs);
       if(failedJobs > 0) {
         return showToast(translate("Failed to schedule service(s)", {count: failedJobs}))
       } else {
@@ -868,15 +870,20 @@ const actions: ActionTree<JobState, RootState> = {
   setBulkJobGlobalFrequency({ commit, state }, payload) {
     let bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs));
     commit(types.JOB_BULK_DATA_UPDATED, { value: payload.frequency, type: 'frequency' });
-    bulkJobs = bulkJobs.map((job: any) => {
-      if(job.freqType === 'slow') {
+    const hasSlowJob = bulkJobs.some((job: any) => job.freqType === 'slow');
+    let slowFreqs = [];
+    let slowFrequency = payload.frequency;
+    if (hasSlowJob) {
+      slowFreqs = generateFrequencyOptions('slow').map((obj: any) => obj.value)
+      if (!slowFreqs.includes(payload.frequency)) {
+        slowFrequency = slowFreqs.pop();
         showToast(translate("Some jobs have slow frequency type, hence, feasible frequency will be set automatically"))
-        // If user sets a valid slow frequency, we honour it else maximum frequency is set
-        const slowFreqs = generateFrequencyOptions('slow').map((obj: any) => obj.value)
-        return slowFreqs.includes(payload.frequency) ? ({ ...job, frequency: state.bulk.frequency }) : ({ ...job, frequency: slowFreqs.pop() })
-      } else {
-        return ({ ...job, frequency: state.bulk.frequency })
       }
+    }
+    bulkJobs = bulkJobs.map((job: any) => {
+      let frequency = payload.frequency;
+      if(job.freqType === 'slow') frequency = slowFrequency;
+      return { ...job, frequency }
     });
     commit(types.JOB_BULK_UPDATED, bulkJobs);
   },
@@ -890,9 +897,8 @@ const actions: ActionTree<JobState, RootState> = {
     bulkJobs.forEach((job: any) => { if (job.jobId === payload.jobId) { job.frequency = payload.frequency }});
     commit(types.JOB_BULK_UPDATED, bulkJobs);
   },
-  removeBulkJob({ commit, state }, systemJobEnumId) {
-    // Updating bulk jobs in state by removing the given job using jobId 
-    const bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs)).filter((job: any) => (job.systemJobEnumId !== systemJobEnumId));
+  removeBulkJobs({ commit, state }, scheduledJobs) {
+    const bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs)).filter((job: any) => !scheduledJobs.includes(job.systemJobEnumId));
     commit(types.JOB_BULK_UPDATED, bulkJobs);
   }
 }
