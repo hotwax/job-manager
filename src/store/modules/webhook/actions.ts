@@ -5,6 +5,7 @@ import { WebhookService } from "@/services/WebhookService";
 import { hasError, showToast } from "@/utils";
 import * as types from './mutations-types'
 import { translate } from '@/i18n'
+import logger from "@/logger";
 
 const actions: ActionTree<WebhookState, RootState> = {
   async fetchWebhooks({ commit }) {
@@ -17,7 +18,7 @@ const actions: ActionTree<WebhookState, RootState> = {
         })
         commit(types.WEBHOOK_UPDATED, topics)
       }
-    }).catch(err => console.error(err))
+    }).catch(err => logger.error(err))
   },
   async unsubscribeWebhook({ dispatch }, payload: any) {
 
@@ -29,7 +30,7 @@ const actions: ActionTree<WebhookState, RootState> = {
         showToast(translate("Webhook unsubscribed successfully"));
       }
     } catch(err) {
-      console.error(err)
+      logger.error(err)
       showToast(translate("Something went wrong"));
     } finally {
       dispatch('fetchWebhooks')
@@ -45,11 +46,11 @@ const actions: ActionTree<WebhookState, RootState> = {
         showToast(translate('Webhook subscribed successfully'))
       } else {
         showToast(translate('Something went wrong'))
-        console.error(resp)
+        logger.error(resp)
       }
     } catch (err) {
       showToast(translate('Something went wrong. Unable to subscribe webhook'))
-      console.error(err);
+      logger.error(err);
     } finally {
       await dispatch('fetchWebhooks')
     }

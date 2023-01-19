@@ -7,6 +7,7 @@ import { JobService } from '@/services/JobService'
 import { translate } from '@/i18n'
 import { DateTime } from 'luxon';
 import store from '@/store'
+import logger from "@/logger";
 
 const actions: ActionTree<JobState, RootState> = {
 
@@ -111,7 +112,7 @@ const actions: ActionTree<JobState, RootState> = {
       }
     }).catch((err) => {
       commit(types.JOB_HISTORY_UPDATED, { jobs: [], total: 0 });
-      console.error(err);
+      logger.error(err);
       showToast(translate("Something went wrong"));
     }) 
   },
@@ -185,7 +186,7 @@ const actions: ActionTree<JobState, RootState> = {
       }
     }).catch((err) => {
       commit(types.JOB_RUNNING_UPDATED, { jobs: [], total: 0 });
-      console.error(err);
+      logger.error(err);
       showToast(translate("Something went wrong"));
     }) 
   },
@@ -258,7 +259,7 @@ const actions: ActionTree<JobState, RootState> = {
       }
     }).catch((err) => {
       commit(types.JOB_PENDING_UPDATED, { jobs: [], total: 0 });
-      console.error(err);
+      logger.error(err);
       showToast(translate("Something went wrong"));
     })
   },
@@ -309,7 +310,7 @@ const actions: ActionTree<JobState, RootState> = {
       }
     } catch (err) {
       commit(types.JOB_MISCELLANEOUS_UPDATED, { jobs: [], total: 0 });
-      console.error(err);
+      logger.error(err);
       showToast(translate("Something went wrong"));
     }
   },
@@ -476,7 +477,7 @@ const actions: ActionTree<JobState, RootState> = {
       }
     } catch (err) {
       showToast(translate('Something went wrong'))
-      console.error(err)
+      logger.error(err)
     }
     return resp;
   },
@@ -542,7 +543,7 @@ const actions: ActionTree<JobState, RootState> = {
       }
     } catch (err) {
       showToast(translate('Something went wrong'))
-      console.error(err)
+      logger.error(err)
     }
     return {};
   },
@@ -652,7 +653,7 @@ const actions: ActionTree<JobState, RootState> = {
       }
     } catch (err) {
       showToast(translate('Something went wrong'))
-      console.error(err)
+      logger.error(err)
     }
     return resp;
   },
@@ -698,7 +699,7 @@ const actions: ActionTree<JobState, RootState> = {
       }
     } catch (err) {
       showToast(translate('Something went wrong'))
-      console.error(err)
+      logger.error(err)
     }
     return resp;
   },
@@ -745,7 +746,7 @@ const actions: ActionTree<JobState, RootState> = {
         return currentJob;
       }
     } catch (err) {
-      console.error(err);
+      logger.error(err);
     }
   },
   setPipelineFilters({ commit, state }, payload) {

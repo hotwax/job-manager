@@ -4,6 +4,7 @@ import RootState from '@/store/RootState'
 import UtilState from './UtilState'
 import * as types from './mutation-types'
 import { hasError } from '@/utils'
+import logger from "@/logger";
 
 const actions: ActionTree<UtilState, RootState> = {
   /**
@@ -25,7 +26,7 @@ const actions: ActionTree<UtilState, RootState> = {
         commit(types.UTIL_SERVICE_STATUS_DESC_UPDATED, resp.data.docs);
       }
     } catch(err) {
-      console.error(err)
+      logger.error(err)
     }
   },
 }

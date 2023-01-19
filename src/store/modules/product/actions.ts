@@ -6,6 +6,7 @@ import * as types from './mutation-types'
 import { hasError, showToast } from '@/utils'
 import { translate } from '@/i18n'
 import emitter from '@/event-bus'
+import logger from "@/logger";
 
 
 const actions: ActionTree<ProductState, RootState> = {
@@ -40,7 +41,7 @@ const actions: ActionTree<ProductState, RootState> = {
       // Remove added loader only when new query and not the infinite scroll
       if (payload.viewIndex === 0) emitter.emit("dismissLoader");
     } catch(error){
-      console.error(error)
+      logger.error(error)
       showToast(translate("Something went wrong"));
     }
     // TODO Handle specific error
