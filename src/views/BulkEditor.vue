@@ -70,9 +70,6 @@
               <ion-select-option v-for="freq in generateFrequencyOptions()" :key="freq.value" :value="freq.value">{{ $t(freq.label) }}</ion-select-option>
             </ion-select>
           </ion-item>
-          <ion-card-content>
-            description 
-          </ion-card-content>
         </ion-card>
       </section>
         
