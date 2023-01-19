@@ -39,7 +39,7 @@
       </ion-select>
     </ion-item>
     <div class="actions">
-      <ion-button size="small" fill="outline" color="danger" @click="removeJob(job.jobId)">
+      <ion-button size="small" fill="outline" color="danger" @click="removeJob(job.systemJobEnumId)">
         <ion-icon slot="start" :icon="closeOutline"/>
         {{ $t("Remove") }}
       </ion-button>
@@ -144,8 +144,8 @@ export default defineComponent({
     getTime (time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
     },
-    removeJob(jobId: any) {
-      this.store.dispatch('job/removeBulkJob', jobId);
+    removeJob(systemJobEnumId: any) {
+      this.store.dispatch('job/removeBulkJob', systemJobEnumId);
     },
   },
   setup() {

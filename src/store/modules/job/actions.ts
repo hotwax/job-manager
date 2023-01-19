@@ -892,6 +892,11 @@ const actions: ActionTree<JobState, RootState> = {
     bulkJobs.forEach((job: any) => { if (job.jobId === payload.jobId) { job.frequency = payload.frequency }});
     commit(types.JOB_BULK_UPDATED, bulkJobs);
   },
+  removeBulkJob({ commit, state }, systemJobEnumId) {
+    // Updating bulk jobs in state by removing the given job using jobId 
+    const bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs)).filter((job: any) => (job.systemJobEnumId !== systemJobEnumId));
+    commit(types.JOB_BULK_UPDATED, bulkJobs);
+  },
   removeBulkJobs({ commit, state }, scheduledJobs) {
     const bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs)).filter((job: any) => !scheduledJobs.includes(job.systemJobEnumId));
     commit(types.JOB_BULK_UPDATED, bulkJobs);
