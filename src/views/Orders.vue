@@ -477,7 +477,7 @@ export default defineComponent({
         "inputFields": {
           'productStoreId': this.currentEComStore.productStoreId,
         },
-        "fieldList": [ 'daysToCancelNonPay' ],
+        "fieldList": ["productStoreId", "daysToCancelNonPay"],
         "entityName": "ProductStore",
         "noConditionFind": "Y"
       }

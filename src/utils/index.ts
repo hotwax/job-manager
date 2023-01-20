@@ -140,4 +140,43 @@ const prepareRuntime = (job: any) => {
   }
 }
 
-export { handleDateTimeInput, showToast, hasError , parseCsv , jsonToCsv, JsonToCsvOption, isFutureDate, prepareRuntime }
+const generateFrequencyOptions = (type?: string) => {
+  const optionDefault = [{
+      "value": "EVERY_1_MIN",
+      "label": "Every 1 minute"
+    },{
+      "value": "EVERY_5_MIN",
+      "label": "Every 5 minutes"
+    },{
+      "value": "EVERY_15_MIN",
+      "label": "Every 15 minutes"
+    },{
+      "value": "EVERY_30_MIN",
+      "label": "Every 30 minutes"
+    },{
+      "value": "HOURLY",
+      "label": "Hourly"
+    },{
+      "value": "EVERY_6_HOUR",
+      "label": "Every 6 hours"
+    },{
+      "value": "EVERYDAY",
+      "label": "Every day"
+    }
+  ]
+
+  const slow = [{
+      "value": "HOURLY",
+      "label": "Hourly"
+    },{
+      "value": "EVERY_6_HOUR",
+      "label": "Every 6 hours"
+    },{
+      "value": "EVERYDAY",
+      "label": "Every day"
+    }
+  ]
+  return type === 'slow' ? slow : optionDefault;
+}
+
+export { handleDateTimeInput, showToast, hasError , parseCsv , jsonToCsv, JsonToCsvOption, isFutureDate, prepareRuntime, generateFrequencyOptions }

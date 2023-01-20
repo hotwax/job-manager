@@ -1,3 +1,11 @@
+# Release 1.5.1
+
+## What's Changed
+* Fixed: issue of having a special character in response when sending a single property in fieldList array by @ymaheshwari1 in https://github.com/hotwax/job-manager/pull/354 (backported)
+
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v1.5.0...v1.5.1
+
 # Release 1.5.0
 
 ## What's Changed
