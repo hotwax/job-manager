@@ -1,3 +1,15 @@
+# Release 1.6.0
+## What's Changed
+* Implemented: Code to show app version & build information on Settings page(#85zrhn8w8) by @shashwatbangar in https://github.com/hotwax/job-manager/pull/341
+* Added apps-theme package(#31nm26y) by @disha1202 in https://github.com/hotwax/job-manager/pull/345
+* Implemented: Added cancelScheduledJob service to cancel job(#85zrh3hjv) by @shashwatbangar in https://github.com/hotwax/job-manager/pull/338
+* Implement bulk scheduling (#32j3gu0) by @k2maan in https://github.com/hotwax/job-manager/pull/314
+* Fixed remove button not working for removing separate jobs in bulk scheduler (#85zrjgnwd) by @k2maan in https://github.com/hotwax/job-manager/pull/355
+* Fixed: issue of having a special character in response when sending a single property in fieldList array by @ymaheshwari1 in https://github.com/hotwax/job-manager/pull/354
+
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v1.5.0...v1.6.0
+
 # Release 1.5.1
 
 ## What's Changed
