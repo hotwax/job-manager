@@ -23,5 +23,10 @@ export default interface JobState {
       status: any,
       category: any,
       enum: any
-    }
+    },
+    bulk: {
+      jobs: any,
+      runtime: any,
+      frequency: any,
+    },
 }

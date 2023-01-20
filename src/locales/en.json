@@ -1,11 +1,13 @@
 {
   "A store repesents a company or a unique catalog of products. If your OMS is connected to multiple eCommerce stores sellling different collections of products, you may have multiple Product Stores set up in HotWax Commerce.": "A store repesents a company or a unique catalog of products. If your OMS is connected to multiple eCommerce stores sellling different collections of products, you may have multiple Product Stores set up in HotWax Commerce.",
   "Add": "Add",
+  "Add jobs": "Add jobs",
   "Add shipping dates in Shopify": "Add shipping dates in Shopify",
   "Add tags in Shopify": "Add tags in Shopify",
   "Are you sure you want to change the time zone to?": "Are you sure you want to change the time zone to?",
   "Adjustments": "Adjustments",
   "Are you sure you want to save these changes?": "Are you sure you want to save these changes?",
+  "Are you sure you want to schedule these jobs?": "Are you sure you want to schedule these jobs?",
   "Auto cancelations": "Auto cancelations",
   "Auto cancel days updated": "Auto cancel days updated",
   "Import all products from Shopify. Make sure you run this before importing orders in bulk during intial setup.": "Import all products from Shopify. Make sure you run this before importing orders in bulk during intial setup.",
@@ -57,6 +59,7 @@
   "Don't skip": "Don't skip",
   "eCommerce": "eCommerce",
   "eCommerce stores are directly connected to one Shop Config. If your OMS is connected to multiple eCommerce stores selling the same catalog operating as one Company, you may have multiple Shop Configs for the selected Product Store.": "eCommerce stores are directly connected to one Shop Config. If your OMS is connected to multiple eCommerce stores selling the same catalog operating as one Company, you may have multiple Shop Configs for the selected Product Store.",
+  "Failed to schedule service(s)": "Failed to schedule {count} service(s)",
   "Every day": "Every day",
   "Every 6 hours": "Every 6 hours",
   "Every 1 minute": "Every 1 minute",
@@ -100,7 +103,9 @@
   "New broker run": "New broker run",
   "New orders": "New orders",
   "New products": "New products",
+  "No": "No",
   "no eCommerce selected": "no eCommerce selected",
+  "No jobs found": "No jobs found",
   "No jobs have run yet": "No jobs have run yet",
   "No previous occurrence": "No previous occurrence",
   "Notes": "Notes",
@@ -140,6 +145,7 @@
   "Rejected orders": "Rejected orders",
   "Release": "Release",
   "Release preorders": "Release preorders",
+  "Remove": "Remove",
   "Remove shipping dates in Shopify": "Remove shipping dates in Shopify",
   "Remove tags in Shopify": "Remove tags in Shopify",
   "Repeat untill disabled": "Repeat untill disabled",
@@ -166,7 +172,9 @@
   "Schedule product sync": "Schedule product sync",
   "Select run time": "Select run time",
   "Search jobs": "Search jobs",
+  "Select jobs": "Select jobs",
   "select jobs": "select jobs",
+  "Services have been scheduled in bulk": "Services have been scheduled in bulk",
   "Search time zones": "Search time zones",
   "Select time zone": "Select time zone",
   "eCom Store": "eCom Store",
@@ -176,7 +184,6 @@
   "Sorry, your username or password is incorrect. Please try again.": "Sorry, your username or password is incorrect. Please try again.",
   "Select eCommerce": "Select eCommerce",
   "Select store": "Select store",
-  "Service has been scheduled": "Service has been scheduled",
   "Service updated successfully": "Service updated successfully",
   "Settings": "Settings",
   "Shopify Config": "Shopify Config",
@@ -186,6 +193,7 @@
   "Skip once": "Skip once",
   "Skipping will run this job at the next occurrence based on the temporal expression.": "Skipping will run this job at the next occurrence based on the temporal expression.",
   "Something went wrong while login. Please contact administrator": "Something went wrong while login. Please contact administrator.",
+  "Some jobs have slow frequency type, hence, feasible frequency will be set automatically": "Some jobs have slow frequency type, hence, feasible frequency will be set automatically",
   "Start with Ionic": "Start with Ionic",
   "Status": "Status",
   "Store": "Store",
@@ -203,6 +211,7 @@
   "This is the name of the OMS you are connected to right now. Make sure that you are connected to the right instance before proceeding.": "This is the name of the OMS you are connected to right now. Make sure that you are connected to the right instance before proceeding.",
   "This job has been skipped": "This job has been skipped",
   "This job has been canceled": "This job has been canceled",
+  "This job has slow frequency type, hence, feasible frequency will be set automatically": "This job has slow frequency type, hence, feasible frequency will be set automatically",
   "This job may take several minutes to run. Wait till the job has moved to the pipeline history before checking results.": "This job may take several minutes to run.{ space } Wait till the job has moved to the pipeline history before checking results.",
   "This job schedule cannot be skipped": "This job schedule cannot be skipped",
   "This job will be scheduled to run as soon as possible. There may not be enough time to revert this action.": "This job will be scheduled to run as soon as possible.{ space } There may not be enough time to revert this action.",
@@ -229,5 +238,9 @@
   "Update shipping dates in Shopify": "Update shipping dates in Shopify",
   "When importing historical completed orders, this should be turned off.": "When importing historical completed orders, this should be turned off.",
   "When using HotWax BOPIS, Shopify isn't aware of the actual inventory consumed. HotWax will automatically restore inventory automatically reduced by Shopify and deduct inventory from the correct store to maintain inventory accuracy.": "When using HotWax BOPIS, Shopify isn't aware of the actual inventory consumed. HotWax will automatically restore inventory automatically reduced by Shopify and deduct inventory from the correct store to maintain inventory accuracy.",
+<<<<<<< HEAD
   "You do not have permission to access this page": "You do not have permission to access this page"
+=======
+  "Yes": "Yes"
+>>>>>>> 0b01f2d4e7de36bbf0300b1777b81e3f468a7f64
 }

@@ -222,7 +222,7 @@ export default defineComponent({
           permissionId: "APP_MISC_VIEW"
         }
       },
-      /* {
+      {
         title: "Bulk editor"
       },
       {
@@ -234,7 +234,7 @@ export default defineComponent({
         meta: {
           permissionId: "APP_BULK_EDITOR_VIEW"
         }
-      }, */
+      },
       {
         title: "Settings",
         url: "/settings",

@@ -14,20 +14,13 @@
             <ion-card-subtitle class="overline">{{ $t("Product Store") }}</ion-card-subtitle>
             <ion-card-title>{{ $t("Stores") }}</ion-card-title>
           </ion-card-header>
-          <ion-list>
-            <ion-item>
-              <ion-label>Store 1</ion-label>
-              <ion-checkbox slot="end" />
-            </ion-item>
-            <ion-item>
-              <ion-label>Store 2</ion-label>
-              <ion-checkbox slot="end" />
-            </ion-item>
-            <ion-item>
-              <ion-label>Store 3</ion-label>
-              <ion-checkbox slot="end" />
-            </ion-item>
-          </ion-list>
+          
+          <ion-item>
+            <ion-select interface="popover" :value="selectedEComStoreId" @ionChange="setEComStore($event)">
+              <ion-select-option v-for="store in (userProfile ? userProfile.stores : [])" :key="store.productStoreId"
+                :value="store.productStoreId">{{ store.storeName }}</ion-select-option>
+            </ion-select>
+          </ion-item>
           
           <ion-card-content>
             {{ $t("A store repesents a company or a unique catalog of products. If your OMS is connected to multiple eCommerce stores sellling different collections of products, you may have multiple Product Stores set up in HotWax Commerce.") }}
@@ -39,23 +32,14 @@
             <ion-card-subtitle class="overline">{{ $t("Shop Config") }}</ion-card-subtitle>
             <ion-card-title>{{ $t("eCommerce") }}</ion-card-title>
           </ion-card-header>
-          <ion-list>
-            <ion-item>
-              <ion-label>eCommerce 1</ion-label>
-              <ion-checkbox slot="end" />
-            </ion-item>
-            <ion-item>
-              <ion-label>eCommerce 2</ion-label>
-              <ion-checkbox slot="end" />
-            </ion-item>
-            <ion-item>
-              <ion-label>eCommerce 3</ion-label>
-              <ion-checkbox slot="end" />
-            </ion-item>
-          </ion-list>
           
+          <ion-item button v-for="shopifyConfig in shopifyConfigsForEComStore" :key="shopifyConfig?.shopifyConfigId" :value="shopifyConfig?.shopifyConfigId" @click="updateSelectedShopifyConfigs(shopifyConfig.shopId)">
+            <ion-label>{{ shopifyConfig.name ? shopifyConfig.name : shopifyConfig.shopifyConfigName }}</ion-label>
+            <ion-checkbox slot="end" :checked="selectedShopifyConfigs.includes(shopifyConfig.shopId)"/>
+          </ion-item>
+            
           <ion-card-content>
-            {{ $t("eCommerce stores are directly connected to one Shop Configs. If your OMS is connected to multiple eCommerce stores selling the same catalog operating as one Company, you may have multiple Shop Configs for the selected Product Store.") }}
+            {{ $t("eCommerce stores are directly connected to one Shop Config. If your OMS is connected to multiple eCommerce stores selling the same catalog operating as one Company, you may have multiple Shop Configs for the selected Product Store.") }}
           </ion-card-content>
         </ion-card>   
            
@@ -67,12 +51,14 @@
           <ion-item>
             <ion-icon slot="start" :icon="timeOutline" />
             <ion-label>{{ $t("Run time") }}</ion-label>
-            <ion-label class="ion-text-wrap" @click="() => isOpenGlobal = true" slot="end">{{ $t('Select run time') }}</ion-label>
-            <ion-modal class="date-time-modal" :is-open="isOpenGlobal" @didDismiss="() => isOpenGlobal = false">
+            <ion-label class="ion-text-wrap" @click="() => isDateTimeModalOpen = true" slot="end">{{ globalRuntime ? getTime(globalRuntime) : $t('Select run time') }}</ion-label>
+            <ion-modal class="date-time-modal" :is-open="isDateTimeModalOpen" @didDismiss="() => isDateTimeModalOpen = false">
               <ion-content force-overscroll="false">
                 <ion-datetime            
-                  show-default-buttons
-                  hour-cycle="h12"
+                  show-default-buttons 
+                  hour-cycle="h23" 
+                  :value="globalRuntime ? getDateTime(globalRuntime) : ''" 
+                  @ionChange="updateRuntime($event)" 
                 />
               </ion-content>
             </ion-modal>
@@ -80,63 +66,24 @@
           <ion-item>
             <ion-icon slot="start" :icon="timerOutline" />
             <ion-label>{{ $t("Schedule") }}</ion-label>
-            <ion-select interface="popover">
-              <ion-select-option>Every 5 minutes</ion-select-option>
+            <ion-select interface="popover" :value="globalFreq" :placeholder='$t("Schedule")' @ionChange=setFrequency($event)>
+              <ion-select-option v-for="freq in generateFrequencyOptions()" :key="freq.value" :value="freq.value">{{ $t(freq.label) }}</ion-select-option>
             </ion-select>
           </ion-item>
-          <ion-card-content>
-            description 
-          </ion-card-content>
         </ion-card>
       </section>
         
-      <ion-button fill="outline">
-        <ion-icon slot="start" :icon="addOutline" />
+      <ion-button fill="outline" @click="selectJobs()">
+        <ion-icon slot="start" :icon="addOutline"/>
         {{ $t("select jobs") }}
       </ion-button>
 
       <section>
-        <ion-card>
-          <ion-item lines="none">
-            <ion-label>
-              Job enum name
-              <p>enum description</p>
-            </ion-label>  
-          </ion-item>
-          <ion-item-divider>
-            {{ $t("Parameters") }}
-          </ion-item-divider>
-          <ion-item>
-            <ion-label>{{ $t("Store") }}</ion-label>
-            <ion-note slot="end">2 {{ $t("stores selected") }}</ion-note>
-          </ion-item>
-          <ion-item>
-            <ion-label>{{ $t("eCommerce") }}</ion-label>
-            <ion-badge color="danger">{{ $t("no eCommerce selected") }}</ion-badge>
-          </ion-item>
-          <ion-item>
-            <ion-label>{{ $t("Run time") }}</ion-label>
-            <ion-label class="ion-text-wrap" @click="() => isOpen = true" slot="end">{{ $t('Select run time') }}</ion-label>
-            <ion-modal class="date-time-modal" :is-open="isOpen" @didDismiss="() => isOpen = false">
-              <ion-content force-overscroll="false">
-                <ion-datetime              
-                  show-default-buttons
-                  hour-cycle="h12"
-                />
-              </ion-content>
-            </ion-modal>
-          </ion-item>
-          <ion-item>
-            <ion-label>{{ $t("Schedule") }}</ion-label>
-            <ion-select interface="popover" :placeholder='$t("Bulk schedule")'>
-              <ion-select-option value="Every 5 minutes">Every 5 minutes</ion-select-option>
-            </ion-select>
-          </ion-item>
-        </ion-card>
+        <JobConfigurationForBulkScheduler :job="job" v-for="job in bulkJobs" :key="job.jobId" :selectedShopifyConfigs="selectedShopifyConfigs" :selectedEComStoreId="selectedEComStoreId"/>
       </section>
 
       <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-        <ion-fab-button>
+        <ion-fab-button @click="saveChanges()" :disabled="bulkJobs?.length === 0">
           <ion-icon :icon="iceCreamOutline" />
         </ion-fab-button>
       </ion-fab>
@@ -146,7 +93,6 @@
 
 <script lang="ts">
 import {
-  IonBadge,
   IonButton,
   IonCard,
   IonCardContent,
@@ -161,27 +107,31 @@ import {
   IonHeader,
   IonIcon,
   IonItem,
-  IonItemDivider,
   IonLabel,
-  IonList,
   IonMenuButton,
   IonModal,
-  IonNote,
   IonPage,
   IonSelect,
   IonSelectOption,
   IonTitle,
   IonToolbar,
+  alertController,
+  modalController
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
-import { useStore } from 'vuex';
+import { mapGetters, useStore } from 'vuex';
 import { addOutline, iceCreamOutline, timeOutline, timerOutline } from 'ionicons/icons';
 import { useRouter } from 'vue-router';
+import SelectJobsModal from '@/views/SelectJobsModal.vue';
+import { UserService } from '@/services/UserService'
+import { hasError, showToast, handleDateTimeInput, generateFrequencyOptions } from '@/utils'
+import { translate } from '@/i18n'
+import JobConfigurationForBulkScheduler from '@/components/JobConfigurationForBulkScheduler.vue'
+import { DateTime } from 'luxon';
 
 export default defineComponent({
-  name: 'InitialLoad',
+  name: 'BulkEditor',
   components: {
-    IonBadge,
     IonButton,
     IonCard,
     IonCardContent,
@@ -196,23 +146,34 @@ export default defineComponent({
     IonHeader,
     IonIcon,
     IonItem,
-    IonItemDivider,
     IonLabel,
-    IonList,
     IonMenuButton,
     IonModal,
-    IonNote,
     IonPage,
     IonSelect,
     IonSelectOption,
     IonTitle,
-    IonToolbar
+    IonToolbar,
+    JobConfigurationForBulkScheduler
   },
   data(){
     return {
-      isOpenGlobal: false,
-      isOpen: false
+      isDateTimeModalOpen: false,
+      selectedEComStoreId: '',
+      selectedShopifyConfigs: [] as Array<string>, // shopifyConfigs for which the user wants to schedule jobs
+      shopifyConfigsForEComStore: [] as any,
     }
+  },
+  computed: {
+    ...mapGetters({
+      userProfile: 'user/getUserProfile',
+      currentEComStore: 'user/getCurrentEComStore',
+      currentShopifyConfig: 'user/getCurrentShopifyConfig',
+      bulkJobs: 'job/getBulkJobs',
+      globalRuntime: 'job/getGlobalRuntime',
+      globalFreq: 'job/getGlobalFreq',
+      shopifyConfigs: 'user/getShopifyConfigs',
+    }),
   },
   setup() {
     const store = useStore();
@@ -224,8 +185,101 @@ export default defineComponent({
       store,
       router,
       timeOutline,
-      timerOutline
+      timerOutline,
+      generateFrequencyOptions
     }
+  },
+  mounted() {
+    // On initial load, show the currently set store's configs.
+    this.shopifyConfigsForEComStore = this.shopifyConfigs;
+    this.selectedEComStoreId = this.currentEComStore.productStoreId;
+    this.selectedShopifyConfigs.push(this.currentShopifyConfig.shopId)
+  },
+  methods: {
+    async saveChanges() {
+      const alert = await alertController
+        .create({
+          header: this.$t('Save changes'),
+          message: this.$t('Are you sure you want to schedule these jobs?'),
+          buttons: [{
+            text: this.$t('No'),
+            role: 'cancel'
+          }, {
+            text: this.$t('Yes'),
+            handler: () => {
+              this.schedule();
+            }
+          }]
+        });
+      return alert.present();
+    },
+    schedule() {
+      this.store.dispatch('job/scheduleBulkJobs', { jobs: this.bulkJobs, eComStoreId: this.selectedEComStoreId, shopifyConfigs: this.selectedShopifyConfigs })
+    },
+    async setEComStore(event: any) {
+      this.selectedEComStoreId = event?.detail?.value
+      this.shopifyConfigsForEComStore = [];
+      if (this.selectedEComStoreId) {
+        let resp;
+        const payload = {
+          "inputFields": {
+            "productStoreId": this.selectedEComStoreId,
+          },
+          "entityName": "ShopifyShopAndConfig",
+          "noConditionFind": "Y",
+          "fieldList": ["shopifyConfigId", "name", "shopId"]
+        }
+        try {
+          resp = await UserService.getShopifyConfig(payload);
+          if (resp.status === 200 && !hasError(resp) && resp.data?.docs?.length > 0) {
+            this.shopifyConfigsForEComStore = resp.data.docs;
+          } else {
+            this.shopifyConfigsForEComStore = [];
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      } else {
+        this.shopifyConfigsForEComStore = [];
+      }
+      this.selectedShopifyConfigs = [];
+    },
+    updateSelectedShopifyConfigs (shopifyConfigId: string) {
+      this.selectedShopifyConfigs.includes(shopifyConfigId)
+      ? this.selectedShopifyConfigs.splice(this.selectedShopifyConfigs.indexOf(shopifyConfigId), 1)
+      : this.selectedShopifyConfigs.push(shopifyConfigId);
+    },
+    
+    async selectJobs() {
+      const selectJobsModal = await modalController.create({
+        component: SelectJobsModal,
+        componentProps: {
+          eComStoreId: this.selectedEComStoreId,
+          shopifyConfigs: this.selectedShopifyConfigs,
+        }
+      });
+      return selectJobsModal.present();
+    },
+    getDateTime(time: any) {
+      return DateTime.fromMillis(time).toISO()
+    },
+    updateRuntime(ev: CustomEvent) {
+      if (this.bulkJobs) {
+        const currTime = DateTime.now().toMillis();
+        const setTime = handleDateTimeInput(ev['detail'].value);
+        if(setTime > currTime) {
+          this.store.dispatch('job/setBulkJobGlobalRuntime', { runtime: setTime });
+        } else {
+          showToast(translate("Provide a future date and time"));
+        }
+      }
+    },
+    setFrequency(ev: CustomEvent) {
+      this.store.dispatch('job/setBulkJobGlobalFrequency', { frequency: ev['detail'].value });
+    },
+    getTime (time: any) {
+      return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
+    },
   }
 });
 </script>

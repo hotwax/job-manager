@@ -53,6 +53,7 @@ const getShopifyConfig = async (productStoreId: any, token?: any): Promise <any>
     url: "performFind",
     method: "get",
     params,
+    cache: true
   } as any;
 
   // Handled the case when getting config during the login action
