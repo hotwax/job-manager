@@ -1,9 +1,10 @@
-import {  AbilityBuilder, PureAbility } from '@casl/ability';
+import { AbilityBuilder, PureAbility } from '@casl/ability';
 import { getEvaluator, parse } from 'boon-js';
 import { Tokens } from 'boon-js/lib/types'
-import Action from './Actions';
-import permissionRules from './Rules'
 
+// TODO Improve this
+let Actions = {} as any;
+let Rules = {} as any;
 
 // We are using CASL library to define permissions.
 // Instead of using Action-Subject based authorisation we are going with Claim based Authorization.
@@ -15,13 +16,11 @@ import permissionRules from './Rules'
 type ClaimBasedAbility = PureAbility<string>;
 const { build } = new AbilityBuilder<ClaimBasedAbility>(PureAbility);
 const ability = build();
-export default ability;
-
 
 const getServerPermissionsFromRules = () => {
     // Iterate for each rule
-    const permissions = Object.keys(permissionRules).reduce((permissions: any, rule: any) => {
-        const permissionRule = permissionRules[rule];
+    const permissions = Object.keys(Rules).reduce((permissions: any, rule: any) => {
+        const permissionRule = Rules[rule];
         // some rules may be empty, no permission is required from server
         if (permissionRule) {
             // Each rule may have multiple permissions along with operators
@@ -49,8 +48,8 @@ const prepareAppPermissions = (serverPermissions: any) => {
         serverPermissionsInput[permission] = true;
         return serverPermissionsInput;
     }, {})
-    const permissions = Object.keys(permissionRules).reduce((permissions: any, rule: any) => {
-        const permissionRule = permissionRules[rule];
+    const permissions = Object.keys(Rules).reduce((permissions: any, rule: any) => {
+        const permissionRule = Rules[rule];
         if (!permissionRule || (permissionRule && getEvaluator(permissionRule)(serverPermissionsInput))) {
             permissions.push(rule);
         }
@@ -79,7 +78,6 @@ const setPermissions = (permissions: any) => {
  */
 const resetPermissions = () => setPermissions([]);
 
-
 /**
  * 
  * @param permission 
@@ -87,4 +85,22 @@ const resetPermissions = () => setPermissions([]);
  */
 const hasPermission = (permission: string) => ability.can(permission);
 
-export { Action, getServerPermissionsFromRules, hasPermission, prepareAppPermissions, resetPermissions, setPermissions};
+export { Actions, getServerPermissionsFromRules, hasPermission, prepareAppPermissions, resetPermissions, setPermissions};
+
+// TODO Move this code to an external plugin, to be used across the apps
+export default {
+    install(app: any, options: any) {
+
+        // Rules and Actions could be app and OMS package specific
+        Rules = options.rules;
+        Actions = options.actions;
+
+        // TODO Check why global properties is not working and apply across.
+        app.config.globalProperties.$permission = this;
+    },
+    getServerPermissionsFromRules, 
+    hasPermission, 
+    prepareAppPermissions, 
+    resetPermissions, 
+    setPermissions
+}
