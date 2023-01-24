@@ -237,7 +237,7 @@ export default defineComponent({
             this.shopifyConfigsForEComStore = [];
           }
         } catch (err) {
-          console.error(err);
+          this.$log.error(err);
         }
       } else {
         this.shopifyConfigsForEComStore = [];
