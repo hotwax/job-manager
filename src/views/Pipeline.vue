@@ -45,7 +45,7 @@
           </div>
 
           <div v-else>
-            <ion-card v-for="job in pendingJobs" :key="job.jobId" @click="viewJobConfiguration(job)" :button="isDesktop">
+            <ion-card v-for="job in pendingJobs" :key="job.jobId" @click="hasPermission(Actions.APP_JOB_UPDATE) && viewJobConfiguration(job)" :button="isDesktop">
               <ion-card-header>
                 <ion-card-title>{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
                 <ion-badge v-if="job.runTime" color="dark">{{ timeFromNow(job.runTime)}}</ion-badge>
@@ -73,8 +73,8 @@
 
               <div class="actions">
                 <div>
-                  <ion-button v-if="hasPermission(Actions.APP_JOB_SKIP)" fill="clear" @click.stop="skipJob(job)">{{ $t("Skip") }}</ion-button>
-                  <ion-button v-if="hasPermission(Actions.APP_JOB_CANCEL)" color="danger" fill="clear" @click.stop="cancelJob(job)">{{ $t("Cancel") }}</ion-button>
+                  <ion-button v-if="hasPermission(Actions.APP_JOB_UPDATE)" fill="clear" @click.stop="skipJob(job)">{{ $t("Skip") }}</ion-button>
+                  <ion-button v-if="hasPermission(Actions.APP_JOB_UPDATE)" color="danger" fill="clear" @click.stop="cancelJob(job)">{{ $t("Cancel") }}</ion-button>
                 </div>
                 <div>
                   <ion-button fill="clear" color="medium" slot="end" @click.stop="openJobActions(job, $event)">
@@ -301,7 +301,6 @@ import JobHistoryModal from '@/components/JobHistoryModal.vue';
 import { Plugins } from '@capacitor/core';
 import { showToast } from '@/utils'
 import JobActionsPopover from '@/components/JobActionsPopover.vue'
-import { useAbility } from '@casl/vue';
 import { Actions, hasPermission } from '@/authorization'
 import Filters from '@/components/Filters.vue';
 

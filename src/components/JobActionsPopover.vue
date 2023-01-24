@@ -14,7 +14,7 @@
         <ion-icon slot="start" :icon="pinOutline" />
         {{ $t("Pin job") }}
       </ion-item>
-      <ion-item @click="runJobNow(job)" lines="none" button>
+      <ion-item v-if="hasPermission(Actions.APP_JOB_UPDATE)" @click="runJobNow(job)" lines="none" button>
         <ion-icon slot="start" :icon="flashOutline" />
         {{ $t("Run now") }}
       </ion-item>      
@@ -40,6 +40,7 @@ import JobHistoryModal from '@/components/JobHistoryModal.vue'
 import { Plugins } from '@capacitor/core';
 import { showToast } from '@/utils'
 import emitter from "@/event-bus"
+import { Actions, hasPermission } from '@/authorization'
 
 export default defineComponent({
   name: "JobActionsPopover",
@@ -123,8 +124,10 @@ export default defineComponent({
     const store = useStore();  
 
     return {
+      Actions,
       copyOutline, 
       flashOutline,
+      hasPermission,
       pinOutline,
       store, 
       timeOutline  

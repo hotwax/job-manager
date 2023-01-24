@@ -129,6 +129,7 @@ import { DateTime } from 'luxon';
 import { translate } from '@/i18n'
 import { useRouter } from "vue-router";
 import emitter from '@/event-bus';
+import { Actions, hasPermission } from '@/authorization'
 
 export default defineComponent({
   name: "JobConfiguration",
@@ -399,9 +400,11 @@ export default defineComponent({
     const router = useRouter();
 
     return {
+      Actions,
       calendarClearOutline,
       copyOutline,
       flashOutline,
+      hasPermission,
       timeOutline,
       timerOutline,
       store,

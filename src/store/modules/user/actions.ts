@@ -51,7 +51,6 @@ const actions: ActionTree<UserState, RootState> = {
       }, token);
       const appPermissions = prepareAppPermissions(serverPermissions);
 
-
       // Checking if the user has permission to access the app
       // If there is no configuration, the permission check is not enabled
       if (permissionId) {
@@ -214,7 +213,6 @@ const actions: ActionTree<UserState, RootState> = {
   async getPinnedJobs({ commit, state }) {
     let resp;
     const user = state?.current as any
-    console.log("user", user);
 
     try{
       const params = {

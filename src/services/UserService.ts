@@ -14,16 +14,6 @@ const login = async (username: string, password: string): Promise <any> => {
   });
 }
 
-const checkPermission = async (payload: any): Promise <any>  => {
-  let baseURL = store.getters['user/getInstanceUrl'];
-  baseURL = baseURL && baseURL.startsWith('http') ? baseURL : `https://${baseURL}.hotwax.io/api/`;
-  return client({
-    url: "checkPermission",
-    method: "post",
-    baseURL: baseURL,
-    ...payload
-  });
-}
 
 const getAvailableTimeZones = async (): Promise <any>  => {
   return api({
@@ -57,7 +47,7 @@ const getShopifyConfig = async (productStoreId: any, token?: any): Promise <any>
   } as any;
 
   // Handled the case when getting config during the login action
-  // We haven't set the token in store till all the essential information is gattered during login
+  // We haven't set the token in store till all the essential information is gathered during login
   if (token) {
     payload.baseURL = store.getters['user/getBaseUrl'];
     payload.headers = {
@@ -143,40 +133,39 @@ const setUserPreference = async (payload: any): Promise<any> => {
 
 const getPreferredStore = async (token: any): Promise<any> => {
   const baseURL = store.getters['user/getBaseUrl'];
-  const resp = await client({
-    url: "service/getUserPreference",
-    //TODO Due to security reasons service model of OMS 1.0 does not support sending parameters in get request that's why we use post here
-    method: "post",
-    baseURL,
-    headers: {
-      Authorization:  'Bearer ' + token,
-      'Content-Type': 'application/json'
-    },
-    data: {
-      'userPrefTypeId': 'SELECTED_BRAND'
-    },
-  });
-  if (hasError(resp)) {
-    return Promise.reject(resp);
-  } else {
-    return Promise.resolve(resp.data.userPrefValue);
+  try {
+    const resp = await client({
+      url: "service/getUserPreference",
+      //TODO Due to security reasons service model of OMS 1.0 does not support sending parameters in get request that's why we use post here
+      method: "post",
+      baseURL,
+      headers: {
+        Authorization:  'Bearer ' + token,
+        'Content-Type': 'application/json'
+      },
+      data: {
+        'userPrefTypeId': 'SELECTED_BRAND'
+      },
+    });
+    if (hasError(resp)) {
+      return Promise.reject(resp);
+    } else {
+      return Promise.resolve(resp.data.userPrefValue);
+    }
+  } catch(error: any) {
+    console.error(error);
+    return Promise.reject(error)
   }
+  
 }
 
-const getUserPreference = async (payload: any): Promise<any> => {
-  return api({
-    url: "service/getUserPreference",
-    //TODO Due to security reasons service model of OMS 1.0 does not support sending parameters in get request that's why we use post here
-    method: "post",
-    data: payload,
-  });
-}
 const getUserPermissions = async (payload: any, token: any): Promise<any> => {
-  let appPermissions = [] as any;
+  const baseURL = store.getters['user/getBaseUrl'];
+  let serverPermissions = [] as any;
 
   // If the server specific permission list doesn't exist, getting server permissions will be of no use
   // It means there are no rules yet depending upon the server permissions.
-  if (payload.permissionIds && payload.permissionIds.length == 0) return appPermissions;
+  if (payload.permissionIds && payload.permissionIds.length == 0) return serverPermissions;
   // TODO pass specific permissionIds
   let resp;
     // TODO Make it configurable from the environment variables.
@@ -190,32 +179,39 @@ const getUserPermissions = async (payload: any, token: any): Promise<any> => {
         viewSize,
         permissionIds: payload.permissionIds
       }
-      resp = await getPermissions({
+      resp = await client({
+        url: "getPermissions",
+        method: "post",
+        baseURL,
         data: params,
         headers: {
           Authorization:  'Bearer ' + token,
           'Content-Type': 'application/json'
         }
-      });
+      })
       if(resp.status === 200 && resp.data.docs?.length && !hasError(resp)) {
-        let serverPermissions = resp.data.docs.map((permission: any) => permission.permissionId);
+        serverPermissions = resp.data.docs.map((permission: any) => permission.permissionId);
         const total = resp.data.count;
         const remainingPermissions = total - serverPermissions.length;
         if (remainingPermissions > 0) {
           // We need to get all the remaining permissions
           const apiCallsNeeded = Math.floor(remainingPermissions / viewSize) + ( remainingPermissions % viewSize != 0 ? 1 : 0);
           const responses = await Promise.all([...Array(apiCallsNeeded).keys()].map(async (index: any) => {
-            const response = await getPermissions({
+            const response = await client({
+              url: "getPermissions",
+              method: "post",
+              baseURL,
               data: {
-              "viewIndex": index + 1,
-              viewSize,
-              permissionIds: payload.permissionIds
-            },
-            headers: {
-              Authorization:  'Bearer ' + token,
-              'Content-Type': 'application/json'
-            }});
-            if(response.status === 200 && !hasError(response)){
+                "viewIndex": index + 1,
+                viewSize,
+                permissionIds: payload.permissionIds
+              },
+              headers: {
+                Authorization:  'Bearer ' + token,
+                'Content-Type': 'application/json'
+              }
+            })
+            if(!hasError(response)){
               return Promise.resolve(response);
               } else {
               return Promise.reject(response);
@@ -245,25 +241,20 @@ const getUserPermissions = async (payload: any, token: any): Promise<any> => {
           // TODO Implement Retry or improve experience with show in progress icon and allowing login only if all the data related to user profile is fetched.
           // if (permissionResponses.failed.length > 0) showToast(translate("Something went wrong while getting complete user profile. Try login again for smoother experience."));
         }
-        appPermissions = prepareAppPermissions(serverPermissions);
       }
-      return appPermissions;
+      return serverPermissions;
     } catch(error: any) {
       console.error(error);
+      return Promise.reject(error);
     }
 }
-const getPermissions = async (payload: any): Promise<any> => {
-  const baseURL = store.getters['user/getBaseUrl'];
-  return client({
-    url: "getPermissions",
-    method: "post",
-    baseURL,
-    ...payload
-  });
-}
 const getUserProfile = async (token: any): Promise<any> => {
+  const baseURL = store.getters['user/getBaseUrl'];
   try {
-    const resp = await getProfile({
+    const resp = await client({
+      url: "user-profile",
+      method: "get",
+      baseURL,
       headers: {
         Authorization:  'Bearer ' + token,
         'Content-Type': 'application/json'
@@ -276,15 +267,6 @@ const getUserProfile = async (token: any): Promise<any> => {
     return Promise.reject(error)
   }
 }
-const getProfile = async (payload: any): Promise <any>  => {
-  const baseURL = store.getters['user/getBaseUrl'];
-  return client({
-    url: "user-profile",
-    method: "get",
-    baseURL,
-    ...payload
-  });
-}
 
 
 export const UserService = {
@@ -292,7 +274,6 @@ export const UserService = {
     login,
     getAvailableTimeZones,
     getEComStores,
-    getProfile,
     getShopifyConfig,
     getPinnedJobs,
     getPreferredStore,
@@ -301,7 +282,5 @@ export const UserService = {
     setUserTimeZone,
     updatePinnedJobPref,
     setUserPreference,
-    getUserPreference,
-    checkPermission,
     getUserPermissions
 }

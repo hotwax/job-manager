@@ -1,4 +1,4 @@
 export default {
-    'APP_JOB_SKIP': 'APP_JOB_SKIP',
-    'APP_JOB_CANCEL': 'APP_JOB_CANCEL' 
+    'APP_JOB_VIEW': 'APP_JOB_VIEW',
+    'APP_JOB_UPDATE': 'APP_JOB_UPDATE' 
 }
