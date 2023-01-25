@@ -14,23 +14,23 @@
             <ion-card-header>
               <ion-card-title>{{ $t("Import") }}</ion-card-title>
             </ion-card-header>
-            <ion-item @click="viewJobConfiguration({ id: 'IMP_NEW_ORDERS', title: 'New orders', status: getJobStatus(jobEnums['IMP_NEW_ORDERS'])})" detail button>
+            <ion-item @click="hasPermission(Actions.APP_JOB_UPDATE) && viewJobConfiguration({ id: 'IMP_NEW_ORDERS', title: 'New orders', status: getJobStatus(jobEnums['IMP_NEW_ORDERS'])})" detail button>
               <ion-label class="ion-text-wrap">{{ $t("New orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_NEW_ORDERS') }}</ion-label>
             </ion-item>
-            <ion-item @click="viewJobConfiguration({ id: 'IMP_CANCELLED_ORDERS', title: 'Cancelled orders', status: getJobStatus(jobEnums['IMP_CANCELLED_ORDERS'])})" detail button>
+            <ion-item @click="hasPermission(Actions.APP_JOB_UPDATE) && viewJobConfiguration({ id: 'IMP_CANCELLED_ORDERS', title: 'Cancelled orders', status: getJobStatus(jobEnums['IMP_CANCELLED_ORDERS'])})" detail button>
               <ion-label class="ion-text-wrap">{{ $t("Cancelled orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_CANCELLED_ORDERS') }}</ion-label>
             </ion-item>
-            <ion-item @click="viewJobConfiguration({ id: 'IMP_CANCELLED_ITEMS', title: 'Cancelled items', status: getJobStatus(jobEnums['IMP_CANCELLED_ITEMS'])})" detail button>
+            <ion-item @click="hasPermission(Actions.APP_JOB_UPDATE) && viewJobConfiguration({ id: 'IMP_CANCELLED_ITEMS', title: 'Cancelled items', status: getJobStatus(jobEnums['IMP_CANCELLED_ITEMS'])})" detail button>
               <ion-label class="ion-text-wrap">{{ $t("Cancelled items") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_CANCELLED_ITEMS') }}</ion-label>
             </ion-item>
-            <ion-item @click="viewJobConfiguration({ id: 'IMP_PAYMENT_STATUS', title: 'Payment status', status: getJobStatus(jobEnums['IMP_PAYMENT_STATUS'])})" detail button>
+            <ion-item @click="hasPermission(Actions.APP_JOB_UPDATE) && viewJobConfiguration({ id: 'IMP_PAYMENT_STATUS', title: 'Payment status', status: getJobStatus(jobEnums['IMP_PAYMENT_STATUS'])})" detail button>
               <ion-label class="ion-text-wrap">{{ $t("Payment status") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_PAYMENT_STATUS') }}</ion-label>
             </ion-item>
-            <ion-item @click="viewJobConfiguration({ id: 'IMP_RETURNS', title: 'Returns', status: getJobStatus(jobEnums['IMP_RETURNS'])})" detail button>
+            <ion-item @click="hasPermission(Actions.APP_JOB_UPDATE) && viewJobConfiguration({ id: 'IMP_RETURNS', title: 'Returns', status: getJobStatus(jobEnums['IMP_RETURNS'])})" detail button>
               <ion-label class="ion-text-wrap">{{ $t("Returns") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_RETURNS') }}</ion-label>
             </ion-item>
@@ -42,19 +42,19 @@
             </ion-card-header>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("New orders") }}</ion-label>
-              <ion-toggle :checked="isNewOrders" @ionChange="updateWebhook($event['detail'].checked, 'NEW_ORDERS')" slot="end" color="secondary" />
+              <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="isNewOrders" @ionChange="updateWebhook($event['detail'].checked, 'NEW_ORDERS')" slot="end" color="secondary" />
             </ion-item>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Cancelled orders") }}</ion-label>
-              <ion-toggle :checked="isCancelledOrders" @ionChange="updateWebhook($event['detail'].checked, 'CANCELLED_ORDERS')" slot="end" color="secondary" />
+              <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="isCancelledOrders" @ionChange="updateWebhook($event['detail'].checked, 'CANCELLED_ORDERS')" slot="end" color="secondary" />
             </ion-item>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Payment status") }}</ion-label>
-              <ion-toggle :checked="isPaymentStatus" @ionChange="updateWebhook($event['detail'].checked, 'PAYMENT_STATUS')" slot="end" color="secondary" />
+              <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="isPaymentStatus" @ionChange="updateWebhook($event['detail'].checked, 'PAYMENT_STATUS')" slot="end" color="secondary" />
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">{{ $t("Returns") }}</ion-label>
-              <ion-toggle :checked="isReturns" @ionChange="updateWebhook($event['detail'].checked, 'RETURNS')" slot="end" color="secondary" />
+              <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="isReturns" @ionChange="updateWebhook($event['detail'].checked, 'RETURNS')" slot="end" color="secondary" />
             </ion-item>
           </ion-card>
 
@@ -62,15 +62,15 @@
             <ion-card-header>
               <ion-card-title>{{ $t("Upload") }}</ion-card-title>
             </ion-card-header>
-            <ion-item @click="viewJobConfiguration({ id: 'UPLD_CMPLT_ORDRS', title: 'Completed orders', status: getJobStatus(jobEnums['UPLD_CMPLT_ORDRS'])})" detail button>
+            <ion-item @click="hasPermission(Actions.APP_JOB_UPDATE) && viewJobConfiguration({ id: 'UPLD_CMPLT_ORDRS', title: 'Completed orders', status: getJobStatus(jobEnums['UPLD_CMPLT_ORDRS'])})" detail button>
               <ion-label class="ion-text-wrap">{{ $t("Completed orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('UPLD_CMPLT_ORDRS') }}</ion-label>
             </ion-item>
-            <ion-item @click="viewJobConfiguration({ id: 'UPLD_CNCLD_ORDRS', title: 'Cancelled orders', status: getJobStatus(jobEnums['UPLD_CNCLD_ORDRS'])})" detail button>
+            <ion-item @click="hasPermission(Actions.APP_JOB_UPDATE) && viewJobConfiguration({ id: 'UPLD_CNCLD_ORDRS', title: 'Cancelled orders', status: getJobStatus(jobEnums['UPLD_CNCLD_ORDRS'])})" detail button>
               <ion-label class="ion-text-wrap">{{ $t("Cancelled orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('UPLD_CNCLD_ORDRS') }}</ion-label>
             </ion-item>
-            <ion-item @click="viewJobConfiguration({ id: 'UPLD_REFUNDS', title: 'Refunds', status: getJobStatus(jobEnums['UPLD_REFUNDS'])})" detail button>
+            <ion-item @click="hasPermission(Actions.APP_JOB_UPDATE) && viewJobConfiguration({ id: 'UPLD_REFUNDS', title: 'Refunds', status: getJobStatus(jobEnums['UPLD_REFUNDS'])})" detail button>
               <ion-label class="ion-text-wrap">{{ $t("Refunds") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('UPLD_REFUNDS') }}</ion-label>
             </ion-item>
@@ -82,16 +82,16 @@
             </ion-card-header>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Days") }}</ion-label>
-              <ion-input :placeholder="$t('before auto cancelation')" v-model.number="autoCancelDays" type="number" />
+              <ion-input :readonly="!hasPermission(Actions.APP_JOB_UPDATE)" :placeholder="$t('before auto cancelation')" v-model.number="autoCancelDays" type="number" />
               <!-- The button is enabled when we hover over the button or ion input looses focus and not when the value is changed -->
               <!-- Todo: need to disable the button if value is unchanged -->
-              <ion-button fill="clear" @click="updateAutoCancelDays()" slot="end">
+              <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" fill="clear" @click="updateAutoCancelDays()" slot="end">
                 {{ $t("Save") }}
               </ion-button>
             </ion-item>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Check daily") }}</ion-label>
-              <ion-toggle :checked="autoCancelCheckDaily" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['AUTO_CNCL_DAL'], 'EVERYDAY')" />
+              <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="autoCancelCheckDaily" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['AUTO_CNCL_DAL'], 'EVERYDAY')" />
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap"><p>{{ $t("Unfulfilled orders that pass their auto cancelation date will be canceled automatically in HotWax Commerce. They will also be canceled in Shopify if upload for canceled orders is enabled.") }}</p></ion-label>
@@ -104,7 +104,7 @@
             </ion-card-header>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Promise date changes") }}</ion-label>
-              <ion-toggle :checked="promiseDateChanges" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['NTS_PRMS_DT_CHNG'])"/>
+              <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="promiseDateChanges" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['NTS_PRMS_DT_CHNG'])"/>
             </ion-item>
           </ion-card>
 
@@ -112,13 +112,13 @@
             <ion-card-header>
               <ion-card-title>{{ $t("Routing") }}</ion-card-title>
             </ion-card-header>
-            <ion-item @click="viewJobConfiguration({ id: 'REJ_ORDR', title: 'Rejected orders', status: getJobStatus(jobEnums['REJ_ORDR'])})" detail button>
+            <ion-item @click="hasPermission(Actions.APP_JOB_UPDATE) && viewJobConfiguration({ id: 'REJ_ORDR', title: 'Rejected orders', status: getJobStatus(jobEnums['REJ_ORDR'])})" detail button>
               <ion-label class="ion-text-wrap">{{ $t("Rejected orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('REJ_ORDR') }}</ion-label>
             </ion-item>
             <ion-item-divider>
               <ion-label class="ion-text-wrap">{{ $t("Batches") }}</ion-label>
-              <ion-button fill="clear" @click="addBatch()" slot="end">
+              <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" fill="clear" @click="addBatch()" slot="end">
                 {{ $t("Add") }}
                 <ion-icon :icon="addCircleOutline" slot="end" />
               </ion-button>
@@ -126,17 +126,17 @@
 
             <ion-list ref="slidingOptions">
               <ion-item-sliding v-for="batch in orderBatchJobs" :key="batch?.id" detail v-show="batch?.status === 'SERVICE_PENDING'">
-                <ion-item @click="editBatch(batch.id, batch.systemJobEnumId)" button>
+                <ion-item @click="hasPermission(Actions.APP_JOB_UPDATE) && editBatch(batch.id, batch.systemJobEnumId)" button>
                   <ion-label class="ion-text-wrap">{{ batch?.jobName }}</ion-label>
                   <ion-note slot="end">{{ batch?.runTime ? getTime(batch.runTime) : '' }}</ion-note>
                 </ion-item>
                 <ion-item-options side="start">
-                  <ion-item-option @click="skipBatch(batch)" color="secondary">
+                  <ion-item-option @click="hasPermission(Actions.APP_JOB_UPDATE) && skipBatch(batch)" color="secondary">
                     <ion-icon slot="icon-only" :icon="arrowRedoOutline" />
                   </ion-item-option>
                 </ion-item-options>
                 <ion-item-options side="end">
-                  <ion-item-option @click="deleteBatch(batch)" color="danger">
+                  <ion-item-option @click="hasPermission(Actions.APP_JOB_UPDATE) && deleteBatch(batch)" color="danger">
                     <ion-icon slot="icon-only" :icon="trash" />
                   </ion-item-option>
                 </ion-item-options>
@@ -194,6 +194,7 @@ import { hasError, isFutureDate, showToast, prepareRuntime } from '@/utils';
 import emitter from '@/event-bus';
 import { JobService } from '@/services/JobService'
 import MoreJobs from '@/components/MoreJobs.vue';
+import { Actions, hasPermission } from '@/authorization'
 
 export default defineComponent({
   name: 'Orders',
@@ -509,6 +510,8 @@ export default defineComponent({
     const router = useRouter();
 
     return {
+      Actions,
+      hasPermission,
       addCircleOutline,
       arrowRedoOutline,
       router,

@@ -223,7 +223,10 @@ export default defineComponent({
         }
       },
       {
-        title: "Bulk editor"
+        title: "Bulk editor",
+        meta: {
+          permissionId: "APP_BULK_EDITOR_VIEW"
+        }
       },
       {
         title: "Schedule in bulk",

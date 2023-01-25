@@ -16,14 +16,14 @@
             </ion-card-header>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("BOPIS corrections") }}</ion-label>
-              <ion-toggle :checked="bopisCorrections" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, this.jobEnums['BOPIS_CORRECTION'])" />
+              <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="bopisCorrections" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, this.jobEnums['BOPIS_CORRECTION'])" />
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
                 <p>{{ $t("When using HotWax BOPIS, Shopify isn't aware of the actual inventory consumed. HotWax will automatically restore inventory automatically reduced by Shopify and deduct inventory from the correct store to maintain inventory accuracy.") }}</p>
               </ion-label>
             </ion-item>
-            <ion-item button @click="viewJobConfiguration({ id: 'HARD_SYNC', title: 'Hard sync', status: getJobStatus(jobEnums['HARD_SYNC'])})" detail>
+            <ion-item button @click="hasPermission(Actions.APP_JOB_UPDATE) && viewJobConfiguration({ id: 'HARD_SYNC', title: 'Hard sync', status: getJobStatus(jobEnums['HARD_SYNC'])})" detail>
               <ion-label class="ion-text-wrap">{{ $t("Hard sync") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('HARD_SYNC') }}</ion-label>
             </ion-item>
@@ -68,6 +68,7 @@ import emitter from '@/event-bus';
 import { useRouter } from 'vue-router'
 import { translate } from '@/i18n';
 import MoreJobs from '@/components/MoreJobs.vue';
+import { Actions, hasPermission } from '@/authorization'
 
 export default defineComponent({
   name: 'Inventory',
@@ -193,6 +194,8 @@ export default defineComponent({
     const store = useStore();
     const router = useRouter();
     return {
+      Actions,
+      hasPermission,
       store,
       router
     }  
