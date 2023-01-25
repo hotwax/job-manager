@@ -1,6 +1,5 @@
 import api, {client} from '@/api'
 import store from '@/store';
-import { prepareAppPermissions } from '@/authorization'
 import { hasError } from '@/utils'
 
 const login = async (username: string, password: string): Promise <any> => {

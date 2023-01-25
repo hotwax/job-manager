@@ -4,7 +4,7 @@
       <ion-card-title>{{ $t("More jobs") }}</ion-card-title>
     </ion-card-header>
     <ion-list>
-      <ion-item v-for="job in jobs" :key="job.jobId" @click="hasPermission(Actions.APP_JOB_UPDATE) && viewJobConfiguration(job)" detail button>
+      <ion-item v-for="job in jobs" :key="job.jobId" @click="viewJobConfiguration(job)" detail button>
         <ion-label class="ion-text-wrap">{{ job.enumName || job.jobName }}</ion-label>
         <ion-label slot="end">{{ job.statusId === "SERVICE_PENDING" ? temporalExpr(job.tempExprId)?.description : $t('Disabled') }}</ion-label>
       </ion-item>
@@ -26,7 +26,6 @@ import { mapGetters, useStore } from 'vuex';
 import emitter from '@/event-bus';
 import { useRouter } from 'vue-router'
 import { DateTime } from 'luxon';
-import { Actions, hasPermission } from '@/authorization'
 
 export default defineComponent({
   name: 'MoreJobs',
@@ -63,8 +62,6 @@ export default defineComponent({
     const store = useStore();
     const router = useRouter();
     return {
-      Actions,
-      hasPermission,
       store,
       router
     }  

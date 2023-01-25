@@ -14,11 +14,11 @@
             <ion-card-header>
               <ion-card-title>{{ $t("Sync") }}</ion-card-title>
             </ion-card-header>
-            <ion-item button @click="hasPermission(Actions.APP_JOB_UPDATE) && viewJobConfiguration({ id: 'IMP_PRDTS', title: 'Import products', status: getJobStatus(jobEnums['IMP_PRDTS'])})" detail>
+            <ion-item button @click="viewJobConfiguration({ id: 'IMP_PRDTS', title: 'Import products', status: getJobStatus(jobEnums['IMP_PRDTS'])})" detail>
               <ion-label class="ion-text-wrap">{{ $t("Import products") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_PRDTS') }}</ion-label>
             </ion-item>
-            <ion-item button @click="hasPermission(Actions.APP_JOB_UPDATE) && viewJobConfiguration({ id: 'SYNC_PRDTS', title: 'Sync products', status: getJobStatus(jobEnums['SYNC_PRDTS'])})" detail>
+            <ion-item button @click="viewJobConfiguration({ id: 'SYNC_PRDTS', title: 'Sync products', status: getJobStatus(jobEnums['SYNC_PRDTS'])})" detail>
               <ion-label class="ion-text-wrap">{{ $t("Sync products") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('SYNC_PRDTS') }} </ion-label>
             </ion-item>

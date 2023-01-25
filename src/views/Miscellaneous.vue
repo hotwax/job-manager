@@ -24,7 +24,7 @@
           <div v-else>
             <ion-list>
               <ion-list-header>{{ $t("Miscellaneous jobs") }}</ion-list-header>
-              <ion-item v-for="job in miscellaneousJobs" :key="job.jobId" @click="hasPermission(Actions.APP_JOB_UPDATE) && viewJobConfiguration(job)" detail button>
+              <ion-item v-for="job in miscellaneousJobs" :key="job.jobId" @click="viewJobConfiguration(job)" detail button>
                 <ion-label>{{ job.jobName }}</ion-label>
                 <ion-note slot="end">{{ getJobRuntime(job) }}</ion-note>
               </ion-item>
@@ -70,7 +70,6 @@ import { mapGetters, useStore } from 'vuex'
 import emitter from '@/event-bus';
 import JobConfiguration from '@/components/JobConfiguration.vue';
 import { isFutureDate } from '@/utils';
-import { Actions, hasPermission } from '@/authorization'
 
 export default defineComponent({
   name: 'Miscellaneous',
@@ -165,8 +164,6 @@ export default defineComponent({
     const router = useRouter();
 
     return {
-      Actions,
-      hasPermission,
       router,
       store,
     };

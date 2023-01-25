@@ -14,7 +14,7 @@
         <ion-icon slot="start" :icon="pinOutline" />
         {{ $t("Pin job") }}
       </ion-item>
-      <ion-item v-if="hasPermission(Actions.APP_JOB_UPDATE)" @click="runJobNow(job)" lines="none" button>
+      <ion-item :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" @click="runJobNow(job)" lines="none" button>
         <ion-icon slot="start" :icon="flashOutline" />
         {{ $t("Run now") }}
       </ion-item>      

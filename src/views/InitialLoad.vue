@@ -14,7 +14,7 @@
             <ion-card-header>
               <ion-card-title>{{ $t("Products") }}</ion-card-title>
             </ion-card-header>
-            <ion-button expand="block" fill="outline" @click="hasPermission(Actions.APP_JOB_UPDATE) && viewJobConfiguration('products', jobEnums['IMP_PRDTS_BLK'])">{{ $t("Import products in bulk") }}</ion-button>
+            <ion-button expand="block" fill="outline" @click="viewJobConfiguration('products', jobEnums['IMP_PRDTS_BLK'])">{{ $t("Import products in bulk") }}</ion-button>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
                 <p>{{ $t("Import all products from Shopify. Make sure you run this before importing orders in bulk during intial setup.") }}</p>
@@ -26,7 +26,7 @@
             <ion-card-header>
               <ion-card-title>{{ $t("Orders") }}</ion-card-title>
             </ion-card-header>
-            <ion-button expand="block" fill="outline" @click="hasPermission(Actions.APP_JOB_UPDATE) && viewJobConfiguration('orders', jobEnums['IMP_ORDERS_BLK'])">{{ $t("Import orders in bulk") }}</ion-button>
+            <ion-button expand="block" fill="outline" @click="viewJobConfiguration('orders', jobEnums['IMP_ORDERS_BLK'])">{{ $t("Import orders in bulk") }}</ion-button>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
                 <p>{{ $t("Before importing historical orders in bulk, make sure all products are set up or else order import will not run correctly.") }}</p>
