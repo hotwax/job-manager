@@ -73,8 +73,8 @@
 
               <div class="actions">
                 <div>
-                  <ion-button fill="clear" @click.stop="skipJob(job)">{{ $t("Skip") }}</ion-button>
-                  <ion-button color="danger" fill="clear" @click.stop="cancelJob(job)">{{ $t("Cancel") }}</ion-button>
+                  <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" fill="clear" @click.stop="skipJob(job)">{{ $t("Skip") }}</ion-button>
+                  <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" color="danger" fill="clear" @click.stop="cancelJob(job)">{{ $t("Cancel") }}</ion-button>
                 </div>
                 <div>
                   <ion-button fill="clear" color="medium" slot="end" @click.stop="openJobActions(job, $event)">
@@ -301,6 +301,7 @@ import JobHistoryModal from '@/components/JobHistoryModal.vue';
 import { Plugins } from '@capacitor/core';
 import { showToast } from '@/utils'
 import JobActionsPopover from '@/components/JobActionsPopover.vue'
+import { Actions, hasPermission } from '@/authorization'
 import Filters from '@/components/Filters.vue';
 
 export default defineComponent({
@@ -602,7 +603,9 @@ export default defineComponent({
     const store = useStore();
     const segmentSelected = ref('pending');
 
+
     return {
+      Actions,
       closeCircleOutline,
       copyOutline,
       store,
@@ -614,7 +617,8 @@ export default defineComponent({
       timerOutline,
       segmentSelected,
       router,
-      filterOutline
+      filterOutline,
+      hasPermission
     };
   }
 });

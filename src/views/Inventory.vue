@@ -16,7 +16,7 @@
             </ion-card-header>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("BOPIS corrections") }}</ion-label>
-              <ion-toggle :checked="bopisCorrections" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, this.jobEnums['BOPIS_CORRECTION'])" />
+              <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="bopisCorrections" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, this.jobEnums['BOPIS_CORRECTION'])" />
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
@@ -68,6 +68,7 @@ import emitter from '@/event-bus';
 import { useRouter } from 'vue-router'
 import { translate } from '@/i18n';
 import MoreJobs from '@/components/MoreJobs.vue';
+import { Actions, hasPermission } from '@/authorization'
 
 export default defineComponent({
   name: 'Inventory',
@@ -193,6 +194,8 @@ export default defineComponent({
     const store = useStore();
     const router = useRouter();
     return {
+      Actions,
+      hasPermission,
       store,
       router
     }  

@@ -33,11 +33,11 @@
             </ion-card-header>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("New products") }}</ion-label>
-              <ion-toggle slot="end" :checked="newProductsWebhook" @ionChange="updateWebhook($event['detail'].checked, 'NEW_PRODUCTS')" color="secondary" />
+              <ion-toggle slot="end" :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="newProductsWebhook" @ionChange="updateWebhook($event['detail'].checked, 'NEW_PRODUCTS')" color="secondary" />
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">{{ $t("Delete products") }}</ion-label>
-              <ion-toggle slot="end" :checked="deleteProductsWebhook" @ionChange="updateWebhook($event['detail'].checked, 'DELETE_PRODUCTS')" color="secondary" />
+              <ion-toggle slot="end" :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="deleteProductsWebhook" @ionChange="updateWebhook($event['detail'].checked, 'DELETE_PRODUCTS')" color="secondary" />
             </ion-item>
           </ion-card>
           <MoreJobs v-if="getMoreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId).length" :jobs="getMoreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId).length" />
@@ -74,6 +74,7 @@ import { isFutureDate } from '@/utils';
 import emitter from '@/event-bus';
 import { useRouter } from 'vue-router'
 import MoreJobs from '@/components/MoreJobs.vue'
+import { Actions, hasPermission } from '@/authorization'
 
 export default defineComponent({
   name: 'Product',
@@ -195,6 +196,8 @@ export default defineComponent({
     const store = useStore();
     const router = useRouter();
     return {
+      Actions,
+      hasPermission,
       customPopoverOptions,
       store,
       router

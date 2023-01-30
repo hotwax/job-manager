@@ -30,7 +30,7 @@
       </ion-item>
     </ion-list>
 
-    <ion-button size="small" fill="outline" expand="block" @click="runJob('Products')">{{ $t("Run import") }}</ion-button>
+    <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" size="small" fill="outline" expand="block" @click="runJob('Products')">{{ $t("Run import") }}</ion-button>
   </section>
 
   <section v-else>
@@ -93,7 +93,7 @@
       </ion-item>
     </ion-list>
 
-    <ion-button size="small" fill="outline" expand="block" :disabled="!lastShopifyOrderId" @click="runJob('Orders')">{{ $t("Run import") }}</ion-button>
+    <ion-button size="small" fill="outline" expand="block" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || !lastShopifyOrderId" @click="runJob('Orders')">{{ $t("Run import") }}</ion-button>
   </section>
 </template>
 
@@ -123,6 +123,7 @@ import { mapGetters, useStore } from "vuex";
 import { translate } from "@/i18n";
 import { DateTime } from 'luxon';
 import { handleDateTimeInput,isFutureDate, showToast } from '@/utils';
+import { Actions, hasPermission } from '@/authorization'
 
 export default defineComponent({
   name: "InitialJobConfiguration",
@@ -234,6 +235,8 @@ export default defineComponent({
     };
 
     return {
+      Actions,
+      hasPermission,
       calendarClearOutline,
       customFulfillmentOptions,
       customOrderOptions,
