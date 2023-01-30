@@ -1,6 +1,7 @@
 import api, {client} from '@/api'
 import store from '@/store';
 import { hasError } from '@/utils'
+import logger from '@/logger';
 
 const login = async (username: string, password: string): Promise <any> => {
   return api({
@@ -152,7 +153,7 @@ const getPreferredStore = async (token: any): Promise<any> => {
       return Promise.resolve(resp.data.userPrefValue);
     }
   } catch(error: any) {
-    console.error(error);
+    logger.error(error);
     return Promise.reject(error)
   }
   
@@ -243,7 +244,7 @@ const getUserPermissions = async (payload: any, token: any): Promise<any> => {
       }
       return serverPermissions;
     } catch(error: any) {
-      console.error(error);
+      logger.error(error);
       return Promise.reject(error);
     }
 }
@@ -262,7 +263,7 @@ const getUserProfile = async (token: any): Promise<any> => {
     if(hasError(resp)) return Promise.reject("Error getting user profile");
     return Promise.resolve(resp.data)
   } catch(error: any) {
-    console.error(error);
+    logger.error(error);
     return Promise.reject(error)
   }
 }
