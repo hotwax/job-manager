@@ -8,7 +8,7 @@
 
     <ion-content>
       <ion-list>
-        <ion-menu-toggle auto-hide="false" v-for="(page, index) in getValidMenuItem(appPages)" :key="index">
+        <ion-menu-toggle auto-hide="false" v-for="(page, index) in getValidMenuItems(appPages)" :key="index">
           <ion-item
             v-if="page.url"
             button
@@ -136,7 +136,7 @@ export default defineComponent({
       await this.store.dispatch('user/setCurrentShopifyConfig', { 'shopifyConfigId': event.detail.value });
       emitter.emit("productStoreOrConfigChanged")
     },
-    getValidMenuItem(appPages: any) {
+    getValidMenuItems(appPages: any) {
       return appPages.filter((appPage: any) => (!appPage.meta || !appPage.meta.permissionId) || hasPermission(appPage.meta.permissionId));
     }
   },
