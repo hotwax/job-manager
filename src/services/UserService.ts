@@ -31,63 +31,71 @@ const setUserTimeZone = async (payload: any): Promise <any>  => {
 }
 
 const getShopifyConfig = async (productStoreId: any, token?: any): Promise <any>  => {
-  const params = {
-    "inputFields": {
-      "productStoreId": productStoreId,
-    },
-    "entityName": "ShopifyShopAndConfig",
-    "noConditionFind": "Y",
-    "fieldList": ["shopifyConfigId", "name", "shopId"]
-  }
-  const payload = {
-    url: "performFind",
-    method: "get",
-    params,
-    cache: true
-  } as any;
-
-  // Handled the case when getting config during the login action
-  // We haven't set the token in store till all the essential information is gathered during login
-  if (token) {
-    payload.baseURL = store.getters['user/getBaseUrl'];
-    payload.headers = {
-      Authorization:  'Bearer ' + token,
-      'Content-Type': 'application/json'
+  try {
+    const params = {
+      "inputFields": {
+        "productStoreId": productStoreId,
+      },
+      "entityName": "ShopifyShopAndConfig",
+      "noConditionFind": "Y",
+      "fieldList": ["shopifyConfigId", "name", "shopId"]
     }
-  }
-  const resp = await client(payload);
-  if (hasError(resp)) {
-    return Promise.reject(resp);
-  } else {
-    return Promise.resolve(resp.data.docs);
+    const payload = {
+      url: "performFind",
+      method: "get",
+      params,
+      cache: true
+    } as any;
+
+    // Handled the case when getting config during the login action
+    // We haven't set the token in store till all the essential information is gathered during login
+    if (token) {
+      payload.baseURL = store.getters['user/getBaseUrl'];
+      payload.headers = {
+        Authorization:  'Bearer ' + token,
+        'Content-Type': 'application/json'
+      }
+    }
+    const resp = await client(payload);
+    if (hasError(resp)) {
+      return Promise.reject(resp.data);
+    } else {
+      return Promise.resolve(resp.data.docs);
+    }
+  } catch(error: any) {
+    return Promise.reject(error)
   }
 }
 
 const getEComStores = async (token: any): Promise<any> => {
-  const params = {
-    "inputFields": {
-      "storeName_op": "not-empty"
-    },
-    "fieldList": ["productStoreId", "storeName"],
-    "entityName": "ProductStore",
-    "distinct": "Y",
-    "noConditionFind": "Y"
-  }
-  const baseURL = store.getters['user/getBaseUrl'];
-  const resp = await client({
-    url: "performFind",
-    method: "get",
-    baseURL,
-    params,
-    headers: {
-      Authorization:  'Bearer ' + token,
-      'Content-Type': 'application/json'
+  try {
+    const params = {
+      "inputFields": {
+        "storeName_op": "not-empty"
+      },
+      "fieldList": ["productStoreId", "storeName"],
+      "entityName": "ProductStore",
+      "distinct": "Y",
+      "noConditionFind": "Y"
     }
-  });
-  if (hasError(resp)) {
-    return Promise.reject(resp);
-  } else {
-    return Promise.resolve(resp.data.docs);
+    const baseURL = store.getters['user/getBaseUrl'];
+    const resp = await client({
+      url: "performFind",
+      method: "get",
+      baseURL,
+      params,
+      headers: {
+        Authorization:  'Bearer ' + token,
+        'Content-Type': 'application/json'
+      }
+    });
+    if (hasError(resp)) {
+      return Promise.reject(resp.data);
+    } else {
+      return Promise.resolve(resp.data.docs);
+    }
+  } catch(error: any) {
+    return Promise.reject(error)
   }
 }
 
@@ -148,12 +156,11 @@ const getPreferredStore = async (token: any): Promise<any> => {
       },
     });
     if (hasError(resp)) {
-      return Promise.reject(resp);
+      return Promise.reject(resp.data);
     } else {
       return Promise.resolve(resp.data.userPrefValue);
     }
   } catch(error: any) {
-    logger.error(error);
     return Promise.reject(error)
   }
   
@@ -239,12 +246,11 @@ const getUserPermissions = async (payload: any, token: any): Promise<any> => {
           // Show toast to user intimiting about the failure
           // Allow user to login
           // TODO Implement Retry or improve experience with show in progress icon and allowing login only if all the data related to user profile is fetched.
-          // if (permissionResponses.failed.length > 0) showToast(translate("Something went wrong while getting complete user profile. Try login again for smoother experience."));
+          if (permissionResponses.failed.length > 0) Promise.reject("Something went wrong while getting complete user permissions.");
         }
       }
       return serverPermissions;
     } catch(error: any) {
-      logger.error(error);
       return Promise.reject(error);
     }
 }
@@ -260,10 +266,9 @@ const getUserProfile = async (token: any): Promise<any> => {
         'Content-Type': 'application/json'
       }
     });
-    if(hasError(resp)) return Promise.reject("Error getting user profile");
+    if(hasError(resp)) return Promise.reject("Error getting user profile: " + JSON.stringify(resp.data));
     return Promise.resolve(resp.data)
   } catch(error: any) {
-    logger.error(error);
     return Promise.reject(error)
   }
 }

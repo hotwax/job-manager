@@ -116,8 +116,10 @@ const actions: ActionTree<UserState, RootState> = {
     } catch (err: any) {
       // If any of the API call in try block has status code other than 2xx it will be handled in common catch block.
       // TODO Check if handling of specific status codes is required.
-      showToast(translate('Something went wrong while login. Contact administrator'));
-      logger.error("error", err);
+      showToast(translate('Something went wrong while login. Please contact administrator.'));
+      console.log("err", err);
+      console.log("err", err?.data);
+      logger.error("error: ", err.toString());
       return Promise.reject(new Error(err))
     }
   },
