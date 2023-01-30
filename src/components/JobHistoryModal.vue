@@ -111,7 +111,7 @@ export default defineComponent({
           this.jobHistory = [];
         }
       } catch(err) {
-        console.error(err);
+        this.$log.error(err);
       }
     }
   },

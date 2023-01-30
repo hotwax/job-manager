@@ -8,6 +8,7 @@ import { translate } from '@/i18n'
 import { Settings } from 'luxon'
 import { getServerPermissionsFromRules, prepareAppPermissions, resetPermissions, setPermissions } from '@/authorization'
 
+import logger from "@/logger";
 
 const actions: ActionTree<UserState, RootState> = {
 
@@ -34,7 +35,7 @@ const actions: ActionTree<UserState, RootState> = {
       // If we have any error most possible reason is incorrect credentials.
       if (hasError(resp)) {
         showToast(translate('Sorry, your username or password is incorrect. Please try again.'));
-        console.error("error", resp.data._ERROR_MESSAGE_);
+        logger.error("error", resp.data._ERROR_MESSAGE_);
         return Promise.reject(new Error(resp.data._ERROR_MESSAGE_));
       }
 
@@ -61,7 +62,7 @@ const actions: ActionTree<UserState, RootState> = {
         if (hasPermission) {
           const permissionError = 'You do not have permission to access the app.';
           showToast(translate(permissionError));
-          console.error("error", permissionError);
+          logger.error("error", permissionError);
           return Promise.reject(new Error(permissionError));
         }
       }
@@ -116,7 +117,7 @@ const actions: ActionTree<UserState, RootState> = {
       // If any of the API call in try block has status code other than 2xx it will be handled in common catch block.
       // TODO Check if handling of specific status codes is required.
       showToast(translate('Something went wrong while login. Contact administrator'));
-      console.error("error", err);
+      logger.error("error", err);
       return Promise.reject(new Error(err))
     }
   },
@@ -176,7 +177,7 @@ const actions: ActionTree<UserState, RootState> = {
     if (!productStoreId) {
       commit(types.USER_SHOPIFY_CONFIGS_UPDATED, []);
       commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, {});
-      console.warn("No productStoreId provided for fetching shopify config. Setting initial values");
+      logger.warn("No productStoreId provided for fetching shopify config. Setting initial values");
     }
 
     try {      
@@ -187,7 +188,7 @@ const actions: ActionTree<UserState, RootState> = {
       commit(types.USER_SHOPIFY_CONFIGS_UPDATED, shopifyConfigs);
       commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, currentShopifyConfig);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       commit(types.USER_SHOPIFY_CONFIGS_UPDATED, []);
       commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, {});
     }
@@ -248,7 +249,7 @@ const actions: ActionTree<UserState, RootState> = {
         commit(types.USER_INFO_UPDATED, user);
       }
     } catch(error) {
-      console.error(error);
+      logger.error(error);
     }
     return resp;
   },
@@ -288,7 +289,7 @@ const actions: ActionTree<UserState, RootState> = {
         }
       }
     } catch(error) {
-      console.error(error);
+      logger.error(error);
     }
     return resp;
   },

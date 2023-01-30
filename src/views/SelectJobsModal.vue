@@ -134,7 +134,7 @@ export default defineComponent({
           this.isScrollable = false;
         }
       } catch (error) {
-        console.error(error);
+        this.$log.error(error);
         showToast(translate("Something went wrong"));
       }
     },

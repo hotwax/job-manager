@@ -307,7 +307,7 @@ export default defineComponent({
           }
         } catch (err) {
           showToast(translate('Something went wrong'))
-          console.error(err)
+          this.$log.error(err)
         }
       } else {
         showToast(translate('Unable to update auto cancel days. None product store selected.'));
@@ -487,11 +487,11 @@ export default defineComponent({
         if (resp.status === 200 && !hasError(resp) && resp.data.docs?.length > 0 ) {
           this.autoCancelDays = resp.data.docs[0].daysToCancelNonPay;
         } else {
-          console.error(resp)
+          this.$log.error(resp)
           this.autoCancelDays = "";
         }
       } catch (err) {
-        console.error(err)
+        this.$log.error(err)
         this.autoCancelDays = "";
       }
     }
