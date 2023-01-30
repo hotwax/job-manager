@@ -3,6 +3,7 @@ import { getEvaluator, parse } from 'boon-js';
 import { Tokens } from 'boon-js/lib/types'
 
 // TODO Improve this
+// We will move this code to an external plugin and use below Actions and Rules accordlingly
 let Actions = {} as any;
 let Rules = {} as any;
 
@@ -17,6 +18,13 @@ type ClaimBasedAbility = PureAbility<string>;
 const { build } = new AbilityBuilder<ClaimBasedAbility>(PureAbility);
 const ability = build();
 
+/**
+ * The method returns list of permissions required for the rules. We are having set of rules, 
+ * through which app permissions are defined based upon the server permissions.
+ * When getting server permissions, as all the permissions are not be required. 
+ * Specific permissions used defining the rules are extracted and sent to server. 
+ * @returns permissions
+ */
 const getServerPermissionsFromRules = () => {
     // Iterate for each rule
     const permissions = Object.keys(Rules).reduce((permissions: any, rule: any) => {
@@ -24,11 +32,13 @@ const getServerPermissionsFromRules = () => {
         // some rules may be empty, no permission is required from server
         if (permissionRule) {
             // Each rule may have multiple permissions along with operators
-            const tokens = parse(permissionRule);
-            permissions = tokens.reduce((permissions: any, token: any) => {
+            // Boon js parse rules into tokens, each token may be operator or server permission
+            // permissionId will have token name as identifier. 
+            const permissionTokens = parse(permissionRule);
+            permissions = permissionTokens.reduce((permissions: any, permissionToken: any) => {
                 // Token object with name as identifier has permissionId 
-                if (Tokens.IDENTIFIER === token.name) {
-                    permissions.push(token.value);
+                if (Tokens.IDENTIFIER === permissionToken.name) {
+                    permissions.push(permissionToken.value);
                 }
                 return permissions;
             }, permissions)
@@ -39,17 +49,23 @@ const getServerPermissionsFromRules = () => {
 }
 
 /**
- * 
+ * The method is used to prepare app permissions from the server permissions.
+ * Rules could be defined such that each app permission could be defined based upon certain one or more server permissions.
  * @param serverPermissions 
- * @returns 
+ * @returns appPermissions
  */
 const prepareAppPermissions = (serverPermissions: any) => {
     const serverPermissionsInput = serverPermissions.reduce((serverPermissionsInput: any, permission: any) => {
         serverPermissionsInput[permission] = true;
         return serverPermissionsInput;
     }, {})
+    // Boonjs evaluator needs server permissions as object with permissionId and boolean value
+    // Each rule is passed to evaluator along with the server permissions
+    // if the server permissions and rule matches, app permission is added to list
     const permissions = Object.keys(Rules).reduce((permissions: any, rule: any) => {
         const permissionRule = Rules[rule];
+        // If for any app permission, we have empty rule we user is assigned the permission
+        // If rule is not defined, the app permisions is still evaluated or provided to all the users.
         if (!permissionRule || (permissionRule && getEvaluator(permissionRule)(serverPermissionsInput))) {
             permissions.push(rule);
         }
@@ -64,17 +80,19 @@ const prepareAppPermissions = (serverPermissions: any) => {
 
 /**
  * 
+ * Sets the current app permissions. This should be used after perparing the app permissions from the server permissions
  * @param permissions 
  * @returns 
  */
 const setPermissions = (permissions: any) => {
     // If the user has passed undefined or null, it should not break the code
     if (!permissions) permissions = [];
-    return ability.update(permissions)
+    ability.update(permissions)
+    return true;
 };
 
 /**
- * 
+ * Resets the permissions list. Used for cases like logout 
  */
 const resetPermissions = () => setPermissions([]);
 
