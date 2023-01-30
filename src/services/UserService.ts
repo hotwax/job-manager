@@ -1,7 +1,6 @@
 import api, {client} from '@/api'
 import store from '@/store';
 import { hasError } from '@/utils'
-import logger from '@/logger';
 
 const login = async (username: string, password: string): Promise <any> => {
   return api({
