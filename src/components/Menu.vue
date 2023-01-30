@@ -8,7 +8,7 @@
 
     <ion-content>
       <ion-list>
-        <ion-menu-toggle auto-hide="false" v-for="(page, index) in appPages" :key="index">
+        <ion-menu-toggle auto-hide="false" v-for="(page, index) in getValidMenuItems(appPages)" :key="index">
           <ion-item
             v-if="page.url"
             button
@@ -48,7 +48,7 @@
         <!-- similarly, showing shopify configs only when there are multiple options to choose from 
         but if both product store and config have multiple options, then only option to choose
         product store will be visible -->
-        <ion-item v-if="shopifyConfigs.length > 1 && userProfile?.stores.length < 3" lines="none">
+        <ion-item v-if="shopifyConfigs?.length > 1 && userProfile?.stores?.length < 3" lines="none">
           <ion-select interface="popover" :value="currentShopifyConfig?.shopifyConfigId" @ionChange="setShopifyConfig($event)">
             <ion-select-option v-for="shopifyConfig in shopifyConfigs" :key="shopifyConfig.shopifyConfigId" :value="shopifyConfig.shopifyConfigId" >{{ shopifyConfig.name ? shopifyConfig.name : shopifyConfig.shopifyConfigName }}</ion-select-option>
           </ion-select>
@@ -86,6 +86,8 @@ import { mapGetters } from "vuex";
 import { pulseOutline, calendarNumberOutline, terminalOutline, ticketOutline, albumsOutline, shirtOutline, settings, iceCreamOutline, libraryOutline } from "ionicons/icons";
 import { useStore } from "@/store";
 import emitter from "@/event-bus"
+import { hasPermission } from "@/authorization";
+
 export default defineComponent({
   name: "Menu",
   components: {
@@ -125,13 +127,18 @@ export default defineComponent({
   },
   methods: {
     async setEComStore(event: CustomEvent) {
-      await this.store.dispatch('user/setEcomStore', { 'productStoreId': event.detail.value })
-      emitter.emit("productStoreOrConfigChanged")
+      if(this.userProfile && this.eComStore?.productStoreId !== event.detail.value) {
+        await this.store.dispatch('user/setEcomStore', { 'productStoreId': event.detail.value })
+        emitter.emit("productStoreOrConfigChanged")
+      }
     },
     async setShopifyConfig(event: CustomEvent){
       await this.store.dispatch('user/setCurrentShopifyConfig', { 'shopifyConfigId': event.detail.value });
       emitter.emit("productStoreOrConfigChanged")
     },
+    getValidMenuItems(appPages: any) {
+      return appPages.filter((appPage: any) => (!appPage.meta || !appPage.meta.permissionId) || hasPermission(appPage.meta.permissionId));
+    }
   },
   watch:{
     $route (to) {
@@ -150,59 +157,86 @@ export default defineComponent({
         url: "/pipeline",
         iosIcon: pulseOutline,
         mdIcon: pulseOutline,
-        dependsOnBaseURL: true
+        dependsOnBaseURL: true,
+        meta: {
+          permissionId: "APP_PIPELINE_VIEW"
+        }
       },
       {
         title: "Initial load",
         url: "/initial-load",
         iosIcon: iceCreamOutline,
         mdIcon: iceCreamOutline,
-        dependsOnBaseURL: false
+        dependsOnBaseURL: false,
+        meta: {
+          permissionId: "APP_INITIAL_LOAD_VIEW"
+        }
       },
       {
         title: "Pre-order",
         url: "/pre-order",
         iosIcon: calendarNumberOutline,
         mdIcon: calendarNumberOutline,
-        dependsOnBaseURL: false
+        dependsOnBaseURL: false,
+        meta: {
+          permissionId: "APP_PREORDER_VIEW"
+        }
       },
       {
         title: "Orders",
         url: "/orders",
         iosIcon: ticketOutline,
         mdIcon: ticketOutline,
-        dependsOnBaseURL: false
+        dependsOnBaseURL: false,
+        meta: {
+          permissionId: "APP_ORDERS_VIEW"
+        }
       },
       {
         title: "Inventory",
         url: "/inventory",
         iosIcon: albumsOutline,
         mdIcon: albumsOutline,
-        dependsOnBaseURL: false
+        dependsOnBaseURL: false,
+        meta: {
+          permissionId: "APP_INVENTORY_VIEW"
+        }
       },
       {
         title: "Products",
         url: "/product",
         iosIcon: shirtOutline,
         mdIcon: shirtOutline,
-        dependsOnBaseURL: false
+        dependsOnBaseURL: false,
+        meta: {
+          permissionId: "APP_PRODUCT_VIEW"
+        }
       },
       {
         title: "Miscellaneous",
         url: "/miscellaneous",
         iosIcon: libraryOutline,
         mdIcon: libraryOutline,
-        dependsOnBaseURL: false
+        dependsOnBaseURL: false,
+        meta: {
+          permissionId: "APP_MISC_VIEW"
+        }
       },
       {
-        title: "Bulk editor"
+        title: "Bulk editor",
+        meta: {
+          permissionId: "APP_BULK_EDITOR_VIEW"
+        }
       },
       {
         title: "Schedule in bulk",
         url: "/bulk-editor",
         iosIcon: terminalOutline,
         mdIcon: terminalOutline,
-        dependsOnBaseURL: false
+        dependsOnBaseURL: false,
+        meta: {
+          permissionId: "APP_BULK_EDITOR_VIEW"
+        }
       },
       {
         title: "Settings",
@@ -219,7 +253,8 @@ export default defineComponent({
       selectedIndex,
       appPages,
       pulseOutline, 
-      calendarNumberOutline, 
+      calendarNumberOutline,
+      hasPermission,
       terminalOutline,
       ticketOutline, 
       albumsOutline, 

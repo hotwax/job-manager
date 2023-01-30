@@ -12,6 +12,19 @@ import BulkEditor from '@/views/BulkEditor.vue'
 import Login from '@/views/Login.vue'
 import Settings from "@/views/Settings.vue"
 import store from '@/store'
+import { hasPermission } from '@/authorization';
+import { showToast } from '@/utils'
+import { translate } from '@/i18n'
+
+import 'vue-router'
+
+// Defining types for the meta values
+declare module 'vue-router' {
+  interface RouteMeta {
+    permissionId?: string;
+  }
+}
+
 
 const authGuard = (to: any, from: any, next: any) => {
   if (store.getters['user/isAuthenticated']) {
@@ -38,55 +51,83 @@ const routes: Array<RouteRecordRaw> = [
     path: '/pipeline',
     name: 'Pipeline',
     component: Pipeline,
-    beforeEnter: authGuard
+    beforeEnter: authGuard,
+    meta: {
+      permissionId: "APP_PIPELINE_VIEW"
+    }
   },
   {
     path: '/inventory',
     name: 'Inventory',
     component: Inventory,
-    beforeEnter: authGuard
+    beforeEnter: authGuard,
+    meta: {
+      permissionId: "APP_INVENTORY_VIEW"
+    }
   },
   {  
     path: '/product',
     name: 'Product',
     component: Product,
-    beforeEnter: authGuard
+    beforeEnter: authGuard,
+    meta: {
+      permissionId: "APP_PRODUCT_VIEW"
+    }
   },
   {
     path: '/pre-order',
     name: 'PreOrder',
     component: PreOrder,
-    beforeEnter: authGuard
+    beforeEnter: authGuard,
+    meta: {
+      permissionId: "APP_PREORDER_VIEW"
+    }
   },
   {
     path: '/orders',
     name: 'Orders',
     component: Orders,
-    beforeEnter: authGuard
+    beforeEnter: authGuard,
+    meta: {
+      permissionId: "APP_ORDERS_VIEW"
+    }
   },
   {
     path: '/:category/job-details/:jobId',
     name: 'JobDetails',
     component: JobDetails,
-    props: true
+    props: true,
+    beforeEnter: authGuard,
+    meta: {
+      permissionId: "APP_JOB_DETAILS_VIEW"
+    }
   },
   {  
     path: '/initial-load',
     name: 'InitialLoad',
     component: InitialLoad,
-    beforeEnter: authGuard
+    beforeEnter: authGuard,
+    meta: {
+      permissionId: "APP_INITIAL_LOAD_VIEW"
+    }
   },
   {  
     path: '/miscellaneous',
     name: 'Miscellaneous',
     component: Miscellaneous,
-    beforeEnter: authGuard
+    beforeEnter: authGuard,
+    meta: {
+      permissionId: "APP_MISC_VIEW"
+    }
   },
   {  
     path: '/bulk-editor',
     name: 'BulkEditor',
     component: BulkEditor,
-    beforeEnter: authGuard
+    beforeEnter: authGuard,
+    meta: {
+      permissionId: "APP_BULK_EDITOR_VIEW"
+    }
   },
   {
     path: '/login',
@@ -105,6 +146,21 @@ const routes: Array<RouteRecordRaw> = [
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
   routes
+})
+
+
+router.beforeEach((to, from) => {
+  if (to.meta.permissionId && !hasPermission(to.meta.permissionId)) {
+    let redirectToPath = from.path;
+    // If the user has navigated from Login page or if it is page load, redirect user to settings page without showing any toast
+    if (redirectToPath == "/login" || redirectToPath == "/") redirectToPath = "/settings";
+    else {
+      showToast(translate('You do not have permission to access this page'));
+    }
+    return {
+      path: redirectToPath,
+    }
+  }
 })
 
 export default router

@@ -192,6 +192,8 @@
   "Skip job": "Skip job",
   "Skip once": "Skip once",
   "Skipping will run this job at the next occurrence based on the temporal expression.": "Skipping will run this job at the next occurrence based on the temporal expression.",
+  "Something went wrong while getting complete user permissions.": "Something went wrong while getting complete user permissions.",
+  "Something went wrong while login. Please contact administrator.": "Something went wrong while login. Please contact administrator.",
   "Some jobs have slow frequency type, hence, feasible frequency will be set automatically": "Some jobs have slow frequency type, hence, feasible frequency will be set automatically",
   "Start with Ionic": "Start with Ionic",
   "Status": "Status",
@@ -237,5 +239,6 @@
   "Update shipping dates in Shopify": "Update shipping dates in Shopify",
   "When importing historical completed orders, this should be turned off.": "When importing historical completed orders, this should be turned off.",
   "When using HotWax BOPIS, Shopify isn't aware of the actual inventory consumed. HotWax will automatically restore inventory automatically reduced by Shopify and deduct inventory from the correct store to maintain inventory accuracy.": "When using HotWax BOPIS, Shopify isn't aware of the actual inventory consumed. HotWax will automatically restore inventory automatically reduced by Shopify and deduct inventory from the correct store to maintain inventory accuracy.",
+  "You do not have permission to access this page": "You do not have permission to access this page",
   "Yes": "Yes"
 }

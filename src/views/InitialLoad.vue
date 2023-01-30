@@ -42,11 +42,11 @@
             </ion-card-header>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("File upload status") }}</ion-label>
-              <ion-toggle :checked="fileStatusUpdateWebhook" color="secondary" slot="end" @ionChange="updateWebhook($event['detail'].checked, 'BULK_OPERATIONS_FINISH')" />
+              <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="fileStatusUpdateWebhook" color="secondary" slot="end" @ionChange="updateWebhook($event['detail'].checked, 'BULK_OPERATIONS_FINISH')" />
             </ion-item>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Upload Pending Process") }}</ion-label>
-              <ion-checkbox slot="end" :checked="processPendingUploadsOnShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['UL_PRCS'])"/>
+              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="processPendingUploadsOnShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['UL_PRCS'])"/>
             </ion-item>
           </ion-card>
         </section>
@@ -84,6 +84,7 @@ import emitter from '@/event-bus';
 import InitialJobConfiguration from '@/components/InitialJobConfiguration.vue';
 import { useRouter } from 'vue-router';
 import { translate } from '@/i18n';
+import { Actions, hasPermission } from '@/authorization'
 
 export default defineComponent({
   name: 'InitialLoad',
@@ -223,6 +224,8 @@ export default defineComponent({
     const router = useRouter();
 
     return {
+      Actions,
+      hasPermission,
       store,
       router
     }

@@ -1,6 +1,6 @@
 {
-  "appId": "co.hotwax.ionic.sdk",
-  "appName": "ionic-sdk",
+  "appId": "co.hotwax.jobmanager",
+  "appName": "Job Manager",
   "bundledWebRuntime": false,
   "npmClient": "npm",
   "webDir": "dist",
