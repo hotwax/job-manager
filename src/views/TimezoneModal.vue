@@ -9,7 +9,7 @@
       <ion-title>{{ $t("Select time zone") }}</ion-title>
     </ion-toolbar>
     <ion-toolbar>
-      <ion-searchbar @ionFocus="selectSearchBarText($event)" :placeholder="$t('Search time zones')"  v-model="queryString" v-on:keyup.enter="queryString = $event.target.value; findTimeZone()" />
+      <ion-searchbar @ionFocus="selectSearchBarText($event)" :placeholder="$t('Search time zones')"  v-model="queryString" @keyup.enter="queryString = $event.target.value; findTimeZone()" @keydown="preventSpecialCharacters($event)" />
     </ion-toolbar>
   </ion-header>
 
@@ -23,9 +23,9 @@
     <div v-else>
       <ion-list>
         <ion-radio-group value="rd" v-model="timeZoneId">
-          <ion-item  v-bind:key="timeZone.id" v-for="timeZone in filteredTimeZones">
+          <ion-item :key="timeZone.id" v-for="timeZone in filteredTimeZones">
             <ion-label>{{ timeZone.label }} ({{ timeZone.id }})</ion-label>
-            <ion-radio :value="timeZone.id" slot="start"></ion-radio>
+            <ion-radio :value="timeZone.id" slot="start" />
           </ion-item>
         </ion-radio-group>
       </ion-list>
@@ -67,6 +67,23 @@ import { DateTime } from 'luxon';
 
 export default defineComponent({
   name: "TimeZoneModal",
+  components: { 
+    IonButtons,
+    IonButton,
+    IonContent,
+    IonFab,
+    IonFabButton,
+    IonHeader,
+    IonIcon,
+    IonItem,
+    IonLabel,
+    IonList,
+    IonRadioGroup,
+    IonRadio,
+    IonSearchbar,
+    IonTitle,
+    IonToolbar 
+  },
   data() {
     return {
       queryString: '',
@@ -85,52 +102,48 @@ export default defineComponent({
         header: this.$t("Update time zone"),
         message,
         buttons: [
-            {
-              text: this.$t("Cancel"),
-            },
-            {
-              text: this.$t("Confirm"),
-              handler: () => {
-                this.setUserTimeZone();
-                }
-              }
-            ],
+          {
+            text: this.$t("Cancel"),
+          },
+          {
+            text: this.$t("Confirm"),
+            handler: () => {
+              this.setUserTimeZone();
+            }
+          }
+        ],
       });
       return alert.present();
     },
-    escapeRegExp(text: string) {
-      //TODO Handle it in a better way
-      // Currently when the user types special character as it part of Regex expressions it breaks the code
-      // so removed the characters for now
-      return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+    preventSpecialCharacters($event: any) {
+      // Searching special characters fails the API, hence, they must be omitted
+      if(/[`!@#$%^&*()_+\-=\\|,.<>?~]/.test($event.key)) $event.preventDefault();
     },
     findTimeZone() { 
-      const regularExp = new RegExp(`${this.escapeRegExp(this.queryString)}`, 'i');
+      const queryString = this.queryString.toLowerCase();
       this.filteredTimeZones = this.timeZones.filter((timeZone: any) => {
-        return regularExp.test(timeZone.id) || regularExp.test(timeZone.label);
+        return timeZone.id.toLowerCase().match(queryString) || timeZone.label.toLowerCase().match(queryString);
       });
     },
     async getAvailableTimeZones() {
-      UserService.getAvailableTimeZones().then((resp: any) => {
-        if (resp.status === 200 && !hasError(resp)) {
-           this.timeZones = resp.data.filter((timeZone: any) => {
-              return DateTime.local().setZone(timeZone.id).isValid;
-          });
-          this.findTimeZone();
-        }
-      })
+      const resp = await UserService.getAvailableTimeZones()
+      if(resp.status === 200 && !hasError(resp)) {
+        // We are filtering valid the timeZones coming with response here
+        this.timeZones = resp.data.filter((timeZone: any) => {
+          return DateTime.local().setZone(timeZone.id).isValid;
+        });
+        this.findTimeZone();
+      }
     },
-    selectSearchBarText(event: any) {
-      event.target.getInputElement().then((element: any) => {
-        element.select();
-      })
+    async selectSearchBarText(event: any) {
+      const element = await event.target.getInputElement()
+      element.select();
     },
     async setUserTimeZone() {
-      return this.store.dispatch("user/setUserTimeZone", {
-          "tzId": this.timeZoneId
-      }).then(() => {
-        this.closeModal()
+      await this.store.dispatch("user/setUserTimeZone", {
+        "timeZoneId": this.timeZoneId
       })
+      this.closeModal()
     }
   },
   beforeMount () {
@@ -143,23 +156,6 @@ export default defineComponent({
       save,
       store
     };
-  },
-  components: { 
-    IonButtons,
-    IonButton,
-    IonContent,
-    IonFab,
-    IonFabButton,
-    IonHeader,
-    IonIcon,
-    IonItem,
-    IonLabel,
-    IonList,
-    IonRadioGroup,
-    IonRadio,
-    IonSearchbar,
-    IonTitle,
-    IonToolbar 
-    },
+  }
 });
 </script>

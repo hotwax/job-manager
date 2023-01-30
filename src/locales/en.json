@@ -4,7 +4,7 @@
   "Add jobs": "Add jobs",
   "Add shipping dates in Shopify": "Add shipping dates in Shopify",
   "Add tags in Shopify": "Add tags in Shopify",
-  "Are you sure you want to change the time zone to?": "Are you sure you want to change the time zone to?",
+  "Are you sure you want to change the time zone to?": "Are you sure you want to change the time zone to {timeZoneId}?",
   "Adjustments": "Adjustments",
   "Are you sure you want to save these changes?": "Are you sure you want to save these changes?",
   "Are you sure you want to schedule these jobs?": "Are you sure you want to schedule these jobs?",
