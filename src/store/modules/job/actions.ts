@@ -400,6 +400,7 @@ const actions: ActionTree<JobState, RootState> = {
     }
     batchJobEnumIds.map((batchBrokeringJobEnum: any) => {
       cached[batchBrokeringJobEnum] = responseJobs.filter((job: any) => job.systemJobEnumId === batchBrokeringJobEnum).reduce((batchBrokeringJobs: any, job: any) => {
+        if (job.statusId === 'SERVICE_DRAFT') job.runTime = "";
         batchBrokeringJobs.push({
           ...job,
           id: job.jobId,
