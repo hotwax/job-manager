@@ -286,9 +286,10 @@ const actions: ActionTree<JobState, RootState> = {
       if (resp.status === 200 && !hasError(resp) && resp.data.docs?.length > 0) {
         const total = resp.data.count;
         let jobs = resp.data.docs.map((job: any) => {
+          if (job.statusId === 'SERVICE_DRAFT') job.runTime = "";
           return {
             ...job,
-            'status': job?.statusId
+            'status': job.statusId
           }
         })
         if(payload.viewIndex && payload.viewIndex > 0){
