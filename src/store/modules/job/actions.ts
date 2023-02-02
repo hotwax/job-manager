@@ -432,7 +432,7 @@ const actions: ActionTree<JobState, RootState> = {
         id: job.jobId,
         frequency: job.tempExprId,
         enumId: job.systemJobEnumId,
-        status: job.statusId,
+        status: job.statusId
       }
     });
 
