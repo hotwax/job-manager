@@ -286,7 +286,7 @@ const actions: ActionTree<JobState, RootState> = {
       if (resp.status === 200 && !hasError(resp) && resp.data.docs?.length > 0) {
         const total = resp.data.count;
         let jobs = resp.data.docs.map((job: any) => {
-          if (job.statusId === 'SERVICE_DRAFT') job.runTime = "";
+          if (job.statusId === 'SERVICE_DRAFT') delete job.runTime;
           return {
             ...job,
             'status': job.statusId
@@ -401,7 +401,7 @@ const actions: ActionTree<JobState, RootState> = {
     }
     batchJobEnumIds.map((batchBrokeringJobEnum: any) => {
       cached[batchBrokeringJobEnum] = responseJobs.filter((job: any) => job.systemJobEnumId === batchBrokeringJobEnum).reduce((batchBrokeringJobs: any, job: any) => {
-        if (job.statusId === 'SERVICE_DRAFT') job.runTime = "";
+        if (job.statusId === 'SERVICE_DRAFT') delete job.runTime;
         batchBrokeringJobs.push({
           ...job,
           id: job.jobId,
@@ -426,13 +426,13 @@ const actions: ActionTree<JobState, RootState> = {
     }, cached)  
 
     responseJobs.filter((job: any) => job.statusId === 'SERVICE_DRAFT').map((job: any) => {
+      delete job.runTime;
       return cached[job.systemJobEnumId] = cached[job.systemJobEnumId] ? cached[job.systemJobEnumId] : {
         ...job,
         id: job.jobId,
         frequency: job.tempExprId,
         enumId: job.systemJobEnumId,
         status: job.statusId,
-        runTime: ""
       }
     });
 
