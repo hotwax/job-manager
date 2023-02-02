@@ -1,3 +1,14 @@
+# Release 2.0.0
+
+## What's Changed
+* Implemented logger using vue logger plugin(#21uxamh) by @disha1202 in https://github.com/hotwax/job-manager/pull/357
+* Implemented: feature for user authorisation (#2ebg32y) by @adityasharma7 in https://github.com/hotwax/job-manager/pull/188
+* Refactored: code for timezone modal and update luxon to 3.2 (#85zrkd35y) by @k2maan in https://github.com/hotwax/job-manager/pull/359
+* Fixed: JobConfiguration component displaying runtime of draft jobs(#85zrjdd3b) by @disha1202 in https://github.com/hotwax/job-manager/pull/362 and @shashwatbangar in https://github.com/hotwax/job-manager/pull/353
+
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v1.6.0...v2.0.0
+
 # Release 1.6.0
 ## What's Changed
 * Implemented: Code to show app version & build information on Settings page(#85zrhn8w8) by @shashwatbangar in https://github.com/hotwax/job-manager/pull/341
