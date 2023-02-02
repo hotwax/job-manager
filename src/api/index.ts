@@ -9,6 +9,34 @@ import {
 import router from '@/router'
 import qs from "qs"
 
+const paramsSerializer = (p: any) => {
+    // When objects are stringified, by default they use bracket notation:
+    // qs.stringify({ a: { b: { c: 'd', e: 'f' } } });
+    // 'a[b][c]=d&a[b][e]=f'
+    //We may override this to use dot notation by setting the allowDots option to true:
+    // qs.stringify({ a: { b: { c: 'd', e: 'f' } } }, { allowDots: true });
+    // 'a.b.c=d&a.b.e=f'
+    // OMS 1.0 supports objects passed as strings
+    const params = Object.keys(p).reduce((params: any, key: string) => {
+        let value = p[key];
+        if ( typeof value === 'object' && !Array.isArray(value) && value !== null) {
+            value = JSON.stringify(value)
+        }
+        params[key] = value;
+        return params;
+    }, {})
+    // arrayFormat option is used to specify the format of the output array:
+    //qs.stringify({ a: ['b', 'c'] }, { arrayFormat: 'indices' })
+    // 'a[0]=b&a[1]=c'
+    //qs.stringify({ a: ['b', 'c'] }, { arrayFormat: 'brackets' })
+    // 'a[]=b&a[]=c'
+    //qs.stringify({ a: ['b', 'c'] }, { arrayFormat: 'repeat' })
+    // 'a=b&a=c'
+    //qs.stringify({ a: ['b', 'c'] }, { arrayFormat: 'comma' })
+    // 'a=b,c'
+    // Currently OMS 1.0 supports values as repeat
+    return qs.stringify(params, {arrayFormat: 'repeat'});
+}
 
 axios.interceptors.request.use((config: any) => {
     const token = store.getters['user/getUserToken'];
@@ -76,34 +104,7 @@ const api = async (customConfig: any) => {
         //     return Qs.stringify(params, {arrayFormat: 'brackets'})
         //   },
         // This implemmentation is done to ensure array and object is passed correctly in OMS 1.0
-        paramsSerializer: (p: any) => {
-            // When objects are stringified, by default they use bracket notation:
-            // qs.stringify({ a: { b: { c: 'd', e: 'f' } } });
-            // 'a[b][c]=d&a[b][e]=f'
-            //We may override this to use dot notation by setting the allowDots option to true:
-            // qs.stringify({ a: { b: { c: 'd', e: 'f' } } }, { allowDots: true });
-            // 'a.b.c=d&a.b.e=f'
-            // OMS 1.0 supports objects passed as strings
-            const params = Object.keys(p).reduce((params: any, key: string) => {
-                let value = p[key];
-                if ( typeof value === 'object' && !Array.isArray(value) && value !== null) {
-                    value = JSON.stringify(value)
-                }
-                params[key] = value;
-                return params;
-            }, {})
-            // arrayFormat option is used to specify the format of the output array:
-            //qs.stringify({ a: ['b', 'c'] }, { arrayFormat: 'indices' })
-            // 'a[0]=b&a[1]=c'
-            //qs.stringify({ a: ['b', 'c'] }, { arrayFormat: 'brackets' })
-            // 'a[]=b&a[]=c'
-            //qs.stringify({ a: ['b', 'c'] }, { arrayFormat: 'repeat' })
-            // 'a=b&a=c'
-            //qs.stringify({ a: ['b', 'c'] }, { arrayFormat: 'comma' })
-            // 'a=b,c'
-            // Currently OMS 1.0 supports values as repeat
-            return qs.stringify(params, {arrayFormat: 'repeat'});
-        }
+        paramsSerializer
     }
 
     let baseURL = store.getters['user/getInstanceUrl'];
@@ -132,7 +133,7 @@ const api = async (customConfig: any) => {
  * @return {Promise} Response from API as returned by Axios
  */
 const client = (config: any) => {
-    return axios.request(config);
+    return axios.request({ paramsSerializer, ...config });
 }
 
 export { api as default, client, axios };
