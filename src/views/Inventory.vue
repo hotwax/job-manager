@@ -33,6 +33,15 @@
               </ion-label>
             </ion-item>
           </ion-card>
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>{{ $t("Webhooks") }}</ion-card-title>
+            </ion-card-header>
+            <ion-item lines="none">
+              <ion-label class="ion-text-wrap">{{ $t("Inventory level update") }}</ion-label>
+              <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="isInventoryLevelUpdated" @ionChange="updateWebhook($event['detail'].checked, 'INVENTORY_LEVEL_UPDATE')" slot="end" color="secondary" />
+            </ion-item>
+          </ion-card>
           <MoreJobs v-if="getMoreJobs(jobEnums, enumTypeId).length" :jobs="getMoreJobs(jobEnums, enumTypeId)" />
         </section>
 
@@ -98,7 +107,8 @@ export default defineComponent({
       freqType: '',
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
-      enumTypeId: 'INVENTORY_SYS_JOB'
+      enumTypeId: 'INVENTORY_SYS_JOB',
+      webhookEnums: JSON.parse(process.env?.VUE_APP_WEBHOOK_ENUMS as string) as any,
     }
   },
   computed: {
@@ -108,14 +118,34 @@ export default defineComponent({
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
       currentEComStore: 'user/getCurrentEComStore',
       getTemporalExpr: 'job/getTemporalExpr',
-      getMoreJobs: 'job/getMoreJobs'
+      getMoreJobs: 'job/getMoreJobs',
+      getCachedWebhook: 'webhook/getCachedWebhook',
     }),
     bopisCorrections(): boolean {
       const status = this.getJobStatus(this.jobEnums["BOPIS_CORRECTION"]);
       return status && status !== "SERVICE_DRAFT";
+    },
+    isInventoryLevelUpdated (): boolean {
+      const webhookTopic = this.webhookEnums['INVENTORY_LEVEL_UPDATE']
+      return this.getCachedWebhook[webhookTopic]
     }
   },
   methods: {
+    async updateWebhook(checked: boolean, enumId: string) {
+      const webhook = this.getCachedWebhook[this.webhookEnums[enumId]]
+
+      // TODO: added this condition to not call the api when the value of the select automatically changes
+      // need to handle this properly
+      if ((checked && webhook) || (!checked && !webhook)) {
+        return;
+      }
+
+      if (checked) {
+        await this.store.dispatch('webhook/subscribeWebhook', enumId)
+      } else {
+        await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhook?.id, shopifyConfigId: this.currentShopifyConfig.shopifyConfigId })
+      }
+    },
     async updateJob(checked: boolean, id: string, status="EVERY_15_MIN") {
       const job = this.getJob(id);
 
