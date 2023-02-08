@@ -10,7 +10,7 @@
       <ion-item>
         <ion-icon slot="start" :icon="calendarClearOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Last run") }}</ion-label>
-        <ion-label class="ion-text-wrap" slot="end">{{ currentJob?.lastUpdatedStamp ? getTime(currentJob?.lastUpdatedStamp) : $t('No previous occurrence') }}</ion-label>
+        <ion-label class="ion-text-wrap" slot="end">{{ previousOccurence ? getTime(previousOccurence) : $t('No previous occurrence') }}</ion-label>
       </ion-item>
 
       <ion-item>
@@ -44,7 +44,7 @@
       <ion-item>
         <ion-icon slot="start" :icon="calendarClearOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Last run") }}</ion-label>
-        <ion-label slot="end">{{ currentJob?.lastUpdatedStamp ? getTime(currentJob?.lastUpdatedStamp) : $t('No previous occurrence') }}</ion-label>
+        <ion-label slot="end">{{ previousOccurence ? getTime(previousOccurence) : $t('No previous occurrence') }}</ion-label>
       </ion-item>
 
       <ion-item button>
@@ -124,6 +124,7 @@ import { translate } from "@/i18n";
 import { DateTime } from 'luxon';
 import { handleDateTimeInput,isFutureDate, showToast } from '@/utils';
 import { Actions, hasPermission } from '@/authorization'
+import { JobService } from "@/services/JobService";
 
 export default defineComponent({
   name: "InitialJobConfiguration",
@@ -142,6 +143,7 @@ export default defineComponent({
   },
   data() {
     return {
+      previousOccurence: '',
       isOpen: false,
       lastShopifyOrderId: this.shopifyOrderId,
       minDateTime: DateTime.now().toISO(),
@@ -150,7 +152,8 @@ export default defineComponent({
     }
   },
   mounted() {
-    this.runTime = this.currentJob?.runTime 
+    this.runTime = this.currentJob?.runTime
+    this.fetchPreviousOccurrence();
   },
   props: ['type', 'shopifyOrderId'],
   computed: {
@@ -159,6 +162,11 @@ export default defineComponent({
     })
   },
   methods: {
+    async fetchPreviousOccurrence() {
+      this.previousOccurence = await JobService.fetchJobPreviousOccurence({
+        systemJobEnumId: this.currentJob?.systemJobEnumId
+      })
+    },
     async runJob(header: string) {
       const alert = await alertController
         .create({
