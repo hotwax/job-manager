@@ -345,7 +345,6 @@ const actions: ActionTree<JobState, RootState> = {
     // Earlier we were having ORing on status only, but now we want to add condition for shopId as well
     // Instead of complicating the query, we have made 2 separate call with status conditions and merged them
 
-
     // Fetching the draft jobs first
     const fetchJobRequests = [];
     let params = {
@@ -397,8 +396,11 @@ const actions: ActionTree<JobState, RootState> = {
     // If query is for single systemJobEnumId only update it 
     if (typeof payload.inputFields.systemJobEnumId === "string" && batchJobEnumIds.includes(payload.inputFields.systemJobEnumId)) {
       batchJobEnumIds = [ payload.inputFields.systemJobEnumId ];
-    } else if (typeof payload.inputFields.systemJobEnumId === "object") {
+    } else if (payload.inputFields.systemJobEnumId && typeof payload.inputFields.systemJobEnumId === "object") {
       batchJobEnumIds = batchJobEnumIds.filter((batchJobEnumId: any) => payload.inputFields.systemJobEnumId.includes(batchJobEnumId));
+    } else {
+      // If we are not explicitly getting the batch jobs skip updating it in cache
+      batchJobEnumIds = [];
     }
     batchJobEnumIds.map((batchBrokeringJobEnum: any) => {
       cached[batchBrokeringJobEnum] = responseJobs.filter((job: any) => job.systemJobEnumId === batchBrokeringJobEnum).reduce((batchBrokeringJobs: any, job: any) => {

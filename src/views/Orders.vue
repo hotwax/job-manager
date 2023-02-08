@@ -456,19 +456,19 @@ export default defineComponent({
         });
       return jobAlert.present();
     },
-    fetchJobs(){
-      this.store.dispatch("job/fetchJobs", {
+    async fetchJobs(){
+      this.store.dispatch('webhook/fetchWebhooks')
+      await this.store.dispatch("job/fetchJobs", {
         "inputFields": {
           "enumTypeId": "ORDER_SYS_JOB"
         }
       });
-      this.store.dispatch("job/fetchJobs", {
+      await this.store.dispatch("job/fetchJobs", {
         "inputFields": {
           "systemJobEnumId": Object.values(this.batchJobEnums).map((jobEnum: any) => jobEnum.id),
           "systemJobEnumId_op": "in"
         }
       });
-      this.store.dispatch('webhook/fetchWebhooks')
       if (this.currentEComStore.productStoreId) {
         this.getAutoCancelDays();
       }
