@@ -1,4 +1,4 @@
-import api from '@/api'
+import { api } from '@/adapter';
 import { showToast } from '@/utils';
 import { translate } from "@/i18n";
 import store from '@/store';

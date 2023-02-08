@@ -7,6 +7,7 @@ import { hasError, showToast } from '@/utils'
 import { translate } from '@/i18n'
 import { Settings } from 'luxon'
 import { getServerPermissionsFromRules, prepareAppPermissions, resetPermissions, setPermissions } from '@/authorization'
+import { updateInstanceUrl, updateToken, resetConfig } from '@/adapter'
 
 import logger from "@/logger";
 
@@ -102,7 +103,7 @@ const actions: ActionTree<UserState, RootState> = {
       commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, currentShopifyConfig);
       commit(types.USER_PERMISSIONS_UPDATED, appPermissions);
       commit(types.USER_TOKEN_CHANGED, { newToken: token })
-
+      updateToken(resp.data.token)
       // Getting service status description
       // TODO check if we could move it to logic for fetching jobs
       this.dispatch('util/getServiceStatusDesc')
@@ -129,6 +130,7 @@ const actions: ActionTree<UserState, RootState> = {
     // TODO add any other tasks if need
     dispatch('job/clearJobState', null, { root: true });
     commit(types.USER_END_SESSION)
+    resetConfig();
     resetPermissions();
   },
 
@@ -170,6 +172,7 @@ const actions: ActionTree<UserState, RootState> = {
    */
   setUserInstanceUrl ({ commit }, payload){
     commit(types.USER_INSTANCE_URL_UPDATED, payload)
+    updateInstanceUrl(payload)
   },
 
 

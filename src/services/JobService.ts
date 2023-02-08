@@ -1,6 +1,6 @@
-import api from '@/api'
 import { hasError } from '@/utils'
 import store from '@/store';
+import { api } from '@/adapter';
 
 const fetchJobInformation = async (payload: any): Promise <any>  => {
   return api({
