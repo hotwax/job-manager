@@ -153,7 +153,8 @@ export default defineComponent({
   },
   mounted() {
     this.runTime = this.currentJob?.runTime
-    this.fetchPreviousOccurrence();
+    // Component is mounted even if there is no current job, do fetch previous occurrence if no current job
+    if (this.currentJob && Object.keys(this.currentJob).length) this.fetchPreviousOccurrence();
   },
   props: ['type', 'shopifyOrderId'],
   computed: {
