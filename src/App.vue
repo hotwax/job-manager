@@ -15,6 +15,9 @@ import { loadingController } from '@ionic/vue';
 import { mapGetters, useStore } from 'vuex';
 import emitter from "@/event-bus"
 import { Settings } from 'luxon'
+import { init, resetConfig } from '@/adapter'
+import { useRouter } from 'vue-router';
+
 export default defineComponent({
   name: 'App',
   components: {
@@ -25,12 +28,16 @@ export default defineComponent({
   },
   data() {
     return {
-      loader: null as any
+      loader: null as any,
+      maxAge: process.env.VUE_APP_CACHE_MAX_AGE ? parseInt(process.env.VUE_APP_CACHE_MAX_AGE) : 0
     }
   },
   computed: {
     ...mapGetters({
       userProfile: 'user/getUserProfile',
+      userToken: 'user/getUserToken',
+      instanceUrl: 'user/getInstanceUrl'
+
     })
   },
   methods: {
@@ -73,6 +80,10 @@ export default defineComponent({
       createAnimation()
         .addAnimation([gapAnimation, revealAnimation])
         .play();
+    },
+    async unauthorized() {
+      this.store.dispatch("user/logout");
+      this.router.push("/login")
     }
   },
   async mounted() {
@@ -85,6 +96,8 @@ export default defineComponent({
     emitter.on('presentLoader', this.presentLoader);
     emitter.on('dismissLoader', this.dismissLoader);
     emitter.on('playAnimation', this.playAnimation);
+    emitter.on('unauthorized', this.unauthorized);
+    init(this.userToken, this.instanceUrl, this.maxAge)
     // Handles case when user resumes or reloads the app
     if (this.userProfile) {
       // Luxon timezone should be set with the user's selected timezone
@@ -95,11 +108,15 @@ export default defineComponent({
     emitter.off('presentLoader', this.presentLoader);
     emitter.off('dismissLoader', this.dismissLoader);
     emitter.off('playAnimation', this.playAnimation);
+    emitter.off('unauthorized', this.unauthorized);
+    resetConfig()
   },
   setup(){
     const store = useStore();
+    const router = useRouter();
     return {
       store,
+      router
     }
   },
 });
