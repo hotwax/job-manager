@@ -16,7 +16,7 @@
       <p>{{ $t("Searched jobs will appear here") }}</p>
     </div>    
 
-    <div v-else-if="jobs.length === 0 && queryString.length != 0" class="ion-text-center">
+    <div v-else-if="jobs.length === 0" class="ion-text-center">
       <p>{{ $t("No jobs found") }}</p>
     </div>
     
@@ -96,9 +96,7 @@ export default defineComponent({
   methods: {
     async search(event: any) {
       this.queryString = event.target.value.trim();
-      if(this.queryString.length > 0) {
-        this.getJobs();
-      }
+      if(this.queryString) this.getJobs();
     },
     async getJobs(vSize?: any, vIndex?: any) {
       const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
