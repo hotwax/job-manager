@@ -10,9 +10,13 @@
     </ion-toolbar>
   </ion-header>
   <ion-content>
-    <ion-searchbar v-model="queryString" :placeholder="$t('Search jobs')" @keyup.enter="search($event)" />
+    <ion-searchbar :placeholder="$t('Search jobs')" @keyup.enter="search($event)" />
 
-    <div v-if="jobs.length === 0" class="ion-text-center">
+    <div v-if="queryString.length === 0" class="ion-text-center">
+      <p>{{ $t("Searched jobs will appear here") }}</p>
+    </div>    
+
+    <div v-else-if="jobs.length === 0" class="ion-text-center">
       <p>{{ $t("No jobs found") }}</p>
     </div>
     
@@ -80,7 +84,7 @@ export default defineComponent({
       queryString: '',
       jobs: [] as any,
       isScrollable: true,
-      jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
+      jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any
     }
   },
   computed: {
@@ -92,7 +96,7 @@ export default defineComponent({
   methods: {
     async search(event: any) {
       this.queryString = event.target.value.trim();
-      if(this.queryString.length > 0) this.getJobs();
+      if(this.queryString) this.getJobs();
     },
     async getJobs(vSize?: any, vIndex?: any) {
       const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
