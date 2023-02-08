@@ -72,7 +72,8 @@ import { defineComponent } from 'vue';
 import { closeOutline, checkmarkDoneOutline } from 'ionicons/icons';
 import { mapGetters, useStore } from 'vuex';
 import { DateTime } from 'luxon';
-import { handleDateTimeInput, isFutureDate } from '@/utils';
+import { handleDateTimeInput, isFutureDate, showToast } from '@/utils';
+import { translate } from '@/i18n'
 export default defineComponent({
   name: 'BatchModal',
   components: {
@@ -143,6 +144,7 @@ export default defineComponent({
       const job = this.currentBatch ? this.currentBatch : this.getJob(batchJobEnum)?.find((job: any) => job.status === 'SERVICE_DRAFT');
 
       if (!job) {
+        showToast(translate('Configuration missing'))
         return;
       }
 
