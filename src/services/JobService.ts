@@ -66,10 +66,10 @@ const cancelJob = async (payload: any): Promise <any> => {
 }
 const fetchJobPreviousOccurence = async (payload: any): Promise <any>  => {
   try {
-    let params = {
+    const params = {
       "inputFields": {
         "systemJobEnumId": payload.systemJobEnumId,
-        "statusId": ["SERVICE_RUNNING", "SERVICE_QUEUED", "SERVICE_DRAFT"],
+        "statusId": ["SERVICE_DRAFT","SERVICE_PENDING","SERVICE_RUNNING", "SERVICE_QUEUED"],
         "statusId_op": "not-in"
       } as any,
       "fieldList": [ "systemJobEnumId", "runTime"],
