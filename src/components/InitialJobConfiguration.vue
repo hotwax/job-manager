@@ -10,7 +10,7 @@
       <ion-item>
         <ion-icon slot="start" :icon="calendarClearOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Last run") }}</ion-label>
-        <ion-label class="ion-text-wrap" slot="end">{{ currentJob?.lastUpdatedStamp ? getTime(currentJob?.lastUpdatedStamp) : $t('No previous occurrence') }}</ion-label>
+        <ion-label class="ion-text-wrap" slot="end">{{ previousOccurrence ? getTime(previousOccurrence) : $t('No previous occurrence') }}</ion-label>
       </ion-item>
 
       <ion-item>
@@ -23,7 +23,7 @@
               show-default-buttons
               hour-cycle="h23"
               :value="runTime ? getDateTime(runTime) : ''"
-              @ionChange="updateRunTime($event, currentJob)"
+              @ionChange="updateRunTime($event)"
             />
           </ion-content>
         </ion-modal>
@@ -44,21 +44,20 @@
       <ion-item>
         <ion-icon slot="start" :icon="calendarClearOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Last run") }}</ion-label>
-        <ion-label slot="end">{{ currentJob?.lastUpdatedStamp ? getTime(currentJob?.lastUpdatedStamp) : $t('No previous occurrence') }}</ion-label>
+        <ion-label slot="end">{{ previousOccurrence ? getTime(previousOccurrence) : $t('No previous occurrence') }}</ion-label>
       </ion-item>
 
       <ion-item button>
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
-        <ion-label @click="() => isOpen = true" slot="end">{{ currentJob?.runTime ? getTime(currentJob.runTime) : $t('Select run time') }}</ion-label>
+        <ion-label @click="() => isOpen = true" slot="end">{{ runTime ? getTime(runTime) : $t('Select run time') }}</ion-label>
         <ion-modal class="date-time-modal" :is-open="isOpen" @didDismiss="() => isOpen = false">
           <ion-content force-overscroll="false">
             <ion-datetime          
               show-default-buttons
               hour-cycle="h12"
-              :min="minDateTime"
-              :value="currentJob?.runTime ? getDateTime(currentJob?.runTime) : ''"
-              @ionChange="updateRunTime($event, currentJob)"
+              :value="runTime ? getDateTime(runTime) : ''"
+              @ionChange="updateRunTime($event)"
             />
           </ion-content>
         </ion-modal>
@@ -93,7 +92,7 @@
       </ion-item>
     </ion-list>
 
-    <ion-button size="small" fill="outline" expand="block" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || !lastShopifyOrderId" @click="runJob('Orders')">{{ $t("Run import") }}</ion-button>
+    <ion-button size="small" fill="outline" expand="block" :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" @click="runJob('Orders')">{{ $t("Run import") }}</ion-button>
   </section>
 </template>
 
@@ -124,6 +123,7 @@ import { translate } from "@/i18n";
 import { DateTime } from 'luxon';
 import { handleDateTimeInput,isFutureDate, showToast } from '@/utils';
 import { Actions, hasPermission } from '@/authorization'
+import { JobService } from "@/services/JobService";
 
 export default defineComponent({
   name: "InitialJobConfiguration",
@@ -142,6 +142,7 @@ export default defineComponent({
   },
   data() {
     return {
+      previousOccurrence: '',
       isOpen: false,
       lastShopifyOrderId: this.shopifyOrderId,
       minDateTime: DateTime.now().toISO(),
@@ -150,7 +151,8 @@ export default defineComponent({
     }
   },
   mounted() {
-    this.runTime = this.currentJob?.runTime 
+    // Component is mounted even if there is no current job, do fetch previous occurrence if no current job
+    if (this.currentJob && Object.keys(this.currentJob).length) this.fetchPreviousOccurrence();
   },
   props: ['type', 'shopifyOrderId'],
   computed: {
@@ -159,6 +161,11 @@ export default defineComponent({
     })
   },
   methods: {
+    async fetchPreviousOccurrence() {
+      this.previousOccurrence = await JobService.fetchJobPreviousOccurrence({
+        systemJobEnumId: this.currentJob?.systemJobEnumId
+      })
+    },
     async runJob(header: string) {
       const alert = await alertController
         .create({
@@ -182,10 +189,6 @@ export default defineComponent({
     },
     async updateJob() {
       const job = this.currentJob;
-
-      if(!job) {
-        return;
-      }
 
       job['sinceId'] = this.lastShopifyOrderId
       job['jobStatus'] = job.tempExprId
@@ -212,16 +215,13 @@ export default defineComponent({
       const timeDiff = DateTime.fromMillis(time).diff(DateTime.local());
       return DateTime.local().plus(timeDiff).toRelative();
     },
-    updateRunTime(ev: CustomEvent, job: any) {
-      if (job) {
-        const currTime = DateTime.now().toMillis();
-        const setTime = handleDateTimeInput(ev['detail'].value);
-        
-        if(setTime > currTime) {
-          this.runTime = setTime;
-        } else {
-          showToast(translate("Provide a future date and time"))
-        }
+    updateRunTime(ev: CustomEvent) {
+      const currTime = DateTime.now().toMillis();
+      const setTime = handleDateTimeInput(ev['detail'].value);
+      if(setTime > currTime) {
+        this.runTime = setTime;
+      } else {
+        showToast(translate("Provide a future date and time"))
       }
     }
   },
