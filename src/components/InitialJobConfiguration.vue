@@ -10,7 +10,7 @@
       <ion-item>
         <ion-icon slot="start" :icon="calendarClearOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Last run") }}</ion-label>
-        <ion-label class="ion-text-wrap" slot="end">{{ previousOccurence ? getTime(previousOccurence) : $t('No previous occurrence') }}</ion-label>
+        <ion-label class="ion-text-wrap" slot="end">{{ previousOccurrence ? getTime(previousOccurrence) : $t('No previous occurrence') }}</ion-label>
       </ion-item>
 
       <ion-item>
@@ -44,7 +44,7 @@
       <ion-item>
         <ion-icon slot="start" :icon="calendarClearOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Last run") }}</ion-label>
-        <ion-label slot="end">{{ previousOccurence ? getTime(previousOccurence) : $t('No previous occurrence') }}</ion-label>
+        <ion-label slot="end">{{ previousOccurrence ? getTime(previousOccurrence) : $t('No previous occurrence') }}</ion-label>
       </ion-item>
 
       <ion-item button>
@@ -142,7 +142,7 @@ export default defineComponent({
   },
   data() {
     return {
-      previousOccurence: '',
+      previousOccurrence: '',
       isOpen: false,
       lastShopifyOrderId: this.shopifyOrderId,
       minDateTime: DateTime.now().toISO(),
@@ -162,7 +162,7 @@ export default defineComponent({
   },
   methods: {
     async fetchPreviousOccurrence() {
-      this.previousOccurence = await JobService.fetchJobPreviousOccurence({
+      this.previousOccurrence = await JobService.fetchJobPreviousOccurrence({
         systemJobEnumId: this.currentJob?.systemJobEnumId
       })
     },

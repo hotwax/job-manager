@@ -64,7 +64,7 @@ const cancelJob = async (payload: any): Promise <any> => {
     data: payload
   });
 }
-const fetchJobPreviousOccurence = async (payload: any): Promise <any>  => {
+const fetchJobPreviousOccurrence = async (payload: any): Promise <any>  => {
   try {
     const params = {
       "inputFields": {
@@ -112,7 +112,7 @@ const fetchJobPreviousOccurence = async (payload: any): Promise <any>  => {
 export const JobService = {
   fetchJobDescription,
   fetchJobInformation,
-  fetchJobPreviousOccurence,
+  fetchJobPreviousOccurrence,
   fetchTemporalExpression,
   updateJob,
   scheduleJob,
