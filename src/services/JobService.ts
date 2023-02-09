@@ -66,16 +66,11 @@ const cancelJob = async (payload: any): Promise <any> => {
 }
 const fetchJobPreviousOccurence = async (payload: any): Promise <any>  => {
   try {
-    const params = {
+    let params = {
       "inputFields": {
         "systemJobEnumId": payload.systemJobEnumId,
         "statusId": ["SERVICE_RUNNING", "SERVICE_QUEUED", "SERVICE_DRAFT"],
-        "statusId_op": "not-in",
-        "shopId_fld0_value": store.state.user.currentShopifyConfig?.shopId,
-        "shopId_fld0_grp": "1",
-        "shopId_fld0_op": "equals",
-        "shopId_fld1_grp": "2",
-        "shopId_fld1_op": "empty"
+        "statusId_op": "not-in"
       } as any,
       "fieldList": [ "systemJobEnumId", "runTime"],
       "noConditionFind": "Y",
@@ -84,7 +79,15 @@ const fetchJobPreviousOccurence = async (payload: any): Promise <any>  => {
       "orderBy": "runTime DESC"
     }
     if (store.state.user.currentEComStore?.productStoreId) {
-      params.inputFields["productStoreId"] = store.state.user.currentEComStore?.productStoreId
+      params.inputFields = {
+        ...params.inputFields,
+        "productStoreId": store.state.user.currentEComStore?.productStoreId,
+        "shopId_fld0_value": store.state.user.currentShopifyConfig?.shopId,
+        "shopId_fld0_grp": "1",
+        "shopId_fld0_op": "equals",
+        "shopId_fld1_grp": "2",
+        "shopId_fld1_op": "empty"
+      }
     } else {
       params.inputFields["productStoreId_op"] = "empty"
     }
