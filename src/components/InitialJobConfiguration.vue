@@ -23,7 +23,7 @@
               show-default-buttons
               hour-cycle="h23"
               :value="runTime ? getDateTime(runTime) : ''"
-              @ionChange="updateRunTime($event, currentJob)"
+              @ionChange="updateRunTime($event)"
             />
           </ion-content>
         </ion-modal>
@@ -50,15 +50,14 @@
       <ion-item button>
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
-        <ion-label @click="() => isOpen = true" slot="end">{{ currentJob?.runTime ? getTime(currentJob.runTime) : $t('Select run time') }}</ion-label>
+        <ion-label @click="() => isOpen = true" slot="end">{{ runTime ? getTime(runTime) : $t('Select run time') }}</ion-label>
         <ion-modal class="date-time-modal" :is-open="isOpen" @didDismiss="() => isOpen = false">
           <ion-content force-overscroll="false">
             <ion-datetime          
               show-default-buttons
               hour-cycle="h12"
-              :min="minDateTime"
-              :value="currentJob?.runTime ? getDateTime(currentJob?.runTime) : ''"
-              @ionChange="updateRunTime($event, currentJob)"
+              :value="runTime ? getDateTime(runTime) : ''"
+              @ionChange="updateRunTime($event)"
             />
           </ion-content>
         </ion-modal>
@@ -152,7 +151,6 @@ export default defineComponent({
     }
   },
   mounted() {
-    this.runTime = this.currentJob?.runTime
     // Component is mounted even if there is no current job, do fetch previous occurrence if no current job
     if (this.currentJob && Object.keys(this.currentJob).length) this.fetchPreviousOccurrence();
   },
@@ -192,10 +190,6 @@ export default defineComponent({
     async updateJob() {
       const job = this.currentJob;
 
-      if(!job) {
-        return;
-      }
-
       job['sinceId'] = this.lastShopifyOrderId
       job['jobStatus'] = job.tempExprId
       job.runTime = this.runTime;
@@ -221,16 +215,13 @@ export default defineComponent({
       const timeDiff = DateTime.fromMillis(time).diff(DateTime.local());
       return DateTime.local().plus(timeDiff).toRelative();
     },
-    updateRunTime(ev: CustomEvent, job: any) {
-      if (job) {
-        const currTime = DateTime.now().toMillis();
-        const setTime = handleDateTimeInput(ev['detail'].value);
-        
-        if(setTime > currTime) {
-          this.runTime = setTime;
-        } else {
-          showToast(translate("Provide a future date and time"))
-        }
+    updateRunTime(ev: CustomEvent) {
+      const currTime = DateTime.now().toMillis();
+      const setTime = handleDateTimeInput(ev['detail'].value);
+      if(setTime > currTime) {
+        this.runTime = setTime;
+      } else {
+        showToast(translate("Provide a future date and time"))
       }
     }
   },

@@ -175,6 +175,11 @@ export default defineComponent({
       this.currentSelectedJobModal = label;
       this.job = this.getJob(id);
 
+      if (!this.job) {
+        showToast(translate('Configuration missing'))
+        return;
+      }
+
       if(this.job?.runtimeData?.sinceId?.length >= 0) {
         this.lastShopifyOrderId = this.job.runtimeData.sinceId !== 'null' ? this.job.runtimeData.sinceId : ''
       }

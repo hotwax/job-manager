@@ -28,7 +28,7 @@
               show-default-buttons
               hour-cycle="h23"
               :value="runTime ? getDateTime(runTime) : ''"
-              @ionChange="updateRunTime($event, currentJob)"
+              @ionChange="updateRunTime($event)"
             />
           </ion-content>
         </ion-modal>
@@ -328,16 +328,13 @@ export default defineComponent({
       const timeDiff = DateTime.fromMillis(time).diff(DateTime.local());
       return DateTime.local().plus(timeDiff).toRelative();
     },
-    updateRunTime(ev: CustomEvent, job: any) {
-      if (job) {
-        const currTime = DateTime.now().toMillis();
-        const setTime = handleDateTimeInput(ev['detail'].value);
-        
-        if(setTime > currTime) {
-          this.runTime = setTime;
-        } else {
-          showToast(translate("Provide a future date and time"))
-        }
+    updateRunTime(ev: CustomEvent) {
+      const currTime = DateTime.now().toMillis();
+      const setTime = handleDateTimeInput(ev['detail'].value);
+      if(setTime > currTime) {
+        this.runTime = setTime;
+      } else {
+        showToast(translate("Provide a future date and time"))
       }
     },
     async viewJobHistory(job: any) {
