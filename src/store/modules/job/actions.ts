@@ -470,7 +470,7 @@ const actions: ActionTree<JobState, RootState> = {
             'systemJobEnumId_op': 'equals'
           }
         })
-        const fetchJobsResponse = jobs.find((job: any) => job?.jobId === payload.jobId);
+        const fetchJobsResponse = jobs.find((job: any) => job?.data.docs[0].jobId === payload.jobId);
         if(fetchJobsResponse.status === 200 && !hasError(fetchJobsResponse) && fetchJobsResponse.data?.docs.length) {
           // We are using status field everywhere so whenever we fetch job again status field needs to be updated
           // TODO Check why status field is used instead of statusId
