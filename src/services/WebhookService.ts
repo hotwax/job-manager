@@ -51,9 +51,6 @@ const webhookParameters = {
 } as any
 
 const subscribeWebhook = async (payload: any, id: string): Promise <any> => {
-  let baseURL = store.getters['user/getInstanceUrl'];
-  baseURL = baseURL && baseURL.startsWith('http') ? baseURL.replace('api/', "") : `https://${baseURL}.hotwax.io/`;
-
   const webhookParameter = webhookParameters[id]
   const topic = webhookParameter.topic;
   const endpoint = webhookParameter.endpoint;
@@ -62,7 +59,7 @@ const subscribeWebhook = async (payload: any, id: string): Promise <any> => {
     return;
   }
   payload['topic'] = topic;
-  payload['endpoint'] = baseURL + 'shopify/' + endpoint;
+  payload['endpoint'] = endpoint;
 
   return api ({
     url: 'service/subscribeShopifyWebhook',
