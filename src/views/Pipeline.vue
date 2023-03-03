@@ -395,7 +395,7 @@ export default defineComponent({
       this.segmentSelected === 'pending' ? this.getPendingJobs():
       this.segmentSelected === 'running' ? this.getRunningJobs():
       this.getJobHistory();
-  },
+    },
     getJobExecutionTime(startTime: any, endTime: any){
       if (startTime && endTime) {
         const timeDiff = DateTime.fromMillis(endTime).diff( DateTime.fromMillis(startTime))
