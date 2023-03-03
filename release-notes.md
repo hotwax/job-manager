@@ -1,3 +1,17 @@
+# Release 2.1.0
+
+## What's Changed
+* Added support to subscribe to INVENTORY_LEVEL_UPDATE webhook (#85zrmekh7) by @k2maan in https://github.com/hotwax/job-manager/pull/372
+* Fixed: Save button while creating a batch for broker order service does not work (#373) by @adityasharma7 in https://github.com/hotwax/job-manager/pull/375
+* Fixed: search jobs modal showing 'no jobs found' without searching any job (#85zrmar8z) by @k2maan in https://github.com/hotwax/job-manager/pull/364
+* Implemented: support for using api and client methods from OMS api package (#85zrm1ktj) by @k2maan in https://github.com/hotwax/job-manager/pull/374
+* Fixed: Last run doesn't shows previous occurrences for jobs of Initial load page (#303) by @adityasharma7 in https://github.com/hotwax/job-manager/pull/376
+* Fixed: issue of webhook not working after successful subscription(#85zrpqhmn) by @ymaheshwari1 in https://github.com/hotwax/job-manager/pull/395
+* Fixed: navigation to login failed for token expire (oms-api#61) by @adityasharma7 in https://github.com/hotwax/job-manager/pull/396
+
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v2.0.0...v2.1.0
+
 # Release 2.0.0
 
 ## What's Changed
