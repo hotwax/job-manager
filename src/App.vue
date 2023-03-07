@@ -15,7 +15,7 @@ import { loadingController } from '@ionic/vue';
 import { mapGetters, useStore } from 'vuex';
 import emitter from "@/event-bus"
 import { Settings } from 'luxon'
-import { init, resetConfig } from '@/adapter'
+import { initialise, resetConfig } from '@/adapter'
 import { useRouter } from 'vue-router';
 
 export default defineComponent({
@@ -86,7 +86,20 @@ export default defineComponent({
     }
   },
   created() {
-    init(this.userToken, this.instanceUrl, this.maxAge)
+    initialise({
+      token: this.userToken,
+      instanceUrl: this.instanceUrl,
+      cacheMaxAge: this.maxAge,
+      events: {
+        unauthorised: this.unauthorized,
+        responseErrror: () => {
+          setTimeout(() => this.dismissLoader(), 100);
+        },
+        queueTask: (payload: any) => {
+          emitter.emit("queueTask", payload);
+        }
+      }
+    })
   },
   async mounted() {
     this.loader = await loadingController
@@ -98,7 +111,6 @@ export default defineComponent({
     emitter.on('presentLoader', this.presentLoader);
     emitter.on('dismissLoader', this.dismissLoader);
     emitter.on('playAnimation', this.playAnimation);
-    emitter.on('unauthorized', this.unauthorized);
     // Handles case when user resumes or reloads the app
     if (this.userProfile) {
       // Luxon timezone should be set with the user's selected timezone
@@ -109,7 +121,6 @@ export default defineComponent({
     emitter.off('presentLoader', this.presentLoader);
     emitter.off('dismissLoader', this.dismissLoader);
     emitter.off('playAnimation', this.playAnimation);
-    emitter.off('unauthorized', this.unauthorized);
     resetConfig()
   },
   setup(){

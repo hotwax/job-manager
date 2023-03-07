@@ -25,7 +25,7 @@ const getters: GetterTree <JobState, RootState> = {
       return state.temporalExp[id];
     },
     getJob: (state) => (id: string): any => {
-      return state.cached[id]
+      return state.cached[id];
     },
     getEnumDescription: (state) => (id: string): any => {
       return state.enumIds[id]?.description;
