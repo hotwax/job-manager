@@ -536,7 +536,6 @@ const actions: ActionTree<JobState, RootState> = {
           },
           orderBy: "runTime ASC"
         })
-        // TODO 
         const fetchJobsResponse = fetchJobsResponses.find((fetchJobsResponse: any) => {
           return !hasError(fetchJobsResponse) && 
               fetchJobsResponse.data?.docs?.length && 
