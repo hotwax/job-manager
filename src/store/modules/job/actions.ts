@@ -426,7 +426,7 @@ const actions: ActionTree<JobState, RootState> = {
         status: job.statusId
       }
       return cached;
-    }, cached)  
+    }, cached)
 
     responseJobs.filter((job: any) => job.statusId === 'SERVICE_DRAFT').map((job: any) => {
       delete job.runTime;
@@ -529,18 +529,21 @@ const actions: ActionTree<JobState, RootState> = {
       resp = await JobService.scheduleJob({ ...job.runtimeData, ...payload });
       if (resp.status == 200 && !hasError(resp)) {
         showToast(translate('Service has been scheduled'));
-        const jobs = await dispatch('fetchJobs', {
+        const fetchJobsResponses = await dispatch('fetchJobs', {
           inputFields: {
             'systemJobEnumId': payload.systemJobEnumId,
             'systemJobEnumId_op': 'equals',
-            'statusId': "SERVICE_PENDING",
-            'statusId_op': 'equals'
           },
           orderBy: "runTime ASC"
         })
-        const fetchJobsResponse = jobs[0];
-        if(fetchJobsResponse.status === 200 && !hasError(fetchJobsResponse) && fetchJobsResponse.data?.docs?.length) {
-          commit(types.JOB_CURRENT_UPDATED, fetchJobsResponse.data?.docs[0]);
+        // TODO 
+        const fetchJobsResponse = fetchJobsResponses.find((fetchJobsResponse: any) => {
+          return !hasError(fetchJobsResponse) && 
+              fetchJobsResponse.data?.docs?.length && 
+              fetchJobsResponse.data?.docs[0].statusId == "SERVICE_PENDING";
+        });
+        if(fetchJobsResponse) {
+          commit(types.JOB_CURRENT_UPDATED, fetchJobsResponse.data.docs[0]);
           return job;
         }
       } else {
@@ -586,23 +589,24 @@ const actions: ActionTree<JobState, RootState> = {
     } as any
 
     const resp = await JobService.updateJob(payload)
-    // Fetch and update current only when there is object in current
-    // Skip job can be performed from pipeline page too causing side effects
-    if (state.current && Object.keys(state.current).length) {
-    let jobs = await dispatch('fetchJobs', {
+    const fetchJobsResponses = await dispatch('fetchJobs', {
       inputFields: {
         'systemJobEnumId': payload.systemJobEnumId,
         'systemJobEnumId_op': 'equals'
       }
     })
-    if (jobs.status === 200 && !hasError(jobs) && jobs.data?.docs?.length) {
-      jobs = jobs.data?.docs;
+    // Fetch and update current only when there is object in current
+    // Skip job can be performed from pipeline page too causing side effects
+    if (state.current && Object.keys(state.current).length) {
+      const fetchJobsResponse = fetchJobsResponses.find((fetchJobsResponse: any) => {
+        return !hasError(fetchJobsResponse) && 
+            fetchJobsResponse.data?.docs?.length && 
+            fetchJobsResponse.data?.docs[0].statusId == "SERVICE_PENDING";
+      });
+      const jobs = fetchJobsResponse.data?.docs;
       const currentJob = jobs.find((currentJob: any) => currentJob?.jobId === job?.jobId);
       commit(types.JOB_CURRENT_UPDATED, currentJob);
     }
-    }
-    // This is done for batch jobs
-    commit(types.JOB_UPDATED, { job });
 
     return resp;
   },
@@ -671,32 +675,20 @@ const actions: ActionTree<JobState, RootState> = {
         jobId: job.jobId
       });
       if (resp.status == 200 && !hasError(resp)) {
-        // TODO: When we are trying to cancel the job from pipeline page those jobs are not in the cached state, so we need to
-        // handle this case because we were getting error :- "can not set status and statusId for pending jobs in cached state".
-        const cachedJob = state.cached[job?.systemJobEnumId]
-        if(cachedJob) {
-          cachedJob.statusId = 'SERVICE_DRAFT'
-          cachedJob.status = 'SERVICE_DRAFT'
-          // deleting the enum from cached job as we will not store the job with cancelled status
-          // TODO: remove the code to change the status to SERVICE_DRAFT after verifying the flow
-          delete state.cached[job?.systemJobEnumId]
 
-          commit(types.JOB_UPDATED, { cachedJob });
-        }
-
-        // Fetch and update current only when there is object in current
-        // Cancel job can be performed from pipeline page too causing side effects
-        if (state.current && Object.keys(state.current).length) {
-        const jobs = await dispatch('fetchJobs', {
+        const fetchJobsResponses = await dispatch('fetchJobs', {
           inputFields: {
             'systemJobEnumId': job.systemJobEnumId,
             'systemJobEnumId_op': 'equals'
           }
         })
-        const fetchJobsResponse = jobs[0];
-        if (fetchJobsResponse.status === 200 && !hasError(fetchJobsResponse) && fetchJobsResponse.data?.docs.length) {
-          commit(types.JOB_CURRENT_UPDATED, fetchJobsResponse);
-        }
+        // Fetch and update current only when there is object in current
+        // Cancel job can be performed from pipeline page too causing side effects
+        if (state.current && Object.keys(state.current).length) {  
+          const fetchJobsResponse = fetchJobsResponses[0];
+          if (fetchJobsResponse.status === 200 && !hasError(fetchJobsResponse) && fetchJobsResponse.data?.docs.length) {
+            commit(types.JOB_CURRENT_UPDATED, fetchJobsResponse);
+          }
         }
         showToast(translate('Service updated successfully'))
       } else {
