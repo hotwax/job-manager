@@ -6,12 +6,6 @@ const mutations: MutationTree <JobState> = {
     [types.JOB_UPDATED_BULK] (state, payload) {
         state.cached = payload
     },
-    [types.JOB_UPDATED] (state, payload) {
-        state.cached[payload.systemJobEnumId] = {
-            ...state.cached[payload.systemJobEnumId],
-            payload
-        }
-    },
     [types.JOB_PENDING_UPDATED] (state, payload) {
         state.pending.list = payload.jobs;
         state.pending.total = payload.total;
