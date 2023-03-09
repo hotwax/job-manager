@@ -464,17 +464,18 @@ const actions: ActionTree<JobState, RootState> = {
     try {
       resp = await JobService.updateJob(payload)
       if (resp.status === 200 && !hasError(resp) && resp.data.successMessage) {
-        const jobs = await dispatch('fetchJobs', {
+        const fetchJobResponses = await dispatch('fetchJobs', {
           inputFields: {
             'systemJobEnumId': payload.systemJobEnumId,
             'systemJobEnumId_op': 'equals'
           }
         })
-        const fetchJobsResponse = jobs.find((job: any) => job?.jobId === payload.jobId);
-        if(fetchJobsResponse.status === 200 && !hasError(fetchJobsResponse) && fetchJobsResponse.data?.docs.length) {
+        // As we are getting both draft and pending jobs in response, we are using find
+        const jobResponse = fetchJobResponses.find((response: any) => response.status === 200 && !hasError(response) && response.data?.docs.length && response.data.docs[0].jobId === payload.jobId);
+        if(jobResponse) {
           // We are using status field everywhere so whenever we fetch job again status field needs to be updated
           // TODO Check why status field is used instead of statusId
-          commit(types.JOB_CURRENT_UPDATED, fetchJobsResponse.data.docs[0]);
+          commit(types.JOB_CURRENT_UPDATED, jobResponse.data.docs[0]);
         }
         showToast(translate('Service updated successfully'))
       } else {
