@@ -1,3 +1,11 @@
+# Release 2.1.1
+
+## What's Changed
+* Fixed: Duplicate batch jobs visible when scheduling a new batch job (#393) by @adityasharma7 in https://github.com/hotwax/job-manager/pull/403
+* Fixed unexpected behaviour on performing multiple operations (update and skip) in configuration component one after the other (#85zrnt2um) by @k2maan in https://github.com/hotwax/job-manager/pull/386
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v2.1.0...v2.1.1
+
 # Release 2.1.0
 
 ## What's Changed
