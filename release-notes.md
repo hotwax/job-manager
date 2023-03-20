@@ -1,3 +1,10 @@
+# Release 2.1.2
+
+## What's Changed
+* Fixed: wrong product delete webhook status on products page (#405) by @adityasharma7 in https://github.com/hotwax/job-manager/pull/406
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v2.1.1...v2.1.2
+
 # Release 2.1.1
 
 ## What's Changed
