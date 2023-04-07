@@ -374,6 +374,7 @@ const actions: ActionTree<JobState, RootState> = {
     // Fetching pending jobs
     params.inputFields.statusId = "SERVICE_PENDING";
     params.inputFields.productStoreId = this.state.user.currentEComStore.productStoreId;
+    params.inputFields.tempExprId_op = "not-empty";
     fetchJobRequests.push(JobService.fetchJobInformation(params).catch((err) => {
       return err;
     }))
