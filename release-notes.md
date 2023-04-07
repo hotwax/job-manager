@@ -1,3 +1,12 @@
+# Release 2.1.3
+
+## What's Changed
+* Fixed: Run now functionality not working for already runnning job (#423) by @adityasharma7 in https://github.com/hotwax/job-manager/pull/425
+* Fixed: Temporal expression for the new scheduled jobs does not appear properly  (#424) by @adityasharma7 in https://github.com/hotwax/job-manager/pull/426
+
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v2.1.2...v2.1.3
+
 # Release 2.1.2
 
 ## What's Changed
