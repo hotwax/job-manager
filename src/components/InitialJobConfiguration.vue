@@ -200,7 +200,7 @@ export default defineComponent({
       }
 
       if (job?.statusId === 'SERVICE_DRAFT') {
-        this.store.dispatch('job/runServiceNow', job)
+        this.store.dispatch('job/scheduleService', job)
       } else if (job?.statusId === 'SERVICE_PENDING') {
         this.store.dispatch('job/updateJob', job)
       }
