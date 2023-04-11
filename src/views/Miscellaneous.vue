@@ -124,7 +124,7 @@ export default defineComponent({
 
       await this.store.dispatch('job/updateCurrentJob', { job: this.currentJob });
       if(!this.isDesktop && job?.jobId) {
-        this.router.push({name: 'JobDetails', params: { title: this.currentJobTitle, jobId: job?.jobId, category: "miscellaneous"}});
+        this.router.push({ name: 'JobDetails', params: { jobId: job?.jobId, category: "miscellaneous" } });
         return;
       }
 

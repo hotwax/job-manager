@@ -50,9 +50,9 @@ export default defineComponent({
   },
   methods: {
     async viewJobConfiguration(job: any) {
-      job.jobTitle = this.getEnumName(job.systemJobEnumId)
+      job.title = this.getEnumName(job.systemJobEnumId)
       job.status = job.statusId === 'SERVICE_DRAFT' ? 'SERVICE_DRAFT' : job.frequency;
-      emitter.emit('viewJobConfiguration', {jobId: job.jobId, jobTitle: job.jobTitle, status: job.status, job});
+      emitter.emit('viewJobConfiguration', { jobId: job.jobId, title: job.title, status: job.status, job });
     },
     getDate (runTime: any) {
       return DateTime.fromMillis(runTime).toLocaleString(DateTime.DATE_MED);

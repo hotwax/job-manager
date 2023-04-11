@@ -733,6 +733,7 @@ const actions: ActionTree<JobState, RootState> = {
           ...resp.data.docs[0],
           'status': resp.data.docs[0]?.statusId 
         }
+        if (currentJob.statusId === 'SERVICE_DRAFT') delete currentJob.runTime;
         commit(types.JOB_CURRENT_UPDATED, currentJob);
 
         const enumIds = resp.data.docs.map((item: any) => {

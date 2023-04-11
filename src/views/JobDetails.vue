@@ -84,12 +84,12 @@ export default defineComponent({
           this.store.dispatch('job/updateCurrentJob', { job });
         }
       } else if(this.jobCategory !== 'pipeline') {
-        this.title = this.$route.params.title ? this.$route.params.title : this.jobTitles[job?.systemJobEnumId];
+        this.title = this.jobTitles[job?.systemJobEnumId];
         this.title = this.title ? this.title : this.getEnumName(job.systemJobEnumId);
         const id = Object.keys(this.jobEnums).find((id: any) => this.jobEnums[id] === job.systemJobEnumId)
         this.freqType = id && this.jobFrequencyType[id];
       } else {
-        this.title = this.$route.params.title ? this.$route.params.title : this.getEnumName(job.systemJobEnumId);
+        this.title = this.getEnumName(job.systemJobEnumId);
         const id = Object.keys(this.jobEnums).find((id: any) => this.jobEnums[id] === job.systemJobEnumId)
         const jobFreqTypeId = (Object.keys(this.jobFrequencyType).find((enumId: any) => enumId === id)) as any;
         this.freqType = (id && jobFreqTypeId) && this.jobFrequencyType[jobFreqTypeId];
