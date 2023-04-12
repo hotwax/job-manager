@@ -1,3 +1,11 @@
+
+# Release 2.2.1
+## What's Changed
+* Fixed: wrong base user when getting shopify config for product store change by @adityasharma7 in https://github.com/hotwax/job-manager/pull/441
+
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v2.2.0...v2.2.1
+
 # Release 2.2.0
 
 ## What's Changed
