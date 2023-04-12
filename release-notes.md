@@ -1,3 +1,12 @@
+# Release 2.2.0
+
+## What's Changed
+* Fixed: redundant copy action (#428) by @adityasharma7 in https://github.com/hotwax/job-manager/pull/436
+* Improved: use scheduleService action instead of runServiceNow for Initial load job (#423) by @adityasharma7 in https://github.com/hotwax/job-manager/pull/437
+
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v2.1.3...v2.2.0
+
 # Release 2.1.3
 
 ## What's Changed
