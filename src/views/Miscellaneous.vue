@@ -97,7 +97,6 @@ export default defineComponent({
   data() {
     return {
       currentJob: '' as any,
-      currentJobTitle: '',
       currentJobStatus: '',
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
@@ -114,7 +113,6 @@ export default defineComponent({
   methods: {
     async viewJobConfiguration(job: any) {
       this.currentJob = job
-      this.currentJobTitle = job.jobName
       this.currentJobStatus = job.status
 
       // if job runTime is not a valid date then making runTime as empty

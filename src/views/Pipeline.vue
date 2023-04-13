@@ -347,7 +347,6 @@ export default defineComponent({
         ...JSON.parse(process.env?.VUE_APP_INV_JOB_ENUMS as string) as any,
         ...JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
       },
-      title: '',
       currentJobStatus: '',
       freqType: '' as any,
       isJobDetailAnimationCompleted: false,

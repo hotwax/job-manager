@@ -43,7 +43,6 @@ export default defineComponent({
   },
   data() {
     return {
-      title: '' as any,
       type: '' as any,
       freqType: '' as any,
       jobCategory: '' as any,

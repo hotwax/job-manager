@@ -23,7 +23,7 @@
                 <p>{{ $t("When using HotWax BOPIS, Shopify isn't aware of the actual inventory consumed. HotWax will automatically restore inventory automatically reduced by Shopify and deduct inventory from the correct store to maintain inventory accuracy.") }}</p>
               </ion-label>
             </ion-item>
-            <ion-item button @click="viewJobConfiguration({ id: 'HARD_SYNC', title: 'Hard sync', status: getJobStatus(jobEnums['HARD_SYNC'])})" detail>
+            <ion-item button @click="viewJobConfiguration({ id: 'HARD_SYNC', status: getJobStatus(jobEnums['HARD_SYNC'])})" detail>
               <ion-label class="ion-text-wrap">{{ $t("Hard sync") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('HARD_SYNC') }}</ion-label>
             </ion-item>
@@ -102,7 +102,6 @@ export default defineComponent({
       jobEnums: JSON.parse(process.env?.VUE_APP_INV_JOB_ENUMS as string) as any,
       jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
       currentJob: '' as any,
-      title: 'Hard sync',
       currentJobStatus: '',
       freqType: '',
       isJobDetailAnimationCompleted: false,
