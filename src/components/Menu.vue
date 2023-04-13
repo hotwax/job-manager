@@ -83,7 +83,7 @@ import {
 } from "@ionic/vue";
 import { defineComponent, ref } from "vue";
 import { mapGetters } from "vuex";
-import { pulseOutline, calendarNumberOutline, terminalOutline, ticketOutline, albumsOutline, shirtOutline, settings, iceCreamOutline, libraryOutline } from "ionicons/icons";
+import { albumsOutline, barChartOutline, calendarNumberOutline, iceCreamOutline, libraryOutline, pulseOutline, settings, shirtOutline, terminalOutline, ticketOutline } from "ionicons/icons";
 import { useStore } from "@/store";
 import emitter from "@/event-bus"
 import { hasPermission } from "@/authorization";
@@ -213,6 +213,16 @@ export default defineComponent({
         }
       },
       {
+        title: "Reports",
+        url: "/reports",
+        iosIcon: barChartOutline,
+        mdIcon: barChartOutline,
+        dependsOnBaseURL: false,
+        meta: {
+          permissionId: "APP_REPORT_VIEW"
+        }
+      },
+      {
         title: "Miscellaneous",
         url: "/miscellaneous",
         iosIcon: libraryOutline,
@@ -250,19 +260,20 @@ export default defineComponent({
       appPages = appPages.filter((page) => page.dependsOnBaseURL);
     }
     return {
-      selectedIndex,
+      albumsOutline,
       appPages,
-      pulseOutline, 
+      barChartOutline,
       calendarNumberOutline,
       hasPermission,
-      terminalOutline,
-      ticketOutline, 
-      albumsOutline, 
-      shirtOutline,
-      settings,
       iceCreamOutline,
+      libraryOutline,
+      pulseOutline,
+      selectedIndex,
+      settings,
+      shirtOutline,
       store,
-      libraryOutline
+      terminalOutline,
+      ticketOutline,
     };
   },
 });

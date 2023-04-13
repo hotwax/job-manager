@@ -39,6 +39,10 @@ const mutations: MutationTree <JobState> = {
         state.miscellaneous.list = payload.jobs;
         state.miscellaneous.total = payload.total;
     },
+    [types.JOB_REPORTS_UPDATED] (state, payload){
+        state.reports.list = payload.jobs;
+        state.reports.total = payload.total;
+    },
     [types.JOB_PIPELINE_FILTERS_UPDATED] (state, payload){
         state.pipelineFilters = payload.pipelineFilters;
     },
