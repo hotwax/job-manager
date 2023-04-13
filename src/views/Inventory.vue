@@ -46,7 +46,7 @@
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
-          <JobConfiguration :title="title" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
+          <JobConfiguration :status="currentJobStatus" :type="freqType" :key="currentJob"/>
         </aside>
       </main>
     </ion-content>
@@ -179,7 +179,6 @@ export default defineComponent({
     },
     async viewJobConfiguration(jobInformation: any) {
       this.currentJob = jobInformation.job || this.getJob(this.jobEnums[jobInformation.id])
-      this.title = jobInformation.title ? jobInformation.title : (jobInformation.job.enumName || jobInformation.job.jobName)
       this.currentJobStatus = jobInformation.status;
       this.freqType = jobInformation.id && this.jobFrequencyType[jobInformation.id]
 
