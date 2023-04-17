@@ -922,9 +922,9 @@ const actions: ActionTree<JobState, RootState> = {
         const tempExprList = [] as any;
         const enumIds = [] as any;
 
-        resp.data.docs.map((item: any) => {
-          enumIds.push(item.systemJobEnumId);
-          tempExprList.push(item.tempExprId);
+        resp.data.docs.map((job: any) => {
+          enumIds.push(job.systemJobEnumId);
+          tempExprList.push(job.tempExprId);
         })
 
         const tempExpr = [...new Set(tempExprList)];

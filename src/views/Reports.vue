@@ -11,7 +11,7 @@
       <main>
         <section>
           <div v-if="reportsJobs?.length === 0">
-            <p class="ion-text-center">{{ $t("There are no reports jobs right now")}}</p>
+            <p class="ion-text-center">{{ $t("There are no reports jobs right now") }}</p>
             <div class="ion-text-center">
               <ion-button fill="outline" @click="refreshJobs()">
                 {{ $t('retry') }}
@@ -20,7 +20,7 @@
             </div>
           </div>
 
-        <div v-else>
+          <div v-else>
             <ion-list>
               <ion-list-header>{{ $t("Reports jobs") }}</ion-list-header>
               <ion-item v-for="job in reportsJobs" :key="job.jobId" @click="viewJobConfiguration(job)" detail button>
@@ -29,17 +29,17 @@
               </ion-item>
             </ion-list>
             <ion-infinite-scroll @ionInfinite="loadMoreReportsJobs($event)" threshold="100px" :disabled="!isReportsJobsScrollable">
-              <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="$t('Loading')"/>
+              <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="$t('Loading')" />
             </ion-infinite-scroll>
           </div>
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob && Object.keys(currentJob).length">
-          <JobConfiguration :title="currentJobTitle" :status="currentJobStatus" :key="currentJob"/>
+          <JobConfiguration :title="currentJobTitle" :status="currentJobStatus" :key="currentJob" />
         </aside>
       </main>
     </ion-content>
-  </ion-page>      
+  </ion-page>
 </template>
 
 <script lang="ts">
