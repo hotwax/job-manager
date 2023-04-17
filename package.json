@@ -39,7 +39,7 @@
     "vuex-persistedstate": "^4.0.0-beta.3"
   },
   "devDependencies": {
-    "@capacitor/cli": "^2.4.7",
+    "@capacitor/cli": "^4.7.3",
     "@intlify/vue-i18n-loader": "^2.1.0",
     "@types/jest": "^27.5.0",
     "@types/luxon": "^3.2.0",
