@@ -19,7 +19,7 @@
     "@hotwax/apps-theme": "^1.1.0",
     "@hotwax/app-version-info": "^1.0.0",
     "@hotwax/oms-api": "^1.6.0",
-    "@ionic/core": "6.2.9",
+    "@ionic/core": "7.0.2",
     "@ionic/vue": "6.2.9",
     "@ionic/vue-router": "6.2.9",
     "@types/file-saver": "^2.0.4",
