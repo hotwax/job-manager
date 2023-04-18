@@ -9,7 +9,7 @@
 
     <ion-content>
       <InitialJobConfiguration v-if="jobCategory === 'initial-load'" :type='type' :shopifyOrderId='lastShopifyOrderId' :key="currentJob" />
-      <JobConfiguration v-else :title="title" :status="currentJob?.status === 'SERVICE_DRAFT' ? currentJob?.status : currentJob?.tempExprId" :type="freqType" :key="currentJob"/>
+      <JobConfiguration v-else :status="currentJob?.status === 'SERVICE_DRAFT' ? currentJob?.status : currentJob?.tempExprId" :type="freqType" :key="currentJob"/>
     </ion-content>
   </ion-page>
 </template>
@@ -43,7 +43,6 @@ export default defineComponent({
   },
   data() {
     return {
-      title: '' as any,
       type: '' as any,
       freqType: '' as any,
       jobCategory: '' as any,
@@ -84,12 +83,9 @@ export default defineComponent({
           this.store.dispatch('job/updateCurrentJob', { job });
         }
       } else if(this.jobCategory !== 'pipeline') {
-        this.title = this.$route.params.title ? this.$route.params.title : this.jobTitles[job?.systemJobEnumId];
-        this.title = this.title ? this.title : this.getEnumName(job.systemJobEnumId);
         const id = Object.keys(this.jobEnums).find((id: any) => this.jobEnums[id] === job.systemJobEnumId)
         this.freqType = id && this.jobFrequencyType[id];
       } else {
-        this.title = this.$route.params.title ? this.$route.params.title : this.getEnumName(job.systemJobEnumId);
         const id = Object.keys(this.jobEnums).find((id: any) => this.jobEnums[id] === job.systemJobEnumId)
         const jobFreqTypeId = (Object.keys(this.jobFrequencyType).find((enumId: any) => enumId === id)) as any;
         this.freqType = (id && jobFreqTypeId) && this.jobFrequencyType[jobFreqTypeId];

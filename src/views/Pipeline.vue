@@ -227,7 +227,7 @@
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="segmentSelected === 'pending' && currentJob && Object.keys(currentJob).length">
-          <JobConfiguration :title="title" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
+          <JobConfiguration :status="currentJobStatus" :type="freqType" :key="currentJob"/>
         </aside>
       </main>
     </ion-content>
@@ -341,7 +341,6 @@ export default defineComponent({
         ...JSON.parse(process.env?.VUE_APP_INV_JOB_ENUMS as string) as any,
         ...JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
       },
-      title: '',
       currentJobStatus: '',
       freqType: '' as any,
       isJobDetailAnimationCompleted: false,
@@ -539,7 +538,6 @@ export default defineComponent({
        return alert.present();
     },
     async viewJobConfiguration(job: any) {
-      this.title = this.getEnumName(job.systemJobEnumId)
       this.currentJobStatus = job.tempExprId
       const id = Object.entries(this.jobEnums).find((enums) => enums[1] == job.systemJobEnumId) as any
       const appFreqType =  id && (Object.entries(this.jobFrequencyType).find((freq) => freq[0] == id[0]) as any)
@@ -547,7 +545,7 @@ export default defineComponent({
 
       await this.store.dispatch('job/updateCurrentJob', { job });
       if(!this.isDesktop && job?.jobId) {
-        this.router.push({name: 'JobDetails', params: { title: this.title, jobId: job?.jobId, category: "pipeline"}});
+        this.router.push({ name: 'JobDetails', params: { jobId: job?.jobId, category: "pipeline" } });
         return;
       }
 

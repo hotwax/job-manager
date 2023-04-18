@@ -14,23 +14,23 @@
             <ion-card-header>
               <ion-card-title>{{ $t("Import") }}</ion-card-title>
             </ion-card-header>
-            <ion-item @click="viewJobConfiguration({ id: 'IMP_NEW_ORDERS', title: 'New orders', status: getJobStatus(jobEnums['IMP_NEW_ORDERS'])})" detail button>
+            <ion-item @click="viewJobConfiguration({ id: 'IMP_NEW_ORDERS', status: getJobStatus(jobEnums['IMP_NEW_ORDERS'])})" detail button>
               <ion-label class="ion-text-wrap">{{ $t("New orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_NEW_ORDERS') }}</ion-label>
             </ion-item>
-            <ion-item @click="viewJobConfiguration({ id: 'IMP_CANCELLED_ORDERS', title: 'Cancelled orders', status: getJobStatus(jobEnums['IMP_CANCELLED_ORDERS'])})" detail button>
+            <ion-item @click="viewJobConfiguration({ id: 'IMP_CANCELLED_ORDERS', status: getJobStatus(jobEnums['IMP_CANCELLED_ORDERS'])})" detail button>
               <ion-label class="ion-text-wrap">{{ $t("Cancelled orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_CANCELLED_ORDERS') }}</ion-label>
             </ion-item>
-            <ion-item @click="viewJobConfiguration({ id: 'IMP_CANCELLED_ITEMS', title: 'Cancelled items', status: getJobStatus(jobEnums['IMP_CANCELLED_ITEMS'])})" detail button>
+            <ion-item @click="viewJobConfiguration({ id: 'IMP_CANCELLED_ITEMS', status: getJobStatus(jobEnums['IMP_CANCELLED_ITEMS'])})" detail button>
               <ion-label class="ion-text-wrap">{{ $t("Cancelled items") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_CANCELLED_ITEMS') }}</ion-label>
             </ion-item>
-            <ion-item @click="viewJobConfiguration({ id: 'IMP_PAYMENT_STATUS', title: 'Payment status', status: getJobStatus(jobEnums['IMP_PAYMENT_STATUS'])})" detail button>
+            <ion-item @click="viewJobConfiguration({ id: 'IMP_PAYMENT_STATUS', status: getJobStatus(jobEnums['IMP_PAYMENT_STATUS'])})" detail button>
               <ion-label class="ion-text-wrap">{{ $t("Payment status") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_PAYMENT_STATUS') }}</ion-label>
             </ion-item>
-            <ion-item @click="viewJobConfiguration({ id: 'IMP_RETURNS', title: 'Returns', status: getJobStatus(jobEnums['IMP_RETURNS'])})" detail button>
+            <ion-item @click="viewJobConfiguration({ id: 'IMP_RETURNS', status: getJobStatus(jobEnums['IMP_RETURNS'])})" detail button>
               <ion-label class="ion-text-wrap">{{ $t("Returns") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_RETURNS') }}</ion-label>
             </ion-item>
@@ -62,15 +62,15 @@
             <ion-card-header>
               <ion-card-title>{{ $t("Upload") }}</ion-card-title>
             </ion-card-header>
-            <ion-item @click="viewJobConfiguration({ id: 'UPLD_CMPLT_ORDRS', title: 'Completed orders', status: getJobStatus(jobEnums['UPLD_CMPLT_ORDRS'])})" detail button>
+            <ion-item @click="viewJobConfiguration({ id: 'UPLD_CMPLT_ORDRS', status: getJobStatus(jobEnums['UPLD_CMPLT_ORDRS'])})" detail button>
               <ion-label class="ion-text-wrap">{{ $t("Completed orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('UPLD_CMPLT_ORDRS') }}</ion-label>
             </ion-item>
-            <ion-item @click="viewJobConfiguration({ id: 'UPLD_CNCLD_ORDRS', title: 'Cancelled orders', status: getJobStatus(jobEnums['UPLD_CNCLD_ORDRS'])})" detail button>
+            <ion-item @click="viewJobConfiguration({ id: 'UPLD_CNCLD_ORDRS', status: getJobStatus(jobEnums['UPLD_CNCLD_ORDRS'])})" detail button>
               <ion-label class="ion-text-wrap">{{ $t("Cancelled orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('UPLD_CNCLD_ORDRS') }}</ion-label>
             </ion-item>
-            <ion-item @click="viewJobConfiguration({ id: 'UPLD_REFUNDS', title: 'Refunds', status: getJobStatus(jobEnums['UPLD_REFUNDS'])})" detail button>
+            <ion-item @click="viewJobConfiguration({ id: 'UPLD_REFUNDS', status: getJobStatus(jobEnums['UPLD_REFUNDS'])})" detail button>
               <ion-label class="ion-text-wrap">{{ $t("Refunds") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('UPLD_REFUNDS') }}</ion-label>
             </ion-item>
@@ -112,7 +112,7 @@
             <ion-card-header>
               <ion-card-title>{{ $t("Routing") }}</ion-card-title>
             </ion-card-header>
-            <ion-item @click="viewJobConfiguration({ id: 'REJ_ORDR', title: 'Rejected orders', status: getJobStatus(jobEnums['REJ_ORDR'])})" detail button>
+            <ion-item @click="viewJobConfiguration({ id: 'REJ_ORDR', status: getJobStatus(jobEnums['REJ_ORDR'])})" detail button>
               <ion-label class="ion-text-wrap">{{ $t("Rejected orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('REJ_ORDR') }}</ion-label>
             </ion-item>
@@ -147,7 +147,7 @@
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
-          <JobConfiguration :title="title" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
+          <JobConfiguration :status="currentJobStatus" :type="freqType" :key="currentJob"/>
         </aside>
       </main>
     </ion-content>
@@ -230,7 +230,6 @@ export default defineComponent({
       jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
       webhookEnums: JSON.parse(process.env?.VUE_APP_WEBHOOK_ENUMS as string) as any,
       currentJob: '' as any,
-      title: 'New orders',
       currentJobStatus: '',
       freqType: '',
       isJobDetailAnimationCompleted: false,
@@ -409,7 +408,6 @@ export default defineComponent({
     },
     async viewJobConfiguration(jobInformation: any) {
       this.currentJob = jobInformation.job || this.getJob(this.jobEnums[jobInformation.id])
-      this.title = jobInformation.title ? jobInformation.title : (jobInformation.job.enumName || jobInformation.job.jobName)
       this.currentJobStatus = jobInformation.status
       this.freqType = jobInformation.id && this.jobFrequencyType[jobInformation.id]
 
@@ -420,7 +418,7 @@ export default defineComponent({
 
       await this.store.dispatch('job/updateCurrentJob', { job: this.currentJob });
       if(!this.isDesktop && this.currentJob) {
-        this.router.push({name: 'JobDetails', params: { title: this.title, jobId: this.currentJob.jobId, category: "orders"}});
+        this.router.push({ name: 'JobDetails', params: { jobId: this.currentJob.jobId, category: "orders" } });
         return;
       }
       if (this.currentJob && !this.isJobDetailAnimationCompleted) {
