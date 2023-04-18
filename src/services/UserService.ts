@@ -49,12 +49,12 @@ const getShopifyConfig = async (productStoreId: any, token?: any): Promise <any>
     // Handled the case when getting config during the login action
     // We haven't set the token in store till all the essential information is gathered during login
     if (token) {
-      payload.baseURL = store.getters['user/getBaseUrl'];
       payload.headers = {
         Authorization:  'Bearer ' + token,
         'Content-Type': 'application/json'
       }
     }
+    payload.baseURL = store.getters['user/getBaseUrl'];
     const resp = await client(payload);
     if (hasError(resp)) {
       return Promise.reject(resp.data);

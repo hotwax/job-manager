@@ -1,7 +1,8 @@
 <template>
   <section>
     <ion-item lines="none">
-      <h1>{{ title ? $t(title) : '' }}</h1>
+      <!-- Adding conditional check for currentJob.jobName as currentJob is undefined when i18n runs $t -->
+      <h1>{{ getEnumName(currentJob.systemJobEnumId) ? $t(getEnumName(currentJob.systemJobEnumId)) : currentJob.jobName ? $t(currentJob.jobName) : '' }}</h1>
       <ion-badge slot="end" color="dark" v-if="currentJob?.runTime && currentJob.statusId !== 'SERVICE_DRAFT'">{{ $t("running") }} {{ timeTillJob(currentJob.runTime) }}</ion-badge>
     </ion-item>
 

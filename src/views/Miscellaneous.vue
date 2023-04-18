@@ -37,7 +37,7 @@
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob && Object.keys(currentJob).length">
-          <JobConfiguration :title="currentJobTitle" :status="currentJobStatus" :key="currentJob"/>
+          <JobConfiguration :status="currentJobStatus" :key="currentJob"/>
         </aside>
       </main>
     </ion-content>
@@ -97,7 +97,6 @@ export default defineComponent({
   data() {
     return {
       currentJob: '' as any,
-      currentJobTitle: '',
       currentJobStatus: '',
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
@@ -114,7 +113,6 @@ export default defineComponent({
   methods: {
     async viewJobConfiguration(job: any) {
       this.currentJob = job
-      this.currentJobTitle = job.jobName
       this.currentJobStatus = job.status
 
       // if job runTime is not a valid date then making runTime as empty
@@ -124,7 +122,7 @@ export default defineComponent({
 
       await this.store.dispatch('job/updateCurrentJob', { job: this.currentJob });
       if(!this.isDesktop && job?.jobId) {
-        this.router.push({name: 'JobDetails', params: { title: this.currentJobTitle, jobId: job?.jobId, category: "miscellaneous"}});
+        this.router.push({ name: 'JobDetails', params: { jobId: job?.jobId, category: "miscellaneous" } });
         return;
       }
 
