@@ -646,17 +646,6 @@ const actions: ActionTree<JobState, RootState> = {
       resp = await JobService.scheduleJob({ ...job.runtimeData, ...payload });
       if (resp.status == 200 && !hasError(resp)) {
         showToast(translate('Service has been scheduled'))
-        // TODO: need to check if we actually need to call fetchJobs when running a service now
-        // becuase when scheduling a service for run now, then the service goes in pending state for a small
-        // time and thus fetchJob api gets the info of that service as well, and when service is exceuted
-        // it is no more in pending state, but on app level we still have that service info with status
-        // pending
-        dispatch('fetchJobs', {
-          inputFields: {
-            'systemJobEnumId': payload.systemJobEnumId,
-            'systemJobEnumId_op': 'equals'
-          }
-        })
       } else {
         showToast(translate('Something went wrong'))
       }
