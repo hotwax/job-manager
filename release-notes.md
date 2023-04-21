@@ -1,3 +1,10 @@
+# Release 2.2.2
+
+## What's Changed
+* Fixed: more jobs' name not showing on mobile view (#85zrw8eup) by @k2maan in https://github.com/hotwax/job-manager/pull/438
+
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v2.2.1...v2.2.2
 
 # Release 2.2.1
 ## What's Changed
