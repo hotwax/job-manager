@@ -282,6 +282,12 @@ const actions: ActionTree<JobState, RootState> = {
       "viewIndex": payload.viewIndex,
     }
 
+    if (payload.eComStoreId) {
+      params.inputFields["productStoreId"] = payload.eComStoreId
+    } else {
+      params.inputFields["productStoreId_op"] = "empty"
+    }
+
     try {
       const resp = await JobService.fetchJobInformation(params)
       if (resp.status === 200 && !hasError(resp) && resp.data.docs?.length > 0) {
@@ -908,6 +914,12 @@ const actions: ActionTree<JobState, RootState> = {
       "viewIndex": payload.viewIndex,
     }
 
+    if (payload.eComStoreId) {
+      params.inputFields["productStoreId"] = payload.eComStoreId
+    } else {
+      params.inputFields["productStoreId_op"] = "empty"
+    }
+    
     let jobs = [], resp;
     try {
       resp = await JobService.fetchJobInformation(params)

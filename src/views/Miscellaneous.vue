@@ -93,6 +93,10 @@ export default defineComponent({
   },
   mounted() {
     this.getMiscellaneousJobs();
+    emitter.on("productStoreOrConfigChanged", this.getMiscellaneousJobs);
+  },
+  unmounted() {
+    emitter.off("productStoreOrConfigChanged", this.getMiscellaneousJobs);
   },
   data() {
     return {

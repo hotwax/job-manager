@@ -83,7 +83,7 @@ import {
 } from "@ionic/vue";
 import { defineComponent, ref } from "vue";
 import { mapGetters } from "vuex";
-import { albumsOutline, barChartOutline, calendarNumberOutline, iceCreamOutline, libraryOutline, pulseOutline, settings, shirtOutline, terminalOutline, ticketOutline } from "ionicons/icons";
+import { albumsOutline, barChartOutline, calendarNumberOutline, iceCreamOutline, libraryOutline, pulseOutline, settingsOutline, shirtOutline, terminalOutline, ticketOutline } from "ionicons/icons";
 import { useStore } from "@/store";
 import emitter from "@/event-bus"
 import { hasPermission } from "@/authorization";
@@ -251,8 +251,8 @@ export default defineComponent({
       {
         title: "Settings",
         url: "/settings",
-        iosIcon: settings,
-        mdIcon: settings,
+        iosIcon: settingsOutline,
+        mdIcon: settingsOutline,
         dependsOnBaseURL: true
       },
     ];
@@ -269,7 +269,7 @@ export default defineComponent({
       libraryOutline,
       pulseOutline,
       selectedIndex,
-      settings,
+      settingsOutline,
       shirtOutline,
       store,
       terminalOutline,

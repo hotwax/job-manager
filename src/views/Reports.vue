@@ -10,7 +10,7 @@
     <ion-content>
       <main>
         <section>
-          <div v-if="reportsJobs?.length === 0">
+          <div v-if="!reportsJobs?.length">
             <p class="ion-text-center">{{ $t("There are no reports jobs right now") }}</p>
             <div class="ion-text-center">
               <ion-button fill="outline" @click="refreshJobs()">
@@ -89,9 +89,6 @@ export default defineComponent({
     IonToolbar,
     JobConfiguration
   },
-  mounted() {
-    this.getReportsJobs();
-  },
   data() {
     return {
       currentJob: '' as any,
@@ -105,14 +102,20 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       reportsJobs: 'job/getReportsJobs',
-      getCurrentEComStore:'user/getCurrentEComStore',
+      getCurrentEComStore: 'user/getCurrentEComStore',
       isReportsJobsScrollable: 'job/isReportsJobsScrollable'
     })
+  },
+  mounted() {
+    this.getReportsJobs();
+    emitter.on("productStoreOrConfigChanged", this.getReportsJobs);
+  },
+  unmounted() {
+    emitter.off("productStoreOrConfigChanged", this.getReportsJobs);
   },
   methods: {
     async viewJobConfiguration(job: any) {
       this.currentJob = job
-      this.currentJobTitle = job.jobName
       this.currentJobStatus = job.status
 
       // if job runTime is not a valid date then making runTime as empty
@@ -121,8 +124,8 @@ export default defineComponent({
       }
 
       await this.store.dispatch('job/updateCurrentJob', { job: this.currentJob });
-      if(!this.isDesktop && job?.jobId) {
-        this.router.push({name: 'JobDetails', params: { title: this.currentJobTitle, jobId: job?.jobId, category: "reports"}});
+      if (!this.isDesktop && job?.jobId) {
+        this.router.push({ name: 'JobDetails', params: { jobId: job?.jobId, category: "reports" } });
         return;
       }
 
@@ -132,9 +135,9 @@ export default defineComponent({
       }
     },
     async getReportsJobs(viewSize = 20, viewIndex = 0) {
-      await this.store.dispatch('job/fetchReportsJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex});
+      await this.store.dispatch('job/fetchReportsJobs', { eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex });
     },
-    async loadMoreReportsJobs (event: any) {
+    async loadMoreReportsJobs(event: any) {
       this.getReportsJobs(
         undefined,
         Math.ceil(this.reportsJobs.length / (process.env.VUE_APP_VIEW_SIZE as any))
@@ -145,11 +148,11 @@ export default defineComponent({
     async refreshJobs(event?: any) {
       this.isRetrying = true;
       this.getReportsJobs().then(() => {
-        if(event) event.target.complete();
+        if (event) event.target.complete();
         this.isRetrying = false;
       })
     },
-    timeFromNow (time: any) {
+    timeFromNow(time: any) {
       const timeDiff = DateTime.fromMillis(time).diff(DateTime.local());
       return DateTime.local().plus(timeDiff).toRelative();
     },
