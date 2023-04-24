@@ -156,7 +156,7 @@ export default defineComponent({
       jobStatus: this.status,
       runTime: {
         value: '',
-        type: ''
+        type: 'CUSTOM' // as job's current time is 'custom'
       } as any,
     }
   },
@@ -231,13 +231,13 @@ export default defineComponent({
       "label": "Now"
     }, {
       "value": 300000,
-      "label": "Every 5 minutes"
+      "label": "In 5 minutes"
     }, {
       "value": 900000,
-      "label": "Every 15 minutes"
+      "label": "In 15 minutes"
     }, {
       "value": 3600000,
-      "label": "Hourly"
+      "label": "In an hour"
     }, {
       "value": 86400000,
       "label": "Tomorrow"
@@ -359,10 +359,18 @@ export default defineComponent({
     updateRunTime(event: CustomEvent) {
       const value = event.detail.value
       if (value != 'CUSTOM') {
+        // check for the first 5, predefined options
+        const isPrefinedValue = this.runTimeOptions.slice(0, 5).some((option: any) => option.value === value)
+
+        if (this.runTime.type == 'CUSTOM'
+          && this.runTimeOptions[this.runTimeOptions.length - 1].value != 'CUSTOM'
+          && isPrefinedValue) {
+          this.runTimeOptions.pop()
+        }
+
         this.runTime = {
           value,
-          // check for the first 5, predefined options
-          type: this.runTimeOptions.slice(0, 5).some((option: any) => option.value === value) ? 'PREDEFINED' : 'CUSTOM'
+          type: isPrefinedValue ? 'PREDEFINED' : 'CUSTOM'
         }
       } else {
         this.isOpen = true
@@ -426,8 +434,6 @@ export default defineComponent({
       const currTime = DateTime.now().toMillis();
       const setTime = handleDateTimeInput(event.detail.value);
       if (setTime > currTime) {
-        // need to pop the last element as the 'updateCustomTime' is called again on 
-        // ionChange and the custom time is pushed twice
         if (this.runTimeOptions[this.runTimeOptions.length - 1].value != 'CUSTOM') this.runTimeOptions.pop()
 
         this.runTimeOptions.push({
