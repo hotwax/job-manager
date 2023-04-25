@@ -643,7 +643,7 @@ const actions: ActionTree<JobState, RootState> = {
       const shopifyConfig = this.state.user.currentShopifyConfig
 
       job?.runtimeData?.shopifyConfigId && (payload['shopifyConfigId'] = job.status === "SERVICE_PENDING" ? job.runtimeData?.shopifyConfigId  : shopifyConfig?.shopifyConfigId);
-      job?.runtimeData?.shopId && (job.status === "SERVICE_PENDING" ? job.runtimeData?.shopId  : shopifyConfig?.shopId);
+      job?.runtimeData?.shopId && (payload['shopId'] = job.status === "SERVICE_PENDING" ? job.runtimeData?.shopId  : shopifyConfig?.shopId);
       payload['jobFields']['shopId'] = job.status === "SERVICE_PENDING" ? job.shopId  : shopifyConfig?.shopId;
     }
 
