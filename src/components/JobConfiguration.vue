@@ -17,7 +17,7 @@
       <ion-item>
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
-        <ion-select interface="popover" placeholder="Select" :value="runTime.value" @ionChange="updateRunTime($event)">
+        <ion-select interface="popover" :placeholder="$t('Select')" :value="runTime.value" @ionChange="updateRunTime($event)">
           <ion-select-option v-for="runTime in runTimeOptions" :key="runTime.value" :value="runTime.value">{{ $t(runTime.label) }}</ion-select-option>
         </ion-select>
         <!-- TODO: display a button when we are not having a runtime and open the datetime component
@@ -359,10 +359,12 @@ export default defineComponent({
     updateRunTime(event: CustomEvent) {
       const value = event.detail.value
       if (value != 'CUSTOM') {
-        // check for the first 5, predefined options
+        // checking if a predefined option is selected i.e the first five options
         const isPrefinedValue = this.runTimeOptions.slice(0, 5).some((option: any) => option.value === value)
 
-        if (this.runTime.type == 'CUSTOM'
+        // Update the option list iff - a predefined option is selected 
+        // and a custom date time is already there in the list 
+        if (this.runTime.type === 'CUSTOM'
           && this.runTimeOptions[this.runTimeOptions.length - 1].value != 'CUSTOM'
           && isPrefinedValue) {
           this.runTimeOptions.pop()
