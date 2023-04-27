@@ -517,10 +517,12 @@ const actions: ActionTree<JobState, RootState> = {
       'systemJobEnumId': job.systemJobEnumId
     } as any
     
-    if(job?.runtimeData?.shopifyConfigId) {
+    if (job?.runtimeData?.shopifyConfigId || job?.runtimeData?.shopId) {
       const shopifyConfig = this.state.user.currentShopifyConfig
-      payload['shopifyConfigId'] = shopifyConfig?.shopifyConfigId
-      payload['jobFields']['shopId'] = shopifyConfig?.shopId
+
+      job?.runtimeData?.shopifyConfigId && (payload['shopifyConfigId'] = shopifyConfig?.shopifyConfigId);
+      job?.runtimeData?.shopId && (payload['shopId'] = shopifyConfig?.shopId);
+      payload['jobFields']['shopId'] = shopifyConfig?.shopId;
     }
 
     // checking if the runtimeData has productStoreId, and if present then adding it on root level
@@ -632,9 +634,7 @@ const actions: ActionTree<JobState, RootState> = {
         'tempExprId': job.jobStatus, // Need to remove this as we are passing frequency in SERVICE_TEMP_EXPR, currently kept it for backward compatibility
         'parentJobId': job.parentJobId,
         'recurrenceTimeZone': this.state.user.current.userTimeZone,
-        'shopId': job.runtimeData?.shopifyConfigId && job.status === "SERVICE_PENDING" ? job.shopId : this.state.user.currentShopifyConfig.shopId,
       },
-      'shopifyConfigId': job.runtimeData?.shopifyConfigId && job.status === "SERVICE_PENDING" ? job.runtimeData?.shopifyConfigId : this.state.user.currentShopifyConfig.shopifyConfigId,
       'statusId': "SERVICE_PENDING",
       'systemJobEnumId': job.systemJobEnumId
     } as any
@@ -642,6 +642,16 @@ const actions: ActionTree<JobState, RootState> = {
     job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = job.status === "SERVICE_PENDING" ? job.productStoreId : this.state.user.currentEComStore.productStoreId)
     job?.priority && (payload['SERVICE_PRIORITY'] = job.priority.toString())
     job?.sinceId && (payload['sinceId'] = job.sinceId)
+
+    // ShopifyConfig and ShopifyShop should be set based upon runtime data
+    // If existing job is run now, copy as is else set the current shop of user
+    if (job?.runtimeData?.shopifyConfigId || job?.runtimeData?.shopId) {
+      const shopifyConfig = this.state.user.currentShopifyConfig
+
+      job?.runtimeData?.shopifyConfigId && (payload['shopifyConfigId'] = job.status === "SERVICE_PENDING" ? job.runtimeData?.shopifyConfigId  : shopifyConfig?.shopifyConfigId);
+      job?.runtimeData?.shopId && (payload['shopId'] = job.status === "SERVICE_PENDING" ? job.runtimeData?.shopId  : shopifyConfig?.shopId);
+      payload['jobFields']['shopId'] = job.status === "SERVICE_PENDING" ? job.shopId  : shopifyConfig?.shopId;
+    }
 
     // assigning '' (empty string) to all the runtimeData properties whose value is "null"
     job.runtimeData && Object.keys(job.runtimeData).map((key: any) => {
@@ -810,13 +820,14 @@ const actions: ActionTree<JobState, RootState> = {
         } as any
 
         
-        if (job?.runtimeData?.shopifyConfigId) {
+        if (job?.runtimeData?.shopifyConfigId || job?.runtimeData?.shopId) {
           const shopifyConfig = this.state.user.shopifyConfigs.find((config: any) => {
             return config.shopId === shopId;
           })
 
-          params['shopifyConfigId'] = shopifyConfig.shopifyConfigId;
-          params['jobFields']['shopId'] = shopId;
+          job?.runtimeData?.shopifyConfigId && (params['shopifyConfigId'] = shopifyConfig.shopifyConfigId);
+          job?.runtimeData?.shopId && (params['shopId'] = shopifyConfig.shopId);
+          params['jobFields']['shopId'] = shopifyConfig.shopId;
         }
 
         // checking if the runtimeData has productStoreId, and if present then adding it on root level
