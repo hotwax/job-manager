@@ -1,3 +1,10 @@
+# Release 2.3.0
+
+## What's Changed
+* Added: support to pass shopId to runtime data by @adityasharma7 in https://github.com/hotwax/job-manager/pull/456
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v2.2.2...v2.3.0
+
 # Release 2.2.2
 
 ## What's Changed
