@@ -330,7 +330,12 @@ export default defineComponent({
       job['jobStatus'] = this.jobStatus !== 'SERVICE_DRAFT' ? this.jobStatus : 'HOURLY';
 
       job.runTime = this.runTime.value
-      if (this.runTime.type === 'PREDEFINED') job.runTime += DateTime.now().toMillis()
+      if (this.runTime.type === 'PREDEFINED') {
+        // Handling the case for 'Now'. Sending the now value will fail the API as by the time
+        // the job is ran, the given 'now' time would have passed. Hence, passing empty 'run time'
+        if (this.runTime.value == 0) job.runTime = ''
+        else job.runTime += DateTime.now().toMillis()
+      }
 
       if (job?.statusId === 'SERVICE_DRAFT') {
         this.store.dispatch('job/scheduleService', job).then((job: any) => {
@@ -360,19 +365,19 @@ export default defineComponent({
       const value = event.detail.value
       if (value != 'CUSTOM') {
         // checking if a predefined option is selected i.e the first five options
-        const isPrefinedValue = this.runTimeOptions.slice(0, 5).some((option: any) => option.value === value)
+        const isPredefinedValue = this.runTimeOptions.slice(0, 5).some((option: any) => option.value === value)
 
         // Update the option list iff - a predefined option is selected 
         // and a custom date time is already there in the list 
         if (this.runTime.type === 'CUSTOM'
           && this.runTimeOptions[this.runTimeOptions.length - 1].value != 'CUSTOM'
-          && isPrefinedValue) {
+          && isPredefinedValue) {
           this.runTimeOptions.pop()
         }
 
         this.runTime = {
           value,
-          type: isPrefinedValue ? 'PREDEFINED' : 'CUSTOM'
+          type: isPredefinedValue ? 'PREDEFINED' : 'CUSTOM'
         }
       } else {
         this.isOpen = true
