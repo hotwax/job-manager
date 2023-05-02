@@ -2,7 +2,7 @@
   <section>
     <ion-item lines="none">
       <!-- Adding conditional check for currentJob.jobName as currentJob is undefined when i18n runs $t -->
-      <h1>{{ getEnumName(currentJob.systemJobEnumId) ? $t(getEnumName(currentJob.systemJobEnumId)) : currentJob.jobName ? $t(currentJob.jobName) : '' }}</h1>
+      <h1>{{ getEnumName(currentJob.systemJobEnumId) ? getEnumName(currentJob.systemJobEnumId) : currentJob.jobName ? currentJob.jobName : '' }}</h1>
       <ion-badge slot="end" color="dark" v-if="currentJob?.runTime && currentJob.statusId !== 'SERVICE_DRAFT'">{{ $t("running") }} {{ timeTillJob(currentJob.runTime) }}</ion-badge>
     </ion-item>
 
@@ -38,8 +38,8 @@
       <ion-item>
         <ion-icon slot="start" :icon="timerOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Schedule") }}</ion-label>
-        <ion-select :interface-options="customPopoverOptions" interface="popover" :value="jobStatus" :placeholder="$t('Disabled')" @ionChange="($event) => jobStatus = $event['detail'].value">
-          <ion-select-option v-for="freq in generateFrequencyOptions" :key="freq.value" :value="freq.value">{{ $t(freq.label) }}</ion-select-option>
+        <ion-select :value="jobStatus" :interface-options="customPopoverOptions" interface="popover" :placeholder="$t('Disabled')" @ionChange="jobStatus = $event.detail.value" @ionDismiss="jobStatus == 'CUSTOM' && setCustomFrequency()">
+          <ion-select-option v-for="freq in frequencyOptions" :key="freq.value" :value="freq.value">{{ freq.label }}</ion-select-option>
         </ion-select>
       </ion-item>
 
@@ -124,13 +124,14 @@ import {
 } from "ionicons/icons";
 import JobHistoryModal from '@/components/JobHistoryModal.vue'
 import { Plugins } from '@capacitor/core';
-import { handleDateTimeInput, showToast } from "@/utils";
+import { generateAllowedFrequencies, handleDateTimeInput, showToast } from "@/utils";
 import { mapGetters, useStore } from "vuex";
 import { DateTime } from 'luxon';
 import { translate } from '@/i18n'
 import { useRouter } from "vue-router";
 import emitter from '@/event-bus';
 import { Actions, hasPermission } from '@/authorization'
+import CustomFrequencyModal from '@/components/CustomFrequencyModal.vue';
 
 export default defineComponent({
   name: "JobConfiguration",
@@ -153,16 +154,19 @@ export default defineComponent({
       isOpen: false,
       jobStatus: this.status,
       runTime: '' as any,
+      frequencyOptions: [] as any
     }
   },
   mounted() {
-    this.runTime = this.currentJob?.runTime 
+    this.runTime = this.currentJob?.runTime;
+    this.generateFrequencyOptions(this.jobStatus)
   },
   updated() {
     // When updating the job, the job is fetched again with the latest values
     // Updated value should be set to instance variable jobStatus
     this.jobStatus = this.currentJob.statusId === "SERVICE_DRAFT" ? this.currentJob.statusId : this.currentJob.tempExprId;
     this.runTime = this.currentJob?.runTime ? this.currentJob?.runTime : ''
+    this.generateFrequencyOptions(this.jobStatus)
   },
   props: ["title", "status", "type"],
   computed: {
@@ -176,44 +180,6 @@ export default defineComponent({
       currentEComStore: 'user/getCurrentEComStore',
       currentJob: 'job/getCurrentJob',
     }),
-    generateFrequencyOptions(): any {
-      const optionDefault = [{
-          "value": "EVERY_1_MIN",
-          "label": "Every 1 minute"
-        },{
-          "value": "EVERY_5_MIN",
-          "label": "Every 5 minutes"
-        },{
-          "value": "EVERY_15_MIN",
-          "label": "Every 15 minutes"
-        },{
-          "value": "EVERY_30_MIN",
-          "label": "Every 30 minutes"
-        },{
-          "value": "HOURLY",
-          "label": "Hourly"
-        },{
-          "value": "EVERY_6_HOUR",
-          "label": "Every 6 hours"
-        },{
-          "value": "EVERYDAY",
-          "label": "Every day"
-        }
-      ]
-
-      const slow = [{
-          "value": "HOURLY",
-          "label": "Hourly"
-        },{
-          "value": "EVERY_6_HOUR",
-          "label": "Every 6 hours"
-        },{
-          "value": "EVERYDAY",
-          "label": "Every day"
-        }
-      ]
-      return (this as any).type === 'slow' ? slow : optionDefault;
-    },
     customPopoverOptions() {
       return {
         header: (this as any).title,
@@ -224,6 +190,20 @@ export default defineComponent({
   methods: {
     getDateTime(time: any) {
       return DateTime.fromMillis(time).toISO()
+    },
+    async generateFrequencyOptions(jobStatus?: any) {
+      const frequencyOptions = JSON.parse(JSON.stringify(generateAllowedFrequencies(this.type)));
+      if (hasPermission(Actions.APP_CUSTOM_FREQ_VIEW)) frequencyOptions.push({ "value": "CUSTOM", "label": "Custom"})
+      if (jobStatus) {
+        const selectedFrequency = frequencyOptions.find((frequency: any) => frequency.value === jobStatus);
+        if (!selectedFrequency ) {
+          const frequencies = await this.store.dispatch("job/fetchTemporalExpression", [ jobStatus ]);
+          const frequency = frequencies[jobStatus];
+          frequency && (frequencyOptions.push({ "value": frequency.tempExprId,  "label": frequency.description }))
+        }
+      }
+      this.frequencyOptions = frequencyOptions;
+      this.jobStatus = jobStatus;
     },
     async skipJob(job: any) {
       const alert = await alertController
@@ -321,6 +301,24 @@ export default defineComponent({
           }
         })
       }
+    },
+    async setCustomFrequency() {
+      // if (this.jobStatus != "CUSTOM") return;
+      const customFrequencyModal = await modalController.create({
+        component: CustomFrequencyModal,
+      });
+      customFrequencyModal.onDidDismiss()
+        .then((result) => {
+          let jobStatus = this.currentJob.statusId === "SERVICE_DRAFT" ? this.currentJob.statusId : this.currentJob.tempExprId;
+          if (result.data && result.data.frequencyId) {
+            jobStatus = result.data.frequencyId;
+          }
+          this.generateFrequencyOptions(jobStatus);
+        });
+      return customFrequencyModal.present();
+    },
+    updateFrequency(frequency: any, event?: any) {
+      this.jobStatus = frequency
     },
     getTime (time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);

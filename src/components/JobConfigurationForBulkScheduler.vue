@@ -33,9 +33,9 @@
       </ion-modal>
     </ion-item>
     <ion-item>
-      <ion-label>{{ $t("Schedule") }}</ion-label>
-      <ion-select :interface-options="customPopoverOptions" :value="job.frequency" interface="popover" :placeholder='$t("Bulk schedule")' @ionChange='setFrequency($event)'>
-        <ion-select-option v-for="freq in generateFrequencyOptions(job.freqType)" :key="freq.value" :value="freq.value">{{ $t(freq.label) }}</ion-select-option>
+      <ion-label>{{ $t("Schedule") }} {{ frequencyOptions }}</ion-label>
+      <ion-select :interface-options="customPopoverOptions" :value="job.frequency" interface="popover" :placeholder='$t("Bulk schedule")' @ionDismiss="job.frequency == 'CUSTOM' && setCustomFrequency()" @ionChange='setFrequency($event)'>
+        <ion-select-option v-for="freq in frequencyOptions" :key="freq.value" :value="freq.value">{{ $t(freq.label) }}</ion-select-option>
       </ion-select>
     </ion-item>
     <div class="actions">
@@ -63,6 +63,7 @@ import {
   IonModal,
   IonSelect,
   IonSelectOption,
+  modalController
 } from "@ionic/vue";
 import {
   calendarClearOutline,
@@ -76,9 +77,11 @@ import {
   closeOutline
 } from "ionicons/icons";
 import { mapGetters, useStore } from "vuex";
-import { handleDateTimeInput, showToast, generateFrequencyOptions } from "@/utils";
+import { generateAllowedFrequencies, handleDateTimeInput, showToast } from "@/utils";
 import { DateTime } from 'luxon';
 import { translate } from '@/i18n'
+import { Actions, hasPermission } from '@/authorization'
+import CustomFrequencyModal from '@/components/CustomFrequencyModal.vue';
 
 export default defineComponent({
   name: "JobConfigurationForBulkScheduler",
@@ -95,11 +98,12 @@ export default defineComponent({
     IonModal,
     IonNote,
     IonSelect,
-    IonSelectOption,
+    IonSelectOption
   },
   data() {
     return {
       isDateTimeModalOpen: false,
+      frequencyOptions: [] as any
     }
   },
   props: ["job", "selectedShopifyConfigs", "selectedEComStoreId"],
@@ -108,6 +112,7 @@ export default defineComponent({
       bulkJobs: 'job/getBulkJobs',
       userProfile: 'user/getUserProfile',
       shopifyConfigs: 'user/getShopifyConfigs',
+      globalFreq: 'job/getGlobalFreq',
     }),
     eComStoreName() {
       return this.userProfile.stores.find((store: any) => store.productStoreId === this.selectedEComStoreId).storeName;
@@ -124,8 +129,44 @@ export default defineComponent({
     }
   },
   methods: {
+    ionViewDidEnter() {
+      this.generateFrequencyOptions(this.job.frequency)
+    },
+    ionViewWillEnter() {
+      this.generateFrequencyOptions(this.job.frequency)
+    },
+    async generateFrequencyOptions(jobFrequency?: any) {
+      const frequencyOptions = JSON.parse(JSON.stringify(generateAllowedFrequencies(this.job.freqType)));
+      if (hasPermission(Actions.APP_CUSTOM_FREQ_VIEW)) frequencyOptions.push({ "value": "CUSTOM", "label": "Custom"})
+      if (jobFrequency) {
+        const selectedFrequency = frequencyOptions.find((frequency: any) => frequency.value === jobFrequency);
+        if (!selectedFrequency ) {
+          const frequencies = await this.store.dispatch("job/fetchTemporalExpression", [ jobFrequency ]);
+          const frequency = frequencies[jobFrequency];
+          frequency && (frequencyOptions.push({ "value": frequency.tempExprId,  "label": frequency.description }))
+        }
+      }
+      this.frequencyOptions = frequencyOptions;
+      // this.job.frequency = jobFrequency;
+    },
     getDateTime(time: any) {
       return DateTime.fromMillis(time).toISO()
+    },
+
+    async setCustomFrequency() {
+      const customFrequencyModal = await modalController.create({
+        component: CustomFrequencyModal,
+      });
+      customFrequencyModal.onDidDismiss()
+        .then(async (result: any) => {
+          let jobFrequency = this.job.freqType === 'slow' ? (generateAllowedFrequencies('slow') as any).pop().value : this.globalFreq;
+          if (result.data && result.data.frequencyId) {
+            jobFrequency = result.data.frequencyId;
+            await this.store.dispatch('job/setBulkJobFrequency', { frequency: jobFrequency, jobId: this.job.jobId });
+          }
+          this.generateFrequencyOptions(jobFrequency);
+        });
+      return customFrequencyModal.present();
     },
     updateRunTime(ev: CustomEvent) {
       const currTime = DateTime.now().toMillis();
@@ -161,8 +202,7 @@ export default defineComponent({
       syncOutline,
       personCircleOutline,
       pinOutline,
-      closeOutline,
-      generateFrequencyOptions
+      closeOutline
     };
   }
 });

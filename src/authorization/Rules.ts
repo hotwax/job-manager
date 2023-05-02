@@ -10,4 +10,5 @@ export default {
     "APP_BULK_EDITOR_VIEW": "COMMON_ADMIN",
     "APP_JOB_VIEW": "",
     "APP_JOB_UPDATE": "COMMON_ADMIN",
+    "APP_CUSTOM_FREQ_VIEW": "COMMON_ADMIN"
 } as any

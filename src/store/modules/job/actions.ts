@@ -2,7 +2,7 @@ import { ActionTree } from 'vuex'
 import RootState from '@/store/RootState'
 import JobState from './JobState'
 import * as types from './mutation-types'
-import { hasError, showToast, generateFrequencyOptions } from '@/utils'
+import { generateAllowedFrequencies, hasError, showToast } from '@/utils'
 import { JobService } from '@/services/JobService'
 import { translate } from '@/i18n'
 import { DateTime } from 'luxon';
@@ -323,7 +323,7 @@ const actions: ActionTree<JobState, RootState> = {
         tempIds.push(id);
       }
     });
-    if(tempIds.length <= 0) return tempExprIds.map((id: any) => state.temporalExp[id]);
+    if(tempIds.length == 0) return state.temporalExp;
     const resp = await JobService.fetchTemporalExpression({
         "inputFields": {
         "tempExprId": tempIds,
@@ -335,9 +335,33 @@ const actions: ActionTree<JobState, RootState> = {
       "noConditionFind": "Y",
     })
     if (resp.status === 200 && !hasError(resp)) {
-      commit(types.JOB_TEMPORAL_EXPRESSION_UPDATED, resp.data.docs);
+      resp.data.docs.forEach((temporalExpression: any) => {
+        state.temporalExp[temporalExpression.tempExprId] = temporalExpression;
+      })
+      commit(types.JOB_TEMPORAL_EXPRESSION_UPDATED, state.temporalExp);
     }
-    return resp;
+    return state.temporalExp;
+  },
+  async findFrequency({ commit, state }){
+    let temporalExpressions = [];
+    const resp = await JobService.fetchTemporalExpression({
+      "inputFields": {
+        "tempExprTypeId": "FREQUENCY",
+      },
+      "viewSize": 100,
+      "fieldList": [ "tempExprId", "description","integer1", "integer2" ],
+      "entityName": "TemporalExpression",
+      "noConditionFind": "Y",
+    })
+    if (resp.status === 200 && !hasError(resp)) {
+      temporalExpressions = resp.data.docs;
+      temporalExpressions.forEach((temporalExpression: any) => {
+        state.temporalExp[temporalExpression.tempExprId] = temporalExpression;
+      })
+      // Caching it for other uses
+      commit(types.JOB_TEMPORAL_EXPRESSION_UPDATED, state.temporalExp);
+    }
+    return temporalExpressions;
   },
   
   async fetchJobs ({ state, commit, dispatch }, payload) {
@@ -780,7 +804,7 @@ const actions: ActionTree<JobState, RootState> = {
     }
     payload.runTime = state.bulk.runtime;
     // set the maximum slow frequency for slow type jobs if global frequnecy is set
-    payload.frequency = (state.bulk.frequency && freqType === 'slow') ? (generateFrequencyOptions('slow') as any).pop().value : state.bulk.frequency;
+    payload.frequency = (state.bulk.frequency && freqType === 'slow') ? (generateAllowedFrequencies('slow') as any).pop().value : state.bulk.frequency;
     
     const bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs));
     bulkJobs.push(payload)
@@ -869,7 +893,7 @@ const actions: ActionTree<JobState, RootState> = {
     let slowFreqs = [];
     let slowFrequency = payload.frequency;
     if (hasSlowJob) {
-      slowFreqs = generateFrequencyOptions('slow').map((obj: any) => obj.value)
+      slowFreqs = generateAllowedFrequencies('slow').map((obj: any) => obj.value)
       if (!slowFreqs.includes(payload.frequency)) {
         slowFrequency = slowFreqs.pop();
         showToast(translate("Some jobs have slow frequency type, hence, feasible frequency will be set automatically"))

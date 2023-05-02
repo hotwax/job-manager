@@ -42,6 +42,7 @@ export default {
     app.config.errorHandler = (error: any, instance: any, info: any) => {
       // TODO Improve code to add more information related to code failed
       logger.error("Global handler:" + getStack(error));
+      console.error("error", error);
     }
     const level = options.level ? options.level : "error"
 
