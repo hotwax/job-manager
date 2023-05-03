@@ -66,8 +66,8 @@
           <ion-item>
             <ion-icon slot="start" :icon="timerOutline" />
             <ion-label>{{ $t("Schedule") }}</ion-label>
-            <ion-select interface="popover" :value="globalFreq" :placeholder='$t("Schedule")' @ionChange=setFrequency($event)>
-              <ion-select-option v-for="freq in generateFrequencyOptions()" :key="freq.value" :value="freq.value">{{ $t(freq.label) }}</ion-select-option>
+            <ion-select interface="popover" :value="globalFreq" :placeholder='$t("Schedule")' @ionChange=setFrequency($event) @ionDismiss="globalFreq == 'CUSTOM' && setCustomFrequency()">
+              <ion-select-option v-for="freq in frequencyOptions" :key="freq.id" :value="freq.id">{{ $t(freq.description) }}</ion-select-option>
             </ion-select>
           </ion-item>
         </ion-card>
@@ -124,10 +124,12 @@ import { addOutline, iceCreamOutline, timeOutline, timerOutline } from 'ionicons
 import { useRouter } from 'vue-router';
 import SelectJobsModal from '@/views/SelectJobsModal.vue';
 import { UserService } from '@/services/UserService'
-import { hasError, showToast, handleDateTimeInput, generateFrequencyOptions } from '@/utils'
+import { generateAllowedFrequencies, hasError, showToast, handleDateTimeInput } from '@/utils'
 import { translate } from '@/i18n'
 import JobConfigurationForBulkScheduler from '@/components/JobConfigurationForBulkScheduler.vue'
 import { DateTime } from 'luxon';
+import { Actions, hasPermission } from '@/authorization'
+import CustomFrequencyModal from '@/components/CustomFrequencyModal.vue';
 
 export default defineComponent({
   name: 'BulkEditor',
@@ -162,6 +164,7 @@ export default defineComponent({
       selectedEComStoreId: '',
       selectedShopifyConfigs: [] as Array<string>, // shopifyConfigs for which the user wants to schedule jobs
       shopifyConfigsForEComStore: [] as any,
+      frequencyOptions: [] as any
     }
   },
   computed: {
@@ -185,8 +188,7 @@ export default defineComponent({
       store,
       router,
       timeOutline,
-      timerOutline,
-      generateFrequencyOptions
+      timerOutline
     }
   },
   mounted() {
@@ -194,8 +196,37 @@ export default defineComponent({
     this.shopifyConfigsForEComStore = this.shopifyConfigs;
     this.selectedEComStoreId = this.currentEComStore.productStoreId;
     this.selectedShopifyConfigs.push(this.currentShopifyConfig.shopId)
+    this.generateFrequencyOptions()
   },
   methods: {
+    async generateFrequencyOptions(currentFrequency?: any) {
+      const frequencyOptions = JSON.parse(JSON.stringify(generateAllowedFrequencies()));
+      if (hasPermission(Actions.APP_CUSTOM_FREQ_VIEW)) frequencyOptions.push({ "id": "CUSTOM", "description": "Custom"})
+      if (currentFrequency) {
+        const selectedFrequency = frequencyOptions.find((frequency: any) => frequency.id === currentFrequency);
+        if (!selectedFrequency ) {
+          const frequencies = await this.store.dispatch("job/fetchTemporalExpression", [ currentFrequency ]);
+          const frequency = frequencies[currentFrequency];
+          frequency && (frequencyOptions.push({ "id": frequency.tempExprId,  "description": frequency.description }))
+        }
+      }
+      this.frequencyOptions = frequencyOptions;
+    },
+    async setCustomFrequency() {
+      const customFrequencyModal = await modalController.create({
+        component: CustomFrequencyModal,
+      });
+      customFrequencyModal.onDidDismiss()
+        .then((result) => {
+          let frequency = "";
+          if (result.data && result.data.frequencyId) {
+            frequency = result.data.frequencyId;
+          }
+          this.store.dispatch('job/setBulkJobGlobalFrequency', { frequency });
+          this.generateFrequencyOptions(frequency);
+        });
+      return customFrequencyModal.present();
+    },
     async saveChanges() {
       const alert = await alertController
         .create({
@@ -274,8 +305,8 @@ export default defineComponent({
         }
       }
     },
-    setFrequency(ev: CustomEvent) {
-      this.store.dispatch('job/setBulkJobGlobalFrequency', { frequency: ev['detail'].value });
+    setFrequency(event: CustomEvent) {
+      this.store.dispatch('job/setBulkJobGlobalFrequency', { frequency: event.detail.value });
     },
     getTime (time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
