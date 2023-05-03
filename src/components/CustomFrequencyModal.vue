@@ -12,7 +12,7 @@
 
   <ion-content>
     <!-- Empty state -->
-    <div class="empty-state" v-if="customFrequencies && customFrequencies.length === 0">
+    <div class="empty-state" v-if="customFrequencies.length === 0">
       <p>{{ $t("No frequency found")}}</p>
     </div>
 
@@ -20,7 +20,7 @@
     <div v-else>
       <ion-list>
         <ion-radio-group v-model="frequencyId">
-          <ion-item :key="customFrequency && customFrequency.tempExprId" v-for="customFrequency in customFrequencies">
+          <ion-item :key="customFrequency.tempExprId" v-for="customFrequency in customFrequencies">
             <ion-label>{{ customFrequency.description }}</ion-label>
             <ion-radio :value="customFrequency.tempExprId" slot="start" />
           </ion-item>
