@@ -33,7 +33,7 @@
     
     <ion-fab vertical="bottom" horizontal="end" slot="fixed">
       <ion-fab-button :disabled="!timeZoneId" @click="saveAlert">
-        <ion-icon :icon="save" />
+        <ion-icon :icon="saveOutline" />
       </ion-fab-button>
     </ion-fab>
   </ion-content>
@@ -59,7 +59,7 @@ import {
   modalController,
   alertController } from "@ionic/vue";
 import { defineComponent } from "vue";
-import { closeOutline, save } from "ionicons/icons";
+import { closeOutline, saveOutline } from "ionicons/icons";
 import { useStore } from "@/store";
 import { UserService } from "@/services/UserService";
 import { hasError } from '@/utils'
@@ -153,7 +153,7 @@ export default defineComponent({
     const store = useStore();
     return {
       closeOutline,
-      save,
+      saveOutline,
       store
     };
   }
