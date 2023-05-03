@@ -343,7 +343,7 @@ const actions: ActionTree<JobState, RootState> = {
     }
     return state.temporalExp;
   },
-  async findFrequency({ commit, state }){
+  async findTemporalExpression({ commit, state }){
     let temporalExpressions = [];
     const resp = await JobService.fetchTemporalExpression({
       "inputFields": {

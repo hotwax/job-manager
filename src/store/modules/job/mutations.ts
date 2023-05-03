@@ -18,13 +18,6 @@ const mutations: MutationTree <JobState> = {
         state.history.list = payload.jobs;
         state.history.total = payload.total;
     },
-    [types.JOB_TEMPORAL_EXPRESSIONS_UPDATED] (state, temporalExpressions) {
-        if(temporalExpressions){
-            temporalExpressions.forEach((temporalExpression: any) => {
-              state.temporalExp[temporalExpression.tempExprId] = temporalExpression;
-            })
-        }
-    },
     [types.JOB_TEMPORAL_EXPRESSION_UPDATED] (state, temporalExp) {
         state.temporalExp = temporalExp;
     },

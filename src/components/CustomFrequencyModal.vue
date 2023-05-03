@@ -87,7 +87,7 @@ export default defineComponent({
       modalController.dismiss({ dismissed: true });
     },
     async findFrequencies() {
-      this.customFrequencies = await this.store.dispatch("job/findFrequency");
+      this.customFrequencies = await this.store.dispatch("job/findTemporalExpression");
     },
     async setFrequency() {
       modalController.dismiss({ dismissed: true, frequencyId: this.frequencyId });
