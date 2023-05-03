@@ -39,7 +39,7 @@
         <ion-icon slot="start" :icon="timerOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Schedule") }}</ion-label>
         <ion-select :value="jobStatus" :interface-options="customPopoverOptions" interface="popover" :placeholder="$t('Disabled')" @ionChange="jobStatus = $event.detail.value" @ionDismiss="jobStatus == 'CUSTOM' && setCustomFrequency()">
-          <ion-select-option v-for="freq in frequencyOptions" :key="freq.value" :value="freq.value">{{ freq.label }}</ion-select-option>
+          <ion-select-option v-for="freq in frequencyOptions" :key="freq.id" :value="freq.id">{{ freq.description }}</ion-select-option>
         </ion-select>
       </ion-item>
 
@@ -191,19 +191,19 @@ export default defineComponent({
     getDateTime(time: any) {
       return DateTime.fromMillis(time).toISO()
     },
-    async generateFrequencyOptions(jobStatus?: any) {
+    async generateFrequencyOptions(currentFrequency?: any) {
       const frequencyOptions = JSON.parse(JSON.stringify(generateAllowedFrequencies(this.type)));
-      if (hasPermission(Actions.APP_CUSTOM_FREQ_VIEW)) frequencyOptions.push({ "value": "CUSTOM", "label": "Custom"})
-      if (jobStatus) {
-        const selectedFrequency = frequencyOptions.find((frequency: any) => frequency.value === jobStatus);
+      if (hasPermission(Actions.APP_CUSTOM_FREQ_VIEW)) frequencyOptions.push({ "id": "CUSTOM", "description": "Custom"})
+      if (currentFrequency) {
+        const selectedFrequency = frequencyOptions.find((frequency: any) => frequency.id === currentFrequency);
         if (!selectedFrequency ) {
-          const frequencies = await this.store.dispatch("job/fetchTemporalExpression", [ jobStatus ]);
-          const frequency = frequencies[jobStatus];
-          frequency && (frequencyOptions.push({ "value": frequency.tempExprId,  "label": frequency.description }))
+          const frequencies = await this.store.dispatch("job/fetchTemporalExpression", [ currentFrequency ]);
+          const frequency = frequencies[currentFrequency];
+          frequency && (frequencyOptions.push({ "id": frequency.tempExprId,  "description": frequency.description }))
         }
       }
       this.frequencyOptions = frequencyOptions;
-      this.jobStatus = jobStatus;
+      this.jobStatus = currentFrequency;
     },
     async skipJob(job: any) {
       const alert = await alertController
@@ -303,7 +303,6 @@ export default defineComponent({
       }
     },
     async setCustomFrequency() {
-      // if (this.jobStatus != "CUSTOM") return;
       const customFrequencyModal = await modalController.create({
         component: CustomFrequencyModal,
       });

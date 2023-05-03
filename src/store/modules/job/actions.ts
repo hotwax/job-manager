@@ -290,7 +290,8 @@ const actions: ActionTree<JobState, RootState> = {
           if (job.statusId === 'SERVICE_DRAFT') delete job.runTime;
           return {
             ...job,
-            'status': job.statusId
+            'status': job.statusId,
+            frequency: job.tempExprId
           }
         })
         if(payload.viewIndex && payload.viewIndex > 0){
@@ -800,12 +801,21 @@ const actions: ActionTree<JobState, RootState> = {
     payload.frequency = state.bulk.frequency;
     if(freqType) {
       payload.freqType = freqType;
-      if(freqType === 'slow') showToast(translate("This job has slow frequency type, hence, feasible frequency will be set automatically"))
+      if(payload.frequency && freqType === 'slow') {
+        const allowedFrequencies = generateAllowedFrequencies(freqType) as any;
+        const defaultFrequencies = generateAllowedFrequencies();
+        const isSlowFrequency = allowedFrequencies.some((frequency: any) => frequency.id === payload.frequency);
+        const isDefaultFrequency = defaultFrequencies.some((frequency: any) => frequency.id === payload.frequency);
+        // if the frequency is custom, skip setting slow frequency
+        if (!isSlowFrequency && isDefaultFrequency) {
+          // set the maximum slow frequency for slow type jobs if global frequnecy is set
+          payload.frequency = allowedFrequencies.pop().id;
+          showToast(translate("This job has slow frequency type, hence, feasible frequency will be set automatically"))
+        }
+      }
     }
     payload.runTime = state.bulk.runtime;
-    // set the maximum slow frequency for slow type jobs if global frequnecy is set
-    payload.frequency = (state.bulk.frequency && freqType === 'slow') ? (generateAllowedFrequencies('slow') as any).pop().value : state.bulk.frequency;
-    
+
     const bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs));
     bulkJobs.push(payload)
     commit(types.JOB_BULK_UPDATED, bulkJobs);
@@ -892,9 +902,11 @@ const actions: ActionTree<JobState, RootState> = {
     const hasSlowJob = bulkJobs.some((job: any) => job.freqType === 'slow');
     let slowFreqs = [];
     let slowFrequency = payload.frequency;
+    const defaultFrequencies = generateAllowedFrequencies().map((obj: any) => obj.id);
     if (hasSlowJob) {
-      slowFreqs = generateAllowedFrequencies('slow').map((obj: any) => obj.value)
-      if (!slowFreqs.includes(payload.frequency)) {
+      slowFreqs = generateAllowedFrequencies('slow').map((obj: any) => obj.id)
+      // If custom frequency set as is
+      if (!slowFreqs.includes(payload.frequency) && defaultFrequencies.includes(payload.frequency)) {
         slowFrequency = slowFreqs.pop();
         showToast(translate("Some jobs have slow frequency type, hence, feasible frequency will be set automatically"))
       }

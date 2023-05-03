@@ -33,9 +33,9 @@
       </ion-modal>
     </ion-item>
     <ion-item>
-      <ion-label>{{ $t("Schedule") }} {{ frequencyOptions }}</ion-label>
-      <ion-select :interface-options="customPopoverOptions" :value="job.frequency" interface="popover" :placeholder='$t("Bulk schedule")' @ionDismiss="job.frequency == 'CUSTOM' && setCustomFrequency()" @ionChange='setFrequency($event)'>
-        <ion-select-option v-for="freq in frequencyOptions" :key="freq.value" :value="freq.value">{{ $t(freq.label) }}</ion-select-option>
+      <ion-label>{{ $t("Schedule") }}</ion-label>
+      <ion-select :interface-options="{ showBackdrop: false }" :value="job.frequency" interface="popover" :placeholder='$t("Bulk schedule")' @ionDismiss="job.frequency == 'CUSTOM' && setCustomFrequency()" @ionChange='setFrequency($event)'>
+        <ion-select-option v-for="freq in frequencyOptions" :key="freq.id" :value="freq.id">{{ $t(freq.description) }}</ion-select-option>
       </ion-select>
     </ion-item>
     <div class="actions">
@@ -128,26 +128,25 @@ export default defineComponent({
       }
     }
   },
+  mounted() {
+    this.generateFrequencyOptions(this.job.frequency)
+  },
+  updated() {
+    this.generateFrequencyOptions(this.job.frequency)
+  },
   methods: {
-    ionViewDidEnter() {
-      this.generateFrequencyOptions(this.job.frequency)
-    },
-    ionViewWillEnter() {
-      this.generateFrequencyOptions(this.job.frequency)
-    },
     async generateFrequencyOptions(jobFrequency?: any) {
       const frequencyOptions = JSON.parse(JSON.stringify(generateAllowedFrequencies(this.job.freqType)));
-      if (hasPermission(Actions.APP_CUSTOM_FREQ_VIEW)) frequencyOptions.push({ "value": "CUSTOM", "label": "Custom"})
+      if (hasPermission(Actions.APP_CUSTOM_FREQ_VIEW)) frequencyOptions.push({ "id": "CUSTOM", "description": "Custom"})
       if (jobFrequency) {
-        const selectedFrequency = frequencyOptions.find((frequency: any) => frequency.value === jobFrequency);
+        const selectedFrequency = frequencyOptions.find((frequency: any) => frequency.id === jobFrequency);
         if (!selectedFrequency ) {
           const frequencies = await this.store.dispatch("job/fetchTemporalExpression", [ jobFrequency ]);
           const frequency = frequencies[jobFrequency];
-          frequency && (frequencyOptions.push({ "value": frequency.tempExprId,  "label": frequency.description }))
+          frequency && (frequencyOptions.push({ "id": frequency.tempExprId,  "description": frequency.description }))
         }
       }
       this.frequencyOptions = frequencyOptions;
-      // this.job.frequency = jobFrequency;
     },
     getDateTime(time: any) {
       return DateTime.fromMillis(time).toISO()
@@ -159,7 +158,7 @@ export default defineComponent({
       });
       customFrequencyModal.onDidDismiss()
         .then(async (result: any) => {
-          let jobFrequency = this.job.freqType === 'slow' ? (generateAllowedFrequencies('slow') as any).pop().value : this.globalFreq;
+          let jobFrequency = this.job.freqType === 'slow' ? (generateAllowedFrequencies('slow') as any).pop().id : this.globalFreq;
           if (result.data && result.data.frequencyId) {
             jobFrequency = result.data.frequencyId;
             await this.store.dispatch('job/setBulkJobFrequency', { frequency: jobFrequency, jobId: this.job.jobId });
