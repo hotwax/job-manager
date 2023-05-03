@@ -316,9 +316,6 @@ export default defineComponent({
         });
       return customFrequencyModal.present();
     },
-    updateFrequency(frequency: any, event?: any) {
-      this.jobStatus = frequency
-    },
     getTime (time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
     },
