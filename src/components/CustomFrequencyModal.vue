@@ -10,7 +10,7 @@
     </ion-toolbar>
   </ion-header>
 
-  <ion-content class="ion-padding">
+  <ion-content>
     <!-- Empty state -->
     <div class="empty-state" v-if="customFrequencies && customFrequencies.length === 0">
       <p>{{ $t("No frequency found")}}</p>
