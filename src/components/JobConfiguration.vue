@@ -161,7 +161,12 @@ export default defineComponent({
     }
   },
   mounted() {
+    // Appendng and setting the previous run time
     this.runTime.value = this.currentJob?.runTime
+    this.runTime.value && this.runTimeOptions.push({
+      value: this.runTime.value,
+      label: this.runTime.value ? this.getTime(this.runTime.value) : ''
+    })
   },
   updated() {
     // When updating the job, the job is fetched again with the latest values
