@@ -1,3 +1,14 @@
+# Release 2.4.0
+
+## What's Changed
+* Removed: Payment status job (getPaidTransactionsAndCreateOrderPayment service) from the Job Manager orders page (job-manager/#448) by @SandeepRajput20 in https://github.com/hotwax/job-manager/pull/461
+* Implemented: Added option for custom frequency (#457) by @adityasharma7 in https://github.com/hotwax/job-manager/pull/468
+
+## New Contributors
+* @SandeepRajput20 made their first contribution in https://github.com/hotwax/job-manager/pull/461
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v2.3.0...v2.4.0
+
 # Release 2.3.0
 
 ## What's Changed
