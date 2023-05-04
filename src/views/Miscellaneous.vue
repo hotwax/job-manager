@@ -113,7 +113,7 @@ export default defineComponent({
   methods: {
     async viewJobConfiguration(job: any) {
       this.currentJob = job
-      this.currentJobStatus = job.status
+      this.currentJobStatus =  job.status === "SERVICE_DRAFT" ? 'SERVICE_DRAFT' : job.frequency;
 
       // if job runTime is not a valid date then making runTime as empty
       if (job?.runTime && !isFutureDate(job?.runTime)) {

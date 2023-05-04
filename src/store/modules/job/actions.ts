@@ -2,7 +2,7 @@ import { ActionTree } from 'vuex'
 import RootState from '@/store/RootState'
 import JobState from './JobState'
 import * as types from './mutation-types'
-import { hasError, showToast, generateFrequencyOptions } from '@/utils'
+import { generateAllowedFrequencies, hasError, showToast } from '@/utils'
 import { JobService } from '@/services/JobService'
 import { translate } from '@/i18n'
 import { DateTime } from 'luxon';
@@ -290,7 +290,8 @@ const actions: ActionTree<JobState, RootState> = {
           if (job.statusId === 'SERVICE_DRAFT') delete job.runTime;
           return {
             ...job,
-            'status': job.statusId
+            'status': job.statusId,
+            frequency: job.tempExprId
           }
         })
         if(payload.viewIndex && payload.viewIndex > 0){
@@ -323,7 +324,7 @@ const actions: ActionTree<JobState, RootState> = {
         tempIds.push(id);
       }
     });
-    if(tempIds.length <= 0) return tempExprIds.map((id: any) => state.temporalExp[id]);
+    if(tempIds.length == 0) return state.temporalExp;
     const resp = await JobService.fetchTemporalExpression({
         "inputFields": {
         "tempExprId": tempIds,
@@ -335,9 +336,33 @@ const actions: ActionTree<JobState, RootState> = {
       "noConditionFind": "Y",
     })
     if (resp.status === 200 && !hasError(resp)) {
-      commit(types.JOB_TEMPORAL_EXPRESSION_UPDATED, resp.data.docs);
+      resp.data.docs.forEach((temporalExpression: any) => {
+        state.temporalExp[temporalExpression.tempExprId] = temporalExpression;
+      })
+      commit(types.JOB_TEMPORAL_EXPRESSION_UPDATED, state.temporalExp);
     }
-    return resp;
+    return state.temporalExp;
+  },
+  async findTemporalExpression({ commit, state }){
+    let temporalExpressions = [];
+    const resp = await JobService.fetchTemporalExpression({
+      "inputFields": {
+        "tempExprTypeId": "FREQUENCY",
+      },
+      "viewSize": 100,
+      "fieldList": [ "tempExprId", "description","integer1", "integer2" ],
+      "entityName": "TemporalExpression",
+      "noConditionFind": "Y",
+    })
+    if (resp.status === 200 && !hasError(resp)) {
+      temporalExpressions = resp.data.docs;
+      temporalExpressions.forEach((temporalExpression: any) => {
+        state.temporalExp[temporalExpression.tempExprId] = temporalExpression;
+      })
+      // Caching it for other uses
+      commit(types.JOB_TEMPORAL_EXPRESSION_UPDATED, state.temporalExp);
+    }
+    return temporalExpressions;
   },
   
   async fetchJobs ({ state, commit, dispatch }, payload) {
@@ -511,10 +536,12 @@ const actions: ActionTree<JobState, RootState> = {
       'systemJobEnumId': job.systemJobEnumId
     } as any
     
-    if(job?.runtimeData?.shopifyConfigId) {
+    if (job?.runtimeData?.shopifyConfigId || job?.runtimeData?.shopId) {
       const shopifyConfig = this.state.user.currentShopifyConfig
-      payload['shopifyConfigId'] = shopifyConfig?.shopifyConfigId
-      payload['jobFields']['shopId'] = shopifyConfig?.shopId
+
+      job?.runtimeData?.shopifyConfigId && (payload['shopifyConfigId'] = shopifyConfig?.shopifyConfigId);
+      job?.runtimeData?.shopId && (payload['shopId'] = shopifyConfig?.shopId);
+      payload['jobFields']['shopId'] = shopifyConfig?.shopId;
     }
 
     // checking if the runtimeData has productStoreId, and if present then adding it on root level
@@ -626,9 +653,7 @@ const actions: ActionTree<JobState, RootState> = {
         'tempExprId': job.jobStatus, // Need to remove this as we are passing frequency in SERVICE_TEMP_EXPR, currently kept it for backward compatibility
         'parentJobId': job.parentJobId,
         'recurrenceTimeZone': this.state.user.current.userTimeZone,
-        'shopId': job.runtimeData?.shopifyConfigId && job.status === "SERVICE_PENDING" ? job.shopId : this.state.user.currentShopifyConfig.shopId,
       },
-      'shopifyConfigId': job.runtimeData?.shopifyConfigId && job.status === "SERVICE_PENDING" ? job.runtimeData?.shopifyConfigId : this.state.user.currentShopifyConfig.shopifyConfigId,
       'statusId': "SERVICE_PENDING",
       'systemJobEnumId': job.systemJobEnumId
     } as any
@@ -636,6 +661,16 @@ const actions: ActionTree<JobState, RootState> = {
     job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = job.status === "SERVICE_PENDING" ? job.productStoreId : this.state.user.currentEComStore.productStoreId)
     job?.priority && (payload['SERVICE_PRIORITY'] = job.priority.toString())
     job?.sinceId && (payload['sinceId'] = job.sinceId)
+
+    // ShopifyConfig and ShopifyShop should be set based upon runtime data
+    // If existing job is run now, copy as is else set the current shop of user
+    if (job?.runtimeData?.shopifyConfigId || job?.runtimeData?.shopId) {
+      const shopifyConfig = this.state.user.currentShopifyConfig
+
+      job?.runtimeData?.shopifyConfigId && (payload['shopifyConfigId'] = job.status === "SERVICE_PENDING" ? job.runtimeData?.shopifyConfigId  : shopifyConfig?.shopifyConfigId);
+      job?.runtimeData?.shopId && (payload['shopId'] = job.status === "SERVICE_PENDING" ? job.runtimeData?.shopId  : shopifyConfig?.shopId);
+      payload['jobFields']['shopId'] = job.status === "SERVICE_PENDING" ? job.shopId  : shopifyConfig?.shopId;
+    }
 
     // assigning '' (empty string) to all the runtimeData properties whose value is "null"
     job.runtimeData && Object.keys(job.runtimeData).map((key: any) => {
@@ -766,12 +801,21 @@ const actions: ActionTree<JobState, RootState> = {
     payload.frequency = state.bulk.frequency;
     if(freqType) {
       payload.freqType = freqType;
-      if(freqType === 'slow') showToast(translate("This job has slow frequency type, hence, feasible frequency will be set automatically"))
+      if(payload.frequency && freqType === 'slow') {
+        const allowedFrequencies = generateAllowedFrequencies(freqType) as any;
+        const defaultFrequencies = generateAllowedFrequencies();
+        const isSlowFrequency = allowedFrequencies.some((frequency: any) => frequency.id === payload.frequency);
+        const isDefaultFrequency = defaultFrequencies.some((frequency: any) => frequency.id === payload.frequency);
+        // if the frequency is custom, skip setting slow frequency
+        if (!isSlowFrequency && isDefaultFrequency) {
+          // set the maximum slow frequency for slow type jobs if global frequnecy is set
+          payload.frequency = allowedFrequencies.pop().id;
+          showToast(translate("This job has slow frequency type, hence, feasible frequency will be set automatically"))
+        }
+      }
     }
     payload.runTime = state.bulk.runtime;
-    // set the maximum slow frequency for slow type jobs if global frequnecy is set
-    payload.frequency = (state.bulk.frequency && freqType === 'slow') ? (generateFrequencyOptions('slow') as any).pop().value : state.bulk.frequency;
-    
+
     const bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs));
     bulkJobs.push(payload)
     commit(types.JOB_BULK_UPDATED, bulkJobs);
@@ -804,13 +848,14 @@ const actions: ActionTree<JobState, RootState> = {
         } as any
 
         
-        if (job?.runtimeData?.shopifyConfigId) {
+        if (job?.runtimeData?.shopifyConfigId || job?.runtimeData?.shopId) {
           const shopifyConfig = this.state.user.shopifyConfigs.find((config: any) => {
             return config.shopId === shopId;
           })
 
-          params['shopifyConfigId'] = shopifyConfig.shopifyConfigId;
-          params['jobFields']['shopId'] = shopId;
+          job?.runtimeData?.shopifyConfigId && (params['shopifyConfigId'] = shopifyConfig.shopifyConfigId);
+          job?.runtimeData?.shopId && (params['shopId'] = shopifyConfig.shopId);
+          params['jobFields']['shopId'] = shopifyConfig.shopId;
         }
 
         // checking if the runtimeData has productStoreId, and if present then adding it on root level
@@ -857,9 +902,11 @@ const actions: ActionTree<JobState, RootState> = {
     const hasSlowJob = bulkJobs.some((job: any) => job.freqType === 'slow');
     let slowFreqs = [];
     let slowFrequency = payload.frequency;
+    const defaultFrequencies = generateAllowedFrequencies().map((obj: any) => obj.id);
     if (hasSlowJob) {
-      slowFreqs = generateFrequencyOptions('slow').map((obj: any) => obj.value)
-      if (!slowFreqs.includes(payload.frequency)) {
+      slowFreqs = generateAllowedFrequencies('slow').map((obj: any) => obj.id)
+      // If custom frequency set as is
+      if (!slowFreqs.includes(payload.frequency) && defaultFrequencies.includes(payload.frequency)) {
         slowFrequency = slowFreqs.pop();
         showToast(translate("Some jobs have slow frequency type, hence, feasible frequency will be set automatically"))
       }
