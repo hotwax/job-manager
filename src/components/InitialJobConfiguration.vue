@@ -17,14 +17,14 @@
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
         <ion-select interface="popover" :placeholder="$t('Select')" :value="runTime.value" @ionChange="updateRunTime($event)">
-          <ion-select-option v-for="runTime in runTimeOptions" :key="runTime.value" :value="runTime.value">{{ $t(runTime.label) }}</ion-select-option>
+          <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ $t(runTime.label) }}</ion-select-option>
         </ion-select>
         <ion-modal :is-open="isOpen" @didDismiss="() => isOpen = false">
           <ion-content force-overscroll="false">
             <ion-datetime
               show-default-buttons
               hour-cycle="h23"
-              :value="runTime.value ? (runTime.type === 'CUSTOM' ? getDateTime(runTime.value) : getDateTime(DateTime.now().toMillis() + parseInt(runTime.value))) : ''"
+              :value="runTime ? (isCustomRunTime(runTime) ? getDateTime(runTime) : getDateTime(DateTime.now().toMillis() + runTime)) : ''"
               @ionChange="updateCustomTime($event)"
             />
           </ion-content>
@@ -53,14 +53,14 @@
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
         <ion-select interface="popover" :placeholder="$t('Select')" :value="runTime.value" @ionChange="updateRunTime($event)">
-          <ion-select-option v-for="runTime in runTimeOptions" :key="runTime.value" :value="runTime.value">{{ $t(runTime.label) }}</ion-select-option>
+          <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ $t(runTime.label) }}</ion-select-option>
         </ion-select>
         <ion-modal class="date-time-modal" :is-open="isOpen" @didDismiss="() => isOpen = false">
           <ion-content force-overscroll="false">
             <ion-datetime          
               show-default-buttons
               hour-cycle="h12"
-              :value="runTime.value ? (runTime.type === 'CUSTOM' ? getDateTime(runTime.value) : getDateTime(DateTime.now().toMillis() + parseInt(runTime.value))) : ''"
+              :value="runTime ? (isCustomRunTime(runTime) ? getDateTime(runTime) : getDateTime(DateTime.now().toMillis() + runTime)) : ''"
               @ionChange="updateCustomTime($event)"
             />
           </ion-content>
@@ -125,7 +125,7 @@ import {
 import { mapGetters, useStore } from "vuex";
 import { translate } from "@/i18n";
 import { DateTime } from 'luxon';
-import { handleDateTimeInput,isFutureDate, showToast } from '@/utils';
+import { isCustomRunTime, generateAllowedRunTimes, handleDateTimeInput, isFutureDate, showToast } from '@/utils';
 import { Actions, hasPermission } from '@/authorization'
 import { JobService } from "@/services/JobService";
 
@@ -151,10 +151,8 @@ export default defineComponent({
       lastShopifyOrderId: this.shopifyOrderId,
       minDateTime: DateTime.now().toISO(),
       jobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
-      runTime: {
-        value: '',
-        type: 'CUSTOM' // as job's current time is 'custom'
-      } as any
+      runTime: '' as any,
+      runTimes: [] as any,
     }
   },
   mounted() {
@@ -162,40 +160,28 @@ export default defineComponent({
     if (this.currentJob && Object.keys(this.currentJob).length) {
       this.fetchPreviousOccurrence();
       // Appendng and setting the previous run time
-      this.runTime.value = this.currentJob.runTime
-      this.runTime.value && this.runTimeOptions.push({
-        value: this.runTime.value,
-        label: this.runTime.value ? this.getTime(this.runTime.value) : ''
-      })
+      this.runTime = this.currentJob?.runTime
+      this.generateRunTimes(this.runTime)
     }
   },
   props: ['type', 'shopifyOrderId'],
   computed: {
     ...mapGetters({
       currentJob: 'job/getCurrentJob',
-    }),
-    // value denotes the time in milliseconds for that label
-    runTimeOptions: () => [{
-      "value": 0,
-      "label": "Now"
-    }, {
-      "value": 300000,
-      "label": "In 5 minutes"
-    }, {
-      "value": 900000,
-      "label": "In 15 minutes"
-    }, {
-      "value": 3600000,
-      "label": "In an hour"
-    }, {
-      "value": 86400000,
-      "label": "Tomorrow"
-    }, {
-      "value": "CUSTOM",
-      "label": "Custom"
-    }]
+    })
   },
   methods: {
+    async generateRunTimes(currentRunTime?: any) {
+      const runTimes = JSON.parse(JSON.stringify(generateAllowedRunTimes()))
+      let selectedRunTime
+      // 0 check for the 'Now' value and '' check for initial render
+      if (currentRunTime || currentRunTime === 0 || currentRunTime === '') {
+        selectedRunTime = runTimes.some((runTime: any) => runTime.value === currentRunTime)
+        if (!selectedRunTime) runTimes.push({ label: this.getTime(currentRunTime), value: currentRunTime })
+      }
+      this.runTime = currentRunTime
+      this.runTimes = runTimes
+    },
     async fetchPreviousOccurrence() {
       this.previousOccurrence = await JobService.fetchJobPreviousOccurrence({
         systemJobEnumId: this.currentJob?.systemJobEnumId
@@ -229,12 +215,10 @@ export default defineComponent({
       job['jobStatus'] = job.tempExprId
 
       job.runTime = this.runTime.value
-      if (this.runTime.type === 'PREDEFINED') {
-        // Handling the case for 'Now'. Sending the now value will fail the API as by the time
-        // the job is ran, the given 'now' time would have passed. Hence, passing empty 'run time'
-        if (this.runTime.value == 0) job.runTime = ''
-        else job.runTime += DateTime.now().toMillis()
-      }
+
+      // Handling the case for 'Now'. Sending the now value will fail the API as by the time
+      // the job is ran, the given 'now' time would have passed. Hence, passing empty 'run time'
+      !isCustomRunTime(this.runTime) && this.runTime == 0 ? job.runTime = '' : job.runTime += DateTime.now().toMillis()
 
       // if job runTime is not a valid date then making runTime as empty
       if (job?.runTime && !isFutureDate(job?.runTime)) {
@@ -259,44 +243,14 @@ export default defineComponent({
     },
     updateRunTime(event: CustomEvent) {
       const value = event.detail.value
-      if (value != 'CUSTOM') {
-        // checking if a predefined option is selected i.e the first five options
-        const isPredefinedValue = this.runTimeOptions.slice(0, 5).some((option: any) => option.value === value)
-
-        // Update the option list iff - a predefined option is selected 
-        // and a custom date time is already there in the list 
-        if (this.runTime.type === 'CUSTOM'
-          && this.runTimeOptions[this.runTimeOptions.length - 1].value != 'CUSTOM'
-          && isPredefinedValue) {
-          this.runTimeOptions.pop()
-        }
-
-        this.runTime = {
-          value,
-          type: isPredefinedValue ? 'PREDEFINED' : 'CUSTOM'
-        }
-      } else {
-        this.isOpen = true
-      }
+      if (value != 'CUSTOM') this.generateRunTimes(value)
+      else this.isOpen = true
     },
     updateCustomTime(event: CustomEvent) {
       const currTime = DateTime.now().toMillis();
       const setTime = handleDateTimeInput(event.detail.value);
-      if (setTime > currTime) {
-        if (this.runTimeOptions[this.runTimeOptions.length - 1].value != 'CUSTOM') this.runTimeOptions.pop()
-
-        this.runTimeOptions.push({
-          value: setTime,
-          label: this.getTime(setTime)
-        })
-
-        this.runTime = {
-          value: setTime,
-          type: 'CUSTOM'
-        }
-      } else {
-        showToast(translate("Provide a future date and time"))
-      }
+      if (setTime > currTime) this.generateRunTimes(setTime)
+      else showToast(translate("Provide a future date and time"))
     }
   },
   setup() {
@@ -310,12 +264,13 @@ export default defineComponent({
 
     return {
       Actions,
-      DateTime,
-      hasPermission,
       calendarClearOutline,
       customFulfillmentOptions,
       customOrderOptions,
+      DateTime,
       flagOutline,
+      hasPermission,
+      isCustomRunTime,
       sendOutline,
       store,
       timeOutline

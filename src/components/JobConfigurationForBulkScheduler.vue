@@ -20,14 +20,16 @@
     </ion-item>
     <ion-item>
       <ion-label>{{ $t("Run time") }}</ion-label>
-      <ion-label class="ion-text-wrap" @click="() => isDateTimeModalOpen = true" slot="end">{{ job.runTime ? getTime(job.runTime) : $t('Select run time') }}</ion-label>
+      <ion-select interface="popover" :placeholder="$t('Select run time')" :value="job.runTime" @ionChange="updateRunTime($event)">
+        <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ $t(runTime.label) }}</ion-select-option>
+      </ion-select>
       <ion-modal class="date-time-modal" :is-open="isDateTimeModalOpen" @didDismiss="() => isDateTimeModalOpen = false">
         <ion-content force-overscroll="false">
           <ion-datetime 
             show-default-buttons 
             hour-cycle="h23" 
-            :value="job.runTime ? getDateTime(job.runTime) : ''" 
-            @ionChange="updateRunTime($event)" 
+            :value="job.runTime ? (isCustomRunTime(job.runTime) ? getDateTime(job.runTime) : getDateTime(DateTime.now().toMillis() + job.runTime)) : ''"
+            @ionChange="updateCustomTime($event)"
           />
         </ion-content>
       </ion-modal>
@@ -77,7 +79,7 @@ import {
   closeOutline
 } from "ionicons/icons";
 import { mapGetters, useStore } from "vuex";
-import { generateAllowedFrequencies, handleDateTimeInput, showToast } from "@/utils";
+import { isCustomRunTime, generateAllowedRunTimes, generateAllowedFrequencies, handleDateTimeInput, showToast } from "@/utils";
 import { DateTime } from 'luxon';
 import { translate } from '@/i18n'
 import { Actions, hasPermission } from '@/authorization'
@@ -103,6 +105,7 @@ export default defineComponent({
   data() {
     return {
       isDateTimeModalOpen: false,
+      runTimes: [] as any,
       frequencyOptions: [] as any
     }
   },
@@ -129,12 +132,24 @@ export default defineComponent({
     }
   },
   mounted() {
+    this.generateRunTimes(this.job.runTime)
     this.generateFrequencyOptions(this.job.frequency)
   },
   updated() {
     this.generateFrequencyOptions(this.job.frequency)
   },
   methods: {
+    async generateRunTimes(currentRunTime?: any) {
+      const runTimes = JSON.parse(JSON.stringify(generateAllowedRunTimes()))
+      let selectedRunTime
+      // 0 check for the 'Now' value and '' check for initial render
+      if (currentRunTime || currentRunTime === 0 || currentRunTime === '') {
+        selectedRunTime = runTimes.some((runTime: any) => runTime.value === currentRunTime)
+        if (!selectedRunTime) runTimes.push({ label: this.getTime(currentRunTime), value: currentRunTime })
+      }
+      this.runTimes = runTimes
+      this.store.dispatch('job/setBulkJobRuntime', { runtime: currentRunTime, jobId: this.job.jobId });
+    },
     async generateFrequencyOptions(jobFrequency?: any) {
       const frequencyOptions = JSON.parse(JSON.stringify(generateAllowedFrequencies(this.job.freqType)));
       if (hasPermission(Actions.APP_CUSTOM_FREQ_VIEW)) frequencyOptions.push({ "id": "CUSTOM", "description": "Custom"})
@@ -167,15 +182,16 @@ export default defineComponent({
         });
       return customFrequencyModal.present();
     },
-    updateRunTime(ev: CustomEvent) {
+    updateRunTime(event: CustomEvent) {
+      const value = event.detail.value
+      if (value != 'CUSTOM') this.generateRunTimes(value)
+      else this.isDateTimeModalOpen = true
+    },
+    updateCustomTime(event: CustomEvent) {
       const currTime = DateTime.now().toMillis();
-      const setTime = handleDateTimeInput(ev['detail'].value);
-      
-      if(setTime > currTime) {
-        this.store.dispatch('job/setBulkJobRuntime', { runtime: setTime, jobId: this.job.jobId });
-      } else {
-        showToast(translate("Provide a future date and time"));
-      }
+      const setTime = handleDateTimeInput(event.detail.value);
+      if (setTime > currTime) this.generateRunTimes(setTime)
+      else showToast(translate("Provide a future date and time"))
     },
     async setFrequency(ev: CustomEvent) {
       const frequency = ev['detail'].value;
@@ -186,7 +202,7 @@ export default defineComponent({
     },
     removeJob(systemJobEnumId: any) {
       this.store.dispatch('job/removeBulkJob', systemJobEnumId);
-    },
+    }
   },
   setup() {
     const store = useStore();
@@ -194,7 +210,9 @@ export default defineComponent({
     return {
       calendarClearOutline,
       copyOutline,
+      DateTime,
       flashOutline,
+      isCustomRunTime,
       timeOutline,
       timerOutline,
       store,
