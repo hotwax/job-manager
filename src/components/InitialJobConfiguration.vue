@@ -19,7 +19,7 @@
         <ion-select interface="popover" :placeholder="$t('Select')" :value="runTime.value" @ionChange="updateRunTime($event)">
           <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ $t(runTime.label) }}</ion-select-option>
         </ion-select>
-        <ion-modal :is-open="isOpen" @didDismiss="() => isOpen = false">
+        <ion-modal :is-open="isDateTimeModalOpen" @didDismiss="() => isDateTimeModalOpen = false">
           <ion-content force-overscroll="false">
             <ion-datetime
               show-default-buttons
@@ -55,7 +55,7 @@
         <ion-select interface="popover" :placeholder="$t('Select')" :value="runTime.value" @ionChange="updateRunTime($event)">
           <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ $t(runTime.label) }}</ion-select-option>
         </ion-select>
-        <ion-modal class="date-time-modal" :is-open="isOpen" @didDismiss="() => isOpen = false">
+        <ion-modal class="date-time-modal" :is-open="isDateTimeModalOpen" @didDismiss="() => isDateTimeModalOpen = false">
           <ion-content force-overscroll="false">
             <ion-datetime          
               show-default-buttons
@@ -147,7 +147,7 @@ export default defineComponent({
   data() {
     return {
       previousOccurrence: '',
-      isOpen: false,
+      isDateTimeModalOpen: false,
       lastShopifyOrderId: this.shopifyOrderId,
       minDateTime: DateTime.now().toISO(),
       jobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
@@ -244,7 +244,7 @@ export default defineComponent({
     updateRunTime(event: CustomEvent) {
       const value = event.detail.value
       if (value != 'CUSTOM') this.generateRunTimes(value)
-      else this.isOpen = true
+      else this.isDateTimeModalOpen = true
     },
     updateCustomTime(event: CustomEvent) {
       const currTime = DateTime.now().toMillis();

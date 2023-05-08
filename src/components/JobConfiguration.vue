@@ -25,7 +25,7 @@
         Currently, when mapping the same datetime component for label and button so it's not working so for
         now commented the button and added a fallback string -->
         <!-- <ion-button id="open-run-time-modal" size="small" fill="outline" color="medium" v-show="!currentJob?.runTime">{{ $t("Select run time") }}</ion-button> -->
-        <ion-modal class="date-time-modal" :is-open="isOpen" @didDismiss="() => isOpen = false">
+        <ion-modal class="date-time-modal" :is-open="isDateTimeModalOpen" @didDismiss="() => isDateTimeModalOpen = false">
           <ion-content force-overscroll="false">
             <ion-datetime          
               show-default-buttons
@@ -153,7 +153,7 @@ export default defineComponent({
   },
   data() {
     return {
-      isOpen: false,
+      isDateTimeModalOpen: false,
       runTime: '' as any,
       runTimes: [] as any,
       jobStatus: this.status,
@@ -401,7 +401,7 @@ export default defineComponent({
     updateRunTime(event: CustomEvent) {
       const value = event.detail.value
       if (value != 'CUSTOM') this.generateRunTimes(value)
-      else this.isOpen = true
+      else this.isDateTimeModalOpen = true
     },
     updateCustomTime(event: CustomEvent) {
       const currTime = DateTime.now().toMillis();
