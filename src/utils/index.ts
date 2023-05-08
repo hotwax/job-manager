@@ -179,4 +179,30 @@ const generateAllowedFrequencies = (type?: string) => {
   return type === 'slow' ? slow : optionDefault;
 }
 
-export { generateAllowedFrequencies, handleDateTimeInput, showToast, hasError , parseCsv , jsonToCsv, JsonToCsvOption, isFutureDate, prepareRuntime }
+const generateAllowedRunTimes = () => {
+  return [{
+    "value": 0,
+    "label": "Now"
+  }, {
+    "value": 300000,
+    "label": "In 5 minutes"
+  }, {
+    "value": 900000,
+    "label": "In 15 minutes"
+  }, {
+    "value": 3600000,
+    "label": "In an hour"
+  }, {
+    "value": 86400000,
+    "label": "Tomorrow"
+  }, {
+    "value": "CUSTOM",
+    "label": "Custom"
+  }]
+}
+
+const isCustomRunTime = (value: number) => {
+  return !generateAllowedRunTimes().some((runTime: any) => runTime.value === value)
+}
+
+export { isCustomRunTime, generateAllowedFrequencies, generateAllowedRunTimes, handleDateTimeInput, showToast, hasError , parseCsv , jsonToCsv, JsonToCsvOption, isFutureDate, prepareRuntime }

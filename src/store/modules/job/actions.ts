@@ -2,7 +2,7 @@ import { ActionTree } from 'vuex'
 import RootState from '@/store/RootState'
 import JobState from './JobState'
 import * as types from './mutation-types'
-import { generateAllowedFrequencies, hasError, showToast } from '@/utils'
+import { isCustomRunTime, generateAllowedFrequencies, hasError, showToast } from '@/utils'
 import { JobService } from '@/services/JobService'
 import { translate } from '@/i18n'
 import { DateTime } from 'luxon';
@@ -827,6 +827,10 @@ const actions: ActionTree<JobState, RootState> = {
     let failedJobs = 0;
     payload.shopifyConfigs.reduce((jobParams: any, shopId: string) => {
       return payload.jobs.reduce((jobParams: any, job: any) => {
+        // Handling the case for 'Now'. Sending the now value will fail the API as by the time
+        // the job is ran, the given 'now' time would have passed. Hence, passing empty 'run time'
+        !isCustomRunTime(job.runTime) && job.runTime == 0 ? job.runTime = '' : job.runTime += DateTime.now().toMillis()
+
         const params = {
           'JOB_NAME': job.jobName,
           'SERVICE_NAME': job.serviceName,
