@@ -17,7 +17,9 @@
       <ion-item>
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
-        <ion-label class="ion-text-wrap" @click="() => isOpen = true" slot="end">{{ runTime ? getTime(runTime) : $t('Select run time') }}</ion-label>
+        <ion-select interface="popover" :placeholder="$t('Select')" :value="runTime" @ionChange="updateRunTime($event)">
+          <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ $t(runTime.label) }}</ion-select-option>
+        </ion-select>
         <!-- TODO: display a button when we are not having a runtime and open the datetime component
         on click of that button
         Currently, when mapping the same datetime component for label and button so it's not working so for
@@ -28,8 +30,8 @@
             <ion-datetime          
               show-default-buttons
               hour-cycle="h23"
-              :value="runTime ? getDateTime(runTime) : ''"
-              @ionChange="updateRunTime($event)"
+              :value="runTime ? (isCustomRunTime(runTime) ? getDateTime(runTime) : getDateTime(DateTime.now().toMillis() + runTime)) : ''"
+              @ionChange="updateCustomTime($event)"
             />
           </ion-content>
         </ion-modal>
@@ -124,7 +126,7 @@ import {
 } from "ionicons/icons";
 import JobHistoryModal from '@/components/JobHistoryModal.vue'
 import { Plugins } from '@capacitor/core';
-import { generateAllowedFrequencies, handleDateTimeInput, showToast } from "@/utils";
+import { isCustomRunTime, generateAllowedRunTimes, generateAllowedFrequencies, handleDateTimeInput, showToast } from "@/utils";
 import { mapGetters, useStore } from "vuex";
 import { DateTime } from 'luxon';
 import { translate } from '@/i18n'
@@ -152,13 +154,15 @@ export default defineComponent({
   data() {
     return {
       isOpen: false,
-      jobStatus: this.status,
       runTime: '' as any,
+      runTimes: [] as any,
+      jobStatus: this.status,
       frequencyOptions: [] as any
     }
   },
   mounted() {
-    this.runTime = this.currentJob?.runTime;
+    this.runTime = this.currentJob?.runTime
+    this.generateRunTimes(this.runTime)
     this.generateFrequencyOptions(this.jobStatus)
   },
   updated() {
@@ -166,6 +170,7 @@ export default defineComponent({
     // Updated value should be set to instance variable jobStatus
     this.jobStatus = this.currentJob.statusId === "SERVICE_DRAFT" ? this.currentJob.statusId : this.currentJob.tempExprId;
     this.runTime = this.currentJob?.runTime ? this.currentJob?.runTime : ''
+    this.generateRunTimes(this.runTime)
     this.generateFrequencyOptions(this.jobStatus)
   },
   props: ["title", "status", "type"],
@@ -204,6 +209,17 @@ export default defineComponent({
       }
       this.frequencyOptions = frequencyOptions;
       this.jobStatus = currentFrequency;
+    },
+    async generateRunTimes(currentRunTime?: any) {
+      const runTimes = JSON.parse(JSON.stringify(generateAllowedRunTimes()))
+      let selectedRunTime
+      // 0 check for the 'Now' value and '' check for initial render
+      if (currentRunTime || currentRunTime === 0 || currentRunTime === '') {
+        selectedRunTime = runTimes.some((runTime: any) => runTime.value === currentRunTime)
+        if (!selectedRunTime) runTimes.push({ label: this.getTime(currentRunTime), value: currentRunTime })
+      }
+      this.runTime = currentRunTime
+      this.runTimes = runTimes
     },
     async skipJob(job: any) {
       const alert = await alertController
@@ -283,7 +299,12 @@ export default defineComponent({
     async updateJob() {
       const job = this.currentJob;
       job['jobStatus'] = this.jobStatus !== 'SERVICE_DRAFT' ? this.jobStatus : 'HOURLY';
-      job.runTime = this.runTime;
+
+      job.runTime = this.runTime
+
+      // Handling the case for 'Now'. Sending the now value will fail the API as by the time
+      // the job is ran, the given 'now' time would have passed. Hence, passing empty 'run time'
+      !isCustomRunTime(this.runTime) && this.runTime == 0 ? job.runTime = '' : job.runTime += DateTime.now().toMillis()
 
       if (job?.statusId === 'SERVICE_DRAFT') {
         this.store.dispatch('job/scheduleService', job).then((job: any) => {
@@ -322,15 +343,6 @@ export default defineComponent({
     timeTillJob (time: any) {
       const timeDiff = DateTime.fromMillis(time).diff(DateTime.local());
       return DateTime.local().plus(timeDiff).toRelative();
-    },
-    updateRunTime(ev: CustomEvent) {
-      const currTime = DateTime.now().toMillis();
-      const setTime = handleDateTimeInput(ev['detail'].value);
-      if(setTime > currTime) {
-        this.runTime = setTime;
-      } else {
-        showToast(translate("Provide a future date and time"))
-      }
     },
     async viewJobHistory(job: any) {
       const jobHistoryModal = await modalController.create({
@@ -385,6 +397,17 @@ export default defineComponent({
         pinnedJobs.add(enumId);
         await this.store.dispatch('user/updatePinnedJobs', { pinnedJobs: [...pinnedJobs] });
       }
+    },
+    updateRunTime(event: CustomEvent) {
+      const value = event.detail.value
+      if (value != 'CUSTOM') this.generateRunTimes(value)
+      else this.isOpen = true
+    },
+    updateCustomTime(event: CustomEvent) {
+      const currTime = DateTime.now().toMillis();
+      const setTime = handleDateTimeInput(event.detail.value);
+      if (setTime > currTime) this.generateRunTimes(setTime)
+      else showToast(translate("Provide a future date and time"))
     }
   },
   setup() {
@@ -395,8 +418,10 @@ export default defineComponent({
       Actions,
       calendarClearOutline,
       copyOutline,
+      DateTime,
       flashOutline,
       hasPermission,
+      isCustomRunTime,
       timeOutline,
       timerOutline,
       store,

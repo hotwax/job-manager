@@ -51,14 +51,16 @@
           <ion-item>
             <ion-icon slot="start" :icon="timeOutline" />
             <ion-label>{{ $t("Run time") }}</ion-label>
-            <ion-label class="ion-text-wrap" @click="() => isDateTimeModalOpen = true" slot="end">{{ globalRuntime ? getTime(globalRuntime) : $t('Select run time') }}</ion-label>
+            <ion-select interface="popover" :placeholder="$t('Select run time')" :value="globalRuntime" @ionChange="updateRunTime($event)">
+              <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ $t(runTime.label) }}</ion-select-option>
+            </ion-select>
             <ion-modal class="date-time-modal" :is-open="isDateTimeModalOpen" @didDismiss="() => isDateTimeModalOpen = false">
               <ion-content force-overscroll="false">
                 <ion-datetime            
                   show-default-buttons 
                   hour-cycle="h23" 
-                  :value="globalRuntime ? getDateTime(globalRuntime) : ''" 
-                  @ionChange="updateRuntime($event)" 
+                  :value="globalRuntime ? (isCustomRunTime(globalRuntime) ? getDateTime(globalRuntime) : getDateTime(DateTime.now().toMillis() + globalRuntime)) : ''"
+                  @ionChange="updateCustomTime($event)"
                 />
               </ion-content>
             </ion-modal>
@@ -124,7 +126,7 @@ import { addOutline, iceCreamOutline, timeOutline, timerOutline } from 'ionicons
 import { useRouter } from 'vue-router';
 import SelectJobsModal from '@/views/SelectJobsModal.vue';
 import { UserService } from '@/services/UserService'
-import { generateAllowedFrequencies, hasError, showToast, handleDateTimeInput } from '@/utils'
+import { isCustomRunTime, generateAllowedRunTimes, generateAllowedFrequencies, hasError, showToast, handleDateTimeInput } from '@/utils'
 import { translate } from '@/i18n'
 import JobConfigurationForBulkScheduler from '@/components/JobConfigurationForBulkScheduler.vue'
 import { DateTime } from 'luxon';
@@ -164,6 +166,7 @@ export default defineComponent({
       selectedEComStoreId: '',
       selectedShopifyConfigs: [] as Array<string>, // shopifyConfigs for which the user wants to schedule jobs
       shopifyConfigsForEComStore: [] as any,
+      runTimes: [] as any,
       frequencyOptions: [] as any
     }
   },
@@ -184,7 +187,9 @@ export default defineComponent({
 
     return {
       addOutline,
+      DateTime,
       iceCreamOutline,
+      isCustomRunTime,
       store,
       router,
       timeOutline,
@@ -196,9 +201,21 @@ export default defineComponent({
     this.shopifyConfigsForEComStore = this.shopifyConfigs;
     this.selectedEComStoreId = this.currentEComStore.productStoreId;
     this.selectedShopifyConfigs.push(this.currentShopifyConfig.shopId)
+    this.generateRunTimes()
     this.generateFrequencyOptions()
   },
   methods: {
+    async generateRunTimes(currentRunTime?: any) {
+      const runTimes = JSON.parse(JSON.stringify(generateAllowedRunTimes()))
+      let selectedRunTime
+      // 0 check for the 'Now' value and '' check for initial render
+      if (currentRunTime || currentRunTime === 0 || currentRunTime === '') {
+        selectedRunTime = runTimes.some((runTime: any) => runTime.value === currentRunTime)
+        if (!selectedRunTime) runTimes.push({ label: this.getTime(currentRunTime), value: currentRunTime })
+      }
+      this.runTimes = runTimes
+      this.store.dispatch('job/setBulkJobGlobalRuntime', { runtime: currentRunTime });
+    },
     async generateFrequencyOptions(currentFrequency?: any) {
       const frequencyOptions = JSON.parse(JSON.stringify(generateAllowedFrequencies()));
       if (hasPermission(Actions.APP_CUSTOM_FREQ_VIEW)) frequencyOptions.push({ "id": "CUSTOM", "description": "Custom"})
@@ -237,15 +254,15 @@ export default defineComponent({
             role: 'cancel'
           }, {
             text: this.$t('Yes'),
-            handler: () => {
-              this.schedule();
+            handler: async () => {
+              await this.schedule();
             }
           }]
         });
       return alert.present();
     },
-    schedule() {
-      this.store.dispatch('job/scheduleBulkJobs', { jobs: this.bulkJobs, eComStoreId: this.selectedEComStoreId, shopifyConfigs: this.selectedShopifyConfigs })
+    async schedule() {
+      await this.store.dispatch('job/scheduleBulkJobs', { jobs: this.bulkJobs, eComStoreId: this.selectedEComStoreId, shopifyConfigs: this.selectedShopifyConfigs })
     },
     async setEComStore(event: any) {
       this.selectedEComStoreId = event?.detail?.value
@@ -280,7 +297,6 @@ export default defineComponent({
       ? this.selectedShopifyConfigs.splice(this.selectedShopifyConfigs.indexOf(shopifyConfigId), 1)
       : this.selectedShopifyConfigs.push(shopifyConfigId);
     },
-    
     async selectJobs() {
       const selectJobsModal = await modalController.create({
         component: SelectJobsModal,
@@ -294,23 +310,23 @@ export default defineComponent({
     getDateTime(time: any) {
       return DateTime.fromMillis(time).toISO()
     },
-    updateRuntime(ev: CustomEvent) {
-      if (this.bulkJobs) {
-        const currTime = DateTime.now().toMillis();
-        const setTime = handleDateTimeInput(ev['detail'].value);
-        if(setTime > currTime) {
-          this.store.dispatch('job/setBulkJobGlobalRuntime', { runtime: setTime });
-        } else {
-          showToast(translate("Provide a future date and time"));
-        }
-      }
+    updateRunTime(event: CustomEvent) {
+      const value = event.detail.value
+      if (value != 'CUSTOM') this.generateRunTimes(value)
+      else this.isDateTimeModalOpen = true
+    },
+    updateCustomTime(event: CustomEvent) {
+      const currTime = DateTime.now().toMillis();
+      const setTime = handleDateTimeInput(event.detail.value);
+      if (setTime > currTime) this.generateRunTimes(setTime)
+      else showToast(translate("Provide a future date and time"))
     },
     setFrequency(event: CustomEvent) {
       this.store.dispatch('job/setBulkJobGlobalFrequency', { frequency: event.detail.value });
     },
     getTime (time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
-    },
+    }
   }
 });
 </script>
