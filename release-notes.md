@@ -1,3 +1,11 @@
+# Release 2.5.0
+
+## What's Changed
+* Implemented: predefined and custom option for selecting job run time (#85zrxc0xf) by @k2maan in https://github.com/hotwax/job-manager/pull/449
+
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v2.4.0...v2.5.0
+
 # Release 2.4.0
 
 ## What's Changed
