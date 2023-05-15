@@ -92,7 +92,11 @@ export default defineComponent({
     JobConfiguration
   },
   mounted() {
+    emitter.on('jobUpdated', this.getMiscellaneousJobs);
     this.getMiscellaneousJobs();
+  },
+  unmounted() {
+    emitter.off('jobUpdated', this.getMiscellaneousJobs);
   },
   data() {
     return {
