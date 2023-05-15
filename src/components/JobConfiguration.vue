@@ -126,7 +126,7 @@ import {
 } from "ionicons/icons";
 import JobHistoryModal from '@/components/JobHistoryModal.vue'
 import { Plugins } from '@capacitor/core';
-import { isCustomRunTime, generateAllowedRunTimes, generateAllowedFrequencies, handleDateTimeInput, showToast } from "@/utils";
+import { isCustomRunTime, generateAllowedRunTimes, generateAllowedFrequencies, handleDateTimeInput, showToast, hasError } from "@/utils";
 import { mapGetters, useStore } from "vuex";
 import { DateTime } from 'luxon';
 import { translate } from '@/i18n'
@@ -214,7 +214,7 @@ export default defineComponent({
       const runTimes = JSON.parse(JSON.stringify(generateAllowedRunTimes()))
       let selectedRunTime
       // 0 check for the 'Now' value and '' check for initial render
-      if (currentRunTime || currentRunTime === 0 || currentRunTime === '') {
+      if (currentRunTime || currentRunTime === 0 ) {
         selectedRunTime = runTimes.some((runTime: any) => runTime.value === currentRunTime)
         if (!selectedRunTime) runTimes.push({ label: this.getTime(currentRunTime), value: currentRunTime })
       }
@@ -257,7 +257,7 @@ export default defineComponent({
             text: this.$t('Cancel'),
             handler: () => {
               this.store.dispatch('job/cancelJob', job).then((resp) => {
-                if(resp.data?.successMessage) {
+                if(!hasError(resp)) {
                   emitter.emit('jobUpdated');
                   const category = this.$route.params?.category;
                   if (category) {
@@ -309,6 +309,7 @@ export default defineComponent({
       if (job?.statusId === 'SERVICE_DRAFT') {
         this.store.dispatch('job/scheduleService', job).then((job: any) => {
           if(job?.jobId) {
+            emitter.emit('jobUpdated');
             const category = this.$route.params.category;
             if (category) {
               this.router.push({ name: 'JobDetails', params: { jobId: job?.jobId, category: category }, replace: true });
