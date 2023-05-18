@@ -1,8 +1,7 @@
 <template>
   <section>
     <ion-item lines="none">
-      <!-- Adding conditional check for currentJob.jobName as currentJob is undefined when i18n runs $t -->
-      <h1>{{ getEnumName(currentJob.systemJobEnumId) ? getEnumName(currentJob.systemJobEnumId) : currentJob.jobName ? currentJob.jobName : '' }}</h1>
+      <h1>{{ getJobTitle(currentJob) }}</h1>
       <ion-badge slot="end" color="dark" v-if="currentJob?.runTime && currentJob.statusId !== 'SERVICE_DRAFT'">{{ $t("running") }} {{ timeTillJob(currentJob.runTime) }}</ion-badge>
     </ion-item>
 
@@ -79,7 +78,7 @@
       <ion-icon slot="start" :icon="timeOutline" />
       {{ $t("History") }}
     </ion-item>
-    <ion-item :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" @click="runNow(title, currentJob)" button>
+    <ion-item :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" @click="runNow(currentJob)" button>
       <ion-icon slot="start" :icon="flashOutline" />
       {{ $t("Run now") }}
     </ion-item>
@@ -173,7 +172,7 @@ export default defineComponent({
     this.generateRunTimes(this.runTime)
     this.generateFrequencyOptions(this.jobStatus)
   },
-  props: ["title", "status", "type"],
+  props: ["status", "type"],
   computed: {
     ...mapGetters({
       getEnumDescription: 'job/getEnumDescription',
@@ -355,10 +354,10 @@ export default defineComponent({
         jobHistoryModal.dismiss({ dismissed: true });
       })
     },
-    async runNow(header: string, job: any) {
+    async runNow(job: any) {
       const jobAlert = await alertController
         .create({
-          header,
+          header: this.getJobTitle(job),
           message: this.$t('This job will be scheduled to run as soon as possible. There may not be enough time to revert this action.', {space: '<br/><br/>'}),
           buttons: [
             {
@@ -409,6 +408,13 @@ export default defineComponent({
       const setTime = handleDateTimeInput(event.detail.value);
       if (setTime > currTime) this.generateRunTimes(setTime)
       else showToast(translate("Provide a future date and time"))
+    },
+    getJobTitle(currentJob: any) {
+      const enumName = this.getEnumName(currentJob.systemJobEnumId)
+      const jobName = currentJob.jobName
+      console.log('jobName', jobName)
+      // Adding conditional check for jobName as currentJob is undefined making jobName undefined on initial load, in mobile view
+      return enumName ? enumName : jobName ? jobName : '';
     }
   },
   setup() {
