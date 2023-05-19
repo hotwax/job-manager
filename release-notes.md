@@ -1,3 +1,13 @@
+# Release 2.6.0
+
+## What's Changed
+* Fixed: job information disappear after cancelling (#462) by @adityasharma7 in https://github.com/hotwax/job-manager/pull/480
+* Improved: Update Pre-Order page for new jobs (#476) by @adityasharma7 in https://github.com/hotwax/job-manager/pull/490
+
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v2.5.0...v2.6.0
+
+
 # Release 2.5.0
 
 ## What's Changed
