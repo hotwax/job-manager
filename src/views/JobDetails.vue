@@ -48,9 +48,6 @@ export default defineComponent({
       jobCategory: '' as any,
       lastShopifyOrderId: '' as any,
       jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
-      jobTitles: {
-        ...JSON.parse(process.env?.VUE_APP_JOB_TITLES as string) as any
-      },
       jobEnums: {
         ...JSON.parse(process.env?.VUE_APP_ODR_JOB_ENUMS as string) as any,
         ...JSON.parse(process.env?.VUE_APP_PRODR_JOB_ENUMS as string) as any,
