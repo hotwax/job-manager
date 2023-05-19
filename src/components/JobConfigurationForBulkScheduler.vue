@@ -36,7 +36,7 @@
     </ion-item>
     <ion-item>
       <ion-label>{{ $t("Schedule") }}</ion-label>
-      <ion-select :interface-options="{ showBackdrop: false }" :value="job.frequency" interface="popover" :placeholder='$t("Bulk schedule")' @ionDismiss="job.frequency == 'CUSTOM' && setCustomFrequency()" @ionChange='setFrequency($event)'>
+      <ion-select :interface-options="{ header: $t('Frequency') }" :value="job.frequency" interface="popover" :placeholder='$t("Bulk schedule")' @ionDismiss="job.frequency == 'CUSTOM' && setCustomFrequency()" @ionChange='setFrequency($event)'>
         <ion-select-option v-for="freq in frequencyOptions" :key="freq.id" :value="freq.id">{{ $t(freq.description) }}</ion-select-option>
       </ion-select>
     </ion-item>
@@ -123,12 +123,6 @@ export default defineComponent({
     shopifyConfigNames() {
       // find matching shopifyConfig objects and return their names 
       return this.shopifyConfigs.filter((config: any) => this.selectedShopifyConfigs.includes(config.shopId)).map((config: any) => config.name).join(', ');
-    },
-    customPopoverOptions() {
-      return {
-        header: (this as any).job.jobName,
-        showBackdrop: false
-      }
     }
   },
   mounted() {
