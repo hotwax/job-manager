@@ -59,7 +59,7 @@
             </ion-card-title>
           </ion-card-header>
           <ion-card-content>
-            {{ $t('A store repesents a company or a unique catalog of products. If your OMS is connected to multiple eCommerce stores sellling different collections of products, you may have multiple Product Stores set up in HotWax Commerce.') }}
+            {{ $t('A store represents a company or a unique catalog of products. If your OMS is connected to multiple eCommerce stores sellling different collections of products, you may have multiple Product Stores set up in HotWax Commerce.') }}
           </ion-card-content>
           <ion-item lines="none">
             <ion-label> {{ $t("Select store") }} </ion-label>

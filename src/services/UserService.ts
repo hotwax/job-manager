@@ -98,6 +98,66 @@ const getEComStores = async (token: any): Promise<any> => {
   }
 }
 
+const getEcommerceCatalog = async (productStoreId: any): Promise<any> => {
+  try {
+    const params = {
+      "inputFields": {
+        productStoreId
+      },
+      "fieldList": ["productStoreId", "prodCatalogId"],
+      "entityName": "ProductStoreCatalog",
+      "distinct": "Y",
+      "noConditionFind": "Y",
+      "filterByDate": 'Y',
+    }
+    const resp = await api({
+      url: "performFind",
+      method: "get",
+      params,
+      cache: true
+    });
+    if (hasError(resp) || resp.data.docs?.length == 0) {
+      // if has error or not catalog found
+      return Promise.reject(resp.data);
+    } else {
+      return Promise.resolve(resp.data.docs[0]);
+    }
+  } catch(error: any) {
+    return Promise.reject(error)
+  }
+}
+
+
+const getPreOrderBackorderCategory = async (prodCatalogId: any): Promise<any> => {
+  try {
+    const params = {
+      "inputFields": {
+        prodCatalogId,
+        "prodCatalogCategoryTypeId": ["PCCT_PREORDR", "PCCT_BACKORDER"],
+        "prodCatalogCategoryTypeId_op": "in"
+      },
+      "fieldList": ["prodCatalogId", "productCategoryId", "prodCatalogCategoryTypeId"],
+      "entityName": "ProdCatalogCategory",
+      "distinct": "Y",
+      "noConditionFind": "Y",
+      "filterByDate": 'Y',
+    }
+    const resp = await api({
+      url: "performFind",
+      method: "get",
+      params,
+      cache: true
+    });
+    if (hasError(resp) || resp.data.docs?.length == 0) {
+      return Promise.reject(resp.data);
+    } else {
+      return Promise.resolve(resp.data.docs);
+    }
+  } catch(error: any) {
+    return Promise.reject(error)
+  }
+}
+
 const getPinnedJobs = async (payload: any): Promise<any> => {
   return api({
     url: "performFind",
@@ -278,6 +338,8 @@ export const UserService = {
     login,
     getAvailableTimeZones,
     getEComStores,
+    getEcommerceCatalog,
+    getPreOrderBackorderCategory,
     getShopifyConfig,
     getPinnedJobs,
     getPreferredStore,

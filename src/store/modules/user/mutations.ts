@@ -16,6 +16,7 @@ const mutations: MutationTree <UserState> = {
       }
       state.shopifyConfigs = []
       state.permissions = []
+      state.productStoreCategories =  {}
     },
     [types.USER_INFO_UPDATED] (state, payload) {
         state.current = { ...state.current,  ...payload}
@@ -28,6 +29,9 @@ const mutations: MutationTree <UserState> = {
     },
     [types.USER_SHOPIFY_CONFIGS_UPDATED] (state, payload) {
         state.shopifyConfigs = payload
+    },
+    [types.USER_PRDCT_STR_CATGRS_UPDATED] (state, payload) {
+        state.productStoreCategories = payload
     },
     [types.USER_CURRENT_ECOM_STORE_UPDATED] (state, payload) {
         state.currentEComStore = payload;

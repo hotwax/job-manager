@@ -711,16 +711,18 @@ const actions: ActionTree<JobState, RootState> = {
         if (state.current && Object.keys(state.current).length) {  
           const fetchJobsResponse = fetchJobsResponses[0];
           if (fetchJobsResponse.status === 200 && !hasError(fetchJobsResponse) && fetchJobsResponse.data?.docs.length) {
-            commit(types.JOB_CURRENT_UPDATED, fetchJobsResponse);
+            commit(types.JOB_CURRENT_UPDATED, fetchJobsResponse.data.docs[0]);
           }
         }
         showToast(translate('Service updated successfully'))
       } else {
         showToast(translate('Something went wrong'))
+        return Promise.reject('Something went wrong' + resp.data);
       }
     } catch (err) {
       showToast(translate('Something went wrong'))
       logger.error(err)
+      return Promise.reject('Something went wrong' + err);
     }
     return resp;
   },
