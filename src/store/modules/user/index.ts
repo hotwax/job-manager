@@ -18,6 +18,7 @@ const userModule: Module<UserState, RootState> = {
         productStoreId: "",
         storeName: "None"
       },
+      productStoreCategories: {}
     },
     getters,
     actions,
