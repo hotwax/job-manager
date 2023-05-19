@@ -40,7 +40,7 @@
       <ion-item>
         <ion-icon slot="start" :icon="timerOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Schedule") }}</ion-label>
-        <ion-select :value="jobStatus" :interface-options="customPopoverOptions" interface="popover" :placeholder="$t('Disabled')" @ionChange="jobStatus = $event.detail.value" @ionDismiss="jobStatus == 'CUSTOM' && setCustomFrequency()">
+        <ion-select :value="jobStatus" :interface-options="{ header: $t('Frequency') }" interface="popover" :placeholder="$t('Disabled')" @ionChange="jobStatus = $event.detail.value" @ionDismiss="jobStatus == 'CUSTOM' && setCustomFrequency()">
           <ion-select-option v-for="freq in frequencyOptions" :key="freq.id" :value="freq.id">{{ freq.description }}</ion-select-option>
         </ion-select>
       </ion-item>
@@ -173,7 +173,7 @@ export default defineComponent({
     this.generateRunTimes(this.runTime)
     this.generateFrequencyOptions(this.jobStatus)
   },
-  props: ["title", "status", "type"],
+  props: ["status", "type"],
   computed: {
     ...mapGetters({
       getEnumDescription: 'job/getEnumDescription',
@@ -184,13 +184,7 @@ export default defineComponent({
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
       currentEComStore: 'user/getCurrentEComStore',
       currentJob: 'job/getCurrentJob',
-    }),
-    customPopoverOptions() {
-      return {
-        header: (this as any).title,
-        showBackdrop: false
-      }
-    }
+    })
   },
   methods: {
     getDateTime(time: any) {
@@ -359,7 +353,7 @@ export default defineComponent({
       const jobAlert = await alertController
         .create({
           header: this.$t("Run now"),
-          message: this.$t('Running this job now will not replace this job. A copy of this job will be created and run immediately.<br/><br/>You may not be able to reverse this action.'),
+          message: this.$t('Running this job now will not replace this job. A copy of this job will be created and run immediately. You may not be able to reverse this action.', { space: '<br/><br/>' }),
           buttons: [
             {
               text: this.$t("Cancel"),

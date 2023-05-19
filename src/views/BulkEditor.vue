@@ -68,7 +68,7 @@
           <ion-item>
             <ion-icon slot="start" :icon="timerOutline" />
             <ion-label>{{ $t("Schedule") }}</ion-label>
-            <ion-select interface="popover" :value="globalFreq" :placeholder='$t("Schedule")' @ionChange=setFrequency($event) @ionDismiss="globalFreq == 'CUSTOM' && setCustomFrequency()">
+            <ion-select interface="popover" :interface-options="{ header: $t('Frequency') }" :value="globalFreq" :placeholder='$t("Schedule")' @ionChange=setFrequency($event) @ionDismiss="globalFreq == 'CUSTOM' && setCustomFrequency()">
               <ion-select-option v-for="freq in frequencyOptions" :key="freq.id" :value="freq.id">{{ $t(freq.description) }}</ion-select-option>
             </ion-select>
           </ion-item>
