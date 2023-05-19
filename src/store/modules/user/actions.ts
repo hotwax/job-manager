@@ -197,6 +197,31 @@ const actions: ActionTree<UserState, RootState> = {
     }
   },
 
+  async getPreOrderBackorderCategory({ state, commit }) {
+    const productStoreId =  (state.currentEComStore as any).productStoreId
+    if (!productStoreId) {
+      logger.warn("No productStoreId provided. Not fetching pre-order/backorder categories");
+      return;
+    }
+    if (state.productStoreCategories[productStoreId]) return state.productStoreCategories[productStoreId];
+
+    try {
+      const ecommerceCatalog =  await UserService.getEcommerceCatalog(productStoreId);
+        // TODO store catalog if required for any other service
+      const preOrderBackorderCategory =  await UserService.getPreOrderBackorderCategory(ecommerceCatalog.prodCatalogId);
+      const productStoreCategories =  {} as any;
+      const preOrderCategory = preOrderBackorderCategory.find((category: any) => category.prodCatalogCategoryTypeId === "PCCT_PREORDR")
+      preOrderCategory && (productStoreCategories.preorder = preOrderCategory.productCategoryId)
+      const backorderCategory = preOrderBackorderCategory.find((category: any) => category.prodCatalogCategoryTypeId === "PCCT_BACKORDER")
+      backorderCategory && (productStoreCategories.backorder = backorderCategory.productCategoryId)
+      state.productStoreCategories[productStoreId] = productStoreCategories;
+      commit(types.USER_PRDCT_STR_CATGRS_UPDATED, state.productStoreCategories);
+    } catch (err) {
+      logger.error(err);
+    }
+    return state.productStoreCategories[productStoreId]
+  },
+
   /**
    * update current shopify config id
    */
