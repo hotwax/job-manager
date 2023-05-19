@@ -427,29 +427,6 @@ export default defineComponent({
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
         this.$t('Disabled')
     },
-    async runJob(header: string, id: string) {
-      const job = this.getJob(id)
-      const jobAlert = await alertController
-        .create({
-          header,
-          message: this.$t('This job will be scheduled to run as soon as possible. There may not be enough time to revert this action.', {space: '<br/><br/>'}),
-          buttons: [
-            {
-              text: this.$t("Cancel"),
-              role: 'cancel',
-            },
-            {
-              text: this.$t('Run now'),
-              handler: () => {
-                if (job) {
-                  this.store.dispatch('job/runServiceNow', job)
-                }
-              }
-            }
-          ]
-        });
-      return jobAlert.present();
-    },
     async fetchJobs(){
       this.store.dispatch('webhook/fetchWebhooks')
       await this.store.dispatch("job/fetchJobs", {
