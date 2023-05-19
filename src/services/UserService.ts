@@ -118,7 +118,7 @@ const getEcommerceCatalog = async (productStoreId: any): Promise<any> => {
     });
     if (hasError(resp) || resp.data.docs?.length == 0) {
       // if has error or not catalog found
-      return Promise.reject(resp.data.docs);
+      return Promise.reject(resp.data);
     } else {
       return Promise.resolve(resp.data.docs[0]);
     }

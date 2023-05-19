@@ -88,7 +88,7 @@
             </ion-item>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Add promise date") }}</ion-label>
-              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="getStatus(jobEnums['JOB_UL_PRMS_DTE'])" @ionChange="updateJob($event['detail'].checked, jobEnums['JOB_UL_PRMS_DTE'])"/>
+              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="getStatus(jobEnums['UL_PRMS_DTE'])" @ionChange="updateJob($event['detail'].checked, jobEnums['UL_PRMS_DTE'])"/>
             </ion-item>
             <ion-item lines="none">
               <ion-label>
@@ -97,7 +97,7 @@
             </ion-item>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Update promise date") }}</ion-label>
-              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="getStatus(jobEnums['JOB_UL_PRMS_DTE'])" @ionChange="updateJob($event['detail'].checked, jobEnums['JOB_UL_PRMS_DTE'])"/>
+              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="getStatus(jobEnums['UL_PRMS_DTE_UPD'])" @ionChange="updateJob($event['detail'].checked, jobEnums['UL_PRMS_DTE_UPD'])"/>
             </ion-item>
             <ion-item lines="none">
               <ion-label>
@@ -114,7 +114,7 @@
             </ion-card-header>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Auto sync date to orders") }}</ion-label>
-              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="getStatus(jobEnums[''])" @ionChange="updateJob($event['detail'].checked, jobEnums[''])"/>
+              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="getStatus(jobEnums['AUTO_SYNC_DT_ODRS'])" @ionChange="updateJob($event['detail'].checked, jobEnums['AUTO_SYNC_DT_ODRS'])"/>
             </ion-item>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Email customers") }}</ion-label>
