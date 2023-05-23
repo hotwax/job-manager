@@ -137,7 +137,7 @@
             </ion-item>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Release preorders")}}</ion-label>
-              <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" fill="outline" @click="runJob('Release preorders', jobEnums['AUTO_RELSE_DAILY'])">{{ $t("Release") }}</ion-button>
+              <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" fill="outline" @click="runJob(jobEnums['AUTO_RELSE_DAILY'])">{{ $t("Release") }}</ion-button>
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap"><p>{{ $t("Auto releasing pre-orders will find pre-orders that have promise dates that have passed and release them for fulfillment.") }}</p></ion-label>
@@ -282,12 +282,12 @@ export default defineComponent({
         this.store.dispatch('job/updateJob', job)
       }
     },
-    async runJob(header: string, id: string) {
+    async runJob(id: string) {
       const job = this.getJob(id)
       const jobAlert = await alertController
         .create({
-          header,
-          message: this.$t('This job will be scheduled to run as soon as possible. There may not be enough time to revert this action.', {space: '<br/><br/>'}),
+          header: this.$t("Run now"),
+          message: this.$t('Running this job now will not replace this job. A copy of this job will be created and run immediately. You may not be able to reverse this action.', { space: '<br/><br/>' }),
           buttons: [
             {
               text: this.$t("Cancel"),
