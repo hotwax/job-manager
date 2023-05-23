@@ -249,6 +249,11 @@ export default defineComponent({
     async updateJob(checked: boolean, id: string, status = 'EVERY_15_MIN') {
       const job = this.getJob(id);
 
+      // This handles programmatic change on page load. Skips 'Configuration missing' error
+      if (!job && !checked) {
+        return;
+      }
+
       // added check that if the job is not present, then display a toast and then return
       if (!job) {
         showToast(translate('Configuration missing'))
