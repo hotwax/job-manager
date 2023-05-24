@@ -16,7 +16,7 @@
       <ion-item>
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
-        <ion-select interface="popover" :placeholder="$t('Select')" :value="runTime.value" @ionChange="updateRunTime($event)">
+        <ion-select interface="popover" :placeholder="$t('Select')" :value="runTime" @ionChange="updateRunTime($event)">
           <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ $t(runTime.label) }}</ion-select-option>
         </ion-select>
         <ion-modal :is-open="isDateTimeModalOpen" @didDismiss="() => isDateTimeModalOpen = false">
@@ -52,7 +52,7 @@
       <ion-item button>
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
-        <ion-select interface="popover" :placeholder="$t('Select')" :value="runTime.value" @ionChange="updateRunTime($event)">
+        <ion-select interface="popover" :placeholder="$t('Select')" :value="runTime" @ionChange="updateRunTime($event)">
           <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ $t(runTime.label) }}</ion-select-option>
         </ion-select>
         <ion-modal class="date-time-modal" :is-open="isDateTimeModalOpen" @didDismiss="() => isDateTimeModalOpen = false">
@@ -214,8 +214,6 @@ export default defineComponent({
       job['sinceId'] = this.lastShopifyOrderId
       job['jobStatus'] = job.tempExprId
 
-      job.runTime = this.runTime.value
-
       // Handling the case for 'Now'. Sending the now value will fail the API as by the time
       // the job is ran, the given 'now' time would have passed. Hence, passing empty 'run time'
       !isCustomRunTime(this.runTime) && this.runTime == 0 ? job.runTime = '' : job.runTime += DateTime.now().toMillis()
@@ -224,7 +222,6 @@ export default defineComponent({
       if (job?.runTime && !isFutureDate(job?.runTime)) {
         job.runTime = ''
       }
-
       if (job?.statusId === 'SERVICE_DRAFT') {
         this.store.dispatch('job/scheduleService', job)
       } else if (job?.statusId === 'SERVICE_PENDING') {
