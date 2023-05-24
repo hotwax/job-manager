@@ -548,6 +548,7 @@ const actions: ActionTree<JobState, RootState> = {
     job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.state.user.currentEComStore.productStoreId)
     job?.priority && (payload['SERVICE_PRIORITY'] = job.priority.toString())
     job?.runTime && (payload['SERVICE_TIME'] = job.runTime.toString())
+    job?.sinceId && (payload['sinceId'] = job.sinceId)
 
     // assigning '' (empty string) to all the runtimeData properties whose value is "null"
     job.runtimeData && Object.keys(job.runtimeData).map((key: any) => {
