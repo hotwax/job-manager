@@ -1,3 +1,13 @@
+# Release 2.6.1
+
+## What's Changed
+* Fixed: old jobs not listed in more jobs (#476) by @adityasharma7 in https://github.com/hotwax/job-manager/pull/499
+* Fixed: issue with scheduling initial load order job by @adityasharma7 in https://github.com/hotwax/job-manager/pull/500
+
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v2.6.0...v2.6.1
+
+
 # Release 2.6.0
 
 ## What's Changed
