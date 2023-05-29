@@ -413,6 +413,12 @@ const actions: ActionTree<JobState, RootState> = {
     // TODO Fix Indentation
     const cached = JSON.parse(JSON.stringify(state.cached));
 
+    // If individual job is fetched, this might be the case for update and cancel of job
+    // Old job should be removed and fetched again, in order to replace last pending one with draft job
+    if (payload.inputFields.systemJobEnumId && payload.inputFields.systemJobEnumId_op === "equals") {
+      delete cached[payload.inputFields.systemJobEnumId];
+    }
+
     // added condition to store multiple pending jobs in the state for order batch jobs,
     // getting job with status Service draft as well, as this information will be needed when scheduling
     // a new batch
