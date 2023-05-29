@@ -15,7 +15,7 @@
     "@capacitor/android": "^2.4.7",
     "@capacitor/core": "^2.4.7",
     "@capacitor/ios": "^2.4.7",
-    "@casl/ability": "^6.0.0",
+    "@casl/ability": "^6.5.0",
     "@hotwax/apps-theme": "^1.1.0",
     "@hotwax/app-version-info": "^1.0.0",
     "@hotwax/oms-api": "^1.6.0",
