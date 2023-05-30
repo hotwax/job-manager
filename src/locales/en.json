@@ -215,6 +215,7 @@
   "Settings": "Settings",
   "Shop Config": "Shop Config",
   "Shopify Config": "Shopify Config",
+  "Shopify configuration not found. Scheduling failed.": "Shopify configuration not found. Scheduling failed.",
   "Shopify source": "Shopify source",
   "Skip": "Skip",
   "Skip job": "Skip job",

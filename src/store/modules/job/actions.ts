@@ -544,6 +544,10 @@ const actions: ActionTree<JobState, RootState> = {
     
     if (job?.runtimeData?.shopifyConfigId || job?.runtimeData?.shopId) {
       const shopifyConfig = this.state.user.currentShopifyConfig
+      if (Object.keys(shopifyConfig).length == 0) {
+        showToast(translate('Shopify configuration not found. Scheduling failed.'))
+        return;
+      }
 
       job?.runtimeData?.shopifyConfigId && (payload['shopifyConfigId'] = shopifyConfig?.shopifyConfigId);
       job?.runtimeData?.shopId && (payload['shopId'] = shopifyConfig?.shopId);
@@ -673,6 +677,10 @@ const actions: ActionTree<JobState, RootState> = {
     // If existing job is run now, copy as is else set the current shop of user
     if (job?.runtimeData?.shopifyConfigId || job?.runtimeData?.shopId) {
       const shopifyConfig = this.state.user.currentShopifyConfig
+      if (job.status !== "SERVICE_PENDING" && Object.keys(shopifyConfig).length == 0) {
+        showToast(translate('Shopify configuration not found. Scheduling failed.'))
+        return;
+      }
 
       job?.runtimeData?.shopifyConfigId && (payload['shopifyConfigId'] = job.status === "SERVICE_PENDING" ? job.runtimeData?.shopifyConfigId  : shopifyConfig?.shopifyConfigId);
       job?.runtimeData?.shopId && (payload['shopId'] = job.status === "SERVICE_PENDING" ? job.runtimeData?.shopId  : shopifyConfig?.shopId);
