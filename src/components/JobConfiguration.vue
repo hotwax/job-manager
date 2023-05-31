@@ -2,7 +2,7 @@
   <section>
     <ion-item lines="none">
       <!-- Adding conditional check for currentJob.jobName as currentJob is undefined when i18n runs $t -->
-      <h1>{{ getEnumName(currentJob.systemJobEnumId) ? getEnumName(currentJob.systemJobEnumId) : currentJob.jobName ? currentJob.jobName : '' }}</h1>
+      <h1>{{ currentJob.enumName ? currentJob.enumName : currentJob.jobName ? currentJob.jobName : '' }}</h1>
       <ion-badge slot="end" color="dark" v-if="currentJob?.runTime && currentJob.statusId !== 'SERVICE_DRAFT'">{{ $t("running") }} {{ timeTillJob(currentJob.runTime) }}</ion-badge>
     </ion-item>
 
@@ -176,8 +176,6 @@ export default defineComponent({
   props: ["status", "type"],
   computed: {
     ...mapGetters({
-      getEnumDescription: 'job/getEnumDescription',
-      getEnumName: 'job/getEnumName',
       pinnedJobs: 'user/getPinnedJobs',
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
@@ -374,7 +372,7 @@ export default defineComponent({
     },
     async copyJobInformation(job: any) {
       const { Clipboard } = Plugins;
-      const jobDetails = `jobId: ${job.jobId}, jobName: ${this.getEnumName(job.systemJobEnumId)}, jobDescription: ${this.getEnumDescription(job.systemJobEnumId)}`;
+      const jobDetails = `jobId: ${job.jobId}, jobName: ${job.enumName}, jobDescription: ${job.description}`;
 
       await Clipboard.write({
         string: jobDetails

@@ -47,13 +47,13 @@
           <div v-else>
             <ion-card v-for="job in pendingJobs" :key="job.jobId" @click="viewJobConfiguration(job)" :button="isDesktop">
               <ion-card-header>
-                <ion-card-title>{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
+                <ion-card-title>{{ job.enumName }}</ion-card-title>
                 <ion-badge v-if="job.runTime" color="dark">{{ timeFromNow(job.runTime)}}</ion-badge>
               </ion-card-header>
 
               <ion-item lines="none">
                 <ion-label class="ion-text-wrap">
-                  <p>{{ getEnumDescription(job.systemJobEnumId) }}</p>
+                  <p>{{ job.description }}</p>
                 </ion-label>
               </ion-item>
               <ion-item>
@@ -109,14 +109,14 @@
               <ion-card-header>
                 <div>
                   <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
-                  <ion-card-title>{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
+                  <ion-card-title>{{ job.enumName }}</ion-card-title>
                 </div>
                 <ion-badge color="dark">{{ job.statusDesc }}</ion-badge>
               </ion-card-header>
 
               <ion-item lines="none">
                 <ion-label class="ion-text-wrap">
-                  <p>{{ getEnumDescription(job.systemJobEnumId) }}</p>
+                  <p>{{ job.description }}</p>
                 </ion-label>
               </ion-item>
               <ion-item>
@@ -173,7 +173,7 @@
             <ion-card-header>
               <div>
                 <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
-                <ion-card-title>{{ getEnumName(job.systemJobEnumId) }}</ion-card-title>
+                <ion-card-title>{{ job.enumName }}</ion-card-title>
               </div>
               <div>
                 <ion-badge v-if="job.cancelDateTime || job.finishDateTime" color="dark">{{ job.statusId == "SERVICE_CANCELLED" || job.statusId == "SERVICE_CRASHED" ?  timeFromNow(job.cancelDateTime) : timeFromNow(job.finishDateTime) }}</ion-badge>
@@ -183,7 +183,7 @@
 
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
-                <p>{{ getEnumDescription(job.systemJobEnumId) }}</p>
+                <p>{{ job.description }}</p>
               </ion-label>
             </ion-item>
             <ion-item>
@@ -355,7 +355,6 @@ export default defineComponent({
       pendingJobs: 'job/getPendingJobs',
       runningJobs: 'job/getRunningJobs',
       temporalExpr: 'job/getTemporalExpr',
-      getEnumDescription: 'job/getEnumDescription',
       getEnumName: 'job/getEnumName',
       getCurrentEComStore:'user/getCurrentEComStore',
       isPendingJobsScrollable: 'job/isPendingJobsScrollable',
@@ -405,7 +404,7 @@ export default defineComponent({
     },
     async copyJobInformation(job: any) {
       const { Clipboard } = Plugins;
-      const jobDetails = `jobId: ${job.jobId}, jobName: ${this.getEnumName(job.systemJobEnumId)}, jobDescription: ${this.getEnumDescription(job.systemJobEnumId)}`;
+      const jobDetails = `jobId: ${job.jobId}, jobName: ${job.enumName}, jobDescription: ${job.description}`;
 
       await Clipboard.write({
         string: jobDetails

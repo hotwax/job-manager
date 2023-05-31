@@ -61,7 +61,6 @@ export default defineComponent({
   computed:{
     ...mapGetters({
       currentJob: 'job/getCurrentJob',
-      getEnumName: 'job/getEnumName'
     }),
   },
   methods: {
