@@ -54,8 +54,6 @@ export default defineComponent({
   props: ["job"],
   computed: {
     ...mapGetters({
-      getEnumDescription: 'job/getEnumDescription',
-      getEnumName: 'job/getEnumName',
       getPinnedJobs: 'user/getPinnedJobs'
     })
   },
@@ -65,7 +63,7 @@ export default defineComponent({
     },
     async copyJobInformation(job: any) {
       const { Clipboard } = Plugins;
-      const jobDetails = `jobId: ${job.jobId}, jobName: ${this.getEnumName(job.systemJobEnumId)}, jobDescription: ${this.getEnumDescription(job.systemJobEnumId)}`;
+      const jobDetails = `jobId: ${job.jobId}, jobName: ${job.enumName}, jobDescription: ${job.description}`;
 
       await Clipboard.write({
         string: jobDetails

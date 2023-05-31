@@ -45,12 +45,11 @@ export default defineComponent({
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
       currentEComStore: 'user/getCurrentEComStore',
       temporalExpr: 'job/getTemporalExpr',
-      getEnumName: 'job/getEnumName',
     })
   },
   methods: {
     async viewJobConfiguration(job: any) {
-      job.title = this.getEnumName(job.systemJobEnumId)
+      job.title = job.enumName
       job.status = job.statusId === 'SERVICE_DRAFT' ? 'SERVICE_DRAFT' : job.frequency;
       emitter.emit('viewJobConfiguration', { jobId: job.jobId, status: job.status, job });
     },

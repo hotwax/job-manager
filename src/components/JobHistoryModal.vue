@@ -6,7 +6,7 @@
           <ion-icon slot="icon-only" :icon="closeOutline" />
         </ion-button>
       </ion-buttons>
-      <ion-title>{{ getEnumName(currentJob?.systemJobEnumId) }}</ion-title>
+      <ion-title>{{ currentJob?.enumName }}</ion-title>
     </ion-toolbar>
   </ion-header>
 
@@ -74,7 +74,6 @@ export default defineComponent({
   props: ['currentJob'],
   computed: {
     ...mapGetters({
-      getEnumName: 'job/getEnumName',
       getCurrentEComStore:'user/getCurrentEComStore',
       getStatusDesc: 'util/getStatusDesc'
     })

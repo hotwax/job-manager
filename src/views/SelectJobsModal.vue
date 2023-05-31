@@ -23,7 +23,7 @@
     <ion-list v-else v-for="job in jobs" :key="job.jobId">
       <ion-item lines="none">
         <ion-label Class="ion-text-wrap">
-          <h2>{{ job.jobName }}</h2>
+          <h2>{{ job.enumName ? job.enumName : job.jobName }}</h2>
         </ion-label>
         <ion-icon v-if="isJobAddedToBulkScheduler(job.jobId)" color="success" :icon="checkmarkCircle" />
         <ion-button v-else fill="outline" @click="addToBulkScheduler(job)">{{ $t("Add") }}</ion-button>
@@ -108,7 +108,6 @@ export default defineComponent({
           "systemJobEnumId_op": "not-empty",
           "description_value": this.queryString,
           "description_op": "contains",
-          "productStoreId": "",
           "description_ic": "Y",
           "shopId_fld0_value": this.shopifyConfigs,
           "shopId_fld0_grp": "1",
@@ -116,7 +115,7 @@ export default defineComponent({
           "shopId_fld1_grp": "2",
           "shopId_fld1_op": "empty",
         },
-        "fieldList": ["systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId", "cancelDateTime", "finishDateTime", "startDateTime", "enumTypeId", "description", "runtimeDataId"],
+        "fieldList": ["systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId", "cancelDateTime", "finishDateTime", "startDateTime", "enumTypeId", "description", "runtimeDataId", "enumName"],
         "noConditionFind": "Y",
         "viewSize": viewSize,
         "viewIndex": viewIndex,

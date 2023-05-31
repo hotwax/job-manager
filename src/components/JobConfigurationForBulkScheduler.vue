@@ -2,7 +2,7 @@
   <ion-card>
     <ion-item lines="none">
       <ion-label class="ion-text-wrap">
-        {{ job.jobName }}
+        {{ job.enumName ? job.enumName : job.jobName }}
         <p>{{ job.description }}</p>
       </ion-label>
     </ion-item>

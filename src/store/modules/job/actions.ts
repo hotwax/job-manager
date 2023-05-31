@@ -52,7 +52,7 @@ const actions: ActionTree<JobState, RootState> = {
         "shopId_fld1_grp": "2",
         "shopId_fld1_op": "empty"
       } as any,
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId", "cancelDateTime", "finishDateTime", "startDateTime" , "enumTypeId" ],
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId", "cancelDateTime", "finishDateTime", "startDateTime" , "enumTypeId", "enumName", "description" ],
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
@@ -105,7 +105,6 @@ const actions: ActionTree<JobState, RootState> = {
           })
           const tempExpr = [...new Set(tempExprList)];
           dispatch('fetchTemporalExpression', tempExpr);
-          dispatch('fetchJobDescription', enumIds);
         }
       } else {
         commit(types.JOB_HISTORY_UPDATED, { jobs: [], total: 0 });
@@ -130,7 +129,7 @@ const actions: ActionTree<JobState, RootState> = {
         "shopId_fld1_grp": "2",
         "shopId_fld1_op": "empty"
       } as any,
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId", "enumTypeId" ],
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId", "enumTypeId", "enumName", "description" ],
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
@@ -179,7 +178,6 @@ const actions: ActionTree<JobState, RootState> = {
           })
           const tempExpr = [...new Set(tempExprList)];
           dispatch('fetchTemporalExpression', tempExpr);
-          dispatch('fetchJobDescription', enumIds);
         }
       } else {
         commit(types.JOB_RUNNING_UPDATED, { jobs: [], total: 0 });
@@ -202,7 +200,7 @@ const actions: ActionTree<JobState, RootState> = {
         "shopId_fld1_grp": "2",
         "shopId_fld1_op": "empty",
       } as any,
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runtimeDataId", "shopId", "description", "enumTypeId" ],
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runtimeDataId", "shopId", "description", "enumTypeId", "enumName" ],
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
@@ -252,7 +250,6 @@ const actions: ActionTree<JobState, RootState> = {
           })
           const tempExpr = [...new Set(tempExprList)];
           dispatch('fetchTemporalExpression', tempExpr);
-          dispatch('fetchJobDescription', enumIds);
         }
       } else {
         commit(types.JOB_PENDING_UPDATED, { jobs: [], total: 0 });
@@ -276,7 +273,7 @@ const actions: ActionTree<JobState, RootState> = {
         "shopId_fld1_grp": "2",
         "shopId_fld1_op": "empty"
       } as any,
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runtimeDataId", "enumName", "shopId", "description" ],
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runtimeDataId", "enumName", "shopId", "description"],
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
@@ -306,7 +303,6 @@ const actions: ActionTree<JobState, RootState> = {
         })
         const tempExpr = [...new Set(tempExprList)];
         dispatch('fetchTemporalExpression', tempExpr);
-        dispatch('fetchJobDescription', enumIds);
       } else {
         commit(types.JOB_MISCELLANEOUS_UPDATED, { jobs: [], total: 0 });
       }
@@ -765,7 +761,7 @@ const actions: ActionTree<JobState, RootState> = {
           "jobId": payload?.jobId
         } as any,
         "viewSize": 1,
-        "fieldList": ["systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "description"],
+        "fieldList": ["systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "description", "enumName"],
         "noConditionFind": "Y"
       }
       resp = await JobService.fetchJobInformation(params);
@@ -776,11 +772,6 @@ const actions: ActionTree<JobState, RootState> = {
         }
         if (currentJob.statusId === 'SERVICE_DRAFT') delete currentJob.runTime;
         commit(types.JOB_CURRENT_UPDATED, currentJob);
-
-        const enumIds = resp.data.docs.map((item: any) => {
-          return item.systemJobEnumId
-        })
-        await dispatch('fetchJobDescription', enumIds);
 
         return currentJob;
       }
