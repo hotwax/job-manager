@@ -1,3 +1,14 @@
+
+# Release 2.7.0
+
+## What's Changed
+* Fixed: jobs list not updated when cancelling a job from configuration by @adityasharma7 in https://github.com/hotwax/job-manager/pull/503
+* Improved: Show toast if shopifyConfig required for the job is missing while scheduling (#502) by @adityasharma7 in https://github.com/hotwax/job-manager/pull/509
+* Fixed: Enum name should appear on the job card and job list (#487) by @adityasharma7 in https://github.com/hotwax/job-manager/pull/510
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v2.6.1...v2.7.0
+
+
 # Release 2.6.1
 
 ## What's Changed
