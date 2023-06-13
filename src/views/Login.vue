@@ -29,6 +29,7 @@
 
 <script lang="ts">
 import { 
+  alertController,
   IonButton,
   IonContent,
   IonInput,
@@ -63,11 +64,17 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
-      currentInstanceUrlSaved: 'user/getInstanceUrl'
+      currentInstanceUrlSaved: 'user/getInstanceUrl',
+      userToken: 'user/getUserToken'
     })
   },
-  mounted() {
-    this.instanceUrl= this.currentInstanceUrlSaved;
+  async mounted() {
+    this.instanceUrl = this.currentInstanceUrlSaved;
+    if (Object.keys(this.$route.query).length) {
+      if (!this.$route.query.oms || !this.$route.query.token) return
+      // if a session/login is already active, present confirmation alert
+      this.userToken ? this.confirmLoginForAcitveSession() : this.linkLogin()
+    }
   },
   methods: {
     login: function () {
@@ -80,7 +87,41 @@ export default defineComponent({
         this.password = ''
         this.$router.push('/')
       })
-    }
+    },
+    linkLogin: async function () {
+      // clear previous user data
+      await this.store.dispatch('user/logout')
+      const instanceURL = this.$route.query.oms as string
+      this.store.dispatch("user/setUserInstanceUrl", this.alias[instanceURL] ? this.alias[instanceURL] : instanceURL);
+      this.store.dispatch("user/login", { linkToken: this.$route.query.token }).then(() => {
+        this.$router.push('/')
+      })
+    },
+    async confirmLoginForAcitveSession() {
+      const sessionAlert = await alertController
+        .create({
+          header: this.$t("Session active"),
+          message: this.$t('A session is already active, all unsaved changes will be lost. Are you sure you want to proceed with this action?'),
+          backdropDismiss: false,
+          buttons: [
+            {
+              text: this.$t("Cancel"),
+              // route user to the default page if login denied
+              handler: () => {
+                this.$router.push('/')
+              }
+            },
+            {
+              text: this.$t('Login'),
+              handler: async () => {
+                this.linkLogin()
+              }
+            }
+          ]
+        });
+
+      return sessionAlert.present();
+    },
   },
   setup() {
     const router = useRouter();

@@ -1,5 +1,6 @@
 <template>
-  <ion-menu side="start" content-id="main-content" type="overlay" :disabled="!isUserAuthenticated">
+  <!-- if the route is for link login, disable the side menu for a better experience -->
+  <ion-menu side="start" content-id="main-content" type="overlay" :disabled="!isUserAuthenticated || ($route.path === '/login' && Object.keys($route.query).length > 0)">
     <ion-header>
       <ion-toolbar>
         <ion-title>{{ $t("Job Manager") }}</ion-title>

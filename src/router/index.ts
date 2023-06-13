@@ -28,15 +28,16 @@ declare module 'vue-router' {
 
 const authGuard = (to: any, from: any, next: any) => {
   if (store.getters['user/isAuthenticated']) {
-      next()
+    next()
   } else {
     next("/login")
   }
 };
 
 const loginGuard = (to: any, from: any, next: any) => {
-  if (!store.getters['user/isAuthenticated']) {
-      next()
+  // condition check on query to not redirect the logged in user when its a link login 
+  if (!store.getters['user/isAuthenticated'] || (to.query.oms && to.query.token)) {
+    next()
   } else {
     next("/")
   }

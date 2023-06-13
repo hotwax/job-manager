@@ -16,31 +16,36 @@ const actions: ActionTree<UserState, RootState> = {
   /**
    *  Login user
    * @param param0 state context
-   * @param param1 payload: object { username, password }
+   * @param param1 payload: object { username, password, linkToken }
    * @returns Promise
    */
-  async login({ commit }, { username, password }) {
+  async login ({ commit }, { username, password, linkToken }) {
     try {
-      const resp = await UserService.login(username, password);
-      // Further we will have only response having 2xx status
-      // https://axios-http.com/docs/handling_errors
-      // We haven't customized validateStatus method and default behaviour is for all status other than 2xx
-      // TODO Check if we need to handle all 2xx status other than 200
+      let resp, token
+      if (!linkToken) {
+        resp = await UserService.login(username, password);
+        // Further we will have only response having 2xx status
+        // https://axios-http.com/docs/handling_errors
+        // We haven't customized validateStatus method and default behaviour is for all status other than 2xx
+        // TODO Check if we need to handle all 2xx status other than 200
 
 
-      /* ---- Guard clauses starts here --- */
-      // Know about Guard clauses here: https://learningactors.com/javascript-guard-clauses-how-you-can-refactor-conditional-logic/
-      // https://medium.com/@scadge/if-statements-design-guard-clauses-might-be-all-you-need-67219a1a981a
+        /* ---- Guard clauses starts here --- */
+        // Know about Guard clauses here: https://learningactors.com/javascript-guard-clauses-how-you-can-refactor-conditional-logic/
+        // https://medium.com/@scadge/if-statements-design-guard-clauses-might-be-all-you-need-67219a1a981a
 
 
-      // If we have any error most possible reason is incorrect credentials.
-      if (hasError(resp)) {
-        showToast(translate('Sorry, your username or password is incorrect. Please try again.'));
-        logger.error("error", resp.data._ERROR_MESSAGE_);
-        return Promise.reject(new Error(resp.data._ERROR_MESSAGE_));
+        // If we have any error most possible reason is incorrect credentials.
+        if (hasError(resp)) {
+          showToast(translate('Sorry, your username or password is incorrect. Please try again.'));
+          logger.error("error", resp.data._ERROR_MESSAGE_);
+          return Promise.reject(new Error(resp.data._ERROR_MESSAGE_));
+        }
+
+        token = resp.data.token;
+      } else {
+        token = linkToken
       }
-
-      const token = resp.data.token;
 
       // Getting the permissions list from server
       const permissionId = process.env.VUE_APP_PERMISSION_ID;
@@ -58,7 +63,7 @@ const actions: ActionTree<UserState, RootState> = {
       if (permissionId) {
         // As the token is not yet set in the state passing token headers explicitly
         // TODO Abstract this out, how token is handled should be part of the method not the callee
-        const hasPermission = appPermissions.some((appPermissionId: any) => appPermissionId === permissionId );
+        const hasPermission = appPermissions.some((appPermissionId: any) => appPermissionId === permissionId);
         // If there are any errors or permission check fails do not allow user to login
         if (hasPermission) {
           const permissionError = 'You do not have permission to access the app.';
@@ -78,15 +83,15 @@ const actions: ActionTree<UserState, RootState> = {
       })
       let preferredStore = userProfile.stores[0]
 
-      const preferredStoreId =  await UserService.getPreferredStore(token);
+      const preferredStoreId = await UserService.getPreferredStore(token);
       if (preferredStoreId) {
         const store = userProfile.stores.find((store: any) => store.productStoreId === preferredStoreId);
         store && (preferredStore = store)
       }
 
-      const shopifyConfigs =  await UserService.getShopifyConfig(preferredStore.productStoreId, token);
+      const shopifyConfigs = await UserService.getShopifyConfig(preferredStore.productStoreId, token);
       // TODO store and get preferred config
-      let currentShopifyConfig =  {};
+      let currentShopifyConfig = {};
       shopifyConfigs.length > 0 && (currentShopifyConfig = shopifyConfigs[0])
 
       /*  ---- Guard clauses ends here --- */
@@ -103,14 +108,14 @@ const actions: ActionTree<UserState, RootState> = {
       commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, currentShopifyConfig);
       commit(types.USER_PERMISSIONS_UPDATED, appPermissions);
       commit(types.USER_TOKEN_CHANGED, { newToken: token })
-      updateToken(resp.data.token)
+      updateToken(token)
       // Getting service status description
       // TODO check if we could move it to logic for fetching jobs
       this.dispatch('util/getServiceStatusDesc')
-      
+
       // Handling case for warnings like password may expire in few days
-      if (resp.data._EVENT_MESSAGE_ && resp.data._EVENT_MESSAGE_.startsWith("Alert:")) {
-      // TODO Internationalise text
+      if (!linkToken && resp.data._EVENT_MESSAGE_ && resp.data._EVENT_MESSAGE_.startsWith("Alert:")) {
+        // TODO Internationalise text
         showToast(translate(resp.data._EVENT_MESSAGE_));
       }
 
