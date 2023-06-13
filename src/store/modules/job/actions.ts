@@ -837,7 +837,10 @@ const actions: ActionTree<JobState, RootState> = {
       return payload.jobs.reduce((jobParams: any, job: any) => {
         // Handling the case for 'Now'. Sending the now value will fail the API as by the time
         // the job is ran, the given 'now' time would have passed. Hence, passing empty 'run time'
-        !isCustomRunTime(job.runTime) && job.runTime == 0 ? job.runTime = '' : job.runTime += DateTime.now().toMillis()
+        if (!isCustomRunTime(job.runTime)) {
+          // scheduleJob service takes empty runTime for scheduling the job now
+          job.runTime === 0 ? job.runTime = '' : job.runTime += DateTime.now().toMillis()
+        }
 
         const params = {
           'JOB_NAME': job.jobName,
