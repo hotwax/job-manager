@@ -1,4 +1,5 @@
 {
+  "A session is already active, all unsaved changes will be lost. Are you sure you want to proceed with this action?": "A session is already active, all unsaved changes will be lost. Are you sure you want to proceed with this action?",
   "A store represents a company or a unique catalog of products. If your OMS is connected to multiple eCommerce stores sellling different collections of products, you may have multiple Product Stores set up in HotWax Commerce.": "A store represents a company or a unique catalog of products. If your OMS is connected to multiple eCommerce stores sellling different collections of products, you may have multiple Product Stores set up in HotWax Commerce.",
   "Add": "Add",
   "Add a note with the promise date given to the customer at the time of placing the order.": "Add a note with the promise date given to the customer at the time of placing the order.",
@@ -212,6 +213,7 @@
   "Service has been scheduled": "Service has been scheduled",
   "Service updated successfully": "Service updated successfully",
   "Services have been scheduled in bulk": "Services have been scheduled in bulk",
+  "Session active": "Session active",
   "Settings": "Settings",
   "Shop Config": "Shop Config",
   "Shopify Config": "Shopify Config",
