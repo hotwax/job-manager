@@ -628,6 +628,7 @@ ion-card-header :last-child {
   flex-direction: column;
   align-items: end;
   row-gap: 4px;
+  flex-shrink: 0;
 }
 
 ion-item {
