@@ -294,7 +294,7 @@ export default defineComponent({
 
       // Handling the case for 'Now'. Sending the now value will fail the API as by the time
       // the job is ran, the given 'now' time would have passed. Hence, passing empty 'run time'
-      !isCustomRunTime(this.runTime) ? job.runTime = DateTime.now().toMillis() + this.runTime : job.runTime = this.runTime
+      job.runTime = !isCustomRunTime(this.runTime) ? DateTime.now().toMillis() + this.runTime : this.runTime
 
       if (job?.statusId === 'SERVICE_DRAFT') {
         this.store.dispatch('job/scheduleService', job).then((job: any) => {
