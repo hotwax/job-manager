@@ -737,7 +737,7 @@ const actions: ActionTree<JobState, RootState> = {
     }
     return resp;
   },
-  async updateCurrentJob({ commit, state, dispatch }, payload) {
+  async updateCurrentJob({ commit, state }, payload) {
     const cachedJobs = state.cached;
     const pendingJobs = state.pending.list;
 
