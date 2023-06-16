@@ -1,3 +1,13 @@
+# Release 2.8.0
+
+## What's Changed
+* Updated favicon by @Nidbhagwat in https://github.com/hotwax/job-manager/pull/523
+* Fixed: 'now' option for run time not working (#517) by @k2maan in https://github.com/hotwax/job-manager/pull/522
+
+## New Contributors
+* @Nidbhagwat made their first contribution in https://github.com/hotwax/job-manager/pull/523
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v2.7.0...v2.8.0
 
 # Release 2.7.0
 
