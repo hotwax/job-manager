@@ -15,7 +15,7 @@ import store from '@/store'
 import { hasPermission } from '@/authorization';
 import { showToast } from '@/utils'
 import { translate } from '@/i18n'
-
+import { useAuthStore } from 'dxp-components';
 import 'vue-router'
 
 // Defining types for the meta values
@@ -25,8 +25,11 @@ declare module 'vue-router' {
   }
 }
 
-
-const authGuard = (to: any, from: any, next: any) => {
+const authGuard = async (to: any, from: any, next: any) => {
+  const authStore = useAuthStore()
+  if (!authStore.isAuthenticated()) {
+    //
+  }
   if (store.getters['user/isAuthenticated']) {
       next()
   } else {

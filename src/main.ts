@@ -33,8 +33,8 @@ import store from './store'
 import permissionPlugin from '@/authorization';
 import permissionRules from '@/authorization/Rules';
 import permissionActions from '@/authorization/Actions';
-
-
+import { initialise } from '@/adapter'
+import { dxpComponents } from 'dxp-components';
 
 const app = createApp(App)
   .use(IonicVue, {
@@ -50,6 +50,12 @@ const app = createApp(App)
     rules: permissionRules,
     actions: permissionActions
   });
+
+initialise({
+  token: store.getters['user/getUserToken'],
+  instanceUrl: store.getters['user/getInstanceUrl'],
+  cacheMaxAge: 3000
+})
 
 // Filters are removed in Vue 3 and global filter introduced https://v3.vuejs.org/guide/migration/filters.html#global-filters
 app.config.globalProperties.$filters = {
@@ -77,6 +83,7 @@ app.config.globalProperties.$filters = {
   }
 }
 
+app.use(dxpComponents)
 
 router.isReady().then(() => {
   app.mount('#app');
