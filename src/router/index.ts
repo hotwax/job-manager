@@ -15,8 +15,10 @@ import store from '@/store'
 import { hasPermission } from '@/authorization';
 import { showToast } from '@/utils'
 import { translate } from '@/i18n'
-import { useAuthStore } from 'dxp-components';
 import 'vue-router'
+import { loadingController } from '@ionic/vue';
+import { useAuthStore } from 'dxp-components';
+import { Login as dxpLogin } from 'dxp-components';
 
 // Defining types for the meta values
 declare module 'vue-router' {
@@ -25,11 +27,37 @@ declare module 'vue-router' {
   }
 }
 
+let loader = null as any
+const presentLoader = async () => {
+  if (!loader) {
+    loader = await loadingController
+      .create({
+        message: translate("Authenticating"),
+        translucent: false,
+        backdropDismiss: false
+      });
+  }
+  loader.present();
+}
+const dismissLoader = () => {
+  if (loader) {
+    loader.dismiss();
+    loader = null as any;
+  }
+}
 const authGuard = async (to: any, from: any, next: any) => {
   const authStore = useAuthStore()
-  if (!authStore.isAuthenticated()) {
-    //
+  if (!authStore.isAuthenticated) {
+    await presentLoader()
+    const token: any = await authStore.authenticate()
+    // redirect if the login fails
+    if (!token?.value?.length) {
+      const redirectUrl = window.location.origin
+      window.location.href = `http://localhost:8101/login?redirectUrl=${redirectUrl}`
+    }
+    dismissLoader()
   }
+
   if (store.getters['user/isAuthenticated']) {
       next()
   } else {
@@ -137,6 +165,11 @@ const routes: Array<RouteRecordRaw> = [
     name: 'Login',
     component: Login,
     beforeEnter: loginGuard
+  },
+  {
+    path: '/dxpLogin',
+    name: 'dxpLogin',
+    component: dxpLogin,
   },
   {
     path: "/settings",
