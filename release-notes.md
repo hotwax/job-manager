@@ -1,3 +1,6 @@
+Latest release notes are maintained on Github only. Refer to below link:
+https://github.com/hotwax/job-manager/releases
+
 # Release 2.8.1
 
 ## What's Changed
