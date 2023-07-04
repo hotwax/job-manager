@@ -26,7 +26,6 @@
     "@types/papaparse": "^5.3.1",
     "boon-js": "^2.0.3",
     "core-js": "^3.6.5",
-    "dxp-components": "file:../../Ionic SDK/ionic-sdk",
     "file-saver": "^2.0.5",
     "luxon": "^3.2.0",
     "mitt": "^2.1.0",
