@@ -17,7 +17,7 @@ import { showToast } from '@/utils'
 import { translate } from '@/i18n'
 import 'vue-router'
 import { loadingController } from '@ionic/vue';
-import { useAuthStore } from 'dxp-components';
+import { useAuthStore } from 'dxp-components'
 import { Login as dxpLogin } from 'dxp-components';
 
 // Defining types for the meta values
@@ -27,39 +27,43 @@ declare module 'vue-router' {
   }
 }
 
-let loader = null as any
-const presentLoader = async () => {
-  if (!loader) {
-    loader = await loadingController
-      .create({
-        message: translate("Authenticating"),
-        translucent: false,
-        backdropDismiss: false
-      });
+const loader = {
+  value: null as any,
+  present: async () => {
+    if (!loader.value) {
+      loader.value = await loadingController
+        .create({
+          message: "Authenticating",
+          translucent: false,
+          backdropDismiss: false
+        });
+    }
+    loader.value.present();
+  },
+  dismiss: () => {
+    if (loader.value) {
+      loader.value.dismiss();
+      loader.value = null as any;
+    }
   }
-  loader.present();
 }
-const dismissLoader = () => {
-  if (loader) {
-    loader.dismiss();
-    loader = null as any;
-  }
-}
+
 const authGuard = async (to: any, from: any, next: any) => {
   const authStore = useAuthStore()
   if (!authStore.isAuthenticated) {
-    await presentLoader()
+    await loader.present()
     const token: any = await authStore.authenticate()
     // redirect if the login fails
     if (!token?.value?.length) {
       const redirectUrl = window.location.origin
-      window.location.href = `http://localhost:8101/login?redirectUrl=${redirectUrl}`
+      // redirect to launchpad login
+      window.location.href = `http://receiving-dev.hotwax.io/login?redirectUrl=${redirectUrl}`
     }
-    dismissLoader()
+    loader.dismiss()
   }
 
   if (store.getters['user/isAuthenticated']) {
-      next()
+    next()
   } else {
     next("/login")
   }
@@ -67,7 +71,7 @@ const authGuard = async (to: any, from: any, next: any) => {
 
 const loginGuard = (to: any, from: any, next: any) => {
   if (!store.getters['user/isAuthenticated']) {
-      next()
+    next()
   } else {
     next("/")
   }
@@ -167,15 +171,16 @@ const routes: Array<RouteRecordRaw> = [
     beforeEnter: loginGuard
   },
   {
-    path: '/dxpLogin',
-    name: 'dxpLogin',
-    component: dxpLogin,
-  },
-  {
     path: "/settings",
     name: "Settings",
     component: Settings,
     beforeEnter: authGuard
+  },
+  {
+    // TODO update component name and remove login
+    path: '/dxpLogin',
+    name: 'dxpLogin',
+    component: dxpLogin
   }
 ]
 

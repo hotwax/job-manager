@@ -6,7 +6,7 @@ import { DateTime } from 'luxon';
 import logger from './logger';
 
 
-import { IonicVue } from '@ionic/vue';
+import { IonicVue, loadingController } from '@ionic/vue';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/vue/css/core.css';
@@ -35,12 +35,34 @@ import permissionRules from '@/authorization/Rules';
 import permissionActions from '@/authorization/Actions';
 import { initialise } from '@/adapter'
 import { dxpComponents } from 'dxp-components'
+import { getAndSetUserDetails, getUserTokenAndOms, confirmSessionEnd, logout } from './user-utils';
 
 initialise({
   token: store.getters['user/getUserToken'],
   instanceUrl: store.getters['user/getInstanceUrl'],
   cacheMaxAge: 3000
 })
+
+const loader = {
+  value: null as any,
+  present: async () => {
+    if (!loader.value) {
+      loader.value = await loadingController
+        .create({
+          message: "Logging in",
+          translucent: false,
+          backdropDismiss: false
+        });
+    }
+    loader.value.present();
+  },
+  dismiss: () => {
+    if (loader.value) {
+      loader.value.dismiss();
+      loader.value = null as any;
+    }
+  }
+}
 
 const app = createApp(App)
   .use(IonicVue, {
@@ -56,7 +78,13 @@ const app = createApp(App)
     rules: permissionRules,
     actions: permissionActions
   })
-  .use(dxpComponents)
+  .use(dxpComponents, {
+    getAndSetUserDetails,
+    getUserTokenAndOms,
+    confirmSessionEnd,
+    logout,
+    loader
+  })
 
 // Filters are removed in Vue 3 and global filter introduced https://v3.vuejs.org/guide/migration/filters.html#global-filters
 app.config.globalProperties.$filters = {
