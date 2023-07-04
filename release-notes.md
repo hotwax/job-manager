@@ -1,3 +1,14 @@
+Latest release notes are maintained on Github only. Refer to below link:
+https://github.com/hotwax/job-manager/releases
+
+# Release 2.8.1
+
+## What's Changed
+* Fixed: build error TS2532: Object is possibly 'undefined'. by @adityasharma7 in https://github.com/hotwax/job-manager/pull/533
+
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v2.8.0...v2.8.1
+
 # Release 2.8.0
 
 ## What's Changed
