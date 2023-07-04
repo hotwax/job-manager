@@ -28,7 +28,7 @@ import '@ionic/vue/css/display.css';
 import './theme/variables.css';
 import '@hotwax/apps-theme';
 
-import i18n from './i18n'
+import i18n, { translate } from './i18n'
 import store from './store'
 import permissionPlugin from '@/authorization';
 import permissionRules from '@/authorization/Rules';
@@ -49,7 +49,7 @@ const loader = {
     if (!loader.value) {
       loader.value = await loadingController
         .create({
-          message: "Logging in",
+          message: translate("Logging in"),
           translucent: false,
           backdropDismiss: false
         });

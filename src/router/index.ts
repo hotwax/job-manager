@@ -33,7 +33,7 @@ const loader = {
     if (!loader.value) {
       loader.value = await loadingController
         .create({
-          message: "Authenticating",
+          message: translate("Authenticating"),
           translucent: false,
           backdropDismiss: false
         });
