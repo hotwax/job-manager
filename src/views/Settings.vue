@@ -63,8 +63,8 @@
           </ion-card-content>
           <ion-item lines="none">
             <ion-label> {{ $t("Select store") }} </ion-label>
-            <ion-select interface="popover" :value="currentEComStore.productStoreId" @ionChange="setEComStore($event)">
-              <ion-select-option v-for="store in (userProfile ? userProfile.stores : [])" :key="store.productStoreId" :value="store.productStoreId" >{{ store.storeName }}</ion-select-option>
+            <ion-select interface="popover" :value="eComStoreAndConfigStore?.getCurrentEComStore.productStoreId" @ionChange="setEComStore($event)">
+              <ion-select-option v-for="store in (eComStoreAndConfigStore?.getEComStores ? eComStoreAndConfigStore.getEComStores : [])" :key="store.productStoreId" :value="store.productStoreId" >{{ store.storeName }}</ion-select-option>
             </ion-select>
           </ion-item>
         </ion-card>
@@ -80,10 +80,11 @@
           <ion-card-content>
             {{ $t('eCommerce stores are directly connected to one Shop Config. If your OMS is connected to multiple eCommerce stores selling the same catalog operating as one Company, you may have multiple Shop Configs for the selected Product Store.') }}
           </ion-card-content>
+          {{ getCurrentShopifyConfig.shopifyConfigId }}
           <ion-item lines="none">
             <ion-label>{{ $t("Select eCommerce") }}</ion-label>
-            <ion-select interface="popover" :value="currentShopifyConfig?.shopifyConfigId" @ionChange="setShopifyConfig($event)">
-              <ion-select-option v-for="shopifyConfig in shopifyConfigs" :key="shopifyConfig.shopifyConfigId" :value="shopifyConfig.shopifyConfigId" >{{ shopifyConfig.name ? shopifyConfig.name : shopifyConfig.shopifyConfigName }}</ion-select-option>
+            <ion-select interface="popover" v-model="getCurrentShopifyConfig.shopifyConfigId" @ionChange="setShopifyConfig($event)">
+              <ion-select-option v-for="shopifyConfig in (getShopifyConfigs ? getShopifyConfigs : [])" :key="shopifyConfig.shopifyConfigId" :value="shopifyConfig.shopifyConfigId" >{{ shopifyConfig.name ? shopifyConfig.name : shopifyConfig.shopifyConfigName }}</ion-select-option>
             </ion-select>
           </ion-item>
         </ion-card>
@@ -122,13 +123,15 @@
 
 <script lang="ts">
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonContent, IonHeader,IonIcon, IonItem, IonLabel, IonMenuButton, IonPage, IonSelect, IonSelectOption, IonTitle, IonToolbar, modalController } from '@ionic/vue';
-import { defineComponent } from 'vue';
+import { computed, defineComponent, reactive } from 'vue';
 import { codeWorkingOutline, ellipsisVertical, personCircleOutline, openOutline, saveOutline, timeOutline } from 'ionicons/icons'
 import { mapGetters, useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import TimeZoneModal from '@/views/TimezoneModal.vue';
 import Image from '@/components/Image.vue'
 import { DateTime } from 'luxon';
+import { UserService } from '@/services/UserService';
+import { useEComStoreAndConfigStore, storeToRefs } from 'dxp-components'
 
 export default defineComponent({
   name: 'Settings',
@@ -173,18 +176,30 @@ export default defineComponent({
     this.appVersion = this.appInfo.branch ? (this.appInfo.branch + "-" + this.appInfo.revision) : this.appInfo.tag;
   },
   methods: {
-    setEComStore(event: any) {
+    async setEComStore(event: any) {
       // If the value is same, no need to update
       // Handled case for programmatical changes
       // https://github.com/ionic-team/ionic-framework/discussions/25532
       // https://github.com/ionic-team/ionic-framework/issues/20106
       // https://github.com/ionic-team/ionic-framework/pull/25858
-      if(this.userProfile && this.currentEComStore?.productStoreId !== event.detail.value) {
-        this.store.dispatch('user/setEcomStore', { 'productStoreId': event.detail.value })
+      
+      // if(this.userProfile && this.currentEComStore?.productStoreId !== event.detail.value) {
+      //   this.store.dispatch('user/setEcomStore', { 'productStoreId': event.detail.value })
+      // }
+      if (this.userProfile && this.eComStoreAndConfigStore.getCurrentEComStore.productStoreId !== event.detail.value) {
+        await this.eComStoreAndConfigStore.setCurrentEComStore({ 'productStoreId': event.detail.value })
+        this.store.dispatch('job/clearJobState', null, { root: true });
+        await this.store.dispatch('user/getShopifyConfig', event.detail.value);
+        await UserService.setUserPreference({
+          'userPrefTypeId': 'SELECTED_BRAND',
+          'userPrefValue': event.detail.value
+        });
       }
     },
-    setShopifyConfig(event: any){
-      this.store.dispatch('user/setCurrentShopifyConfig', { 'shopifyConfigId': event.detail.value });
+    async setShopifyConfig(event: CustomEvent){
+      await this.eComStoreAndConfigStore.setCurrentShopifyConfig({ 'shopifyConfigId': event.detail.value })
+      this.store.dispatch('job/clearJobState', null, { root: true });
+      console.log('setShopifyConfig settings', this.getCurrentShopifyConfig)
     },
     async changeTimeZone() {
       const timeZoneModal = await modalController.create({
@@ -207,6 +222,9 @@ export default defineComponent({
   setup(){
     const store = useStore();
     const router = useRouter();
+    const eComStoreAndConfigStore = useEComStoreAndConfigStore()
+    const { getCurrentEComStore, getCurrentShopifyConfig, getShopifyConfigs, getEComStores } = storeToRefs(eComStoreAndConfigStore)
+    // let subscribedEComStoreAndConfigStore = reactive(eComStoreAndConfigStore)
 
     return {
       codeWorkingOutline,
@@ -217,6 +235,12 @@ export default defineComponent({
       router,
       openOutline,
       saveOutline,
+      eComStoreAndConfigStore,
+      getCurrentEComStore,
+      getCurrentShopifyConfig,
+      getShopifyConfigs,
+      getEComStores,
+      // subscribedEComStoreAndConfigStore
     }
   }
 });

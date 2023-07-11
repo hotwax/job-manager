@@ -35,27 +35,28 @@
           <ion-note slot="end">{{ userProfile?.userTimeZone }}</ion-note>
         </ion-item>
         <!-- showing product stores only when there are multiple options to choose from. -->
-        <ion-item v-if="userProfile?.stores?.length > 2" lines="none">
-          <ion-select interface="popover" :value="eComStore.productStoreId" @ionChange="setEComStore($event)">
-            <ion-select-option v-for="store in (userProfile?.stores ? userProfile.stores : [])" :key="store.productStoreId" :value="store.productStoreId" >{{ store.storeName }}</ion-select-option>
+        <ion-item v-if="eComStoreAndConfigStore?.getEComStores?.length > 2" lines="none">
+          <ion-select interface="popover" :value="getCurrentEComStore.productStoreId" @ionChange="setEComStore($event)">
+            <ion-select-option v-for="store in (eComStoreAndConfigStore?.getEComStores ? eComStoreAndConfigStore.getEComStores : [])" :key="store.productStoreId" :value="store.productStoreId" >{{ store.storeName }}</ion-select-option>
           </ion-select>
         </ion-item>
         <ion-item v-else lines="none">
           <ion-label class="ion-text-wrap">
-            {{ currentEComStore.storeName }}
+            {{ getCurrentEComStore.storeName }}
           </ion-label>
         </ion-item>
         <!-- similarly, showing shopify configs only when there are multiple options to choose from 
         but if both product store and config have multiple options, then only option to choose
         product store will be visible -->
-        <ion-item v-if="shopifyConfigs?.length > 1 && userProfile?.stores?.length < 3" lines="none">
-          <ion-select interface="popover" :value="currentShopifyConfig?.shopifyConfigId" @ionChange="setShopifyConfig($event)">
-            <ion-select-option v-for="shopifyConfig in shopifyConfigs" :key="shopifyConfig.shopifyConfigId" :value="shopifyConfig.shopifyConfigId" >{{ shopifyConfig.name ? shopifyConfig.name : shopifyConfig.shopifyConfigName }}</ion-select-option>
+        {{ eComStoreAndConfigStore.getCurrentShopifyConfig }}
+        <ion-item v-if="eComStoreAndConfigStore?.getShopifyConfigs?.length > 1 && eComStoreAndConfigStore?.getEComStores?.length < 3" lines="none">
+          <ion-select interface="popover" :value="getCurrentShopifyConfig.shopifyConfigId" @ionChange="setShopifyConfig($event)">
+            <ion-select-option v-for="shopifyConfig in (eComStoreAndConfigStore?.getShopifyConfigs ? eComStoreAndConfigStore.getShopifyConfigs : [])" :key="shopifyConfig.shopifyConfigId" :value="shopifyConfig.shopifyConfigId" >{{ shopifyConfig.name ? shopifyConfig.name : shopifyConfig.shopifyConfigName }}</ion-select-option>
           </ion-select>
         </ion-item>
         <ion-item v-else lines="none">
           <ion-label class="ion-text-wrap">
-           <p>{{ currentShopifyConfig.name ? currentShopifyConfig.name : currentShopifyConfig.shopifyConfigName }}</p> 
+           <p>{{ getCurrentShopifyConfig.name ? getCurrentShopifyConfig.name : getCurrentShopifyConfig.shopifyConfigName }}</p> 
           </ion-label>
         </ion-item>
       </ion-toolbar>
@@ -81,12 +82,14 @@ import {
   IonTitle,
   IonToolbar
 } from "@ionic/vue";
-import { defineComponent, ref } from "vue";
+import { defineComponent, reactive, ref } from "vue";
 import { mapGetters } from "vuex";
 import { pulseOutline, calendarNumberOutline, terminalOutline, ticketOutline, albumsOutline, shirtOutline, settings, iceCreamOutline, libraryOutline } from "ionicons/icons";
 import { useStore } from "@/store";
 import emitter from "@/event-bus"
 import { hasPermission } from "@/authorization";
+import { UserService } from "@/services/UserService";
+import { useEComStoreAndConfigStore, storeToRefs } from 'dxp-components'
 
 export default defineComponent({
   name: "Menu",
@@ -107,6 +110,11 @@ export default defineComponent({
     IonTitle,
     IonToolbar
   },
+  data() {
+    return {
+      // subscribedEComStoreAndConfigStore: null as any
+    }
+  },
   created() {
     // When open any specific screen it should show that screen selected
     this.selectedIndex = this.appPages.findIndex((screen) => {
@@ -123,18 +131,27 @@ export default defineComponent({
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
       currentEComStore: 'user/getCurrentEComStore',
       shopifyConfigs: 'user/getShopifyConfigs',
-    })
+    }),
   },
   methods: {
     async setEComStore(event: CustomEvent) {
-      if(this.userProfile && this.eComStore?.productStoreId !== event.detail.value) {
-        await this.store.dispatch('user/setEcomStore', { 'productStoreId': event.detail.value })
+      if (this.userProfile && this.eComStoreAndConfigStore.getCurrentEComStore.productStoreId !== event.detail.value) {
+        await this.eComStoreAndConfigStore.setCurrentEComStore({ 'productStoreId': event.detail.value })
         emitter.emit("productStoreOrConfigChanged")
+        this.store.dispatch('job/clearJobState', null, { root: true });
+        await this.store.dispatch('user/getShopifyConfig', event.detail.value);
+        await UserService.setUserPreference({
+          'userPrefTypeId': 'SELECTED_BRAND',
+          'userPrefValue': event.detail.value
+        });
       }
     },
     async setShopifyConfig(event: CustomEvent){
-      await this.store.dispatch('user/setCurrentShopifyConfig', { 'shopifyConfigId': event.detail.value });
+      console.log('here')
+      await this.eComStoreAndConfigStore.setCurrentShopifyConfig({ 'shopifyConfigId': event.detail.value })
       emitter.emit("productStoreOrConfigChanged")
+      this.store.dispatch('job/clearJobState', null, { root: true });
+      console.log(this.eComStoreAndConfigStore.getCurrentShopifyConfig)
     },
     getValidMenuItems(appPages: any) {
       return appPages.filter((appPage: any) => (!appPage.meta || !appPage.meta.permissionId) || hasPermission(appPage.meta.permissionId));
@@ -151,6 +168,15 @@ export default defineComponent({
   setup() {
     const store = useStore();
     const selectedIndex = ref(0);
+    const eComStoreAndConfigStore = reactive(useEComStoreAndConfigStore())
+    const { getCurrentEComStore, getCurrentShopifyConfig, getShopifyConfigs, getEComStores } = storeToRefs(eComStoreAndConfigStore)
+    // let subscribedEComStoreAndConfigStore = reactive(eComStoreAndConfigStore)
+    // eComStoreAndConfigStore.$subscribe((mutation: any, state: any) => {
+    //   console.log('ran')
+    //   subscribedEComStoreAndConfigStore = state
+    //   console.log('subscribedEComStoreAndConfigStore', subscribedEComStoreAndConfigStore)
+    // }, { detached: true })
+
     let appPages = [
       {
         title: "Pipeline",
@@ -262,7 +288,13 @@ export default defineComponent({
       settings,
       iceCreamOutline,
       store,
-      libraryOutline
+      libraryOutline,
+      eComStoreAndConfigStore,
+      getCurrentEComStore,
+      getCurrentShopifyConfig,
+      getShopifyConfigs,
+      getEComStores
+      // subscribedEComStoreAndConfigStore
     };
   },
 });
