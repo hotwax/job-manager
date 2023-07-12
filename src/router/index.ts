@@ -57,7 +57,7 @@ const authGuard = async (to: any, from: any, next: any) => {
     if (!token?.value?.length) {
       const redirectUrl = window.location.origin
       // redirect to launchpad login
-      window.location.href = `http://receiving-dev.hotwax.io/login?redirectUrl=${redirectUrl}`
+      window.location.href = `http://launchpad.hotwax.io/login?redirectUrl=${redirectUrl}`
     }
     loader.dismiss()
   }

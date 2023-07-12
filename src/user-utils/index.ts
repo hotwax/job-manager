@@ -1,5 +1,4 @@
 import { translate } from '@/i18n'
-import router from '@/router'
 import store from '@/store'
 import { alertController } from '@ionic/core'
 
@@ -12,20 +11,23 @@ const getUserTokenAndOms = async () => {
   }
 }
 
-const confirmSessionEnd = async (appOms: string, cb: any, oms: string, token: string) => {
-  const alert = await alertController
-    .create({
-      header: translate('Active session'),
-      message: translate(`A user is already logged in via ${appOms}. Do you want to end the current session and login with the entered details?`),
-      buttons: [{
-        text: translate("Cancel"),
-        handler: () => router.push('/')
-      }, {
-        text: translate('Login'),
-        handler: () => cb(token, oms)
-      }],
-    });
-  return alert.present();
+const confirmSessionEnd = (appOms: string) => {
+  return new Promise((resolve: any) => {
+    alertController
+      .create({
+        header: translate('Active session'),
+        message: translate(`A user is already logged in via ${appOms}. Do you want to end the current session and login with the entered details?`),
+        buttons: [{
+          text: translate("Cancel"),
+          handler: () => resolve(false)
+        }, {
+          text: translate('Login'),
+          handler: () => resolve(true)
+        }],
+      }).then((alert: any) => {
+        alert.present()
+      });
+  })
 }
 
 const logout = async () => store.dispatch('user/logout')
