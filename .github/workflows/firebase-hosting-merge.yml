@@ -11,4 +11,6 @@ jobs:
     uses: hotwax/dxp-components/.github/workflows/common-firebase-hosting-merge.yml@main
     with:
       config-path: .github/labeler.yml
-    secrets: inherit
+    secrets:
+      envPAT: ${{ secrets.envPAT }}
+      HOTWAX_PUBLIC_SECRET: ${{ secrets.HOTWAX_PUBLIC_SECRET }}
