@@ -33,15 +33,8 @@ import store from './store'
 import permissionPlugin from '@/authorization';
 import permissionRules from '@/authorization/Rules';
 import permissionActions from '@/authorization/Actions';
-import { initialise } from '@/adapter'
 import { dxpComponents } from 'dxp-components'
 import { getAndSetUserDetails, getUserTokenAndOms, confirmSessionEnd, logout } from './user-utils';
-
-initialise({
-  token: store.getters['user/getUserToken'],
-  instanceUrl: store.getters['user/getInstanceUrl'],
-  cacheMaxAge: 3000
-})
 
 const loader = {
   value: null as any,

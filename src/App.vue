@@ -85,23 +85,22 @@ export default defineComponent({
       this.router.push("/login")
     }
   },
-  // created() {
-    // initialise({
-    //   token: this.userToken,
-    //   instanceUrl: this.instanceUrl,
-    //   cacheMaxAge: this.maxAge,
-    //   events: {
-    //     unauthorised: this.unauthorized,
-    //     responseErrror: () => {
-    //       setTimeout(() => this.dismissLoader(), 100);
-    //     },
-    //     queueTask: (payload: any) => {
-    //       emitter.emit("queueTask", payload);
-    //     }
-    //   }
-    // })
-    // app.use(dxpComponents)
-  // },
+  created() {
+    initialise({
+      token: this.userToken,
+      instanceUrl: this.instanceUrl,
+      cacheMaxAge: this.maxAge,
+      events: {
+        unauthorised: this.unauthorized,
+        responseErrror: () => {
+          setTimeout(() => this.dismissLoader(), 100);
+        },
+        queueTask: (payload: any) => {
+          emitter.emit("queueTask", payload);
+        }
+      }
+    })
+  },
   async mounted() {
     this.loader = await loadingController
       .create({
