@@ -5,13 +5,6 @@ import { loadingController } from '@ionic/vue'
 
 const login = async (payload: any) => store.dispatch('user/login', payload)
 
-const getUserTokenAndOms = async () => {
-  return {
-    appToken: store.getters['user/getUserToken'],
-    appOms: store.getters['user/getInstanceUrl']
-  }
-}
-
 const confirmSessionEnd = (appOms: string) => {
   return new Promise((resolve: any) => {
     alertController

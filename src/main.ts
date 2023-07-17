@@ -33,7 +33,7 @@ import permissionPlugin from '@/authorization';
 import permissionRules from '@/authorization/Rules';
 import permissionActions from '@/authorization/Actions';
 import { dxpComponents } from 'dxp-components'
-import { login, getUserTokenAndOms, confirmSessionEnd, logout, loader } from './user-utils';
+import { login, confirmSessionEnd, logout, loader } from './user-utils';
 
 const app = createApp(App)
   .use(IonicVue, {
@@ -51,7 +51,6 @@ const app = createApp(App)
   })
   .use(dxpComponents, {
     login,
-    getUserTokenAndOms,
     confirmSessionEnd,
     logout,
     loader
