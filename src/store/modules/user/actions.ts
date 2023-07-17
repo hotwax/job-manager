@@ -18,28 +18,6 @@ const actions: ActionTree<UserState, RootState> = {
    * @param param1 payload: token and oms
    * @returns Promise
    */
-  // async login({ commit }, { username, password }) {
-  //   try {
-  //     const resp = await UserService.login(username, password);
-  //     // Further we will have only response having 2xx status
-  //     // https://axios-http.com/docs/handling_errors
-  //     // We haven't customized validateStatus method and default behaviour is for all status other than 2xx
-  //     // TODO Check if we need to handle all 2xx status other than 200
-
-
-  //     /* ---- Guard clauses starts here --- */
-  //     // Know about Guard clauses here: https://learningactors.com/javascript-guard-clauses-how-you-can-refactor-conditional-logic/
-  //     // https://medium.com/@scadge/if-statements-design-guard-clauses-might-be-all-you-need-67219a1a981a
-
-
-  //     // If we have any error most possible reason is incorrect credentials.
-  //     if (hasError(resp)) {
-  //       showToast(translate('Sorry, your username or password is incorrect. Please try again.'));
-  //       logger.error("error", resp.data._ERROR_MESSAGE_);
-  //       return Promise.reject(new Error(resp.data._ERROR_MESSAGE_));
-  //     }
-
-  //     const token = resp.data.token;
   async login({ commit, dispatch }, payload) {
     try {
       const { token, oms } = payload

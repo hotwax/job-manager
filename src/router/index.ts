@@ -33,9 +33,9 @@ const authGuard = async (to: any, from: any, next: any) => {
     const token: any = await authStore.authenticate()
     // redirect if the login fails
     if (!token?.value?.length) {
-      const redirectUrl = window.location.origin
+      const redirectUrl = window.location.origin + '/login'
       // redirect to launchpad login
-      window.location.href = `${process.env.VUE_APP_LOGIN_URL}/login?redirectUrl=${redirectUrl}`
+      window.location.href = `${process.env.VUE_APP_LOGIN_URL}?redirectUrl=${redirectUrl}`
     }
     loader.dismiss()
   }
