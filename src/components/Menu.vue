@@ -1,5 +1,5 @@
 <template>
-  <ion-menu side="start" content-id="main-content" type="overlay" :disabled="!isUserAuthenticated || $route.path === '/dxpLogin'">
+  <ion-menu side="start" content-id="main-content" type="overlay" :disabled="!isUserAuthenticated || $route.path === '/login'">
     <ion-header>
       <ion-toolbar>
         <ion-title>{{ $t("Job Manager") }}</ion-title>
@@ -144,7 +144,7 @@ export default defineComponent({
     $route (to, from) {
       // When logout and login it should point to Oth index
       // TODO remove login check
-      if (to.path === '/login' || from.path === '/dxpLogin') {
+      if (from.path === '/login') {
         this.selectedIndex = 0;
       }
     },

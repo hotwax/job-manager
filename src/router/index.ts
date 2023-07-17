@@ -9,16 +9,15 @@ import JobDetails from '@/views/JobDetails.vue'
 import InitialLoad from '@/views/InitialLoad.vue'
 import Miscellaneous from '@/views/Miscellaneous.vue'
 import BulkEditor from '@/views/BulkEditor.vue'
-import Login from '@/views/Login.vue'
 import Settings from "@/views/Settings.vue"
 import store from '@/store'
 import { hasPermission } from '@/authorization';
 import { showToast } from '@/utils'
 import { translate } from '@/i18n'
 import 'vue-router'
-import { loadingController } from '@ionic/vue';
 import { useAuthStore } from 'dxp-components'
-import { Login as dxpLogin } from 'dxp-components';
+import { Login } from 'dxp-components';
+import { loader } from '@/user-utils';
 
 // Defining types for the meta values
 declare module 'vue-router' {
@@ -27,37 +26,16 @@ declare module 'vue-router' {
   }
 }
 
-const loader = {
-  value: null as any,
-  present: async () => {
-    if (!loader.value) {
-      loader.value = await loadingController
-        .create({
-          message: translate("Authenticating"),
-          translucent: false,
-          backdropDismiss: false
-        });
-    }
-    loader.value.present();
-  },
-  dismiss: () => {
-    if (loader.value) {
-      loader.value.dismiss();
-      loader.value = null as any;
-    }
-  }
-}
-
 const authGuard = async (to: any, from: any, next: any) => {
   const authStore = useAuthStore()
   if (!authStore.isAuthenticated) {
-    await loader.present()
+    await loader.present('Authenticating')
     const token: any = await authStore.authenticate()
     // redirect if the login fails
     if (!token?.value?.length) {
       const redirectUrl = window.location.origin
       // redirect to launchpad login
-      window.location.href = `http://launchpad.hotwax.io/login?redirectUrl=${redirectUrl}`
+      window.location.href = `${process.env.VUE_APP_LOGIN_URL}/login?redirectUrl=${redirectUrl}`
     }
     loader.dismiss()
   }
@@ -176,12 +154,6 @@ const routes: Array<RouteRecordRaw> = [
     component: Settings,
     beforeEnter: authGuard
   },
-  {
-    // TODO update component name and remove login
-    path: '/dxpLogin',
-    name: 'dxpLogin',
-    component: dxpLogin
-  }
 ]
 
 const router = createRouter({

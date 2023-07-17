@@ -40,13 +40,10 @@ const actions: ActionTree<UserState, RootState> = {
   //     }
 
   //     const token = resp.data.token;
-  async getAndSetUserDetails({ commit, dispatch, state }, payload) {
+  async login({ commit, dispatch }, payload) {
     try {
       const { token, oms } = payload
-      const baseURL = process.env.VUE_APP_BASE_URL
-      const alias = process.env.VUE_APP_ALIAS ? JSON.parse(process.env.VUE_APP_ALIAS) : {}
-
-      if (!baseURL) dispatch("setUserInstanceUrl", alias[oms] ? alias[oms] : oms);
+      dispatch("setUserInstanceUrl", oms);
 
       // Getting the permissions list from server
       const permissionId = process.env.VUE_APP_PERMISSION_ID;
