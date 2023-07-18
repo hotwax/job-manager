@@ -5,7 +5,6 @@ import './registerServiceWorker'
 import { DateTime } from 'luxon';
 import logger from './logger';
 
-
 import { IonicVue } from '@ionic/vue';
 
 /* Core CSS required for Ionic components to work properly */
@@ -33,8 +32,8 @@ import store from './store'
 import permissionPlugin from '@/authorization';
 import permissionRules from '@/authorization/Rules';
 import permissionActions from '@/authorization/Actions';
-
-
+import { dxpComponents } from '@hotwax/dxp-components'
+import { login, confirmSessionEnd, logout, loader } from './user-utils';
 
 const app = createApp(App)
   .use(IonicVue, {
@@ -49,7 +48,13 @@ const app = createApp(App)
   .use(permissionPlugin, {
     rules: permissionRules,
     actions: permissionActions
-  });
+  })
+  .use(dxpComponents, {
+    login,
+    confirmSessionEnd,
+    logout,
+    loader
+  })
 
 // Filters are removed in Vue 3 and global filter introduced https://v3.vuejs.org/guide/migration/filters.html#global-filters
 app.config.globalProperties.$filters = {
@@ -76,7 +81,6 @@ app.config.globalProperties.$filters = {
     return featureValue;
   }
 }
-
 
 router.isReady().then(() => {
   app.mount('#app');

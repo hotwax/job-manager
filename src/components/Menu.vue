@@ -1,5 +1,5 @@
 <template>
-  <ion-menu side="start" content-id="main-content" type="overlay" :disabled="!isUserAuthenticated">
+  <ion-menu side="start" content-id="main-content" type="overlay" :disabled="!isUserAuthenticated || $route.path === '/login'">
     <ion-header>
       <ion-toolbar>
         <ion-title>{{ $t("Job Manager") }}</ion-title>
@@ -141,9 +141,9 @@ export default defineComponent({
     }
   },
   watch:{
-    $route (to) {
+    $route (to, from) {
       // When logout and login it should point to Oth index
-      if (to.path === '/login') {
+      if (from.path === '/login') {
         this.selectedIndex = 0;
       }
     },
