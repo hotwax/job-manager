@@ -143,7 +143,6 @@ export default defineComponent({
   watch:{
     $route (to, from) {
       // When logout and login it should point to Oth index
-      // TODO remove login check
       if (from.path === '/login') {
         this.selectedIndex = 0;
       }
@@ -162,7 +161,7 @@ export default defineComponent({
         meta: {
           permissionId: "APP_PIPELINE_VIEW"
         }
-      },
+    },
       {
         title: "Initial load",
         url: "/initial-load",
