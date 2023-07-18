@@ -8,6 +8,7 @@ import { translate } from '@/i18n'
 import { Settings } from 'luxon'
 import { getServerPermissionsFromRules, prepareAppPermissions, resetPermissions, setPermissions } from '@/authorization'
 import { updateInstanceUrl, updateToken, resetConfig } from '@/adapter'
+import { useEComStoreAndConfigStore } from 'dxp-components'
 
 import logger from "@/logger";
 
@@ -21,6 +22,7 @@ const actions: ActionTree<UserState, RootState> = {
    */
   async login({ commit }, { username, password }) {
     try {
+      const eComStoreAndConfigStore = useEComStoreAndConfigStore()
       const resp = await UserService.login(username, password);
       // Further we will have only response having 2xx status
       // https://axios-http.com/docs/handling_errors
@@ -89,6 +91,16 @@ const actions: ActionTree<UserState, RootState> = {
       let currentShopifyConfig =  {};
       shopifyConfigs.length > 0 && (currentShopifyConfig = shopifyConfigs[0])
 
+      await eComStoreAndConfigStore.setEComStores(userProfile.stores)
+      await eComStoreAndConfigStore.setCurrentEComStore(preferredStore)
+
+      await eComStoreAndConfigStore.setShopifyConfigs(shopifyConfigs)
+      await eComStoreAndConfigStore.setCurrentShopifyConfig(currentShopifyConfig)
+
+      // console.log(eComStoreAndConfigStore.eComStores)
+      // console.log(eComStoreAndConfigStore.currentEComStore)
+      // console.log(eComStoreAndConfigStore.shopifyConfigs)
+      // console.log(eComStoreAndConfigStore.currentShopifyConfig)
       /*  ---- Guard clauses ends here --- */
 
       setPermissions(appPermissions);
