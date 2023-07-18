@@ -153,7 +153,7 @@ const routes: Array<RouteRecordRaw> = [
     name: "Settings",
     component: Settings,
     beforeEnter: authGuard
-  },
+  }
 ]
 
 const router = createRouter({

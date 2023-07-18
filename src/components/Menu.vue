@@ -161,7 +161,7 @@ export default defineComponent({
         meta: {
           permissionId: "APP_PIPELINE_VIEW"
         }
-    },
+      },
       {
         title: "Initial load",
         url: "/initial-load",
