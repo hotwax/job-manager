@@ -50,7 +50,6 @@ const loader = {
 export {
   login,
   loader,
-  getUserTokenAndOms,
   confirmSessionEnd,
   logout
 }

@@ -32,7 +32,7 @@ import store from './store'
 import permissionPlugin from '@/authorization';
 import permissionRules from '@/authorization/Rules';
 import permissionActions from '@/authorization/Actions';
-import { dxpComponents } from 'dxp-components'
+import { dxpComponents } from '@hotwax/dxp-components'
 import { login, confirmSessionEnd, logout, loader } from './user-utils';
 
 const app = createApp(App)

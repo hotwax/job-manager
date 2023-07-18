@@ -15,8 +15,8 @@ import { hasPermission } from '@/authorization';
 import { showToast } from '@/utils'
 import { translate } from '@/i18n'
 import 'vue-router'
-import { useAuthStore } from 'dxp-components'
-import { Login } from 'dxp-components';
+import { useAuthStore } from '@hotwax/dxp-components'
+import { Login } from '@hotwax/dxp-components';
 import { loader } from '@/user-utils';
 
 // Defining types for the meta values
