@@ -16,10 +16,8 @@ import { showToast } from '@/utils'
 import { translate } from '@/i18n'
 import 'vue-router'
 import { Login } from '@hotwax/dxp-components';
-
-// TODO uncomment when support for authenticate() is there
-// import { useAuthStore } from '@hotwax/dxp-components'
-// import { loader } from '@/user-utils';
+import { useAuthStore } from '@hotwax/dxp-components'
+import { loader } from '@/user-utils';
 
 // Defining types for the meta values
 declare module 'vue-router' {
@@ -29,19 +27,14 @@ declare module 'vue-router' {
 }
 
 const authGuard = async (to: any, from: any, next: any) => {
-  // TODO uncomment when support for authenticate() is there
-  // const authStore = useAuthStore()
-  // if (!authStore.isAuthenticated) {
-  //   await loader.present('Authenticating')
-  //   const token: any = await authStore.authenticate()
-  //   // redirect if the login fails
-  //   if (!token?.value?.length) {
-  //     const redirectUrl = window.location.origin + '/login'
-  //     // redirect to launchpad login
-  //     window.location.href = `${process.env.VUE_APP_LOGIN_URL}?redirectUrl=${redirectUrl}`
-  //   }
-  //   loader.dismiss()
-  // }
+  const authStore = useAuthStore()
+  if (!authStore.isAuthenticated) {
+    await loader.present('Authenticating')
+    // TODO use authenticate() when support is there
+    const redirectUrl = window.location.origin + '/login'
+    window.location.href = `${process.env.VUE_APP_LOGIN_URL}?redirectUrl=${redirectUrl}`
+    loader.dismiss()
+  }
 
   if (store.getters['user/isAuthenticated']) {
     next()

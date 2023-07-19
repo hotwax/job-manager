@@ -10,7 +10,7 @@ const confirmSessionEnd = (appOms: string) => {
     alertController
       .create({
         header: translate('Active session'),
-        message: translate(`A user is already logged in via ${appOms}. Do you want to end the current session and login with the entered details?`),
+        message: translate(`A user is already logged in via. Do you want to end the current session and login with the entered details?`, { appOms }),
         buttons: [{
           text: translate("Cancel"),
           handler: () => resolve(false)
