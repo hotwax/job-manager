@@ -207,15 +207,19 @@ export default defineComponent({
           "enumTypeId": "INVENTORY_SYS_JOB"
         }
       });
+    },
+    fetchData() {
+      this.store.dispatch('webhook/fetchWebhooks')
+      this.fetchJobs()
     }
   },
   mounted () {
-    this.fetchJobs();
-    emitter.on("productStoreOrConfigChanged", this.fetchJobs);
+    this.fetchData();
+    emitter.on("productStoreOrConfigChanged", this.fetchData);
     emitter.on('viewJobConfiguration', this.viewJobConfiguration)
   },
   unmounted() {
-    emitter.off("productStoreOrConfigChanged", this.fetchJobs);
+    emitter.off("productStoreOrConfigChanged", this.fetchData);
     emitter.off('viewJobConfiguration', this.viewJobConfiguration)
   },
   setup() {
