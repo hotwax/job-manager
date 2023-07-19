@@ -15,9 +15,11 @@ import { hasPermission } from '@/authorization';
 import { showToast } from '@/utils'
 import { translate } from '@/i18n'
 import 'vue-router'
-import { useAuthStore } from '@hotwax/dxp-components'
 import { Login } from '@hotwax/dxp-components';
-import { loader } from '@/user-utils';
+
+// TODO uncomment when support for authenticate() is there
+// import { useAuthStore } from '@hotwax/dxp-components'
+// import { loader } from '@/user-utils';
 
 // Defining types for the meta values
 declare module 'vue-router' {
@@ -27,31 +29,24 @@ declare module 'vue-router' {
 }
 
 const authGuard = async (to: any, from: any, next: any) => {
-  const authStore = useAuthStore()
-  if (!authStore.isAuthenticated) {
-    await loader.present('Authenticating')
-    const token: any = await authStore.authenticate()
-    // redirect if the login fails
-    if (!token?.value?.length) {
-      const redirectUrl = window.location.origin + '/login'
-      // redirect to launchpad login
-      window.location.href = `${process.env.VUE_APP_LOGIN_URL}?redirectUrl=${redirectUrl}`
-    }
-    loader.dismiss()
-  }
+  // TODO uncomment when support for authenticate() is there
+  // const authStore = useAuthStore()
+  // if (!authStore.isAuthenticated) {
+  //   await loader.present('Authenticating')
+  //   const token: any = await authStore.authenticate()
+  //   // redirect if the login fails
+  //   if (!token?.value?.length) {
+  //     const redirectUrl = window.location.origin + '/login'
+  //     // redirect to launchpad login
+  //     window.location.href = `${process.env.VUE_APP_LOGIN_URL}?redirectUrl=${redirectUrl}`
+  //   }
+  //   loader.dismiss()
+  // }
 
   if (store.getters['user/isAuthenticated']) {
     next()
   } else {
     next("/login")
-  }
-};
-
-const loginGuard = (to: any, from: any, next: any) => {
-  if (!store.getters['user/isAuthenticated']) {
-    next()
-  } else {
-    next("/")
   }
 };
 
@@ -146,7 +141,6 @@ const routes: Array<RouteRecordRaw> = [
     path: '/login',
     name: 'Login',
     component: Login,
-    beforeEnter: loginGuard
   },
   {
     path: "/settings",
