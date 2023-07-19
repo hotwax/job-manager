@@ -53,7 +53,8 @@ const app = createApp(App)
     login,
     confirmSessionEnd,
     logout,
-    loader
+    loader,
+    appLoginUrl: process.env.VUE_APP_LOGIN_URL as string
   })
 
 // Filters are removed in Vue 3 and global filter introduced https://v3.vuejs.org/guide/migration/filters.html#global-filters
