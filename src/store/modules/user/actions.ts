@@ -9,6 +9,7 @@ import { Settings } from 'luxon'
 import { getServerPermissionsFromRules, prepareAppPermissions, resetPermissions, setPermissions } from '@/authorization'
 import { updateInstanceUrl, updateToken, resetConfig } from '@/adapter'
 import logger from "@/logger";
+import { useAuthStore } from '@hotwax/dxp-components'
 
 const actions: ActionTree<UserState, RootState> = {
 
@@ -101,11 +102,14 @@ const actions: ActionTree<UserState, RootState> = {
    * Logout user
    */
   async logout ({ commit, dispatch }) {
+    const authStore = useAuthStore()
     // TODO add any other tasks if need
     dispatch('job/clearJobState', null, { root: true });
     commit(types.USER_END_SESSION)
     resetConfig();
     resetPermissions();
+    // reset plugin state on logout
+    authStore.$reset()
   },
 
   /**
