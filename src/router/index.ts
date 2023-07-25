@@ -28,18 +28,14 @@ declare module 'vue-router' {
 
 const authGuard = async (to: any, from: any, next: any) => {
   const authStore = useAuthStore()
-  if (!authStore.isAuthenticated) {
+  if (!authStore.isAuthenticated || !store.getters['user/isAuthenticated']) {
     await loader.present('Authenticating')
     // TODO use authenticate() when support is there
     const redirectUrl = window.location.origin + '/login'
     window.location.href = `${process.env.VUE_APP_LOGIN_URL}?redirectUrl=${redirectUrl}`
     loader.dismiss()
-  }
-
-  if (store.getters['user/isAuthenticated']) {
-    next()
   } else {
-    next("/login")
+    next()
   }
 };
 
