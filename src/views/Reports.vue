@@ -35,7 +35,7 @@
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob && Object.keys(currentJob).length">
-          <JobConfiguration :title="currentJobTitle" :status="currentJobStatus" :key="currentJob" />
+          <JobConfiguration :status="currentJobStatus" :key="currentJob" />
         </aside>
       </main>
     </ion-content>
