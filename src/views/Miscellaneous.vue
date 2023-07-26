@@ -24,7 +24,7 @@
           <div v-else>
             <ion-list>
               <ion-list-header>{{ $t("Miscellaneous jobs") }}</ion-list-header>
-              <ion-item v-for="job in miscellaneousJobs" :key="job.jobId" @click="viewJobConfiguration(job)" detail button>
+              <ion-item v-for="job in prepareMiscJobs" :key="job.jobId" @click="viewJobConfiguration(job)" detail button>
                 <ion-label>{{ job.jobName }}</ion-label>
                 <ion-note slot="end">{{ getJobRuntime(job) }}</ion-note>
               </ion-item>
@@ -92,11 +92,15 @@ export default defineComponent({
     JobConfiguration
   },
   mounted() {
+    emitter.on('jobUpdated', this.getMiscellaneousJobs);
     this.getMiscellaneousJobs();
     emitter.on("productStoreOrConfigChanged", this.getMiscellaneousJobs);
   },
   unmounted() {
     emitter.off("productStoreOrConfigChanged", this.getMiscellaneousJobs);
+  },
+  unmounted() {
+    emitter.off('jobUpdated', this.getMiscellaneousJobs);
   },
   data() {
     return {
@@ -112,12 +116,23 @@ export default defineComponent({
       miscellaneousJobs: 'job/getMiscellaneousJobs',
       getCurrentEComStore:'user/getCurrentEComStore',
       isMiscellaneousJobsScrollable: 'job/isMiscellaneousJobsScrollable'
-    })
+    }),
+    prepareMiscJobs() {
+      // preparing the jobs to display single instance of a job if the job is in pending and draft status
+      const miscJobs = {} as any
+      const pendingJobs = this.miscellaneousJobs.filter((job: any) => job.statusId === 'SERVICE_PENDING')
+      const draftJobs = this.miscellaneousJobs.filter((job: any) => job.statusId === 'SERVICE_DRAFT')
+
+      pendingJobs.map((job: any) => miscJobs[job.systemJobEnumId] = job)
+      draftJobs.map((job: any) => miscJobs[job.systemJobEnumId] = miscJobs[job.systemJobEnumId] ? miscJobs[job.systemJobEnumId] : job)
+
+      return Object.values(miscJobs);
+    }
   },
   methods: {
     async viewJobConfiguration(job: any) {
       this.currentJob = job
-      this.currentJobStatus = job.status
+      this.currentJobStatus =  job.status === "SERVICE_DRAFT" ? 'SERVICE_DRAFT' : job.frequency;
 
       // if job runTime is not a valid date then making runTime as empty
       if (job?.runTime && !isFutureDate(job?.runTime)) {
@@ -135,13 +150,13 @@ export default defineComponent({
         this.isJobDetailAnimationCompleted = true;
       }
     },
-    async getMiscellaneousJobs(viewSize = 20, viewIndex = 0) {
+    async getMiscellaneousJobs(viewSize = 100, viewIndex = 0) {
       await this.store.dispatch('job/fetchMiscellaneousJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex});
     },
     async loadMoreMiscellaneousJobs (event: any) {
       this.getMiscellaneousJobs(
         undefined,
-        Math.ceil(this.miscellaneousJobs.length / (process.env.VUE_APP_VIEW_SIZE as any))
+        Math.ceil(this.miscellaneousJobs.length / 100) //using 100 as harcoded value, as we are fetching the miscellaneous jobs in batches of 100, so we need to find the viewIndex using the same value that is used as viewSize
       ).then(() => {
         event.target.complete();
       })

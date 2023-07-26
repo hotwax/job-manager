@@ -2,7 +2,7 @@
   <section>
     <ion-item lines="none">
       <!-- Adding conditional check for currentJob.jobName as currentJob is undefined when i18n runs $t -->
-      <h1>{{ getEnumName(currentJob.systemJobEnumId) ? $t(getEnumName(currentJob.systemJobEnumId)) : currentJob.jobName ? $t(currentJob.jobName) : '' }}</h1>
+      <h1>{{ currentJob.enumName ? currentJob.enumName : currentJob.jobName ? currentJob.jobName : '' }}</h1>
       <ion-badge slot="end" color="dark" v-if="currentJob?.runTime && currentJob.statusId !== 'SERVICE_DRAFT'">{{ $t("running") }} {{ timeTillJob(currentJob.runTime) }}</ion-badge>
     </ion-item>
 
@@ -17,19 +17,21 @@
       <ion-item>
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
-        <ion-label class="ion-text-wrap" @click="() => isOpen = true" slot="end">{{ runTime ? getTime(runTime) : $t('Select run time') }}</ion-label>
+        <ion-select interface="popover" :placeholder="$t('Select')" :value="runTime" @ionChange="updateRunTime($event)">
+          <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ $t(runTime.label) }}</ion-select-option>
+        </ion-select>
         <!-- TODO: display a button when we are not having a runtime and open the datetime component
         on click of that button
         Currently, when mapping the same datetime component for label and button so it's not working so for
         now commented the button and added a fallback string -->
         <!-- <ion-button id="open-run-time-modal" size="small" fill="outline" color="medium" v-show="!currentJob?.runTime">{{ $t("Select run time") }}</ion-button> -->
-        <ion-modal class="date-time-modal" :is-open="isOpen" @didDismiss="() => isOpen = false">
+        <ion-modal class="date-time-modal" :is-open="isDateTimeModalOpen" @didDismiss="() => isDateTimeModalOpen = false">
           <ion-content force-overscroll="false">
             <ion-datetime          
               show-default-buttons
               hour-cycle="h23"
-              :value="runTime ? getDateTime(runTime) : ''"
-              @ionChange="updateRunTime($event)"
+              :value="runTime ? (isCustomRunTime(runTime) ? getDateTime(runTime) : getDateTime(DateTime.now().toMillis() + runTime)) : ''"
+              @ionChange="updateCustomTime($event)"
             />
           </ion-content>
         </ion-modal>
@@ -38,8 +40,8 @@
       <ion-item>
         <ion-icon slot="start" :icon="timerOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Schedule") }}</ion-label>
-        <ion-select :interface-options="customPopoverOptions" interface="popover" :value="jobStatus" :placeholder="$t('Disabled')" @ionChange="($event) => jobStatus = $event['detail'].value">
-          <ion-select-option v-for="freq in generateFrequencyOptions" :key="freq.value" :value="freq.value">{{ $t(freq.label) }}</ion-select-option>
+        <ion-select :value="jobStatus" :interface-options="{ header: $t('Frequency') }" interface="popover" :placeholder="$t('Disabled')" @ionChange="jobStatus = $event.detail.value" @ionDismiss="jobStatus == 'CUSTOM' && setCustomFrequency()">
+          <ion-select-option v-for="freq in frequencyOptions" :key="freq.id" :value="freq.id">{{ freq.description }}</ion-select-option>
         </ion-select>
       </ion-item>
 
@@ -77,7 +79,7 @@
       <ion-icon slot="start" :icon="timeOutline" />
       {{ $t("History") }}
     </ion-item>
-    <ion-item :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" @click="runNow(title, currentJob)" button>
+    <ion-item :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" @click="runNow(currentJob)" button>
       <ion-icon slot="start" :icon="flashOutline" />
       {{ $t("Run now") }}
     </ion-item>
@@ -124,13 +126,14 @@ import {
 } from "ionicons/icons";
 import JobHistoryModal from '@/components/JobHistoryModal.vue'
 import { Plugins } from '@capacitor/core';
-import { handleDateTimeInput, showToast } from "@/utils";
+import { isCustomRunTime, generateAllowedRunTimes, generateAllowedFrequencies, handleDateTimeInput, showToast, hasError } from "@/utils";
 import { mapGetters, useStore } from "vuex";
 import { DateTime } from 'luxon';
 import { translate } from '@/i18n'
 import { useRouter } from "vue-router";
 import emitter from '@/event-bus';
 import { Actions, hasPermission } from '@/authorization'
+import CustomFrequencyModal from '@/components/CustomFrequencyModal.vue';
 
 export default defineComponent({
   name: "JobConfiguration",
@@ -150,80 +153,65 @@ export default defineComponent({
   },
   data() {
     return {
-      isOpen: false,
-      jobStatus: this.status,
+      isDateTimeModalOpen: false,
       runTime: '' as any,
+      runTimes: [] as any,
+      jobStatus: this.status,
+      frequencyOptions: [] as any
     }
   },
   mounted() {
-    this.runTime = this.currentJob?.runTime 
+    this.runTime = this.currentJob?.runTime
+    this.generateRunTimes(this.runTime)
+    this.generateFrequencyOptions(this.jobStatus)
   },
   updated() {
     // When updating the job, the job is fetched again with the latest values
     // Updated value should be set to instance variable jobStatus
     this.jobStatus = this.currentJob.statusId === "SERVICE_DRAFT" ? this.currentJob.statusId : this.currentJob.tempExprId;
     this.runTime = this.currentJob?.runTime ? this.currentJob?.runTime : ''
+    this.generateRunTimes(this.runTime)
+    this.generateFrequencyOptions(this.jobStatus)
   },
-  props: ["title", "status", "type"],
+  props: ["status", "type"],
   computed: {
     ...mapGetters({
-      getEnumDescription: 'job/getEnumDescription',
-      getEnumName: 'job/getEnumName',
       pinnedJobs: 'user/getPinnedJobs',
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
       currentEComStore: 'user/getCurrentEComStore',
       currentJob: 'job/getCurrentJob',
-    }),
-    generateFrequencyOptions(): any {
-      const optionDefault = [{
-          "value": "EVERY_1_MIN",
-          "label": "Every 1 minute"
-        },{
-          "value": "EVERY_5_MIN",
-          "label": "Every 5 minutes"
-        },{
-          "value": "EVERY_15_MIN",
-          "label": "Every 15 minutes"
-        },{
-          "value": "EVERY_30_MIN",
-          "label": "Every 30 minutes"
-        },{
-          "value": "HOURLY",
-          "label": "Hourly"
-        },{
-          "value": "EVERY_6_HOUR",
-          "label": "Every 6 hours"
-        },{
-          "value": "EVERYDAY",
-          "label": "Every day"
-        }
-      ]
-
-      const slow = [{
-          "value": "HOURLY",
-          "label": "Hourly"
-        },{
-          "value": "EVERY_6_HOUR",
-          "label": "Every 6 hours"
-        },{
-          "value": "EVERYDAY",
-          "label": "Every day"
-        }
-      ]
-      return (this as any).type === 'slow' ? slow : optionDefault;
-    },
-    customPopoverOptions() {
-      return {
-        header: (this as any).title,
-        showBackdrop: false
-      }
-    }
+    })
   },
   methods: {
     getDateTime(time: any) {
       return DateTime.fromMillis(time).toISO()
+    },
+    async generateFrequencyOptions(currentFrequency?: any) {
+      const frequencyOptions = JSON.parse(JSON.stringify(generateAllowedFrequencies(this.type)));
+      if (hasPermission(Actions.APP_CUSTOM_FREQ_VIEW)) frequencyOptions.push({ "id": "CUSTOM", "description": "Custom"})
+      if (currentFrequency) {
+        const selectedFrequency = frequencyOptions.find((frequency: any) => frequency.id === currentFrequency);
+        if (!selectedFrequency ) {
+          const frequencies = await this.store.dispatch("job/fetchTemporalExpression", [ currentFrequency ]);
+          const frequency = frequencies[currentFrequency];
+          frequency && (frequencyOptions.push({ "id": frequency.tempExprId,  "description": frequency.description }))
+        }
+      }
+      this.frequencyOptions = frequencyOptions;
+      this.jobStatus = currentFrequency;
+    },
+    async generateRunTimes(currentRunTime?: any) {
+      const runTimes = JSON.parse(JSON.stringify(generateAllowedRunTimes()))
+      let selectedRunTime
+      // 0 check for the 'Now' value and '' check for initial render
+      if (currentRunTime || currentRunTime === 0 ) {
+        selectedRunTime = runTimes.some((runTime: any) => runTime.value === currentRunTime)
+        if (!selectedRunTime) runTimes.push({ label: this.getTime(currentRunTime), value: currentRunTime })
+      }
+      this.runTime = currentRunTime
+      this.runTimes = runTimes
     },
     async skipJob(job: any) {
       const alert = await alertController
@@ -261,7 +249,7 @@ export default defineComponent({
             text: this.$t('Cancel'),
             handler: () => {
               this.store.dispatch('job/cancelJob', job).then((resp) => {
-                if(resp.data?.successMessage) {
+                if(!hasError(resp)) {
                   emitter.emit('jobUpdated');
                   const category = this.$route.params?.category;
                   if (category) {
@@ -303,11 +291,15 @@ export default defineComponent({
     async updateJob() {
       const job = this.currentJob;
       job['jobStatus'] = this.jobStatus !== 'SERVICE_DRAFT' ? this.jobStatus : 'HOURLY';
-      job.runTime = this.runTime;
+
+      // Handling the case for 'Now'. Sending the now value will fail the API as by the time
+      // the job is ran, the given 'now' time would have passed. Hence, passing empty 'run time'
+      job.runTime = !isCustomRunTime(this.runTime) ? DateTime.now().toMillis() + this.runTime : this.runTime
 
       if (job?.statusId === 'SERVICE_DRAFT') {
         this.store.dispatch('job/scheduleService', job).then((job: any) => {
           if(job?.jobId) {
+            emitter.emit('jobUpdated');
             const category = this.$route.params.category;
             if (category) {
               this.router.push({ name: 'JobDetails', params: { jobId: job?.jobId, category: category }, replace: true });
@@ -322,21 +314,26 @@ export default defineComponent({
         })
       }
     },
+    async setCustomFrequency() {
+      const customFrequencyModal = await modalController.create({
+        component: CustomFrequencyModal,
+      });
+      customFrequencyModal.onDidDismiss()
+        .then((result) => {
+          let jobStatus = this.currentJob.statusId === "SERVICE_DRAFT" ? this.currentJob.statusId : this.currentJob.tempExprId;
+          if (result.data && result.data.frequencyId) {
+            jobStatus = result.data.frequencyId;
+          }
+          this.generateFrequencyOptions(jobStatus);
+        });
+      return customFrequencyModal.present();
+    },
     getTime (time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
     },
     timeTillJob (time: any) {
       const timeDiff = DateTime.fromMillis(time).diff(DateTime.local());
       return DateTime.local().plus(timeDiff).toRelative();
-    },
-    updateRunTime(ev: CustomEvent) {
-      const currTime = DateTime.now().toMillis();
-      const setTime = handleDateTimeInput(ev['detail'].value);
-      if(setTime > currTime) {
-        this.runTime = setTime;
-      } else {
-        showToast(translate("Provide a future date and time"))
-      }
     },
     async viewJobHistory(job: any) {
       const jobHistoryModal = await modalController.create({
@@ -348,11 +345,11 @@ export default defineComponent({
         jobHistoryModal.dismiss({ dismissed: true });
       })
     },
-    async runNow(header: string, job: any) {
+    async runNow(job: any) {
       const jobAlert = await alertController
         .create({
-          header,
-          message: this.$t('This job will be scheduled to run as soon as possible. There may not be enough time to revert this action.', {space: '<br/><br/>'}),
+          header: this.$t("Run now"),
+          message: this.$t('Running this job now will not replace this job. A copy of this job will be created and run immediately. You may not be able to reverse this action.', { space: '<br/><br/>' }),
           buttons: [
             {
               text: this.$t("Cancel"),
@@ -373,7 +370,7 @@ export default defineComponent({
     },
     async copyJobInformation(job: any) {
       const { Clipboard } = Plugins;
-      const jobDetails = `jobId: ${job.jobId}, jobName: ${this.getEnumName(job.systemJobEnumId)}, jobDescription: ${this.getEnumDescription(job.systemJobEnumId)}`;
+      const jobDetails = `jobId: ${job.jobId}, jobName: ${job.enumName}, jobDescription: ${job.description}`;
 
       await Clipboard.write({
         string: jobDetails
@@ -391,6 +388,17 @@ export default defineComponent({
         pinnedJobs.add(enumId);
         await this.store.dispatch('user/updatePinnedJobs', { pinnedJobs: [...pinnedJobs] });
       }
+    },
+    updateRunTime(event: CustomEvent) {
+      const value = event.detail.value
+      if (value != 'CUSTOM') this.generateRunTimes(value)
+      else this.isDateTimeModalOpen = true
+    },
+    updateCustomTime(event: CustomEvent) {
+      const currTime = DateTime.now().toMillis();
+      const setTime = handleDateTimeInput(event.detail.value);
+      if (setTime > currTime) this.generateRunTimes(setTime)
+      else showToast(translate("Provide a future date and time"))
     }
   },
   setup() {
@@ -401,8 +409,10 @@ export default defineComponent({
       Actions,
       calendarClearOutline,
       copyOutline,
+      DateTime,
       flashOutline,
       hasPermission,
+      isCustomRunTime,
       timeOutline,
       timerOutline,
       store,

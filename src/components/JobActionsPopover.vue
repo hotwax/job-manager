@@ -54,8 +54,6 @@ export default defineComponent({
   props: ["job"],
   computed: {
     ...mapGetters({
-      getEnumDescription: 'job/getEnumDescription',
-      getEnumName: 'job/getEnumName',
       getPinnedJobs: 'user/getPinnedJobs'
     })
   },
@@ -65,7 +63,7 @@ export default defineComponent({
     },
     async copyJobInformation(job: any) {
       const { Clipboard } = Plugins;
-      const jobDetails = `jobId: ${job.jobId}, jobName: ${this.getEnumName(job.systemJobEnumId)}, jobDescription: ${this.getEnumDescription(job.systemJobEnumId)}`;
+      const jobDetails = `jobId: ${job.jobId}, jobName: ${job.enumName}, jobDescription: ${job.description}`;
 
       await Clipboard.write({
         string: jobDetails
@@ -100,7 +98,7 @@ export default defineComponent({
       const alert = await alertController
         .create({
           header: this.$t("Run now"),
-          message: this.$t('Running this job now will not replace this job. A copy of this job will be created and run immediately.<br/><br/>You may not be able to reverse this action.'),
+          message: this.$t('Running this job now will not replace this job. A copy of this job will be created and run immediately. You may not be able to reverse this action.', { space: '<br/><br/>' }),
           buttons: [
             {
               text: this.$t("Cancel"),

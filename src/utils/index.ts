@@ -140,43 +140,81 @@ const prepareRuntime = (job: any) => {
   }
 }
 
-const generateFrequencyOptions = (type?: string) => {
+const generateAllowedFrequencies = (type?: string) => {
   const optionDefault = [{
-      "value": "EVERY_1_MIN",
-      "label": "Every 1 minute"
+      "id": "EVERY_1_MIN",
+      "description": "Every 1 minute"
     },{
-      "value": "EVERY_5_MIN",
-      "label": "Every 5 minutes"
+      "id": "EVERY_5_MIN",
+      "description": "Every 5 minutes"
     },{
-      "value": "EVERY_15_MIN",
-      "label": "Every 15 minutes"
+      "id": "EVERY_15_MIN",
+      "description": "Every 15 minutes"
     },{
-      "value": "EVERY_30_MIN",
-      "label": "Every 30 minutes"
+      "id": "EVERY_30_MIN",
+      "description": "Every 30 minutes"
     },{
-      "value": "HOURLY",
-      "label": "Hourly"
+      "id": "HOURLY",
+      "description": "Hourly"
     },{
-      "value": "EVERY_6_HOUR",
-      "label": "Every 6 hours"
+      "id": "EVERY_6_HOUR",
+      "description": "Every 6 hours"
     },{
-      "value": "EVERYDAY",
-      "label": "Every day"
+      "id": "EVERYDAY",
+      "description": "Every day"
     }
   ]
 
   const slow = [{
-      "value": "HOURLY",
-      "label": "Hourly"
+      "id": "HOURLY",
+      "description": "Hourly"
     },{
-      "value": "EVERY_6_HOUR",
-      "label": "Every 6 hours"
+      "id": "EVERY_6_HOUR",
+      "description": "Every 6 hours"
     },{
-      "value": "EVERYDAY",
-      "label": "Every day"
+      "id": "EVERYDAY",
+      "description": "Every day"
     }
   ]
   return type === 'slow' ? slow : optionDefault;
 }
 
-export { handleDateTimeInput, showToast, hasError , parseCsv , jsonToCsv, JsonToCsvOption, isFutureDate, prepareRuntime, generateFrequencyOptions }
+const generateAllowedRunTimes = () => {
+  return [{
+    "value": 0,
+    "label": "Now"
+  }, {
+    "value": 300000,
+    "label": "In 5 minutes"
+  }, {
+    "value": 900000,
+    "label": "In 15 minutes"
+  }, {
+    "value": 3600000,
+    "label": "In an hour"
+  }, {
+    "value": 86400000,
+    "label": "Tomorrow"
+  }, {
+    "value": "CUSTOM",
+    "label": "Custom"
+  }]
+}
+
+const isCustomRunTime = (value: number) => {
+  return !generateAllowedRunTimes().some((runTime: any) => runTime.value === value)
+}
+
+export {
+  isCustomRunTime,
+  generateAllowedFrequencies,
+  generateAllowedRunTimes,
+  handleDateTimeInput,
+  showToast,
+  hasError,
+  parseCsv,
+  jsonToCsv,
+  JsonToCsvOption,
+  isFutureDate,
+  prepareRuntime
+}

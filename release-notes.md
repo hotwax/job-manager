@@ -1,3 +1,88 @@
+Latest release notes are maintained on Github only. Refer to below link:
+https://github.com/hotwax/job-manager/releases  
+
+# Release 2.8.1
+
+## What's Changed
+* Fixed: build error TS2532: Object is possibly 'undefined'. by @adityasharma7 in https://github.com/hotwax/job-manager/pull/533
+
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v2.8.0...v2.8.1
+
+# Release 2.8.0
+
+## What's Changed
+* Updated favicon by @Nidbhagwat in https://github.com/hotwax/job-manager/pull/523
+* Fixed: 'now' option for run time not working (#517) by @k2maan in https://github.com/hotwax/job-manager/pull/522
+
+## New Contributors
+* @Nidbhagwat made their first contribution in https://github.com/hotwax/job-manager/pull/523
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v2.7.0...v2.8.0
+
+# Release 2.7.0
+
+## What's Changed
+* Fixed: jobs list not updated when cancelling a job from configuration by @adityasharma7 in https://github.com/hotwax/job-manager/pull/503
+* Improved: Show toast if shopifyConfig required for the job is missing while scheduling (#502) by @adityasharma7 in https://github.com/hotwax/job-manager/pull/509
+* Fixed: Enum name should appear on the job card and job list (#487) by @adityasharma7 in https://github.com/hotwax/job-manager/pull/510
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v2.6.1...v2.7.0
+
+
+# Release 2.6.1
+
+## What's Changed
+* Fixed: old jobs not listed in more jobs (#476) by @adityasharma7 in https://github.com/hotwax/job-manager/pull/499
+* Fixed: issue with scheduling initial load order job by @adityasharma7 in https://github.com/hotwax/job-manager/pull/500
+
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v2.6.0...v2.6.1
+
+
+# Release 2.6.0
+
+## What's Changed
+* Fixed: job information disappear after cancelling (#462) by @adityasharma7 in https://github.com/hotwax/job-manager/pull/480
+* Improved: Update Pre-Order page for new jobs (#476) by @adityasharma7 in https://github.com/hotwax/job-manager/pull/490
+* Fixed: alert header issue by always displaying Run now in header and made the message consistent across app(#85zt2zp30) by @ymaheshwari1 in https://github.com/hotwax/job-manager/pull/488
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v2.5.0...v2.6.0
+
+
+# Release 2.5.0
+
+## What's Changed
+* Implemented: predefined and custom option for selecting job run time (#85zrxc0xf) by @k2maan in https://github.com/hotwax/job-manager/pull/449
+
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v2.4.0...v2.5.0
+
+# Release 2.4.0
+
+## What's Changed
+* Removed: Payment status job (getPaidTransactionsAndCreateOrderPayment service) from the Job Manager orders page (job-manager/#448) by @SandeepRajput20 in https://github.com/hotwax/job-manager/pull/461
+* Implemented: Added option for custom frequency (#457) by @adityasharma7 in https://github.com/hotwax/job-manager/pull/468
+
+## New Contributors
+* @SandeepRajput20 made their first contribution in https://github.com/hotwax/job-manager/pull/461
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v2.3.0...v2.4.0
+
+# Release 2.3.0
+
+## What's Changed
+* Added: support to pass shopId to runtime data by @adityasharma7 in https://github.com/hotwax/job-manager/pull/456
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v2.2.2...v2.3.0
+
+# Release 2.2.2
+
+## What's Changed
+* Fixed: more jobs' name not showing on mobile view (#85zrw8eup) by @k2maan in https://github.com/hotwax/job-manager/pull/438
+
+
+**Full Changelog**: https://github.com/hotwax/job-manager/compare/v2.2.1...v2.2.2
 
 # Release 2.2.1
 ## What's Changed

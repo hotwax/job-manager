@@ -57,9 +57,9 @@ const getShopifyConfig = async (productStoreId: any, token?: any): Promise <any>
     payload.baseURL = store.getters['user/getBaseUrl'];
     const resp = await client(payload);
     if (hasError(resp)) {
-      return Promise.reject(resp.data);
+      return Promise.reject(resp?.data);
     } else {
-      return Promise.resolve(resp.data.docs);
+      return Promise.resolve(resp?.data.docs);
     }
   } catch(error: any) {
     return Promise.reject(error)
@@ -89,9 +89,69 @@ const getEComStores = async (token: any): Promise<any> => {
       }
     });
     if (hasError(resp)) {
-      return Promise.reject(resp.data);
+      return Promise.reject(resp?.data);
     } else {
-      return Promise.resolve(resp.data.docs);
+      return Promise.resolve(resp?.data.docs);
+    }
+  } catch(error: any) {
+    return Promise.reject(error)
+  }
+}
+
+const getEcommerceCatalog = async (productStoreId: any): Promise<any> => {
+  try {
+    const params = {
+      "inputFields": {
+        productStoreId
+      },
+      "fieldList": ["productStoreId", "prodCatalogId"],
+      "entityName": "ProductStoreCatalog",
+      "distinct": "Y",
+      "noConditionFind": "Y",
+      "filterByDate": 'Y',
+    }
+    const resp = await api({
+      url: "performFind",
+      method: "get",
+      params,
+      cache: true
+    });
+    if (hasError(resp) || resp?.data.docs?.length == 0) {
+      // if has error or not catalog found
+      return Promise.reject(resp?.data);
+    } else {
+      return Promise.resolve(resp?.data.docs[0]);
+    }
+  } catch(error: any) {
+    return Promise.reject(error)
+  }
+}
+
+
+const getPreOrderBackorderCategory = async (prodCatalogId: any): Promise<any> => {
+  try {
+    const params = {
+      "inputFields": {
+        prodCatalogId,
+        "prodCatalogCategoryTypeId": ["PCCT_PREORDR", "PCCT_BACKORDER"],
+        "prodCatalogCategoryTypeId_op": "in"
+      },
+      "fieldList": ["prodCatalogId", "productCategoryId", "prodCatalogCategoryTypeId"],
+      "entityName": "ProdCatalogCategory",
+      "distinct": "Y",
+      "noConditionFind": "Y",
+      "filterByDate": 'Y',
+    }
+    const resp = await api({
+      url: "performFind",
+      method: "get",
+      params,
+      cache: true
+    });
+    if (hasError(resp) || resp?.data.docs?.length == 0) {
+      return Promise.reject(resp?.data);
+    } else {
+      return Promise.resolve(resp?.data.docs);
     }
   } catch(error: any) {
     return Promise.reject(error)
@@ -155,9 +215,9 @@ const getPreferredStore = async (token: any): Promise<any> => {
       },
     });
     if (hasError(resp)) {
-      return Promise.reject(resp.data);
+      return Promise.reject(resp?.data);
     } else {
-      return Promise.resolve(resp.data.userPrefValue);
+      return Promise.resolve(resp?.data.userPrefValue);
     }
   } catch(error: any) {
     return Promise.reject(error)
@@ -195,9 +255,9 @@ const getUserPermissions = async (payload: any, token: any): Promise<any> => {
           'Content-Type': 'application/json'
         }
       })
-      if(resp.status === 200 && resp.data.docs?.length && !hasError(resp)) {
-        serverPermissions = resp.data.docs.map((permission: any) => permission.permissionId);
-        const total = resp.data.count;
+      if(resp.status === 200 && resp?.data.docs?.length && !hasError(resp)) {
+        serverPermissions = resp?.data.docs.map((permission: any) => permission.permissionId);
+        const total = resp?.data.count;
         const remainingPermissions = total - serverPermissions.length;
         if (remainingPermissions > 0) {
           // We need to get all the remaining permissions
@@ -265,8 +325,8 @@ const getUserProfile = async (token: any): Promise<any> => {
         'Content-Type': 'application/json'
       }
     });
-    if(hasError(resp)) return Promise.reject("Error getting user profile: " + JSON.stringify(resp.data));
-    return Promise.resolve(resp.data)
+    if(hasError(resp)) return Promise.reject("Error getting user profile: " + JSON.stringify(resp?.data));
+    return Promise.resolve(resp?.data)
   } catch(error: any) {
     return Promise.reject(error)
   }
@@ -278,6 +338,8 @@ export const UserService = {
     login,
     getAvailableTimeZones,
     getEComStores,
+    getEcommerceCatalog,
+    getPreOrderBackorderCategory,
     getShopifyConfig,
     getPinnedJobs,
     getPreferredStore,

@@ -26,10 +26,6 @@
               <ion-label class="ion-text-wrap">{{ $t("Cancelled items") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_CANCELLED_ITEMS') }}</ion-label>
             </ion-item>
-            <ion-item @click="viewJobConfiguration({ id: 'IMP_PAYMENT_STATUS', status: getJobStatus(jobEnums['IMP_PAYMENT_STATUS'])})" detail button>
-              <ion-label class="ion-text-wrap">{{ $t("Payment status") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('IMP_PAYMENT_STATUS') }}</ion-label>
-            </ion-item>
             <ion-item @click="viewJobConfiguration({ id: 'IMP_RETURNS', status: getJobStatus(jobEnums['IMP_RETURNS'])})" detail button>
               <ion-label class="ion-text-wrap">{{ $t("Returns") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_RETURNS') }}</ion-label>
@@ -430,29 +426,6 @@ export default defineComponent({
       return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
         this.$t('Disabled')
-    },
-    async runJob(header: string, id: string) {
-      const job = this.getJob(id)
-      const jobAlert = await alertController
-        .create({
-          header,
-          message: this.$t('This job will be scheduled to run as soon as possible. There may not be enough time to revert this action.', {space: '<br/><br/>'}),
-          buttons: [
-            {
-              text: this.$t("Cancel"),
-              role: 'cancel',
-            },
-            {
-              text: this.$t('Run now'),
-              handler: () => {
-                if (job) {
-                  this.store.dispatch('job/runServiceNow', job)
-                }
-              }
-            }
-          ]
-        });
-      return jobAlert.present();
     },
     async fetchJobs(){
       this.store.dispatch('webhook/fetchWebhooks')

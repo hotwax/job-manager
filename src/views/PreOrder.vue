@@ -12,70 +12,117 @@
         <section>
           <ion-card>
             <ion-card-header>
-              <ion-card-title>{{ $t("Pre-orders") }}</ion-card-title>
+              <ion-card-title>{{ $t("Pre-sell catalog") }}</ion-card-title>
             </ion-card-header>
             <ion-item>
-              <ion-label class="ion-text-wrap">{{ $t("Use POs to manage catalog") }}</ion-label>
-              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="preOrderManageCatalog" @ionChange="updateJob($event['detail'].checked, jobEnums['PRE_ORDER_CTLG'])"/>
-            </ion-item>
-            <ion-item>
-              <ion-label class="ion-text-wrap">{{ $t("Add tags in Shopify") }}</ion-label>
-              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="addPreOrderTagInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_PRODR_TG_SHPFY'])"/>
-            </ion-item>
-            <ion-item>
-              <ion-label class="ion-text-wrap">{{ $t("Remove tags in Shopify") }}</ion-label>
-              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="removePreOrderTagInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['REMV_PRODR_TG_SHPFY'])"/>
-            </ion-item>
-            <ion-item>
-              <ion-label class="ion-text-wrap">{{ $t("Add shipping dates in Shopify") }}</ion-label>
-              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="addPreOrderShippingDateInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_PRODR_SHPG_DTE_SHPFY'])"/>
-            </ion-item>
-            <ion-item>
-              <ion-label class="ion-text-wrap">{{ $t("Update shipping dates in Shopify") }}</ion-label>
-              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="updatePreOrderShippingDateInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['JOB_UPD_PREORD_SKU'])"/>
-            </ion-item>
-            <ion-item>
-              <ion-label class="ion-text-wrap">{{ $t("Remove shipping dates in Shopify") }}</ion-label>
-              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="removePreOrderShippingDateInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['REMV_PRODR_SHPG_DTE_SHPFY'])"/>
+              <ion-label class="ion-text-wrap">{{ $t("Auto refresh pre-sell catalog") }}</ion-label>
+              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="getStatus(jobEnums['REL_PREODR_CAT'])" @ionChange="updateJob($event['detail'].checked, jobEnums['REL_PREODR_CAT'])"/>
             </ion-item>
             <ion-item lines="none">
               <ion-label>
-                <p class="ion-text-wrap">{{ $t("Transfer pre-order related information to Shopify as tags and meta fields.") }}</p>
+                <p class="ion-text-wrap">{{ $t("Automatically add and remove products from the pre-order and backorder catalogs based on inventory, purchase orders, and order queues.") }}</p>
               </ion-label>
             </ion-item>
+            <ion-item-divider color="light">
+              <ion-label color="medium">{{ $t("View catalog") }}</ion-label>
+            </ion-item-divider>
+            <div class="actions">
+              <ion-button :disabled="!preOrderBackorderCategory.preorder" @click.stop="goToOmsCategoryPage('/commerce/control/ViewCategory?productCategoryId=' + preOrderBackorderCategory.preorder)" fill="clear">
+                {{ $t('Pre-Order') }}
+                <ion-icon slot="end" :icon="openOutline" />
+              </ion-button>
+              <ion-button :disabled="!preOrderBackorderCategory.backorder" @click.stop="goToOmsCategoryPage('/commerce/control/ViewCategory?productCategoryId=' + preOrderBackorderCategory.backorder)" fill="clear">
+                {{ $t('Backorder') }}
+                <ion-icon slot="end" :icon="openOutline" />
+              </ion-button>
+            </div>
           </ion-card>
 
           <ion-card>
             <ion-card-header>
-              <ion-card-title>{{ $t("Backorder") }}</ion-card-title>
+              <ion-card-title>{{ $t("Pre-sell on Shopify") }}</ion-card-title>
             </ion-card-header>
+            <ion-item-divider color="light">
+              <ion-label color="medium">{{ $t("Catalog") }}</ion-label>
+            </ion-item-divider>
             <ion-item>
-              <ion-label class="ion-text-wrap">{{ $t("Use POs to manage catalog") }}</ion-label>
-              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="backOrderManageCatalog" @ionChange="updateJob($event['detail'].checked, jobEnums['BACK_ORDER_CTLG'])"/>
+              <ion-label class="ion-text-wrap">{{ $t("Sync variant details") }}</ion-label>
+              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="getStatus(jobEnums['PREORDER_CAT_SYC'])" @ionChange="updateJob($event['detail'].checked, jobEnums['PREORDER_CAT_SYC'])"/>
             </ion-item>
             <ion-item>
-              <ion-label class="ion-text-wrap">{{ $t("Add tags in Shopify") }}</ion-label>
-              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="addBackOrderTagInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_BACKODR_TG_SHPFY'])"/>
+              <ion-label class="ion-text-wrap">{{ $t("Add pre-order tags") }}</ion-label>
+              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="getStatus(jobEnums['ADD_PRODR_TG_SHPFY'])" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_PRODR_TG_SHPFY'])"/>
             </ion-item>
             <ion-item>
-              <ion-label class="ion-text-wrap">{{ $t("Remove tags in Shopify") }}</ion-label>
-              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="removeBackOrderTagInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['REMV_BACKODR_TG_SHPFY'])"/>
+              <ion-label class="ion-text-wrap">{{ $t("Remove pre-order tags") }}</ion-label>
+              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="getStatus(jobEnums['REMV_PRODR_TG_SHPFY'])" @ionChange="updateJob($event['detail'].checked, jobEnums['REMV_PRODR_TG_SHPFY'])"/>
             </ion-item>
             <ion-item>
-              <ion-label class="ion-text-wrap">{{ $t("Add shipping dates in Shopify") }}</ion-label>
-              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="addBackOrderShippingDateInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_BACKODR_SHPG_DTE_SHPFY'])"/>
+              <ion-label class="ion-text-wrap">{{ $t("Add backorder tags") }}</ion-label>
+              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="getStatus(jobEnums['ADD_BACKODR_TG_SHPFY'])" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_BACKODR_TG_SHPFY'])"/>
             </ion-item>
             <ion-item>
-              <ion-label class="ion-text-wrap">{{ $t("Update shipping dates in Shopify") }}</ion-label>
-              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="updateBackOrderShippingDateInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['JOB_UPD_BACKORD_SKU'])"/>
-            </ion-item>
-            <ion-item>
-              <ion-label class="ion-text-wrap">{{ $t("Remove shipping dates in Shopify") }}</ion-label>
-              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="removeBackOrderShippingDateInShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['REMV_BACKODR_SHPG_DTE_SHPFY'])"/>
+              <ion-label class="ion-text-wrap">{{ $t("Remove backorder tags") }}</ion-label>
+              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="getStatus(jobEnums['REMV_BACKODR_TG_SHPFY'])" @ionChange="updateJob($event['detail'].checked, jobEnums['REMV_BACKODR_TG_SHPFY'])"/>
             </ion-item>
             <ion-item lines="none">
               <ion-label>
-                <p class="ion-text-wrap">{{ $t("Transfer backorder related information to Shopify as tags and meta fields.") }}</p>
+                <p class="ion-text-wrap">{{ $t("Sync pre-selling related information to Shopify as tags and meta fields.") }}</p>
+              </ion-label>
+            </ion-item>
+            <ion-item-divider color="light">
+              <ion-label color="medium">{{ $t("Orders") }}</ion-label>
+            </ion-item-divider>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("Add pre-order tags") }}</ion-label>
+              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="getStatus(jobEnums['ADD_TAG_PREORD'])" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_TAG_PREORD'])"/>
+            </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("Add backorder tags") }}</ion-label>
+              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="getStatus(jobEnums['ADD_TAG_BACKORD'])" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_TAG_BACKORD'])"/>
+            </ion-item>
+            <ion-item lines="none">
+              <ion-label>
+                <p class="ion-text-wrap">{{ $t("Add pre-order/backorder tags on orders with pre-selling items in them.") }}</p>
+              </ion-label>
+            </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("Add promise date") }}</ion-label>
+              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="getStatus(jobEnums['UL_PRMS_DTE'])" @ionChange="updateJob($event['detail'].checked, jobEnums['UL_PRMS_DTE'])"/>
+            </ion-item>
+            <ion-item lines="none">
+              <ion-label>
+                <p class="ion-text-wrap">{{ $t("Add a note with the promise date given to the customer at the time of placing the order.") }}</p>
+              </ion-label>
+            </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("Update promise date") }}</ion-label>
+              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="getStatus(jobEnums['UL_PRMS_DTE_UPD'])" @ionChange="updateJob($event['detail'].checked, jobEnums['UL_PRMS_DTE_UPD'])"/>
+            </ion-item>
+            <ion-item lines="none">
+              <ion-label>
+                <p class="ion-text-wrap">{{ $t("Add notes to the impacted order items on Shopify for changes promise dates.") }}</p>
+              </ion-label>
+            </ion-item>
+          </ion-card>
+
+
+
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>{{ $t("Promise date change") }}</ion-card-title>
+            </ion-card-header>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("Auto sync date to orders") }}</ion-label>
+              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="getStatus(jobEnums['AUTO_SYNC_DT_ODRS'])" @ionChange="updateJob($event['detail'].checked, jobEnums['AUTO_SYNC_DT_ODRS'])"/>
+            </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap">{{ $t("Email customers") }}</ion-label>
+              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="getStatus(jobEnums['SD_PRMSDDTE_CNG_NOTI'])" @ionChange="updateJob($event['detail'].checked, jobEnums['SD_PRMSDDTE_CNG_NOTI'])"/>
+            </ion-item>
+            <ion-item lines="none">
+              <ion-label>
+                <p class="ion-text-wrap">{{ $t("Notify customers of any changed promise dates for their orders.") }}</p>
               </ion-label>
             </ion-item>
           </ion-card>
@@ -86,16 +133,18 @@
             </ion-card-header>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Run daily") }}</ion-label>
-              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="autoReleaseRunDaily" @ionChange="updateJob($event['detail'].checked, jobEnums['AUTO_RELSE_DAILY'], 'EVERYDAY')" />
+              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="getStatus(jobEnums['AUTO_RELSE_DAILY'])" @ionChange="updateJob($event['detail'].checked, jobEnums['AUTO_RELSE_DAILY'], 'EVERYDAY')" />
             </ion-item>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("Release preorders")}}</ion-label>
-              <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" fill="outline" @click="runJob('Release preorders', jobEnums['AUTO_RELSE_DAILY'])">{{ $t("Release") }}</ion-button>
+              <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" fill="outline" @click="runJob(jobEnums['AUTO_RELSE_DAILY'])">{{ $t("Release") }}</ion-button>
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap"><p>{{ $t("Auto releasing pre-orders will find pre-orders that have promise dates that have passed and release them for fulfillment.") }}</p></ion-label>
             </ion-item>
           </ion-card>
+
+
 
           <MoreJobs v-if="getMoreJobs(jobEnums, enumTypeId).length" :jobs="getMoreJobs(jobEnums, enumTypeId)" />
         </section>
@@ -117,6 +166,8 @@ import {
   IonCheckbox,
   IonContent,
   IonHeader,
+  IonIcon,
+  IonItemDivider,
   IonItem,
   IonLabel,
   IonMenuButton,
@@ -136,6 +187,7 @@ import emitter from '@/event-bus';
 import { translate } from '@/i18n';
 import MoreJobs from '@/components/MoreJobs.vue';
 import { Actions, hasPermission } from '@/authorization'
+import { openOutline } from 'ionicons/icons'
 
 export default defineComponent({
   name: 'PreOrder',
@@ -147,6 +199,8 @@ export default defineComponent({
     IonCheckbox,
     IonContent,
     IonHeader,
+    IonIcon,
+    IonItemDivider,
     IonItem,
     IonLabel,
     IonMenuButton,
@@ -158,65 +212,14 @@ export default defineComponent({
 },
   computed: {
     ...mapGetters({
+      instanceUrl: 'user/getInstanceUrl',
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
       currentEComStore: 'user/getCurrentEComStore',
       getTemporalExpr: 'job/getTemporalExpr',
       getMoreJobs: 'job/getMoreJobs'
-    }),
-    preOrderManageCatalog(): boolean {
-      const status = this.getJobStatus(this.jobEnums["PRE_ORDER_CTLG"]);
-      return status && status !== "SERVICE_DRAFT";
-    },
-    addPreOrderTagInShopify(): boolean {
-      const status = this.getJobStatus(this.jobEnums["ADD_PRODR_TG_SHPFY"]);
-      return status && status !== "SERVICE_DRAFT";
-    },
-    removePreOrderTagInShopify(): boolean {
-      const status = this.getJobStatus(this.jobEnums["REMV_PRODR_TG_SHPFY"]);
-      return status && status !== "SERVICE_DRAFT";
-    },
-    addPreOrderShippingDateInShopify(): boolean {
-      const status = this.getJobStatus(this.jobEnums["ADD_PRODR_SHPG_DTE_SHPFY"]);
-      return status && status !== "SERVICE_DRAFT";
-    },
-    updatePreOrderShippingDateInShopify(): boolean {
-      const status = this.getJobStatus(this.jobEnums["JOB_UPD_PREORD_SKU"]);
-      return status && status !== "SERVICE_DRAFT";
-    },
-    removePreOrderShippingDateInShopify(): boolean {
-      const status = this.getJobStatus(this.jobEnums["REMV_PRODR_SHPG_DTE_SHPFY"]);
-      return status && status !== "SERVICE_DRAFT";
-    },
-    backOrderManageCatalog(): boolean {
-      const status = this.getJobStatus(this.jobEnums["BACK_ORDER_CTLG"]);
-      return status && status !== "SERVICE_DRAFT";
-    },
-    addBackOrderTagInShopify(): boolean {
-      const status = this.getJobStatus(this.jobEnums["ADD_BACKODR_TG_SHPFY"]);
-      return status && status !== "SERVICE_DRAFT";
-    },
-    removeBackOrderTagInShopify(): boolean {
-      const status = this.getJobStatus(this.jobEnums["REMV_BACKODR_TG_SHPFY"]);
-      return status && status !== "SERVICE_DRAFT";
-    },
-    addBackOrderShippingDateInShopify(): boolean {
-      const status = this.getJobStatus(this.jobEnums["ADD_BACKODR_SHPG_DTE_SHPFY"]);
-      return status && status !== "SERVICE_DRAFT";
-    },
-    updateBackOrderShippingDateInShopify(): boolean {
-      const status = this.getJobStatus(this.jobEnums["JOB_UPD_BACKORD_SKU"]);
-      return status && status !== "SERVICE_DRAFT";
-    },
-    removeBackOrderShippingDateInShopify(): boolean {
-      const status = this.getJobStatus(this.jobEnums["REMV_BACKODR_SHPG_DTE_SHPFY"]);
-      return status && status !== "SERVICE_DRAFT";
-    },
-    autoReleaseRunDaily(): boolean {
-      const status = this.getJobStatus(this.jobEnums["AUTO_RELSE_DAILY"]);
-      return status && status !== "SERVICE_DRAFT";
-    }
+    })
   },
   data() {
     return {
@@ -227,12 +230,29 @@ export default defineComponent({
       freqType: '',
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
-      enumTypeId: 'PRE_ORD_SYS_JOB'
+      enumTypeId: 'PRE_ORD_SYS_JOB',
+      preOrderBackorderCategory: {} as any
     }
   },
   methods: {
+    async getPreOrderBackorderCategory() {
+      const preOrderBackorderCategory = await this.store.dispatch("user/getPreOrderBackorderCategory");
+      preOrderBackorderCategory && (this.preOrderBackorderCategory = preOrderBackorderCategory);
+    },
+    goToOmsCategoryPage(path: any) {
+      window.open((this.instanceUrl.startsWith('http') ? this.instanceUrl.replace('api/', "") : `https://${this.instanceUrl}.hotwax.io/`) + path, '_blank', 'noopener, noreferrer');
+    },
+    getStatus(enumId: any): boolean {
+      const status = this.getJobStatus(enumId);
+      return status && status !== "SERVICE_DRAFT";
+    },
     async updateJob(checked: boolean, id: string, status = 'EVERY_15_MIN') {
       const job = this.getJob(id);
+
+      // This handles programmatic change on page load. Skips 'Configuration missing' error
+      if (!job && !checked) {
+        return;
+      }
 
       // added check that if the job is not present, then display a toast and then return
       if (!job) {
@@ -262,12 +282,12 @@ export default defineComponent({
         this.store.dispatch('job/updateJob', job)
       }
     },
-    async runJob(header: string, id: string) {
+    async runJob(id: string) {
       const job = this.getJob(id)
       const jobAlert = await alertController
         .create({
-          header,
-          message: this.$t('This job will be scheduled to run as soon as possible. There may not be enough time to revert this action.', {space: '<br/><br/>'}),
+          header: this.$t("Run now"),
+          message: this.$t('Running this job now will not replace this job. A copy of this job will be created and run immediately. You may not be able to reverse this action.', { space: '<br/><br/>' }),
           buttons: [
             {
               text: this.$t("Cancel"),
@@ -317,11 +337,15 @@ export default defineComponent({
           "enumTypeId": "PRE_ORD_SYS_JOB"
         }
       });
+    },
+    fetchInitialData() {
+      this.fetchJobs();
+      this.getPreOrderBackorderCategory();
     }
   },
   mounted () {
-    this.fetchJobs();
-    emitter.on("productStoreOrConfigChanged", this.fetchJobs);
+    this.fetchInitialData();
+    emitter.on("productStoreOrConfigChanged", this.fetchInitialData);
     emitter.on('viewJobConfiguration', this.viewJobConfiguration)
   },
   unmounted() {
@@ -334,6 +358,7 @@ export default defineComponent({
     return {
       Actions,
       hasPermission,
+      openOutline,
       store,
       router
     };
