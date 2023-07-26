@@ -54,6 +54,12 @@ const getters: GetterTree <JobState, RootState> = {
     isMiscellaneousJobsScrollable: (state) => {
       return state.miscellaneous.list?.length > 0 && state.miscellaneous.list?.length < state.miscellaneous.total
     },
+    getReportsJobs (state){
+      return state.reports.list;
+    },
+    isReportsJobsScrollable: (state) => {
+      return state.reports.list?.length > 0 && state.reports.list?.length < state.reports.total
+    },
     getMoreJobs: (state) => (jobEnums: any, enumTypeId: string): any => {
       const orderJobEnumIds = Object.values(jobEnums) as any;
 
