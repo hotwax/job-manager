@@ -98,8 +98,6 @@ export default defineComponent({
   },
   unmounted() {
     emitter.off("productStoreOrConfigChanged", this.getMiscellaneousJobs);
-  },
-  unmounted() {
     emitter.off('jobUpdated', this.getMiscellaneousJobs);
   },
   data() {
