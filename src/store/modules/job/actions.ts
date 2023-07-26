@@ -538,15 +538,16 @@ const actions: ActionTree<JobState, RootState> = {
       'systemJobEnumId': job.systemJobEnumId
     } as any
     
-    if (job?.runtimeData?.shopifyConfigId || job?.runtimeData?.shopId) {
+    const jobRunTimeDataKeys = job?.runtimeData ? Object.keys(job?.runtimeData) : [];
+    if (jobRunTimeDataKeys.includes('shopifyConfigId') || jobRunTimeDataKeys.includes('shopId')) {
       const shopifyConfig = this.state.user.currentShopifyConfig
       if (Object.keys(shopifyConfig).length == 0) {
         showToast(translate('Shopify configuration not found. Scheduling failed.'))
         return;
       }
 
-      job?.runtimeData?.shopifyConfigId && (payload['shopifyConfigId'] = shopifyConfig?.shopifyConfigId);
-      job?.runtimeData?.shopId && (payload['shopId'] = shopifyConfig?.shopId);
+      jobRunTimeDataKeys.includes('shopifyConfigId') && (payload['shopifyConfigId'] = shopifyConfig?.shopifyConfigId);
+      jobRunTimeDataKeys.includes('shopId') && (payload['shopId'] = shopifyConfig?.shopId);
       payload['jobFields']['shopId'] = shopifyConfig?.shopId;
     }
 
@@ -863,14 +864,14 @@ const actions: ActionTree<JobState, RootState> = {
           'systemJobEnumId': job.systemJobEnumId
         } as any
 
-        
-        if (job?.runtimeData?.shopifyConfigId || job?.runtimeData?.shopId) {
+        const jobRunTimeDataKeys = job?.runtimeData ? Object.keys(job?.runtimeData) : [];
+        if (jobRunTimeDataKeys.includes('shopifyConfigId') || jobRunTimeDataKeys.includes('shopId')) {
           const shopifyConfig = this.state.user.shopifyConfigs.find((config: any) => {
             return config.shopId === shopId;
           })
 
-          job?.runtimeData?.shopifyConfigId && (params['shopifyConfigId'] = shopifyConfig.shopifyConfigId);
-          job?.runtimeData?.shopId && (params['shopId'] = shopifyConfig.shopId);
+          jobRunTimeDataKeys.includes('shopifyConfigId') && (params['shopifyConfigId'] = shopifyConfig.shopifyConfigId);
+          jobRunTimeDataKeys.includes('shopId') && (params['shopId'] = shopifyConfig.shopId);
           params['jobFields']['shopId'] = shopifyConfig.shopId;
         }
 
