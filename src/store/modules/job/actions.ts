@@ -52,7 +52,7 @@ const actions: ActionTree<JobState, RootState> = {
         "shopId_fld1_grp": "2",
         "shopId_fld1_op": "empty"
       } as any,
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId", "cancelDateTime", "finishDateTime", "startDateTime" , "enumTypeId", "enumName", "description" ],
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId", "cancelDateTime", "finishDateTime", "startDateTime" , "enumTypeId", "enumName", "description", "runtimeDataId" ],
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
@@ -129,7 +129,7 @@ const actions: ActionTree<JobState, RootState> = {
         "shopId_fld1_grp": "2",
         "shopId_fld1_op": "empty"
       } as any,
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId", "enumTypeId", "enumName", "description" ],
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "statusId", "enumTypeId", "enumName", "description", "runtimeDataId" ],
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
@@ -544,15 +544,16 @@ const actions: ActionTree<JobState, RootState> = {
       'systemJobEnumId': job.systemJobEnumId
     } as any
     
-    if (job?.runtimeData?.shopifyConfigId || job?.runtimeData?.shopId) {
+    const jobRunTimeDataKeys = job?.runtimeData ? Object.keys(job?.runtimeData) : [];
+    if (jobRunTimeDataKeys.includes('shopifyConfigId') || jobRunTimeDataKeys.includes('shopId')) {
       const shopifyConfig = this.state.user.currentShopifyConfig
       if (Object.keys(shopifyConfig).length == 0) {
         showToast(translate('Shopify configuration not found. Scheduling failed.'))
         return;
       }
 
-      job?.runtimeData?.shopifyConfigId && (payload['shopifyConfigId'] = shopifyConfig?.shopifyConfigId);
-      job?.runtimeData?.shopId && (payload['shopId'] = shopifyConfig?.shopId);
+      jobRunTimeDataKeys.includes('shopifyConfigId') && (payload['shopifyConfigId'] = shopifyConfig?.shopifyConfigId);
+      jobRunTimeDataKeys.includes('shopId') && (payload['shopId'] = shopifyConfig?.shopId);
       payload['jobFields']['shopId'] = shopifyConfig?.shopId;
     }
 
@@ -677,16 +678,17 @@ const actions: ActionTree<JobState, RootState> = {
 
     // ShopifyConfig and ShopifyShop should be set based upon runtime data
     // If existing job is run now, copy as is else set the current shop of user
-    if (job?.runtimeData?.shopifyConfigId || job?.runtimeData?.shopId) {
+    const jobRunTimeDataKeys = job?.runtimeData ? Object.keys(job?.runtimeData) : [];
+    if (jobRunTimeDataKeys.includes('shopifyConfigId') || jobRunTimeDataKeys.includes('shopId')) {
       const shopifyConfig = this.state.user.currentShopifyConfig
       if (job.status !== "SERVICE_PENDING" && Object.keys(shopifyConfig).length == 0) {
         showToast(translate('Shopify configuration not found. Scheduling failed.'))
         return;
       }
 
-      job?.runtimeData?.shopifyConfigId && (payload['shopifyConfigId'] = job.status === "SERVICE_PENDING" ? job.runtimeData?.shopifyConfigId  : shopifyConfig?.shopifyConfigId);
-      job?.runtimeData?.shopId && (payload['shopId'] = job.status === "SERVICE_PENDING" ? job.runtimeData?.shopId  : shopifyConfig?.shopId);
-      payload['jobFields']['shopId'] = job.status === "SERVICE_PENDING" ? job.shopId  : shopifyConfig?.shopId;
+      jobRunTimeDataKeys.includes('shopifyConfigId') && (payload['shopifyConfigId'] = job.status === "SERVICE_PENDING" ? job.runtimeData?.shopifyConfigId : shopifyConfig?.shopifyConfigId);
+      jobRunTimeDataKeys.includes('shopId') && (payload['shopId'] = job.status === "SERVICE_PENDING" ? job.runtimeData?.shopId : shopifyConfig?.shopId);
+      payload['jobFields']['shopId'] = job.status === "SERVICE_PENDING" ? job.shopId : shopifyConfig?.shopId;
     }
 
     // assigning '' (empty string) to all the runtimeData properties whose value is "null"
@@ -868,14 +870,14 @@ const actions: ActionTree<JobState, RootState> = {
           'systemJobEnumId': job.systemJobEnumId
         } as any
 
-        
-        if (job?.runtimeData?.shopifyConfigId || job?.runtimeData?.shopId) {
+        const jobRunTimeDataKeys = job?.runtimeData ? Object.keys(job?.runtimeData) : [];
+        if (jobRunTimeDataKeys.includes('shopifyConfigId') || jobRunTimeDataKeys.includes('shopId')) {
           const shopifyConfig = this.state.user.shopifyConfigs.find((config: any) => {
             return config.shopId === shopId;
           })
 
-          job?.runtimeData?.shopifyConfigId && (params['shopifyConfigId'] = shopifyConfig.shopifyConfigId);
-          job?.runtimeData?.shopId && (params['shopId'] = shopifyConfig.shopId);
+          jobRunTimeDataKeys.includes('shopifyConfigId') && (params['shopifyConfigId'] = shopifyConfig.shopifyConfigId);
+          jobRunTimeDataKeys.includes('shopId') && (params['shopId'] = shopifyConfig.shopId);
           params['jobFields']['shopId'] = shopifyConfig.shopId;
         }
 
