@@ -960,11 +960,12 @@ const actions: ActionTree<JobState, RootState> = {
     commit(types.JOB_BULK_UPDATED, bulkJobs);
   },
   async fetchReportsJobs({ commit, dispatch, state }, payload){
+    const fetchJobRequests = [];
+
     const params = {
       "inputFields": {
         "enumTypeId": "REPORT_SYS_JOB",
-        "statusId": ["SERVICE_PENDING", "SERVICE_DRAFT"],
-        "statusId_op": "in",
+        "statusId": "SERVICE_DRAFT",
         "systemJobEnumId_op": "not-empty",
         "shopId_fld0_value": store.state.user.currentShopifyConfig?.shopId,
         "shopId_fld0_grp": "1",
@@ -978,41 +979,56 @@ const actions: ActionTree<JobState, RootState> = {
       "viewIndex": payload.viewIndex,
     }
 
+    fetchJobRequests.push(JobService.fetchJobInformation(params).catch((err) => {
+      return err;
+    }))
+
+    params.inputFields.statusId = "SERVICE_PENDING";
     if (payload.eComStoreId) {
       params.inputFields["productStoreId"] = payload.eComStoreId
     } else {
       params.inputFields["productStoreId_op"] = "empty"
     }
+
+    fetchJobRequests.push(JobService.fetchJobInformation(params).catch((err) => {
+      return err;
+    }))
     
-    let jobs = [], resp;
+    let jobs = [];
+    
+    let total = 0;
     try {
-      resp = await JobService.fetchJobInformation(params)
+      const resp = await Promise.all(fetchJobRequests)
+      const responseJobs = resp.reduce((responseJobs: any, response: any) => {
+        total += response.data.count
+        response.status === 200 && !hasError(response) && response.data.docs && (responseJobs = [...responseJobs, ...response.data.docs]);
+        return responseJobs;
+      }, [])
 
-      if (!hasError(resp)) {
-        jobs = resp.data.docs.map((job: any) => {
-          if (job.statusId === 'SERVICE_DRAFT') delete job.runTime;
-          return { ...job, 'status': job.statusId }
-        })
+      jobs = responseJobs.map((job: any) => {
+        if (job.statusId === 'SERVICE_DRAFT') delete job.runTime;
+        return { ...job, 'status': job.statusId }
+      })
 
-        if (payload.viewIndex > 0) jobs = state.reports.list.concat(jobs);
+      if (payload.viewIndex > 0) jobs = state.reports.list.concat(jobs);
 
-        const tempExprList = [] as any;
-        const enumIds = [] as any;
+      const tempExprList = [] as any;
+      const enumIds = [] as any;
 
-        resp.data.docs.map((job: any) => {
-          enumIds.push(job.systemJobEnumId);
-          tempExprList.push(job.tempExprId);
-        })
+      responseJobs.map((job: any) => {
+        enumIds.push(job.systemJobEnumId);
+        tempExprList.push(job.tempExprId);
+      })
 
-        const tempExpr = [...new Set(tempExprList)];
-        dispatch('fetchTemporalExpression', tempExpr);
-        dispatch('fetchJobDescription', enumIds);
-      }
+      const tempExpr = [...new Set(tempExprList)];
+      dispatch('fetchTemporalExpression', tempExpr);
+      dispatch('fetchJobDescription', enumIds);
     } catch (err) {
       logger.error(err);
       showToast(translate("Something went wrong"));
     } finally {
-      commit(types.JOB_REPORTS_UPDATED, { jobs: jobs, total: resp.data.count ? resp.data.count : 0  });
+      console.log(total)
+      commit(types.JOB_REPORTS_UPDATED, { jobs: jobs, total: total ? total : 0 });
     }
   },
 }
