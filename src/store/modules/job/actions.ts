@@ -298,7 +298,7 @@ const actions: ActionTree<JobState, RootState> = {
     try {
       const resp = await Promise.all(fetchJobRequests)
       const responseJobs = resp.reduce((responseJobs: any, response: any) => {
-        response.status === 200 && !hasError(response) && response.data.docs && (total += +response.data.count, responseJobs = [...responseJobs, ...response.data.docs]);
+        !hasError(response) && (total += +response.data.count, responseJobs = [...responseJobs, ...response.data.docs]);
         return responseJobs;
       }, [])
 
@@ -307,7 +307,7 @@ const actions: ActionTree<JobState, RootState> = {
         return { ...job, 'status': job.statusId }
       })
 
-      if (payload.viewIndex > 0) jobs = state.reports.list.concat(jobs);
+      if (payload.viewIndex > 0) jobs = state.miscellaneous.list.concat(jobs);
 
       const tempExprList = [] as any;
       const enumIds = [] as any;
