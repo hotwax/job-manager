@@ -1008,6 +1008,7 @@ const actions: ActionTree<JobState, RootState> = {
       const resp = await Promise.all(fetchJobRequests)
 
       if (!hasError(resp[0])) {
+        total += +resp[0].data.count
         draft = resp[0].data.docs.reduce((jobs: any, job: any) => {
           delete job.runTime
           jobs[job.systemJobEnumId] = job
@@ -1016,6 +1017,7 @@ const actions: ActionTree<JobState, RootState> = {
       }
 
       if (!hasError(resp[1])) {
+        total += +resp[1].data.count
         pending = resp[1].data.docs.reduce((jobs: any, job: any) => {
           jobs[job.systemJobEnumId] = job
           return jobs
@@ -1024,7 +1026,6 @@ const actions: ActionTree<JobState, RootState> = {
 
       const responseJobs = {...draft, ...pending}
       jobs = Object.values(responseJobs)
-      total = jobs.length
 
       jobs = jobs.map((job: any) => {
         return { ...job, 'status': job.statusId }
