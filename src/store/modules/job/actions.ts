@@ -261,11 +261,11 @@ const actions: ActionTree<JobState, RootState> = {
     })
   },
   async fetchMiscellaneousJobs({ commit, dispatch, state }, payload){
+    const fetchJobRequests = [];
     const params = {
       "inputFields": {
         "enumTypeId": "MISC_SYS_JOB",
-        "statusId": ["SERVICE_PENDING", "SERVICE_DRAFT"],
-        "statusId_op": "in",
+        "statusId": "SERVICE_DRAFT",
         "systemJobEnumId_op": "not-empty",
         "shopId_fld0_value": store.state.user.currentShopifyConfig?.shopId,
         "shopId_fld0_grp": "1",
@@ -273,49 +273,58 @@ const actions: ActionTree<JobState, RootState> = {
         "shopId_fld1_grp": "2",
         "shopId_fld1_op": "empty"
       } as any,
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runtimeDataId", "enumName", "shopId", "description"],
+      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runtimeDataId", "enumName", "shopId", "description" ],
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
     }
 
+    fetchJobRequests.push(JobService.fetchJobInformation(params).catch((err) => {
+      return err;
+    }))
+
+    params.inputFields.statusId = "SERVICE_PENDING";
     if (payload.eComStoreId) {
       params.inputFields["productStoreId"] = payload.eComStoreId
     } else {
       params.inputFields["productStoreId_op"] = "empty"
     }
 
+    fetchJobRequests.push(JobService.fetchJobInformation(params).catch((err) => {
+      return err;
+    }))
+
+    let jobs = [], total = 0;
     try {
-      const resp = await JobService.fetchJobInformation(params)
-      if (resp.status === 200 && !hasError(resp) && resp.data.docs?.length > 0) {
-        const total = resp.data.count;
-        let jobs = resp.data.docs.map((job: any) => {
-          if (job.statusId === 'SERVICE_DRAFT') delete job.runTime;
-          return {
-            ...job,
-            'status': job.statusId,
-            frequency: job.tempExprId
-          }
-        })
-        if(payload.viewIndex && payload.viewIndex > 0){
-          jobs = state.miscellaneous.list.concat(jobs);
-        }
-        commit(types.JOB_MISCELLANEOUS_UPDATED, { jobs, total });
-        const tempExprList = [] as any;
-        const enumIds = [] as any;
-        resp.data.docs.map((item: any) => {
-          enumIds.push(item.systemJobEnumId);
-          tempExprList.push(item.tempExprId);
-        })
-        const tempExpr = [...new Set(tempExprList)];
-        dispatch('fetchTemporalExpression', tempExpr);
-      } else {
-        commit(types.JOB_MISCELLANEOUS_UPDATED, { jobs: [], total: 0 });
-      }
+      const resp = await Promise.all(fetchJobRequests)
+      const responseJobs = resp.reduce((responseJobs: any, response: any) => {
+        response.status === 200 && !hasError(response) && response.data.docs && (total += +response.data.count, responseJobs = [...responseJobs, ...response.data.docs]);
+        return responseJobs;
+      }, [])
+
+      jobs = responseJobs.map((job: any) => {
+        if (job.statusId === 'SERVICE_DRAFT') delete job.runTime;
+        return { ...job, 'status': job.statusId }
+      })
+
+      if (payload.viewIndex > 0) jobs = state.reports.list.concat(jobs);
+
+      const tempExprList = [] as any;
+      const enumIds = [] as any;
+
+      responseJobs.map((job: any) => {
+        enumIds.push(job.systemJobEnumId);
+        tempExprList.push(job.tempExprId);
+      })
+
+      const tempExpr = [...new Set(tempExprList)];
+      dispatch('fetchTemporalExpression', tempExpr);
+      dispatch('fetchJobDescription', enumIds);
     } catch (err) {
-      commit(types.JOB_MISCELLANEOUS_UPDATED, { jobs: [], total: 0 });
       logger.error(err);
       showToast(translate("Something went wrong"));
+    } finally {
+      commit(types.JOB_MISCELLANEOUS_UPDATED, { jobs: jobs, total: total ? total : 0 });
     }
   },
   async fetchTemporalExpression({ state, commit }, tempExprIds){
@@ -961,7 +970,6 @@ const actions: ActionTree<JobState, RootState> = {
   },
   async fetchReportsJobs({ commit, dispatch, state }, payload){
     const fetchJobRequests = [];
-
     const params = {
       "inputFields": {
         "enumTypeId": "REPORT_SYS_JOB",
@@ -994,12 +1002,11 @@ const actions: ActionTree<JobState, RootState> = {
       return err;
     }))
     
-    let jobs = []; let total = 0;
+    let jobs = [], total = 0;
     try {
       const resp = await Promise.all(fetchJobRequests)
       const responseJobs = resp.reduce((responseJobs: any, response: any) => {
-        response.status === 200 && !hasError(response) && response.data.docs && 
-          (total += +response.data.count, responseJobs = [...responseJobs, ...response.data.docs]);
+        response.status === 200 && !hasError(response) && response.data.docs && (total += +response.data.count, responseJobs = [...responseJobs, ...response.data.docs]);
         return responseJobs;
       }, [])
 
