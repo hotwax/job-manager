@@ -107,10 +107,12 @@ export default defineComponent({
     })
   },
   mounted() {
+    emitter.on('jobUpdated', this.getReportsJobs);
     this.getReportsJobs();
     emitter.on("productStoreOrConfigChanged", this.getReportsJobs);
   },
   unmounted() {
+    emitter.on('jobUpdated', this.getReportsJobs);
     emitter.off("productStoreOrConfigChanged", this.getReportsJobs);
   },
   methods: {
@@ -134,13 +136,13 @@ export default defineComponent({
         this.isJobDetailAnimationCompleted = true;
       }
     },
-    async getReportsJobs(viewSize = 20, viewIndex = 0) {
+    async getReportsJobs(viewSize = 200, viewIndex = 0) {
       await this.store.dispatch('job/fetchReportsJobs', { eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex });
     },
     async loadMoreReportsJobs(event: any) {
       this.getReportsJobs(
         undefined,
-        Math.ceil(this.reportsJobs.length / (process.env.VUE_APP_VIEW_SIZE as any))
+        Math.ceil(this.reportsJobs.length / 200) //using 200 as harcoded value, as we are fetching the reports jobs in batches of 200, so we need to find the viewIndex using the same value that is used as viewSize
       ).then(() => {
         event.target.complete();
       })
