@@ -994,14 +994,12 @@ const actions: ActionTree<JobState, RootState> = {
       return err;
     }))
     
-    let jobs = [];
-    
-    let total = 0;
+    let jobs = []; let total = 0;
     try {
       const resp = await Promise.all(fetchJobRequests)
       const responseJobs = resp.reduce((responseJobs: any, response: any) => {
-        total += response.data.count
-        response.status === 200 && !hasError(response) && response.data.docs && (responseJobs = [...responseJobs, ...response.data.docs]);
+        response.status === 200 && !hasError(response) && response.data.docs && 
+          (total += +response.data.count, responseJobs = [...responseJobs, ...response.data.docs]);
         return responseJobs;
       }, [])
 
@@ -1027,7 +1025,6 @@ const actions: ActionTree<JobState, RootState> = {
       logger.error(err);
       showToast(translate("Something went wrong"));
     } finally {
-      console.log(total)
       commit(types.JOB_REPORTS_UPDATED, { jobs: jobs, total: total ? total : 0 });
     }
   },
