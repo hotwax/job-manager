@@ -63,7 +63,6 @@ export default defineComponent({
     },
     async copyJobInformation(job: any) {
       const { Clipboard } = Plugins;
-      console.log("job", job)
       const jobDetails = `jobId: ${job.jobId}, jobName: ${job.enumName}, jobDescription: ${job.description} ${job.runtimeData ? (", runtimeData: " + JSON.stringify(job.runtimeData)) : ""}`;
 
       await Clipboard.write({
