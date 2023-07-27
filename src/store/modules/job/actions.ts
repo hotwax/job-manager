@@ -279,7 +279,7 @@ const actions: ActionTree<JobState, RootState> = {
       "viewIndex": payload.viewIndex,
     }
 
-    fetchJobRequests.push(JobService.fetchJobInformation(params).catch((err) => {
+    fetchJobRequests.push(JobService.fetchJobInformation(JSON.parse(JSON.stringify(params))).catch((err) => {
       return err;
     }))
 
@@ -290,7 +290,7 @@ const actions: ActionTree<JobState, RootState> = {
       params.inputFields["productStoreId_op"] = "empty"
     }
 
-    fetchJobRequests.push(JobService.fetchJobInformation(params).catch((err) => {
+    fetchJobRequests.push(JobService.fetchJobInformation(JSON.parse(JSON.stringify(params))).catch((err) => {
       return err;
     }))
 
@@ -987,7 +987,7 @@ const actions: ActionTree<JobState, RootState> = {
       "viewIndex": payload.viewIndex,
     }
 
-    fetchJobRequests.push(JobService.fetchJobInformation(params).catch((err) => {
+    fetchJobRequests.push(JobService.fetchJobInformation(JSON.parse(JSON.stringify(params))).catch((err) => {
       return err;
     }))
 
@@ -998,7 +998,7 @@ const actions: ActionTree<JobState, RootState> = {
       params.inputFields["productStoreId_op"] = "empty"
     }
 
-    fetchJobRequests.push(JobService.fetchJobInformation(params).catch((err) => {
+    fetchJobRequests.push(JobService.fetchJobInformation(JSON.parse(JSON.stringify(params))).catch((err) => {
       return err;
     }))
     
