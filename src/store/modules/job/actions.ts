@@ -1003,15 +1003,30 @@ const actions: ActionTree<JobState, RootState> = {
     }))
     
     let jobs = [], total = 0;
+    let draft = {}, pending = {}
     try {
       const resp = await Promise.all(fetchJobRequests)
-      const responseJobs = resp.reduce((responseJobs: any, response: any) => {
-        response.status === 200 && !hasError(response) && response.data.docs && (total += +response.data.count, responseJobs = [...responseJobs, ...response.data.docs]);
-        return responseJobs;
-      }, [])
 
-      jobs = responseJobs.map((job: any) => {
-        if (job.statusId === 'SERVICE_DRAFT') delete job.runTime;
+      if (!hasError(resp[0])) {
+        draft = resp[0].data.docs.reduce((jobs: any, job: any) => {
+          delete job.runTime
+          jobs[job.systemJobEnumId] = job
+          return jobs
+        }, {})
+      }
+
+      if (!hasError(resp[1])) {
+        pending = resp[1].data.docs.reduce((jobs: any, job: any) => {
+          jobs[job.systemJobEnumId] = job
+          return jobs
+        }, {})
+      }
+
+      const responseJobs = {...draft, ...pending}
+      jobs = Object.values(responseJobs)
+      total = jobs.length
+
+      jobs = jobs.map((job: any) => {
         return { ...job, 'status': job.statusId }
       })
 
@@ -1020,7 +1035,7 @@ const actions: ActionTree<JobState, RootState> = {
       const tempExprList = [] as any;
       const enumIds = [] as any;
 
-      responseJobs.map((job: any) => {
+      jobs.map((job: any) => {
         enumIds.push(job.systemJobEnumId);
         tempExprList.push(job.tempExprId);
       })
