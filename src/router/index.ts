@@ -35,9 +35,8 @@ const authGuard = async (to: any, from: any, next: any) => {
     const redirectUrl = window.location.origin + '/login'
     window.location.href = `${process.env.VUE_APP_LOGIN_URL}?redirectUrl=${redirectUrl}`
     loader.dismiss()
-  } else {
-    next()
   }
+  next()
 };
 
 const routes: Array<RouteRecordRaw> = [
