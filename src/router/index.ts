@@ -39,6 +39,16 @@ const authGuard = async (to: any, from: any, next: any) => {
   next()
 };
 
+const loginGuard = (to: any, from: any, next: any) => {
+  const authStore = useAuthStore()
+  if (authStore.isAuthenticated) {
+    // if route has token and oms do the login flow processing
+    if (to.query?.token && to.query?.oms) next()
+    else next('/')
+  }
+  next();
+};
+
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
@@ -139,6 +149,7 @@ const routes: Array<RouteRecordRaw> = [
     path: '/login',
     name: 'Login',
     component: Login,
+    beforeEnter: loginGuard
   },
   {
     path: "/settings",
