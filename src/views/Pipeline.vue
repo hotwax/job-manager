@@ -122,6 +122,7 @@
               <ion-item>
                 <ion-icon slot="start" :icon="timeOutline" />
                 <ion-label class="ion-text-wrap">{{ job.runTime ? getTime(job.runTime) : "-"  }}</ion-label>
+                <ion-note slot="end">{{ job.startDateTime ? timeFromNow(job.startDateTime) : "-"  }}</ion-note>
               </ion-item>
 
               <ion-item>
