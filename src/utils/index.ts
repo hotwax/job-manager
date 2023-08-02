@@ -142,9 +142,6 @@ const prepareRuntime = (job: any) => {
 
 const generateAllowedFrequencies = (type?: string) => {
   const optionDefault = [{
-      "id": "EVERY_1_MIN",
-      "description": "Every 1 minute"
-    },{
       "id": "EVERY_5_MIN",
       "description": "Every 5 minutes"
     },{
