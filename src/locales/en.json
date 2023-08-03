@@ -1,6 +1,5 @@
 {
   "A store represents a company or a unique catalog of products. If your OMS is connected to multiple eCommerce stores sellling different collections of products, you may have multiple Product Stores set up in HotWax Commerce.": "A store represents a company or a unique catalog of products. If your OMS is connected to multiple eCommerce stores sellling different collections of products, you may have multiple Product Stores set up in HotWax Commerce.",
-  "Active session": "Active session",
   "Add": "Add",
   "Add a note with the promise date given to the customer at the time of placing the order.": "Add a note with the promise date given to the customer at the time of placing the order.",
   "Add a note with the promise date given to the customer at the time of placing the order.' key in 'en' locale messages.": "Add a note with the promise date given to the customer at the time of placing the order.' key in 'en' locale messages.",
