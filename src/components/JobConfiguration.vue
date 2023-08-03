@@ -45,6 +45,26 @@
         </ion-select>
       </ion-item>
 
+      <ion-item-group>
+        <ion-item-divider v-if="customRequiredParameters.length" color="light">
+          <ion-label>{{ $t('Required Parameters') }}</ion-label>
+        </ion-item-divider>
+
+        <ion-item :key="index" v-for="(parameter, index) in customRequiredParameters">
+          <ion-label>{{ parameter.name }}</ion-label>
+          <ion-input :placeholder="parameter.name" v-model="parameter.value" slot="end" />
+        </ion-item>
+
+        <ion-item-divider v-if="customOptionalParameters.length" color="light">
+          <ion-label>{{ $t('Optional Parameters') }}</ion-label>
+        </ion-item-divider>
+
+        <ion-item :key="index" v-for="(parameter, index) in customOptionalParameters">
+          <ion-label>{{ parameter.name }}</ion-label>
+          <ion-input :placeholder="parameter.name" v-model="parameter.value" slot="end" />
+        </ion-item>
+      </ion-item-group>
+
       <!-- TODO: enable this feature of passing count when supported on backend -->
       <!-- <ion-item>
         <ion-icon slot="start" :icon="syncOutline" />
@@ -64,14 +84,14 @@
         <ion-button size="small" fill="outline" color="danger" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || currentJob.statusId === 'SERVICE_DRAFT'" @click="cancelJob(currentJob)">{{ $t("Disable") }}</ion-button>
       </div>
       <div>
-        <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" size="small" fill="outline" @click="saveChanges()">{{ $t("Save changes") }}</ion-button>
+        <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || isRequiredParametersMissing" size="small" fill="outline" @click="saveChanges()">{{ $t("Save changes") }}</ion-button>
       </div>
     </div>
 
     <div class=" actions mobile-only">
       <ion-button size="small" expand="block" fill="outline" color="medium" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || status === 'SERVICE_DRAFT'" @click="skipJob(currentJob)">{{ $t("Skip once") }}</ion-button>
       <ion-button size="small" expand="block" fill="outline" color="danger" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || status === 'SERVICE_DRAFT'" @click="cancelJob(currentJob)">{{ $t("Disable") }}</ion-button>
-      <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" expand="block" @click="saveChanges()">{{ $t("Save changes") }}</ion-button>
+      <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || isRequiredParametersMissing" expand="block" @click="saveChanges()">{{ $t("Save changes") }}</ion-button>
     </div>
   </section>
   <div class="more-actions">
@@ -105,7 +125,10 @@ import {
   IonContent,
   IonDatetime,
   IonIcon,
+  IonInput,
   IonItem,
+  IonItemDivider,
+  IonItemGroup,
   IonLabel,
   IonList,
   IonModal,
@@ -143,7 +166,10 @@ export default defineComponent({
     IonContent,
     IonDatetime,
     IonIcon,
+    IonInput,
     IonItem,
+    IonItemDivider,
+    IonItemGroup,
     IonLabel,
     IonList,
     IonModal,
@@ -157,13 +183,23 @@ export default defineComponent({
       runTime: '' as any,
       runTimes: [] as any,
       jobStatus: this.status,
-      frequencyOptions: [] as any
+      frequencyOptions: [] as any,
+      customOptionalParameters: [] as any,
+      customRequiredParameters: [] as any,
+      selectedCustomParameters: [] as any,
     }
   },
   mounted() {
     this.runTime = this.currentJob?.runTime
     this.generateRunTimes(this.runTime)
     this.generateFrequencyOptions(this.jobStatus)
+    let inputParameters = this.currentJob?.serviceInParams ? JSON.parse(JSON.stringify(this.currentJob?.serviceInParams)) : []
+
+    // removing some fields that we don't want user to edit, and for which the values will be added programatically
+    inputParameters = inputParameters.filter((parameter: any) => !(parameter.name == 'productStoreId' || parameter.name == 'shopId' || parameter.name == 'shopifyConfigId'))
+
+    this.customOptionalParameters = inputParameters.filter((parameter: any) => parameter.optional)
+    this.customRequiredParameters = inputParameters.filter((parameter: any) => !parameter.optional)
   },
   updated() {
     // When updating the job, the job is fetched again with the latest values
@@ -182,7 +218,10 @@ export default defineComponent({
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
       currentEComStore: 'user/getCurrentEComStore',
       currentJob: 'job/getCurrentJob',
-    })
+    }),
+    isRequiredParametersMissing() {
+      return this.customRequiredParameters.some((parameter: any) => !parameter.value?.trim())
+    }
   },
   methods: {
     getDateTime(time: any) {
@@ -292,12 +331,25 @@ export default defineComponent({
       const job = this.currentJob;
       job['jobStatus'] = this.jobStatus !== 'SERVICE_DRAFT' ? this.jobStatus : 'HOURLY';
 
+      // preparing the custom parameters those needs to passed with the job
+      const jobCustomParameters = {} as any;
+
+      this.customRequiredParameters.map((parameter: any) => {
+        jobCustomParameters[parameter.name] = parameter.value.trim();
+      })
+
+      this.customOptionalParameters.map((parameter: any) => {
+        if(parameter.value?.trim()) {
+          jobCustomParameters[parameter.name] = parameter.value.trim();
+        }
+      })
+
       // Handling the case for 'Now'. Sending the now value will fail the API as by the time
       // the job is ran, the given 'now' time would have passed. Hence, passing empty 'run time'
       job.runTime = !isCustomRunTime(this.runTime) ? DateTime.now().toMillis() + this.runTime : this.runTime
 
       if (job?.statusId === 'SERVICE_DRAFT') {
-        this.store.dispatch('job/scheduleService', job).then((job: any) => {
+        this.store.dispatch('job/scheduleService', { job, jobCustomParameters }).then((job: any) => {
           if(job?.jobId) {
             emitter.emit('jobUpdated');
             const category = this.$route.params.category;
@@ -307,7 +359,7 @@ export default defineComponent({
           }
         })
       } else if (job?.statusId === 'SERVICE_PENDING') {
-        this.store.dispatch('job/updateJob', job).then((resp) => {
+        this.store.dispatch('job/updateJob', { job, jobCustomParameters }).then((resp) => {
           if (resp) {
             emitter.emit('jobUpdated');
           }
