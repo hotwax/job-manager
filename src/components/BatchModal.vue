@@ -160,9 +160,9 @@ export default defineComponent({
         job.runTime = ''
       }
       if (job?.status === 'SERVICE_DRAFT') {
-        await this.store.dispatch('job/scheduleService', job)
+        await this.store.dispatch('job/scheduleService', { job })
       } else if (job?.status === 'SERVICE_PENDING') {
-        await this.store.dispatch('job/updateJob', job)
+        await this.store.dispatch('job/updateJob', { job })
       }
       this.closeModal()
     },

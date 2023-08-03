@@ -185,8 +185,7 @@ export default defineComponent({
       jobStatus: this.status,
       frequencyOptions: [] as any,
       customOptionalParameters: [] as any,
-      customRequiredParameters: [] as any,
-      selectedCustomParameters: [] as any,
+      customRequiredParameters: [] as any
     }
   },
   mounted() {
@@ -423,7 +422,19 @@ export default defineComponent({
               text: this.$t('Run now'),
               handler: () => {
                 if (job) {
-                  this.store.dispatch('job/runServiceNow', job)
+                  // preparing the custom parameters those needs to passed with the job
+                  const jobCustomParameters = {} as any;
+                  this.customRequiredParameters.map((parameter: any) => {
+                    jobCustomParameters[parameter.name] = parameter.value.trim();
+                  })
+
+                  this.customOptionalParameters.map((parameter: any) => {
+                    if(parameter.value?.trim()) {
+                      jobCustomParameters[parameter.name] = parameter.value.trim();
+                    }
+                  })
+
+                  this.store.dispatch('job/runServiceNow', { job, ...jobCustomParameters })
                 }
               }
             }

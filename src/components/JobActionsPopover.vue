@@ -108,7 +108,7 @@ export default defineComponent({
               text: this.$t('Run now'),
               handler: async () => {
                 if(job) {
-                  await this.store.dispatch('job/runServiceNow', job)
+                  await this.store.dispatch('job/runServiceNow', { job })
                   this.closePopover();
                 }
               }

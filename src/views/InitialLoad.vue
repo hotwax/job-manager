@@ -166,9 +166,9 @@ export default defineComponent({
       if (!checked) {
         this.store.dispatch('job/cancelJob', job)
       } else if (job?.status === 'SERVICE_DRAFT') {
-        this.store.dispatch('job/scheduleService', job)
+        this.store.dispatch('job/scheduleService', { job })
       } else if (job?.status === 'SERVICE_PENDING') {
-        this.store.dispatch('job/updateJob', job)
+        this.store.dispatch('job/updateJob', { job })
       }
     },
     async viewJobConfiguration(label: string, id: string) {
