@@ -30,6 +30,26 @@
           </ion-content>
         </ion-modal>
       </ion-item>
+
+      <ion-item-group>
+        <ion-item-divider v-if="customRequiredParameters.length" color="light">
+          <ion-label>{{ $t('Required Parameters') }}</ion-label>
+        </ion-item-divider>
+
+        <ion-item :key="index" v-for="(parameter, index) in customRequiredParameters">
+          <ion-label>{{ parameter.name }}</ion-label>
+          <ion-input :placeholder="parameter.name" v-model="parameter.value" slot="end" />
+        </ion-item>
+
+        <ion-item-divider v-if="customOptionalParameters.length" color="light">
+          <ion-label>{{ $t('Optional Parameters') }}</ion-label>
+        </ion-item-divider>
+
+        <ion-item :key="index" v-for="(parameter, index) in customOptionalParameters">
+          <ion-label>{{ parameter.name }}</ion-label>
+          <ion-input :placeholder="parameter.name" v-model="parameter.value" slot="end" />
+        </ion-item>
+      </ion-item-group>
     </ion-list>
 
     <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" size="small" fill="outline" expand="block" @click="runJob('Products')">{{ $t("Run import") }}</ion-button>
@@ -94,6 +114,26 @@
         <ion-label class="ion-text-wrap">{{ $t("Last Shopify Order ID") }}</ion-label>
         <ion-input v-model="lastShopifyOrderId" :placeholder="$t('Internal Shopify Order ID')" />
       </ion-item>
+
+      <ion-item-group>
+        <ion-item-divider v-if="customRequiredParameters.length" color="light">
+          <ion-label>{{ $t('Required Parameters') }}</ion-label>
+        </ion-item-divider>
+
+        <ion-item :key="index" v-for="(parameter, index) in customRequiredParameters">
+          <ion-label>{{ parameter.name }}</ion-label>
+          <ion-input :placeholder="parameter.name" v-model="parameter.value" slot="end" />
+        </ion-item>
+
+        <ion-item-divider v-if="customOptionalParameters.length" color="light">
+          <ion-label>{{ $t('Optional Parameters') }}</ion-label>
+        </ion-item-divider>
+
+        <ion-item :key="index" v-for="(parameter, index) in customOptionalParameters">
+          <ion-label>{{ parameter.name }}</ion-label>
+          <ion-input :placeholder="parameter.name" v-model="parameter.value" slot="end" />
+        </ion-item>
+      </ion-item-group>
     </ion-list>
 
     <ion-button size="small" fill="outline" expand="block" :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" @click="runJob('Orders')">{{ $t("Run import") }}</ion-button>
@@ -153,6 +193,8 @@ export default defineComponent({
       jobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
       runTime: '' as any,
       runTimes: [] as any,
+      customOptionalParameters: [] as any,
+      customRequiredParameters: [] as any
     }
   },
   mounted() {
@@ -162,6 +204,25 @@ export default defineComponent({
       // Appendng and setting the previous run time
       this.runTime = this.currentJob?.runTime
       this.generateRunTimes(this.runTime)
+
+      let inputParameters = this.currentJob?.serviceInParams ? JSON.parse(JSON.stringify(this.currentJob?.serviceInParams)) : []
+      // removing some fields that we don't want user to edit, and for which the values will be added programatically
+      const excludeParameters = ['productStoreId', 'shopId', 'shopifyConfigId', 'frequency']
+      inputParameters = inputParameters.filter((parameter: any) =>!excludeParameters.includes(parameter.name))
+
+      inputParameters.map((parameter: any) => {
+        if(parameter.optional) {
+          this.customOptionalParameters.push({
+            name: parameter.name,
+            value: this.currentJob?.runtimeData ? this.currentJob?.runtimeData[parameter.name] : ''
+          })
+        } else {
+          this.customRequiredParameters.push({
+            name: parameter.name,
+            value: this.currentJob?.runtimeData ? this.currentJob?.runtimeData[parameter.name] : ''
+          })
+        }
+      })
     }
   },
   props: ['type', 'shopifyOrderId'],
@@ -211,6 +272,19 @@ export default defineComponent({
     async updateJob() {
       const job = this.currentJob;
 
+      // preparing the custom parameters those needs to passed with the job
+      const jobCustomParameters = {} as any;
+
+      this.customRequiredParameters.map((parameter: any) => {
+        jobCustomParameters[parameter.name] = parameter.value.trim();
+      })
+
+      this.customOptionalParameters.map((parameter: any) => {
+        if(parameter.value?.trim()) {
+          jobCustomParameters[parameter.name] = parameter.value.trim();
+        }
+      })
+
       job['sinceId'] = this.lastShopifyOrderId
       job['jobStatus'] = job.tempExprId
 
@@ -223,9 +297,9 @@ export default defineComponent({
         job.runTime = ''
       }
       if (job?.statusId === 'SERVICE_DRAFT') {
-        this.store.dispatch('job/scheduleService', job)
+        this.store.dispatch('job/scheduleService', { job, jobCustomParameters })
       } else if (job?.statusId === 'SERVICE_PENDING') {
-        this.store.dispatch('job/updateJob', job)
+        this.store.dispatch('job/updateJob', { job, jobCustomParameters })
       }
     },
     getDateTime(time: any) {
