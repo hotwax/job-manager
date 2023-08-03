@@ -236,24 +236,6 @@ const actions: ActionTree<JobState, RootState> = {
             return {
               ...job,
               'status': job?.statusId,
-              'serviceInParams': [
-                {
-                  name: 'facilityId',
-                  optional: true,
-                },
-                {
-                  name: 'productStoreId',
-                  optional: false,
-                },
-                {
-                  name: 'testOptional',
-                  optional: true,
-                },
-                {
-                  name: 'testRequired',
-                  optional: false,
-                }
-              ]
             }
           })
           if(payload.viewIndex && payload.viewIndex > 0){
@@ -525,32 +507,30 @@ const actions: ActionTree<JobState, RootState> = {
     job?.sinceId && (payload['sinceId'] = job.sinceId)
     job?.jobName && (payload['jobName'] = job.jobName)
 
-    console.log('job', payload)
-
-    // try {
-    //   resp = await JobService.updateJob(payload)
-    //   if (resp.status === 200 && !hasError(resp) && resp.data.successMessage) {
-    //     const fetchJobResponses = await dispatch('fetchJobs', {
-    //       inputFields: {
-    //         'systemJobEnumId': payload.systemJobEnumId,
-    //         'systemJobEnumId_op': 'equals'
-    //       }
-    //     })
-    //     // As we are getting both draft and pending jobs in response, we are using find
-    //     const jobResponse = fetchJobResponses.find((response: any) => response.status === 200 && !hasError(response) && response.data?.docs.length && response.data.docs[0].jobId === payload.jobId);
-    //     if(jobResponse) {
-    //       // We are using status field everywhere so whenever we fetch job again status field needs to be updated
-    //       // TODO Check why status field is used instead of statusId
-    //       commit(types.JOB_CURRENT_UPDATED, jobResponse.data.docs[0]);
-    //     }
-    //     showToast(translate('Service updated successfully'))
-    //   } else {
-    //     showToast(translate('Something went wrong'))
-    //   }
-    // } catch (err) {
-    //   showToast(translate('Something went wrong'))
-    //   logger.error(err)
-    // }
+    try {
+      resp = await JobService.updateJob(payload)
+      if (resp.status === 200 && !hasError(resp) && resp.data.successMessage) {
+        const fetchJobResponses = await dispatch('fetchJobs', {
+          inputFields: {
+            'systemJobEnumId': payload.systemJobEnumId,
+            'systemJobEnumId_op': 'equals'
+          }
+        })
+        // As we are getting both draft and pending jobs in response, we are using find
+        const jobResponse = fetchJobResponses.find((response: any) => response.status === 200 && !hasError(response) && response.data?.docs.length && response.data.docs[0].jobId === payload.jobId);
+        if(jobResponse) {
+          // We are using status field everywhere so whenever we fetch job again status field needs to be updated
+          // TODO Check why status field is used instead of statusId
+          commit(types.JOB_CURRENT_UPDATED, jobResponse.data.docs[0]);
+        }
+        showToast(translate('Service updated successfully'))
+      } else {
+        showToast(translate('Something went wrong'))
+      }
+    } catch (err) {
+      showToast(translate('Something went wrong'))
+      logger.error(err)
+    }
     return resp;
   },
 
@@ -603,35 +583,33 @@ const actions: ActionTree<JobState, RootState> = {
       if (job.runtimeData[key] === 'null' ) job.runtimeData[key] = ''
     })
 
-    console.log('job', job)
-
-    // try {
-    //   resp = await JobService.scheduleJob({ ...job.runtimeData, ...payload });
-    //   if (resp.status == 200 && !hasError(resp)) {
-    //     showToast(translate('Service has been scheduled'));
-    //     const fetchJobsResponses = await dispatch('fetchJobs', {
-    //       inputFields: {
-    //         'systemJobEnumId': payload.systemJobEnumId,
-    //         'systemJobEnumId_op': 'equals',
-    //       },
-    //       orderBy: "runTime ASC"
-    //     })
-    //     const fetchJobsResponse = fetchJobsResponses.find((fetchJobsResponse: any) => {
-    //       return !hasError(fetchJobsResponse) && 
-    //           fetchJobsResponse.data?.docs?.length && 
-    //           fetchJobsResponse.data?.docs[0].statusId == "SERVICE_PENDING";
-    //     });
-    //     if(fetchJobsResponse) {
-    //       commit(types.JOB_CURRENT_UPDATED, fetchJobsResponse.data.docs[0]);
-    //       return job;
-    //     }
-    //   } else {
-    //     showToast(translate('Something went wrong'))
-    //   }
-    // } catch (err) {
-    //   showToast(translate('Something went wrong'))
-    //   logger.error(err)
-    // }
+    try {
+      resp = await JobService.scheduleJob({ ...job.runtimeData, ...payload });
+      if (resp.status == 200 && !hasError(resp)) {
+        showToast(translate('Service has been scheduled'));
+        const fetchJobsResponses = await dispatch('fetchJobs', {
+          inputFields: {
+            'systemJobEnumId': payload.systemJobEnumId,
+            'systemJobEnumId_op': 'equals',
+          },
+          orderBy: "runTime ASC"
+        })
+        const fetchJobsResponse = fetchJobsResponses.find((fetchJobsResponse: any) => {
+          return !hasError(fetchJobsResponse) &&
+              fetchJobsResponse.data?.docs?.length &&
+              fetchJobsResponse.data?.docs[0].statusId == "SERVICE_PENDING";
+        });
+        if(fetchJobsResponse) {
+          commit(types.JOB_CURRENT_UPDATED, fetchJobsResponse.data.docs[0]);
+          return job;
+        }
+      } else {
+        showToast(translate('Something went wrong'))
+      }
+    } catch (err) {
+      showToast(translate('Something went wrong'))
+      logger.error(err)
+    }
     return {};
   },
 
@@ -690,8 +668,10 @@ const actions: ActionTree<JobState, RootState> = {
     return resp;
   },
 
-  async runServiceNow({ dispatch }, job) {
+  async runServiceNow({ dispatch }, params) {
     let resp;
+
+    const job = params.job
 
     const payload = {
       'JOB_NAME': job.jobName,
@@ -706,7 +686,8 @@ const actions: ActionTree<JobState, RootState> = {
         'recurrenceTimeZone': this.state.user.current.userTimeZone,
       },
       'statusId': "SERVICE_PENDING",
-      'systemJobEnumId': job.systemJobEnumId
+      'systemJobEnumId': job.systemJobEnumId,
+      ...params.jobCustomParameters
     } as any
     // checking if the runtimeData has productStoreId, and if present then adding it on root level
     job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = job.status === "SERVICE_PENDING" ? job.productStoreId : this.state.user.currentEComStore.productStoreId)
