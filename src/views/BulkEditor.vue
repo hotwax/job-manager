@@ -59,7 +59,7 @@
                 <ion-datetime            
                   show-default-buttons 
                   hour-cycle="h23" 
-                  :value="globalRuntime ? (isCustomRunTime(globalRuntime) ? getDateTime(globalRuntime) : getDateTime(DateTime.now().toMillis() + globalRuntime)) : ''"
+                  :value="globalRuntime ? (isCustomRunTime(globalRuntime) ? getDateTime(globalRuntime) : getDateTime(DateTime.now().toMillis() + globalRuntime)) : getNowTimestamp"
                   @ionChange="updateCustomTime($event)"
                 />
               </ion-content>
@@ -126,7 +126,7 @@ import { addOutline, iceCreamOutline, timeOutline, timerOutline } from 'ionicons
 import { useRouter } from 'vue-router';
 import SelectJobsModal from '@/views/SelectJobsModal.vue';
 import { UserService } from '@/services/UserService'
-import { isCustomRunTime, generateAllowedRunTimes, generateAllowedFrequencies, hasError, showToast, handleDateTimeInput } from '@/utils'
+import { isCustomRunTime, getNowTimestamp, generateAllowedRunTimes, generateAllowedFrequencies, hasError, showToast, handleDateTimeInput } from '@/utils'
 import { translate } from '@/i18n'
 import JobConfigurationForBulkScheduler from '@/components/JobConfigurationForBulkScheduler.vue'
 import { DateTime } from 'luxon';
@@ -190,6 +190,7 @@ export default defineComponent({
       DateTime,
       iceCreamOutline,
       isCustomRunTime,
+      getNowTimestamp,
       store,
       router,
       timeOutline,
