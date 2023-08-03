@@ -196,10 +196,22 @@ export default defineComponent({
     let inputParameters = this.currentJob?.serviceInParams ? JSON.parse(JSON.stringify(this.currentJob?.serviceInParams)) : []
 
     // removing some fields that we don't want user to edit, and for which the values will be added programatically
-    inputParameters = inputParameters.filter((parameter: any) => !(parameter.name == 'productStoreId' || parameter.name == 'shopId' || parameter.name == 'shopifyConfigId'))
+    const excludeParameters = ['productStoreId', 'shopId', 'shopifyConfigId', 'frequency']
+    inputParameters = inputParameters.filter((parameter: any) =>!excludeParameters.includes(parameter.name))
 
-    this.customOptionalParameters = inputParameters.filter((parameter: any) => parameter.optional)
-    this.customRequiredParameters = inputParameters.filter((parameter: any) => !parameter.optional)
+    inputParameters.map((parameter: any) => {
+      if(parameter.optional) {
+        this.customOptionalParameters.push({
+          name: parameter.name,
+          value: this.currentJob?.runtimeData ? this.currentJob?.runtimeData[parameter.name] : ''
+        })
+      } else {
+        this.customRequiredParameters.push({
+          name: parameter.name,
+          value: this.currentJob?.runtimeData ? this.currentJob?.runtimeData[parameter.name] : ''
+        })
+      }
+    })
   },
   updated() {
     // When updating the job, the job is fetched again with the latest values
