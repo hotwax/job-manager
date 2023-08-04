@@ -52,7 +52,7 @@
       </ion-item-group>
     </ion-list>
 
-    <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" size="small" fill="outline" expand="block" @click="runJob('Products')">{{ $t("Run import") }}</ion-button>
+    <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || isRequiredParametersMissing" size="small" fill="outline" expand="block" @click="runJob('Products')">{{ $t("Run import") }}</ion-button>
   </section>
 
   <section v-else>
@@ -136,7 +136,7 @@
       </ion-item-group>
     </ion-list>
 
-    <ion-button size="small" fill="outline" expand="block" :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" @click="runJob('Orders')">{{ $t("Run import") }}</ion-button>
+    <ion-button size="small" fill="outline" expand="block" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || isRequiredParametersMissing" @click="runJob('Orders')">{{ $t("Run import") }}</ion-button>
   </section>
 </template>
 
@@ -150,6 +150,8 @@ import {
   IonIcon,
   IonInput,
   IonItem,
+  IonItemDivider,
+  IonItemGroup,
   IonLabel,
   IonList,
   IonModal,
@@ -177,6 +179,8 @@ export default defineComponent({
     IonDatetime,
     IonIcon,
     IonInput,
+    IonItemDivider,
+    IonItemGroup,
     IonItem,
     IonLabel,
     IonList,
@@ -214,12 +218,12 @@ export default defineComponent({
         if(parameter.optional) {
           this.customOptionalParameters.push({
             name: parameter.name,
-            value: this.currentJob?.runtimeData ? this.currentJob?.runtimeData[parameter.name] : ''
+            value: this.currentJob?.runtimeData && this.currentJob?.runtimeData[parameter.name] ? '' + this.currentJob?.runtimeData[parameter.name] : ''
           })
         } else {
           this.customRequiredParameters.push({
             name: parameter.name,
-            value: this.currentJob?.runtimeData ? this.currentJob?.runtimeData[parameter.name] : ''
+            value: this.currentJob?.runtimeData && this.currentJob?.runtimeData[parameter.name] ? '' + this.currentJob?.runtimeData[parameter.name] : ''
           })
         }
       })
@@ -229,7 +233,10 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       currentJob: 'job/getCurrentJob',
-    })
+    }),
+    isRequiredParametersMissing() {
+      return this.customRequiredParameters.some((parameter: any) => !parameter.value?.trim())
+    }
   },
   methods: {
     async generateRunTimes(currentRunTime?: any) {
@@ -280,7 +287,7 @@ export default defineComponent({
       })
 
       this.customOptionalParameters.map((parameter: any) => {
-        if(parameter.value?.trim()) {
+        if(parameter.value.trim()) {
           jobCustomParameters[parameter.name] = parameter.value.trim();
         }
       })

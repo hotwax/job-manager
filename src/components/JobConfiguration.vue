@@ -202,12 +202,12 @@ export default defineComponent({
       if(parameter.optional) {
         this.customOptionalParameters.push({
           name: parameter.name,
-          value: this.currentJob?.runtimeData ? this.currentJob?.runtimeData[parameter.name] : ''
+          value: this.currentJob?.runtimeData && this.currentJob?.runtimeData[parameter.name] ? '' + this.currentJob?.runtimeData[parameter.name] : ''
         })
       } else {
         this.customRequiredParameters.push({
           name: parameter.name,
-          value: this.currentJob?.runtimeData ? this.currentJob?.runtimeData[parameter.name] : ''
+          value: this.currentJob?.runtimeData && this.currentJob?.runtimeData[parameter.name] ? '' + this.currentJob?.runtimeData[parameter.name] : ''
         })
       }
     })
@@ -350,7 +350,7 @@ export default defineComponent({
       })
 
       this.customOptionalParameters.map((parameter: any) => {
-        if(parameter.value?.trim()) {
+        if(parameter.value.trim()) {
           jobCustomParameters[parameter.name] = parameter.value.trim();
         }
       })
@@ -429,7 +429,7 @@ export default defineComponent({
                   })
 
                   this.customOptionalParameters.map((parameter: any) => {
-                    if(parameter.value?.trim()) {
+                    if(parameter.value.trim()) {
                       jobCustomParameters[parameter.name] = parameter.value.trim();
                     }
                   })
