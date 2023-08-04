@@ -202,10 +202,27 @@ const isCustomRunTime = (value: number) => {
   return !generateAllowedRunTimes().some((runTime: any) => runTime.value === value)
 }
 
+const generateJobCustomParameters = (requiredParameters: any, optionalParameters: any) => {
+  // preparing the custom parameters those needs to passed with the job
+  const jobCustomParameters = {} as any;
+
+  requiredParameters.map((parameter: any) => {
+    jobCustomParameters[parameter.name] = parameter.value.trim();
+  })
+
+  optionalParameters.map((parameter: any) => {
+    if(parameter.value.trim()) {
+      jobCustomParameters[parameter.name] = parameter.value.trim();
+    }
+  })
+  return jobCustomParameters;
+}
+
 export {
   isCustomRunTime,
   generateAllowedFrequencies,
   generateAllowedRunTimes,
+  generateJobCustomParameters,
   handleDateTimeInput,
   showToast,
   hasError,

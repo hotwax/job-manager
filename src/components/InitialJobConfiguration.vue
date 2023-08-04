@@ -167,7 +167,7 @@ import {
 import { mapGetters, useStore } from "vuex";
 import { translate } from "@/i18n";
 import { DateTime } from 'luxon';
-import { isCustomRunTime, generateAllowedRunTimes, handleDateTimeInput, isFutureDate, showToast } from '@/utils';
+import { isCustomRunTime, generateAllowedRunTimes, generateJobCustomParameters, handleDateTimeInput, isFutureDate, showToast } from '@/utils';
 import { Actions, hasPermission } from '@/authorization'
 import { JobService } from "@/services/JobService";
 
@@ -279,18 +279,7 @@ export default defineComponent({
     async updateJob() {
       const job = this.currentJob;
 
-      // preparing the custom parameters those needs to passed with the job
-      const jobCustomParameters = {} as any;
-
-      this.customRequiredParameters.map((parameter: any) => {
-        jobCustomParameters[parameter.name] = parameter.value.trim();
-      })
-
-      this.customOptionalParameters.map((parameter: any) => {
-        if(parameter.value.trim()) {
-          jobCustomParameters[parameter.name] = parameter.value.trim();
-        }
-      })
+      const jobCustomParameters = generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters)
 
       job['sinceId'] = this.lastShopifyOrderId
       job['jobStatus'] = job.tempExprId

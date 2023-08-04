@@ -45,25 +45,46 @@
         </ion-select>
       </ion-item>
 
-      <ion-item-group>
-        <ion-item-divider v-if="customRequiredParameters.length" color="light">
-          <ion-label>{{ $t('Required Parameters') }}</ion-label>
-        </ion-item-divider>
+      <!-- IONIC SHEET MODAL STARTS -->
+      <ion-button id="open-modal" expand="block">Open Sheet Modal</ion-button>
 
-        <ion-item :key="index" v-for="(parameter, index) in customRequiredParameters">
-          <ion-label>{{ parameter.name }}</ion-label>
-          <ion-input :placeholder="parameter.name" v-model="parameter.value" slot="end" />
-        </ion-item>
+      <ion-modal :can-dismiss="canDismiss" ref="modal" trigger="open-modal" :backdrop-breakpoint="0.25" :initial-breakpoint="0.75" :breakpoints="[0, 0.25, 0.5, 0.75, 1]">
+        <ion-header>
+          <ion-toolbar>
+            <ion-title>{{ $t('Custom Parameters') }}</ion-title>
+            <ion-buttons slot="end">
+              <ion-button @click="dismiss">{{ $t('Close') }}</ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        <ion-content class="ion-padding">
+          <ion-list>
+            <ion-item-group>
+              <ion-item-divider v-if="customRequiredParameters.length" color="light">
+                <ion-label>{{ $t('Required Parameters') }}</ion-label>
+              </ion-item-divider>
 
-        <ion-item-divider v-if="customOptionalParameters.length" color="light">
-          <ion-label>{{ $t('Optional Parameters') }}</ion-label>
-        </ion-item-divider>
+              <ion-item :key="index" v-for="(parameter, index) in customRequiredParameters">
+                <ion-label>{{ parameter.name }}</ion-label>
+                <ion-input v-if="currentJob.statusId === 'SERVICE_DRAFT'" :placeholder="parameter.name" v-model="parameter.value" slot="end" />
+                <ion-label v-else>{{ parameter.value }}</ion-label>
+              </ion-item>
 
-        <ion-item :key="index" v-for="(parameter, index) in customOptionalParameters">
-          <ion-label>{{ parameter.name }}</ion-label>
-          <ion-input :placeholder="parameter.name" v-model="parameter.value" slot="end" />
-        </ion-item>
-      </ion-item-group>
+              <ion-item-divider v-if="customOptionalParameters.length" color="light">
+                <ion-label>{{ $t('Optional Parameters') }}</ion-label>
+              </ion-item-divider>
+
+              <ion-item :key="index" v-for="(parameter, index) in customOptionalParameters">
+                <ion-label>{{ parameter.name }}</ion-label>
+                <ion-input v-if="currentJob.statusId === 'SERVICE_DRAFT'" :placeholder="parameter.name" v-model="parameter.value" slot="end" />
+                <ion-label v-else>{{ parameter.value }}</ion-label>
+              </ion-item>
+            </ion-item-group>
+          </ion-list>
+          <ion-button v-if="currentJob.statusId === 'SERVICE_DRAFT'" @click="saveCustomParameters">{{ 'Save' }}</ion-button>
+        </ion-content>
+      </ion-modal>
+      <!-- IONIC SHEET MODAL ENDS -->
 
       <!-- TODO: enable this feature of passing count when supported on backend -->
       <!-- <ion-item>
@@ -117,13 +138,15 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, ref } from "vue";
 import {
   IonBadge,
   IonButton,
+  IonButtons,
   IonCheckbox,
   IonContent,
   IonDatetime,
+  IonHeader,
   IonIcon,
   IonInput,
   IonItem,
@@ -134,6 +157,8 @@ import {
   IonModal,
   IonSelect,
   IonSelectOption,
+  IonTitle,
+  IonToolbar,
   alertController,
   modalController,
 } from "@ionic/vue";
@@ -149,7 +174,7 @@ import {
 } from "ionicons/icons";
 import JobHistoryModal from '@/components/JobHistoryModal.vue'
 import { Plugins } from '@capacitor/core';
-import { isCustomRunTime, generateAllowedRunTimes, generateAllowedFrequencies, handleDateTimeInput, showToast, hasError } from "@/utils";
+import { isCustomRunTime, generateAllowedRunTimes, generateAllowedFrequencies, generateJobCustomParameters, handleDateTimeInput, showToast, hasError } from "@/utils";
 import { mapGetters, useStore } from "vuex";
 import { DateTime } from 'luxon';
 import { translate } from '@/i18n'
@@ -163,8 +188,10 @@ export default defineComponent({
   components: {
     IonBadge,
     IonButton,
+    IonButtons,
     IonContent,
     IonDatetime,
+    IonHeader,
     IonIcon,
     IonInput,
     IonItem,
@@ -175,6 +202,8 @@ export default defineComponent({
     IonModal,
     IonSelect,
     IonSelectOption,
+    IonTitle,
+    IonToolbar,
     IonCheckbox
   },
   data() {
@@ -342,18 +371,7 @@ export default defineComponent({
       const job = this.currentJob;
       job['jobStatus'] = this.jobStatus !== 'SERVICE_DRAFT' ? this.jobStatus : 'HOURLY';
 
-      // preparing the custom parameters those needs to passed with the job
-      const jobCustomParameters = {} as any;
-
-      this.customRequiredParameters.map((parameter: any) => {
-        jobCustomParameters[parameter.name] = parameter.value.trim();
-      })
-
-      this.customOptionalParameters.map((parameter: any) => {
-        if(parameter.value.trim()) {
-          jobCustomParameters[parameter.name] = parameter.value.trim();
-        }
-      })
+      const jobCustomParameters = generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters)
 
       // Handling the case for 'Now'. Sending the now value will fail the API as by the time
       // the job is ran, the given 'now' time would have passed. Hence, passing empty 'run time'
@@ -474,17 +492,33 @@ export default defineComponent({
       const setTime = handleDateTimeInput(event.detail.value);
       if (setTime > currTime) this.generateRunTimes(setTime)
       else showToast(translate("Provide a future date and time"))
+    },
+    saveCustomParameters() {
+      console.log('saved')
     }
   },
   setup() {
     const store = useStore();
     const router = useRouter();
 
+    const modal = ref(null) as any;
+
+    function dismiss() {
+      modal.value.$el.dismiss();
+    }
+
+    function canDismiss(data?: any, role?: string) {
+      return role !== 'gesture';
+    }
+
     return {
       Actions,
       calendarClearOutline,
+      canDismiss,
       copyOutline,
+      dismiss,
       DateTime,
+      modal,
       flashOutline,
       hasPermission,
       isCustomRunTime,
@@ -540,7 +574,7 @@ ion-label:nth-child(3) {
   cursor: pointer;
 }
 
-ion-modal {
+ion-modal.date-time-modal {
   --width: 290px;
   --height: 440px;
   --border-radius: 8px;
