@@ -198,6 +198,8 @@ export default defineComponent({
     this.runTime = this.currentJob?.runTime ? this.currentJob?.runTime : ''
     this.generateRunTimes(this.runTime)
     this.generateFrequencyOptions(this.jobStatus)
+    this.customOptionalParameters = generateJobCustomOptions(this.currentJob).optionalParameters;
+    this.customRequiredParameters = generateJobCustomOptions(this.currentJob).requiredParameters;
   },
   props: ["status", "type"],
   computed: {

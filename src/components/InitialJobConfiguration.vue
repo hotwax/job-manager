@@ -110,25 +110,20 @@
         <ion-input v-model="lastShopifyOrderId" :placeholder="$t('Internal Shopify Order ID')" />
       </ion-item>
 
-      <ion-item-group>
-        <ion-item-divider v-if="customRequiredParameters.length" color="light">
-          <ion-label>{{ $t('Required Parameters') }}</ion-label>
-        </ion-item-divider>
-
-        <ion-item :key="index" v-for="(parameter, index) in customRequiredParameters">
-          <ion-label>{{ parameter.name }}</ion-label>
-          <ion-input :placeholder="parameter.name" v-model="parameter.value" slot="end" />
-        </ion-item>
-
-        <ion-item-divider v-if="customOptionalParameters.length" color="light">
-          <ion-label>{{ $t('Optional Parameters') }}</ion-label>
-        </ion-item-divider>
-
-        <ion-item :key="index" v-for="(parameter, index) in customOptionalParameters">
-          <ion-label>{{ parameter.name }}</ion-label>
-          <ion-input :placeholder="parameter.name" v-model="parameter.value" slot="end" />
-        </ion-item>
-      </ion-item-group>
+      <ion-item lines="none">
+        <ion-chip @click="openJobCustomParameterModal" outline v-if="!Object.keys(generateCustomParameters).length">
+          <ion-icon :icon="addOutline" />
+          <ion-label>{{ $t('Add custom parameters') }}</ion-label>
+        </ion-chip>
+        <ion-row v-else>
+          <ion-chip @click="openJobCustomParameterModal" outline :key="name" v-for="(parameter, name) in generateCustomParameters">
+            {{ name }} : {{ parameter }}
+          </ion-chip>
+        </ion-row>
+        <ion-button @click="openJobCustomParameterModal" id="open-modal" slot="end" fill="clear">
+          <ion-icon slot="icon-only" :icon="listCircleOutline"/>
+        </ion-button>
+      </ion-item>
     </ion-list>
 
     <ion-button size="small" fill="outline" expand="block" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || isRequiredParametersMissing" @click="runJob('Orders')">{{ $t("Run import") }}</ion-button>
@@ -146,8 +141,6 @@ import {
   IonIcon,
   IonInput,
   IonItem,
-  IonItemDivider,
-  IonItemGroup,
   IonLabel,
   IonList,
   IonModal,
@@ -181,8 +174,6 @@ export default defineComponent({
     IonDatetime,
     IonIcon,
     IonInput,
-    IonItemDivider,
-    IonItemGroup,
     IonItem,
     IonLabel,
     IonList,

@@ -54,6 +54,8 @@ import {
 import { defineComponent } from 'vue';
 import { closeOutline } from 'ionicons/icons';
 import { useStore } from 'vuex';
+import { translate } from '@/i18n';
+import { showToast } from '@/utils';
 
 export default defineComponent({
   name: 'JobParameterModal',
@@ -74,7 +76,13 @@ export default defineComponent({
   props: ['currentJob', 'customRequiredParameters', 'customOptionalParameters'],
   methods: {
     closeModal() {
-      modalController.dismiss({ dismissed: true });
+      const isRequiredParameterMissing = this.customRequiredParameters.some((parameter: any) => !parameter.value?.trim())
+
+      if(isRequiredParameterMissing) {
+        showToast(translate('Required Parameters cannot be empty'))
+      } else {
+        modalController.dismiss({ dismissed: true })
+      }
     }
   },
   setup() {
