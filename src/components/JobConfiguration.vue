@@ -112,7 +112,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from "vue";
+import { defineComponent } from "vue";
 import {
   IonBadge,
   IonButton,
@@ -394,18 +394,9 @@ export default defineComponent({
               handler: () => {
                 if (job) {
                   // preparing the custom parameters those needs to passed with the job
-                  const jobCustomParameters = {} as any;
-                  this.customRequiredParameters.map((parameter: any) => {
-                    jobCustomParameters[parameter.name] = parameter.value.trim();
-                  })
+                  const jobCustomParameters = this.generateCustomParameters;
 
-                  this.customOptionalParameters.map((parameter: any) => {
-                    if(parameter.value.trim()) {
-                      jobCustomParameters[parameter.name] = parameter.value.trim();
-                    }
-                  })
-
-                  this.store.dispatch('job/runServiceNow', { job, ...jobCustomParameters })
+                  this.store.dispatch('job/runServiceNow', { job, jobCustomParameters })
                 }
               }
             }
