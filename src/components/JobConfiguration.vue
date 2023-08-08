@@ -45,10 +45,22 @@
         </ion-select>
       </ion-item>
 
-      <!-- IONIC SHEET MODAL STARTS -->
-      <ion-button id="open-modal" expand="block">Open Sheet Modal</ion-button>
+      <ion-item lines="none">
+        <ion-chip outline v-if="!Object.keys(generateCustomParameters).length">
+          <ion-icon :icon="addOutline" />
+          <ion-label>{{ $t('Add custom parameters') }}</ion-label>
+        </ion-chip>
+        <ion-row v-else>
+          <ion-chip outline :key="name" v-for="(parameter, name) in generateCustomParameters">
+            {{ name }} : {{ parameter }}
+          </ion-chip>
+        </ion-row>
+        <ion-button id="open-modal" slot="end" fill="clear">
+          <ion-icon slot="icon-only" :icon="listCircleOutline"/>
+        </ion-button>
+      </ion-item>
 
-      <ion-modal :can-dismiss="canDismiss" ref="modal" trigger="open-modal" :backdrop-breakpoint="0.25" :initial-breakpoint="0.75" :breakpoints="[0, 0.25, 0.5, 0.75, 1]">
+      <ion-modal :key="currentJob.jobId" ref="modal" trigger="open-modal" :backdrop-breakpoint="0.25" :initial-breakpoint="0.75" :breakpoints="[0, 0.25, 0.5, 0.75, 1]">
         <ion-header>
           <ion-toolbar>
             <ion-title>{{ $t('Custom Parameters') }}</ion-title>
@@ -57,7 +69,7 @@
             </ion-buttons>
           </ion-toolbar>
         </ion-header>
-        <ion-content class="ion-padding">
+        <ion-content>
           <ion-list>
             <ion-item-group>
               <ion-item-divider v-if="customRequiredParameters.length" color="light">
@@ -81,10 +93,8 @@
               </ion-item>
             </ion-item-group>
           </ion-list>
-          <ion-button v-if="currentJob.statusId === 'SERVICE_DRAFT'" @click="saveCustomParameters">{{ 'Save' }}</ion-button>
         </ion-content>
       </ion-modal>
-      <!-- IONIC SHEET MODAL ENDS -->
 
       <!-- TODO: enable this feature of passing count when supported on backend -->
       <!-- <ion-item>
@@ -144,6 +154,7 @@ import {
   IonButton,
   IonButtons,
   IonCheckbox,
+  IonChip,
   IonContent,
   IonDatetime,
   IonHeader,
@@ -155,6 +166,7 @@ import {
   IonLabel,
   IonList,
   IonModal,
+  IonRow,
   IonSelect,
   IonSelectOption,
   IonTitle,
@@ -163,8 +175,10 @@ import {
   modalController,
 } from "@ionic/vue";
 import {
+  addOutline,
   calendarClearOutline,
   flashOutline,
+  listCircleOutline,
   copyOutline,
   timeOutline,
   timerOutline,
@@ -189,6 +203,7 @@ export default defineComponent({
     IonBadge,
     IonButton,
     IonButtons,
+    IonChip,
     IonContent,
     IonDatetime,
     IonHeader,
@@ -200,6 +215,7 @@ export default defineComponent({
     IonLabel,
     IonList,
     IonModal,
+    IonRow,
     IonSelect,
     IonSelectOption,
     IonTitle,
@@ -221,25 +237,7 @@ export default defineComponent({
     this.runTime = this.currentJob?.runTime
     this.generateRunTimes(this.runTime)
     this.generateFrequencyOptions(this.jobStatus)
-    let inputParameters = this.currentJob?.serviceInParams ? JSON.parse(JSON.stringify(this.currentJob?.serviceInParams)) : []
-
-    // removing some fields that we don't want user to edit, and for which the values will be added programatically
-    const excludeParameters = ['productStoreId', 'shopId', 'shopifyConfigId', 'frequency']
-    inputParameters = inputParameters.filter((parameter: any) =>!excludeParameters.includes(parameter.name))
-
-    inputParameters.map((parameter: any) => {
-      if(parameter.optional) {
-        this.customOptionalParameters.push({
-          name: parameter.name,
-          value: this.currentJob?.runtimeData && this.currentJob?.runtimeData[parameter.name] ? '' + this.currentJob?.runtimeData[parameter.name] : ''
-        })
-      } else {
-        this.customRequiredParameters.push({
-          name: parameter.name,
-          value: this.currentJob?.runtimeData && this.currentJob?.runtimeData[parameter.name] ? '' + this.currentJob?.runtimeData[parameter.name] : ''
-        })
-      }
-    })
+    this.generateCustomOptions();
   },
   updated() {
     // When updating the job, the job is fetched again with the latest values
@@ -261,6 +259,9 @@ export default defineComponent({
     }),
     isRequiredParametersMissing() {
       return this.customRequiredParameters.some((parameter: any) => !parameter.value?.trim())
+    },
+    generateCustomParameters() {
+      return generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters)
     }
   },
   methods: {
@@ -371,7 +372,7 @@ export default defineComponent({
       const job = this.currentJob;
       job['jobStatus'] = this.jobStatus !== 'SERVICE_DRAFT' ? this.jobStatus : 'HOURLY';
 
-      const jobCustomParameters = generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters)
+      const jobCustomParameters = this.generateCustomParameters;
 
       // Handling the case for 'Now'. Sending the now value will fail the API as by the time
       // the job is ran, the given 'now' time would have passed. Hence, passing empty 'run time'
@@ -493,8 +494,26 @@ export default defineComponent({
       if (setTime > currTime) this.generateRunTimes(setTime)
       else showToast(translate("Provide a future date and time"))
     },
-    saveCustomParameters() {
-      console.log('saved')
+    generateCustomOptions() {
+      let inputParameters = this.currentJob?.serviceInParams ? JSON.parse(JSON.stringify(this.currentJob?.serviceInParams)) : []
+
+      // removing some fields that we don't want user to edit, and for which the values will be added programatically
+      const excludeParameters = ['productStoreId', 'shopId', 'shopifyConfigId']
+      inputParameters = inputParameters.filter((parameter: any) =>!excludeParameters.includes(parameter.name))
+
+      inputParameters.map((parameter: any) => {
+        if(parameter.optional) {
+          this.customOptionalParameters.push({
+            name: parameter.name,
+            value: this.currentJob?.runtimeData && this.currentJob?.runtimeData[parameter.name] ? '' + this.currentJob?.runtimeData[parameter.name] : ''
+          })
+        } else {
+          this.customRequiredParameters.push({
+            name: parameter.name,
+            value: this.currentJob?.runtimeData && this.currentJob?.runtimeData[parameter.name] ? '' + this.currentJob?.runtimeData[parameter.name] : ''
+          })
+        }
+      })
     }
   },
   setup() {
@@ -507,17 +526,14 @@ export default defineComponent({
       modal.value.$el.dismiss();
     }
 
-    function canDismiss(data?: any, role?: string) {
-      return role !== 'gesture';
-    }
-
     return {
       Actions,
+      addOutline,
       calendarClearOutline,
-      canDismiss,
       copyOutline,
       dismiss,
       DateTime,
+      listCircleOutline,
       modal,
       flashOutline,
       hasPermission,
