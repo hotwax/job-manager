@@ -145,7 +145,7 @@ import {
 } from "ionicons/icons";
 import JobHistoryModal from '@/components/JobHistoryModal.vue'
 import { Plugins } from '@capacitor/core';
-import { isCustomRunTime, generateAllowedRunTimes, generateAllowedFrequencies, generateJobCustomParameters, handleDateTimeInput, showToast, hasError } from "@/utils";
+import { isCustomRunTime, generateAllowedRunTimes, generateAllowedFrequencies, generateJobCustomParameters, generateJobCustomOptions, handleDateTimeInput, showToast, hasError } from "@/utils";
 import { mapGetters, useStore } from "vuex";
 import { DateTime } from 'luxon';
 import { translate } from '@/i18n'
@@ -188,7 +188,8 @@ export default defineComponent({
     this.runTime = this.currentJob?.runTime
     this.generateRunTimes(this.runTime)
     this.generateFrequencyOptions(this.jobStatus)
-    this.generateCustomOptions();
+    this.customOptionalParameters = generateJobCustomOptions(this.currentJob).optionalParameters;
+    this.customRequiredParameters = generateJobCustomOptions(this.currentJob).requiredParameters;
   },
   updated() {
     // When updating the job, the job is fetched again with the latest values

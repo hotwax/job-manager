@@ -218,11 +218,41 @@ const generateJobCustomParameters = (requiredParameters: any, optionalParameters
   return jobCustomParameters;
 }
 
+const generateJobCustomOptions = (job: any) => {
+  let inputParameters = job?.serviceInParams ? JSON.parse(JSON.stringify(job?.serviceInParams)) : []
+  const optionalParameters: Array<any> = [];
+  const requiredParameters: Array<any> = [];
+
+  // removing some fields that we don't want user to edit, and for which the values will be added programatically
+  const excludeParameters = ['productStoreId', 'shopId', 'shopifyConfigId']
+  inputParameters = inputParameters.filter((parameter: any) =>!excludeParameters.includes(parameter.name))
+
+  inputParameters.map((parameter: any) => {
+    if(parameter.optional) {
+      optionalParameters.push({
+        name: parameter.name,
+        value: job?.runtimeData && job?.runtimeData[parameter.name] ? '' + job?.runtimeData[parameter.name] : ''
+      })
+    } else {
+      requiredParameters.push({
+        name: parameter.name,
+        value: job?.runtimeData && job?.runtimeData[parameter.name] ? '' + job?.runtimeData[parameter.name] : ''
+      })
+    }
+  })
+
+  return {
+    optionalParameters,
+    requiredParameters
+  }
+}
+
 export {
   isCustomRunTime,
   generateAllowedFrequencies,
   generateAllowedRunTimes,
   generateJobCustomParameters,
+  generateJobCustomOptions,
   handleDateTimeInput,
   showToast,
   hasError,
