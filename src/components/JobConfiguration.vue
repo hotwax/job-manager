@@ -446,27 +446,6 @@ export default defineComponent({
       if (setTime > currTime) this.generateRunTimes(setTime)
       else showToast(translate("Provide a future date and time"))
     },
-    generateCustomOptions() {
-      let inputParameters = this.currentJob?.serviceInParams ? JSON.parse(JSON.stringify(this.currentJob?.serviceInParams)) : []
-
-      // removing some fields that we don't want user to edit, and for which the values will be added programatically
-      const excludeParameters = ['productStoreId', 'shopId', 'shopifyConfigId']
-      inputParameters = inputParameters.filter((parameter: any) =>!excludeParameters.includes(parameter.name))
-
-      inputParameters.map((parameter: any) => {
-        if(parameter.optional) {
-          this.customOptionalParameters.push({
-            name: parameter.name,
-            value: this.currentJob?.runtimeData && this.currentJob?.runtimeData[parameter.name] ? '' + this.currentJob?.runtimeData[parameter.name] : ''
-          })
-        } else {
-          this.customRequiredParameters.push({
-            name: parameter.name,
-            value: this.currentJob?.runtimeData && this.currentJob?.runtimeData[parameter.name] ? '' + this.currentJob?.runtimeData[parameter.name] : ''
-          })
-        }
-      })
-    },
     async openJobCustomParameterModal() {
       const jobParameterModal = await modalController.create({
         component: JobParameterModal,
