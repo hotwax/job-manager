@@ -46,55 +46,19 @@
       </ion-item>
 
       <ion-item lines="none">
-        <ion-chip outline v-if="!Object.keys(generateCustomParameters).length">
+        <ion-chip @click="openJobCustomParameterModal" outline v-if="!Object.keys(generateCustomParameters).length">
           <ion-icon :icon="addOutline" />
           <ion-label>{{ $t('Add custom parameters') }}</ion-label>
         </ion-chip>
         <ion-row v-else>
-          <ion-chip outline :key="name" v-for="(parameter, name) in generateCustomParameters">
+          <ion-chip @click="openJobCustomParameterModal" outline :key="name" v-for="(parameter, name) in generateCustomParameters">
             {{ name }} : {{ parameter }}
           </ion-chip>
         </ion-row>
-        <ion-button id="open-modal" slot="end" fill="clear">
+        <ion-button @click="openJobCustomParameterModal" id="open-modal" slot="end" fill="clear">
           <ion-icon slot="icon-only" :icon="listCircleOutline"/>
         </ion-button>
       </ion-item>
-
-      <ion-modal :key="currentJob.jobId" ref="modal" trigger="open-modal" :backdrop-breakpoint="0.25" :initial-breakpoint="0.75" :breakpoints="[0, 0.25, 0.5, 0.75, 1]">
-        <ion-header>
-          <ion-toolbar>
-            <ion-title>{{ $t('Custom Parameters') }}</ion-title>
-            <ion-buttons slot="end">
-              <ion-button @click="dismiss">{{ $t('Close') }}</ion-button>
-            </ion-buttons>
-          </ion-toolbar>
-        </ion-header>
-        <ion-content>
-          <ion-list>
-            <ion-item-group>
-              <ion-item-divider v-if="customRequiredParameters.length" color="light">
-                <ion-label>{{ $t('Required Parameters') }}</ion-label>
-              </ion-item-divider>
-
-              <ion-item :key="index" v-for="(parameter, index) in customRequiredParameters">
-                <ion-label>{{ parameter.name }}</ion-label>
-                <ion-input v-if="currentJob.statusId === 'SERVICE_DRAFT'" :placeholder="parameter.name" v-model="parameter.value" slot="end" />
-                <ion-label v-else>{{ parameter.value }}</ion-label>
-              </ion-item>
-
-              <ion-item-divider v-if="customOptionalParameters.length" color="light">
-                <ion-label>{{ $t('Optional Parameters') }}</ion-label>
-              </ion-item-divider>
-
-              <ion-item :key="index" v-for="(parameter, index) in customOptionalParameters">
-                <ion-label>{{ parameter.name }}</ion-label>
-                <ion-input v-if="currentJob.statusId === 'SERVICE_DRAFT'" :placeholder="parameter.name" v-model="parameter.value" slot="end" />
-                <ion-label v-else>{{ parameter.value }}</ion-label>
-              </ion-item>
-            </ion-item-group>
-          </ion-list>
-        </ion-content>
-      </ion-modal>
 
       <!-- TODO: enable this feature of passing count when supported on backend -->
       <!-- <ion-item>
@@ -152,25 +116,18 @@ import { defineComponent, ref } from "vue";
 import {
   IonBadge,
   IonButton,
-  IonButtons,
   IonCheckbox,
   IonChip,
   IonContent,
   IonDatetime,
-  IonHeader,
   IonIcon,
-  IonInput,
   IonItem,
-  IonItemDivider,
-  IonItemGroup,
   IonLabel,
   IonList,
   IonModal,
   IonRow,
   IonSelect,
   IonSelectOption,
-  IonTitle,
-  IonToolbar,
   alertController,
   modalController,
 } from "@ionic/vue";
@@ -196,30 +153,24 @@ import { useRouter } from "vue-router";
 import emitter from '@/event-bus';
 import { Actions, hasPermission } from '@/authorization'
 import CustomFrequencyModal from '@/components/CustomFrequencyModal.vue';
+import JobParameterModal from '@/components/JobParameterModal.vue'
 
 export default defineComponent({
   name: "JobConfiguration",
   components: {
     IonBadge,
     IonButton,
-    IonButtons,
     IonChip,
     IonContent,
     IonDatetime,
-    IonHeader,
     IonIcon,
-    IonInput,
     IonItem,
-    IonItemDivider,
-    IonItemGroup,
     IonLabel,
     IonList,
     IonModal,
     IonRow,
     IonSelect,
     IonSelectOption,
-    IonTitle,
-    IonToolbar,
     IonCheckbox
   },
   data() {
@@ -514,27 +465,29 @@ export default defineComponent({
           })
         }
       })
+    },
+    async openJobCustomParameterModal() {
+      const jobParameterModal = await modalController.create({
+        component: JobParameterModal,
+        componentProps: { customOptionalParameters: this.customOptionalParameters, customRequiredParameters: this.customRequiredParameters, currentJob: this.currentJob },
+        breakpoints: [0, 0.25, 0.5, 0.75, 1],
+        initialBreakpoint: 0.75,
+        backdropBreakpoint: 0.25
+      });
+      await jobParameterModal.present();
     }
   },
   setup() {
     const store = useStore();
     const router = useRouter();
 
-    const modal = ref(null) as any;
-
-    function dismiss() {
-      modal.value.$el.dismiss();
-    }
-
     return {
       Actions,
       addOutline,
       calendarClearOutline,
       copyOutline,
-      dismiss,
       DateTime,
       listCircleOutline,
-      modal,
       flashOutline,
       hasPermission,
       isCustomRunTime,
