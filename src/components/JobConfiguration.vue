@@ -445,7 +445,7 @@ export default defineComponent({
         componentProps: { customOptionalParameters: this.customOptionalParameters, customRequiredParameters: this.customRequiredParameters, currentJob: this.currentJob },
         breakpoints: [0, 0.25, 0.5, 0.75, 1],
         initialBreakpoint: 0.75,
-        backdropBreakpoint: 0.25
+        backdropDismiss: false
       });
       await jobParameterModal.present();
     }
