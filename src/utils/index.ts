@@ -198,6 +198,27 @@ const generateAllowedRunTimes = () => {
   }]
 }
 
+// converts the entered value to the expected type used by the service
+const convertValue = (parameter: any) => {
+  const value = parameter.value.trim();
+
+  if(!value) {
+    return ''
+  }
+
+  if(parameter.type === 'Map' || parameter.type === 'List' || parameter.type === 'Object') {
+    try {
+      return JSON.parse(JSON.stringify(value))
+    } catch {
+      return value;
+    }
+  } else if(parameter.type === 'String') {
+    return value
+  } else {
+    return JSON.parse(value);
+  }
+}
+
 const isCustomRunTime = (value: number) => {
   return !generateAllowedRunTimes().some((runTime: any) => runTime.value === value)
 }
@@ -207,12 +228,12 @@ const generateJobCustomParameters = (requiredParameters: any, optionalParameters
   const jobCustomParameters = {} as any;
 
   requiredParameters.map((parameter: any) => {
-    jobCustomParameters[parameter.name] = parameter.value.trim();
+    jobCustomParameters[parameter.name] = convertValue(parameter)
   })
 
   optionalParameters.map((parameter: any) => {
     if(parameter.value.trim()) {
-      jobCustomParameters[parameter.name] = parameter.value.trim();
+      jobCustomParameters[parameter.name] = convertValue(parameter)
     }
   })
   return jobCustomParameters;
@@ -231,12 +252,14 @@ const generateJobCustomOptions = (job: any) => {
     if(parameter.optional) {
       optionalParameters.push({
         name: parameter.name,
-        value: job?.runtimeData && job?.runtimeData[parameter.name] ? '' + job?.runtimeData[parameter.name] : ''
+        value: job?.runtimeData && job?.runtimeData[parameter.name] ? '' + job?.runtimeData[parameter.name] : '',
+        type: parameter.type
       })
     } else {
       requiredParameters.push({
         name: parameter.name,
-        value: job?.runtimeData && job?.runtimeData[parameter.name] ? '' + job?.runtimeData[parameter.name] : ''
+        value: job?.runtimeData && job?.runtimeData[parameter.name] ? '' + job?.runtimeData[parameter.name] : '',
+        type: parameter.type
       })
     }
   })
