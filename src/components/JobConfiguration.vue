@@ -215,7 +215,8 @@ export default defineComponent({
       return this.customRequiredParameters.some((parameter: any) => !parameter.value?.trim())
     },
     generateCustomParameters() {
-      return generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters)
+      // passing runTimeData params as empty, as we don't need to show the runTimeData information on UI as all the options from runtimeData might not be available in serviceInParams
+      return generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters, {})
     }
   },
   methods: {
@@ -326,7 +327,7 @@ export default defineComponent({
       const job = this.currentJob;
       job['jobStatus'] = this.jobStatus !== 'SERVICE_DRAFT' ? this.jobStatus : 'HOURLY';
 
-      const jobCustomParameters = this.generateCustomParameters;
+      const jobCustomParameters = generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters, this.currentJob?.runtimeData)
 
       // Handling the case for 'Now'. Sending the now value will fail the API as by the time
       // the job is ran, the given 'now' time would have passed. Hence, passing empty 'run time'
@@ -396,7 +397,7 @@ export default defineComponent({
               handler: () => {
                 if (job) {
                   // preparing the custom parameters those needs to passed with the job
-                  const jobCustomParameters = this.generateCustomParameters;
+                  const jobCustomParameters = generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters, this.currentJob?.runtimeData)
 
                   this.store.dispatch('job/runServiceNow', { job, jobCustomParameters })
                 }
@@ -444,8 +445,7 @@ export default defineComponent({
         component: JobParameterModal,
         componentProps: { customOptionalParameters: this.customOptionalParameters, customRequiredParameters: this.customRequiredParameters, currentJob: this.currentJob },
         breakpoints: [0, 0.25, 0.5, 0.75, 1],
-        initialBreakpoint: 0.75,
-        backdropDismiss: false
+        initialBreakpoint: 0.75
       });
       await jobParameterModal.present();
     }

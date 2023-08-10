@@ -216,7 +216,7 @@ export default defineComponent({
       return this.customRequiredParameters.some((parameter: any) => !parameter.value?.trim())
     },
     generateCustomParameters() {
-      return generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters)
+      return generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters, this.currentJob?.runtimeData)
     }
   },
   methods: {
