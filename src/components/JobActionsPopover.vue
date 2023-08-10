@@ -38,7 +38,7 @@ import { copyOutline, flashOutline, pinOutline, timeOutline  } from 'ionicons/ic
 import { mapGetters, useStore } from 'vuex'
 import JobHistoryModal from '@/components/JobHistoryModal.vue'
 import { Plugins } from '@capacitor/core';
-import { showToast } from '@/utils'
+import { generateJobCustomParameters, showToast } from '@/utils'
 import emitter from "@/event-bus"
 import { Actions, hasPermission } from '@/authorization'
 
@@ -108,7 +108,8 @@ export default defineComponent({
               text: this.$t('Run now'),
               handler: async () => {
                 if(job) {
-                  await this.store.dispatch('job/runServiceNow', { job })
+                  const jobCustomParameters = generateJobCustomParameters([], [], job.runtimeData)
+                  await this.store.dispatch('job/runServiceNow', { job, jobCustomParameters })
                   this.closePopover();
                 }
               }

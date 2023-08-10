@@ -186,7 +186,7 @@ import { useRouter } from 'vue-router'
 import { mapGetters } from "vuex";
 import JobConfiguration from '@/components/JobConfiguration.vue';
 import { DateTime } from 'luxon';
-import { hasError, isFutureDate, showToast, prepareRuntime } from '@/utils';
+import { generateJobCustomParameters, hasError, isFutureDate, showToast, prepareRuntime } from '@/utils';
 import emitter from '@/event-bus';
 import { JobService } from '@/services/JobService'
 import MoreJobs from '@/components/MoreJobs.vue';
@@ -397,9 +397,10 @@ export default defineComponent({
         this.store.dispatch('job/cancelJob', job)
       } else if (job?.status === 'SERVICE_DRAFT') {
         job.runTime = prepareRuntime(job)
-        this.store.dispatch('job/scheduleService', { job })
+        const jobCustomParameters = generateJobCustomParameters([], [], job.runtimeData)
+        this.store.dispatch('job/scheduleService', { job, jobCustomParameters })
       } else if (job?.status === 'SERVICE_PENDING') {
-        this.store.dispatch('job/updateJob', { job })
+        this.store.dispatch('job/updateJob', job)
       }
     },
     async viewJobConfiguration(jobInformation: any) {

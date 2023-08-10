@@ -79,7 +79,7 @@ import {
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
-import { isFutureDate, showToast } from '@/utils';
+import { generateJobCustomParameters, isFutureDate, showToast } from '@/utils';
 import emitter from '@/event-bus';
 import InitialJobConfiguration from '@/components/InitialJobConfiguration.vue';
 import { useRouter } from 'vue-router';
@@ -166,9 +166,10 @@ export default defineComponent({
       if (!checked) {
         this.store.dispatch('job/cancelJob', job)
       } else if (job?.status === 'SERVICE_DRAFT') {
-        this.store.dispatch('job/scheduleService', { job })
+        const jobCustomParameters = generateJobCustomParameters([], [], job.runtimeData)
+        this.store.dispatch('job/scheduleService', { job, jobCustomParameters })
       } else if (job?.status === 'SERVICE_PENDING') {
-        this.store.dispatch('job/updateJob', { job })
+        this.store.dispatch('job/updateJob', job)
       }
     },
     async viewJobConfiguration(label: string, id: string) {

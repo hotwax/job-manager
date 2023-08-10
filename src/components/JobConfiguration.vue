@@ -327,13 +327,13 @@ export default defineComponent({
       const job = this.currentJob;
       job['jobStatus'] = this.jobStatus !== 'SERVICE_DRAFT' ? this.jobStatus : 'HOURLY';
 
-      const jobCustomParameters = generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters, this.currentJob?.runtimeData)
-
       // Handling the case for 'Now'. Sending the now value will fail the API as by the time
       // the job is ran, the given 'now' time would have passed. Hence, passing empty 'run time'
       job.runTime = !isCustomRunTime(this.runTime) ? DateTime.now().toMillis() + this.runTime : this.runTime
 
       if (job?.statusId === 'SERVICE_DRAFT') {
+        const jobCustomParameters = generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters, job.runtimeData)
+
         this.store.dispatch('job/scheduleService', { job, jobCustomParameters }).then((job: any) => {
           if(job?.jobId) {
             emitter.emit('jobUpdated');
@@ -344,7 +344,7 @@ export default defineComponent({
           }
         })
       } else if (job?.statusId === 'SERVICE_PENDING') {
-        this.store.dispatch('job/updateJob', { job, jobCustomParameters }).then((resp) => {
+        this.store.dispatch('job/updateJob', job).then((resp) => {
           if (resp) {
             emitter.emit('jobUpdated');
           }
@@ -397,7 +397,7 @@ export default defineComponent({
               handler: () => {
                 if (job) {
                   // preparing the custom parameters those needs to passed with the job
-                  const jobCustomParameters = generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters, this.currentJob?.runtimeData)
+                  const jobCustomParameters = generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters, job.runtimeData)
 
                   this.store.dispatch('job/runServiceNow', { job, jobCustomParameters })
                 }

@@ -273,15 +273,14 @@ export default defineComponent({
         job.runTime = ''
       }
 
-      const jobCustomParameters = generateJobCustomParameters([], [], job?.runtimeData)
-
       if (!checked) {
         this.store.dispatch('job/cancelJob', job)
       } else if (job?.status === 'SERVICE_DRAFT') {
         job.runTime = prepareRuntime(job)
+        const jobCustomParameters = generateJobCustomParameters([], [], job.runtimeData)
         this.store.dispatch('job/scheduleService', { job, jobCustomParameters })
       } else if (job?.status === 'SERVICE_PENDING') {
-        this.store.dispatch('job/updateJob', { job, jobCustomParameters })
+        this.store.dispatch('job/updateJob', job)
       }
     },
     async runJob(id: string) {

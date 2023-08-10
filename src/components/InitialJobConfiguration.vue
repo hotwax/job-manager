@@ -216,7 +216,7 @@ export default defineComponent({
       return this.customRequiredParameters.some((parameter: any) => !parameter.value?.trim())
     },
     generateCustomParameters() {
-      return generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters, this.currentJob?.runtimeData)
+      return generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters, {})
     }
   },
   methods: {
@@ -260,8 +260,6 @@ export default defineComponent({
     async updateJob() {
       const job = this.currentJob;
 
-      const jobCustomParameters = this.generateCustomParameters
-
       job['sinceId'] = this.lastShopifyOrderId
       job['jobStatus'] = job.tempExprId
 
@@ -273,10 +271,12 @@ export default defineComponent({
       if (job?.runTime && !isFutureDate(job?.runTime)) {
         job.runTime = ''
       }
+
       if (job?.statusId === 'SERVICE_DRAFT') {
+        const jobCustomParameters = generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters, job.runtimeData)
         this.store.dispatch('job/scheduleService', { job, jobCustomParameters })
       } else if (job?.statusId === 'SERVICE_PENDING') {
-        this.store.dispatch('job/updateJob', { job, jobCustomParameters })
+        this.store.dispatch('job/updateJob', job)
       }
     },
     getDateTime(time: any) {

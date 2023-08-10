@@ -489,18 +489,15 @@ const actions: ActionTree<JobState, RootState> = {
     commit(types.JOB_UPDATED_BULK, cached);
     return resp;
   },
-  async updateJob ({ commit, dispatch }, params) {
+  async updateJob ({ commit, dispatch }, job) {
     let resp;
-
-    const job = params.job;
 
     const payload = {
       'jobId': job.jobId,
       'systemJobEnumId': job.systemJobEnumId,
       'recurrenceTimeZone': this.state.user.current.userTimeZone,
       'tempExprId': job.jobStatus,
-      'statusId': "SERVICE_PENDING",
-      ...params.jobCustomParameters
+      'statusId': "SERVICE_PENDING"
     } as any
 
     job?.runTime && (payload['runTime'] = job.runTime)
@@ -577,11 +574,6 @@ const actions: ActionTree<JobState, RootState> = {
     job?.priority && (payload['SERVICE_PRIORITY'] = job.priority.toString())
     job?.runTime && (payload['SERVICE_TIME'] = job.runTime.toString())
     job?.sinceId && (payload['sinceId'] = job.sinceId)
-
-    // assigning '' (empty string) to all the runtimeData properties whose value is "null"
-    job.runtimeData && Object.keys(job.runtimeData).map((key: any) => {
-      if (job.runtimeData[key] === 'null' ) job.runtimeData[key] = ''
-    })
 
     try {
       resp = await JobService.scheduleJob({ ...payload });
@@ -709,13 +701,8 @@ const actions: ActionTree<JobState, RootState> = {
       payload['jobFields']['shopId'] = job.status === "SERVICE_PENDING" ? job.shopId : shopifyConfig?.shopId;
     }
 
-    // assigning '' (empty string) to all the runtimeData properties whose value is "null"
-    job.runtimeData && Object.keys(job.runtimeData).map((key: any) => {
-      if (job.runtimeData[key] === 'null' ) job.runtimeData[key] = ''
-    })
-
     try {
-      resp = await JobService.scheduleJob({ ...job.runtimeData, ...payload });
+      resp = await JobService.scheduleJob({ ...payload });
       if (resp.status == 200 && !hasError(resp)) {
         showToast(translate('Service has been scheduled'))
       } else {
