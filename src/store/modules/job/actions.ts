@@ -774,7 +774,7 @@ const actions: ActionTree<JobState, RootState> = {
           "jobId": payload?.jobId
         } as any,
         "viewSize": 1,
-        "fieldList": ["systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "description", "enumName"],
+        "fieldList": ["systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "description", "enumName", "runtimeDataId"],
         "noConditionFind": "Y"
       }
       resp = await JobService.fetchJobInformation(params);
