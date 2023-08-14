@@ -19,6 +19,7 @@
           <ion-label>{{ parameter.name }}</ion-label>
           <ion-input v-if="currentJob.statusId === 'SERVICE_DRAFT'" :placeholder="parameter.name" v-model="parameter.value" slot="end" />
           <ion-label v-else>{{ parameter.value }}</ion-label>
+          <ion-note slot="helper">{{ parameter.type }}</ion-note>
         </ion-item>
 
         <ion-item-divider v-if="customOptionalParameters.length" color="light">
@@ -29,6 +30,7 @@
           <ion-label>{{ parameter.name }}</ion-label>
           <ion-input v-if="currentJob.statusId === 'SERVICE_DRAFT'" :placeholder="parameter.name" v-model="parameter.value" slot="end" />
           <ion-label v-else>{{ parameter.value }}</ion-label>
+          <ion-note slot="helper">{{ parameter.type }}</ion-note>
         </ion-item>
       </ion-item-group>
     </ion-list>
@@ -47,6 +49,7 @@ import {
   IonItemGroup,
   IonLabel,
   IonList,
+  IonNote,
   IonTitle,
   IonToolbar,
   modalController
@@ -68,6 +71,7 @@ export default defineComponent({
     IonItemGroup,
     IonLabel,
     IonList,
+    IonNote,
     IonTitle,
     IonToolbar,
   },
