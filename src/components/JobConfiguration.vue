@@ -198,8 +198,6 @@ export default defineComponent({
     this.runTime = this.currentJob?.runTime ? this.currentJob?.runTime : ''
     this.generateRunTimes(this.runTime)
     this.generateFrequencyOptions(this.jobStatus)
-    this.customOptionalParameters = generateJobCustomOptions(this.currentJob).optionalParameters;
-    this.customRequiredParameters = generateJobCustomOptions(this.currentJob).requiredParameters;
   },
   props: ["status", "type"],
   computed: {
@@ -338,6 +336,8 @@ export default defineComponent({
           if(job?.jobId) {
             emitter.emit('jobUpdated');
             const category = this.$route.params.category;
+            this.customOptionalParameters = generateJobCustomOptions(this.currentJob).optionalParameters;
+            this.customRequiredParameters = generateJobCustomOptions(this.currentJob).requiredParameters;
             if (category) {
               this.router.push({ name: 'JobDetails', params: { jobId: job?.jobId, category: category }, replace: true });
             }
@@ -346,6 +346,8 @@ export default defineComponent({
       } else if (job?.statusId === 'SERVICE_PENDING') {
         this.store.dispatch('job/updateJob', job).then((resp) => {
           if (resp) {
+            this.customOptionalParameters = generateJobCustomOptions(this.currentJob).optionalParameters;
+            this.customRequiredParameters = generateJobCustomOptions(this.currentJob).requiredParameters;
             emitter.emit('jobUpdated');
           }
         })
