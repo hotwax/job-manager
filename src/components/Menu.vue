@@ -12,7 +12,6 @@
           <ion-item
             v-if="page.url"
             button
-            @click="selectedIndex = index"
             router-direction="root"
             :router-link="page.url"
             class="hydrated"
@@ -81,12 +80,13 @@ import {
   IonTitle,
   IonToolbar
 } from "@ionic/vue";
-import { defineComponent, ref } from "vue";
+import { computed, defineComponent } from "vue";
 import { mapGetters } from "vuex";
 import { albumsOutline, barChartOutline, calendarNumberOutline, iceCreamOutline, libraryOutline, pulseOutline, settingsOutline, shirtOutline, terminalOutline, ticketOutline } from "ionicons/icons";
 import { useStore } from "@/store";
 import emitter from "@/event-bus"
 import { hasPermission } from "@/authorization";
+import { useRouter } from "vue-router";
 
 export default defineComponent({
   name: "Menu",
@@ -106,12 +106,6 @@ export default defineComponent({
     IonSelectOption,
     IonTitle,
     IonToolbar
-  },
-  created() {
-    // When open any specific screen it should show that screen selected
-    this.selectedIndex = this.appPages.findIndex((screen) => {
-      return screen.url === this.$router.currentRoute.value.path;
-    })
   },
   computed: {
     ...mapGetters({
@@ -140,17 +134,9 @@ export default defineComponent({
       return appPages.filter((appPage: any) => (!appPage.meta || !appPage.meta.permissionId) || hasPermission(appPage.meta.permissionId));
     }
   },
-  watch:{
-    $route (to, from) {
-      // When logout and login it should point to Oth index
-      if (from.path === '/login') {
-        this.selectedIndex = 0;
-      }
-    },
-  }, 
   setup() {
     const store = useStore();
-    const selectedIndex = ref(0);
+    const router = useRouter();
     let appPages = [
       {
         title: "Pipeline",
@@ -254,11 +240,17 @@ export default defineComponent({
         iosIcon: settingsOutline,
         mdIcon: settingsOutline,
         dependsOnBaseURL: true
-      },
-    ];
+      }
+    ] as any;
     if (process.env.VUE_APP_BASE_URL) {
-      appPages = appPages.filter((page) => page.dependsOnBaseURL);
+      appPages = appPages.filter((page : any) => page.dependsOnBaseURL);
     }
+
+    const selectedIndex = computed(() => {
+      const path = router.currentRoute.value.path
+      return appPages.findIndex((screen : any) => screen.url === path || screen.childRoutes?.includes(path))
+    })
+
     return {
       albumsOutline,
       appPages,
@@ -275,7 +267,7 @@ export default defineComponent({
       terminalOutline,
       ticketOutline,
     };
-  },
+  }
 });
 </script>
 
