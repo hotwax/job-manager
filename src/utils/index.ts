@@ -202,8 +202,13 @@ const isCustomRunTime = (value: number) => {
   return !generateAllowedRunTimes().some((runTime: any) => runTime.value === value)
 }
 
+const getNowTimestamp = () => {
+  return DateTime.now().toISO();
+}
+
 export {
   isCustomRunTime,
+  getNowTimestamp,
   generateAllowedFrequencies,
   generateAllowedRunTimes,
   handleDateTimeInput,

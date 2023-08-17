@@ -37,7 +37,7 @@
     </ion-radio-group>
     <ion-item>
       <ion-label position="fixed">{{ $t("Schedule") }}</ion-label>
-      <ion-datetime hour-cycle="h12" :value="currentBatch?.runTime ? getDateTime(currentBatch.runTime) : ''" @ionChange="updateRunTime($event)" presentation="time" size="cover" />
+      <ion-datetime hour-cycle="h12" :value="currentBatch?.runTime ? getDateTime(currentBatch.runTime) : getNowTimestamp()" @ionChange="updateRunTime($event)" presentation="time" size="cover" />
     </ion-item>    
     <ion-fab @click="updateJob()" vertical="bottom" horizontal="end" slot="fixed">
       <ion-fab-button>
@@ -72,7 +72,7 @@ import { defineComponent } from 'vue';
 import { closeOutline, checkmarkDoneOutline } from 'ionicons/icons';
 import { mapGetters, useStore } from 'vuex';
 import { DateTime } from 'luxon';
-import { handleDateTimeInput, isFutureDate, showToast } from '@/utils';
+import { handleDateTimeInput, isFutureDate, showToast, getNowTimestamp } from '@/utils';
 import { translate } from '@/i18n'
 export default defineComponent({
   name: 'BatchModal',
@@ -179,7 +179,8 @@ export default defineComponent({
     return {
       checkmarkDoneOutline,
       closeOutline,
-      store
+      store,
+      getNowTimestamp
     };
   },
 });

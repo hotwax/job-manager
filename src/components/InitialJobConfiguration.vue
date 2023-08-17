@@ -24,7 +24,7 @@
             <ion-datetime
               show-default-buttons
               hour-cycle="h23"
-              :value="runTime ? (isCustomRunTime(runTime) ? getDateTime(runTime) : getDateTime(DateTime.now().toMillis() + runTime)) : ''"
+              :value="runTime ? (isCustomRunTime(runTime) ? getDateTime(runTime) : getDateTime(DateTime.now().toMillis() + runTime)) : getNowTimestamp()"
               @ionChange="updateCustomTime($event)"
             />
           </ion-content>
@@ -60,7 +60,7 @@
             <ion-datetime          
               show-default-buttons
               hour-cycle="h12"
-              :value="runTime ? (isCustomRunTime(runTime) ? getDateTime(runTime) : getDateTime(DateTime.now().toMillis() + runTime)) : ''"
+              :value="runTime ? (isCustomRunTime(runTime) ? getDateTime(runTime) : getDateTime(DateTime.now().toMillis() + runTime)) : getNowTimestamp()"
               @ionChange="updateCustomTime($event)"
             />
           </ion-content>
@@ -125,7 +125,7 @@ import {
 import { mapGetters, useStore } from "vuex";
 import { translate } from "@/i18n";
 import { DateTime } from 'luxon';
-import { isCustomRunTime, generateAllowedRunTimes, handleDateTimeInput, isFutureDate, showToast } from '@/utils';
+import { isCustomRunTime, getNowTimestamp, generateAllowedRunTimes, handleDateTimeInput, isFutureDate, showToast } from '@/utils';
 import { Actions, hasPermission } from '@/authorization'
 import { JobService } from "@/services/JobService";
 
@@ -216,7 +216,7 @@ export default defineComponent({
 
       // Handling the case for 'Now'. Sending the now value will fail the API as by the time
       // the job is ran, the given 'now' time would have passed. Hence, passing empty 'run time'
-      job.runTime = !isCustomRunTime(this.runTime) ? DateTime.now().toMillis() + this.runTime : this.runTime
+      job.runTime = this.runTime != 0 ? (!isCustomRunTime(this.runTime) ? DateTime.now().toMillis() + this.runTime : this.runTime) : ''
 
       // if job runTime is not a valid date then making runTime as empty
       if (job?.runTime && !isFutureDate(job?.runTime)) {
@@ -268,6 +268,7 @@ export default defineComponent({
       flagOutline,
       hasPermission,
       isCustomRunTime,
+      getNowTimestamp,
       sendOutline,
       store,
       timeOutline
