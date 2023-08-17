@@ -30,7 +30,7 @@
             <ion-datetime          
               show-default-buttons
               hour-cycle="h23"
-              :value="runTime ? (isCustomRunTime(runTime) ? getDateTime(DateTime.now().toMillis()) : getDateTime(DateTime.now().toMillis() + runTime)) : getNowTimestamp()"
+              :value="runTime ? (isCustomRunTime(runTime) ? getDateTime(runTime) : getDateTime(DateTime.now().toMillis() + runTime)) : getNowTimestamp()"
               @ionChange="updateCustomTime($event)"
             />
           </ion-content>
