@@ -216,7 +216,7 @@ export default defineComponent({
 
       // Handling the case for 'Now'. Sending the now value will fail the API as by the time
       // the job is ran, the given 'now' time would have passed. Hence, passing empty 'run time'
-      job.runTime = !isCustomRunTime(this.runTime) ? DateTime.now().toMillis() + this.runTime : this.runTime
+      job.runTime = this.runTime != 0 ? (!isCustomRunTime(this.runTime) ? DateTime.now().toMillis() + this.runTime : this.runTime) : ''
 
       // if job runTime is not a valid date then making runTime as empty
       if (job?.runTime && !isFutureDate(job?.runTime)) {
