@@ -82,7 +82,7 @@ import {
 } from "@ionic/vue";
 import { computed, defineComponent } from "vue";
 import { mapGetters } from "vuex";
-import { albumsOutline, barChartOutline, calendarNumberOutline, iceCreamOutline, libraryOutline, pulseOutline, settingsOutline, shirtOutline, terminalOutline, ticketOutline } from "ionicons/icons";
+import { albumsOutline, barChartOutline, calendarNumberOutline, compassOutline, iceCreamOutline, libraryOutline, pulseOutline, settingsOutline, shirtOutline, terminalOutline, ticketOutline } from "ionicons/icons";
 import { useStore } from "@/store";
 import emitter from "@/event-bus"
 import { hasPermission } from "@/authorization";
@@ -179,6 +179,16 @@ export default defineComponent({
         }
       },
       {
+        title: "Brokering",
+        url: "/brokering",
+        iosIcon: compassOutline,
+        mdIcon: compassOutline,
+        dependsOnBaseURL: false,
+        meta: {
+          permissionId: "APP_BROKERING_VIEW"
+        }
+      },
+      {
         title: "Inventory",
         url: "/inventory",
         iosIcon: albumsOutline,
@@ -254,6 +264,7 @@ export default defineComponent({
     return {
       albumsOutline,
       appPages,
+      compassOutline,
       barChartOutline,
       calendarNumberOutline,
       hasPermission,
