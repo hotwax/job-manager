@@ -283,8 +283,13 @@ const generateJobCustomOptions = (job: any) => {
   }
 }
 
+const getNowTimestamp = () => {
+  return DateTime.now().toISO();
+}
+
 export {
   isCustomRunTime,
+  getNowTimestamp,
   generateAllowedFrequencies,
   generateAllowedRunTimes,
   generateJobCustomParameters,

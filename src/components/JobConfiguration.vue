@@ -30,7 +30,7 @@
             <ion-datetime          
               show-default-buttons
               hour-cycle="h23"
-              :value="runTime ? (isCustomRunTime(runTime) ? getDateTime(runTime) : getDateTime(DateTime.now().toMillis() + runTime)) : ''"
+              :value="runTime ? (isCustomRunTime(runTime) ? getDateTime(runTime) : getDateTime(DateTime.now().toMillis() + runTime)) : getNowTimestamp()"
               @ionChange="updateCustomTime($event)"
             />
           </ion-content>
@@ -145,7 +145,7 @@ import {
 } from "ionicons/icons";
 import JobHistoryModal from '@/components/JobHistoryModal.vue'
 import { Plugins } from '@capacitor/core';
-import { isCustomRunTime, generateAllowedRunTimes, generateAllowedFrequencies, generateJobCustomParameters, generateJobCustomOptions, handleDateTimeInput, showToast, hasError } from "@/utils";
+import { isCustomRunTime, generateAllowedRunTimes, generateAllowedFrequencies, generateJobCustomParameters, generateJobCustomOptions, getNowTimestamp, handleDateTimeInput, showToast, hasError } from "@/utils";
 import { mapGetters, useStore } from "vuex";
 import { DateTime } from 'luxon';
 import { translate } from '@/i18n'
@@ -327,7 +327,7 @@ export default defineComponent({
 
       // Handling the case for 'Now'. Sending the now value will fail the API as by the time
       // the job is ran, the given 'now' time would have passed. Hence, passing empty 'run time'
-      job.runTime = !isCustomRunTime(this.runTime) ? DateTime.now().toMillis() + this.runTime : this.runTime
+      job.runTime = this.runTime != 0 ? (!isCustomRunTime(this.runTime) ? DateTime.now().toMillis() + this.runTime : this.runTime) : ''
 
       if (job?.statusId === 'SERVICE_DRAFT') {
         const jobCustomParameters = generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters, job.runtimeData)
@@ -444,7 +444,7 @@ export default defineComponent({
     },
     async openJobCustomParameterModal() {
       const jobParameterModal = await modalController.create({
-        component: JobParameterModal,
+      component: JobParameterModal,
         componentProps: { customOptionalParameters: this.customOptionalParameters, customRequiredParameters: this.customRequiredParameters, currentJob: this.currentJob },
         breakpoints: [0, 0.25, 0.5, 0.75, 1],
         initialBreakpoint: 0.75
@@ -466,6 +466,7 @@ export default defineComponent({
       flashOutline,
       hasPermission,
       isCustomRunTime,
+      getNowTimestamp,
       timeOutline,
       timerOutline,
       store,

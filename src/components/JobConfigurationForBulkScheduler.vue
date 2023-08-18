@@ -28,7 +28,7 @@
           <ion-datetime 
             show-default-buttons 
             hour-cycle="h23" 
-            :value="job.runTime ? (isCustomRunTime(job.runTime) ? getDateTime(job.runTime) : getDateTime(DateTime.now().toMillis() + job.runTime)) : ''"
+            :value="job.runTime ? (isCustomRunTime(job.runTime) ? getDateTime(job.runTime) : getDateTime(DateTime.now().toMillis() + job.runTime)) : getNowTimestamp()"
             @ionChange="updateCustomTime($event)"
           />
         </ion-content>
@@ -79,7 +79,7 @@ import {
   closeOutline
 } from "ionicons/icons";
 import { mapGetters, useStore } from "vuex";
-import { isCustomRunTime, generateAllowedRunTimes, generateAllowedFrequencies, handleDateTimeInput, showToast } from "@/utils";
+import { isCustomRunTime, getNowTimestamp, generateAllowedRunTimes, generateAllowedFrequencies, handleDateTimeInput, showToast } from "@/utils";
 import { DateTime } from 'luxon';
 import { translate } from '@/i18n'
 import { Actions, hasPermission } from '@/authorization'
@@ -207,6 +207,7 @@ export default defineComponent({
       DateTime,
       flashOutline,
       isCustomRunTime,
+      getNowTimestamp,
       timeOutline,
       timerOutline,
       store,
