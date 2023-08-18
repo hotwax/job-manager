@@ -2,6 +2,7 @@ import saveAs from "file-saver";
 import { toastController } from '@ionic/vue';
 import Papa from 'papaparse'
 import { DateTime } from "luxon";
+import logger from "@/logger";
 
 // TODO Use separate files for specific utilities
 
@@ -198,8 +199,88 @@ const generateAllowedRunTimes = () => {
   }]
 }
 
+// converts the entered value to the expected type used by the service
+const convertValue = (parameter: any) => {
+  const value = parameter.value.trim();
+
+  if(!value) {
+    return ''
+  }
+
+  // TODO: add support to convert timestamp and double
+  try {
+    if(parameter.type === 'Map' || parameter.type === 'List' || parameter.type === 'Object') {
+      return JSON.parse(JSON.stringify(value))
+    } else if(parameter.type === 'String' || parameter.type === 'Date' || parameter.type === 'Time') {
+      return value
+    } else {
+      return JSON.parse(value);
+    }
+  } catch {
+    logger.error('Unable to parse the defined value', value)
+    return value;
+  }
+}
+
 const isCustomRunTime = (value: number) => {
   return !generateAllowedRunTimes().some((runTime: any) => runTime.value === value)
+}
+
+// preparing the parameters for the job, by checking whether the job has supported making
+// changes in the custom parameters or not and honoring runTimeData properties as well
+const generateJobCustomParameters = (requiredParameters: any, optionalParameters: any, runtimeData: any) => {
+  // preparing the custom parameters those needs to passed with the job
+  const jobCustomParameters = {} as any;
+  const jobRuntimeData = runtimeData ? JSON.parse(JSON.stringify(runtimeData)) : {} // deep cloning the runtimeData as to avoid side effects in the original data
+
+  // assigning '' (empty string) to all the runtimeData properties whose value is "null"
+  Object.keys(jobRuntimeData).map((key: any) => {
+    if (jobRuntimeData[key] === 'null' ) jobCustomParameters[key] = ''
+    else jobCustomParameters[key] = jobRuntimeData[key] // not converting runtimeData value as the value in runtimeData will be in correct format
+  })
+
+  requiredParameters.map((parameter: any) => {
+    jobCustomParameters[parameter.name] = convertValue(parameter)
+  })
+
+  optionalParameters.map((parameter: any) => {
+    // added this check to not show those optional params in the configuration card whose value is left empty in the parameter modal
+    if(parameter.value.trim()) {
+      jobCustomParameters[parameter.name] = convertValue(parameter)
+    }
+  })
+  return jobCustomParameters;
+}
+
+const generateJobCustomOptions = (job: any) => {
+  let inputParameters = job?.serviceInParams ? JSON.parse(JSON.stringify(job?.serviceInParams)) : []
+  const optionalParameters: Array<any> = [];
+  const requiredParameters: Array<any> = [];
+
+  // removing some fields that we don't want user to edit, and for which the values will be added programatically
+  const excludeParameters = ['productStoreId', 'shopId', 'shopifyConfigId']
+  inputParameters = inputParameters.filter((parameter: any) =>!excludeParameters.includes(parameter.name))
+
+  inputParameters.map((parameter: any) => {
+    if(parameter.optional) {
+      optionalParameters.push({
+        name: parameter.name,
+        value: job?.runtimeData && job?.runtimeData[parameter.name] && job?.runtimeData[parameter.name] !== 'null' ? '' + job?.runtimeData[parameter.name] : '',   // added check for null as we don't want to pass null as a value in the params
+        type: parameter.type
+      })
+    } else {
+      requiredParameters.push({
+        name: parameter.name,
+        value: job?.runtimeData && job?.runtimeData[parameter.name] && job?.runtimeData[parameter.name] !== 'null' ? '' + job?.runtimeData[parameter.name] : '',   // added check for null as we don't want to pass null as a value in the params
+        type: parameter.type
+      })
+    }
+  })
+
+  return {
+    optionalParameters,
+    requiredParameters
+  }
 }
 
 const getNowTimestamp = () => {
@@ -211,6 +292,8 @@ export {
   getNowTimestamp,
   generateAllowedFrequencies,
   generateAllowedRunTimes,
+  generateJobCustomParameters,
+  generateJobCustomOptions,
   handleDateTimeInput,
   showToast,
   hasError,

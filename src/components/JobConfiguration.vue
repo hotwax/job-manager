@@ -45,6 +45,21 @@
         </ion-select>
       </ion-item>
 
+      <ion-item lines="none">
+        <ion-chip @click="openJobCustomParameterModal" outline v-if="!Object.keys(generateCustomParameters).length">
+          <ion-icon :icon="addOutline" />
+          <ion-label>{{ $t('Add custom parameters') }}</ion-label>
+        </ion-chip>
+        <ion-row v-else>
+          <ion-chip @click="openJobCustomParameterModal" outline :color="value ? undefined :'danger'" :key="name" v-for="(value, name) in generateCustomParameters">
+            {{ name }} : {{ value }}
+          </ion-chip>
+        </ion-row>
+        <ion-button @click="openJobCustomParameterModal" id="open-modal" slot="end" fill="clear">
+          <ion-icon slot="icon-only" :icon="listCircleOutline"/>
+        </ion-button>
+      </ion-item>
+
       <!-- TODO: enable this feature of passing count when supported on backend -->
       <!-- <ion-item>
         <ion-icon slot="start" :icon="syncOutline" />
@@ -64,14 +79,14 @@
         <ion-button size="small" fill="outline" color="danger" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || currentJob.statusId === 'SERVICE_DRAFT'" @click="cancelJob(currentJob)">{{ $t("Disable") }}</ion-button>
       </div>
       <div>
-        <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" size="small" fill="outline" @click="saveChanges()">{{ $t("Save changes") }}</ion-button>
+        <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || isRequiredParametersMissing" size="small" fill="outline" @click="saveChanges()">{{ $t("Save changes") }}</ion-button>
       </div>
     </div>
 
     <div class=" actions mobile-only">
       <ion-button size="small" expand="block" fill="outline" color="medium" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || status === 'SERVICE_DRAFT'" @click="skipJob(currentJob)">{{ $t("Skip once") }}</ion-button>
       <ion-button size="small" expand="block" fill="outline" color="danger" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || status === 'SERVICE_DRAFT'" @click="cancelJob(currentJob)">{{ $t("Disable") }}</ion-button>
-      <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" expand="block" @click="saveChanges()">{{ $t("Save changes") }}</ion-button>
+      <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || isRequiredParametersMissing" expand="block" @click="saveChanges()">{{ $t("Save changes") }}</ion-button>
     </div>
   </section>
   <div class="more-actions">
@@ -102,6 +117,7 @@ import {
   IonBadge,
   IonButton,
   IonCheckbox,
+  IonChip,
   IonContent,
   IonDatetime,
   IonIcon,
@@ -109,14 +125,17 @@ import {
   IonLabel,
   IonList,
   IonModal,
+  IonRow,
   IonSelect,
   IonSelectOption,
   alertController,
   modalController,
 } from "@ionic/vue";
 import {
+  addOutline,
   calendarClearOutline,
   flashOutline,
+  listCircleOutline,
   copyOutline,
   timeOutline,
   timerOutline,
@@ -126,7 +145,7 @@ import {
 } from "ionicons/icons";
 import JobHistoryModal from '@/components/JobHistoryModal.vue'
 import { Plugins } from '@capacitor/core';
-import { isCustomRunTime, getNowTimestamp, generateAllowedRunTimes, generateAllowedFrequencies, handleDateTimeInput, showToast, hasError } from "@/utils";
+import { isCustomRunTime, generateAllowedRunTimes, generateAllowedFrequencies, generateJobCustomParameters, generateJobCustomOptions, getNowTimestamp, handleDateTimeInput, showToast, hasError } from "@/utils";
 import { mapGetters, useStore } from "vuex";
 import { DateTime } from 'luxon';
 import { translate } from '@/i18n'
@@ -134,12 +153,14 @@ import { useRouter } from "vue-router";
 import emitter from '@/event-bus';
 import { Actions, hasPermission } from '@/authorization'
 import CustomFrequencyModal from '@/components/CustomFrequencyModal.vue';
+import JobParameterModal from '@/components/JobParameterModal.vue'
 
 export default defineComponent({
   name: "JobConfiguration",
   components: {
     IonBadge,
     IonButton,
+    IonChip,
     IonContent,
     IonDatetime,
     IonIcon,
@@ -147,6 +168,7 @@ export default defineComponent({
     IonLabel,
     IonList,
     IonModal,
+    IonRow,
     IonSelect,
     IonSelectOption,
     IonCheckbox
@@ -157,13 +179,17 @@ export default defineComponent({
       runTime: '' as any,
       runTimes: [] as any,
       jobStatus: this.status,
-      frequencyOptions: [] as any
+      frequencyOptions: [] as any,
+      customOptionalParameters: [] as any,
+      customRequiredParameters: [] as any
     }
   },
   mounted() {
     this.runTime = this.currentJob?.runTime
     this.generateRunTimes(this.runTime)
     this.generateFrequencyOptions(this.jobStatus)
+    this.customOptionalParameters = generateJobCustomOptions(this.currentJob).optionalParameters;
+    this.customRequiredParameters = generateJobCustomOptions(this.currentJob).requiredParameters;
   },
   updated() {
     // When updating the job, the job is fetched again with the latest values
@@ -182,7 +208,14 @@ export default defineComponent({
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
       currentEComStore: 'user/getCurrentEComStore',
       currentJob: 'job/getCurrentJob',
-    })
+    }),
+    isRequiredParametersMissing() {
+      return this.customRequiredParameters.some((parameter: any) => !parameter.value?.trim())
+    },
+    generateCustomParameters() {
+      // passing runTimeData params as empty, as we don't need to show the runTimeData information on UI as all the options from runtimeData might not be available in serviceInParams
+      return generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters, {})
+    }
   },
   methods: {
     getDateTime(time: any) {
@@ -297,10 +330,14 @@ export default defineComponent({
       job.runTime = this.runTime != 0 ? (!isCustomRunTime(this.runTime) ? DateTime.now().toMillis() + this.runTime : this.runTime) : ''
 
       if (job?.statusId === 'SERVICE_DRAFT') {
-        this.store.dispatch('job/scheduleService', job).then((job: any) => {
+        const jobCustomParameters = generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters, job.runtimeData)
+
+        this.store.dispatch('job/scheduleService', { job, jobCustomParameters }).then((job: any) => {
           if(job?.jobId) {
             emitter.emit('jobUpdated');
             const category = this.$route.params.category;
+            this.customOptionalParameters = generateJobCustomOptions(this.currentJob).optionalParameters;
+            this.customRequiredParameters = generateJobCustomOptions(this.currentJob).requiredParameters;
             if (category) {
               this.router.push({ name: 'JobDetails', params: { jobId: job?.jobId, category: category }, replace: true });
             }
@@ -309,6 +346,8 @@ export default defineComponent({
       } else if (job?.statusId === 'SERVICE_PENDING') {
         this.store.dispatch('job/updateJob', job).then((resp) => {
           if (resp) {
+            this.customOptionalParameters = generateJobCustomOptions(this.currentJob).optionalParameters;
+            this.customRequiredParameters = generateJobCustomOptions(this.currentJob).requiredParameters;
             emitter.emit('jobUpdated');
           }
         })
@@ -359,7 +398,10 @@ export default defineComponent({
               text: this.$t('Run now'),
               handler: () => {
                 if (job) {
-                  this.store.dispatch('job/runServiceNow', job)
+                  // preparing the custom parameters those needs to passed with the job
+                  const jobCustomParameters = generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters, job.runtimeData)
+
+                  this.store.dispatch('job/runServiceNow', { job, jobCustomParameters })
                 }
               }
             }
@@ -399,6 +441,15 @@ export default defineComponent({
       const setTime = handleDateTimeInput(event.detail.value);
       if (setTime > currTime) this.generateRunTimes(setTime)
       else showToast(translate("Provide a future date and time"))
+    },
+    async openJobCustomParameterModal() {
+      const jobParameterModal = await modalController.create({
+      component: JobParameterModal,
+        componentProps: { customOptionalParameters: this.customOptionalParameters, customRequiredParameters: this.customRequiredParameters, currentJob: this.currentJob },
+        breakpoints: [0, 0.25, 0.5, 0.75, 1],
+        initialBreakpoint: 0.75
+      });
+      await jobParameterModal.present();
     }
   },
   setup() {
@@ -407,9 +458,11 @@ export default defineComponent({
 
     return {
       Actions,
+      addOutline,
       calendarClearOutline,
       copyOutline,
       DateTime,
+      listCircleOutline,
       flashOutline,
       hasPermission,
       isCustomRunTime,
@@ -466,7 +519,7 @@ ion-label:nth-child(3) {
   cursor: pointer;
 }
 
-ion-modal {
+ion-modal.date-time-modal {
   --width: 290px;
   --height: 440px;
   --border-radius: 8px;

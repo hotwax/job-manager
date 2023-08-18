@@ -182,7 +182,7 @@ import { mapGetters } from "vuex";
 import { useRouter } from 'vue-router'
 import { alertController } from '@ionic/vue';
 import JobConfiguration from '@/components/JobConfiguration.vue'
-import { isFutureDate, showToast, prepareRuntime } from '@/utils';
+import { generateJobCustomParameters, isFutureDate, showToast, prepareRuntime } from '@/utils';
 import emitter from '@/event-bus';
 import { translate } from '@/i18n';
 import MoreJobs from '@/components/MoreJobs.vue';
@@ -277,7 +277,8 @@ export default defineComponent({
         this.store.dispatch('job/cancelJob', job)
       } else if (job?.status === 'SERVICE_DRAFT') {
         job.runTime = prepareRuntime(job)
-        this.store.dispatch('job/scheduleService', job)
+        const jobCustomParameters = generateJobCustomParameters([], [], job.runtimeData)
+        this.store.dispatch('job/scheduleService', { job, jobCustomParameters })
       } else if (job?.status === 'SERVICE_PENDING') {
         this.store.dispatch('job/updateJob', job)
       }
@@ -297,7 +298,8 @@ export default defineComponent({
               text: this.$t('Run now'),
               handler: () => {
                 if (job) {
-                  this.store.dispatch('job/runServiceNow', job)
+                  const jobCustomParameters = generateJobCustomParameters([], [], job.runtimeData)
+                  this.store.dispatch('job/runServiceNow', { job, jobCustomParameters })
                 }
               }
             }

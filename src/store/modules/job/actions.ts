@@ -235,7 +235,7 @@ const actions: ActionTree<JobState, RootState> = {
           let jobs = resp.data.docs.map((job: any) => {
             return {
               ...job,
-              'status': job?.statusId
+              'status': job?.statusId,
             }
           })
           if(payload.viewIndex && payload.viewIndex > 0){
@@ -531,8 +531,10 @@ const actions: ActionTree<JobState, RootState> = {
     return resp;
   },
 
-  async scheduleService({ dispatch, commit }, job) {
+  async scheduleService({ dispatch, commit }, params) {
     let resp;
+
+    const job = params.job
 
     const payload = {
       'JOB_NAME': job.jobName,
@@ -550,7 +552,8 @@ const actions: ActionTree<JobState, RootState> = {
         'recurrenceTimeZone': this.state.user.current.userTimeZone
       },
       'statusId': "SERVICE_PENDING",
-      'systemJobEnumId': job.systemJobEnumId
+      'systemJobEnumId': job.systemJobEnumId,
+      ...params.jobCustomParameters
     } as any
     
     const jobRunTimeDataKeys = job?.runtimeData ? Object.keys(job?.runtimeData) : [];
@@ -572,13 +575,8 @@ const actions: ActionTree<JobState, RootState> = {
     job?.runTime && (payload['SERVICE_TIME'] = job.runTime.toString())
     job?.sinceId && (payload['sinceId'] = job.sinceId)
 
-    // assigning '' (empty string) to all the runtimeData properties whose value is "null"
-    job.runtimeData && Object.keys(job.runtimeData).map((key: any) => {
-      if (job.runtimeData[key] === 'null' ) job.runtimeData[key] = ''
-    })
-
     try {
-      resp = await JobService.scheduleJob({ ...job.runtimeData, ...payload });
+      resp = await JobService.scheduleJob({ ...payload });
       if (resp.status == 200 && !hasError(resp)) {
         showToast(translate('Service has been scheduled'));
         const fetchJobsResponses = await dispatch('fetchJobs', {
@@ -589,8 +587,8 @@ const actions: ActionTree<JobState, RootState> = {
           orderBy: "runTime ASC"
         })
         const fetchJobsResponse = fetchJobsResponses.find((fetchJobsResponse: any) => {
-          return !hasError(fetchJobsResponse) && 
-              fetchJobsResponse.data?.docs?.length && 
+          return !hasError(fetchJobsResponse) &&
+              fetchJobsResponse.data?.docs?.length &&
               fetchJobsResponse.data?.docs[0].statusId == "SERVICE_PENDING";
         });
         if(fetchJobsResponse) {
@@ -662,8 +660,10 @@ const actions: ActionTree<JobState, RootState> = {
     return resp;
   },
 
-  async runServiceNow({ dispatch }, job) {
+  async runServiceNow({ dispatch }, params) {
     let resp;
+
+    const job = params.job
 
     const payload = {
       'JOB_NAME': job.jobName,
@@ -678,7 +678,8 @@ const actions: ActionTree<JobState, RootState> = {
         'recurrenceTimeZone': this.state.user.current.userTimeZone,
       },
       'statusId': "SERVICE_PENDING",
-      'systemJobEnumId': job.systemJobEnumId
+      'systemJobEnumId': job.systemJobEnumId,
+      ...params.jobCustomParameters
     } as any
     // checking if the runtimeData has productStoreId, and if present then adding it on root level
     job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = job.status === "SERVICE_PENDING" ? job.productStoreId : this.state.user.currentEComStore.productStoreId)
@@ -700,13 +701,8 @@ const actions: ActionTree<JobState, RootState> = {
       payload['jobFields']['shopId'] = job.status === "SERVICE_PENDING" ? job.shopId : shopifyConfig?.shopId;
     }
 
-    // assigning '' (empty string) to all the runtimeData properties whose value is "null"
-    job.runtimeData && Object.keys(job.runtimeData).map((key: any) => {
-      if (job.runtimeData[key] === 'null' ) job.runtimeData[key] = ''
-    })
-
     try {
-      resp = await JobService.scheduleJob({ ...job.runtimeData, ...payload });
+      resp = await JobService.scheduleJob({ ...payload });
       if (resp.status == 200 && !hasError(resp)) {
         showToast(translate('Service has been scheduled'))
       } else {
@@ -778,7 +774,7 @@ const actions: ActionTree<JobState, RootState> = {
           "jobId": payload?.jobId
         } as any,
         "viewSize": 1,
-        "fieldList": ["systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "description", "enumName"],
+        "fieldList": ["systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "description", "enumName", "runtimeDataId"],
         "noConditionFind": "Y"
       }
       resp = await JobService.fetchJobInformation(params);

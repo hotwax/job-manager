@@ -30,9 +30,24 @@
           </ion-content>
         </ion-modal>
       </ion-item>
+
+      <ion-item lines="none">
+        <ion-chip @click="openJobCustomParameterModal" outline v-if="!Object.keys(generateCustomParameters).length">
+          <ion-icon :icon="addOutline" />
+          <ion-label>{{ $t('Add custom parameters') }}</ion-label>
+        </ion-chip>
+        <ion-row v-else>
+          <ion-chip @click="openJobCustomParameterModal" outline :color="value ? undefined :'danger'" :key="name" v-for="(value, name) in generateCustomParameters">
+            {{ name }} : {{ value }}
+          </ion-chip>
+        </ion-row>
+        <ion-button @click="openJobCustomParameterModal" id="open-modal" slot="end" fill="clear">
+          <ion-icon slot="icon-only" :icon="listCircleOutline"/>
+        </ion-button>
+      </ion-item>
     </ion-list>
 
-    <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" size="small" fill="outline" expand="block" @click="runJob('Products')">{{ $t("Run import") }}</ion-button>
+    <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || isRequiredParametersMissing" size="small" fill="outline" expand="block" @click="runJob('Products')">{{ $t("Run import") }}</ion-button>
   </section>
 
   <section v-else>
@@ -94,9 +109,24 @@
         <ion-label class="ion-text-wrap">{{ $t("Last Shopify Order ID") }}</ion-label>
         <ion-input v-model="lastShopifyOrderId" :placeholder="$t('Internal Shopify Order ID')" />
       </ion-item>
+
+      <ion-item lines="none">
+        <ion-chip @click="openJobCustomParameterModal" outline v-if="!Object.keys(generateCustomParameters).length">
+          <ion-icon :icon="addOutline" />
+          <ion-label>{{ $t('Add custom parameters') }}</ion-label>
+        </ion-chip>
+        <ion-row v-else>
+          <ion-chip @click="openJobCustomParameterModal" outline :color="value ? undefined :'danger'" :key="name" v-for="(value, name) in generateCustomParameters">
+            {{ name }} : {{ value }}
+          </ion-chip>
+        </ion-row>
+        <ion-button @click="openJobCustomParameterModal" id="open-modal" slot="end" fill="clear">
+          <ion-icon slot="icon-only" :icon="listCircleOutline"/>
+        </ion-button>
+      </ion-item>
     </ion-list>
 
-    <ion-button size="small" fill="outline" expand="block" :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" @click="runJob('Orders')">{{ $t("Run import") }}</ion-button>
+    <ion-button size="small" fill="outline" expand="block" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || isRequiredParametersMissing" @click="runJob('Orders')">{{ $t("Run import") }}</ion-button>
   </section>
 </template>
 
@@ -105,6 +135,7 @@ import { defineComponent } from "vue";
 import {
   alertController,
   IonButton,
+  IonChip,
   IonContent,
   IonDatetime,
   IonIcon,
@@ -113,26 +144,32 @@ import {
   IonLabel,
   IonList,
   IonModal,
+  IonRow,
   IonSelect,
   IonSelectOption,
+  modalController
 } from "@ionic/vue";
 import {
+  addOutline,
   calendarClearOutline,
   flagOutline,
+  listCircleOutline,
   sendOutline,
   timeOutline,
 } from "ionicons/icons";
 import { mapGetters, useStore } from "vuex";
 import { translate } from "@/i18n";
 import { DateTime } from 'luxon';
-import { isCustomRunTime, getNowTimestamp, generateAllowedRunTimes, handleDateTimeInput, isFutureDate, showToast } from '@/utils';
+import { isCustomRunTime, generateAllowedRunTimes, generateJobCustomParameters, generateJobCustomOptions, getNowTimestamp, handleDateTimeInput, isFutureDate, showToast } from '@/utils';
 import { Actions, hasPermission } from '@/authorization'
 import { JobService } from "@/services/JobService";
+import JobParameterModal from '@/components/JobParameterModal.vue'
 
 export default defineComponent({
   name: "InitialJobConfiguration",
   components: {
     IonButton,
+    IonChip,
     IonContent,
     IonDatetime,
     IonIcon,
@@ -141,6 +178,7 @@ export default defineComponent({
     IonLabel,
     IonList,
     IonModal,
+    IonRow,
     IonSelect,
     IonSelectOption
   },
@@ -153,6 +191,8 @@ export default defineComponent({
       jobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
       runTime: '' as any,
       runTimes: [] as any,
+      customOptionalParameters: [] as any,
+      customRequiredParameters: [] as any
     }
   },
   mounted() {
@@ -162,13 +202,22 @@ export default defineComponent({
       // Appendng and setting the previous run time
       this.runTime = this.currentJob?.runTime
       this.generateRunTimes(this.runTime)
+
+      this.customOptionalParameters = generateJobCustomOptions(this.currentJob).optionalParameters;
+      this.customRequiredParameters = generateJobCustomOptions(this.currentJob).requiredParameters;
     }
   },
   props: ['type', 'shopifyOrderId'],
   computed: {
     ...mapGetters({
       currentJob: 'job/getCurrentJob',
-    })
+    }),
+    isRequiredParametersMissing() {
+      return this.customRequiredParameters.some((parameter: any) => !parameter.value?.trim())
+    },
+    generateCustomParameters() {
+      return generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters, {})
+    }
   },
   methods: {
     async generateRunTimes(currentRunTime?: any) {
@@ -222,8 +271,10 @@ export default defineComponent({
       if (job?.runTime && !isFutureDate(job?.runTime)) {
         job.runTime = ''
       }
+
       if (job?.statusId === 'SERVICE_DRAFT') {
-        this.store.dispatch('job/scheduleService', job)
+        const jobCustomParameters = generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters, job.runtimeData)
+        this.store.dispatch('job/scheduleService', { job, jobCustomParameters })
       } else if (job?.statusId === 'SERVICE_PENDING') {
         this.store.dispatch('job/updateJob', job)
       }
@@ -248,6 +299,15 @@ export default defineComponent({
       const setTime = handleDateTimeInput(event.detail.value);
       if (setTime > currTime) this.generateRunTimes(setTime)
       else showToast(translate("Provide a future date and time"))
+    },
+    async openJobCustomParameterModal() {
+      const jobParameterModal = await modalController.create({
+        component: JobParameterModal,
+        componentProps: { customOptionalParameters: this.customOptionalParameters, customRequiredParameters: this.customRequiredParameters, currentJob: this.currentJob },
+        breakpoints: [0, 0.25, 0.5, 0.75, 1],
+        initialBreakpoint: 0.75
+      });
+      await jobParameterModal.present();
     }
   },
   setup() {
@@ -261,12 +321,14 @@ export default defineComponent({
 
     return {
       Actions,
+      addOutline,
       calendarClearOutline,
       customFulfillmentOptions,
       customOrderOptions,
       DateTime,
       flagOutline,
       hasPermission,
+      listCircleOutline,
       isCustomRunTime,
       getNowTimestamp,
       sendOutline,
@@ -312,7 +374,7 @@ ion-item:nth-child(2) > ion-label:nth-child(3) {
   }
 }
 
-ion-modal {
+ion-modal.date-time-modal {
   --width: 290px;
   --height: 440px;
   --border-radius: 8px;

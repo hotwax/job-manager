@@ -72,8 +72,9 @@ import { defineComponent } from 'vue';
 import { closeOutline, checkmarkDoneOutline } from 'ionicons/icons';
 import { mapGetters, useStore } from 'vuex';
 import { DateTime } from 'luxon';
-import { handleDateTimeInput, isFutureDate, showToast, getNowTimestamp } from '@/utils';
+import { handleDateTimeInput, generateJobCustomParameters, getNowTimestamp, isFutureDate, showToast } from '@/utils';
 import { translate } from '@/i18n'
+
 export default defineComponent({
   name: 'BatchModal',
   components: {
@@ -160,7 +161,8 @@ export default defineComponent({
         job.runTime = ''
       }
       if (job?.status === 'SERVICE_DRAFT') {
-        await this.store.dispatch('job/scheduleService', job)
+        const jobCustomParameters = generateJobCustomParameters([], [], job.runtimeData)
+        await this.store.dispatch('job/scheduleService', { job, jobCustomParameters })
       } else if (job?.status === 'SERVICE_PENDING') {
         await this.store.dispatch('job/updateJob', job)
       }

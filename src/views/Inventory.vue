@@ -72,7 +72,7 @@ import {
 import { defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
 import JobConfiguration from '@/components/JobConfiguration.vue'
-import { isFutureDate, showToast, prepareRuntime } from '@/utils';
+import { generateJobCustomParameters, isFutureDate, showToast, prepareRuntime } from '@/utils';
 import emitter from '@/event-bus';
 import { useRouter } from 'vue-router'
 import { translate } from '@/i18n';
@@ -171,7 +171,8 @@ export default defineComponent({
         this.store.dispatch('job/cancelJob', job)
       } else if (job?.status === 'SERVICE_DRAFT') {
         job.runTime = prepareRuntime(job)
-        this.store.dispatch('job/scheduleService', job)
+        const jobCustomParameters = generateJobCustomParameters([], [], job.runtimeData)
+        this.store.dispatch('job/scheduleService', { job, jobCustomParameters })
       } else if (job?.status === 'SERVICE_PENDING') {
         this.store.dispatch('job/updateJob', job)
       }
