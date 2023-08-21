@@ -1,5 +1,6 @@
 export default {
     "APP_PIPELINE_VIEW": "",
+    "APP_FULFILLMENT_VIEW": "",
     "APP_INVENTORY_VIEW": "",
     "APP_PRODUCT_VIEW": "",
     "APP_PREORDER_VIEW": "",
@@ -11,5 +12,5 @@ export default {
     "APP_BULK_EDITOR_VIEW": "COMMON_ADMIN",
     "APP_JOB_VIEW": "",
     "APP_JOB_UPDATE": "COMMON_ADMIN",
-    "APP_CUSTOM_FREQ_VIEW": "COMMON_ADMIN"
+    "APP_CUSTOM_FREQ_VIEW": "COMMON_ADMIN",
 } as any
