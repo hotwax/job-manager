@@ -14,9 +14,9 @@
               <ion-card-header>
                 <ion-card-title>{{ $t("Shipping") }}</ion-card-title>
               </ion-card-header>
-              <ion-item button @click="viewJobConfiguration({ id: 'HARD_SYNC', status: getJobStatus(jobEnums['HARD_SYNC']) })" detail>
+              <ion-item button @click="viewJobConfiguration({ id: 'SHIP_PKD_ODRS', status: getJobStatus(jobEnums['SHIP_PKD_ODRS']) })" detail>
                 <ion-label class="ion-text-wrap">{{ $t("Ship packed orders") }}</ion-label>
-                <ion-label slot="end">{{ getTemporalExpression('HARD_SYNC') }}</ion-label>
+                <ion-label slot="end">{{ getTemporalExpression('SHIP_PKD_ODRS') }}</ion-label>
               </ion-item>
               <ion-item lines="none">
                 <ion-label class="ion-text-wrap">
@@ -29,9 +29,9 @@
               <ion-card-header>
                 <ion-card-title>{{ $t("History") }}</ion-card-title>
               </ion-card-header>
-              <ion-item button @click="viewJobConfiguration({ id: 'HARD_SYNC', status: getJobStatus(jobEnums['HARD_SYNC']) })" detail>
+              <ion-item button @click="viewJobConfiguration({ id: 'ODR_FULFILLMENT', status: getJobStatus(jobEnums['ODR_FULFILLMENT']) })" detail>
                 <ion-label class="ion-text-wrap">{{ $t("Order fulfillment") }}</ion-label>
-                <ion-label slot="end">{{ getTemporalExpression('HARD_SYNC') }}</ion-label>
+                <ion-label slot="end">{{ getTemporalExpression('ODR_FULFILLMENT') }}</ion-label>
               </ion-item>
               <ion-item lines="none">
                 <ion-label class="ion-text-wrap">
