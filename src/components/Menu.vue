@@ -129,14 +129,16 @@ export default defineComponent({
     async setShopifyConfig(event: CustomEvent){
       await this.store.dispatch('user/setCurrentShopifyConfig', { 'shopifyConfigId': event.detail.value });
       emitter.emit("productStoreOrConfigChanged")
-    },
-    getValidMenuItems(appPages: any) {
-      return appPages.filter((appPage: any) => (!appPage.meta || !appPage.meta.permissionId) || hasPermission(appPage.meta.permissionId));
     }
   },
   setup() {
     const store = useStore();
     const router = useRouter();
+    
+    const getValidMenuItems = (appPages: any) => {
+      return appPages.filter((appPage: any) => (!appPage.meta || !appPage.meta.permissionId) || hasPermission(appPage.meta.permissionId));
+    }
+
     let appPages = [
       {
         title: "Pipeline",
@@ -258,7 +260,7 @@ export default defineComponent({
 
     const selectedIndex = computed(() => {
       const path = router.currentRoute.value.path
-      return appPages.findIndex((screen : any) => screen.url === path || screen.childRoutes?.includes(path))
+      return getValidMenuItems(appPages).findIndex((screen : any) => screen.url === path || screen.childRoutes?.includes(path))
     })
 
     return {
@@ -266,6 +268,7 @@ export default defineComponent({
       appPages,
       barChartOutline,
       calendarNumberOutline,
+      getValidMenuItems,
       hasPermission,
       iceCreamOutline,
       libraryOutline,
