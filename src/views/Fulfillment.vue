@@ -121,7 +121,7 @@
       IonToolbar,
       JobConfiguration,
       MoreJobs
-  },
+    },
     data() {
       return {
         jobEnums: JSON.parse(process.env?.VUE_APP_FULFILLMENT_JOB_ENUMS as string) as any,
