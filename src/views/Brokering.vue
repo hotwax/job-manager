@@ -235,6 +235,11 @@ export default defineComponent({
     async fetchJobs(){
       await this.store.dispatch("job/fetchJobs", {
         "inputFields": {
+          // If we fetch broker sys job by not passing systemJobEnumId filter then this api
+          // call will fetch all the broker jobs which includes batch jobs also and will cause an error (jobs is not iterable) 
+          // in getBatchJobs getters as jobs will be stored as objects in state
+          "systemJobEnumId": Object.values(this.batchJobEnums).map((jobEnum: any) => jobEnum.id),
+          "systemJobEnumId_op": "not_in",
           "enumTypeId": "BROKER_SYS_JOB"
         }
       });
