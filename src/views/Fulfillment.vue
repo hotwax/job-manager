@@ -140,7 +140,6 @@
       ...mapGetters({
         getJobStatus: 'job/getJobStatus',
         getJob: 'job/getJob',
-        currentShopifyConfig: 'user/getCurrentShopifyConfig',
         currentEComStore: 'user/getCurrentEComStore',
         getTemporalExpr: 'job/getTemporalExpr',
         getMoreJobs: 'job/getMoreJobs'
