@@ -34,7 +34,7 @@
         </ion-item>
       </ion-item-group>
       <ion-item v-else lines="none">
-        <ion-label class="ion-text-center" >There are no custom parameters for this job</ion-label>
+        <ion-label class="ion-text-center" >This job does not have any custom parameters.</ion-label>
       </ion-item>
     </ion-list>
   </ion-content>
