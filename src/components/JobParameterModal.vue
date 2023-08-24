@@ -9,8 +9,8 @@
   </ion-header>
 
   <ion-content>
-    <ion-list>
-      <ion-item-group v-if="customRequiredParameters.length || customOptionalParameters.length">
+    <ion-list v-if="customRequiredParameters.length || customOptionalParameters.length">
+      <ion-item-group>
         <ion-item-divider v-if="customRequiredParameters.length" color="light">
           <ion-label>{{ $t('Required Parameters') }}</ion-label>
         </ion-item-divider>
@@ -33,10 +33,10 @@
           <ion-note slot="helper">{{ parameter.type }}</ion-note>
         </ion-item>
       </ion-item-group>
-      <ion-item v-else lines="none">
-        <ion-label class="ion-text-center" >{{ $t('This job does not have any custom parameters.') }}</ion-label>
-      </ion-item>
     </ion-list>
+    <ion-item v-else lines="none">
+      <ion-label class="ion-text-center" >{{ $t('This job does not have any custom parameters.') }}</ion-label>
+    </ion-item>
   </ion-content>
 </template>
 
