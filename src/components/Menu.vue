@@ -135,6 +135,7 @@ export default defineComponent({
     const store = useStore();
     const router = useRouter();
     
+    // Filtering array of app pages, retaining only those elements (pages) that have the necessary permissions for display.
     const getValidMenuItems = (appPages: any) => {
       return appPages.filter((appPage: any) => (!appPage.meta || !appPage.meta.permissionId) || hasPermission(appPage.meta.permissionId));
     }
