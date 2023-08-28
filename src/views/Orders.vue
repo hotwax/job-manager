@@ -18,6 +18,14 @@
               <ion-label class="ion-text-wrap">{{ $t("New orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_NEW_ORDERS') }}</ion-label>
             </ion-item>
+            <ion-item @click="viewJobConfiguration({ id: 'APR_ORD', status: getJobStatus(jobEnums['APR_ORD'])})" detail button>
+              <ion-label class="ion-text-wrap">{{ $t("Approve orders") }}</ion-label>
+              <ion-label slot="end">{{ getTemporalExpression('APR_ORD') }}</ion-label>
+            </ion-item>
+            <ion-item @click="viewJobConfiguration({ id: 'UPDT_ORDS', status: getJobStatus(jobEnums['UPDT_ORDS'])})" detail button>
+              <ion-label class="ion-text-wrap">{{ $t("Update orders") }}</ion-label>
+              <ion-label slot="end">{{ getTemporalExpression('UPDT_ORDS') }}</ion-label>
+            </ion-item>
             <ion-item @click="viewJobConfiguration({ id: 'IMP_CANCELLED_ORDERS', status: getJobStatus(jobEnums['IMP_CANCELLED_ORDERS'])})" detail button>
               <ion-label class="ion-text-wrap">{{ $t("Cancelled orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_CANCELLED_ORDERS') }}</ion-label>
