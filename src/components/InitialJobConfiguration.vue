@@ -38,7 +38,7 @@
         </ion-chip>
         <ion-row v-else>
           <ion-chip @click="openJobCustomParameterModal" outline :color="value ? undefined :'danger'" :key="name" v-for="(value, name) in generateCustomParameters">
-            {{ name }} : {{ value }}
+            {{ name }}: {{ value }}
           </ion-chip>
         </ion-row>
         <ion-button @click="openJobCustomParameterModal" id="open-modal" slot="end" fill="clear">
@@ -117,7 +117,7 @@
         </ion-chip>
         <ion-row v-else>
           <ion-chip @click="openJobCustomParameterModal" outline :color="value ? undefined :'danger'" :key="name" v-for="(value, name) in generateCustomParameters">
-            {{ name }} : {{ value }}
+            {{ name }}: {{ value }}
           </ion-chip>
         </ion-row>
         <ion-button @click="openJobCustomParameterModal" id="open-modal" slot="end" fill="clear">
