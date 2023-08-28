@@ -260,6 +260,7 @@
   "This job has slow frequency type, hence, feasible frequency will be set automatically": "This job has slow frequency type, hence, feasible frequency will be set automatically",
   "This job may take several minutes to run. Wait till the job has moved to the pipeline history before checking results.": "This job may take several minutes to run.{ space } Wait till the job has moved to the pipeline history before checking results.",
   "This job schedule cannot be skipped": "This job schedule cannot be skipped",
+  "This job does not have any custom parameters.": "This job does not have any custom parameters.",
   "Time zone updated successfully": "Time zone updated successfully",
   "Timezone": "Timezone",
   "Tomorrow": "Tomorrow",
