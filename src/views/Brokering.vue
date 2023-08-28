@@ -42,13 +42,13 @@
                     <ion-icon slot="icon-only" :icon="trashOutline" />
                   </ion-item-option>
                 </ion-item-options>
-                <ion-item lines="none">
-                  <ion-label class="ion-text-wrap">
-                    <p>{{ $t("Create batches and schedule brokering for different orders.") }}</p>
-                  </ion-label>
-                </ion-item>
               </ion-item-sliding>
             </ion-list>
+            <ion-item lines="none">
+              <ion-label class="ion-text-wrap">
+                <p>{{ $t("Create batches and schedule brokering for different orders.") }}</p>
+              </ion-label>
+            </ion-item>
           </ion-card>
           <MoreJobs v-if="getMoreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId).length" :jobs="getMoreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId)" />
         </section>
