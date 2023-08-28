@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { RouteRecordRaw } from 'vue-router';
+import Fulfillment from '@/views/Fulfillment.vue';
 import Inventory from '@/views/Inventory.vue'
 import Product from '@/views/Product.vue'
 import Pipeline from '@/views/Pipeline.vue'
@@ -95,6 +96,15 @@ const routes: Array<RouteRecordRaw> = [
     beforeEnter: authGuard,
     meta: {
       permissionId: "APP_ORDERS_VIEW"
+    }
+  },
+  {
+    path: '/fulfillment',
+    name: 'Fulfillment',
+    component: Fulfillment,
+    beforeEnter: authGuard,
+    meta: {
+      permissionId: "APP_FULFILLMENT_VIEW"
     }
   },
   {
