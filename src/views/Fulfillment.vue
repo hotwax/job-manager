@@ -29,9 +29,9 @@
             <ion-card-header>
               <ion-card-title>{{ $t("History") }}</ion-card-title>
             </ion-card-header>
-            <ion-item button @click="viewJobConfiguration({ id: 'ODR_FULFILLMENT', status: getJobStatus(jobEnums['ODR_FULFILLMENT']) })" detail>
+            <ion-item button @click="viewJobConfiguration({ id: 'ODR_FLMNT_HST', status: getJobStatus(jobEnums['ODR_FLMNT_HST']) })" detail>
               <ion-label class="ion-text-wrap">{{ $t("Order fulfillment") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('ODR_FULFILLMENT') }}</ion-label>
+              <ion-label slot="end">{{ getTemporalExpression('ODR_FLMNT_HST') }}</ion-label>
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
@@ -101,6 +101,7 @@ import emitter from '@/event-bus';
 import { JobService } from '@/services/JobService'
 import MoreJobs from '@/components/MoreJobs.vue';
 import { Actions, hasPermission } from '@/authorization'
+import logger from '@/logger';
 
 export default defineComponent({
   name: 'Fulfillment',
@@ -165,7 +166,7 @@ export default defineComponent({
           }
         } catch (err) {
           showToast(translate('Something went wrong'))
-          this.$log.error(err)
+          logger.error(err)
         }
       } else {
         showToast(translate('Unable to update auto cancel days. None product store selected.'));
@@ -227,11 +228,11 @@ export default defineComponent({
         if (resp.status === 200 && !hasError(resp) && resp.data.docs?.length > 0 ) {
           this.autoCancelDays = resp.data.docs[0].daysToCancelNonPay;
         } else {
-          this.$log.error(resp)
+          logger.error(resp)
           this.autoCancelDays = "";
         }
       } catch (err) {
-        this.$log.error(err)
+        logger.error(err)
         this.autoCancelDays = "";
       }
     },
