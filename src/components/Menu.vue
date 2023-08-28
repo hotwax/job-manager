@@ -82,7 +82,7 @@ import {
 } from "@ionic/vue";
 import { computed, defineComponent } from "vue";
 import { mapGetters } from "vuex";
-import { albumsOutline, barChartOutline, calendarNumberOutline, compassOutline, iceCreamOutline, libraryOutline, pulseOutline, settingsOutline, shirtOutline, terminalOutline, ticketOutline } from "ionicons/icons";
+import { albumsOutline, barChartOutline, calendarNumberOutline, compassOutline, iceCreamOutline, libraryOutline, pulseOutline, settingsOutline, sendOutline, shirtOutline, terminalOutline, ticketOutline } from "ionicons/icons";
 import { useStore } from "@/store";
 import emitter from "@/event-bus"
 import { hasPermission } from "@/authorization";
@@ -129,14 +129,17 @@ export default defineComponent({
     async setShopifyConfig(event: CustomEvent){
       await this.store.dispatch('user/setCurrentShopifyConfig', { 'shopifyConfigId': event.detail.value });
       emitter.emit("productStoreOrConfigChanged")
-    },
-    getValidMenuItems(appPages: any) {
-      return appPages.filter((appPage: any) => (!appPage.meta || !appPage.meta.permissionId) || hasPermission(appPage.meta.permissionId));
     }
   },
   setup() {
     const store = useStore();
     const router = useRouter();
+    
+    // Filtering array of app pages, retaining only those elements (pages) that have the necessary permissions for display.
+    const getValidMenuItems = (appPages: any) => {
+      return appPages.filter((appPage: any) => (!appPage.meta || !appPage.meta.permissionId) || hasPermission(appPage.meta.permissionId));
+    }
+
     let appPages = [
       {
         title: "Pipeline",
@@ -186,6 +189,16 @@ export default defineComponent({
         dependsOnBaseURL: false,
         meta: {
           permissionId: "APP_BROKERING_VIEW"
+        }
+      },
+      {
+        title: "Fulfillment",
+        url: "/fulfillment",
+        iosIcon: sendOutline,
+        mdIcon: sendOutline,
+        dependsOnBaseURL: false,
+        meta: {
+          permissionId: "APP_FULFILLMENT_VIEW"
         }
       },
       {
@@ -258,7 +271,7 @@ export default defineComponent({
 
     const selectedIndex = computed(() => {
       const path = router.currentRoute.value.path
-      return appPages.findIndex((screen : any) => screen.url === path || screen.childRoutes?.includes(path))
+      return getValidMenuItems(appPages).findIndex((screen : any) => screen.url === path || screen.childRoutes?.includes(path))
     })
 
     return {
@@ -267,12 +280,14 @@ export default defineComponent({
       compassOutline,
       barChartOutline,
       calendarNumberOutline,
+      getValidMenuItems,
       hasPermission,
       iceCreamOutline,
       libraryOutline,
       pulseOutline,
       selectedIndex,
       settingsOutline,
+      sendOutline,
       shirtOutline,
       store,
       terminalOutline,
