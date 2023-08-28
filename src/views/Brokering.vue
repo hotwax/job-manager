@@ -39,9 +39,14 @@
                 </ion-item-options>
                 <ion-item-options side="end">
                   <ion-item-option @click="hasPermission(Actions.APP_JOB_UPDATE) && deleteBatch(batch)" color="danger">
-                    <ion-icon slot="icon-only" :icon="trash" />
+                    <ion-icon slot="icon-only" :icon="trashOutline" />
                   </ion-item-option>
                 </ion-item-options>
+                <ion-item lines="none">
+                  <ion-label class="ion-text-wrap">
+                    <p>{{ $t("Create batches and schedule brokering for different orders.") }}</p>
+                  </ion-label>
+                </ion-item>
               </ion-item-sliding>
             </ion-list>
           </ion-card>
@@ -83,7 +88,7 @@ import {
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { translate } from '@/i18n'
-import { addCircleOutline, arrowRedoOutline, trash } from 'ionicons/icons';
+import { addCircleOutline, arrowRedoOutline, trashOutline } from 'ionicons/icons';
 import BatchModal from '@/components/BatchModal.vue';
 import { useStore } from "@/store";
 import { useRouter } from 'vue-router'
@@ -271,7 +276,7 @@ export default defineComponent({
       arrowRedoOutline,
       router,
       store,
-      trash,
+      trashOutline,
     };
   },
 });
