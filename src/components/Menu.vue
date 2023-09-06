@@ -25,6 +25,8 @@
         </ion-menu-toggle>
       </ion-list>
     </ion-content>
+
+    <!-- WHY EVENTS IS USED: https://michaelnthiessen.com/pass-function-as-prop/ -->
     <MenuFooterNavigation @change-ecom-store="setEComStore($event)" @change-shopify-config="setShopifyConfig($event)" />
   </ion-menu>
 </template>
