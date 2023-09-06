@@ -25,47 +25,13 @@
         </ion-menu-toggle>
       </ion-list>
     </ion-content>
-    <ion-footer>
-      <ion-toolbar>
-        <ion-item lines="none">
-          <ion-label class="ion-text-wrap">
-            <p class="overline">{{ instanceUrl }}</p>
-          </ion-label>
-          <ion-note slot="end">{{ userProfile?.userTimeZone }}</ion-note>
-        </ion-item>
-        <!-- showing product stores only when there are multiple options to choose from. -->
-        <ion-item v-if="userProfile?.stores?.length > 2" lines="none">
-          <ion-select interface="popover" :value="eComStore.productStoreId" @ionChange="setEComStore($event)">
-            <ion-select-option v-for="store in (userProfile?.stores ? userProfile.stores : [])" :key="store.productStoreId" :value="store.productStoreId" >{{ store.storeName }}</ion-select-option>
-          </ion-select>
-        </ion-item>
-        <ion-item v-else lines="none">
-          <ion-label class="ion-text-wrap">
-            {{ currentEComStore.storeName }}
-          </ion-label>
-        </ion-item>
-        <!-- similarly, showing shopify configs only when there are multiple options to choose from 
-        but if both product store and config have multiple options, then only option to choose
-        product store will be visible -->
-        <ion-item v-if="shopifyConfigs?.length > 1 && userProfile?.stores?.length < 3" lines="none">
-          <ion-select interface="popover" :value="currentShopifyConfig?.shopifyConfigId" @ionChange="setShopifyConfig($event)">
-            <ion-select-option v-for="shopifyConfig in shopifyConfigs" :key="shopifyConfig.shopifyConfigId" :value="shopifyConfig.shopifyConfigId" >{{ shopifyConfig.name ? shopifyConfig.name : shopifyConfig.shopifyConfigName }}</ion-select-option>
-          </ion-select>
-        </ion-item>
-        <ion-item v-else lines="none">
-          <ion-label class="ion-text-wrap">
-           <p>{{ currentShopifyConfig.name ? currentShopifyConfig.name : currentShopifyConfig.shopifyConfigName }}</p> 
-          </ion-label>
-        </ion-item>
-      </ion-toolbar>
-    </ion-footer>
+    <MenuFooterNavigation @change-ecom-store="setEComStore($event)" @change-shopify-config="setShopifyConfig($event)" />
   </ion-menu>
 </template>
 
 <script lang="ts">
 import {
   IonContent,
-  IonFooter,
   IonHeader,
   IonIcon,
   IonItem,
@@ -74,9 +40,6 @@ import {
   IonList,
   IonMenu,
   IonMenuToggle,
-  IonNote,
-  IonSelect,
-  IonSelectOption,
   IonTitle,
   IonToolbar
 } from "@ionic/vue";
@@ -92,7 +55,6 @@ export default defineComponent({
   name: "Menu",
   components: {
     IonContent,
-    IonFooter,
     IonHeader,
     IonIcon,
     IonItem,
@@ -101,9 +63,6 @@ export default defineComponent({
     IonList,
     IonMenu,
     IonMenuToggle,
-    IonNote,
-    IonSelect,
-    IonSelectOption,
     IonTitle,
     IonToolbar
   },
