@@ -1,4 +1,4 @@
-import { hasError } from '@/utils'
+import { checkServiceAndRuntimeDataError, hasError } from '@/utils'
 import store from '@/store';
 import { api } from '@/adapter';
 
@@ -102,6 +102,7 @@ const fetchJobPreviousOccurrence = async (payload: any): Promise <any>  => {
     } else {
       // if there are no records response has { error: "No record found" } which is handled in if block
       // We will have atleast a single record 
+      checkServiceAndRuntimeDataError(resp?.data.docs[0]);
       return Promise.resolve(resp?.data.docs[0].runTime);
     }
   } catch(error: any) {

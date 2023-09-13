@@ -2,7 +2,7 @@ import { ActionTree } from 'vuex'
 import RootState from '@/store/RootState'
 import JobState from './JobState'
 import * as types from './mutation-types'
-import { isCustomRunTime, generateAllowedFrequencies, hasError, showToast } from '@/utils'
+import { isCustomRunTime, generateAllowedFrequencies, hasError, showToast, checkServiceAndRuntimeDataError } from '@/utils'
 import { JobService } from '@/services/JobService'
 import { translate } from '@/i18n'
 import { DateTime } from 'luxon';
@@ -94,6 +94,7 @@ const actions: ActionTree<JobState, RootState> = {
             jobs = state.history.list.concat(jobs);
           }
           jobs.map((job: any) => {
+            checkServiceAndRuntimeDataError(job);
             job['statusDesc'] = this.state.util.statusDesc[job.statusId];
           })          
           commit(types.JOB_HISTORY_UPDATED, { jobs, total });
@@ -167,6 +168,7 @@ const actions: ActionTree<JobState, RootState> = {
             jobs = state.running.list.concat(jobs);
           }
           jobs.map((job: any) => {
+            checkServiceAndRuntimeDataError(job);
             job['statusDesc'] = this.state.util.statusDesc[job.statusId];
           })
           commit(types.JOB_RUNNING_UPDATED, { jobs, total });
@@ -233,6 +235,7 @@ const actions: ActionTree<JobState, RootState> = {
         if (resp.data.docs) {
           const total = resp.data.count;
           let jobs = resp.data.docs.map((job: any) => {
+            checkServiceAndRuntimeDataError(job);
             return {
               ...job,
               'status': job?.statusId,
@@ -303,6 +306,7 @@ const actions: ActionTree<JobState, RootState> = {
       }, [])
 
       jobs = responseJobs.map((job: any) => {
+        checkServiceAndRuntimeDataError(job);
         if (job.statusId === 'SERVICE_DRAFT') delete job.runTime;
         return { ...job, 'status': job.statusId }
       })
@@ -420,6 +424,7 @@ const actions: ActionTree<JobState, RootState> = {
       response.status === 200 && !hasError(response) && response.data.docs && (responseJobs = [...responseJobs, ...response.data.docs]);
       return responseJobs;
     }, [])
+    responseJobs.map((job: any) => checkServiceAndRuntimeDataError(job));
 
     // TODO Fix Indentation
     const cached = JSON.parse(JSON.stringify(state.cached));
@@ -779,6 +784,7 @@ const actions: ActionTree<JobState, RootState> = {
       }
       resp = await JobService.fetchJobInformation(params);
       if(resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
+        checkServiceAndRuntimeDataError(resp.data.docs[0]);
         const currentJob = {
           ...resp.data.docs[0],
           'status': resp.data.docs[0]?.statusId 
@@ -1024,6 +1030,7 @@ const actions: ActionTree<JobState, RootState> = {
       jobs = Object.values(responseJobs)
 
       jobs = jobs.map((job: any) => {
+        checkServiceAndRuntimeDataError(job);
         return { ...job, 'status': job.statusId }
       })
 

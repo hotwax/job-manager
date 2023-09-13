@@ -287,7 +287,13 @@ const getNowTimestamp = () => {
   return DateTime.now().toISO();
 }
 
+const checkServiceAndRuntimeDataError = (job: any) => {
+  if (job?.serviceName === '_NA_') console.warn(`${job.systemJobEnumId} :: service does not exists in system`);
+  if (job?.runtimeData?._ERROR_MESSAGE_) console.warn(`${job.systemJobEnumId}(${job.serviceName}) has runtimeData error :: ${job.runtimeData._ERROR_MESSAGE_}`);
+}
+
 export {
+  checkServiceAndRuntimeDataError,
   isCustomRunTime,
   getNowTimestamp,
   generateAllowedFrequencies,
