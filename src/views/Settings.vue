@@ -36,7 +36,7 @@
         <h1>{{ $t('OMS') }}</h1>
       </div>
       <section>
-        <OmsInstanceChanger />
+        <OmsInstanceNavigation />
 
         <ion-card>
           <ion-card-header>
@@ -153,7 +153,6 @@ export default defineComponent({
     ...mapGetters({
       userProfile: 'user/getUserProfile',
       currentEComStore: 'user/getCurrentEComStore',
-      instanceUrl: 'user/getInstanceUrl',
       shopifyConfigs: 'user/getShopifyConfigs',
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
     })
@@ -186,9 +185,6 @@ export default defineComponent({
         const redirectUrl = window.location.origin + '/login'
         window.location.href = `${process.env.VUE_APP_LOGIN_URL}?isLoggedOut=true&redirectUrl=${redirectUrl}`
       })
-    },
-    goToOms(){
-      window.open(this.instanceUrl.startsWith('http') ? this.instanceUrl.replace('api/', "") : `https://${this.instanceUrl}.hotwax.io/`, '_blank', 'noopener, noreferrer');
     },
     getDateTime(time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
