@@ -79,7 +79,7 @@ import {
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
-import { generateJobCustomParameters, isFutureDate, showToast } from '@/utils';
+import { checkServiceAndRuntimeDataError, generateJobCustomParameters, isFutureDate, showToast } from '@/utils';
 import emitter from '@/event-bus';
 import InitialJobConfiguration from '@/components/InitialJobConfiguration.vue';
 import { useRouter } from 'vue-router';
@@ -155,6 +155,9 @@ export default defineComponent({
         showToast(translate('Configuration missing'))
         return;
       }
+
+      // return if job has missing runtime and service configuration
+      if(checkServiceAndRuntimeDataError(job)) return;
 
       job['jobStatus'] = status
 
