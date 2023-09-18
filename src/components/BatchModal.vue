@@ -150,7 +150,7 @@ export default defineComponent({
       }
 
       // return if job has missing runtime and service configuration
-      if(checkServiceAndRuntimeDataError(job)) return;
+      if (checkServiceAndRuntimeDataError(job)) return;
 
       if (this.jobRunTime) {
         job['runTime'] = this.jobRunTime

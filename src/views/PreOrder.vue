@@ -261,7 +261,7 @@ export default defineComponent({
       }
 
       // return if job has missing runtime and service configuration
-      if(checkServiceAndRuntimeDataError(job)) return;
+      if (checkServiceAndRuntimeDataError(job)) return;
 
       // TODO: added this condition to not call the api when the value of the select automatically changes
       // need to handle this properly

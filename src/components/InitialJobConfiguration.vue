@@ -261,7 +261,7 @@ export default defineComponent({
       const job = this.currentJob;
 
       // return if job has missing runtime and service configuration
-      if(checkServiceAndRuntimeDataError(job)) return;
+      if (checkServiceAndRuntimeDataError(job)) return;
 
       job['sinceId'] = this.lastShopifyOrderId
       job['jobStatus'] = job.tempExprId
