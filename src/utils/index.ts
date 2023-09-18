@@ -3,6 +3,7 @@ import { toastController } from '@ionic/vue';
 import Papa from 'papaparse'
 import { DateTime } from "luxon";
 import logger from "@/logger";
+import { translate } from "@/i18n";
 
 // TODO Use separate files for specific utilities
 
@@ -287,17 +288,16 @@ const getNowTimestamp = () => {
   return DateTime.now().toISO();
 }
 
-const checkServiceAndRuntimeDataError = (job: any) => {
+const hasServiceNameOrRuntimeDataError = (job: any) => {
   if (job?.serviceName === '_NA_' || job?.runtimeData?._ERROR_MESSAGE_) {
     console.warn(job?.serviceName === '_NA_' ? `${job.systemJobEnumId} :: This job does not have any service data configuration.` : `${job.systemJobEnumId}(${job.serviceName}) has runtimeData error :: ${job.runtimeData._ERROR_MESSAGE_}`);
-    showToast(job?.serviceName === '_NA_' ? 'This job does not have any service data configuration.' : 'This job does not have any runtime data configuration.');
+    showToast(job?.serviceName === '_NA_' ? translate('This job does not have any service data configuration.') : translate('This job does not have any runtime data configuration.'));
     return true;
   }
   return false;
 }
 
 export {
-  checkServiceAndRuntimeDataError,
   isCustomRunTime,
   getNowTimestamp,
   generateAllowedFrequencies,
@@ -305,6 +305,7 @@ export {
   generateJobCustomParameters,
   generateJobCustomOptions,
   handleDateTimeInput,
+  hasServiceNameOrRuntimeDataError,
   showToast,
   hasError,
   parseCsv,
