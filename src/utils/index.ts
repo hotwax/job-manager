@@ -287,6 +287,8 @@ const getNowTimestamp = () => {
   return DateTime.now().toISO();
 }
 
+const highlight = (value1: any, value2: any) =>  value1 === value2 ? 'secondary' : '';
+
 export {
   isCustomRunTime,
   getNowTimestamp,
@@ -295,6 +297,7 @@ export {
   generateJobCustomParameters,
   generateJobCustomOptions,
   handleDateTimeInput,
+  highlight,
   showToast,
   hasError,
   parseCsv,

@@ -47,7 +47,7 @@
           <div v-else>
             <ion-card v-for="job in pendingJobs" :key="job.jobId" @click="viewJobConfiguration(job)" :button="isDesktop">
               <ion-card-header>
-                <ion-card-title>{{ job.enumName }}</ion-card-title>
+                <ion-card-title :color="highlight(job.systemJobEnumId,currentJob.systemJobEnumId)" >{{ job.enumName }}</ion-card-title>
                 <ion-badge v-if="job.runTime" color="dark">{{ timeFromNow(job.runTime)}}</ion-badge>
               </ion-card-header>
 
@@ -299,6 +299,8 @@ import { showToast } from '@/utils'
 import JobActionsPopover from '@/components/JobActionsPopover.vue'
 import { Actions, hasPermission } from '@/authorization'
 import Filters from '@/components/Filters.vue';
+import { highlight } from '@/utils'
+
 
 export default defineComponent({
   name: "Pipeline",
@@ -611,7 +613,8 @@ export default defineComponent({
       segmentSelected,
       router,
       filterOutline,
-      hasPermission
+      hasPermission,
+      highlight
     };
   }
 });

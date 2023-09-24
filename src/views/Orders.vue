@@ -10,32 +10,32 @@
     <ion-content>
       <main>
         <section>
-          <ion-card>
+          <ion-card @click="selectedCard = 'import'">
             <ion-card-header>
-              <ion-card-title>{{ $t("Import") }}</ion-card-title>
+              <ion-card-title :color="highlight(selectedCard,'import')">{{ $t("Import") }}</ion-card-title>
             </ion-card-header>
             <ion-item @click="viewJobConfiguration({ id: 'IMP_NEW_ORDERS', status: getJobStatus(jobEnums['IMP_NEW_ORDERS'])})" detail button>
-              <ion-label class="ion-text-wrap">{{ $t("New orders") }}</ion-label>
+              <ion-label class="ion-text-wrap" :color="highlight(jobEnums['IMP_NEW_ORDERS'],currentJob.systemJobEnumId) ">{{ $t("New orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_NEW_ORDERS') }}</ion-label>
             </ion-item>
             <ion-item @click="viewJobConfiguration({ id: 'APR_ORD', status: getJobStatus(jobEnums['APR_ORD'])})" detail button>
-              <ion-label class="ion-text-wrap">{{ $t("Approve orders") }}</ion-label>
+              <ion-label class="ion-text-wrap" :color="highlight(jobEnums['APR_ORD'],currentJob.systemJobEnumId) ">{{ $t("Approve orders") }}</ion-label>          
               <ion-label slot="end">{{ getTemporalExpression('APR_ORD') }}</ion-label>
             </ion-item>
             <ion-item @click="viewJobConfiguration({ id: 'UPDT_ORDS', status: getJobStatus(jobEnums['UPDT_ORDS'])})" detail button>
-              <ion-label class="ion-text-wrap">{{ $t("Update orders") }}</ion-label>
+              <ion-label class="ion-text-wrap" :color="highlight(jobEnums['UPDT_ORDS'],currentJob.systemJobEnumId) ">{{ $t("Update orders") }}</ion-label>     
               <ion-label slot="end">{{ getTemporalExpression('UPDT_ORDS') }}</ion-label>
             </ion-item>
             <ion-item @click="viewJobConfiguration({ id: 'IMP_CANCELLED_ORDERS', status: getJobStatus(jobEnums['IMP_CANCELLED_ORDERS'])})" detail button>
-              <ion-label class="ion-text-wrap">{{ $t("Cancelled orders") }}</ion-label>
+              <ion-label class="ion-text-wrap" :color="highlight(jobEnums['IMP_CANCELLED_ORDERS'],currentJob.systemJobEnumId) ">{{ $t("Cancelled orders") }}</ion-label>          
               <ion-label slot="end">{{ getTemporalExpression('IMP_CANCELLED_ORDERS') }}</ion-label>
             </ion-item>
             <ion-item @click="viewJobConfiguration({ id: 'IMP_CANCELLED_ITEMS', status: getJobStatus(jobEnums['IMP_CANCELLED_ITEMS'])})" detail button>
-              <ion-label class="ion-text-wrap">{{ $t("Cancelled items") }}</ion-label>
+              <ion-label class="ion-text-wrap" :color="highlight(jobEnums['IMP_CANCELLED_ITEMS'],currentJob.systemJobEnumId) ">{{ $t("Cancelled items") }}</ion-label>      
               <ion-label slot="end">{{ getTemporalExpression('IMP_CANCELLED_ITEMS') }}</ion-label>
             </ion-item>
             <ion-item @click="viewJobConfiguration({ id: 'IMP_RETURNS', status: getJobStatus(jobEnums['IMP_RETURNS'])})" detail button>
-              <ion-label class="ion-text-wrap">{{ $t("Returns") }}</ion-label>
+              <ion-label class="ion-text-wrap" :color="highlight(jobEnums['IMP_RETURNS'],currentJob.systemJobEnumId) ">{{ $t("Returns") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_RETURNS') }}</ion-label>
             </ion-item>
           </ion-card>
@@ -62,24 +62,24 @@
             </ion-item>
           </ion-card>
 
-          <ion-card>
+          <ion-card @click="selectedCard = 'upload'">
             <ion-card-header>
-              <ion-card-title>{{ $t("Upload") }}</ion-card-title>
+              <ion-card-title :color="highlight(selectedCard,'upload')">{{ $t("Upload") }}</ion-card-title>
             </ion-card-header>
             <ion-item @click="viewJobConfiguration({ id: 'UPLD_CMPLT_ORDRS', status: getJobStatus(jobEnums['UPLD_CMPLT_ORDRS'])})" detail button>
-              <ion-label class="ion-text-wrap">{{ $t("Completed orders") }}</ion-label>
+              <ion-label class="ion-text-wrap" :color="highlight(jobEnums['UPLD_CMPLT_ORDRS'],currentJob.systemJobEnumId) ">{{ $t("Completed orders") }}</ion-label>         
               <ion-label slot="end">{{ getTemporalExpression('UPLD_CMPLT_ORDRS') }}</ion-label>
             </ion-item>
             <ion-item @click="viewJobConfiguration({ id: 'UPLD_CNCLD_ORDRS', status: getJobStatus(jobEnums['UPLD_CNCLD_ORDRS'])})" detail button>
-              <ion-label class="ion-text-wrap">{{ $t("Cancelled orders") }}</ion-label>
+              <ion-label class="ion-text-wrap" :color="highlight(jobEnums['UPLD_CNCLD_ORDRS'],currentJob.systemJobEnumId) ">{{ $t("Cancelled orders") }}</ion-label>       
               <ion-label slot="end">{{ getTemporalExpression('UPLD_CNCLD_ORDRS') }}</ion-label>
             </ion-item>
             <ion-item @click="viewJobConfiguration({ id: 'UPLD_REFUNDS', status: getJobStatus(jobEnums['UPLD_REFUNDS'])})" detail button>
-              <ion-label class="ion-text-wrap">{{ $t("Refunds") }}</ion-label>
+              <ion-label class="ion-text-wrap" :color="highlight(jobEnums['UPLD_REFUNDS'],currentJob.systemJobEnumId) ">{{ $t("Refunds") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('UPLD_REFUNDS') }}</ion-label>
             </ion-item>
           </ion-card>
-          <MoreJobs v-if="getMoreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId).length" :jobs="getMoreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId)" />
+          <MoreJobs v-if="getMoreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId).length" :jobs="getMoreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId)" @click="selectedCard='moreJobs'" :selectedCard="selectedCard" />
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
@@ -116,6 +116,7 @@ import { generateJobCustomParameters, isFutureDate, showToast, prepareRuntime } 
 import emitter from '@/event-bus';
 import MoreJobs from '@/components/MoreJobs.vue';
 import { Actions, hasPermission } from '@/authorization'
+import {highlight} from '@/utils';
 
 export default defineComponent({
   name: 'Orders',
@@ -146,7 +147,8 @@ export default defineComponent({
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
       enumTypeId: 'ORDER_SYS_JOB',
-      initialLoadJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any
+      initialLoadJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
+      selectedCard: ''
     }
   },
   computed: {
@@ -162,6 +164,7 @@ export default defineComponent({
     promiseDateChanges(): boolean {
       const status = this.getJobStatus(this.jobEnums['NTS_PRMS_DT_CHNG']);
       return status && status !== "SERVICE_DRAFT";
+
     },
     isNewOrders(): boolean {
       const webhookTopic = this.webhookEnums['NEW_ORDERS']
@@ -279,7 +282,8 @@ export default defineComponent({
       Actions,
       hasPermission,
       router,
-      store
+      store,
+      highlight
     };
   },
 });

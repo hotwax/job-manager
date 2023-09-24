@@ -1,11 +1,11 @@
 <template>
   <ion-card>
     <ion-card-header>
-      <ion-card-title>{{ $t("More jobs") }}</ion-card-title>
+      <ion-card-title :color="highlight(selectedCard,'moreJobs')">{{ $t("More jobs") }}</ion-card-title>
     </ion-card-header>
     <ion-list>
       <ion-item v-for="job in jobs" :key="job.jobId" @click="viewJobConfiguration(job)" detail button>
-        <ion-label class="ion-text-wrap">{{ job.enumName || job.jobName }}</ion-label>
+        <ion-label class="ion-text-wrap" :color="highlight(job.systemJobEnumId,currentJob.systemJobEnumId)">{{ job.enumName || job.jobName }}</ion-label>
         <ion-label slot="end">{{ job.statusId === "SERVICE_PENDING" ? temporalExpr(job.tempExprId)?.description : $t('Disabled') }}</ion-label>
       </ion-item>
     </ion-list>
@@ -26,6 +26,8 @@ import { mapGetters, useStore } from 'vuex';
 import emitter from '@/event-bus';
 import { useRouter } from 'vue-router'
 import { DateTime } from 'luxon';
+import { highlight } from '@/utils'
+
 
 export default defineComponent({
   name: 'MoreJobs',
@@ -37,7 +39,7 @@ export default defineComponent({
     IonLabel,
     IonList
   },
-  props: ["jobs"],
+  props: ["jobs", "selectedCard"],
   computed: {
     ...mapGetters({
       getJobStatus: 'job/getJobStatus',
@@ -45,6 +47,7 @@ export default defineComponent({
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
       currentEComStore: 'user/getCurrentEComStore',
       temporalExpr: 'job/getTemporalExpr',
+      currentJob: 'job/getCurrentJob',
     })
   },
   methods: {
@@ -55,14 +58,15 @@ export default defineComponent({
     },
     getDate (runTime: any) {
       return DateTime.fromMillis(runTime).toLocaleString(DateTime.DATE_MED);
-    },
+    }
   },
   setup() {
     const store = useStore();
     const router = useRouter();
     return {
       store,
-      router
+      router,
+      highlight
     }  
   }
 });
