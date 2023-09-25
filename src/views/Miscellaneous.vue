@@ -22,10 +22,10 @@
           </div>
 
           <div v-else>
-            <ion-list>
-              <ion-list-header>{{ $t("Miscellaneous jobs") }}</ion-list-header>
+            <ion-list @click="selectedCard = 'miscellaneous'">
+              <ion-list-header :color="updateColor(selectedCard,'miscellaneous')">{{ $t("Miscellaneous jobs") }}</ion-list-header>
               <ion-item v-for="job in prepareMiscJobs" :key="job.jobId" @click="viewJobConfiguration(job)" detail button>
-                <ion-label>{{ job.jobName }}</ion-label>
+                <ion-label :color="updateColor(job.systemJobEnumId,currentJob.systemJobEnumId)">{{ job.jobName }}</ion-label>
                 <ion-note slot="end">{{ getJobRuntime(job) }}</ion-note>
               </ion-item>
             </ion-list>
@@ -70,6 +70,7 @@ import { mapGetters, useStore } from 'vuex'
 import emitter from '@/event-bus';
 import JobConfiguration from '@/components/JobConfiguration.vue';
 import { isFutureDate } from '@/utils';
+import { updateColor } from '@/utils'
 
 export default defineComponent({
   name: 'Miscellaneous',
@@ -107,6 +108,7 @@ export default defineComponent({
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
       isRetrying: false,
+      selectedCard: ''
     }
   },
   computed: {
@@ -181,6 +183,7 @@ export default defineComponent({
     return {
       router,
       store,
+      updateColor
     };
   },
 })

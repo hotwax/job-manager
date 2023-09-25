@@ -146,7 +146,7 @@
 
 
 
-          <MoreJobs v-if="getMoreJobs(jobEnums, enumTypeId).length" :jobs="getMoreJobs(jobEnums, enumTypeId)" />
+          <MoreJobs v-if="getMoreJobs(jobEnums, enumTypeId).length" :jobs="getMoreJobs(jobEnums, enumTypeId)" @click="selectedCard='moreJobs'" :selectedCard="selectedCard"/>
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
@@ -188,6 +188,7 @@ import { translate } from '@/i18n';
 import MoreJobs from '@/components/MoreJobs.vue';
 import { Actions, hasPermission } from '@/authorization'
 import { openOutline } from 'ionicons/icons'
+import {updateColor} from '@/utils';
 
 export default defineComponent({
   name: 'PreOrder',
@@ -231,7 +232,8 @@ export default defineComponent({
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
       enumTypeId: 'PRE_ORD_SYS_JOB',
-      preOrderBackorderCategory: {} as any
+      preOrderBackorderCategory: {} as any,
+      selectedCard: ''
     }
   },
   methods: {
@@ -362,7 +364,8 @@ export default defineComponent({
       hasPermission,
       openOutline,
       store,
-      router
+      router,
+      updateColor
     };
   },
 });

@@ -1,11 +1,11 @@
 <template>
   <ion-card>
     <ion-card-header>
-      <ion-card-title :color="highlight(selectedCard,'moreJobs')">{{ $t("More jobs") }}</ion-card-title>
+      <ion-card-title :color="updateColor(selectedCard, 'moreJobs')">{{ $t("More jobs") }}</ion-card-title>
     </ion-card-header>
     <ion-list>
       <ion-item v-for="job in jobs" :key="job.jobId" @click="viewJobConfiguration(job)" detail button>
-        <ion-label class="ion-text-wrap" :color="highlight(job.systemJobEnumId,currentJob.systemJobEnumId)">{{ job.enumName || job.jobName }}</ion-label>
+        <ion-label class="ion-text-wrap" :color="updateColor(job.systemJobEnumId,currentJob.systemJobEnumId)">{{ job.enumName || job.jobName }}</ion-label>
         <ion-label slot="end">{{ job.statusId === "SERVICE_PENDING" ? temporalExpr(job.tempExprId)?.description : $t('Disabled') }}</ion-label>
       </ion-item>
     </ion-list>
@@ -26,7 +26,7 @@ import { mapGetters, useStore } from 'vuex';
 import emitter from '@/event-bus';
 import { useRouter } from 'vue-router'
 import { DateTime } from 'luxon';
-import { highlight } from '@/utils'
+import { updateColor } from '@/utils'
 
 
 export default defineComponent({
@@ -58,7 +58,7 @@ export default defineComponent({
     },
     getDate (runTime: any) {
       return DateTime.fromMillis(runTime).toLocaleString(DateTime.DATE_MED);
-    }
+    },
   },
   setup() {
     const store = useStore();
@@ -66,7 +66,7 @@ export default defineComponent({
     return {
       store,
       router,
-      highlight
+      updateColor
     }  
   }
 });

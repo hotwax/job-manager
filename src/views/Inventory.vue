@@ -10,9 +10,9 @@
     <ion-content>
       <main>
         <section>
-          <ion-card>
+          <ion-card @click="selectedCard = 'adjustments'">
             <ion-card-header>
-              <ion-card-title>{{ $t("Adjustments") }}</ion-card-title>
+              <ion-card-title :color="updateColor(selectedCard,'adjustments')">{{ $t("Adjustments") }}</ion-card-title>
             </ion-card-header>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("BOPIS corrections") }}</ion-label>
@@ -24,7 +24,7 @@
               </ion-label>
             </ion-item>
             <ion-item button @click="viewJobConfiguration({ id: 'HARD_SYNC', status: getJobStatus(jobEnums['HARD_SYNC'])})" detail>
-              <ion-label class="ion-text-wrap">{{ $t("Hard sync") }}</ion-label>
+              <ion-label class="ion-text-wrap" :color="updateColor(jobEnums['HARD_SYNC'], currentJob?.systemJobEnumId)">{{ $t("Hard sync") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('HARD_SYNC') }}</ion-label>
             </ion-item>
             <ion-item lines="none">
@@ -42,7 +42,7 @@
               <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="isInventoryLevelUpdated" @ionChange="updateWebhook($event['detail'].checked, 'INVENTORY_LEVEL_UPDATE')" slot="end" color="secondary" />
             </ion-item>
           </ion-card>
-          <MoreJobs v-if="getMoreJobs(jobEnums, enumTypeId).length" :jobs="getMoreJobs(jobEnums, enumTypeId)" />
+          <MoreJobs v-if="getMoreJobs(jobEnums, enumTypeId).length" :jobs="getMoreJobs(jobEnums, enumTypeId)" @click="selectedCard='moreJobs'" :selectedCard="selectedCard"/>
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
@@ -78,6 +78,7 @@ import { useRouter } from 'vue-router'
 import { translate } from '@/i18n';
 import MoreJobs from '@/components/MoreJobs.vue';
 import { Actions, hasPermission } from '@/authorization'
+import {updateColor} from '@/utils';
 
 export default defineComponent({
   name: 'Inventory',
@@ -108,6 +109,7 @@ export default defineComponent({
       isDesktop: isPlatform('desktop'),
       enumTypeId: 'INVENTORY_SYS_JOB',
       webhookEnums: JSON.parse(process.env?.VUE_APP_WEBHOOK_ENUMS as string) as any,
+      selectedCard: ''
     }
   },
   computed: {
@@ -230,7 +232,8 @@ export default defineComponent({
       Actions,
       hasPermission,
       store,
-      router
+      router,
+      updateColor
     }  
   }
 });

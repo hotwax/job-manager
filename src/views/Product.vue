@@ -10,16 +10,16 @@
     <ion-content>
       <main>
         <section>
-          <ion-card>
+          <ion-card @click="selectedCard = 'sync'">
             <ion-card-header>
-              <ion-card-title>{{ $t("Sync") }}</ion-card-title>
+              <ion-card-title :color="updateColor(selectedCard,'sync')">{{ $t("Sync") }}</ion-card-title>
             </ion-card-header>
             <ion-item button @click="viewJobConfiguration({ id: 'IMP_PRDTS', status: getJobStatus(jobEnums['IMP_PRDTS'])})" detail>
-              <ion-label class="ion-text-wrap">{{ $t("Import products") }}</ion-label>
+              <ion-label class="ion-text-wrap" :color="updateColor(jobEnums['IMP_PRDTS'], currentJob?.systemJobEnumId)">{{ $t("Import products") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_PRDTS') }}</ion-label>
             </ion-item>
             <ion-item button @click="viewJobConfiguration({ id: 'SYNC_PRDTS', status: getJobStatus(jobEnums['SYNC_PRDTS'])})" detail>
-              <ion-label class="ion-text-wrap">{{ $t("Sync products") }}</ion-label>
+              <ion-label class="ion-text-wrap" :color="updateColor(jobEnums['SYNC_PRDTS'], currentJob?.systemJobEnumId)">{{ $t("Sync products") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('SYNC_PRDTS') }} </ion-label>
             </ion-item>
             <ion-item lines="none">
@@ -75,6 +75,7 @@ import emitter from '@/event-bus';
 import { useRouter } from 'vue-router'
 import MoreJobs from '@/components/MoreJobs.vue'
 import { Actions, hasPermission } from '@/authorization'
+import {updateColor} from '@/utils';
 
 export default defineComponent({
   name: 'Product',
@@ -123,7 +124,8 @@ export default defineComponent({
       isDesktop: isPlatform('desktop'),
       webhookEnums: JSON.parse(process.env?.VUE_APP_WEBHOOK_ENUMS as string) as any,
       enumTypeId: 'PRODUCT_SYS_JOB',
-      initialLoadJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any
+      initialLoadJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
+      selectedCard: ''
     }
   },
   mounted () {
@@ -198,7 +200,8 @@ export default defineComponent({
       hasPermission,
       customPopoverOptions,
       store,
-      router
+      router,
+      updateColor
     }
   }
 });

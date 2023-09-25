@@ -10,12 +10,12 @@
     <ion-content>
       <main>
         <section>
-          <ion-card>
+          <ion-card @click="selectedCard = 'routing'">
             <ion-card-header>
-              <ion-card-title>{{ $t("Routing") }}</ion-card-title>
+              <ion-card-title :color="updateColor(selectedCard,'routing')">{{ $t("Routing") }}</ion-card-title>
             </ion-card-header>
             <ion-item @click="viewJobConfiguration({ id: 'REJ_ORDR', status: getJobStatus(jobEnums['REJ_ORDR'])})" detail button>
-              <ion-label class="ion-text-wrap">{{ $t("Rejected orders") }}</ion-label>
+              <ion-label class="ion-text-wrap" :color="updateColor(jobEnums['REJ_ORDR'], currentJob?.systemJobEnumId)">{{ $t("Rejected orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('REJ_ORDR') }}</ion-label>
             </ion-item>
             <ion-item-divider>
@@ -99,7 +99,7 @@ import { hasError, isFutureDate, showToast } from '@/utils';
 import emitter from '@/event-bus';
 import MoreJobs from '@/components/MoreJobs.vue';
 import { Actions, hasPermission } from '@/authorization'
-
+import {updateColor} from '@/utils';
 export default defineComponent({
   name: 'Brokering',
   components: {
@@ -136,7 +136,8 @@ export default defineComponent({
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
       enumTypeId: 'BROKER_SYS_JOB',
-      initialLoadJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any
+      initialLoadJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
+      selectedCard: ''
     }
   },
   computed: {
@@ -277,6 +278,7 @@ export default defineComponent({
       router,
       store,
       trashOutline,
+      updateColor
     };
   },
 });

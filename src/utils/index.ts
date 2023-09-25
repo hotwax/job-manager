@@ -287,7 +287,7 @@ const getNowTimestamp = () => {
   return DateTime.now().toISO();
 }
 
-const highlight = (value1: any, value2: any) =>  value1 === value2 ? 'secondary' : '';
+const updateColor = (value1: string, value2: string) =>  value1 === value2 ? 'secondary' : '';
 
 export {
   isCustomRunTime,
@@ -297,7 +297,7 @@ export {
   generateJobCustomParameters,
   generateJobCustomOptions,
   handleDateTimeInput,
-  highlight,
+  updateColor,
   showToast,
   hasError,
   parseCsv,

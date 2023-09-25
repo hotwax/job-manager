@@ -10,12 +10,12 @@
     <ion-content>
       <main>
         <section>
-          <ion-card>
+          <ion-card @click="selectedCard = 'shipping'">
             <ion-card-header>
-              <ion-card-title>{{ $t("Shipping") }}</ion-card-title>
+              <ion-card-title :color="updateColor(selectedCard,'shipping')">{{ $t("Shipping") }}</ion-card-title>
             </ion-card-header>
             <ion-item button @click="viewJobConfiguration({ id: 'SHIP_PKD_ODRS', status: getJobStatus(jobEnums['SHIP_PKD_ODRS']) })" detail>
-              <ion-label class="ion-text-wrap">{{ $t("Ship packed orders") }}</ion-label>
+              <ion-label class="ion-text-wrap" :color="updateColor(jobEnums['SHIP_PKD_ODRS'], currentJob?.systemJobEnumId)">{{ $t("Ship packed orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('SHIP_PKD_ODRS') }}</ion-label>
             </ion-item>
             <ion-item lines="none">
@@ -25,12 +25,12 @@
             </ion-item>
           </ion-card>
 
-          <ion-card>
+          <ion-card @click="selectedCard = 'history'">
             <ion-card-header>
-              <ion-card-title>{{ $t("History") }}</ion-card-title>
+              <ion-card-title :color="updateColor(selectedCard,'history')">{{ $t("History") }}</ion-card-title>
             </ion-card-header>
             <ion-item button @click="viewJobConfiguration({ id: 'ODR_FLMNT_HST', status: getJobStatus(jobEnums['ODR_FLMNT_HST']) })" detail>
-              <ion-label class="ion-text-wrap">{{ $t("Order fulfillment") }}</ion-label>
+              <ion-label class="ion-text-wrap" :color="updateColor(jobEnums['ODR_FLMNT_HST'], currentJob?.systemJobEnumId)">{{ $t("Order fulfillment") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('ODR_FLMNT_HST') }}</ion-label>
             </ion-item>
             <ion-item lines="none">
@@ -102,6 +102,8 @@ import { JobService } from '@/services/JobService'
 import MoreJobs from '@/components/MoreJobs.vue';
 import { Actions, hasPermission } from '@/authorization'
 import logger from '@/logger';
+import {updateColor} from '@/utils';
+
 
 export default defineComponent({
   name: 'Fulfillment',
@@ -134,7 +136,8 @@ export default defineComponent({
       isDesktop: isPlatform('desktop'),
       autoCancelDays: '',
       enumTypeId: 'FULFILLMENT_SYS_JOB',
-      initialLoadJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any
+      initialLoadJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
+      selectedCard: ''
     }
   },
   computed: {
@@ -279,7 +282,8 @@ export default defineComponent({
       Actions,
       hasPermission,
       router,
-      store
+      store,
+      updateColor
     };
   },
 });
