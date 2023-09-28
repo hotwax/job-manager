@@ -145,7 +145,7 @@ import {
 } from "ionicons/icons";
 import JobHistoryModal from '@/components/JobHistoryModal.vue'
 import { Plugins } from '@capacitor/core';
-import { isCustomRunTime, generateAllowedRunTimes, generateAllowedFrequencies, generateJobCustomParameters, generateJobCustomOptions, getNowTimestamp, handleDateTimeInput, showToast, hasError, hasServiceNameOrRuntimeDataError } from "@/utils";
+import { isCustomRunTime, generateAllowedRunTimes, generateAllowedFrequencies, generateJobCustomParameters, generateJobCustomOptions, getNowTimestamp, handleDateTimeInput, showToast, hasError, hasJobDataError } from "@/utils";
 import { mapGetters, useStore } from "vuex";
 import { DateTime } from 'luxon';
 import { translate } from '@/i18n'
@@ -324,8 +324,8 @@ export default defineComponent({
     async updateJob() {
       const job = this.currentJob;
 
-      // return if job has missing runtime or service configuration
-      if(hasServiceNameOrRuntimeDataError(job)) return;
+      // return if job has missing data or error
+      if(hasJobDataError(job)) return;
 
       job['jobStatus'] = this.jobStatus !== 'SERVICE_DRAFT' ? this.jobStatus : 'HOURLY';
 
@@ -402,6 +402,9 @@ export default defineComponent({
               text: this.$t('Run now'),
               handler: () => {
                 if (job) {
+                  // return if job has missing data or error
+                  if (hasJobDataError(job)) return;
+
                   // preparing the custom parameters those needs to passed with the job
                   const jobCustomParameters = generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters, job.runtimeData)
 

@@ -112,7 +112,7 @@ import { useStore } from "@/store";
 import { useRouter } from 'vue-router'
 import { mapGetters } from "vuex";
 import JobConfiguration from '@/components/JobConfiguration.vue';
-import { generateJobCustomParameters, isFutureDate, showToast, prepareRuntime, hasServiceNameOrRuntimeDataError } from '@/utils';
+import { generateJobCustomParameters, isFutureDate, showToast, prepareRuntime, hasJobDataError } from '@/utils';
 import emitter from '@/event-bus';
 import MoreJobs from '@/components/MoreJobs.vue';
 import { Actions, hasPermission } from '@/authorization'
@@ -205,8 +205,8 @@ export default defineComponent({
         return;
       }
 
-      // return if job has missing runtime or service configuration
-      if (hasServiceNameOrRuntimeDataError(job)) return;
+      // return if job has missing data or error
+      if (hasJobDataError(job)) return;
 
       // TODO: added this condition to not call the api when the value of the select automatically changes
       // need to handle this properly

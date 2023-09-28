@@ -288,10 +288,21 @@ const getNowTimestamp = () => {
   return DateTime.now().toISO();
 }
 
-const hasServiceNameOrRuntimeDataError = (job: any) => {
-  if (job?.serviceName === '_NA_' || job?.runtimeData?._ERROR_MESSAGE_) {
-    console.warn(job?.serviceName === '_NA_' ? `${job.systemJobEnumId} :: This job does not have any service data configuration.` : `${job.systemJobEnumId}(${job.serviceName}) has runtimeData error :: ${job.runtimeData._ERROR_MESSAGE_}`);
-    showToast(job?.serviceName === '_NA_' ? translate('This job does not have any service data configuration.') : translate('This job does not have any runtime data configuration.'));
+const hasJobDataError = (job: any) => {
+  let warning = '';
+  let message = '';
+
+  if (job?.serviceName === '_NA_') {
+    warning = `${job.systemJobEnumId} :: This job does not have any service data configuration.`;
+    message = 'This job does not have any service data configuration.';
+  } else if (job?.runtimeData?._ERROR_MESSAGE_) {
+    warning = `${job.systemJobEnumId}(${job.serviceName}) has runtimeData error :: ${job.runtimeData._ERROR_MESSAGE_}`;
+    message = 'This job does not have any runtime data configuration.';
+  }
+
+  if(message) {
+    console.warn(warning);
+    showToast(translate(message));
     return true;
   }
   return false;
@@ -305,7 +316,7 @@ export {
   generateJobCustomParameters,
   generateJobCustomOptions,
   handleDateTimeInput,
-  hasServiceNameOrRuntimeDataError,
+  hasJobDataError,
   showToast,
   hasError,
   parseCsv,
