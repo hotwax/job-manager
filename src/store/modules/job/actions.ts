@@ -56,7 +56,7 @@ const actions: ActionTree<JobState, RootState> = {
       "noConditionFind": "Y",
       "viewSize": payload.viewSize,
       "viewIndex": payload.viewIndex,
-      "orderBy": "runTime DESC"
+      "orderBy": "lastUpdatedStamp DESC | runTime DESC"
     }
 
     if(payload.statusId.length > 0) {
