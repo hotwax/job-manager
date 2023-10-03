@@ -287,7 +287,16 @@ const getNowTimestamp = () => {
   return DateTime.now().toISO();
 }
 
-const updateColor = (value1: string, value2: string) =>  value1 === value2 ? 'secondary' : '';
+const updateColor = (value1: string, value2: string, value: string) => 
+{
+  if(value==undefined){
+    return '';
+  }
+  else{
+    return  value1 === value2 ? 'secondary' : '';
+  }
+}
+
 
 export {
   isCustomRunTime,

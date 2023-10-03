@@ -12,7 +12,7 @@
         <section>
           <ion-card @click="selectedCard = 'adjustments'">
             <ion-card-header>
-              <ion-card-title :color="updateColor(selectedCard,'adjustments')">{{ $t("Adjustments") }}</ion-card-title>
+              <ion-card-title :color="updateColor(selectedCard,'adjustments',currentJob)">{{ $t("Adjustments") }}</ion-card-title>
             </ion-card-header>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ $t("BOPIS corrections") }}</ion-label>
@@ -24,7 +24,7 @@
               </ion-label>
             </ion-item>
             <ion-item button @click="viewJobConfiguration({ id: 'HARD_SYNC', status: getJobStatus(jobEnums['HARD_SYNC'])})" detail>
-              <ion-label class="ion-text-wrap" :color="updateColor(jobEnums['HARD_SYNC'], currentJob?.systemJobEnumId)">{{ $t("Hard sync") }}</ion-label>
+              <ion-label class="ion-text-wrap" :color="updateColor(jobEnums['HARD_SYNC'], currentJob?.systemJobEnumId, currentJob)">{{ $t("Hard sync") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('HARD_SYNC') }}</ion-label>
             </ion-item>
             <ion-item lines="none">

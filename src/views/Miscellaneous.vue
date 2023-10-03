@@ -23,9 +23,11 @@
 
           <div v-else>
             <ion-list @click="selectedCard = 'miscellaneous'">
-              <ion-list-header :color="updateColor(selectedCard,'miscellaneous')">{{ $t("Miscellaneous jobs") }}</ion-list-header>
+              <ion-list-header>
+                <ion-label :color="updateColor(selectedCard,'miscellaneous',currentJob)">{{ $t("Miscellaneous jobs") }}</ion-label>
+              </ion-list-header>
               <ion-item v-for="job in prepareMiscJobs" :key="job.jobId" @click="viewJobConfiguration(job)" detail button>
-                <ion-label :color="updateColor(job.systemJobEnumId,currentJob.systemJobEnumId)">{{ job.jobName }}</ion-label>
+                <ion-label :color="updateColor(job.systemJobEnumId, currentJob?.systemJobEnumId, currentJob)">{{ job.jobName }}</ion-label>
                 <ion-note slot="end">{{ getJobRuntime(job) }}</ion-note>
               </ion-item>
             </ion-list>

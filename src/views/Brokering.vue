@@ -12,10 +12,10 @@
         <section>
           <ion-card @click="selectedCard = 'routing'">
             <ion-card-header>
-              <ion-card-title :color="updateColor(selectedCard,'routing')">{{ $t("Routing") }}</ion-card-title>
+              <ion-card-title :color="updateColor(selectedCard,'routing',currentJob)">{{ $t("Routing") }}</ion-card-title>
             </ion-card-header>
             <ion-item @click="viewJobConfiguration({ id: 'REJ_ORDR', status: getJobStatus(jobEnums['REJ_ORDR'])})" detail button>
-              <ion-label class="ion-text-wrap" :color="updateColor(jobEnums['REJ_ORDR'], currentJob?.systemJobEnumId)">{{ $t("Rejected orders") }}</ion-label>
+              <ion-label class="ion-text-wrap" :color="updateColor(jobEnums['REJ_ORDR'], currentJob?.systemJobEnumId, currentJob)">{{ $t("Rejected orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('REJ_ORDR') }}</ion-label>
             </ion-item>
             <ion-item-divider>

@@ -12,14 +12,14 @@
         <section>
           <ion-card @click="selectedCard = 'sync'">
             <ion-card-header>
-              <ion-card-title :color="updateColor(selectedCard,'sync')">{{ $t("Sync") }}</ion-card-title>
+              <ion-card-title :color="updateColor(selectedCard,'sync',currentJob)">{{ $t("Sync") }}</ion-card-title>
             </ion-card-header>
             <ion-item button @click="viewJobConfiguration({ id: 'IMP_PRDTS', status: getJobStatus(jobEnums['IMP_PRDTS'])})" detail>
-              <ion-label class="ion-text-wrap" :color="updateColor(jobEnums['IMP_PRDTS'], currentJob?.systemJobEnumId)">{{ $t("Import products") }}</ion-label>
+              <ion-label class="ion-text-wrap" :color="updateColor(jobEnums['IMP_PRDTS'], currentJob?.systemJobEnumId, currentJob)">{{ $t("Import products") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_PRDTS') }}</ion-label>
             </ion-item>
             <ion-item button @click="viewJobConfiguration({ id: 'SYNC_PRDTS', status: getJobStatus(jobEnums['SYNC_PRDTS'])})" detail>
-              <ion-label class="ion-text-wrap" :color="updateColor(jobEnums['SYNC_PRDTS'], currentJob?.systemJobEnumId)">{{ $t("Sync products") }}</ion-label>
+              <ion-label class="ion-text-wrap" :color="updateColor(jobEnums['SYNC_PRDTS'], currentJob?.systemJobEnumId, currentJob)">{{ $t("Sync products") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('SYNC_PRDTS') }} </ion-label>
             </ion-item>
             <ion-item lines="none">

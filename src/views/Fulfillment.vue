@@ -12,10 +12,10 @@
         <section>
           <ion-card @click="selectedCard = 'shipping'">
             <ion-card-header>
-              <ion-card-title :color="updateColor(selectedCard,'shipping')">{{ $t("Shipping") }}</ion-card-title>
+              <ion-card-title :color="updateColor(selectedCard,'shipping',currentJob)">{{ $t("Shipping") }}</ion-card-title>
             </ion-card-header>
             <ion-item button @click="viewJobConfiguration({ id: 'SHIP_PKD_ODRS', status: getJobStatus(jobEnums['SHIP_PKD_ODRS']) })" detail>
-              <ion-label class="ion-text-wrap" :color="updateColor(jobEnums['SHIP_PKD_ODRS'], currentJob?.systemJobEnumId)">{{ $t("Ship packed orders") }}</ion-label>
+              <ion-label class="ion-text-wrap" :color="updateColor(jobEnums['SHIP_PKD_ODRS'], currentJob?.systemJobEnumId, currentJob)">{{ $t("Ship packed orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('SHIP_PKD_ODRS') }}</ion-label>
             </ion-item>
             <ion-item lines="none">
@@ -27,10 +27,10 @@
 
           <ion-card @click="selectedCard = 'history'">
             <ion-card-header>
-              <ion-card-title :color="updateColor(selectedCard,'history')">{{ $t("History") }}</ion-card-title>
+              <ion-card-title :color="updateColor(selectedCard,'history',currentJob)">{{ $t("History") }}</ion-card-title>
             </ion-card-header>
             <ion-item button @click="viewJobConfiguration({ id: 'ODR_FLMNT_HST', status: getJobStatus(jobEnums['ODR_FLMNT_HST']) })" detail>
-              <ion-label class="ion-text-wrap" :color="updateColor(jobEnums['ODR_FLMNT_HST'], currentJob?.systemJobEnumId)">{{ $t("Order fulfillment") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ $t("Order fulfillment") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('ODR_FLMNT_HST') }}</ion-label>
             </ion-item>
             <ion-item lines="none">
