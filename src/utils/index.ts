@@ -301,7 +301,7 @@ const hasJobDataError = (job: any) => {
   }
 
   if(message) {
-    console.warn(warning);
+    logger.warn(warning);
     showToast(translate(message));
     return true;
   }

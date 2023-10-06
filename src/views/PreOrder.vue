@@ -300,10 +300,7 @@ export default defineComponent({
             {
               text: this.$t('Run now'),
               handler: () => {
-                if (job) {
-                  // return if job has missing data or error
-                  if (hasJobDataError(job)) return;
-
+                if (job && !hasJobDataError(job)) {
                   const jobCustomParameters = generateJobCustomParameters([], [], job.runtimeData)
                   this.store.dispatch('job/runServiceNow', { job, jobCustomParameters })
                 }
