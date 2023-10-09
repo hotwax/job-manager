@@ -401,9 +401,7 @@ export default defineComponent({
             {
               text: this.$t('Run now'),
               handler: () => {
-                if (job) {
-                  // return if job has missing data or error
-                  if (hasJobDataError(job)) return;
+                if (job && !hasJobDataError(job)) {
 
                   // preparing the custom parameters those needs to passed with the job
                   const jobCustomParameters = generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters, job.runtimeData)
