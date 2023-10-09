@@ -160,7 +160,7 @@ import {
 import { mapGetters, useStore } from "vuex";
 import { translate } from "@/i18n";
 import { DateTime } from 'luxon';
-import { isCustomRunTime, generateAllowedRunTimes, generateJobCustomParameters, generateJobCustomOptions, getNowTimestamp, handleDateTimeInput, isFutureDate, showToast } from '@/utils';
+import { isCustomRunTime, generateAllowedRunTimes, generateJobCustomParameters, generateJobCustomOptions, getNowTimestamp, handleDateTimeInput, isFutureDate, showToast, hasJobDataError } from '@/utils';
 import { Actions, hasPermission } from '@/authorization'
 import { JobService } from "@/services/JobService";
 import JobParameterModal from '@/components/JobParameterModal.vue'
@@ -259,6 +259,9 @@ export default defineComponent({
     },
     async updateJob() {
       const job = this.currentJob;
+
+      // return if job has missing data or error
+      if (hasJobDataError(job)) return;
 
       job['sinceId'] = this.lastShopifyOrderId
       job['jobStatus'] = job.tempExprId

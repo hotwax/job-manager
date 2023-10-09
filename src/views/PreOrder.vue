@@ -182,7 +182,7 @@ import { mapGetters } from "vuex";
 import { useRouter } from 'vue-router'
 import { alertController } from '@ionic/vue';
 import JobConfiguration from '@/components/JobConfiguration.vue'
-import { generateJobCustomParameters, isFutureDate, showToast, prepareRuntime } from '@/utils';
+import { generateJobCustomParameters, isFutureDate, showToast, prepareRuntime, hasJobDataError } from '@/utils';
 import emitter from '@/event-bus';
 import { translate } from '@/i18n';
 import MoreJobs from '@/components/MoreJobs.vue';
@@ -260,6 +260,9 @@ export default defineComponent({
         return;
       }
 
+      // return if job has missing data or error
+      if (hasJobDataError(job)) return;
+
       // TODO: added this condition to not call the api when the value of the select automatically changes
       // need to handle this properly
       if ((checked && job?.status === 'SERVICE_PENDING') || (!checked && job?.status === 'SERVICE_DRAFT')) {
@@ -297,7 +300,7 @@ export default defineComponent({
             {
               text: this.$t('Run now'),
               handler: () => {
-                if (job) {
+                if (job && !hasJobDataError(job)) {
                   const jobCustomParameters = generateJobCustomParameters([], [], job.runtimeData)
                   this.store.dispatch('job/runServiceNow', { job, jobCustomParameters })
                 }
