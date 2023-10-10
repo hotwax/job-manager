@@ -263,6 +263,8 @@
   "There are no jobs running right now": "There are no jobs running right now",
   "There are no miscellaneous jobs right now": "There are no miscellaneous jobs right now",
   "This is the name of the OMS you are connected to right now. Make sure that you are connected to the right instance before proceeding.": "This is the name of the OMS you are connected to right now. Make sure that you are connected to the right instance before proceeding.",
+  "This job does not have any runtime data configuration.": "This job does not have any runtime data configuration.",
+  "This job does not have any service data configuration.": "This job does not have any service data configuration.",
   "This job has been canceled": "This job has been canceled",
   "This job has been skipped": "This job has been skipped",
   "This job has slow frequency type, hence, feasible frequency will be set automatically": "This job has slow frequency type, hence, feasible frequency will be set automatically",
