@@ -1,4 +1,5 @@
 const path = require('path')
+
 require("@hotwax/app-version-info")
 module.exports = {
   pluginOptions: {
