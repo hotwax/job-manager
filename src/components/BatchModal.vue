@@ -6,81 +6,6 @@
           <ion-icon slot="icon-only" :icon="closeOutline" />
         </ion-button>
       </ion-buttons>
-      <ion-title>{{ $t('New broker run') }}</ion-title>
-    </ion-toolbar>
-  </ion-header>
-
-  <ion-content>
-    <ion-item>
-      <ion-label position="fixed">{{ $t('Name') }}</ion-label>
-      <ion-input placeholder="Batch Name" v-model="jobName" />
-    </ion-item>
-    <ion-item :disabled="currentBatch?.jobId">
-      <ion-icon slot="start" :icon="ticketOutline" />
-      <ion-label>{{ $t('Order parking') }}</ion-label>
-      <ion-select slot="end" interface="popover" :value="this.currentScheduledBatch?.facilityId || batchFacilityId" @ionChange="batchFacilityId = $event['detail'].value">
-        <ion-select-option value="_NA_">{{ $t("Brokering queue") }}</ion-select-option>
-        <ion-select-option value="PRE_ORDER_PARKING">{{ $t("Pre-order parking") }}</ion-select-option>
-        <ion-select-option value="BACKORDER_PARKING">{{ $t("Back-order parking") }}</ion-select-option>
-      </ion-select>
-    </ion-item>
-    <ion-item :disabled="currentBatch?.jobId">
-      <ion-icon slot="start" :icon="warningOutline" />
-      <ion-label>{{ $t('Unfillable Orders') }}</ion-label>
-      <ion-toggle slot="end"></ion-toggle>
-    </ion-item>
-    <ion-list>
-      <ion-list-header>
-        {{ 'More parameters' }}
-      </ion-list-header>
-      <ion-item>
-        <ion-label>{{ 'Placeholder 1' }}</ion-label>
-        <ion-input placeholder="Placeholder"></ion-input>
-      </ion-item>
-      <ion-item>
-        <ion-label>{{ 'Placeholder 2' }}</ion-label>
-        <ion-input placeholder="Placeholder"></ion-input>
-      </ion-item>
-      <ion-item>
-        <ion-label>{{ 'Placeholder 3' }}</ion-label>
-        <ion-input placeholder="Placeholder"></ion-input>
-      </ion-item>
-    </ion-list>
-    <ion-card>
-      <ion-item lines="none">
-        <ion-label>{{ 'Schedule' }}</ion-label>
-      </ion-item>
-      <ion-item :disabled="currentBatch?.jobId">
-        <ion-icon slot="start" :icon="timeOutline" />
-        <ion-label>{{ $t('Run time') }}</ion-label>
-        <ion-select slot="end" interface="popover" value="Select" @ionChange="batchFacilityId = $event['detail'].value">
-          <ion-select-option value="Select">{{ $t("Select") }}</ion-select-option> -->
-          <!-- <ion-select-option value="PRE_ORDER_PARKING">{{ $t("Pre-order parking") }}</ion-select-option>
-          <ion-select-option value="BACKORDER_PARKING">{{ $t("Back-order parking") }}</ion-select-option> -->
-        <!-- </ion-select>
-      </ion-item>
-      <ion-item lines="none" :disabled="currentBatch?.jobId">
-        <ion-icon slot="start" :icon="timerOutline" />
-        <ion-label>{{ $t('Frequency') }}</ion-label>
-        <ion-select slot="end" interface="popover" value="Select" @ionChange="batchFacilityId = $event['detail'].value">
-          <ion-select-option value="Select">{{ $t("Once in 15 minutes") }}</ion-select-option>
-        </ion-select>
-      </ion-item>
-    </ion-card>
-    <ion-fab @click="updateJob()" vertical="bottom" horizontal="end" slot="fixed">
-      <ion-fab-button>
-        <ion-icon :icon="checkmarkDoneOutline" />  
-      </ion-fab-button>
-    </ion-fab>
-  </ion-content> -->
-
-  <!-- <ion-header>
-    <ion-toolbar>
-      <ion-buttons slot="start">
-        <ion-button @click="closeModal">
-          <ion-icon slot="icon-only" :icon="closeOutline" />
-        </ion-button>
-      </ion-buttons>
       <ion-title>{{ currentBatch?.jobName ? currentBatch?.jobName : $t('New broker run') }}</ion-title>
     </ion-toolbar>
   </ion-header>
@@ -120,6 +45,7 @@
       </ion-fab-button>
     </ion-fab>
   </ion-content> -->
+
   <ion-header>
     <ion-toolbar>
       <ion-buttons slot="start">
@@ -134,7 +60,7 @@
   <ion-content>
     <ion-item>
       <ion-label position="fixed">{{ $t('Name') }}</ion-label>
-      <ion-input placeholder="Batch Name" v-model="jobName" />
+      <ion-input :placeholder="currentDateTime = getCurrentDateTime()" v-model="jobName" />
     </ion-item>
     <ion-item>
       <ion-icon slot="start" :icon="ticketOutline" />
@@ -176,11 +102,24 @@
       <ion-item :disabled="currentBatch?.jobId">
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label>{{ $t('Run time') }}</ion-label>
-        <ion-select slot="end" interface="popover" value="Select" @ionChange="batchFacilityId = $event['detail'].value">
-          <ion-select-option value="Select">{{ $t("Select") }}</ion-select-option>
-          <ion-select-option value="PRE_ORDER_PARKING">{{ $t("Pre-order parking") }}</ion-select-option>
-          <ion-select-option value="BACKORDER_PARKING">{{ $t("Back-order parking") }}</ion-select-option> -->
+        <ion-select interface="popover" :placeholder="$t('Select')" :value="runTime" @ionChange="updateRunTime($event)">
+          <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ $t(runTime.label) }}</ion-select-option>
         </ion-select>
+        <!-- TODO: display a button when we are not having a runtime and open the datetime component
+        on click of that button
+        Currently, when mapping the same datetime component for label and button so it's not working so for
+        now commented the button and added a fallback string -->
+        <!-- <ion-button id="open-run-time-modal" size="small" fill="outline" color="medium" v-show="!currentJob?.runTime">{{ $t("Select run time") }}</ion-button> -->
+        <ion-modal class="date-time-modal" :is-open="isDateTimeModalOpen" @didDismiss="() => isDateTimeModalOpen = false">
+          <ion-content force-overscroll="false">
+            <ion-datetime          
+              show-default-buttons
+              hour-cycle="h23"
+              :value="runTime ? (isCustomRunTime(runTime) ? getDateTime(runTime) : getDateTime(DateTime.now().toMillis() + runTime)) : getNowTimestamp()"
+              @ionChange="updateCustomTime($event)"
+            />
+          </ion-content>
+        </ion-modal>
       </ion-item>
       <ion-item lines="none" :disabled="currentBatch?.jobId">
         <ion-icon slot="start" :icon="timerOutline" />
@@ -209,15 +148,11 @@ import {
   IonButtons,
   IonContent,
   IonDatetime,
-  IonFab,
-  IonFabButton,
   IonHeader,
   IonIcon,
   IonInput,
   IonItem,
   IonLabel,
-  IonRadio,
-  IonRadioGroup,
   IonSelect,
   IonSelectOption,
   IonTitle,
@@ -228,7 +163,7 @@ import { defineComponent } from 'vue';
 import { closeOutline, checkmarkDoneOutline, timeOutline, timerOutline, ticketOutline, warningOutline } from 'ionicons/icons';
 import { mapGetters, useStore } from 'vuex';
 import { DateTime } from 'luxon';
-import { handleDateTimeInput, generateJobCustomParameters, getNowTimestamp, isFutureDate, showToast, hasJobDataError } from '@/utils';
+import { handleDateTimeInput, generateAllowedRunTimes, generateJobCustomParameters, getNowTimestamp, isCustomRunTime, isFutureDate, showToast, hasJobDataError } from '@/utils';
 import { translate } from '@/i18n'
 
 export default defineComponent({
@@ -237,16 +172,11 @@ export default defineComponent({
     IonButton,
     IonButtons,
     IonContent,
-    // IonDatetime,
-    // IonFab,
-    // IonFabButton,
     IonHeader,
     IonIcon,
     IonInput,
     IonItem,
     IonLabel,
-    // IonRadio,
-    // IonRadioGroup,
     IonSelect,
     IonSelectOption,
     IonTitle,
@@ -263,7 +193,10 @@ export default defineComponent({
       currentDateTime: '' as string,
       jobRunTime: '' as any,
       currentScheduledBatch: {} as any,
-      orders: ""
+      orders: "",
+      runTime: '' as any,
+      runTimes: [] as any,
+      isDateTimeModalOpen: false,
     }
   },
   computed: {
@@ -276,6 +209,7 @@ export default defineComponent({
   },
   mounted() {
     // this.getCurrentBatch();
+    this.generateRunTimes(this.runTime)
   },
   methods: {
     getDateTime(time: any) {
@@ -284,17 +218,28 @@ export default defineComponent({
     closeModal() {
       modalController.dismiss({ dismissed: true });
     },
+    async generateRunTimes(currentRunTime?: any) {
+      const runTimes = JSON.parse(JSON.stringify(generateAllowedRunTimes()))
+      let selectedRunTime
+      // 0 check for the 'Now' value and '' check for initial render
+      if (currentRunTime || currentRunTime === 0 ) {
+        selectedRunTime = runTimes.some((runTime: any) => runTime.value === currentRunTime)
+        if (!selectedRunTime) runTimes.push({ label: this.getTime(currentRunTime), value: currentRunTime })
+      }
+      this.runTime = currentRunTime
+      this.runTimes = runTimes
+    },
     async updateJob() {
       let batchJobEnum = this.enumId;
       if (!batchJobEnum) {
+        console.log('enter');
         const jobEnum: any = Object.values(this.jobEnums)?.find((job: any) => {
           return job.unfillable === this.unfillableOrder && job.facilityId === this.batchFacilityId
         });
         batchJobEnum = jobEnum.id
       }
-
-      const job = this.currentBatch ? this.currentBatch : this.getJob(batchJobEnum)?.find((job: any) => job.status === 'SERVICE_DRAFT');
       
+      const job = this.getJob(batchJobEnum)?.find((job: any) => job.status === 'SERVICE_DRAFT');
       if (!job) {
         showToast(translate('Configuration missing'))
         return;
@@ -303,36 +248,52 @@ export default defineComponent({
       // return if job has missing data or error
       if (hasJobDataError(job)) return;
 
-      if (this.jobRunTime) {
-        job['runTime'] = this.jobRunTime
+      console.log('run', this.runTime);
+      
+      if (this.runTime) {
+        console.log('entered');
+        
+        job['runTime'] = this.runTime
       }
 
       job['jobStatus'] = 'EVERYDAY';
       job['jobName'] = this.jobName || this.currentDateTime;
 
       // if job runTime is not a valid date then making runTime as empty
-      if (job?.runTime && !isFutureDate(job?.runTime)) {
-        job.runTime = ''
-      }
-      console.log(this.jobRunTime);
-      console.log(getNowTimestamp());
-      
+      // if (job?.runTime && !isFutureDate(job?.runTime)) {
+      //   job.runTime = ''
+      // }
       console.log('end', job);
       
-      if (job?.status === 'SERVICE_DRAFT') {
-        const jobCustomParameters = generateJobCustomParameters([], [], job.runtimeData)
-        // await this.store.dispatch('job/scheduleService', { job, jobCustomParameters })
-      } else if (job?.status === 'SERVICE_PENDING') {
-        // await this.store.dispatch('job/updateJob', job)
-      }
+      // if (job?.status === 'SERVICE_DRAFT') {
+      //   const jobCustomParameters = generateJobCustomParameters([], [], job.runtimeData)
+      //   await this.store.dispatch('job/scheduleService', { job, jobCustomParameters })
+      // } else if (job?.status === 'SERVICE_PENDING') {
+      //   await this.store.dispatch('job/updateJob', job)
+      // }
       this.closeModal()
     },
-    updateRunTime(ev: CustomEvent) {
-      console.log('ev', ev)
-      this.jobRunTime = handleDateTimeInput(ev['detail'].value)
+    updateCustomTime(event: CustomEvent) {
+      const currTime = DateTime.now().toMillis();
+      const setTime = handleDateTimeInput(event.detail.value);
+      if (setTime > currTime) this.generateRunTimes(setTime)
+      else showToast(translate("Provide a future date and time"))
+    },
+    // updateRunTime(ev: CustomEvent) {
+    //   console.log('ev', ev)
+    //   this.jobRunTime = handleDateTimeInput(ev['detail'].value)
+    // },
+    updateRunTime(event: CustomEvent) {
+      console.log(event);
+      const value = event.detail.value
+      if (value != 'CUSTOM') this.generateRunTimes(value)
+      else this.isDateTimeModalOpen = true
     },
     getCurrentDateTime() {
       return DateTime.now().setZone(this.userProfile.userTimeZone).toLocaleString(DateTime.DATETIME_MED);
+    },
+    getTime (time: any) {
+      return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
     },
   },
   setup() {
@@ -346,7 +307,9 @@ export default defineComponent({
       timerOutline,
       warningOutline,
       store,
-      getNowTimestamp
+      DateTime,
+      getNowTimestamp,
+      isCustomRunTime
     };
   },
 });

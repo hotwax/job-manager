@@ -244,6 +244,8 @@ export default defineComponent({
         if (!selectedRunTime) runTimes.push({ label: this.getTime(currentRunTime), value: currentRunTime })
       }
       this.runTime = currentRunTime
+      console.log(this.runTime);
+      
       this.runTimes = runTimes
     },
     async skipJob(job: any) {

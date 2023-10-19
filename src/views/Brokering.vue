@@ -189,6 +189,7 @@ export default defineComponent({
   },
   methods: {
     async addBatch() {
+      console.log(this.orderBatchJobs);
       const batchmodal = await modalController.create({
         component: BatchModal
       });
