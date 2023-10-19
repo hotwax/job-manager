@@ -1,5 +1,80 @@
 <template>
-  <ion-header>
+  <!-- <ion-header>
+    <ion-toolbar>
+      <ion-buttons slot="start">
+        <ion-button @click="closeModal">
+          <ion-icon slot="icon-only" :icon="closeOutline" />
+        </ion-button>
+      </ion-buttons>
+      <ion-title>{{ $t('New broker run') }}</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-content>
+    <ion-item>
+      <ion-label position="fixed">{{ $t('Name') }}</ion-label>
+      <ion-input placeholder="Batch Name" v-model="jobName" />
+    </ion-item>
+    <ion-item :disabled="currentBatch?.jobId">
+      <ion-icon slot="start" :icon="ticketOutline" />
+      <ion-label>{{ $t('Order parking') }}</ion-label>
+      <ion-select slot="end" interface="popover" :value="this.currentScheduledBatch?.facilityId || batchFacilityId" @ionChange="batchFacilityId = $event['detail'].value">
+        <ion-select-option value="_NA_">{{ $t("Brokering queue") }}</ion-select-option>
+        <ion-select-option value="PRE_ORDER_PARKING">{{ $t("Pre-order parking") }}</ion-select-option>
+        <ion-select-option value="BACKORDER_PARKING">{{ $t("Back-order parking") }}</ion-select-option>
+      </ion-select>
+    </ion-item>
+    <ion-item :disabled="currentBatch?.jobId">
+      <ion-icon slot="start" :icon="warningOutline" />
+      <ion-label>{{ $t('Unfillable Orders') }}</ion-label>
+      <ion-toggle slot="end"></ion-toggle>
+    </ion-item>
+    <ion-list>
+      <ion-list-header>
+        {{ 'More parameters' }}
+      </ion-list-header>
+      <ion-item>
+        <ion-label>{{ 'Placeholder 1' }}</ion-label>
+        <ion-input placeholder="Placeholder"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-label>{{ 'Placeholder 2' }}</ion-label>
+        <ion-input placeholder="Placeholder"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-label>{{ 'Placeholder 3' }}</ion-label>
+        <ion-input placeholder="Placeholder"></ion-input>
+      </ion-item>
+    </ion-list>
+    <ion-card>
+      <ion-item lines="none">
+        <ion-label>{{ 'Schedule' }}</ion-label>
+      </ion-item>
+      <ion-item :disabled="currentBatch?.jobId">
+        <ion-icon slot="start" :icon="timeOutline" />
+        <ion-label>{{ $t('Run time') }}</ion-label>
+        <ion-select slot="end" interface="popover" value="Select" @ionChange="batchFacilityId = $event['detail'].value">
+          <ion-select-option value="Select">{{ $t("Select") }}</ion-select-option> -->
+          <!-- <ion-select-option value="PRE_ORDER_PARKING">{{ $t("Pre-order parking") }}</ion-select-option>
+          <ion-select-option value="BACKORDER_PARKING">{{ $t("Back-order parking") }}</ion-select-option> -->
+        <!-- </ion-select>
+      </ion-item>
+      <ion-item lines="none" :disabled="currentBatch?.jobId">
+        <ion-icon slot="start" :icon="timerOutline" />
+        <ion-label>{{ $t('Frequency') }}</ion-label>
+        <ion-select slot="end" interface="popover" value="Select" @ionChange="batchFacilityId = $event['detail'].value">
+          <ion-select-option value="Select">{{ $t("Once in 15 minutes") }}</ion-select-option>
+        </ion-select>
+      </ion-item>
+    </ion-card>
+    <ion-fab @click="updateJob()" vertical="bottom" horizontal="end" slot="fixed">
+      <ion-fab-button>
+        <ion-icon :icon="checkmarkDoneOutline" />  
+      </ion-fab-button>
+    </ion-fab>
+  </ion-content> -->
+
+  <!-- <ion-header>
     <ion-toolbar>
       <ion-buttons slot="start">
         <ion-button @click="closeModal">
@@ -26,18 +101,99 @@
     <ion-radio-group>
       <ion-item :disabled="currentBatch?.jobId">
         <ion-label>{{ $t('New orders') }}</ion-label>
-        <!-- "this.currentScheduledBatch?.unfillable === false" - Did this because ion-radio is not considering boolean -->
+        "this.currentScheduledBatch?.unfillable === false" - Did this because ion-radio is not considering boolean 
         <ion-radio :checked="this.currentScheduledBatch?.unfillable === false" slot="start" @click="unfillableOrder = false" color="secondary"/>
       </ion-item>
       <ion-item :disabled="currentBatch?.jobId">
         <ion-label>{{ $t('Unfillable orders') }}</ion-label>
-        <!-- "this.currentScheduledBatch?.unfillable === false" - Did this because ion-radio is not considering boolean -->
+        "this.currentScheduledBatch?.unfillable === false" - Did this because ion-radio is not considering boolean 
         <ion-radio :checked="this.currentScheduledBatch?.unfillable === true" slot="start" @click="unfillableOrder = true" color="secondary"/>
       </ion-item>
     </ion-radio-group>
     <ion-item>
       <ion-label position="fixed">{{ $t("Schedule") }}</ion-label>
       <ion-datetime hour-cycle="h12" :value="currentBatch?.runTime ? getDateTime(currentBatch.runTime) : getNowTimestamp()" @ionChange="updateRunTime($event)" presentation="time" size="cover" />
+    </ion-item>    
+    <ion-fab @click="updateJob()" vertical="bottom" horizontal="end" slot="fixed">
+      <ion-fab-button>
+        <ion-icon :icon="checkmarkDoneOutline" />  
+      </ion-fab-button>
+    </ion-fab>
+  </ion-content> -->
+  <ion-header>
+    <ion-toolbar>
+      <ion-buttons slot="start">
+        <ion-button @click="closeModal">
+          <ion-icon slot="icon-only" :icon="closeOutline" />
+        </ion-button>
+      </ion-buttons>
+      <ion-title>{{ $t('New broker run') }}</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-content>
+    <ion-item>
+      <ion-label position="fixed">{{ $t('Name') }}</ion-label>
+      <ion-input placeholder="Batch Name" v-model="jobName" />
+    </ion-item>
+    <ion-item>
+      <ion-icon slot="start" :icon="ticketOutline" />
+      <ion-label>{{ $t('Order parking') }}</ion-label>
+      <ion-select slot="end" interface="popover" :value="batchFacilityId" @ionChange="batchFacilityId = $event['detail'].value">
+        <ion-select-option value="_NA_">{{ $t("Brokering queue") }}</ion-select-option>
+        <ion-select-option value="PRE_ORDER_PARKING">{{ $t("Pre-order parking") }}</ion-select-option>
+        <ion-select-option value="BACKORDER_PARKING">{{ $t("Back-order parking") }}</ion-select-option>
+      </ion-select>
+    </ion-item>
+    <ion-item>
+      <ion-icon slot="start" :icon="warningOutline" />
+      <ion-label>{{ $t('Unfillable Orders') }}</ion-label>
+      <ion-toggle slot="end" :checked="unfillableOrder" @ionChange="unfillableOrder = !unfillableOrder"></ion-toggle>
+    </ion-item>
+
+    <ion-list>
+      <ion-list-header>
+        {{ 'More parameters' }}
+      </ion-list-header>
+      <ion-item>
+        <ion-label>{{ 'Placeholder 1' }}</ion-label>
+        <ion-input placeholder="Placeholder"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-label>{{ 'Placeholder 2' }}</ion-label>
+        <ion-input placeholder="Placeholder"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-label>{{ 'Placeholder 3' }}</ion-label>
+        <ion-input placeholder="Placeholder"></ion-input>
+      </ion-item>
+    </ion-list>
+
+    <ion-card>
+      <ion-item lines="none">
+        <ion-label>{{ 'Schedule' }}</ion-label>
+      </ion-item>
+      <ion-item :disabled="currentBatch?.jobId">
+        <ion-icon slot="start" :icon="timeOutline" />
+        <ion-label>{{ $t('Run time') }}</ion-label>
+        <ion-select slot="end" interface="popover" value="Select" @ionChange="batchFacilityId = $event['detail'].value">
+          <ion-select-option value="Select">{{ $t("Select") }}</ion-select-option>
+          <ion-select-option value="PRE_ORDER_PARKING">{{ $t("Pre-order parking") }}</ion-select-option>
+          <ion-select-option value="BACKORDER_PARKING">{{ $t("Back-order parking") }}</ion-select-option> -->
+        </ion-select>
+      </ion-item>
+      <ion-item lines="none" :disabled="currentBatch?.jobId">
+        <ion-icon slot="start" :icon="timerOutline" />
+        <ion-label>{{ $t('Frequency') }}</ion-label>
+        <ion-select slot="end" interface="popover" value="Select" @ionChange="batchFacilityId = $event['detail'].value">
+          <ion-select-option value="Select">{{ $t("Once in 15 minutes") }}</ion-select-option>
+        </ion-select>
+      </ion-item>
+    </ion-card>
+    
+    <ion-item>
+      <ion-label position="fixed">{{ $t("Schedule") }}</ion-label>
+      <ion-datetime hour-cycle="h12" :value="getNowTimestamp()" @ionChange="updateRunTime($event)" presentation="time" size="cover" />
     </ion-item>    
     <ion-fab @click="updateJob()" vertical="bottom" horizontal="end" slot="fixed">
       <ion-fab-button>
@@ -69,7 +225,7 @@ import {
   modalController
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
-import { closeOutline, checkmarkDoneOutline } from 'ionicons/icons';
+import { closeOutline, checkmarkDoneOutline, timeOutline, timerOutline, ticketOutline, warningOutline } from 'ionicons/icons';
 import { mapGetters, useStore } from 'vuex';
 import { DateTime } from 'luxon';
 import { handleDateTimeInput, generateJobCustomParameters, getNowTimestamp, isFutureDate, showToast, hasJobDataError } from '@/utils';
@@ -81,16 +237,16 @@ export default defineComponent({
     IonButton,
     IonButtons,
     IonContent,
-    IonDatetime,
-    IonFab,
-    IonFabButton,
+    // IonDatetime,
+    // IonFab,
+    // IonFabButton,
     IonHeader,
     IonIcon,
     IonInput,
     IonItem,
     IonLabel,
-    IonRadio,
-    IonRadioGroup,
+    // IonRadio,
+    // IonRadioGroup,
     IonSelect,
     IonSelectOption,
     IonTitle,
@@ -119,14 +275,9 @@ export default defineComponent({
     }),
   },
   mounted() {
-    this.getCurrentBatch();
+    // this.getCurrentBatch();
   },
   methods: {
-    getCurrentBatch() {
-      this.currentBatch = this.getJob(this.enumId)?.find((job: any) => job.id === this.id)
-      this.jobName = this.currentBatch?.jobName;
-      this.currentScheduledBatch = (this as any).jobEnums[this.currentBatch?.enumId];
-    },
     getDateTime(time: any) {
       return DateTime.fromMillis(time).toISO()
     },
@@ -143,7 +294,7 @@ export default defineComponent({
       }
 
       const job = this.currentBatch ? this.currentBatch : this.getJob(batchJobEnum)?.find((job: any) => job.status === 'SERVICE_DRAFT');
-
+      
       if (!job) {
         showToast(translate('Configuration missing'))
         return;
@@ -163,15 +314,21 @@ export default defineComponent({
       if (job?.runTime && !isFutureDate(job?.runTime)) {
         job.runTime = ''
       }
+      console.log(this.jobRunTime);
+      console.log(getNowTimestamp());
+      
+      console.log('end', job);
+      
       if (job?.status === 'SERVICE_DRAFT') {
         const jobCustomParameters = generateJobCustomParameters([], [], job.runtimeData)
-        await this.store.dispatch('job/scheduleService', { job, jobCustomParameters })
+        // await this.store.dispatch('job/scheduleService', { job, jobCustomParameters })
       } else if (job?.status === 'SERVICE_PENDING') {
-        await this.store.dispatch('job/updateJob', job)
+        // await this.store.dispatch('job/updateJob', job)
       }
       this.closeModal()
     },
     updateRunTime(ev: CustomEvent) {
+      console.log('ev', ev)
       this.jobRunTime = handleDateTimeInput(ev['detail'].value)
     },
     getCurrentDateTime() {
@@ -184,6 +341,10 @@ export default defineComponent({
     return {
       checkmarkDoneOutline,
       closeOutline,
+      ticketOutline,
+      timeOutline,
+      timerOutline,
+      warningOutline,
       store,
       getNowTimestamp
     };

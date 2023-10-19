@@ -10,6 +10,45 @@
     <ion-content>
       <main>
         <section>
+          <ion-button expand="block" :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" @click="addBatch()" >{{ 'Create new brokering job' }}</ion-button>
+        
+          <ion-item lines="none">
+            <ion-label>
+              <h1>{{ 'Scheduled Job' }}</h1>
+            </ion-label>
+          </ion-item>
+
+          <ion-card v-for="batch in orderBatchJobs" :key="batch?.id" detail v-show="batch?.status === 'SERVICE_PENDING'" @click="viewJobConfiguration({ id: batch.systemJobEnumId, status: batch.statusId})">
+            <ion-item lines="none">
+              <ion-label>
+                {{'Queue Name'}}
+                <h1>{{ batch?.jobName }}</h1>
+              </ion-label>
+              <ion-badge slot="end" color="dark" >{{ timeFromNow(batch?.runTime) }}</ion-badge>
+            </ion-item>
+
+            <ion-list>
+              <ion-item lines="none">
+                <ion-label class="ion-text-wrap">{{ batch?.frequency }}</ion-label>
+                <ion-label slot="end">{{ batch?.runTime ? getTime(batch.runTime) : '' }}</ion-label>
+              </ion-item>
+
+              <ion-item lines="none">
+                <ion-label class="ion-text-wrap">{{ $t("Unfillable Order") }}</ion-label>
+                <ion-toggle slot="end"/>
+              </ion-item>
+
+              <ion-item lines="none">
+                <ion-row>
+                  <ion-chip outline >
+                    {{ 'Custom' }}: {{ 'Parameter' }}
+                  </ion-chip>
+                </ion-row>
+              </ion-item>
+            </ion-list>
+          </ion-card>
+        </section>
+        <!-- <section>
           <ion-card>
             <ion-card-header>
               <ion-card-title>{{ $t("Routing") }}</ion-card-title>
@@ -51,7 +90,7 @@
             </ion-item>
           </ion-card>
           <MoreJobs v-if="getMoreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId).length" :jobs="getMoreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId)" />
-        </section>
+        </section> -->
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
           <JobConfiguration :status="currentJobStatus" :type="freqType" :key="currentJob"/>
@@ -105,25 +144,25 @@ export default defineComponent({
   components: {
     IonButton,
     IonCard,
-    IonCardHeader,
-    IonCardTitle,
+    // IonCardHeader,
+    // IonCardTitle,
     IonContent,
     IonHeader,
-    IonIcon,
+    // IonIcon,
     IonItem,
-    IonItemSliding,
-    IonItemDivider,
+    // IonItemSliding,
+    // IonItemDivider,
     IonLabel,
     IonList,
     IonMenuButton,
-    IonNote,
-    IonItemOption,
-    IonItemOptions,
+    // IonNote,
+    // IonItemOption,
+    // IonItemOptions,
     IonPage,
     IonTitle,
     IonToolbar,
     JobConfiguration,
-    MoreJobs
+    // MoreJobs
   },
   data() {
     return {
@@ -210,10 +249,14 @@ export default defineComponent({
       return skipJobAlert.present();
     },
     getTime (time: any) {
-      return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
+      // return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
+      return DateTime.fromMillis(time).toLocaleString(DateTime.TIME_24_SIMPLE);
     },
     async viewJobConfiguration(jobInformation: any) {
       this.currentJob = jobInformation.job || this.getJob(this.jobEnums[jobInformation.id])
+      console.log(this.jobEnums[jobInformation.id]);
+      console.log(this.currentJob);
+      
       this.currentJobStatus = jobInformation.status
       this.freqType = jobInformation.id && this.jobFrequencyType[jobInformation.id]
 
@@ -255,11 +298,18 @@ export default defineComponent({
         }
       });
     },
+    timeFromNow (time: any) {
+      if(time){
+        const timeDiff = DateTime.fromMillis(time).diff(DateTime.local());
+        return DateTime.local().plus(timeDiff).toRelative();
+      }
+    },    
   },
   mounted () {
     this.fetchJobs();
     emitter.on("productStoreOrConfigChanged", this.fetchJobs);
     emitter.on('viewJobConfiguration', this.viewJobConfiguration)
+    
   },
   unmounted() {
     emitter.off("productStoreOrConfigChanged", this.fetchJobs);
