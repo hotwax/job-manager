@@ -25,7 +25,7 @@
             </ion-item>
           </ion-card>
 
-          <ion-card :button="isDesktop" v-for="batch in orderBatchJobs" :key="batch?.id" detail v-show="batch?.status === 'SERVICE_PENDING'" @click="hasPermission(Actions.APP_JOB_UPDATE) && viewJobConfiguration({ job: batch })">
+          <ion-card :button="isDesktop" v-for="batch in orderBatchJobs" :key="batch?.id" detail v-show="batch?.status === 'SERVICE_PENDING'" @click="hasPermission(Actions.APP_JOB_UPDATE) && viewJobConfiguration({ id: batch.enumId, job: batch })">
             <ion-card-header>
               <div>
                 <ion-card-subtitle>{{ getBrokerQueue(batch) }}</ion-card-subtitle>
@@ -58,7 +58,7 @@
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
-          <JobConfiguration :status="currentJobStatus" :type="freqType" :key="currentJob" isBrokerJob="true"/>
+          <JobConfiguration :type="freqType" :key="currentJob" isBrokerJob="true"/>
         </aside>
       </main>
     </ion-content>

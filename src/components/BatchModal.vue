@@ -10,7 +10,7 @@
     </ion-toolbar>
   </ion-header>
 
-  <ion-content>
+  <ion-content class="custom-ion-content">
     <ion-item>
       <ion-label position="fixed">{{ $t('Name') }}</ion-label>
       <ion-input :placeholder="currentDateTime = getCurrentDateTime()" v-model="jobName" />
@@ -244,18 +244,14 @@ export default defineComponent({
       if (hasJobDataError(job)) return;
       
       if (this.runTime) {
-        job['runTime'] = this.runTime
+        job['runTime'] = DateTime.now().toMillis() + this.runTime
       }
 
       job['jobStatus'] = this.jobStatus !== 'SERVICE_DRAFT' ? this.jobStatus : 'HOURLY';
       job['jobName'] = this.jobName || this.currentDateTime;
 
-      if (job?.status === 'SERVICE_DRAFT') {
-        const jobCustomParameters = generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters, job.runtimeData)
-        await this.store.dispatch('job/scheduleService', { job, jobCustomParameters })
-      } else if (job?.status === 'SERVICE_PENDING') {
-        await this.store.dispatch('job/updateJob', job)
-      }
+      const jobCustomParameters = generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters, job.runtimeData)
+      await this.store.dispatch('job/scheduleService', { job, jobCustomParameters })
       this.closeModal()
     },
     async setCustomFrequency() {
@@ -321,7 +317,10 @@ export default defineComponent({
 </script>
 
 <style scoped>
-  ion-content {
+ion-content {
+--offset-bottom: 100px;
+}
+.custom-ion-content {
   --offset-bottom: 100px;
-  }
+}
 </style>
