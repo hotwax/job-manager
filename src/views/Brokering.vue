@@ -11,89 +11,54 @@
       <main>
         <section>
           <ion-button expand="block" :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" @click="addBatch()" >{{ 'Create new brokering job' }}</ion-button>
-        
+
           <ion-item lines="none">
             <ion-label>
               <h1>{{ 'Scheduled Job' }}</h1>
             </ion-label>
           </ion-item>
 
-          <ion-card v-for="batch in orderBatchJobs" :key="batch?.id" detail v-show="batch?.status === 'SERVICE_PENDING'" @click="viewJobConfiguration({ id: batch.systemJobEnumId, status: batch.statusId})">
-            <ion-item lines="none">
-              <ion-label>
-                {{'Queue Name'}}
-                <h1>{{ batch?.jobName }}</h1>
-              </ion-label>
-              <ion-badge slot="end" color="dark" >{{ timeFromNow(batch?.runTime) }}</ion-badge>
+          <ion-card>
+            <ion-item @click="viewJobConfiguration({ id: 'REJ_ORDR', status: getJobStatus(jobEnums['REJ_ORDR'])})" detail button>
+              <ion-label class="ion-text-wrap">{{ $t("Rejected orders") }}</ion-label>
+              <ion-label slot="end">{{ getTemporalExpression('REJ_ORDR') }}</ion-label>
             </ion-item>
+          </ion-card>
+
+          <ion-card :button="isDesktop" v-for="batch in orderBatchJobs" :key="batch?.id" detail v-show="batch?.status === 'SERVICE_PENDING'" @click="hasPermission(Actions.APP_JOB_UPDATE) && viewJobConfiguration({ job:batch })">
+            <ion-card-header>
+              <div>
+                <ion-card-subtitle>{{ getBrokerQueue(batch) }}</ion-card-subtitle>
+                <ion-card-title>{{ batch?.jobName }}</ion-card-title>
+              </div>
+              <ion-badge class="ion-margin-start" color="dark" >{{ timeFromNow(batch?.runTime) }}</ion-badge>
+            </ion-card-header>
 
             <ion-list>
               <ion-item lines="none">
-                <ion-label class="ion-text-wrap">{{ batch?.frequency }}</ion-label>
-                <ion-label slot="end">{{ batch?.runTime ? getTime(batch.runTime) : '' }}</ion-label>
+                <ion-label class="ion-text-wrap">{{ batch?.temporalExpression?.description }}</ion-label>
+                <ion-label slot="end">{{  batch?.runTime ? getTime(batch.runTime) : "-" }}</ion-label>
               </ion-item>
-
+  
               <ion-item lines="none">
-                <ion-label class="ion-text-wrap">{{ $t("Unfillable Order") }}</ion-label>
-                <ion-toggle slot="end"/>
+                <ion-text class="ion-text-wrap">{{ $t("Unfillable orders") }}</ion-text>
+                <ion-toggle disabled :checked="batchJobEnums[batch?.enumId].unfillable" slot="end"/>
               </ion-item>
-
-              <ion-item lines="none">
+  
+              <ion-item lines="none" v-if="generateCustomParameters(batch).length">
                 <ion-row>
-                  <ion-chip outline >
-                    {{ 'Custom' }}: {{ 'Parameter' }}
+                  <ion-chip outline :key="name" v-for="(value, name) in generateCustomParameters(batch)">
+                    {{ name }}: {{ value }}
                   </ion-chip>
                 </ion-row>
               </ion-item>
             </ion-list>
           </ion-card>
-        </section>
-        <!-- <section>
-          <ion-card>
-            <ion-card-header>
-              <ion-card-title>{{ $t("Routing") }}</ion-card-title>
-            </ion-card-header>
-            <ion-item @click="viewJobConfiguration({ id: 'REJ_ORDR', status: getJobStatus(jobEnums['REJ_ORDR'])})" detail button>
-              <ion-label class="ion-text-wrap">{{ $t("Rejected orders") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('REJ_ORDR') }}</ion-label>
-            </ion-item>
-            <ion-item-divider>
-              <ion-label class="ion-text-wrap">{{ $t("Batches") }}</ion-label>
-              <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" fill="clear" @click="addBatch()" slot="end">
-                {{ $t("Add") }}
-                <ion-icon :icon="addCircleOutline" slot="end" />
-              </ion-button>
-            </ion-item-divider>
-
-            <ion-list ref="slidingOptions">
-              <ion-item-sliding v-for="batch in orderBatchJobs" :key="batch?.id" detail v-show="batch?.status === 'SERVICE_PENDING'">
-                <ion-item @click="hasPermission(Actions.APP_JOB_UPDATE) && editBatch(batch.id, batch.systemJobEnumId)" button>
-                  <ion-label class="ion-text-wrap">{{ batch?.jobName }}</ion-label>
-                  <ion-note slot="end">{{ batch?.runTime ? getTime(batch.runTime) : '' }}</ion-note>
-                </ion-item>
-                <ion-item-options side="start">
-                  <ion-item-option @click="hasPermission(Actions.APP_JOB_UPDATE) && skipBatch(batch)" color="secondary">
-                    <ion-icon slot="icon-only" :icon="arrowRedoOutline" />
-                  </ion-item-option>
-                </ion-item-options>
-                <ion-item-options side="end">
-                  <ion-item-option @click="hasPermission(Actions.APP_JOB_UPDATE) && deleteBatch(batch)" color="danger">
-                    <ion-icon slot="icon-only" :icon="trashOutline" />
-                  </ion-item-option>
-                </ion-item-options>
-              </ion-item-sliding>
-            </ion-list>
-            <ion-item lines="none">
-              <ion-label class="ion-text-wrap">
-                <p>{{ $t("Create batches and schedule brokering for different orders.") }}</p>
-              </ion-label>
-            </ion-item>
-          </ion-card>
           <MoreJobs v-if="getMoreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId).length" :jobs="getMoreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId)" />
-        </section> -->
+        </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
-          <JobConfiguration :status="currentJobStatus" :type="freqType" :key="currentJob"/>
+          <JobConfiguration :status="currentJobStatus" :type="freqType" :key="currentJob" isBrokerJob="true"/>
         </aside>
       </main>
     </ion-content>
@@ -103,25 +68,25 @@
 <script lang="ts">
 import {
   alertController,
+  IonBadge,
   IonButton,
   IonCard,
   IonCardHeader,
+  IonCardSubtitle,
   IonCardTitle,
+  IonChip,
   IonContent,
   IonHeader,
-  IonIcon,
   IonItem,
-  IonItemDivider,
-  IonItemSliding,
   IonLabel,
   IonList,
   IonMenuButton,
-  IonNote,
-  IonItemOption,
-  IonItemOptions,
   IonPage,
+  IonText,
   IonTitle,
+  IonToggle,
   IonToolbar,
+  IonRow,
   isPlatform,
   modalController
 } from '@ionic/vue';
@@ -134,7 +99,7 @@ import { useRouter } from 'vue-router'
 import { mapGetters } from "vuex";
 import JobConfiguration from '@/components/JobConfiguration.vue';
 import { DateTime } from 'luxon';
-import { hasError, isFutureDate, showToast } from '@/utils';
+import { generateJobCustomOptions, generateJobCustomParameters, hasError, isFutureDate, showToast } from '@/utils';
 import emitter from '@/event-bus';
 import MoreJobs from '@/components/MoreJobs.vue';
 import { Actions, hasPermission } from '@/authorization'
@@ -142,27 +107,27 @@ import { Actions, hasPermission } from '@/authorization'
 export default defineComponent({
   name: 'Brokering',
   components: {
+    IonBadge,
     IonButton,
     IonCard,
-    // IonCardHeader,
-    // IonCardTitle,
+    IonCardHeader,
+    IonCardSubtitle,
+    IonCardTitle,
+    IonChip,
     IonContent,
     IonHeader,
-    // IonIcon,
     IonItem,
-    // IonItemSliding,
-    // IonItemDivider,
     IonLabel,
     IonList,
     IonMenuButton,
-    // IonNote,
-    // IonItemOption,
-    // IonItemOptions,
     IonPage,
+    IonRow,
+    IonText,
     IonTitle,
+    IonToggle,
     IonToolbar,
     JobConfiguration,
-    // MoreJobs
+    MoreJobs
   },
   data() {
     return {
@@ -189,7 +154,6 @@ export default defineComponent({
   },
   methods: {
     async addBatch() {
-      console.log(this.orderBatchJobs);
       const batchmodal = await modalController.create({
         component: BatchModal
       });
@@ -253,11 +217,21 @@ export default defineComponent({
       // return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
       return DateTime.fromMillis(time).toLocaleString(DateTime.TIME_24_SIMPLE);
     },
+    getBrokerQueue(job: any){
+      if(job.status === 'SERVICE_PENDING'){
+        const brokerQueueId = this.batchJobEnums[job?.enumId].id
+        
+        if(brokerQueueId === "_NA_"){
+          return "Brokering queue"
+        }else if(brokerQueueId === "PRE_ORDER_PARKING"){
+          return "Pre-order parking"
+        }else{
+          return "Back-order parking"
+        }
+      }
+    },
     async viewJobConfiguration(jobInformation: any) {
       this.currentJob = jobInformation.job || this.getJob(this.jobEnums[jobInformation.id])
-      console.log(this.jobEnums[jobInformation.id]);
-      console.log(this.currentJob);
-      
       this.currentJobStatus = jobInformation.status
       this.freqType = jobInformation.id && this.jobFrequencyType[jobInformation.id]
 
@@ -304,7 +278,15 @@ export default defineComponent({
         const timeDiff = DateTime.fromMillis(time).diff(DateTime.local());
         return DateTime.local().plus(timeDiff).toRelative();
       }
-    },    
+    },
+    generateCustomParameters(job: any) {
+      let customOptionalParameters = generateJobCustomOptions(job).optionalParameters;
+      let customRequiredParameters = generateJobCustomOptions(job).requiredParameters;
+      
+      // passing runTimeData params as empty, as we don't need to show the runTimeData information on UI as all the options from runtimeData might not be available in serviceInParams
+      return generateJobCustomParameters(customRequiredParameters, customOptionalParameters, {})
+      // return generateJobCustomParameters(customRequiredParameters, customOptionalParameters, job.runtimeData)
+    }
   },
   mounted () {
     this.fetchJobs();
@@ -332,3 +314,11 @@ export default defineComponent({
   },
 });
 </script>
+
+<style scoped>
+ion-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+</style>

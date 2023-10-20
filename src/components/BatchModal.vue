@@ -1,51 +1,4 @@
 <template>
-  <!-- <ion-header>
-    <ion-toolbar>
-      <ion-buttons slot="start">
-        <ion-button @click="closeModal">
-          <ion-icon slot="icon-only" :icon="closeOutline" />
-        </ion-button>
-      </ion-buttons>
-      <ion-title>{{ currentBatch?.jobName ? currentBatch?.jobName : $t('New broker run') }}</ion-title>
-    </ion-toolbar>
-  </ion-header>
-
-  <ion-content>
-    <ion-item>
-      <ion-label position="fixed">{{ $t('Batch name') }}</ion-label>
-      <ion-input :placeholder="currentDateTime = getCurrentDateTime()" v-model="jobName" />
-    </ion-item>
-    <ion-item :disabled="currentBatch?.jobId">
-      <ion-label>{{ $t('Order queue') }}</ion-label>
-      <ion-select slot="end" interface="popover" :value="this.currentScheduledBatch?.facilityId || batchFacilityId" @ionChange="batchFacilityId = $event['detail'].value">
-        <ion-select-option value="_NA_">{{ $t("Brokering queue") }}</ion-select-option>
-        <ion-select-option value="PRE_ORDER_PARKING">{{ $t("Pre-order parking") }}</ion-select-option>
-        <ion-select-option value="BACKORDER_PARKING">{{ $t("Back-order parking") }}</ion-select-option>
-      </ion-select>
-    </ion-item>
-    <ion-radio-group>
-      <ion-item :disabled="currentBatch?.jobId">
-        <ion-label>{{ $t('New orders') }}</ion-label>
-        "this.currentScheduledBatch?.unfillable === false" - Did this because ion-radio is not considering boolean 
-        <ion-radio :checked="this.currentScheduledBatch?.unfillable === false" slot="start" @click="unfillableOrder = false" color="secondary"/>
-      </ion-item>
-      <ion-item :disabled="currentBatch?.jobId">
-        <ion-label>{{ $t('Unfillable orders') }}</ion-label>
-        "this.currentScheduledBatch?.unfillable === false" - Did this because ion-radio is not considering boolean 
-        <ion-radio :checked="this.currentScheduledBatch?.unfillable === true" slot="start" @click="unfillableOrder = true" color="secondary"/>
-      </ion-item>
-    </ion-radio-group>
-    <ion-item>
-      <ion-label position="fixed">{{ $t("Schedule") }}</ion-label>
-      <ion-datetime hour-cycle="h12" :value="currentBatch?.runTime ? getDateTime(currentBatch.runTime) : getNowTimestamp()" @ionChange="updateRunTime($event)" presentation="time" size="cover" />
-    </ion-item>    
-    <ion-fab @click="updateJob()" vertical="bottom" horizontal="end" slot="fixed">
-      <ion-fab-button>
-        <ion-icon :icon="checkmarkDoneOutline" />  
-      </ion-fab-button>
-    </ion-fab>
-  </ion-content> -->
-
   <ion-header>
     <ion-toolbar>
       <ion-buttons slot="start">
@@ -65,33 +18,49 @@
     <ion-item>
       <ion-icon slot="start" :icon="ticketOutline" />
       <ion-label>{{ $t('Order parking') }}</ion-label>
-      <ion-select slot="end" interface="popover" :value="batchFacilityId" @ionChange="batchFacilityId = $event['detail'].value">
+      <ion-select slot="end" interface="popover" :value="batchFacilityId" @ionChange="batchFacilityId = $event['detail'].value; updateCustomParameters()">
         <ion-select-option value="_NA_">{{ $t("Brokering queue") }}</ion-select-option>
         <ion-select-option value="PRE_ORDER_PARKING">{{ $t("Pre-order parking") }}</ion-select-option>
         <ion-select-option value="BACKORDER_PARKING">{{ $t("Back-order parking") }}</ion-select-option>
       </ion-select>
     </ion-item>
-    <ion-item>
+    <ion-item lines="full">
       <ion-icon slot="start" :icon="warningOutline" />
-      <ion-label>{{ $t('Unfillable Orders') }}</ion-label>
-      <ion-toggle slot="end" :checked="unfillableOrder" @ionChange="unfillableOrder = !unfillableOrder"></ion-toggle>
+      <ion-label>{{ $t('Unfillable orders') }}</ion-label>
+      <ion-toggle slot="end" :checked="unfillableOrder" @click="unfillableOrder = !unfillableOrder; updateCustomParameters()"></ion-toggle>
     </ion-item>
+    
+    
+    <ion-list v-if="customOptionalParameters.length || customRequiredParameters.length">
+      <ion-item lines="none">
+        <ion-label>
+          {{ 'More Parameters' }}
+        </ion-label>
+      </ion-item>
 
-    <ion-list>
-      <ion-list-header>
-        {{ 'More parameters' }}
-      </ion-list-header>
-      <ion-item>
-        <ion-label>{{ 'Placeholder 1' }}</ion-label>
-        <ion-input placeholder="Placeholder"></ion-input>
+      <ion-item-divider v-if="customRequiredParameters.length">
+        <ion-label>{{ $t('Required Parameters') }}</ion-label>
+      </ion-item-divider>
+      
+      <ion-item :key="index" v-for="(parameter, index) in customRequiredParameters">
+        <ion-label>{{ parameter.name }}</ion-label>
+        <ion-input ></ion-input>>
+        <ion-note slot="helper">{{ parameter.type }}</ion-note>
       </ion-item>
-      <ion-item>
-        <ion-label>{{ 'Placeholder 2' }}</ion-label>
-        <ion-input placeholder="Placeholder"></ion-input>
+      
+      <ion-item-divider v-if="customOptionalParameters.length" color="light">
+        <ion-label>{{ $t('Optional Parameters') }}</ion-label>
+      </ion-item-divider>
+
+      <ion-item :key="parameter.value" v-for="parameter in customOptionalParameters">
+        <ion-label>{{ parameter.name }}</ion-label>
+        <ion-input :placeholder="parameter.name" v-model="parameter.value" />
+        <ion-note slot="helper">{{ parameter.type }}</ion-note>
       </ion-item>
+    </ion-list>
+    <ion-list v-else>
       <ion-item>
-        <ion-label>{{ 'Placeholder 3' }}</ion-label>
-        <ion-input placeholder="Placeholder"></ion-input>
+        <ion-label>{{ 'No parameters available' }}</ion-label>
       </ion-item>
     </ion-list>
 
@@ -124,38 +93,42 @@
       <ion-item lines="none" :disabled="currentBatch?.jobId">
         <ion-icon slot="start" :icon="timerOutline" />
         <ion-label>{{ $t('Frequency') }}</ion-label>
-        <ion-select slot="end" interface="popover" value="Select" @ionChange="batchFacilityId = $event['detail'].value">
-          <ion-select-option value="Select">{{ $t("Once in 15 minutes") }}</ion-select-option>
+        <ion-select :value="jobStatus" :interface-options="{ header: $t('Frequency') }" interface="popover" :placeholder="$t('Disabled')" @ionChange="jobStatus = $event.detail.value" @ionDismiss="jobStatus == 'CUSTOM' && setCustomFrequency()">
+          <ion-select-option v-for="freq in frequencyOptions" :key="freq.id" :value="freq.id">{{ freq.description }}</ion-select-option>
         </ion-select>
       </ion-item>
     </ion-card>
-    
-    <ion-item>
-      <ion-label position="fixed">{{ $t("Schedule") }}</ion-label>
-      <ion-datetime hour-cycle="h12" :value="getNowTimestamp()" @ionChange="updateRunTime($event)" presentation="time" size="cover" />
-    </ion-item>    
-    <ion-fab @click="updateJob()" vertical="bottom" horizontal="end" slot="fixed">
-      <ion-fab-button>
-        <ion-icon :icon="checkmarkDoneOutline" />  
-      </ion-fab-button>
-    </ion-fab>
+
   </ion-content>
+  <ion-fab  :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || isRequiredParametersMissing"  @click="updateJob()" vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button>
+      <ion-icon :icon="checkmarkDoneOutline" />  
+    </ion-fab-button>
+  </ion-fab>
 </template>
 
 <script lang="ts">
 import {
   IonButton,
   IonButtons,
+  IonCard,
   IonContent,
   IonDatetime,
+  IonFab,
+  IonFabButton,
   IonHeader,
   IonIcon,
   IonInput,
   IonItem,
+  IonItemDivider,
   IonLabel,
+  IonList,
+  IonModal,
+  IonNote,
   IonSelect,
   IonSelectOption,
   IonTitle,
+  IonToggle,
   IonToolbar,
   modalController
 } from '@ionic/vue';
@@ -163,23 +136,34 @@ import { defineComponent } from 'vue';
 import { closeOutline, checkmarkDoneOutline, timeOutline, timerOutline, ticketOutline, warningOutline } from 'ionicons/icons';
 import { mapGetters, useStore } from 'vuex';
 import { DateTime } from 'luxon';
-import { handleDateTimeInput, generateAllowedRunTimes, generateJobCustomParameters, getNowTimestamp, isCustomRunTime, isFutureDate, showToast, hasJobDataError } from '@/utils';
+import { handleDateTimeInput, generateAllowedRunTimes, generateAllowedFrequencies, generateJobCustomParameters, generateJobCustomOptions, getNowTimestamp, isCustomRunTime, isFutureDate, showToast, hasJobDataError } from '@/utils';
 import { translate } from '@/i18n'
+import CustomFrequencyModal from '@/components/CustomFrequencyModal.vue';
+import { Actions, hasPermission } from '@/authorization'
 
 export default defineComponent({
   name: 'BatchModal',
   components: {
     IonButton,
     IonButtons,
+    IonCard,
     IonContent,
+    IonDatetime,
+    IonFab,
+    IonFabButton,
     IonHeader,
     IonIcon,
     IonInput,
     IonItem,
+    IonItemDivider,
     IonLabel,
+    IonList,
+    IonModal,
+    IonNote,
     IonSelect,
     IonSelectOption,
     IonTitle,
+    IonToggle,
     IonToolbar,
   },
   props: ["id", "enumId"],
@@ -191,12 +175,13 @@ export default defineComponent({
       unfillableOrder: false as boolean,
       batchFacilityId: '_NA_' as string,
       currentDateTime: '' as string,
-      jobRunTime: '' as any,
-      currentScheduledBatch: {} as any,
-      orders: "",
       runTime: '' as any,
       runTimes: [] as any,
       isDateTimeModalOpen: false,
+      jobStatus: null,
+      frequencyOptions: [] as any,
+      customOptionalParameters: [] as any,
+      customRequiredParameters: [] as any
     }
   },
   computed: {
@@ -208,8 +193,9 @@ export default defineComponent({
     }),
   },
   mounted() {
-    // this.getCurrentBatch();
     this.generateRunTimes(this.runTime)
+    this.generateFrequencyOptions(this.jobStatus)
+    this.updateCustomParameters()
   },
   methods: {
     getDateTime(time: any) {
@@ -229,10 +215,23 @@ export default defineComponent({
       this.runTime = currentRunTime
       this.runTimes = runTimes
     },
+    async generateFrequencyOptions(currentFrequency?: any) {
+      const frequencyOptions = JSON.parse(JSON.stringify(generateAllowedFrequencies()));
+      if (hasPermission(Actions.APP_CUSTOM_FREQ_VIEW)) frequencyOptions.push({ "id": "CUSTOM", "description": "Custom"})
+      if (currentFrequency) {
+        const selectedFrequency = frequencyOptions.find((frequency: any) => frequency.id === currentFrequency);
+        if (!selectedFrequency ) {
+          const frequencies = await this.store.dispatch("job/fetchTemporalExpression", [ currentFrequency ]);
+          const frequency = frequencies[currentFrequency];
+          frequency && (frequencyOptions.push({ "id": frequency.tempExprId,  "description": frequency.description }))
+        }
+      }
+      this.frequencyOptions = frequencyOptions;
+      this.jobStatus = currentFrequency;
+    },
     async updateJob() {
       let batchJobEnum = this.enumId;
       if (!batchJobEnum) {
-        console.log('enter');
         const jobEnum: any = Object.values(this.jobEnums)?.find((job: any) => {
           return job.unfillable === this.unfillableOrder && job.facilityId === this.batchFacilityId
         });
@@ -247,16 +246,12 @@ export default defineComponent({
 
       // return if job has missing data or error
       if (hasJobDataError(job)) return;
-
-      console.log('run', this.runTime);
       
       if (this.runTime) {
-        console.log('entered');
-        
         job['runTime'] = this.runTime
       }
 
-      job['jobStatus'] = 'EVERYDAY';
+      job['jobStatus'] = this.jobStatus !== 'SERVICE_DRAFT' ? this.jobStatus : 'HOURLY';
       job['jobName'] = this.jobName || this.currentDateTime;
 
       // if job runTime is not a valid date then making runTime as empty
@@ -265,13 +260,24 @@ export default defineComponent({
       // }
       console.log('end', job);
       
-      // if (job?.status === 'SERVICE_DRAFT') {
-      //   const jobCustomParameters = generateJobCustomParameters([], [], job.runtimeData)
-      //   await this.store.dispatch('job/scheduleService', { job, jobCustomParameters })
-      // } else if (job?.status === 'SERVICE_PENDING') {
-      //   await this.store.dispatch('job/updateJob', job)
-      // }
+      if (job?.status === 'SERVICE_DRAFT') {
+        const jobCustomParameters = generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters, job.runtimeData)  
+        await this.store.dispatch('job/scheduleService', { job, jobCustomParameters })
+      } else if (job?.status === 'SERVICE_PENDING') {
+        await this.store.dispatch('job/updateJob', job)
+      }
       this.closeModal()
+    },
+    async setCustomFrequency() {
+      const customFrequencyModal = await modalController.create({
+        component: CustomFrequencyModal,
+      });
+      customFrequencyModal.onDidDismiss()
+        .then((result) => {
+          let jobStatus = result.data.frequencyId;
+          this.generateFrequencyOptions(jobStatus);
+        });
+      return customFrequencyModal.present();
     },
     updateCustomTime(event: CustomEvent) {
       const currTime = DateTime.now().toMillis();
@@ -279,12 +285,17 @@ export default defineComponent({
       if (setTime > currTime) this.generateRunTimes(setTime)
       else showToast(translate("Provide a future date and time"))
     },
-    // updateRunTime(ev: CustomEvent) {
-    //   console.log('ev', ev)
-    //   this.jobRunTime = handleDateTimeInput(ev['detail'].value)
-    // },
+    updateCustomParameters() {
+      const jobEnum: any = Object.values(this.jobEnums)?.find((job: any) => {
+        return job.unfillable === this.unfillableOrder && job.facilityId === this.batchFacilityId
+      });
+      let batchJobEnum = jobEnum.id
+      
+      const job = this.getJob(batchJobEnum)?.find((job: any) => job.status === 'SERVICE_DRAFT');
+      this.customOptionalParameters = generateJobCustomOptions(job).optionalParameters;
+      this.customRequiredParameters = generateJobCustomOptions(job).requiredParameters;
+    },
     updateRunTime(event: CustomEvent) {
-      console.log(event);
       const value = event.detail.value
       if (value != 'CUSTOM') this.generateRunTimes(value)
       else this.isDateTimeModalOpen = true
@@ -294,6 +305,9 @@ export default defineComponent({
     },
     getTime (time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
+    },
+    isRequiredParametersMissing() {
+      return this.customRequiredParameters.some((parameter: any) => !parameter.value?.trim())
     },
   },
   setup() {
@@ -309,8 +323,15 @@ export default defineComponent({
       store,
       DateTime,
       getNowTimestamp,
-      isCustomRunTime
+      isCustomRunTime,
+      Actions,
+      hasPermission
     };
   },
 });
 </script>
+<style scoped>
+  ion-content {
+  --offset-bottom: 100px;
+  }
+</style>
