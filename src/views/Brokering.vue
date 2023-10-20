@@ -25,7 +25,7 @@
             </ion-item>
           </ion-card>
 
-          <ion-card :button="isDesktop" v-for="batch in orderBatchJobs" :key="batch?.id" detail v-show="batch?.status === 'SERVICE_PENDING'" @click="hasPermission(Actions.APP_JOB_UPDATE) && viewJobConfiguration({ job:batch })">
+          <ion-card :button="isDesktop" v-for="batch in orderBatchJobs" :key="batch?.id" detail v-show="batch?.status === 'SERVICE_PENDING'" @click="hasPermission(Actions.APP_JOB_UPDATE) && viewJobConfiguration({ job: batch })">
             <ion-card-header>
               <div>
                 <ion-card-subtitle>{{ getBrokerQueue(batch) }}</ion-card-subtitle>
@@ -67,7 +67,6 @@
 
 <script lang="ts">
 import {
-  alertController,
   IonBadge,
   IonButton,
   IonCard,
@@ -82,16 +81,15 @@ import {
   IonList,
   IonMenuButton,
   IonPage,
+  IonRow,
   IonText,
   IonTitle,
   IonToggle,
   IonToolbar,
-  IonRow,
   isPlatform,
   modalController
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
-import { translate } from '@/i18n'
 import { addCircleOutline, arrowRedoOutline, trashOutline } from 'ionicons/icons';
 import BatchModal from '@/components/BatchModal.vue';
 import { useStore } from "@/store";
@@ -166,55 +164,7 @@ export default defineComponent({
       });
       return batchmodal.present();
     },
-    async deleteBatch(batch: any) {
-      const deleteBatchAlert = await alertController
-        .create({
-          header: this.$t('Cancel job'),
-          message: this.$t("Canceling this job will cancel this occurrence and all following occurrences. This job will have to be re-enabled manually to run it again."),
-          buttons: [
-            {
-              text: this.$t("Don't cancel"),
-              role: 'cancel',
-            },
-            {
-              text: this.$t("Cancel"),
-              handler: async () => {
-                await this.store.dispatch('job/cancelJob', batch);
-              },
-            },
-          ],
-        });
-      return deleteBatchAlert.present();
-    },
-    async skipBatch (batch: any) {
-      const skipJobAlert = await alertController
-        .create({
-          header: this.$t('Skip job'),
-          message: this.$t('Skipping will run this job at the next occurrence based on the temporal expression.'),
-          buttons: [
-            {
-              text: this.$t("Don't skip"),
-              role: 'cancel',
-            },
-            {
-              text: this.$t('Skip'),
-              handler: async () => {
-                this.store.dispatch('job/skipJob', batch).then((resp) => {
-                  if (resp.status === 200 && !hasError(resp)) {
-                    showToast(translate("This job has been skipped"));
-                  } else {
-                    showToast(translate("This job schedule cannot be skipped"));
-                  }
-                });
-                (this as any).$refs.slidingOptions.$el.closeSlidingItems();
-              },
-            }
-          ]
-        });
-      return skipJobAlert.present();
-    },
     getTime (time: any) {
-      // return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
       return DateTime.fromMillis(time).toLocaleString(DateTime.TIME_24_SIMPLE);
     },
     getBrokerQueue(job: any){
@@ -283,16 +233,14 @@ export default defineComponent({
       let customOptionalParameters = generateJobCustomOptions(job).optionalParameters;
       let customRequiredParameters = generateJobCustomOptions(job).requiredParameters;
       
-      // passing runTimeData params as empty, as we don't need to show the runTimeData information on UI as all the options from runtimeData might not be available in serviceInParams
+      // passing runTimeData params as empty, as we don't need to show the runTimeData information on UI
       return generateJobCustomParameters(customRequiredParameters, customOptionalParameters, {})
-      // return generateJobCustomParameters(customRequiredParameters, customOptionalParameters, job.runtimeData)
     }
   },
   mounted () {
     this.fetchJobs();
     emitter.on("productStoreOrConfigChanged", this.fetchJobs);
     emitter.on('viewJobConfiguration', this.viewJobConfiguration)
-    
   },
   unmounted() {
     emitter.off("productStoreOrConfigChanged", this.fetchJobs);
