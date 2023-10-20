@@ -165,7 +165,7 @@ export default defineComponent({
       return batchmodal.present();
     },
     getTime (time: any) {
-      return DateTime.fromMillis(time).toLocaleString(DateTime.TIME_24_SIMPLE);
+      return DateTime.fromMillis(time).toFormat('hh:mm a');
     },
     getBrokerQueue(job: any){
       if(job.status === 'SERVICE_PENDING'){
