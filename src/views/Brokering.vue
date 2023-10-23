@@ -44,10 +44,10 @@
                 <ion-text class="ion-text-wrap">{{ $t("Unfillable orders") }}</ion-text>
                 <ion-toggle disabled :checked="batchJobEnums[batch?.enumId].unfillable" slot="end"/>
               </ion-item>
-  
-              <ion-item lines="none" v-if="generateCustomParameters(batch).length">
+
+              <ion-item lines="none" v-if="batch?.status === 'SERVICE_PENDING' && Object.keys(generateCustomParameters(batch)).length">
                 <ion-row>
-                  <ion-chip outline :key="name" v-for="(value, name) in generateCustomParameters(batch)">
+                  <ion-chip disabled outline :key="index" v-for="(value, name, index) in generateCustomParameters(batch)">
                     {{ name }}: {{ value }}
                   </ion-chip>
                 </ion-row>
