@@ -97,7 +97,7 @@ import { useRouter } from 'vue-router'
 import { mapGetters } from "vuex";
 import JobConfiguration from '@/components/JobConfiguration.vue';
 import { DateTime } from 'luxon';
-import { generateJobCustomOptions, generateJobCustomParameters, hasError, isFutureDate, showToast } from '@/utils';
+import { generateJobCustomOptions, generateJobCustomParameters, isFutureDate } from '@/utils';
 import emitter from '@/event-bus';
 import MoreJobs from '@/components/MoreJobs.vue';
 import { Actions, hasPermission } from '@/authorization'
@@ -153,14 +153,9 @@ export default defineComponent({
   methods: {
     async addBatch() {
       const batchmodal = await modalController.create({
-        component: BatchModal
-      });
-      return batchmodal.present();
-    },
-    async editBatch(id: string, enumId: string) {
-      const batchmodal = await modalController.create({
         component: BatchModal,
-        componentProps: {id, enumId}
+        breakpoints: [0, 0.25, 0.5, 0.75, 1],
+        initialBreakpoint: 1
       });
       return batchmodal.present();
     },

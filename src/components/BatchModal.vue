@@ -10,7 +10,7 @@
     </ion-toolbar>
   </ion-header>
 
-  <ion-content class="custom-ion-content">
+  <ion-content>
     <ion-item>
       <ion-label position="fixed">{{ $t('Name') }}</ion-label>
       <ion-input :placeholder="currentDateTime = getCurrentDateTime()" v-model="jobName" />
@@ -27,14 +27,12 @@
     <ion-item>
       <ion-icon slot="start" :icon="warningOutline" />
       <ion-label>{{ $t('Unfillable orders') }}</ion-label>
-      <ion-toggle slot="end" :checked="unfillableOrder" @click="unfillableOrder = !unfillableOrder; updateCustomParameters()"></ion-toggle>
+      <ion-toggle slot="end" :checked="unfillableOrder" @ion-change="unfillableOrder = !unfillableOrder; updateCustomParameters()" />
     </ion-item>
 
     <ion-list v-if="customOptionalParameters.length || customRequiredParameters.length">
       <ion-item lines="none">
-        <ion-label>
-          {{ 'More Parameters' }}
-        </ion-label>
+        <ion-label>{{ $t('More parameters') }}</ion-label>
       </ion-item>
 
       <ion-item-divider v-if="customRequiredParameters.length">
@@ -43,7 +41,7 @@
       
       <ion-item :key="index" v-for="(parameter, index) in customRequiredParameters">
         <ion-label>{{ parameter.name }}</ion-label>
-        <ion-input :placeholder="parameter.name" v-model="parameter.value" />
+        <ion-input :placeholder="parameter.value ? parameter.value : parameter.name" v-model="parameter.value" />
         <ion-note slot="helper">{{ parameter.type }}</ion-note>
       </ion-item>
       
@@ -51,10 +49,9 @@
         <ion-label>{{ $t('Optional Parameters') }}</ion-label>
       </ion-item-divider>
 
-      <ion-item :key="parameter.value" v-for="parameter in customOptionalParameters">
+      <ion-item :key="index" v-for="(parameter, index) in customOptionalParameters">
         <ion-label>{{ parameter.name }}</ion-label>
-        <!-- Todo: look into issue with input taking one character at a time -->
-        <ion-input :placeholder="parameter.name" v-model="parameter.value" />
+        <ion-input :placeholder="parameter.value ? parameter.value : parameter.name" v-model="parameter.value"/>
         <ion-note slot="helper">{{ parameter.type }}</ion-note>
       </ion-item>
     </ion-list>
@@ -73,7 +70,7 @@
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label>{{ $t('Run time') }}</ion-label>
         <ion-select interface="popover" :placeholder="$t('Select')" :value="runTime" @ionChange="updateRunTime($event)">
-          <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ $t(runTime.label) }}</ion-select-option>
+          <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ runTime.label }}</ion-select-option>
         </ion-select>
 
         <ion-modal class="date-time-modal" :is-open="isDateTimeModalOpen" @didDismiss="() => isDateTimeModalOpen = false">
@@ -95,9 +92,8 @@
         </ion-select>
       </ion-item>
     </ion-card>
-
   </ion-content>
-  <ion-fab  :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || isRequiredParametersMissing"  @click="updateJob()" vertical="bottom" horizontal="end" slot="fixed">
+  <ion-fab :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || isRequiredParametersMissing"  @click="updateJob()" vertical="bottom" horizontal="end" slot="fixed">
     <ion-fab-button>
       <ion-icon :icon="checkmarkDoneOutline" />  
     </ion-fab-button>
@@ -135,7 +131,7 @@ import { defineComponent } from 'vue';
 import { closeOutline, checkmarkDoneOutline, ticketOutline, timeOutline, timerOutline, warningOutline } from 'ionicons/icons';
 import { mapGetters, useStore } from 'vuex';
 import { DateTime } from 'luxon';
-import { handleDateTimeInput, generateAllowedFrequencies, generateAllowedRunTimes, generateJobCustomParameters, generateJobCustomOptions, getNowTimestamp, hasJobDataError, isCustomRunTime, showToast } from '@/utils';
+import { handleDateTimeInput, generateAllowedFrequencies, generateAllowedRunTimes, generateJobCustomParameters, generateJobCustomOptions, getNowTimestamp, hasJobDataError, isCustomRunTime, isFutureDate, showToast } from '@/utils';
 import { translate } from '@/i18n'
 import CustomFrequencyModal from '@/components/CustomFrequencyModal.vue';
 import { Actions, hasPermission } from '@/authorization'
@@ -242,9 +238,12 @@ export default defineComponent({
 
       // return if job has missing data or error
       if (hasJobDataError(job)) return;
-      
-      if (this.runTime) {
-        job['runTime'] = DateTime.now().toMillis() + this.runTime
+
+      job.runTime = this.runTime != 0 ? (!isCustomRunTime(this.runTime) ? DateTime.now().toMillis() + this.runTime : this.runTime) : ''
+
+      // if job runTime is not a valid date then making runTime as empty
+      if (job?.runTime && !isFutureDate(job?.runTime)) {
+        job.runTime = ''
       }
 
       job['jobStatus'] = this.jobStatus !== 'SERVICE_DRAFT' ? this.jobStatus : 'HOURLY';
@@ -315,12 +314,3 @@ export default defineComponent({
   },
 });
 </script>
-
-<style scoped>
-ion-content {
---offset-bottom: 100px;
-}
-.custom-ion-content {
-  --offset-bottom: 100px;
-}
-</style>
