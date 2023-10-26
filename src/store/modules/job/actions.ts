@@ -577,7 +577,6 @@ const actions: ActionTree<JobState, RootState> = {
 
     try {
       resp = await JobService.scheduleJob({ ...payload });
-      console.log(resp)
       if (resp.status == 200 && !hasError(resp)) {
         showToast(translate('Service has been scheduled'));
         const fetchJobsResponses = await dispatch('fetchJobs', {

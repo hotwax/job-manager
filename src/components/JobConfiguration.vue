@@ -18,7 +18,7 @@
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
         <ion-select interface="popover" :placeholder="$t('Select')" :value="runTime" @ionChange="updateRunTime($event)">
-          <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ runTime.label }}</ion-select-option>
+          <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ $t(runTime.label) }}</ion-select-option>
         </ion-select>
         <!-- TODO: display a button when we are not having a runtime and open the datetime component
         on click of that button

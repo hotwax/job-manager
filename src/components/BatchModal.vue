@@ -38,13 +38,13 @@
       <ion-item-divider v-if="customRequiredParameters.length">
         <ion-label>{{ $t('Required Parameters') }}</ion-label>
       </ion-item-divider>
-      
+
       <ion-item :key="index" v-for="(parameter, index) in customRequiredParameters">
         <ion-label>{{ parameter.name }}</ion-label>
         <ion-input :placeholder="parameter.value ? parameter.value : parameter.name" v-model="parameter.value" />
         <ion-note slot="helper">{{ parameter.type }}</ion-note>
       </ion-item>
-      
+
       <ion-item-divider v-if="customOptionalParameters.length" color="light">
         <ion-label>{{ $t('Optional Parameters') }}</ion-label>
       </ion-item-divider>

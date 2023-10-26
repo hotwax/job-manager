@@ -10,11 +10,11 @@
     <ion-content>
       <main>
         <section>
-          <ion-button expand="block" :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" @click="addBatch()" >{{ 'Create new brokering job' }}</ion-button>
+          <ion-button expand="block" :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" @click="addBatch()" >{{ $t('Create new brokering job') }}</ion-button>
 
           <ion-item lines="none">
             <ion-label>
-              <h1>{{ 'Scheduled Job' }}</h1>
+              <h1>{{ $t('Scheduled Job') }}</h1>
             </ion-label>
           </ion-item>
 
