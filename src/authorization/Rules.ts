@@ -4,7 +4,7 @@ export default {
     "APP_FULFILLMENT_VIEW": "",
     "APP_INVENTORY_VIEW": "",
     "APP_PRODUCT_VIEW": "",
-    "APP_PREORDER_VIEW": "",
+    "APP_PRESELL_VIEW": "",
     "APP_ORDERS_VIEW": "",
     "APP_JOB_DETAILS_VIEW": "",
     "APP_INITIAL_LOAD_VIEW": "",

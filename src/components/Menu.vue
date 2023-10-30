@@ -162,13 +162,13 @@ export default defineComponent({
         }
       },
       {
-        title: "Pre-order",
-        url: "/pre-order",
+        title: "Pre-sell",
+        url: "/pre-sell",
         iosIcon: calendarNumberOutline,
         mdIcon: calendarNumberOutline,
         dependsOnBaseURL: false,
         meta: {
-          permissionId: "APP_PREORDER_VIEW"
+          permissionId: "APP_PRESELL_VIEW"
         }
       },
       {

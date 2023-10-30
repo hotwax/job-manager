@@ -3,7 +3,7 @@
     <ion-header :translucent="true">
       <ion-toolbar>
         <ion-menu-button slot="start" />
-        <ion-title>{{ $t("Pre-order") }}</ion-title>
+        <ion-title>{{ $t("Pre-sell") }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -190,7 +190,7 @@ import { Actions, hasPermission } from '@/authorization'
 import { openOutline } from 'ionicons/icons'
 
 export default defineComponent({
-  name: 'PreOrder',
+  name: 'PreSell',
   components: {
     IonButton,
     IonCard,

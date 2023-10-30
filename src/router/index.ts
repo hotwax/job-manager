@@ -5,7 +5,7 @@ import Fulfillment from '@/views/Fulfillment.vue';
 import Inventory from '@/views/Inventory.vue'
 import Product from '@/views/Product.vue'
 import Pipeline from '@/views/Pipeline.vue'
-import PreOrder from '@/views/PreOrder.vue'
+import PreSell from '@/views/PreSell.vue'
 import Orders from '@/views/Orders.vue'
 import JobDetails from '@/views/JobDetails.vue'
 import InitialLoad from '@/views/InitialLoad.vue'
@@ -82,12 +82,12 @@ const routes: Array<RouteRecordRaw> = [
     }
   },
   {
-    path: '/pre-order',
-    name: 'PreOrder',
-    component: PreOrder,
+    path: '/pre-sell',
+    name: 'PreSell',
+    component: PreSell,
     beforeEnter: authGuard,
     meta: {
-      permissionId: "APP_PREORDER_VIEW"
+      permissionId: "APP_PRESELL_VIEW"
     }
   },
   {
