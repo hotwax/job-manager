@@ -37,7 +37,7 @@
             <ion-list>
               <ion-item lines="none">
                 <ion-label class="ion-text-wrap">{{ batch?.temporalExpression?.description }}</ion-label>
-                <ion-label slot="end">{{  batch?.runTime ? getTime(batch.runTime) : "-" }}</ion-label>
+                <ion-label slot="end">{{ batch?.runTime ? getTime(batch.runTime) : "-" }}</ion-label>
               </ion-item>
   
               <ion-item lines="none">
@@ -58,7 +58,7 @@
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
-          <JobConfiguration :type="freqType" :key="currentJob" isBrokerJob="true"/>
+          <JobConfiguration :status="currentJobStatus" :type="freqType" :key="currentJob" isBrokerJob="true"/>
         </aside>
       </main>
     </ion-content>
@@ -163,21 +163,19 @@ export default defineComponent({
       return DateTime.fromMillis(time).toFormat('hh:mm a');
     },
     getBrokerQueue(job: any){
-      if(job.status === 'SERVICE_PENDING'){
-        const brokerQueueId = this.batchJobEnums[job?.enumId].id
-        
-        if(brokerQueueId === "_NA_"){
-          return "Brokering queue"
-        }else if(brokerQueueId === "PRE_ORDER_PARKING"){
-          return "Pre-order parking"
-        }else{
-          return "Back-order parking"
-        }
+      const brokerQueueId = this.batchJobEnums[job?.enumId].facilityId
+
+      if(brokerQueueId === "_NA_"){
+        return "Brokering queue"
+      }else if(brokerQueueId === "PRE_ORDER_PARKING"){
+        return "Pre-order parking"
+      }else{
+        return "Back-order parking"
       }
     },
     async viewJobConfiguration(jobInformation: any) {
       this.currentJob = jobInformation.job || this.getJob(this.jobEnums[jobInformation.id])
-      this.currentJobStatus = jobInformation.status
+      this.currentJobStatus = this.currentJob.statusId === 'SERVICE_DRAFT' ? 'SERVICE_DRAFT' : this.currentJob.frequency
       this.freqType = jobInformation.id && this.jobFrequencyType[jobInformation.id]
 
       // if job runTime is not a valid date then making runTime as empty

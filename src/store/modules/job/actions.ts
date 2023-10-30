@@ -483,7 +483,23 @@ const actions: ActionTree<JobState, RootState> = {
     });
 
     // fetching temp expressions
-    const tempExpr = Object.values(cached).map((job: any) => job.tempExprId)
+    // added check to loop over cachedJob (in else part), as in case of batch job same enum contains multiple jobs as an array
+    // and thus tempExprId is not available by default on the root
+    // Before looping over cachedJob, checking whether the tempExprId is directly available on the root or not,
+    // if tempExprId is available on root it simply means that we have a single job against the enum
+    const tempExpr = Object.values(cached).reduce((tempExprIds: any, cachedJob: any) => {
+      if(cachedJob.tempExprId && !tempExprIds.includes(cachedJob.tempExprId)) {
+        tempExprIds.push(cachedJob.tempExprId)
+      } else if (cachedJob?.length) {
+        cachedJob.map((job: any) => {
+          if(job.tempExprId && !tempExprIds.includes(job.tempExprId)) {
+            tempExprIds.push(job.tempExprId)
+          }
+        });
+      }
+
+      return tempExprIds;
+    }, [])
     await dispatch('fetchTemporalExpression', tempExpr)
 
     commit(types.JOB_UPDATED_BULK, cached);

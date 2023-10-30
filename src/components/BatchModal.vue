@@ -35,7 +35,7 @@
         <ion-label>{{ $t('More parameters') }}</ion-label>
       </ion-item>
 
-      <ion-item-divider v-if="customRequiredParameters.length">
+      <ion-item-divider v-if="customRequiredParameters.length" color="light">
         <ion-label>{{ $t('Required Parameters') }}</ion-label>
       </ion-item-divider>
 
@@ -66,7 +66,7 @@
         <ion-card-title>{{ $t('Schedule') }}</ion-card-title>
       </ion-card-header>
 
-      <ion-item :disabled="currentBatch?.jobId">
+      <ion-item>
         <ion-icon slot="start" :icon="timeOutline" />
         <ion-label>{{ $t('Run time') }}</ion-label>
         <ion-select interface="popover" :placeholder="$t('Select')" :value="runTime" @ionChange="updateRunTime($event)">
@@ -84,7 +84,7 @@
           </ion-content>
         </ion-modal>
       </ion-item>
-      <ion-item lines="none" :disabled="currentBatch?.jobId">
+      <ion-item lines="none">
         <ion-icon slot="start" :icon="timerOutline" />
         <ion-label>{{ $t('Frequency') }}</ion-label>
         <ion-select :value="jobStatus" :interface-options="{ header: $t('Frequency') }" interface="popover" :placeholder="$t('Disabled')" @ionChange="jobStatus = $event.detail.value" @ionDismiss="jobStatus == 'CUSTOM' && setCustomFrequency()">
@@ -226,9 +226,7 @@ export default defineComponent({
       this.jobStatus = currentFrequency;
     },
     async updateJob() {
-      const jobEnum: any = Object.values(this.jobEnums)?.find((job: any) => {
-        return job.unfillable === this.unfillableOrder && job.facilityId === this.batchFacilityId
-      });
+      const jobEnum: any = Object.values(this.jobEnums)?.find((job: any) => job.unfillable === this.unfillableOrder && job.facilityId === this.batchFacilityId);
 
       const job = this.getJob(jobEnum.id)?.find((job: any) => job.status === 'SERVICE_DRAFT');
       if (!job) {
@@ -246,10 +244,11 @@ export default defineComponent({
         job.runTime = ''
       }
 
-      job['jobStatus'] = this.jobStatus !== 'SERVICE_DRAFT' ? this.jobStatus : 'HOURLY';
+      job['jobStatus'] = this.jobStatus ? this.jobStatus : 'HOURLY';
       job['jobName'] = this.jobName || this.currentDateTime;
 
       const jobCustomParameters = generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters, job.runtimeData)
+
       await this.store.dispatch('job/scheduleService', { job, jobCustomParameters })
       this.closeModal()
     },
@@ -271,9 +270,7 @@ export default defineComponent({
       else showToast(translate("Provide a future date and time"))
     },
     updateCustomParameters() {
-      const jobEnum: any = Object.values(this.jobEnums)?.find((job: any) => {
-        return job.unfillable === this.unfillableOrder && job.facilityId === this.batchFacilityId
-      });
+      const jobEnum: any = Object.values(this.jobEnums)?.find((job: any) => job.unfillable === this.unfillableOrder && job.facilityId === this.batchFacilityId);
 
       const job = this.getJob(jobEnum.id)?.find((job: any) => job.status === 'SERVICE_DRAFT');
       this.customOptionalParameters = generateJobCustomOptions(job).optionalParameters;
