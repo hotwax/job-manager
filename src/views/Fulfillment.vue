@@ -249,7 +249,10 @@ export default defineComponent({
         this.currentJob.runTime = ''
       }
 
-      await this.store.dispatch('job/updateCurrentJob', { job: this.currentJob });
+      const job = await this.store.dispatch('job/updateCurrentJob', { job: this.currentJob, jobId: this.jobEnums[jobInformation.id] });
+
+      if(job) this.currentJob = job;
+
       if(!this.isDesktop && this.currentJob) {
         this.router.push({ name: 'JobDetails', params: { jobId: this.currentJob.jobId, category: "orders" } });
         return;
