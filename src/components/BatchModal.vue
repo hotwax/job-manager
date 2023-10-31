@@ -27,7 +27,7 @@
     <ion-item>
       <ion-icon slot="start" :icon="warningOutline" />
       <ion-label>{{ $t('Unfillable orders') }}</ion-label>
-      <ion-toggle slot="end" :checked="unfillableOrder" @ion-change="unfillableOrder = !unfillableOrder; updateCustomParameters()" />
+      <ion-toggle slot="end" :checked="unfillableOrder" @ionChange="unfillableOrder = !unfillableOrder; updateCustomParameters()" />
     </ion-item>
 
     <ion-list v-if="customOptionalParameters.length || customRequiredParameters.length">
@@ -213,7 +213,7 @@ export default defineComponent({
     },
     async generateFrequencyOptions(currentFrequency?: any) {
       const frequencyOptions = JSON.parse(JSON.stringify(generateAllowedFrequencies()));
-      if(hasPermission(Actions.APP_CUSTOM_FREQ_VIEW)) frequencyOptions.push({ "id": "CUSTOM", "description": "Custom"})
+      if(hasPermission(Actions.APP_CUSTOM_FREQ_VIEW)) frequencyOptions.push({ "id": "CUSTOM", "description": "Custom" })
       if(currentFrequency) {
         const selectedFrequency = frequencyOptions.find((frequency: any) => frequency.id === currentFrequency);
         if(!selectedFrequency ) {
