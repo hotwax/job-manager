@@ -204,19 +204,19 @@ export default defineComponent({
       const runTimes = JSON.parse(JSON.stringify(generateAllowedRunTimes()))
       let selectedRunTime
       // 0 check for the 'Now' value and '' check for initial render
-      if (currentRunTime || currentRunTime === 0 ) {
+      if(currentRunTime || currentRunTime === 0 ) {
         selectedRunTime = runTimes.some((runTime: any) => runTime.value === currentRunTime)
-        if (!selectedRunTime) runTimes.push({ label: this.getTime(currentRunTime), value: currentRunTime })
+        if(!selectedRunTime) runTimes.push({ label: this.getTime(currentRunTime), value: currentRunTime })
       }
       this.runTime = currentRunTime
       this.runTimes = runTimes
     },
     async generateFrequencyOptions(currentFrequency?: any) {
       const frequencyOptions = JSON.parse(JSON.stringify(generateAllowedFrequencies()));
-      if (hasPermission(Actions.APP_CUSTOM_FREQ_VIEW)) frequencyOptions.push({ "id": "CUSTOM", "description": "Custom"})
-      if (currentFrequency) {
+      if(hasPermission(Actions.APP_CUSTOM_FREQ_VIEW)) frequencyOptions.push({ "id": "CUSTOM", "description": "Custom"})
+      if(currentFrequency) {
         const selectedFrequency = frequencyOptions.find((frequency: any) => frequency.id === currentFrequency);
-        if (!selectedFrequency ) {
+        if(!selectedFrequency ) {
           const frequencies = await this.store.dispatch("job/fetchTemporalExpression", [ currentFrequency ]);
           const frequency = frequencies[currentFrequency];
           frequency && (frequencyOptions.push({ "id": frequency.tempExprId,  "description": frequency.description }))
@@ -229,18 +229,18 @@ export default defineComponent({
       const jobEnum: any = Object.values(this.jobEnums)?.find((job: any) => job.unfillable === this.unfillableOrder && job.facilityId === this.batchFacilityId);
 
       const job = this.getJob(jobEnum.id)?.find((job: any) => job.status === 'SERVICE_DRAFT');
-      if (!job) {
+      if(!job) {
         showToast(translate('Configuration missing'))
         return;
       }
 
       // return if job has missing data or error
-      if (hasJobDataError(job)) return;
+      if(hasJobDataError(job)) return;
 
       job.runTime = this.runTime != 0 ? (!isCustomRunTime(this.runTime) ? DateTime.now().toMillis() + this.runTime : this.runTime) : ''
 
       // if job runTime is not a valid date then making runTime as empty
-      if (job?.runTime && !isFutureDate(job?.runTime)) {
+      if(job?.runTime && !isFutureDate(job?.runTime)) {
         job.runTime = ''
       }
 
@@ -266,7 +266,7 @@ export default defineComponent({
     updateCustomTime(event: CustomEvent) {
       const currTime = DateTime.now().toMillis();
       const setTime = handleDateTimeInput(event.detail.value);
-      if (setTime > currTime) this.generateRunTimes(setTime)
+      if(setTime > currTime) this.generateRunTimes(setTime)
       else showToast(translate("Provide a future date and time"))
     },
     updateCustomParameters() {
@@ -278,13 +278,13 @@ export default defineComponent({
     },
     updateRunTime(event: CustomEvent) {
       const value = event.detail.value
-      if (value != 'CUSTOM') this.generateRunTimes(value)
+      if(value != 'CUSTOM') this.generateRunTimes(value)
       else this.isDateTimeModalOpen = true
     },
     getCurrentDateTime() {
       return DateTime.now().setZone(this.userProfile.userTimeZone).toLocaleString(DateTime.DATETIME_MED);
     },
-    getTime (time: any) {
+    getTime(time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
     },
     isRequiredParametersMissing() {

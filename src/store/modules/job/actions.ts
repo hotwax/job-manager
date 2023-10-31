@@ -490,7 +490,7 @@ const actions: ActionTree<JobState, RootState> = {
     const tempExpr = Object.values(cached).reduce((tempExprIds: any, cachedJob: any) => {
       if(cachedJob.tempExprId && !tempExprIds.includes(cachedJob.tempExprId)) {
         tempExprIds.push(cachedJob.tempExprId)
-      } else if (cachedJob?.length) {
+      } else if(Array.isArray(cachedJob)) {
         cachedJob.map((job: any) => {
           if(job.tempExprId && !tempExprIds.includes(job.tempExprId)) {
             tempExprIds.push(job.tempExprId)

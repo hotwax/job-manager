@@ -10,7 +10,7 @@
     <ion-content>
       <main>
         <section>
-          <ion-button expand="block" :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" @click="addBatch()" >{{ $t('Create new brokering job') }}</ion-button>
+          <ion-button expand="block" :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" @click="addBatch()">{{ $t('Create new brokering job') }}</ion-button>
 
           <ion-item lines="none">
             <ion-label>
@@ -31,7 +31,7 @@
                 <ion-card-subtitle>{{ getBrokerQueue(batch) }}</ion-card-subtitle>
                 <ion-card-title>{{ batch?.jobName }}</ion-card-title>
               </div>
-              <ion-badge class="ion-margin-start" color="dark" >{{ timeFromNow(batch?.runTime) }}</ion-badge>
+              <ion-badge class="ion-margin-start" color="dark" v-if="batch.status === 'SERVICE_PENDING'">{{ timeFromNow(batch?.runTime) }}</ion-badge>
             </ion-card-header>
 
             <ion-list>
@@ -58,7 +58,7 @@
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
-          <JobConfiguration :status="currentJobStatus" :type="freqType" :key="currentJob" isBrokerJob="true"/>
+          <JobConfiguration :status="currentJobStatus" :type="freqType" :key="currentJob" :isBrokerJob="orderBatchJobs.includes(currentJob) ? true : false"/>
         </aside>
       </main>
     </ion-content>
@@ -159,27 +159,27 @@ export default defineComponent({
       });
       return batchmodal.present();
     },
-    getTime (time: any) {
+    getTime(time: any) {
       return DateTime.fromMillis(time).toFormat('hh:mm a');
     },
-    getBrokerQueue(job: any){
+    getBrokerQueue(job: any) {
       const brokerQueueId = this.batchJobEnums[job?.enumId].facilityId
 
-      if(brokerQueueId === "_NA_"){
+      if(brokerQueueId === "_NA_") {
         return "Brokering queue"
-      }else if(brokerQueueId === "PRE_ORDER_PARKING"){
+      } else if(brokerQueueId === "PRE_ORDER_PARKING") {
         return "Pre-order parking"
-      }else{
+      } else {
         return "Back-order parking"
       }
     },
     async viewJobConfiguration(jobInformation: any) {
       this.currentJob = jobInformation.job || this.getJob(this.jobEnums[jobInformation.id])
-      this.currentJobStatus = this.currentJob.statusId === 'SERVICE_DRAFT' ? 'SERVICE_DRAFT' : this.currentJob.frequency
+      this.currentJobStatus = this.currentJob?.statusId === 'SERVICE_DRAFT' ? 'SERVICE_DRAFT' : this.currentJob?.frequency
       this.freqType = jobInformation.id && this.jobFrequencyType[jobInformation.id]
 
       // if job runTime is not a valid date then making runTime as empty
-      if (this.currentJob?.runTime && !isFutureDate(this.currentJob?.runTime)) {
+      if(this.currentJob?.runTime && !isFutureDate(this.currentJob?.runTime)) {
         this.currentJob.runTime = ''
       }
 
@@ -188,7 +188,7 @@ export default defineComponent({
         this.router.push({ name: 'JobDetails', params: { jobId: this.currentJob.jobId, category: "orders" } });
         return;
       }
-      if (this.currentJob && !this.isJobDetailAnimationCompleted) {
+      if(this.currentJob && !this.isJobDetailAnimationCompleted) {
         emitter.emit('playAnimation');
         this.isJobDetailAnimationCompleted = true;
       }
@@ -198,7 +198,7 @@ export default defineComponent({
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
         this.$t('Disabled')
     },
-    async fetchJobs(){
+    async fetchJobs() {
       await this.store.dispatch("job/fetchJobs", {
         "inputFields": {
           // If we fetch broker sys job by not passing systemJobEnumId filter then this api
@@ -216,11 +216,9 @@ export default defineComponent({
         }
       });
     },
-    timeFromNow (time: any) {
-      if(time){
-        const timeDiff = DateTime.fromMillis(time).diff(DateTime.local());
-        return DateTime.local().plus(timeDiff).toRelative();
-      }
+    timeFromNow(time: any) {
+      const timeDiff = DateTime.fromMillis(time).diff(DateTime.local());
+      return DateTime.local().plus(timeDiff).toRelative();
     },
     generateCustomParameters(job: any) {
       let customOptionalParameters = generateJobCustomOptions(job).optionalParameters;
@@ -230,7 +228,7 @@ export default defineComponent({
       return generateJobCustomParameters(customRequiredParameters, customOptionalParameters, {})
     }
   },
-  mounted () {
+  mounted() {
     this.fetchJobs();
     emitter.on("productStoreOrConfigChanged", this.fetchJobs);
     emitter.on('viewJobConfiguration', this.viewJobConfiguration)
