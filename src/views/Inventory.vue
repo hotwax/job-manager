@@ -186,7 +186,12 @@ export default defineComponent({
       this.freqType = jobInformation.id && this.jobFrequencyType[jobInformation.id]
 
       const job = await this.store.dispatch('job/updateCurrentJob', { job: this.currentJob, jobId: this.jobEnums[jobInformation.id] });
-      if(job) this.currentJob = job;
+      if(job) {
+        this.currentJob = job
+      } else {
+        showToast(translate('Configuration missing'))
+        return;
+      }
 
       if(!this.isDesktop && this.currentJob) {
         this.router.push({ name: 'JobDetails', params: { jobId: this.currentJob.jobId, category: "inventory" } });

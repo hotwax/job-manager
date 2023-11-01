@@ -188,7 +188,12 @@ export default defineComponent({
       }
 
       const job = await this.store.dispatch('job/updateCurrentJob', { job: this.job, jobId: id });
-      if(job) this.job = job;
+      if(job) {
+        this.job = job
+      } else {
+        showToast(translate('Configuration missing'))
+        return;
+      }
 
       if(!this.isDesktop && this.job) {
         this.router.push({ name: 'JobDetails', params: { jobId: this.job.jobId, category: "initial-load" } });

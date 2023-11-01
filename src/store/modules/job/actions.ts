@@ -760,6 +760,7 @@ const actions: ActionTree<JobState, RootState> = {
     }
 
     if(!payload.jobId) {
+      commit(types.JOB_CURRENT_UPDATED, {});
       return;
     }
 
