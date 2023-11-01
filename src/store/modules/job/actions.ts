@@ -767,6 +767,10 @@ const actions: ActionTree<JobState, RootState> = {
       return currentJob;
     }
 
+    if(!payload.jobId) {
+      return;
+    }
+
     let resp;
     try {
       const params = {

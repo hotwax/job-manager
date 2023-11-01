@@ -179,11 +179,6 @@ export default defineComponent({
       this.currentSelectedJobModal = label;
       this.job = this.getJob(id);
 
-      if (!this.job) {
-        showToast(translate('Configuration missing'))
-        return;
-      }
-
       if(this.job?.runtimeData?.sinceId?.length >= 0) {
         this.lastShopifyOrderId = this.job.runtimeData.sinceId !== 'null' ? this.job.runtimeData.sinceId : ''
       }
@@ -192,7 +187,9 @@ export default defineComponent({
         this.job.runTime = ''
       }
 
-      await this.store.dispatch('job/updateCurrentJob', { job: this.job });
+      const job = await this.store.dispatch('job/updateCurrentJob', { job: this.job, jobId: id });
+      if(job) this.job = job;
+
       if(!this.isDesktop && this.job) {
         this.router.push({ name: 'JobDetails', params: { jobId: this.job.jobId, category: "initial-load" } });
         return;
