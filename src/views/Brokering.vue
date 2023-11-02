@@ -97,10 +97,11 @@ import { useRouter } from 'vue-router'
 import { mapGetters } from "vuex";
 import JobConfiguration from '@/components/JobConfiguration.vue';
 import { DateTime } from 'luxon';
-import { generateJobCustomOptions, generateJobCustomParameters, isFutureDate } from '@/utils';
+import { generateJobCustomOptions, generateJobCustomParameters, isFutureDate, showToast } from '@/utils';
 import emitter from '@/event-bus';
 import MoreJobs from '@/components/MoreJobs.vue';
 import { Actions, hasPermission } from '@/authorization'
+import { translate } from '@/i18n';
 
 export default defineComponent({
   name: 'Brokering',
