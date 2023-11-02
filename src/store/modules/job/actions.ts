@@ -759,6 +759,11 @@ const actions: ActionTree<JobState, RootState> = {
       return payload?.job;
     }
 
+    if(!payload.jobId) {
+      commit(types.JOB_CURRENT_UPDATED, {});
+      return;
+    }
+
     let currentJob = pendingJobs.find((job: any) => job.jobId === payload.jobId);
     currentJob = currentJob ? currentJob : cachedJobs[payload?.jobId];
 

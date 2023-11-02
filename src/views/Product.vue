@@ -70,11 +70,12 @@ import {
 import { defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
 import JobConfiguration from '@/components/JobConfiguration.vue'
-import { isFutureDate } from '@/utils';
+import { isFutureDate, showToast } from '@/utils';
 import emitter from '@/event-bus';
 import { useRouter } from 'vue-router'
 import MoreJobs from '@/components/MoreJobs.vue'
 import { Actions, hasPermission } from '@/authorization'
+import { translate } from '@/i18n';
 
 export default defineComponent({
   name: 'Product',
@@ -157,7 +158,14 @@ export default defineComponent({
       this.currentJobStatus = jobInformation.status;
       this.freqType = jobInformation.id && this.jobFrequencyType[jobInformation.id]
 
-      await this.store.dispatch('job/updateCurrentJob', { job: this.currentJob });
+      const job = await this.store.dispatch('job/updateCurrentJob', { job: this.currentJob, jobId: this.jobEnums[jobInformation.id] });
+      if(job) {
+        this.currentJob = job
+      } else {
+        showToast(translate('Configuration missing'))
+        return;
+      }
+
       if(!this.isDesktop && this.currentJob) {
         this.router.push({ name: 'JobDetails', params: { jobId: this.currentJob.jobId, category: "product" } });
         return;
