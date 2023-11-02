@@ -25,7 +25,7 @@
             </ion-item>
           </ion-card>
 
-          <ion-card :button="isDesktop" v-for="batch in orderBatchJobs" :key="batch?.id" detail v-show="batch?.status === 'SERVICE_PENDING'" @click="hasPermission(Actions.APP_JOB_UPDATE) && viewJobConfiguration({ id: batch.enumId, job: batch })">
+          <ion-card :button="isDesktop" v-for="batch in batchJobs()" :key="batch?.id" detail v-show="batch?.status === 'SERVICE_PENDING'" @click="hasPermission(Actions.APP_JOB_UPDATE) && viewJobConfiguration({ id: batch.enumId, job: batch })">
             <ion-card-header>
               <div>
                 <ion-card-subtitle>{{ getBrokerQueue(batch) }}</ion-card-subtitle>
@@ -151,6 +151,9 @@ export default defineComponent({
     }),
   },
   methods: {
+    batchJobs() {
+      return this.orderBatchJobs?.sort((jobA: any,jobB: any) => jobA.runTime - jobB.runTime)
+    },
     async addBatch() {
       const batchmodal = await modalController.create({
         component: BatchModal,
