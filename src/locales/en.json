@@ -86,6 +86,7 @@
   "Every day": "Every day",
   "Failed": "Failed",
   "Failed to schedule service(s)": "Failed to schedule {count} service(s)",
+  "Fetching TimeZones": "Fetching TimeZones",
   "File upload status": "File upload status",
   "Filters": "Filters",
   "Finished": "Finished",
