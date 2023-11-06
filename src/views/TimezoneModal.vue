@@ -14,23 +14,26 @@
   </ion-header>
 
   <ion-content class="ion-padding">
-    <!-- Empty state -->
-    <div class="empty-state" v-if="filteredTimeZones.length === 0">
-      <p>{{ $t("No time zone found")}}</p>
-    </div>
+    <form @keyup.enter="setUserTimeZone">
+      <!-- Empty state -->
+      <div class="empty-state" v-if="filteredTimeZones.length === 0">
+        <p>{{ $t("No time zone found")}}</p>
+      </div>
 
-    <!-- Timezones -->
-    <div v-else>
-      <ion-list>
-        <ion-radio-group value="rd" v-model="timeZoneId">
-          <ion-item :key="timeZone.id" v-for="timeZone in filteredTimeZones">
-            <ion-label>{{ timeZone.label }} ({{ timeZone.id }})</ion-label>
-            <ion-radio :value="timeZone.id" slot="start" />
-          </ion-item>
-        </ion-radio-group>
-      </ion-list>
-    </div>
-    
+      <!-- Timezones -->
+      <div v-else>
+        <ion-list>
+          <ion-radio-group value="rd" v-model="timeZoneId">
+            <ion-item :key="timeZone.id" v-for="timeZone in filteredTimeZones">
+              <ion-label>{{ timeZone.label }} ({{ timeZone.id }})</ion-label>
+              <ion-radio :value="timeZone.id" slot="start" />
+            </ion-item>
+          </ion-radio-group>
+        </ion-list>
+      </div>
+    </form>
+
+    <!-- Defined ion-fab outside of form element as the fab button losoe its styling when wrapped inside form -->
     <ion-fab vertical="bottom" horizontal="end" slot="fixed">
       <ion-fab-button :disabled="!timeZoneId" @click="setUserTimeZone">
         <ion-icon :icon="saveOutline" />
