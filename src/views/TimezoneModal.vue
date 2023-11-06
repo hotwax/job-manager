@@ -141,7 +141,7 @@ export default defineComponent({
     },
     async setUserTimeZone() {
       await this.store.dispatch("user/setUserTimeZone", {
-        "timeZoneId": this.timeZoneId
+        "tzId": this.timeZoneId
       })
       this.closeModal()
     }
