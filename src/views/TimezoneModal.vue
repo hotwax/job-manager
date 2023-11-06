@@ -14,25 +14,33 @@
   </ion-header>
 
   <ion-content class="ion-padding">
-    <!-- Empty state -->
-    <div class="empty-state" v-if="filteredTimeZones.length === 0">
-      <p>{{ $t("No time zone found")}}</p>
-    </div>
+    <form @keyup.enter="setUserTimeZone">
+      <div class="empty-state" v-if="isLoading">
+        <ion-spinner name="crescent" />
+        <p>{{ $t("Fetching TimeZones")}}</p>
+      </div>
 
-    <!-- Timezones -->
-    <div v-else>
-      <ion-list>
-        <ion-radio-group value="rd" v-model="timeZoneId">
-          <ion-item :key="timeZone.id" v-for="timeZone in filteredTimeZones">
-            <ion-label>{{ timeZone.label }} ({{ timeZone.id }})</ion-label>
-            <ion-radio :value="timeZone.id" slot="start" />
-          </ion-item>
-        </ion-radio-group>
-      </ion-list>
-    </div>
-    
+      <!-- Empty state -->
+      <div class="empty-state" v-else-if="filteredTimeZones.length === 0">
+        <p>{{ $t("No time zone found")}}</p>
+      </div>
+
+      <!-- Timezones -->
+      <div v-else>
+        <ion-list>
+          <ion-radio-group value="rd" v-model="timeZoneId">
+            <ion-item :key="timeZone.id" v-for="timeZone in filteredTimeZones">
+              <ion-label>{{ timeZone.label }} ({{ timeZone.id }})</ion-label>
+              <ion-radio :value="timeZone.id" slot="start" />
+            </ion-item>
+          </ion-radio-group>
+        </ion-list>
+      </div>
+    </form>
+
+    <!-- Defined ion-fab outside of form element as the fab button losoe its styling when wrapped inside form -->
     <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-      <ion-fab-button :disabled="!timeZoneId" @click="saveAlert">
+      <ion-fab-button :disabled="!timeZoneId" @click="setUserTimeZone">
         <ion-icon :icon="saveOutline" />
       </ion-fab-button>
     </ion-fab>
@@ -54,16 +62,18 @@ import {
   IonRadioGroup,
   IonRadio,
   IonSearchbar,
+  IonSpinner,
   IonTitle,
   IonToolbar,
   modalController,
-  alertController } from "@ionic/vue";
+} from "@ionic/vue";
 import { defineComponent } from "vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { useStore } from "@/store";
 import { UserService } from "@/services/UserService";
 import { hasError } from '@/utils'
 import { DateTime } from 'luxon';
+import logger from "@/logger";
 
 export default defineComponent({
   name: "TimeZoneModal",
@@ -81,6 +91,7 @@ export default defineComponent({
     IonRadioGroup,
     IonRadio,
     IonSearchbar,
+    IonSpinner,
     IonTitle,
     IonToolbar 
   },
@@ -89,31 +100,13 @@ export default defineComponent({
       queryString: '',
       filteredTimeZones: [],
       timeZones: [],
-      timeZoneId: ''
+      timeZoneId: '',
+      isLoading: false
     }
   },
   methods: {
     closeModal() {
       modalController.dismiss({ dismissed: true });
-    },
-    async saveAlert() {
-      const message = this.$t("Are you sure you want to change the time zone to?", { timeZoneId: this.timeZoneId });
-      const alert = await alertController.create({
-        header: this.$t("Update time zone"),
-        message,
-        buttons: [
-          {
-            text: this.$t("Cancel"),
-          },
-          {
-            text: this.$t("Confirm"),
-            handler: () => {
-              this.setUserTimeZone();
-            }
-          }
-        ],
-      });
-      return alert.present();
     },
     preventSpecialCharacters($event: any) {
       // Searching special characters fails the API, hence, they must be omitted
@@ -126,14 +119,20 @@ export default defineComponent({
       });
     },
     async getAvailableTimeZones() {
-      const resp = await UserService.getAvailableTimeZones()
-      if(resp.status === 200 && !hasError(resp)) {
-        // We are filtering valid the timeZones coming with response here
-        this.timeZones = resp.data.filter((timeZone: any) => {
-          return DateTime.local().setZone(timeZone.id).isValid;
-        });
-        this.findTimeZone();
+      this.isLoading = true;
+      try {
+        const resp = await UserService.getAvailableTimeZones()
+        if(resp.status === 200 && !hasError(resp)) {
+          // We are filtering valid the timeZones coming with response here
+          this.timeZones = resp.data.filter((timeZone: any) => {
+            return DateTime.local().setZone(timeZone.id).isValid;
+          });
+          this.findTimeZone();
+        }
+      } catch(err) {
+        logger.error(err)
       }
+      this.isLoading = false;
     },
     async selectSearchBarText(event: any) {
       const element = await event.target.getInputElement()
@@ -141,7 +140,7 @@ export default defineComponent({
     },
     async setUserTimeZone() {
       await this.store.dispatch("user/setUserTimeZone", {
-        "timeZoneId": this.timeZoneId
+        "tzId": this.timeZoneId
       })
       this.closeModal()
     }
