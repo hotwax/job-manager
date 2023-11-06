@@ -32,7 +32,7 @@
     </div>
     
     <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-      <ion-fab-button :disabled="!timeZoneId" @click="saveAlert">
+      <ion-fab-button :disabled="!timeZoneId" @click="setUserTimeZone">
         <ion-icon :icon="saveOutline" />
       </ion-fab-button>
     </ion-fab>
@@ -57,7 +57,7 @@ import {
   IonTitle,
   IonToolbar,
   modalController,
-  alertController } from "@ionic/vue";
+} from "@ionic/vue";
 import { defineComponent } from "vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { useStore } from "@/store";
@@ -95,25 +95,6 @@ export default defineComponent({
   methods: {
     closeModal() {
       modalController.dismiss({ dismissed: true });
-    },
-    async saveAlert() {
-      const message = this.$t("Are you sure you want to change the time zone to?", { timeZoneId: this.timeZoneId });
-      const alert = await alertController.create({
-        header: this.$t("Update time zone"),
-        message,
-        buttons: [
-          {
-            text: this.$t("Cancel"),
-          },
-          {
-            text: this.$t("Confirm"),
-            handler: () => {
-              this.setUserTimeZone();
-            }
-          }
-        ],
-      });
-      return alert.present();
     },
     preventSpecialCharacters($event: any) {
       // Searching special characters fails the API, hence, they must be omitted
