@@ -514,7 +514,7 @@ const actions: ActionTree<JobState, RootState> = {
       'recurrenceTimeZone': this.state.user.current.userTimeZone,
       'tempExprId': job.jobStatus,
       'statusId': "SERVICE_PENDING",
-      'runTimeEpoch': ''
+      'runTimeEpoch': ''  // when updating a job clearning the epoch time, as job honors epoch time as runTime and the new job created also uses epoch time as runTime
     } as any
 
     job?.runTime && (payload['runTime'] = job.runTime)
