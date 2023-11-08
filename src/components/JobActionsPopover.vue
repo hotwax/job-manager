@@ -14,7 +14,7 @@
         <ion-icon slot="start" :icon="pinOutline" />
         {{ $t("Pin job") }}
       </ion-item>
-      <ion-item :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" @click="runJobNow(job)" lines="none" button>
+      <ion-item :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" @click="openJobCustomParameterModal()" lines="none" button>
         <ion-icon slot="start" :icon="flashOutline" />
         {{ $t("Run now") }}
       </ion-item>      
@@ -29,7 +29,6 @@ import {
   IonItem,
   IonList,
   IonListHeader,
-  alertController,
   modalController,
   popoverController
 } from "@ionic/vue";
@@ -38,9 +37,10 @@ import { copyOutline, flashOutline, pinOutline, timeOutline  } from 'ionicons/ic
 import { mapGetters, useStore } from 'vuex'
 import JobHistoryModal from '@/components/JobHistoryModal.vue'
 import { Plugins } from '@capacitor/core';
-import { generateJobCustomParameters, hasJobDataError, showToast } from '@/utils'
+import { showToast } from '@/utils'
 import emitter from "@/event-bus"
 import { Actions, hasPermission } from '@/authorization'
+import JobParameterModal from '@/components/JobParameterModal.vue'
 
 export default defineComponent({
   name: "JobActionsPopover",
@@ -94,35 +94,24 @@ export default defineComponent({
       }
       this.closePopover();
     },
-    async runJobNow(job: any) {
-      const alert = await alertController
-        .create({
-          header: this.$t("Run now"),
-          message: this.$t('Running this job now will not replace this job. A copy of this job will be created and run immediately. You may not be able to reverse this action.', { space: '<br/><br/>' }),
-          buttons: [
-            {
-              text: this.$t("Cancel"),
-              role: 'cancel',
-            },
-            {
-              text: this.$t('Run now'),
-              handler: async () => {
-                if(job) {
-                  // return if job has missing data or error
-                  if (hasJobDataError(job)) {
-                    this.closePopover();
-                    return;
-                  }
-
-                  const jobCustomParameters = generateJobCustomParameters([], [], job.runtimeData)
-                  await this.store.dispatch('job/runServiceNow', { job, jobCustomParameters })
-                  this.closePopover();
-                }
-              }
-            }
-          ]
-        });
-      return alert.present();
+    async openJobCustomParameterModal() {
+      const jobParameterModal = await modalController.create({
+        component: JobParameterModal,
+        // deep cloning the props for the 'run now' case as the parameter objects are
+        // v-modeled in the job parameter modal hence, changes are reflected back on the UI
+        // (because of reference) which is misleading as the job with edited changes
+        // has already ran
+        componentProps: {
+          customOptionalParameters: [],
+          customRequiredParameters: [],
+          currentJob: JSON.parse(JSON.stringify(this.job)),
+          runNow: true
+        },
+        breakpoints: [0, 0.25, 0.5, 0.75, 1],
+        initialBreakpoint: 0.75
+      });
+      await jobParameterModal.present();
+      this.closePopover();
     },
   },
   setup() {
