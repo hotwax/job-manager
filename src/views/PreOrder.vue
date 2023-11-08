@@ -181,7 +181,6 @@ import { defineComponent } from 'vue';
 import { useStore } from "@/store";
 import { mapGetters } from "vuex";
 import { useRouter } from 'vue-router'
-import { alertController } from '@ionic/vue';
 import JobConfiguration from '@/components/JobConfiguration.vue'
 import { generateJobCustomParameters, isFutureDate, showToast, prepareRuntime, hasJobDataError } from '@/utils';
 import emitter from '@/event-bus';
