@@ -182,7 +182,14 @@ import { useStore } from "@/store";
 import { mapGetters } from "vuex";
 import { useRouter } from 'vue-router'
 import JobConfiguration from '@/components/JobConfiguration.vue'
-import { generateJobCustomParameters, isFutureDate, showToast, prepareRuntime, hasJobDataError } from '@/utils';
+import {
+  generateJobCustomParameters,
+  isFutureDate,
+  showToast,
+  prepareRuntime,
+  hasJobDataError,
+  generateJobCustomOptions
+} from '@/utils';
 import emitter from '@/event-bus';
 import { translate } from '@/i18n';
 import MoreJobs from '@/components/MoreJobs.vue';
@@ -291,13 +298,9 @@ export default defineComponent({
       const job = this.getJob(id)
       const jobParameterModal = await modalController.create({
         component: JobParameterModal,
-        // deep cloning the props for the 'run now' case as the parameter objects are
-        // v-modeled in the job parameter modal hence, changes are reflected back on the UI
-        // (because of reference) which is misleading as the job with edited changes
-        // has already ran
         componentProps: {
-          customOptionalParameters: [],
-          customRequiredParameters: [],
+          customOptionalParameters: generateJobCustomOptions(job).optionalParameters,
+          customRequiredParameters: generateJobCustomOptions(job).requiredParameters,
           currentJob: job,
           runNow: true
         },

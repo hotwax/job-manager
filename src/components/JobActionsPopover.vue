@@ -37,7 +37,7 @@ import { copyOutline, flashOutline, pinOutline, timeOutline  } from 'ionicons/ic
 import { mapGetters, useStore } from 'vuex'
 import JobHistoryModal from '@/components/JobHistoryModal.vue'
 import { Plugins } from '@capacitor/core';
-import { showToast } from '@/utils'
+import { generateJobCustomOptions, showToast } from '@/utils'
 import emitter from "@/event-bus"
 import { Actions, hasPermission } from '@/authorization'
 import JobParameterModal from '@/components/JobParameterModal.vue'
@@ -97,13 +97,9 @@ export default defineComponent({
     async openJobCustomParameterModal() {
       const jobParameterModal = await modalController.create({
         component: JobParameterModal,
-        // deep cloning the props for the 'run now' case as the parameter objects are
-        // v-modeled in the job parameter modal hence, changes are reflected back on the UI
-        // (because of reference) which is misleading as the job with edited changes
-        // has already ran
         componentProps: {
-          customOptionalParameters: [],
-          customRequiredParameters: [],
+          customOptionalParameters: generateJobCustomOptions(this.job).optionalParameters,
+          customRequiredParameters: generateJobCustomOptions(this.job).requiredParameters,
           currentJob: JSON.parse(JSON.stringify(this.job)),
           runNow: true
         },
