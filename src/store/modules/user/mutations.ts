@@ -33,6 +33,10 @@ const mutations: MutationTree <UserState> = {
     [types.USER_PRDCT_STR_CATGRS_UPDATED] (state, payload) {
         state.productStoreCategories = payload
     },
+    [types.USER_PWA_STATE_UPDATED] (state, payload) {
+        state.pwaState.registration = payload.registration;
+        state.pwaState.updateExists = payload.updateExists;
+    },
     [types.USER_CURRENT_ECOM_STORE_UPDATED] (state, payload) {
         state.currentEComStore = payload;
     },
