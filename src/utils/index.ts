@@ -224,7 +224,7 @@ const convertToString = (parameter: any) => {
 
 // converts the entered value to the expected type used by the service
 const convertValue = (parameter: any) => {
-  const value = parameter.value.trim();
+  const value = parameter.value.toString().trim();
 
   if(!value) {
     return ''
@@ -268,7 +268,7 @@ const generateJobCustomParameters = (requiredParameters: any, optionalParameters
 
   optionalParameters.map((parameter: any) => {
     // added this check to not show those optional params in the configuration card whose value is left empty in the parameter modal
-    if(parameter.value.trim()) {
+    if(parameter.value && parameter.value.toString().trim()) {
       jobCustomParameters[parameter.name] = convertValue(parameter)
     }
   })
