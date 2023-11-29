@@ -514,7 +514,8 @@ const actions: ActionTree<JobState, RootState> = {
       'recurrenceTimeZone': this.state.user.current.userTimeZone,
       'tempExprId': job.jobStatus,
       'statusId': "SERVICE_PENDING",
-      'runTimeEpoch': ''  // when updating a job clearning the epoch time, as job honors epoch time as runTime and the new job created also uses epoch time as runTime
+      'runTimeEpoch': '',  // when updating a job clearning the epoch time, as job honors epoch time as runTime and the new job created also uses epoch time as runTime
+      'lastModifiedByUserLogin': this.state.user.current.userLoginId
     } as any
 
     job?.runTime && (payload['runTime'] = job.runTime)
@@ -566,7 +567,9 @@ const actions: ActionTree<JobState, RootState> = {
         'maxRecurrenceCount': '-1',
         'parentJobId': job.parentJobId,
         'runAsUser': 'system', //default system, but empty in run now.  TODO Need to remove this as we are using SERVICE_RUN_AS_SYSTEM, currently kept it for backward compatibility
-        'recurrenceTimeZone': this.state.user.current.userTimeZone
+        'recurrenceTimeZone': this.state.user.current.userTimeZone,
+        'createdByUserLogin': this.state.user.current.userLoginId,
+        'lastModifiedByUserLogin': this.state.user.current.userLoginId,
       },
       'statusId': "SERVICE_PENDING",
       'systemJobEnumId': job.systemJobEnumId,
@@ -694,6 +697,8 @@ const actions: ActionTree<JobState, RootState> = {
         'tempExprId': job.jobStatus, // Need to remove this as we are passing frequency in SERVICE_TEMP_EXPR, currently kept it for backward compatibility
         'parentJobId': job.parentJobId,
         'recurrenceTimeZone': this.state.user.current.userTimeZone,
+        'createdByUserLogin': this.state.user.current.userLoginId,
+        'lastModifiedByUserLogin': this.state.user.current.userLoginId
       },
       'statusId': "SERVICE_PENDING",
       'systemJobEnumId': job.systemJobEnumId,
@@ -892,7 +897,9 @@ const actions: ActionTree<JobState, RootState> = {
             'maxRecurrenceCount': '-1',
             'parentJobId': job.parentJobId,
             'runAsUser': 'system', //default system, but empty in run now.  TODO Need to remove this as we are using SERVICE_RUN_AS_SYSTEM, currently kept it for backward compatibility
-            'recurrenceTimeZone': this.state.user.current.userTimeZone
+            'recurrenceTimeZone': this.state.user.current.userTimeZone,
+            'createdByUserLogin': this.state.user.current.userLoginId,
+            'lastModifiedByUserLogin': this.state.user.current.userLoginId
           },
           'statusId': "SERVICE_PENDING",
           'systemJobEnumId': job.systemJobEnumId
