@@ -18,7 +18,11 @@ const userModule: Module<UserState, RootState> = {
         productStoreId: "",
         storeName: "None"
       },
-      productStoreCategories: {}
+      productStoreCategories: {},
+      pwaState: {
+        updateExists: false,
+        registration: null,
+      },
     },
     getters,
     actions,
