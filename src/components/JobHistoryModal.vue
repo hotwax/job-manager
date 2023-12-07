@@ -99,7 +99,7 @@ export default defineComponent({
             "statusId_op": "in",
             "systemJobEnumId": this.currentJob?.systemJobEnumId
           },
-          "fieldList": [ "runTime", "statusId" ],
+          "fieldList": [ "jobResult", "runTime", "statusId" ],
           "noConditionFind": "Y",
           "viewSize": process.env.VUE_APP_VIEW_SIZE,
           "orderBy": "runTime DESC"

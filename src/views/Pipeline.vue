@@ -205,6 +205,10 @@
               <ion-icon slot="start" :icon="codeWorkingOutline" />
               <ion-label class="ion-text-wrap">{{ job.serviceName }}</ion-label>
             </ion-item>
+            <ion-item lines="full" v-if="job.statusId === 'SERVICE_FAILED'">
+              <ion-icon slot="start" color="danger" :icon="warningOutline" />
+              <ion-label class="ion-text-wrap" color="danger">{{ job.jobResult }}</ion-label>
+            </ion-item>
 
             <div class="actions">
               <div></div>
@@ -291,7 +295,7 @@ import {
   IonButtons
 } from "@ionic/vue";
 import JobConfiguration from '@/components/JobConfiguration.vue'
-import { closeCircleOutline, codeWorkingOutline, copyOutline, ellipsisVerticalOutline, filterOutline, pinOutline, refreshOutline, timeOutline, timerOutline } from "ionicons/icons";
+import { closeCircleOutline, codeWorkingOutline, copyOutline, ellipsisVerticalOutline, filterOutline, pinOutline, refreshOutline, timeOutline, timerOutline, warningOutline } from "ionicons/icons";
 import emitter from '@/event-bus';
 import JobHistoryModal from '@/components/JobHistoryModal.vue';
 import { Plugins } from '@capacitor/core';
@@ -611,7 +615,8 @@ export default defineComponent({
       segmentSelected,
       router,
       filterOutline,
-      hasPermission
+      hasPermission,
+      warningOutline
     };
   }
 });
