@@ -394,7 +394,7 @@ export default defineComponent({
     async openFailedJobReason(job: any) {
       const jobHistoryModal = await modalController.create({
         component: FailedJobReasonModal,
-        componentProps: { currentJob: job }
+        componentProps: { job }
       });
 
       return jobHistoryModal.present();

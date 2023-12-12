@@ -11,7 +11,7 @@
   </ion-header>
   <ion-content>
     <ion-item lines="none">
-      <p>{{ currentJob.jobResult }}</p>
+      <p>{{ job.jobResult }}</p>
     </ion-item>
   </ion-content>
 </template>
@@ -32,7 +32,7 @@ import { defineComponent } from 'vue';
 import { closeOutline } from 'ionicons/icons';
 
 export default defineComponent({
-  name: "SelectJobsModal",
+  name: "FailedJobReasonModal",
   components: {
     IonButton,
     IonButtons,
@@ -43,7 +43,7 @@ export default defineComponent({
     IonTitle,
     IonToolbar
   },
-  props: ["currentJob"],
+  props: ["job"],
   methods: { 
     closeModal() {
       modalController.dismiss({ dismissed: true });
