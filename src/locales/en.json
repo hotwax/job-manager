@@ -85,6 +85,7 @@
   "Every 6 hours": "Every 6 hours",
   "Every day": "Every day",
   "Failed": "Failed",
+  "Failed job reason": "Failed job reason",
   "Failed to schedule service(s)": "Failed to schedule {count} service(s)",
   "Fetching TimeZones": "Fetching TimeZones",
   "File upload status": "File upload status",

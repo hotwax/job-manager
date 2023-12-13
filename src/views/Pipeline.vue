@@ -179,7 +179,7 @@
               </div>
               <div>
                 <ion-badge v-if="job.cancelDateTime || job.finishDateTime" color="dark">{{ job.statusId == "SERVICE_CANCELLED" || job.statusId == "SERVICE_CRASHED" ?  timeFromNow(job.cancelDateTime) : timeFromNow(job.finishDateTime) }}</ion-badge>
-                <ion-badge v-if="job.statusId" :color="job.statusId === 'SERVICE_FINISHED' ? 'success' : 'danger'">{{ job.statusDesc }}</ion-badge>
+                <ion-badge v-if="job.statusId" :color="job.statusId === 'SERVICE_FINISHED' ? 'success' : 'danger'" @click="job.statusId === 'SERVICE_FAILED' ? openFailedJobReason(job) : ''">{{ job.statusDesc }}</ion-badge>
               </div>
             </ion-card-header>
 
@@ -299,6 +299,7 @@ import { showToast } from '@/utils'
 import JobActionsPopover from '@/components/JobActionsPopover.vue'
 import { Actions, hasPermission } from '@/authorization'
 import Filters from '@/components/Filters.vue';
+import FailedJobReasonModal from '@/views/FailedJobReasonModal.vue'
 
 export default defineComponent({
   name: "Pipeline",
@@ -389,6 +390,14 @@ export default defineComponent({
       this.segmentSelected === 'pending' ? this.getPendingJobs():
       this.segmentSelected === 'running' ? this.getRunningJobs():
       this.getJobHistory();
+    },
+    async openFailedJobReason(job: any) {
+      const jobHistoryModal = await modalController.create({
+        component: FailedJobReasonModal,
+        componentProps: { job }
+      });
+
+      return jobHistoryModal.present();
     },
     getJobExecutionTime(startTime: any, endTime: any){
       if (startTime && endTime) {
