@@ -214,8 +214,8 @@ export default defineComponent({
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
         this.$t('Disabled')
     },
-    fetchJobs(){
-      this.store.dispatch("job/fetchJobs", {
+    async fetchJobs(){
+      await this.store.dispatch("job/fetchJobs", {
         "inputFields":{
           "enumTypeId": "INVENTORY_SYS_JOB"
         }
