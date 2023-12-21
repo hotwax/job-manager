@@ -16,11 +16,13 @@
             </ion-card-header>
             <ion-item button @click="viewJobConfiguration({ id: 'IMP_PRDTS', status: getJobStatus(jobEnums['IMP_PRDTS'])})" detail>
               <ion-label class="ion-text-wrap">{{ $t("Import products") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('IMP_PRDTS') }}</ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('IMP_PRDTS') }}</ion-label>
+              <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
             <ion-item button @click="viewJobConfiguration({ id: 'SYNC_PRDTS', status: getJobStatus(jobEnums['SYNC_PRDTS'])})" detail>
               <ion-label class="ion-text-wrap">{{ $t("Sync products") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('SYNC_PRDTS') }} </ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('SYNC_PRDTS') }} </ion-label>
+              <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap"><p>{{ $t("Sync products and category structures from Shopify into HotWax Commerce and keep them up to date.") }}</p></ion-label>
@@ -124,7 +126,8 @@ export default defineComponent({
       isDesktop: isPlatform('desktop'),
       webhookEnums: JSON.parse(process.env?.VUE_APP_WEBHOOK_ENUMS as string) as any,
       enumTypeId: 'PRODUCT_SYS_JOB',
-      initialLoadJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any
+      initialLoadJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
+      isLoading: true
     }
   },
   mounted () {
@@ -185,13 +188,14 @@ export default defineComponent({
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
         this.$t('Disabled')
     },
-    fetchJobs(){
-      this.store.dispatch("job/fetchJobs", {
+    async fetchJobs(){
+      await this.store.dispatch("job/fetchJobs", {
         "inputFields":{
           "enumTypeId": "PRODUCT_SYS_JOB"
         }
       });
       this.store.dispatch('webhook/fetchWebhooks')
+      this.isLoading = false
     }
   },
   setup() {

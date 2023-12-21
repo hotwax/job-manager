@@ -25,7 +25,8 @@
             </ion-item>
             <ion-item button @click="viewJobConfiguration({ id: 'HARD_SYNC', status: getJobStatus(jobEnums['HARD_SYNC'])})" detail>
               <ion-label class="ion-text-wrap">{{ $t("Hard sync") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('HARD_SYNC') }}</ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('HARD_SYNC') }}</ion-label>
+              <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
@@ -108,6 +109,7 @@ export default defineComponent({
       isDesktop: isPlatform('desktop'),
       enumTypeId: 'INVENTORY_SYS_JOB',
       webhookEnums: JSON.parse(process.env?.VUE_APP_WEBHOOK_ENUMS as string) as any,
+      isLoading: true
     }
   },
   computed: {
@@ -218,6 +220,7 @@ export default defineComponent({
           "enumTypeId": "INVENTORY_SYS_JOB"
         }
       });
+      this.isLoading = false
     },
     fetchData() {
       this.store.dispatch('webhook/fetchWebhooks')
