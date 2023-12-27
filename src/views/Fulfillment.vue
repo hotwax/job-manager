@@ -50,7 +50,7 @@
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
-                <p>{{ $t("Sends open orders and ready to pickup orders notification.") }}</p>
+                <p>{{ $t("Sends notifications for open orders and ready-to-pickup orders.") }}</p>
               </ion-label>
             </ion-item>
           </ion-card>
