@@ -39,6 +39,21 @@
               </ion-label>
             </ion-item>
           </ion-card>
+
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>{{ $t("Notification") }}</ion-card-title>
+            </ion-card-header>
+            <ion-item button @click="viewJobConfiguration({ id: 'OPN_BOPIS_ORD_NT', status: getJobStatus(jobEnums['OPN_BOPIS_ORD_NT']) })" detail>
+              <ion-label class="ion-text-wrap">{{ $t("Open BOPIS order notification") }}</ion-label>
+              <ion-label slot="end">{{ getTemporalExpression('OPN_BOPIS_ORD_NT') }}</ion-label>
+            </ion-item>
+            <ion-item lines="none">
+              <ion-label class="ion-text-wrap">
+                <p>{{ $t("Sends open orders and ready to pickup orders notification.") }}</p>
+              </ion-label>
+            </ion-item>
+          </ion-card>
           
           <ion-card>
             <ion-card-header>
