@@ -7,6 +7,11 @@
         </ion-button>
       </ion-buttons>
       <ion-title>{{ $t("Failed job reason") }}</ion-title>
+      <ion-buttons slot="end">
+        <ion-button @click="copyToClipboard(job.jobResult, 'Copied to clipboard')">
+          <ion-icon slot="icon-only" :icon="copyOutline" />
+        </ion-button>
+      </ion-buttons>
     </ion-toolbar>
   </ion-header>
   <ion-content>
@@ -29,7 +34,8 @@ import {
   modalController,
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
-import { closeOutline } from 'ionicons/icons';
+import { closeOutline, copyOutline } from 'ionicons/icons';
+import { copyToClipboard } from "@/utils";
 
 export default defineComponent({
   name: "FailedJobReasonModal",
@@ -51,7 +57,9 @@ export default defineComponent({
   },
   setup() {
     return {
-      closeOutline
+      closeOutline,
+      copyOutline,
+      copyToClipboard
     };
   },
 });
