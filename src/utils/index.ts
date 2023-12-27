@@ -4,6 +4,7 @@ import Papa from 'papaparse'
 import { DateTime } from "luxon";
 import logger from "@/logger";
 import { translate } from "@/i18n";
+import { Plugins } from '@capacitor/core';
 
 // TODO Use separate files for specific utilities
 
@@ -330,7 +331,19 @@ const hasJobDataError = (job: any) => {
   return false;
 }
 
+const copyToClipboard = async (value: string, text?: string) => {
+  const { Clipboard } = Plugins;
+
+  await Clipboard.write({
+    string: value,
+  }).then(() => {
+    text ? showToast(translate(text)) : showToast(translate("Copied", { value }));
+  });
+}
+
+
 export {
+  copyToClipboard,
   isCustomRunTime,
   getNowTimestamp,
   generateAllowedFrequencies,
