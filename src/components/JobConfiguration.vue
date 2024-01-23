@@ -3,7 +3,10 @@
     <ion-item lines="none">
       <!-- Adding conditional check for currentJob.jobName as currentJob is undefined when i18n runs $t -->
       <h1>{{ isBrokerJob ? currentJob.jobName : currentJob.enumName ? currentJob.enumName : currentJob.jobName ? currentJob.jobName : '' }}</h1>
-      <ion-badge slot="end" color="dark" v-if="currentJob?.runTime && currentJob.statusId !== 'SERVICE_DRAFT'">{{ $t("running") }} {{ timeTillJob(currentJob.runTime) }}</ion-badge>
+      <ion-button fill="outline" slot="end" v-if="areActionsDisabled" @click="refreshCurrentJob">
+        <ion-icon :icon="refreshOutline" />
+      </ion-button>
+      <ion-badge slot="end" color="dark" v-if="currentJob?.runTime && currentJob.statusId !== 'SERVICE_DRAFT' && !areActionsDisabled">{{ $t("running") }} {{ timeTillJob(currentJob.runTime) }}</ion-badge>
     </ion-item>
 
     <ion-list>
@@ -75,8 +78,8 @@
 
     <div class="actions desktop-only">
       <div>
-        <ion-button size="small" fill="outline" color="medium" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || currentJob.statusId === 'SERVICE_DRAFT'" @click="skipJob(currentJob)">{{ $t("Skip once") }}</ion-button>
-        <ion-button size="small" fill="outline" color="danger" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || currentJob.statusId === 'SERVICE_DRAFT'" @click="cancelJob(currentJob)">{{ $t("Disable") }}</ion-button>
+        <ion-button size="small" fill="outline" color="medium" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || currentJob.statusId === 'SERVICE_DRAFT' || areActionsDisabled" @click="skipJob(currentJob)">{{ $t("Skip once") }}</ion-button>
+        <ion-button size="small" fill="outline" color="danger" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || currentJob.statusId === 'SERVICE_DRAFT' || areActionsDisabled" @click="cancelJob(currentJob)">{{ $t("Disable") }}</ion-button>
       </div>
       <div>
         <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || isRequiredParametersMissing" size="small" fill="outline" @click="saveChanges()">{{ $t("Save changes") }}</ion-button>
@@ -142,6 +145,7 @@ import {
   syncOutline,
   personCircleOutline,
   pinOutline,
+  refreshOutline
 } from "ionicons/icons";
 import JobHistoryModal from '@/components/JobHistoryModal.vue'
 import { Plugins } from '@capacitor/core';
@@ -181,7 +185,8 @@ export default defineComponent({
       jobStatus: this.status,
       frequencyOptions: [] as any,
       customOptionalParameters: [] as any,
-      customRequiredParameters: [] as any
+      customRequiredParameters: [] as any,
+      areActionsDisabled: false
     }
   },
   mounted() {
@@ -208,6 +213,7 @@ export default defineComponent({
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
       currentEComStore: 'user/getCurrentEComStore',
       currentJob: 'job/getCurrentJob',
+      pendingJobs: 'job/getPendingJobs',
     }),
     isRequiredParametersMissing() {
       return this.customRequiredParameters.some((parameter: any) => !parameter.value?.trim())
@@ -246,7 +252,32 @@ export default defineComponent({
       this.runTime = currentRunTime
       this.runTimes = runTimes
     },
+    isJobPassed() {
+      return this.currentJob.runTime <= DateTime.now().toMillis()
+    },
+    async refreshCurrentJob() {
+      let job;
+      if(this.$route.path === '/pipeline') {
+        job = this.pendingJobs.find((job: any) => job.systemJobEnumId === this.currentJob.systemJobEnumId)
+      } else {
+        job = this.getJob(this.currentJob.systemJobEnumId)
+      }
+      
+      await this.store.dispatch('job/updateCurrentJob', { job });
+      this.jobStatus = this.currentJob.statusId === "SERVICE_DRAFT" ? this.currentJob.statusId : this.currentJob.tempExprId;
+      this.runTime = this.currentJob?.runTime ? this.currentJob?.runTime : ''
+      this.generateRunTimes(this.runTime)
+      this.generateFrequencyOptions(this.jobStatus)
+    },
     async skipJob(job: any) {
+      if(this.isJobPassed()) {
+        this.areActionsDisabled = true
+        emitter.emit("productStoreOrConfigChanged")
+        showToast(translate("Job has already completed."))
+        return;
+      }
+
+
       const alert = await alertController
         .create({
           header: this.$t('Skip job'),
@@ -478,7 +509,8 @@ export default defineComponent({
       router,
       syncOutline,
       personCircleOutline,
-      pinOutline
+      pinOutline,
+      refreshOutline
     };
   }
 });
