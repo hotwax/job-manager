@@ -75,7 +75,8 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       getCurrentEComStore:'user/getCurrentEComStore',
-      getStatusDesc: 'util/getStatusDesc'
+      getStatusDesc: 'util/getStatusDesc',
+      currentShopifyConfig: 'user/getCurrentShopifyConfigs'
     })
   },
   methods: {
@@ -97,7 +98,12 @@ export default defineComponent({
             "productStoreId": this.getCurrentEComStore.productStoreId,
             "statusId": ["SERVICE_CANCELLED", "SERVICE_CRASHED", "SERVICE_FAILED", "SERVICE_FINISHED"],
             "statusId_op": "in",
-            "systemJobEnumId": this.currentJob?.systemJobEnumId
+            "systemJobEnumId": this.currentJob?.systemJobEnumId,
+            "shopId_fld0_value": this.currentShopifyConfig?.shopId,
+            "shopId_fld0_grp": "1",
+            "shopId_fld0_op": "equals",
+            "shopId_fld1_grp": "2",
+            "shopId_fld1_op": "empty"
           },
           "fieldList": [ "runTime", "statusId" ],
           "noConditionFind": "Y",
