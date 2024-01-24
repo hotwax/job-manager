@@ -504,7 +504,7 @@ export default defineComponent({
               handler: async () => {
                 if(this.isJobPassed(job)) {
                   await this.refreshJobs(undefined, true)
-                  showToast(this.$t("Job has been already completed, hence refreshed jobs. Please retry."))
+                  showToast(this.$t("Job runtime has passed. The job data has refreshed. Please try now."))
                   await this.store.dispatch('job/updateCurrentJob', { job: {} });
                   return;
                 }
@@ -550,7 +550,7 @@ export default defineComponent({
               handler: async () => {
                 if(this.isJobPassed(job)) {
                   await this.refreshJobs(undefined, true)
-                  showToast(this.$t("Job has been already completed, hence refreshed jobs. Please retry."))
+                  showToast(this.$t("Job runtime has passed. The job data has refreshed. Please try now."))
                   await this.store.dispatch('job/updateCurrentJob', { job: {} });
                   return;
                 }
