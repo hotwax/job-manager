@@ -289,7 +289,7 @@ export default defineComponent({
                 if (this.isJobPassed()) {
                   this.isRefreshEnabled = true
                   emitter.emit("productStoreOrConfigChanged")
-                  showToast(translate("Job has already completed. Please refresh to update job."))
+                  showToast(translate("Job has been already completed. Please refresh to update job."))
                   return;
                 }
 
@@ -319,7 +319,7 @@ export default defineComponent({
               if (this.isJobPassed()) {
                 this.isRefreshEnabled = true
                 emitter.emit("productStoreOrConfigChanged")
-                showToast(translate("Job has already completed. Please refresh to update job."))
+                showToast(translate("Job has been already completed. Please refresh to update job."))
                 return;
               }
 
@@ -351,7 +351,7 @@ export default defineComponent({
               if (this.isJobPassed()) {
                 this.isRefreshEnabled = true
                 emitter.emit("productStoreOrConfigChanged")
-                showToast(translate("Job has already completed. Please refresh to update job."))
+                showToast(translate("Job has been already completed. Please refresh to update job."))
                 return;
               }
 

@@ -486,6 +486,9 @@ export default defineComponent({
       this.segmentSelected === 'running' ? this.getRunningJobs():
       this.getJobHistory();
     },
+    isJobPassed(job: any) {
+      return job.runTime <= DateTime.now().toMillis()
+    },
     async skipJob (job: any) {
       const alert = await alertController
         .create({
@@ -499,6 +502,12 @@ export default defineComponent({
             {
               text: this.$t('Skip'),
               handler: async () => {
+                if (this.isJobPassed(job)) {
+                  await this.refreshJobs(undefined, true)
+                  showToast(this.$t("Job has been already completed, hence refreshed jobs. Please retry."))
+                  return;
+                }
+
                 await this.store.dispatch('job/skipJob', job);
                 await this.getPendingJobs();
               },
@@ -538,6 +547,12 @@ export default defineComponent({
             {
               text: this.$t("CANCEL"),
               handler: async () => {
+                if (this.isJobPassed(job)) {
+                  await this.refreshJobs(undefined, true)
+                  showToast(this.$t("Job has been already completed, hence refreshed jobs. Please retry."))
+                  return;
+                }
+
                 await this.store.dispatch('job/cancelJob', job);
                 await this.getPendingJobs();
               },

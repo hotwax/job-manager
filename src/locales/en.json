@@ -118,6 +118,8 @@
   "Inventory cost": "Inventory cost",
   "Inventory level update": "Inventory level update",
   "Job details": "Job details",
+  "Job has been already completed, hence refreshed jobs. Please retry.": "Job has been already completed, hence refreshed jobs. Please retry.",
+  "Job has been already completed. Please refresh to update job.": "Job has been already completed. Please refresh to update job.",
   "Job Manager": "Job Manager",
   "Landed inventory cost": "Landed inventory cost",
   "Last run": "Last run",
