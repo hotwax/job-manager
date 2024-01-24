@@ -502,9 +502,10 @@ export default defineComponent({
             {
               text: this.$t('Skip'),
               handler: async () => {
-                if (this.isJobPassed(job)) {
+                if(this.isJobPassed(job)) {
                   await this.refreshJobs(undefined, true)
                   showToast(this.$t("Job has been already completed, hence refreshed jobs. Please retry."))
+                  await this.store.dispatch('job/updateCurrentJob', { job: {} });
                   return;
                 }
 
@@ -547,9 +548,10 @@ export default defineComponent({
             {
               text: this.$t("CANCEL"),
               handler: async () => {
-                if (this.isJobPassed(job)) {
+                if(this.isJobPassed(job)) {
                   await this.refreshJobs(undefined, true)
                   showToast(this.$t("Job has been already completed, hence refreshed jobs. Please retry."))
+                  await this.store.dispatch('job/updateCurrentJob', { job: {} });
                   return;
                 }
 
