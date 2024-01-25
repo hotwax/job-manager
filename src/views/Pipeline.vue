@@ -486,7 +486,7 @@ export default defineComponent({
       this.segmentSelected === 'running' ? this.getRunningJobs():
       this.getJobHistory();
     },
-    isJobPassed(job: any) {
+    isRuntimePassed(job: any) {
       return job.runTime <= DateTime.now().toMillis()
     },
     async skipJob (job: any) {
@@ -502,9 +502,9 @@ export default defineComponent({
             {
               text: this.$t('Skip'),
               handler: async () => {
-                if(this.isJobPassed(job)) {
+                if(this.isRuntimePassed(job)) {
                   await this.refreshJobs(undefined, true)
-                  showToast(this.$t("Job runtime has passed. The job data has refreshed. Please try now."))
+                  showToast(this.$t("Job runtime has passed. The job data has refreshed. Please try again."))
                   await this.store.dispatch('job/updateCurrentJob', { job: {} });
                   return;
                 }
@@ -548,9 +548,9 @@ export default defineComponent({
             {
               text: this.$t("CANCEL"),
               handler: async () => {
-                if(this.isJobPassed(job)) {
+                if(this.isRuntimePassed(job)) {
                   await this.refreshJobs(undefined, true)
-                  showToast(this.$t("Job runtime has passed. The job data has refreshed. Please try now."))
+                  showToast(this.$t("Job runtime has passed. The job data has refreshed. Please try again."))
                   await this.store.dispatch('job/updateCurrentJob', { job: {} });
                   return;
                 }
