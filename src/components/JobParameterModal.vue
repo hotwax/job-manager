@@ -2,13 +2,15 @@
   <ion-header>
     <ion-toolbar>
       <ion-buttons slot="start">
-        <ion-button fill="clear" @click="copyToClipboard(getParameters(), 'Copied to clipboard')">
-          <ion-icon slot="icon-only" :icon="copyOutline" />
+        <ion-button @click="closeModal">
+          <ion-icon slot="icon-only" :icon="closeOutline" />
         </ion-button>
       </ion-buttons>
       <ion-title>{{ $t('Custom Parameters') }}</ion-title>
       <ion-buttons slot="end">
-        <ion-button @click="closeModal">{{ $t('Close') }}</ion-button>
+        <ion-button fill="clear" @click="copyToClipboard(getParameters(), 'Copied to clipboard')">
+          <ion-icon slot="icon-only" :icon="copyOutline" />
+        </ion-button>
       </ion-buttons>
     </ion-toolbar>
   </ion-header>
