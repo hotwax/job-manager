@@ -3,7 +3,10 @@
     <ion-item lines="none">
       <!-- Adding conditional check for currentJob.jobName as currentJob is undefined when i18n runs $t -->
       <h1>{{ isBrokerJob ? currentJob.jobName : currentJob.enumName ? currentJob.enumName : currentJob.jobName ? currentJob.jobName : '' }}</h1>
-      <ion-badge slot="end" color="dark" v-if="currentJob?.runTime && currentJob.statusId !== 'SERVICE_DRAFT'">{{ $t("running") }} {{ timeTillJob(currentJob.runTime) }}</ion-badge>
+      <ion-button fill="outline" slot="end" v-if="isRefreshRequired" @click="refreshCurrentJob">
+        <ion-icon :icon="refreshOutline" slot="icon-only" />
+      </ion-button>
+      <ion-badge slot="end" color="dark" v-if="currentJob?.runTime && currentJob.statusId !== 'SERVICE_DRAFT' && !isRefreshRequired">{{ $t("running") }} {{ timeTillJob(currentJob.runTime) }}</ion-badge>
     </ion-item>
 
     <ion-list>
@@ -75,18 +78,18 @@
 
     <div class="actions desktop-only">
       <div>
-        <ion-button size="small" fill="outline" color="medium" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || currentJob.statusId === 'SERVICE_DRAFT'" @click="skipJob(currentJob)">{{ $t("Skip once") }}</ion-button>
-        <ion-button size="small" fill="outline" color="danger" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || currentJob.statusId === 'SERVICE_DRAFT'" @click="cancelJob(currentJob)">{{ $t("Disable") }}</ion-button>
+        <ion-button size="small" fill="outline" color="medium" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || currentJob.statusId === 'SERVICE_DRAFT' || isRefreshRequired" @click="skipJob(currentJob)">{{ $t("Skip once") }}</ion-button>
+        <ion-button size="small" fill="outline" color="danger" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || currentJob.statusId === 'SERVICE_DRAFT' || isRefreshRequired" @click="cancelJob(currentJob)">{{ $t("Disable") }}</ion-button>
       </div>
       <div>
-        <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || isRequiredParametersMissing" size="small" fill="outline" @click="saveChanges()">{{ $t("Save changes") }}</ion-button>
+        <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || isRequiredParametersMissing || isRefreshRequired" size="small" fill="outline" @click="saveChanges()">{{ $t("Save changes") }}</ion-button>
       </div>
     </div>
 
     <div class=" actions mobile-only">
-      <ion-button size="small" expand="block" fill="outline" color="medium" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || status === 'SERVICE_DRAFT'" @click="skipJob(currentJob)">{{ $t("Skip once") }}</ion-button>
-      <ion-button size="small" expand="block" fill="outline" color="danger" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || status === 'SERVICE_DRAFT'" @click="cancelJob(currentJob)">{{ $t("Disable") }}</ion-button>
-      <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || isRequiredParametersMissing" expand="block" @click="saveChanges()">{{ $t("Save changes") }}</ion-button>
+      <ion-button size="small" expand="block" fill="outline" color="medium" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || status === 'SERVICE_DRAFT' || isRefreshRequired" @click="skipJob(currentJob)">{{ $t("Skip once") }}</ion-button>
+      <ion-button size="small" expand="block" fill="outline" color="danger" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || status === 'SERVICE_DRAFT' || isRefreshRequired" @click="cancelJob(currentJob)">{{ $t("Disable") }}</ion-button>
+      <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || isRequiredParametersMissing || isRefreshRequired" expand="block" @click="saveChanges()">{{ $t("Save changes") }}</ion-button>
     </div>
   </section>
   <div class="more-actions">
@@ -142,6 +145,7 @@ import {
   syncOutline,
   personCircleOutline,
   pinOutline,
+  refreshOutline
 } from "ionicons/icons";
 import JobHistoryModal from '@/components/JobHistoryModal.vue'
 import { Plugins } from '@capacitor/core';
@@ -181,7 +185,8 @@ export default defineComponent({
       jobStatus: this.status,
       frequencyOptions: [] as any,
       customOptionalParameters: [] as any,
-      customRequiredParameters: [] as any
+      customRequiredParameters: [] as any,
+      isRefreshRequired: false
     }
   },
   mounted() {
@@ -208,6 +213,7 @@ export default defineComponent({
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
       currentEComStore: 'user/getCurrentEComStore',
       currentJob: 'job/getCurrentJob',
+      pendingJobs: 'job/getPendingJobs',
     }),
     isRequiredParametersMissing() {
       return this.customRequiredParameters.some((parameter: any) => !parameter.value?.trim())
@@ -246,6 +252,29 @@ export default defineComponent({
       this.runTime = currentRunTime
       this.runTimes = runTimes
     },
+    isRuntimePassed() {
+      return this.currentJob.runTime <= DateTime.now().toMillis()
+    },
+    async refreshCurrentJob() {
+      let job;
+
+      if(this.$route.path === '/pipeline') {
+        job = this.pendingJobs.find((job: any) => job.systemJobEnumId === this.currentJob.systemJobEnumId)
+      } else if(this.$route.path === '/brokering') {
+        // In brokering page, we may have multiple batch jobs for a single systemJobEnumId.
+        // Hence uniquely identifying current job using parentJobId.
+        job = this.getJob(this.currentJob.systemJobEnumId)?.find((job: any) => job.parentJobId === this.currentJob.parentJobId)
+      } else {
+        job = this.getJob(this.currentJob.systemJobEnumId)
+      }
+
+      await this.store.dispatch('job/updateCurrentJob', { job });
+      this.jobStatus = this.currentJob.statusId === "SERVICE_DRAFT" ? this.currentJob.statusId : this.currentJob.tempExprId;
+      this.runTime = this.currentJob?.runTime ? this.currentJob?.runTime : ''
+      this.generateRunTimes(this.runTime)
+      this.generateFrequencyOptions(this.jobStatus)
+      this.isRefreshRequired = false
+    },
     async skipJob(job: any) {
       const alert = await alertController
         .create({
@@ -258,6 +287,14 @@ export default defineComponent({
             text: this.$t('Skip'),
             handler: () => {
               if (job) {
+
+                if(this.isRuntimePassed()) {
+                  this.isRefreshRequired = true
+                  emitter.emit("productStoreOrConfigChanged")
+                  showToast(translate("Job runtime has passed. Please refresh to get the latest job data in order to perform any action."))
+                  return;
+                }
+
                 this.store.dispatch('job/skipJob', job).then((resp) => {
                   if (resp) {
                     emitter.emit('jobUpdated');
@@ -281,6 +318,13 @@ export default defineComponent({
           }, {
             text: this.$t('Cancel'),
             handler: () => {
+              if(this.isRuntimePassed()) {
+                this.isRefreshRequired = true
+                emitter.emit("productStoreOrConfigChanged")
+                showToast(translate("Job runtime has passed. Please refresh to get the latest job data in order to perform any action."))
+                return;
+              }
+
               this.store.dispatch('job/cancelJob', job).then((resp) => {
                 if(!hasError(resp)) {
                   emitter.emit('jobUpdated');
@@ -306,6 +350,13 @@ export default defineComponent({
           }, {
             text: this.$t('Save'),
             handler: () => {
+              if(this.isRuntimePassed()) {
+                this.isRefreshRequired = true
+                emitter.emit("productStoreOrConfigChanged")
+                showToast(translate("Job runtime has passed. Please refresh to get the latest job data in order to perform any action."))
+                return;
+              }
+
               this.updateJob();
             }
           }]
@@ -478,7 +529,8 @@ export default defineComponent({
       router,
       syncOutline,
       personCircleOutline,
-      pinOutline
+      pinOutline,
+      refreshOutline
     };
   }
 });
