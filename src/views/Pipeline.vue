@@ -486,6 +486,9 @@ export default defineComponent({
       this.segmentSelected === 'running' ? this.getRunningJobs():
       this.getJobHistory();
     },
+    isRuntimePassed(job: any) {
+      return job.runTime <= DateTime.now().toMillis()
+    },
     async skipJob (job: any) {
       const alert = await alertController
         .create({
@@ -499,6 +502,13 @@ export default defineComponent({
             {
               text: this.$t('Skip'),
               handler: async () => {
+                if(this.isRuntimePassed(job)) {
+                  await this.refreshJobs(undefined, true)
+                  showToast(this.$t("Job runtime has passed. The job data has refreshed. Please try again."))
+                  await this.store.dispatch('job/updateCurrentJob', { job: {} });
+                  return;
+                }
+
                 await this.store.dispatch('job/skipJob', job);
                 await this.getPendingJobs();
               },
@@ -538,6 +548,13 @@ export default defineComponent({
             {
               text: this.$t("CANCEL"),
               handler: async () => {
+                if(this.isRuntimePassed(job)) {
+                  await this.refreshJobs(undefined, true)
+                  showToast(this.$t("Job runtime has passed. The job data has refreshed. Please try again."))
+                  await this.store.dispatch('job/updateCurrentJob', { job: {} });
+                  return;
+                }
+
                 await this.store.dispatch('job/cancelJob', job);
                 await this.getPendingJobs();
               },

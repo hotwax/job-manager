@@ -118,6 +118,8 @@
   "Inventory cost": "Inventory cost",
   "Inventory level update": "Inventory level update",
   "Job details": "Job details",
+  "Job runtime has passed. The job data has refreshed. Please try again.": "Job runtime has passed. The job data has refreshed. Please try again.",
+  "Job runtime has passed. Please refresh to get the latest job data in order to perform any action.": "Job runtime has passed. Please refresh to get the latest job data in order to perform any action.",
   "Job Manager": "Job Manager",
   "Landed inventory cost": "Landed inventory cost",
   "Last run": "Last run",
