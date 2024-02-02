@@ -98,7 +98,6 @@
           <ion-card-content>
             {{ $t('The timezone you select is used to ensure automations you schedule are always accurate to the time you select.') }}
           </ion-card-content>
-          
             <ion-item lines="none">
               <ion-label>Browse time zone</ion-label>
             </ion-item>
@@ -116,7 +115,6 @@
               </ion-label>
               <ion-button @click="changeTimeZone()" slot="end" fill="outline" color="dark">{{ $t("Change") }}</ion-button>
             </ion-item>
-         
         </ion-card>
       </section>
     </ion-content>
@@ -161,7 +159,8 @@ export default defineComponent({
     return {
       baseURL: process.env.VUE_APP_BASE_URL,
       appInfo: (process.env.VUE_APP_VERSION_INFO ? JSON.parse(process.env.VUE_APP_VERSION_INFO) : {}) as any,
-      appVersion: ""
+      appVersion: "",
+      selectedTimeZone:null
     };
   },
   computed: {
