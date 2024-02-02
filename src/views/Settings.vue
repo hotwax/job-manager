@@ -98,11 +98,25 @@
           <ion-card-content>
             {{ $t('The timezone you select is used to ensure automations you schedule are always accurate to the time you select.') }}
           </ion-card-content>
-
-          <ion-item lines="none">
-            <ion-label> {{ userProfile && userProfile.userTimeZone ? userProfile.userTimeZone : '-' }} </ion-label>
-            <ion-button @click="changeTimeZone()" slot="end" fill="outline" color="dark">{{ $t("Change") }}</ion-button>
-          </ion-item>
+          
+            <ion-item lines="none">
+              <ion-label>Browse time zone</ion-label>
+            </ion-item>
+            <ion-item>
+              <ion-label>{{ $t('India Standard Time(Asia/Culcutta)') }}<br>
+                <ion-text color="medium">{{ defaultTimeZone() }}</ion-text> 
+              </ion-label>
+            </ion-item>
+            <ion-item lines="none">
+              <ion-label>Selected Time Zone</ion-label>
+            </ion-item>
+            <ion-item lines="none">
+              <ion-label> {{ currentZoneUpdate() }}<br>
+                <ion-text color="medium">{{ currentTimeZone() }}</ion-text> 
+              </ion-label>
+              <ion-button @click="changeTimeZone()" slot="end" fill="outline" color="dark">{{ $t("Change") }}</ion-button>
+            </ion-item>
+         
         </ion-card>
       </section>
     </ion-content>
@@ -110,7 +124,7 @@
 </template>
 
 <script lang="ts">
-import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonContent, IonHeader,IonIcon, IonItem, IonLabel, IonMenuButton, IonPage, IonSelect, IonSelectOption, IonTitle, IonToolbar, modalController } from '@ionic/vue';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonContent, IonHeader,IonIcon, IonItem, IonLabel, IonMenuButton, IonPage, IonSelect, IonSelectOption, IonText, IonTitle, IonToolbar, modalController } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { codeWorkingOutline, ellipsisVertical, personCircleOutline, openOutline, saveOutline, timeOutline } from 'ionicons/icons'
 import { mapGetters, useStore } from 'vuex';
@@ -138,6 +152,7 @@ export default defineComponent({
     IonPage, 
     IonSelect,
     IonSelectOption,
+    IonText,
     IonTitle, 
     IonToolbar,
     Image
@@ -178,7 +193,22 @@ export default defineComponent({
       const timeZoneModal = await modalController.create({
         component: TimeZoneModal,
       });
+      timeZoneModal.onDidDismiss().then((selectedZone)=>{
+        if(selectedZone && selectedZone.data.selectedTimeZone){
+          this.userProfile.userTimeZone = selectedZone.data.selectedTimeZone
+        }
+      });
       return timeZoneModal.present();
+    },
+    currentTimeZone(){
+      const currentTime = DateTime.local().setZone(this.userProfile.userTimeZone || this.userProfile.userTimeZone).toFormat('hh:mm a ZZZZ')
+      return currentTime
+    },
+    currentZoneUpdate(){
+      return this.userProfile?.userTimeZone || this.defaultTimeZone
+    },
+    defaultTimeZone(){
+     return DateTime.local().setZone('Asia/Kolkata').toFormat('hh:mm a ZZZZ');
     },
     logout () {
       this.store.dispatch('user/logout', { isUserUnauthorised: false }).then((redirectionUrl) => {

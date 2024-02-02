@@ -8,12 +8,12 @@
       </ion-buttons>
       <ion-title>{{ $t("Select time zone") }}</ion-title>
     </ion-toolbar>
-    <ion-toolbar>
-      <ion-searchbar @ionFocus="selectSearchBarText($event)" :placeholder="$t('Search time zones')"  v-model="queryString" @keyup.enter="queryString = $event.target.value; findTimeZone()" @keydown="preventSpecialCharacters($event)" />
-    </ion-toolbar>
   </ion-header>
 
   <ion-content class="ion-padding">
+    <ion-toolbar>
+      <ion-searchbar @ionFocus="selectSearchBarText($event)" :placeholder="$t('Search time zones')"  v-model="queryString" @keyup.enter="queryString = $event.target.value; findTimeZone()" @keydown="preventSpecialCharacters($event)" />
+    </ion-toolbar>
     <form @keyup.enter="setUserTimeZone">
       <div class="empty-state" v-if="isLoading">
         <ion-spinner name="crescent" />
@@ -27,14 +27,36 @@
 
       <!-- Timezones -->
       <div v-else>
-        <ion-list>
-          <ion-radio-group value="rd" v-model="timeZoneId">
-            <ion-item :key="timeZone.id" v-for="timeZone in filteredTimeZones">
-              <ion-label>{{ timeZone.label }} ({{ timeZone.id }})</ion-label>
-              <ion-radio :value="timeZone.id" slot="start" />
-            </ion-item>
-          </ion-radio-group>
-        </ion-list>
+        <div>
+          <ion-list>
+            <ion-radio-group value="rd" v-model="timeZoneId">
+              <ion-item lines="none">
+                <ion-label>Browser time zone</ion-label>
+              </ion-item>
+              <ion-item lines="none" v-if="indiaTimeZone.id" :key="indiaTimeZone.id">
+                <ion-label>{{ indiaTimeZone.label }} ({{ indiaTimeZone.id }})<br>
+                 <ion-text color="medium">{{ indiaTimeZone.currentTime }}</ion-text>
+                </ion-label>
+                <ion-radio :value="indiaTimeZone.id" slot="start"/>
+              </ion-item>
+           </ion-radio-group>  
+          </ion-list>
+        </div>
+        <div>
+          <ion-list>
+            <ion-radio-group value="rd" v-model="timeZoneId">
+              <ion-item lines="none">
+                <ion-label>Select a different time zones</ion-label>
+              </ion-item>
+              <ion-item :key="timeZone.id" v-for="timeZone in filteredTimeZones">   
+                <ion-label>{{ timeZone.label }} ({{ timeZone.id }})<br>
+                  <ion-text color="medium">{{ timeZone.currentTime }}</ion-text>
+                </ion-label>
+                <ion-radio :value="timeZone.id" slot="start" />
+              </ion-item>
+            </ion-radio-group>
+          </ion-list>
+        </div>
       </div>
     </form>
 
@@ -63,9 +85,10 @@ import {
   IonRadio,
   IonSearchbar,
   IonSpinner,
+  IonText,
   IonTitle,
   IonToolbar,
-  modalController,
+  modalController
 } from "@ionic/vue";
 import { defineComponent } from "vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
@@ -92,8 +115,9 @@ export default defineComponent({
     IonRadio,
     IonSearchbar,
     IonSpinner,
+    IonText,
     IonTitle,
-    IonToolbar 
+    IonToolbar
   },
   data() {
     return {
@@ -101,6 +125,7 @@ export default defineComponent({
       filteredTimeZones: [],
       timeZones: [],
       timeZoneId: '',
+      indiaTimeZone:{},
       isLoading: false
     }
   },
@@ -121,16 +146,22 @@ export default defineComponent({
     async getAvailableTimeZones() {
       this.isLoading = true;
       try {
-        const resp = await UserService.getAvailableTimeZones()
+        const resp = await UserService.getAvailableTimeZones();
         if(resp.status === 200 && !hasError(resp)) {
           // We are filtering valid the timeZones coming with response here
-          this.timeZones = resp.data.filter((timeZone: any) => {
-            return DateTime.local().setZone(timeZone.id).isValid;
+          this.timeZones = resp.data
+          .filter((timeZone: any) => DateTime.local().setZone(timeZone.id).isValid)
+          .map((timeZone: any) => {
+            const currentTime = DateTime.local().setZone(timeZone.id).toFormat('hh:mm a ZZZZ');
+            if(timeZone.id === 'Asia/Kolkata') {
+              this.indiaTimeZone = { id: timeZone.id, label: timeZone.label, currentTime };
+            }
+            return { ...timeZone, currentTime };
           });
           this.findTimeZone();
         }
-      } catch(err) {
-        logger.error(err)
+      } catch (err) {
+        logger.error(err);
       }
       this.isLoading = false;
     },
