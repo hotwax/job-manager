@@ -27,21 +27,19 @@
 
       <!-- Timezones -->
       <div v-else>
-        <div>
           <ion-list>
             <ion-radio-group value="rd" v-model="timeZoneId">
               <ion-item lines="none">
                 <ion-label>Browser time zone</ion-label>
               </ion-item>
-              <ion-item lines="none" v-if="indiaTimeZone.id" :key="indiaTimeZone.id">
-                <ion-label>{{ indiaTimeZone.label }} ({{ indiaTimeZone.id }})<br>
-                 <ion-text color="medium">{{ indiaTimeZone.currentTime }}</ion-text>
+              <ion-item lines="none" v-if="currentTimeZone.id" :key="currentTimeZone.id">
+                <ion-label>{{ currentTimeZone.label }} ({{ currentTimeZone.id }})<br>
+                 <ion-text color="medium">{{ currentTimeZone.currentTime }}</ion-text>
                 </ion-label>
-                <ion-radio :value="indiaTimeZone.id" slot="start"/>
+                <ion-radio :value="currentTimeZone.id" slot="start"/>
               </ion-item>
            </ion-radio-group>  
           </ion-list>
-        </div>
         <div>
           <ion-list>
             <ion-radio-group value="rd" v-model="timeZoneId">
@@ -125,7 +123,7 @@ export default defineComponent({
       filteredTimeZones: [],
       timeZones: [],
       timeZoneId: '',
-      indiaTimeZone:{},
+      currentTimeZone:{},
       isLoading: false
     }
   },
@@ -153,8 +151,8 @@ export default defineComponent({
           .filter((timeZone: any) => DateTime.local().setZone(timeZone.id).isValid)
           .map((timeZone: any) => {
             const currentTime = DateTime.local().setZone(timeZone.id).toFormat('hh:mm a ZZZZ');
-            if(timeZone.id === 'Asia/Kolkata') {
-              this.indiaTimeZone = { id: timeZone.id, label: timeZone.label, currentTime };
+            if(timeZone.id === Intl.DateTimeFormat().resolvedOptions().timeZone) {
+              this.currentTimeZone = { id: timeZone.id, label: timeZone.label, currentTime };
             }
             return { ...timeZone, currentTime };
           });
