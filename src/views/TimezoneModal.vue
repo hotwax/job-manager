@@ -30,7 +30,7 @@
           <ion-list>
             <ion-radio-group value="rd" v-model="timeZoneId">
               <ion-item lines="none">
-                <ion-label>Browser time zone</ion-label>
+                <ion-label><small>{{ $t("Browser time zone") }}</small></ion-label>
               </ion-item>
               <ion-item lines="none" v-if="currentTimeZone.id" :key="currentTimeZone.id">
                 <ion-label>{{ currentTimeZone.label }} ({{ currentTimeZone.id }})<br>
@@ -44,7 +44,7 @@
           <ion-list>
             <ion-radio-group value="rd" v-model="timeZoneId">
               <ion-item lines="none">
-                <ion-label>Select a different time zones</ion-label>
+                <ion-label><small>{{ $t("Select a different time zone") }}</small></ion-label>
               </ion-item>
               <ion-item :key="timeZone.id" v-for="timeZone in filteredTimeZones">   
                 <ion-label>{{ timeZone.id }}<br>
