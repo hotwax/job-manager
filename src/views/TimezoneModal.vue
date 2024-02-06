@@ -47,7 +47,7 @@
                 <ion-label>Select a different time zones</ion-label>
               </ion-item>
               <ion-item :key="timeZone.id" v-for="timeZone in filteredTimeZones">   
-                <ion-label>{{ timeZone.label }} ({{ timeZone.id }})<br>
+                <ion-label>{{ timeZone.id }}<br>
                   <ion-text color="medium">{{ timeZone.currentTime }}</ion-text>
                 </ion-label>
                 <ion-radio :value="timeZone.id" slot="start" />
@@ -158,8 +158,8 @@ export default defineComponent({
           });
           this.findTimeZone();
         }
-      } catch (err) {
-        logger.error(err);
+      } catch(err) {
+        logger.error(err)
       }
       this.isLoading = false;
     },

@@ -98,18 +98,18 @@
           <ion-card-content>
             {{ $t('The timezone you select is used to ensure automations you schedule are always accurate to the time you select.') }}
           </ion-card-content>
-          <ion-label class="ion-margin-start" color="dark">{{ $t('BROWSER TIME ZONE') }}</ion-label>
+          <ion-label class="ion-margin-start" color="dark"><strong><small>{{ $t('BROWSER TIME ZONE') }}</small></strong></ion-label>
           <ion-item>
             <ion-label>
               {{defaultTimeZone().timeZoneCountry}}({{ defaultTimeZone().timeZoneName }})
               <p>{{ defaultTimeZone().timeZone }}</p>
             </ion-label>
           </ion-item>
-            <ion-label class="ion-margin-start" color="dark">{{ $t('SELECTED TIME ZONE') }}</ion-label>
+            <ion-label class="ion-margin-start" color="dark"><strong><small>{{ $t('SELECTED TIME ZONE') }}</small></strong></ion-label>
           <ion-item lines="none">
             <ion-label>
-              {{ currentZoneUpdate().currentZone }} 
-              <p>{{ currentZoneUpdate().currentTime }}</p> 
+              {{ currentZoneUpdate().currentZone }}
+              <p>{{ currentZoneUpdate().currentTime }}</p>
             </ion-label>
             <ion-button @click="changeTimeZone()" slot="end" fill="outline" color="dark">{{ $t("Change") }}</ion-button>
           </ion-item>
@@ -133,15 +133,15 @@ export default defineComponent({
   name: 'Settings',
   components: {
     IonAvatar,
-    IonButton, 
+    IonButton,
     IonCard,
     IonCardContent,
     IonCardHeader,
     IonCardSubtitle,
     IonCardTitle,
     IonContent, 
-    IonHeader, 
-    IonIcon,  
+    IonHeader,
+    IonIcon,
     IonItem,
     IonLabel,
     IonMenuButton,
