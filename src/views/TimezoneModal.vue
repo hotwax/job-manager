@@ -14,15 +14,16 @@
   </ion-header>
 
   <ion-content class="ion-padding">
+    <!-- Empty state -->
     <form @keyup.enter="setUserTimeZone">
       <div class="empty-state" v-if="isLoading">
-        <ion-spinner name="crescent" />
-        <p>{{ $t("Fetching TimeZones")}}</p>
+        <ion-item lines="none">
+          <ion-spinner color="secondary" name="crescent" slot="start" />
+          {{ $t("Fetching time zones") }}
+        </ion-item>
       </div>
-
-      <!-- Empty state -->
       <div class="empty-state" v-else-if="filteredTimeZones.length === 0">
-        <p>{{ $t("No time zone found")}}</p>
+        <p>{{ $t("No time zone found") }}</p>
       </div>
 
       <!-- Timezones -->
