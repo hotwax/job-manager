@@ -1,9 +1,16 @@
 <template>
   <ion-header>
     <ion-toolbar>
+      <ion-buttons slot="start">
+        <ion-button @click="closeModal">
+          <ion-icon slot="icon-only" :icon="closeOutline" />
+        </ion-button>
+      </ion-buttons>
       <ion-title>{{ $t('Custom Parameters') }}</ion-title>
       <ion-buttons slot="end">
-        <ion-button @click="closeModal">{{ $t('Close') }}</ion-button>
+        <ion-button fill="clear" @click="copyToClipboard(getParameters(), 'Copied to clipboard')">
+          <ion-icon slot="icon-only" :icon="copyOutline" />
+        </ion-button>
       </ion-buttons>
     </ion-toolbar>
   </ion-header>
@@ -46,6 +53,7 @@ import {
   IonButton,
   IonContent,
   IonHeader,
+  IonIcon,
   IonInput,
   IonItem,
   IonItemDivider,
@@ -58,8 +66,9 @@ import {
   modalController
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
-import { closeOutline } from 'ionicons/icons';
+import { closeOutline, copyOutline } from 'ionicons/icons';
 import { useStore } from 'vuex';
+import { copyToClipboard } from "@/utils";
 
 export default defineComponent({
   name: 'JobParameterModal',
@@ -68,6 +77,7 @@ export default defineComponent({
     IonButton,
     IonContent,
     IonHeader,
+    IonIcon,
     IonInput,
     IonItem,
     IonItemDivider,
@@ -82,6 +92,25 @@ export default defineComponent({
   methods: {
     closeModal() {
       modalController.dismiss({ dismissed: true })
+    },
+    getParameters() {
+      let res = {} as any;
+
+      this.customRequiredParameters.map((param: any) => {
+        res[param.name] = {
+          value: param.value,
+          optional: false
+        }
+      })
+
+      this.customOptionalParameters.map((param: any) => {
+        res[param.name] = {
+          value: param.value,
+          optional: true
+        }
+      })
+
+      return JSON.stringify(res);
     }
   },
   setup() {
@@ -89,6 +118,8 @@ export default defineComponent({
 
     return {
       closeOutline,
+      copyOutline,
+      copyToClipboard,
       store
     };
   },
