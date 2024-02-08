@@ -16,7 +16,8 @@
             </ion-card-header>
             <ion-item button @click="viewJobConfiguration({ id: 'SHIP_PKD_ODRS', status: getJobStatus(jobEnums['SHIP_PKD_ODRS']) })" detail>
               <ion-label class="ion-text-wrap">{{ $t("Ship packed orders") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('SHIP_PKD_ODRS') }}</ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('SHIP_PKD_ODRS') }}</ion-label>
+              <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
@@ -31,7 +32,8 @@
             </ion-card-header>
             <ion-item button @click="viewJobConfiguration({ id: 'ODR_FLMNT_HST', status: getJobStatus(jobEnums['ODR_FLMNT_HST']) })" detail>
               <ion-label class="ion-text-wrap">{{ $t("Order fulfillment") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('ODR_FLMNT_HST') }}</ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('ODR_FLMNT_HST') }}</ion-label>
+              <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
@@ -100,6 +102,7 @@ import {
   IonLabel,
   IonMenuButton,
   IonPage,
+  IonSkeletonText,
   IonTitle,
   IonToggle,
   IonToolbar,
@@ -132,6 +135,7 @@ export default defineComponent({
     IonLabel,
     IonMenuButton,
     IonPage,
+    IonSkeletonText,
     IonTitle,
     IonToggle,
     IonToolbar,
@@ -149,7 +153,8 @@ export default defineComponent({
       isDesktop: isPlatform('desktop'),
       autoCancelDays: '',
       enumTypeId: 'FULFILLMENT_SYS_JOB',
-      initialLoadJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any
+      initialLoadJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
+      isLoading: true
     }
   },
   computed: {
@@ -231,6 +236,7 @@ export default defineComponent({
       if (this.currentEComStore.productStoreId) {
         this.getAutoCancelDays();
       }
+      this.isLoading = false
     },
     async getAutoCancelDays(){
       const payload = {
