@@ -98,9 +98,19 @@
           <ion-card-content>
             {{ $t('The timezone you select is used to ensure automations you schedule are always accurate to the time you select.') }}
           </ion-card-content>
-
+          <ion-label class="ion-margin-start" color="dark"><strong><small>{{ $t('BROWSER TIME ZONE') }}</small></strong></ion-label>
+          <ion-item>
+            <ion-label>
+              {{defaultTimeZone().timeZoneCountry}}({{ defaultTimeZone().timeZoneName }})
+              <p>{{ defaultTimeZone().timeZone }}</p>
+            </ion-label>
+          </ion-item>
+            <ion-label class="ion-margin-start" color="dark"><strong><small>{{ $t('SELECTED TIME ZONE') }}</small></strong></ion-label>
           <ion-item lines="none">
-            <ion-label> {{ userProfile && userProfile.userTimeZone ? userProfile.userTimeZone : '-' }} </ion-label>
+            <ion-label>
+              {{ currentZoneUpdate().currentZone }}
+              <p>{{ currentZoneUpdate().currentTime }}</p>
+            </ion-label>
             <ion-button @click="changeTimeZone()" slot="end" fill="outline" color="dark">{{ $t("Change") }}</ion-button>
           </ion-item>
         </ion-card>
@@ -110,7 +120,7 @@
 </template>
 
 <script lang="ts">
-import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonContent, IonHeader,IonIcon, IonItem, IonLabel, IonMenuButton, IonPage, IonSelect, IonSelectOption, IonTitle, IonToolbar, modalController } from '@ionic/vue';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonContent, IonHeader,IonIcon,IonItem, IonLabel, IonMenuButton, IonPage, IonSelect, IonSelectOption, IonTitle, IonToolbar, modalController } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { codeWorkingOutline, ellipsisVertical, personCircleOutline, openOutline, saveOutline, timeOutline } from 'ionicons/icons'
 import { mapGetters, useStore } from 'vuex';
@@ -123,16 +133,16 @@ export default defineComponent({
   name: 'Settings',
   components: {
     IonAvatar,
-    IonButton, 
+    IonButton,
     IonCard,
     IonCardContent,
     IonCardHeader,
     IonCardSubtitle,
     IonCardTitle,
     IonContent, 
-    IonHeader, 
+    IonHeader,
     IonIcon,
-    IonItem, 
+    IonItem,
     IonLabel,
     IonMenuButton,
     IonPage, 
@@ -146,7 +156,8 @@ export default defineComponent({
     return {
       baseURL: process.env.VUE_APP_BASE_URL,
       appInfo: (process.env.VUE_APP_VERSION_INFO ? JSON.parse(process.env.VUE_APP_VERSION_INFO) : {}) as any,
-      appVersion: ""
+      appVersion: "",
+      selectedTimeZone:null
     };
   },
   computed: {
@@ -178,11 +189,34 @@ export default defineComponent({
       const timeZoneModal = await modalController.create({
         component: TimeZoneModal,
       });
+      timeZoneModal.onDidDismiss().then((selectedZone)=>{
+        if(selectedZone && selectedZone.data && selectedZone.data.selectedTimeZone){
+          this.userProfile.userTimeZone = selectedZone.data.selectedTimeZone
+        }
+      });
       return timeZoneModal.present();
+    },
+    currentZoneUpdate(){
+      const currentZone = this.userProfile?.userTimeZone
+      const currentTime = DateTime.local().setZone(currentZone).toFormat('hh:mm a ZZZZ')
+      return{
+        currentZone,
+        currentTime
+      }
+    },
+    defaultTimeZone(){
+    const timeZoneName = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const timeZone = DateTime.local().setZone(timeZoneName).toFormat('hh:mm a ZZZZ');
+    const timeZoneCountry = Intl.DateTimeFormat(undefined,{timeZone: timeZoneName,timeZoneName:'long'})?.formatToParts()?.find(part=>part.type==='timeZoneName')?.value
+
+    return{
+      timeZoneName,
+      timeZone,
+      timeZoneCountry
+    }
     },
     logout () {
       this.store.dispatch('user/logout', { isUserUnauthorised: false }).then((redirectionUrl) => {
-        // if not having redirection url then redirect the user to launchpad
         if(!redirectionUrl) {
           const redirectUrl = window.location.origin + '/login'
           window.location.href = `${process.env.VUE_APP_LOGIN_URL}?isLoggedOut=true&redirectUrl=${redirectUrl}`
