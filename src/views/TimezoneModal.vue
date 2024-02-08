@@ -22,9 +22,9 @@
           {{ $t("Fetching time zones") }}
         </ion-item>
       </div>
-    <div class="empty-state" v-else-if="filteredTimeZones.length === 0">
-      <p>{{ $t("No time zone found") }}</p>
-    </div>
+      <div class="empty-state" v-else-if="filteredTimeZones.length === 0">
+        <p>{{ $t("No time zone found") }}</p>
+      </div>
 
       <!-- Timezones -->
       <div v-else>
