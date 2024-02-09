@@ -76,7 +76,7 @@ export default defineComponent({
     ...mapGetters({
       getCurrentEComStore:'user/getCurrentEComStore',
       getStatusDesc: 'util/getStatusDesc',
-      currentShopifyConfig: 'user/getCurrentShopifyConfigs'
+      currentShopifyConfig: 'user/getCurrentShopifyConfig'
     })
   },
   methods: {
