@@ -1,16 +1,9 @@
 <template>
   <ion-header>
     <ion-toolbar>
-      <ion-buttons slot="start">
-        <ion-button @click="closeModal">
-          <ion-icon slot="icon-only" :icon="closeOutline" />
-        </ion-button>
-      </ion-buttons>
       <ion-title>{{ $t('Custom Parameters') }}</ion-title>
       <ion-buttons slot="end">
-        <ion-button fill="clear" @click="copyToClipboard(getParameters(), 'Copied to clipboard')">
-          <ion-icon slot="icon-only" :icon="copyOutline" />
-        </ion-button>
+        <ion-button color="primary" @click="closeModal">{{ $t('Save') }}</ion-button>
       </ion-buttons>
     </ion-toolbar>
   </ion-header>
@@ -20,6 +13,9 @@
       <ion-item-group>
         <ion-item-divider v-if="customRequiredParameters.length" color="light">
           <ion-label>{{ $t('Required Parameters') }}</ion-label>
+          <ion-button slot="end" fill="clear" color="medium" @click="copyToClipboard(getParameters('required'), 'Copied to clipboard')">
+            <ion-icon slot="icon-only" :icon="copyOutline" />
+          </ion-button>
         </ion-item-divider>
 
         <ion-item :key="index" v-for="(parameter, index) in customRequiredParameters">
@@ -31,6 +27,9 @@
 
         <ion-item-divider v-if="customOptionalParameters.length" color="light">
           <ion-label>{{ $t('Optional Parameters') }}</ion-label>
+          <ion-button slot="end" fill="clear" color="medium" @click="copyToClipboard(getParameters('optional'), 'Copied to clipboard')">
+            <ion-icon slot="icon-only" :icon="copyOutline" />
+          </ion-button>
         </ion-item-divider>
 
         <ion-item :key="index" v-for="(parameter, index) in customOptionalParameters">
@@ -93,22 +92,18 @@ export default defineComponent({
     closeModal() {
       modalController.dismiss({ dismissed: true })
     },
-    getParameters() {
+    getParameters(parameterType: string) {
       let res = {} as any;
 
-      this.customRequiredParameters.map((param: any) => {
-        res[param.name] = {
-          value: param.value,
-          optional: false
-        }
-      })
-
-      this.customOptionalParameters.map((param: any) => {
-        res[param.name] = {
-          value: param.value,
-          optional: true
-        }
-      })
+      if(parameterType === 'required') {
+        this.customRequiredParameters.map((param: any) => {
+          res[param.name] = param.value
+        })
+      } else {
+        this.customOptionalParameters.map((param: any) => {
+          res[param.name] = param.value
+        })
+      }
 
       return JSON.stringify(res);
     }
