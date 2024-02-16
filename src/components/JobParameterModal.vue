@@ -65,7 +65,7 @@ import {
   modalController
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
-import { closeOutline, copyOutline } from 'ionicons/icons';
+import { copyOutline } from 'ionicons/icons';
 import { useStore } from 'vuex';
 import { copyToClipboard } from "@/utils";
 
@@ -112,7 +112,6 @@ export default defineComponent({
     const store = useStore();
 
     return {
-      closeOutline,
       copyOutline,
       copyToClipboard,
       store
