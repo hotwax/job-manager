@@ -310,6 +310,14 @@ export default defineComponent({
         breakpoints: [0, 0.25, 0.5, 0.75, 1],
         initialBreakpoint: 0.75
       });
+
+      jobParameterModal.onDidDismiss().then((result) => {
+        if (result.data.customOptionalParameters) {
+          this.customOptionalParameters = result.data.customOptionalParameters
+          this.customRequiredParameters = result.data.customRequiredParameters
+        }
+      })
+
       await jobParameterModal.present();
     }
   },

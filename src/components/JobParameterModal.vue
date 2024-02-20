@@ -1,9 +1,14 @@
 <template>
   <ion-header>
     <ion-toolbar>
+      <ion-buttons slot="start">
+        <ion-button @click="closeModal">
+          <ion-icon slot="icon-only" :icon="closeOutline" />
+        </ion-button>
+      </ion-buttons>
       <ion-title>{{ $t('Custom Parameters') }}</ion-title>
       <ion-buttons slot="end">
-        <ion-button color="primary" @click="closeModal">{{ $t('Save') }}</ion-button>
+        <ion-button color="primary" @click="save()">{{ $t('Save') }}</ion-button>
       </ion-buttons>
     </ion-toolbar>
   </ion-header>
@@ -18,7 +23,7 @@
           </ion-button>
         </ion-item-divider>
 
-        <ion-item :key="index" v-for="(parameter, index) in customRequiredParameters">
+        <ion-item :key="index" v-for="(parameter, index) in customRequiredParametersValue">
           <ion-label>{{ parameter.name }}</ion-label>
           <ion-input v-if="currentJob.statusId === 'SERVICE_DRAFT'" :placeholder="parameter.name" v-model="parameter.value" slot="end" />
           <ion-label v-else>{{ parameter.value }}</ion-label>
@@ -32,7 +37,7 @@
           </ion-button>
         </ion-item-divider>
 
-        <ion-item :key="index" v-for="(parameter, index) in customOptionalParameters">
+        <ion-item :key="index" v-for="(parameter, index) in customOptionalParametersValue">
           <ion-label>{{ parameter.name }}</ion-label>
           <ion-input v-if="currentJob.statusId === 'SERVICE_DRAFT'" :placeholder="parameter.name" v-model="parameter.value" slot="end" />
           <ion-label v-else>{{ parameter.value }}</ion-label>
@@ -65,7 +70,7 @@ import {
   modalController
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
-import { copyOutline } from 'ionicons/icons';
+import { closeOutline, copyOutline } from 'ionicons/icons';
 import { useStore } from 'vuex';
 import { copyToClipboard } from "@/utils";
 
@@ -88,6 +93,16 @@ export default defineComponent({
     IonToolbar,
   },
   props: ['currentJob', 'customRequiredParameters', 'customOptionalParameters'],
+  data() {
+    return {
+      customOptionalParametersValue: {} as any,
+      customRequiredParametersValue: {} as any
+    }
+  },
+  mounted() {
+    this.customOptionalParametersValue = JSON.parse(JSON.stringify(this.customOptionalParameters))
+    this.customRequiredParametersValue = JSON.parse(JSON.stringify(this.customRequiredParameters))
+  },
   methods: {
     closeModal() {
       modalController.dismiss({ dismissed: true })
@@ -96,22 +111,26 @@ export default defineComponent({
       let res = {} as any;
 
       if(parameterType === 'required') {
-        this.customRequiredParameters.map((param: any) => {
+        this.customRequiredParametersValue.map((param: any) => {
           res[param.name] = param.value
         })
       } else {
-        this.customOptionalParameters.map((param: any) => {
+        this.customOptionalParametersValue.map((param: any) => {
           res[param.name] = param.value
         })
       }
 
       return JSON.stringify(res);
+    },
+    save() {
+      modalController.dismiss({ dismissed: true, customOptionalParameters: this.customOptionalParametersValue, customRequiredParameters: this.customRequiredParametersValue })
     }
   },
   setup() {
     const store = useStore();
 
     return {
+      closeOutline,
       copyOutline,
       copyToClipboard,
       store
