@@ -1,4 +1,5 @@
 import { api, client } from '@/adapter';
+import logger from '@/logger';
 import store from '@/store';
 import { hasError } from '@/utils'
 
@@ -56,13 +57,14 @@ const getShopifyConfig = async (productStoreId: any, token?: any): Promise <any>
     }
     payload.baseURL = store.getters['user/getBaseUrl'];
     const resp = await client(payload);
-    if (hasError(resp)) {
-      return Promise.reject(resp?.data);
-    } else {
+    if (!hasError(resp)) {
       return Promise.resolve(resp?.data.docs);
+    } else {
+      throw resp.data
     }
   } catch(error: any) {
-    return Promise.reject(error)
+    logger.error(error)
+    return Promise.resolve([])
   }
 }
 
@@ -241,13 +243,14 @@ const getPreferredShopifyShop = async (token: any): Promise<any> => {
         'userPrefTypeId': 'FAVORITE_SHOPIFY_SHOP'
       },
     });
-    if (hasError(resp)) {
-      return Promise.reject(resp?.data);
-    } else {
+    if (!hasError(resp)) {
       return Promise.resolve(resp?.data.userPrefValue);
+    } else {
+      throw resp.data
     }
   } catch(error: any) {
-    return Promise.reject(error)
+    logger.error(error)
+    return Promise.reject(null)
   }
   
 }
