@@ -250,7 +250,7 @@ const getPreferredShopifyShop = async (token: any): Promise<any> => {
     }
   } catch(error: any) {
     logger.error(error)
-    return Promise.reject(null)
+    return Promise.resolve(null)
   }
   
 }
