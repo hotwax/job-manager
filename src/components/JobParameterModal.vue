@@ -8,9 +8,7 @@
       </ion-buttons>
       <ion-title>{{ $t('Custom Parameters') }}</ion-title>
       <ion-buttons slot="end">
-        <ion-button fill="clear" @click="copyToClipboard(getParameters(), 'Copied to clipboard')">
-          <ion-icon slot="icon-only" :icon="copyOutline" />
-        </ion-button>
+        <ion-button color="primary" @click="save()">{{ $t('Save') }}</ion-button>
       </ion-buttons>
     </ion-toolbar>
   </ion-header>
@@ -20,9 +18,12 @@
       <ion-item-group>
         <ion-item-divider v-if="customRequiredParameters.length" color="light">
           <ion-label>{{ $t('Required Parameters') }}</ion-label>
+          <ion-button slot="end" fill="clear" color="medium" @click="copyToClipboard(getParameters('required'), 'Copied to clipboard')">
+            <ion-icon slot="icon-only" :icon="copyOutline" />
+          </ion-button>
         </ion-item-divider>
 
-        <ion-item :key="index" v-for="(parameter, index) in customRequiredParameters">
+        <ion-item :key="index" v-for="(parameter, index) in customRequiredParametersValue">
           <ion-label>{{ parameter.name }}</ion-label>
           <ion-input v-if="currentJob.statusId === 'SERVICE_DRAFT'" :placeholder="parameter.name" v-model="parameter.value" slot="end" />
           <ion-label v-else>{{ parameter.value }}</ion-label>
@@ -31,9 +32,12 @@
 
         <ion-item-divider v-if="customOptionalParameters.length" color="light">
           <ion-label>{{ $t('Optional Parameters') }}</ion-label>
+          <ion-button slot="end" fill="clear" color="medium" @click="copyToClipboard(getParameters('optional'), 'Copied to clipboard')">
+            <ion-icon slot="icon-only" :icon="copyOutline" />
+          </ion-button>
         </ion-item-divider>
 
-        <ion-item :key="index" v-for="(parameter, index) in customOptionalParameters">
+        <ion-item :key="index" v-for="(parameter, index) in customOptionalParametersValue">
           <ion-label>{{ parameter.name }}</ion-label>
           <ion-input v-if="currentJob.statusId === 'SERVICE_DRAFT'" :placeholder="parameter.name" v-model="parameter.value" slot="end" />
           <ion-label v-else>{{ parameter.value }}</ion-label>
@@ -89,28 +93,37 @@ export default defineComponent({
     IonToolbar,
   },
   props: ['currentJob', 'customRequiredParameters', 'customOptionalParameters'],
+  data() {
+    return {
+      customOptionalParametersValue: {} as any,
+      customRequiredParametersValue: {} as any
+    }
+  },
+  mounted() {
+    this.customOptionalParametersValue = JSON.parse(JSON.stringify(this.customOptionalParameters))
+    this.customRequiredParametersValue = JSON.parse(JSON.stringify(this.customRequiredParameters))
+  },
   methods: {
     closeModal() {
       modalController.dismiss({ dismissed: true })
     },
-    getParameters() {
+    getParameters(parameterType: string) {
       let res = {} as any;
 
-      this.customRequiredParameters.map((param: any) => {
-        res[param.name] = {
-          value: param.value,
-          optional: false
-        }
-      })
-
-      this.customOptionalParameters.map((param: any) => {
-        res[param.name] = {
-          value: param.value,
-          optional: true
-        }
-      })
+      if(parameterType === 'required') {
+        this.customRequiredParametersValue.map((param: any) => {
+          res[param.name] = param.value
+        })
+      } else {
+        this.customOptionalParametersValue.map((param: any) => {
+          res[param.name] = param.value
+        })
+      }
 
       return JSON.stringify(res);
+    },
+    save() {
+      modalController.dismiss({ dismissed: true, customOptionalParameters: this.customOptionalParametersValue, customRequiredParameters: this.customRequiredParametersValue })
     }
   },
   setup() {
