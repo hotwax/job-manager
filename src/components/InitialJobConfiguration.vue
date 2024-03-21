@@ -1,7 +1,7 @@
 <template>
   <section v-if="type === 'products'">
     <ion-item lines="none">
-      <h1>{{ $t("Products") }}</h1>
+      <h1>{{ translate("Products") }}</h1>
       <!-- TODO: make the badges dynamic on the basis of job status -->
       <!-- <ion-badge slot="end" color="warning">running</ion-badge> -->
     </ion-item>
@@ -9,15 +9,15 @@
     <ion-list>
       <ion-item>
         <ion-icon slot="start" :icon="calendarClearOutline" />
-        <ion-label class="ion-text-wrap">{{ $t("Last run") }}</ion-label>
-        <ion-label class="ion-text-wrap" slot="end">{{ previousOccurrence ? getTime(previousOccurrence) : $t('No previous occurrence') }}</ion-label>
+        <ion-label class="ion-text-wrap">{{ translate("Last run") }}</ion-label>
+        <ion-label class="ion-text-wrap" slot="end">{{ previousOccurrence ? getTime(previousOccurrence) : translate('No previous occurrence') }}</ion-label>
       </ion-item>
 
       <ion-item>
         <ion-icon slot="start" :icon="timeOutline" />
-        <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
-        <ion-select interface="popover" :placeholder="$t('Select')" :value="runTime" @ionChange="updateRunTime($event)">
-          <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ $t(runTime.label) }}</ion-select-option>
+        <ion-label class="ion-text-wrap">{{ translate("Run time") }}</ion-label>
+        <ion-select interface="popover" :placeholder="translate('Select')" :value="runTime" @ionChange="updateRunTime($event)">
+          <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ translate(runTime.label) }}</ion-select-option>
         </ion-select>
         <ion-modal :is-open="isDateTimeModalOpen" @didDismiss="() => isDateTimeModalOpen = false">
           <ion-content force-overscroll="false">
@@ -34,7 +34,7 @@
       <ion-item lines="none">
         <ion-chip @click="openJobCustomParameterModal" outline v-if="!Object.keys(generateCustomParameters).length">
           <ion-icon :icon="addOutline" />
-          <ion-label>{{ $t('Add custom parameters') }}</ion-label>
+          <ion-label>{{ translate('Add custom parameters') }}</ion-label>
         </ion-chip>
         <ion-row v-else>
           <ion-chip @click="openJobCustomParameterModal" outline :color="value ? undefined :'danger'" :key="name" v-for="(value, name) in generateCustomParameters">
@@ -47,12 +47,12 @@
       </ion-item>
     </ion-list>
 
-    <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || isRequiredParametersMissing" size="small" fill="outline" expand="block" @click="runJob('Products')">{{ $t("Run import") }}</ion-button>
+    <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || isRequiredParametersMissing" size="small" fill="outline" expand="block" @click="runJob('Products')">{{ translate("Run import") }}</ion-button>
   </section>
 
   <section v-else>
     <ion-item lines="none">
-      <h1>{{ $t("Orders") }}</h1>
+      <h1>{{ translate("Orders") }}</h1>
       <!-- TODO: make the badges dynamic on the basis of job status -->
       <!-- <ion-badge slot="end" color="medium">pending</ion-badge> -->
     </ion-item>
@@ -60,15 +60,15 @@
     <ion-list>
       <ion-item>
         <ion-icon slot="start" :icon="calendarClearOutline" />
-        <ion-label class="ion-text-wrap">{{ $t("Last run") }}</ion-label>
-        <ion-label slot="end">{{ previousOccurrence ? getTime(previousOccurrence) : $t('No previous occurrence') }}</ion-label>
+        <ion-label class="ion-text-wrap">{{ translate("Last run") }}</ion-label>
+        <ion-label slot="end">{{ previousOccurrence ? getTime(previousOccurrence) : translate('No previous occurrence') }}</ion-label>
       </ion-item>
 
       <ion-item button>
         <ion-icon slot="start" :icon="timeOutline" />
-        <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
-        <ion-select interface="popover" :placeholder="$t('Select')" :value="runTime" @ionChange="updateRunTime($event)">
-          <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ $t(runTime.label) }}</ion-select-option>
+        <ion-label class="ion-text-wrap">{{ translate("Run time") }}</ion-label>
+        <ion-select interface="popover" :placeholder="translate('Select')" :value="runTime" @ionChange="updateRunTime($event)">
+          <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ translate(runTime.label) }}</ion-select-option>
         </ion-select>
         <ion-modal class="date-time-modal" :is-open="isDateTimeModalOpen" @didDismiss="() => isDateTimeModalOpen = false">
           <ion-content force-overscroll="false">
@@ -84,36 +84,36 @@
 
       <ion-item>
         <ion-icon slot="start" :icon="flagOutline" />
-        <ion-label class="ion-text-wrap">{{ $t("Order status") }}</ion-label>
+        <ion-label class="ion-text-wrap">{{ translate("Order status") }}</ion-label>
         <ion-select value="open" :interface-options="customOrderOptions" interface="popover">
-          <ion-select-option value="open">{{ $t("Open") }}</ion-select-option>
+          <ion-select-option value="open">{{ translate("Open") }}</ion-select-option>
           <!-- TODO: commenting options for now, enable it once having support -->
-          <!-- <ion-select-option value="archived">{{ $t("Archived") }}</ion-select-option>
-          <ion-select-option value="canceled">{{ $t("Canceled") }}</ion-select-option> -->
+          <!-- <ion-select-option value="archived">{{ translate("Archived") }}</ion-select-option>
+          <ion-select-option value="canceled">{{ translate("Canceled") }}</ion-select-option> -->
         </ion-select>
       </ion-item>
 
       <ion-item>
         <ion-icon slot="start" :icon="sendOutline" />
-        <ion-label class="ion-text-wrap">{{ $t("Fulfillment status") }}</ion-label>
+        <ion-label class="ion-text-wrap">{{ translate("Fulfillment status") }}</ion-label>
         <ion-select value="unshipped" :interface-options="customFulfillmentOptions" interface="popover">
           <!-- TODO: commenting options for now, enable it once having support -->
-          <ion-select-option value="unshipped">{{ $t("Unfulfilled") }}</ion-select-option>
-          <!-- <ion-select-option value="partially-fulfilled">{{ $t("Partally fulfilled") }}</ion-select-option>
-          <ion-select-option value="on-hold">{{ $t("On hold") }}</ion-select-option>
-          <ion-select-option value="fulfilled">{{ $t("Fulfilled") }}</ion-select-option> -->
+          <ion-select-option value="unshipped">{{ translate("Unfulfilled") }}</ion-select-option>
+          <!-- <ion-select-option value="partially-fulfilled">{{ translate("Partally fulfilled") }}</ion-select-option>
+          <ion-select-option value="on-hold">{{ translate("On hold") }}</ion-select-option>
+          <ion-select-option value="fulfilled">{{ translate("Fulfilled") }}</ion-select-option> -->
         </ion-select>
       </ion-item>
 
       <ion-item>
-        <ion-label class="ion-text-wrap">{{ $t("Last Shopify Order ID") }}</ion-label>
-        <ion-input v-model="lastShopifyOrderId" :placeholder="$t('Internal Shopify Order ID')" />
+        <ion-label class="ion-text-wrap">{{ translate("Last Shopify Order ID") }}</ion-label>
+        <ion-input v-model="lastShopifyOrderId" :placeholder="translate('Internal Shopify Order ID')" />
       </ion-item>
 
       <ion-item lines="none">
         <ion-chip @click="openJobCustomParameterModal" outline v-if="!Object.keys(generateCustomParameters).length">
           <ion-icon :icon="addOutline" />
-          <ion-label>{{ $t('Add custom parameters') }}</ion-label>
+          <ion-label>{{ translate('Add custom parameters') }}</ion-label>
         </ion-chip>
         <ion-row v-else>
           <ion-chip @click="openJobCustomParameterModal" outline :color="value ? undefined :'danger'" :key="name" v-for="(value, name) in generateCustomParameters">
@@ -126,7 +126,7 @@
       </ion-item>
     </ion-list>
 
-    <ion-button size="small" fill="outline" expand="block" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || isRequiredParametersMissing" @click="runJob('Orders')">{{ $t("Run import") }}</ion-button>
+    <ion-button size="small" fill="outline" expand="block" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || isRequiredParametersMissing" @click="runJob('Orders')">{{ translate("Run import") }}</ion-button>
   </section>
 </template>
 
@@ -158,7 +158,7 @@ import {
   timeOutline,
 } from "ionicons/icons";
 import { mapGetters, useStore } from "vuex";
-import { translate } from "@/i18n";
+import { translate } from "@hotwax/dxp-components";
 import { DateTime } from 'luxon';
 import { isCustomRunTime, generateAllowedRunTimes, generateJobCustomParameters, generateJobCustomOptions, getNowTimestamp, handleDateTimeInput, isFutureDate, showToast, hasJobDataError } from '@/utils';
 import { Actions, hasPermission } from '@/authorization'
@@ -239,15 +239,15 @@ export default defineComponent({
     async runJob(header: string) {
       const alert = await alertController
         .create({
-          header: this.$t(header),
-          message: this.$t('This job may take several minutes to run. Wait till the job has moved to the pipeline history before checking results.', {space: '<br/><br/>'}),
+          header: translate(header),
+          message: translate('This job may take several minutes to run. Wait till the job has moved to the pipeline history before checking results.', {space: '<br/><br/>'}),
           buttons: [
             {
-              text: this.$t("Cancel"),
+              text: translate("Cancel"),
               role: 'cancel',
             },
             {
-              text: this.$t('Run now'),
+              text: translate('Run now'),
               handler: async () => {
                 await this.updateJob()
               }
@@ -336,7 +336,8 @@ export default defineComponent({
       getNowTimestamp,
       sendOutline,
       store,
-      timeOutline
+      timeOutline,
+      translate
     };
   }
 });

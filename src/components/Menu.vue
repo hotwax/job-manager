@@ -2,7 +2,7 @@
   <ion-menu side="start" content-id="main-content" type="overlay" :disabled="!isUserAuthenticated || $route.path === '/login'">
     <ion-header>
       <ion-toolbar>
-        <ion-title>{{ $t("Job Manager") }}</ion-title>
+        <ion-title>{{ translate("Job Manager") }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -17,10 +17,10 @@
             class="hydrated"
             :class="{ selected: selectedIndex === index }">
             <ion-icon slot="start" :ios="page.iosIcon" :md="page.mdIcon" />
-            <ion-label>{{ $t(page.title) }}</ion-label>
+            <ion-label>{{ translate(page.title) }}</ion-label>
           </ion-item>
           <ion-item-divider color="light" v-else>
-            <ion-label color="medium">{{ $t(page.title) }}</ion-label>
+            <ion-label color="medium">{{ translate(page.title) }}</ion-label>
           </ion-item-divider> 
         </ion-menu-toggle>
       </ion-list>
@@ -50,6 +50,7 @@ import { useStore } from "@/store";
 import emitter from "@/event-bus"
 import { hasPermission } from "@/authorization";
 import { useRouter } from "vue-router";
+import { translate } from "@hotwax/dxp-components";
 
 export default defineComponent({
   name: "Menu",
@@ -251,6 +252,7 @@ export default defineComponent({
       store,
       terminalOutline,
       ticketOutline,
+      translate
     };
   }
 });

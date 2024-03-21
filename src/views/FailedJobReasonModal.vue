@@ -6,7 +6,7 @@
           <ion-icon slot="icon-only" :icon="closeOutline" />
         </ion-button>
       </ion-buttons>
-      <ion-title>{{ $t("Failed job reason") }}</ion-title>
+      <ion-title>{{ translate("Failed job reason") }}</ion-title>
       <ion-buttons slot="end">
         <ion-button @click="copyToClipboard(job.jobResult, 'Copied to clipboard')">
           <ion-icon slot="icon-only" :icon="copyOutline" />
@@ -36,6 +36,7 @@ import {
 import { defineComponent } from 'vue';
 import { closeOutline, copyOutline } from 'ionicons/icons';
 import { copyToClipboard } from "@/utils";
+import { translate } from '@hotwax/dxp-components';
 
 export default defineComponent({
   name: "FailedJobReasonModal",
@@ -59,7 +60,8 @@ export default defineComponent({
     return {
       closeOutline,
       copyOutline,
-      copyToClipboard
+      copyToClipboard,
+      translate
     };
   },
 });
