@@ -3,7 +3,7 @@
     <ion-header :translucent="true">
       <ion-toolbar>
         <ion-menu-button slot="start" />
-        <ion-title>{{ $t("Orders") }}</ion-title>
+        <ion-title>{{ translate("Orders") }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -12,70 +12,70 @@
         <section>
           <ion-card>
             <ion-card-header>
-              <ion-card-title>{{ $t("Import") }}</ion-card-title>
+              <ion-card-title>{{ translate("Import") }}</ion-card-title>
             </ion-card-header>
             <ion-item @click="viewJobConfiguration({ id: 'IMP_NEW_ORDERS', status: getJobStatus(jobEnums['IMP_NEW_ORDERS'])})" detail button>
-              <ion-label class="ion-text-wrap">{{ $t("New orders") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ translate("New orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_NEW_ORDERS') }}</ion-label>
             </ion-item>
             <ion-item @click="viewJobConfiguration({ id: 'APR_ORD', status: getJobStatus(jobEnums['APR_ORD'])})" detail button>
-              <ion-label class="ion-text-wrap">{{ $t("Approve orders") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ translate("Approve orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('APR_ORD') }}</ion-label>
             </ion-item>
             <ion-item @click="viewJobConfiguration({ id: 'UPDT_ORDS', status: getJobStatus(jobEnums['UPDT_ORDS'])})" detail button>
-              <ion-label class="ion-text-wrap">{{ $t("Update orders") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ translate("Update orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('UPDT_ORDS') }}</ion-label>
             </ion-item>
             <ion-item @click="viewJobConfiguration({ id: 'IMP_CANCELLED_ORDERS', status: getJobStatus(jobEnums['IMP_CANCELLED_ORDERS'])})" detail button>
-              <ion-label class="ion-text-wrap">{{ $t("Cancelled orders") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ translate("Cancelled orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_CANCELLED_ORDERS') }}</ion-label>
             </ion-item>
             <ion-item @click="viewJobConfiguration({ id: 'IMP_CANCELLED_ITEMS', status: getJobStatus(jobEnums['IMP_CANCELLED_ITEMS'])})" detail button>
-              <ion-label class="ion-text-wrap">{{ $t("Cancelled items") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ translate("Cancelled items") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_CANCELLED_ITEMS') }}</ion-label>
             </ion-item>
             <ion-item @click="viewJobConfiguration({ id: 'IMP_RETURNS', status: getJobStatus(jobEnums['IMP_RETURNS'])})" detail button>
-              <ion-label class="ion-text-wrap">{{ $t("Returns") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ translate("Returns") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_RETURNS') }}</ion-label>
             </ion-item>
           </ion-card>
 
           <ion-card>
             <ion-card-header>
-              <ion-card-title>{{ $t("Webhooks") }}</ion-card-title>
+              <ion-card-title>{{ translate("Webhooks") }}</ion-card-title>
             </ion-card-header>
             <ion-item>
-              <ion-label class="ion-text-wrap">{{ $t("New orders") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ translate("New orders") }}</ion-label>
               <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="isNewOrders" @ionChange="updateWebhook($event['detail'].checked, 'NEW_ORDERS')" slot="end" color="secondary" />
             </ion-item>
             <ion-item>
-              <ion-label class="ion-text-wrap">{{ $t("Cancelled orders") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ translate("Cancelled orders") }}</ion-label>
               <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="isCancelledOrders" @ionChange="updateWebhook($event['detail'].checked, 'CANCELLED_ORDERS')" slot="end" color="secondary" />
             </ion-item>
             <ion-item>
-              <ion-label class="ion-text-wrap">{{ $t("Payment status") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ translate("Payment status") }}</ion-label>
               <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="isPaymentStatus" @ionChange="updateWebhook($event['detail'].checked, 'PAYMENT_STATUS')" slot="end" color="secondary" />
             </ion-item>
             <ion-item lines="none">
-              <ion-label class="ion-text-wrap">{{ $t("Returns") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ translate("Returns") }}</ion-label>
               <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="isReturns" @ionChange="updateWebhook($event['detail'].checked, 'RETURNS')" slot="end" color="secondary" />
             </ion-item>
           </ion-card>
 
           <ion-card>
             <ion-card-header>
-              <ion-card-title>{{ $t("Upload") }}</ion-card-title>
+              <ion-card-title>{{ translate("Upload") }}</ion-card-title>
             </ion-card-header>
             <ion-item @click="viewJobConfiguration({ id: 'UPLD_CMPLT_ORDRS', status: getJobStatus(jobEnums['UPLD_CMPLT_ORDRS'])})" detail button>
-              <ion-label class="ion-text-wrap">{{ $t("Completed orders") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ translate("Completed orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('UPLD_CMPLT_ORDRS') }}</ion-label>
             </ion-item>
             <ion-item @click="viewJobConfiguration({ id: 'UPLD_CNCLD_ORDRS', status: getJobStatus(jobEnums['UPLD_CNCLD_ORDRS'])})" detail button>
-              <ion-label class="ion-text-wrap">{{ $t("Cancelled orders") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ translate("Cancelled orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('UPLD_CNCLD_ORDRS') }}</ion-label>
             </ion-item>
             <ion-item @click="viewJobConfiguration({ id: 'UPLD_REFUNDS', status: getJobStatus(jobEnums['UPLD_REFUNDS'])})" detail button>
-              <ion-label class="ion-text-wrap">{{ $t("Refunds") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ translate("Refunds") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('UPLD_REFUNDS') }}</ion-label>
             </ion-item>
           </ion-card>
@@ -107,7 +107,7 @@ import {
   isPlatform,
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
-import { translate } from '@/i18n'
+import { translate } from '@hotwax/dxp-components'
 import { useStore } from "@/store";
 import { useRouter } from 'vue-router'
 import { mapGetters } from "vuex";
@@ -261,7 +261,7 @@ export default defineComponent({
     getTemporalExpression(enumId: string) {
       return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
-        this.$t('Disabled')
+        translate('Disabled')
     },
     async fetchJobs(){
       this.store.dispatch('webhook/fetchWebhooks')
@@ -289,7 +289,8 @@ export default defineComponent({
       Actions,
       hasPermission,
       router,
-      store
+      store,
+      translate
     };
   },
 });

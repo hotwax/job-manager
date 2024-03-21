@@ -3,7 +3,7 @@
     <ion-header :translucent="true">
       <ion-toolbar>
         <ion-menu-button slot="start" />
-        <ion-title>{{ $t("Product") }}</ion-title>
+        <ion-title>{{ translate("Product") }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -12,31 +12,31 @@
         <section>
           <ion-card>
             <ion-card-header>
-              <ion-card-title>{{ $t("Sync") }}</ion-card-title>
+              <ion-card-title>{{ translate("Sync") }}</ion-card-title>
             </ion-card-header>
             <ion-item button @click="viewJobConfiguration({ id: 'IMP_PRDTS', status: getJobStatus(jobEnums['IMP_PRDTS'])})" detail>
-              <ion-label class="ion-text-wrap">{{ $t("Import products") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ translate("Import products") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('IMP_PRDTS') }}</ion-label>
             </ion-item>
             <ion-item button @click="viewJobConfiguration({ id: 'SYNC_PRDTS', status: getJobStatus(jobEnums['SYNC_PRDTS'])})" detail>
-              <ion-label class="ion-text-wrap">{{ $t("Sync products") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ translate("Sync products") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('SYNC_PRDTS') }} </ion-label>
             </ion-item>
             <ion-item lines="none">
-              <ion-label class="ion-text-wrap"><p>{{ $t("Sync products and category structures from Shopify into HotWax Commerce and keep them up to date.") }}</p></ion-label>
+              <ion-label class="ion-text-wrap"><p>{{ translate("Sync products and category structures from Shopify into HotWax Commerce and keep them up to date.") }}</p></ion-label>
             </ion-item>
           </ion-card>
 
           <ion-card>
             <ion-card-header>
-              <ion-card-title>{{ $t("Webhooks") }}</ion-card-title>
+              <ion-card-title>{{ translate("Webhooks") }}</ion-card-title>
             </ion-card-header>
             <ion-item>
-              <ion-label class="ion-text-wrap">{{ $t("New products") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ translate("New products") }}</ion-label>
               <ion-toggle slot="end" :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="newProductsWebhook" @ionChange="updateWebhook($event['detail'].checked, 'NEW_PRODUCTS')" color="secondary" />
             </ion-item>
             <ion-item lines="none">
-              <ion-label class="ion-text-wrap">{{ $t("Delete products") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ translate("Delete products") }}</ion-label>
               <ion-toggle slot="end" :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="deleteProductsWebhook" @ionChange="updateWebhook($event['detail'].checked, 'DELETE_PRODUCTS')" color="secondary" />
             </ion-item>
           </ion-card>
@@ -75,7 +75,7 @@ import emitter from '@/event-bus';
 import { useRouter } from 'vue-router'
 import MoreJobs from '@/components/MoreJobs.vue'
 import { Actions, hasPermission } from '@/authorization'
-import { translate } from '@/i18n';
+import { translate } from '@hotwax/dxp-components';
 
 export default defineComponent({
   name: 'Product',
@@ -183,7 +183,7 @@ export default defineComponent({
     getTemporalExpression(enumId: string) {
       return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
-        this.$t('Disabled')
+        translate('Disabled')
     },
     fetchJobs(){
       this.store.dispatch("job/fetchJobs", {
@@ -206,7 +206,8 @@ export default defineComponent({
       hasPermission,
       customPopoverOptions,
       store,
-      router
+      router,
+      translate
     }
   }
 });
