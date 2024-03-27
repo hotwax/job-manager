@@ -211,7 +211,34 @@ const getPreferredStore = async (token: any): Promise<any> => {
         'Content-Type': 'application/json'
       },
       data: {
-        'userPrefTypeId': 'SELECTED_BRAND'
+        'userPrefTypeId': 'FAVORITE_PRODUCT_STORE'
+      },
+    });
+    if (hasError(resp)) {
+      return Promise.reject(resp?.data);
+    } else {
+      return Promise.resolve(resp?.data.userPrefValue);
+    }
+  } catch(error: any) {
+    return Promise.reject(error)
+  }
+  
+}
+
+const getPreferredShopifyShop = async (token: any): Promise<any> => {
+  const baseURL = store.getters['user/getBaseUrl'];
+  try {
+    const resp = await client({
+      url: "service/getUserPreference",
+      //TODO Due to security reasons service model of OMS 1.0 does not support sending parameters in get request that's why we use post here
+      method: "post",
+      baseURL,
+      headers: {
+        Authorization:  'Bearer ' + token,
+        'Content-Type': 'application/json'
+      },
+      data: {
+        'userPrefTypeId': 'FAVORITE_SHOPIFY_SHOP'
       },
     });
     if (hasError(resp)) {
@@ -342,6 +369,7 @@ export const UserService = {
     getPreOrderBackorderCategory,
     getShopifyConfig,
     getPinnedJobs,
+    getPreferredShopifyShop,
     getPreferredStore,
     getUserProfile,
     associatePinnedJobPrefToUser,

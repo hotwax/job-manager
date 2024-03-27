@@ -32,7 +32,7 @@ const actions: ActionTree<UserState, RootState> = {
       if (permissionId) serverPermissionsFromRules.push(permissionId);
 
       const serverPermissions = await UserService.getUserPermissions({
-        permissionIds: serverPermissionsFromRules
+        permissionIds: [...new Set(serverPermissionsFromRules)]
       }, token);
       const appPermissions = prepareAppPermissions(serverPermissions);
 
@@ -71,6 +71,11 @@ const actions: ActionTree<UserState, RootState> = {
       // TODO store and get preferred config
       let currentShopifyConfig =  {};
       shopifyConfigs.length > 0 && (currentShopifyConfig = shopifyConfigs[0])
+
+      const preferredShopifyShopId =  await UserService.getPreferredShopifyShop(token);
+      if (preferredShopifyShopId) {
+        currentShopifyConfig = shopifyConfigs.find((shopifyConfig: any) => shopifyConfig.shopId === preferredShopifyShopId);
+      }
 
       /*  ---- Guard clauses ends here --- */
 
@@ -157,10 +162,6 @@ const actions: ActionTree<UserState, RootState> = {
     }
     commit(types.USER_CURRENT_ECOM_STORE_UPDATED, productStore);
     await dispatch('getShopifyConfig',  productStore.productStoreId);
-    await UserService.setUserPreference({
-      'userPrefTypeId': 'SELECTED_BRAND',
-      'userPrefValue': productStore.productStoreId
-    });
   },
   /**
    * Update user timeZone
