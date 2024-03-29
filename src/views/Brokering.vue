@@ -41,8 +41,9 @@
               </ion-item>
   
               <ion-item lines="none">
-                <ion-text class="ion-text-wrap">{{ $t("Unfillable orders") }}</ion-text>
-                <ion-toggle disabled :checked="batchJobEnums[batch?.enumId].unfillable" slot="end"/>
+                <ion-toggle disabled :checked="batchJobEnums[batch?.enumId].unfillable" slot="end">
+                  <div slot="label" class="ion-text-wrap">{{ $t("Unfillable orders") }}</div>
+                </ion-toggle>
               </ion-item>
 
               <ion-item lines="none" v-if="batch?.status === 'SERVICE_PENDING' && Object.keys(generateCustomParameters(batch)).length">
@@ -82,7 +83,6 @@ import {
   IonMenuButton,
   IonPage,
   IonRow,
-  IonText,
   IonTitle,
   IonToggle,
   IonToolbar,
@@ -121,7 +121,6 @@ export default defineComponent({
     IonMenuButton,
     IonPage,
     IonRow,
-    IonText,
     IonTitle,
     IonToggle,
     IonToolbar,

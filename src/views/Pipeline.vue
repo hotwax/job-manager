@@ -646,6 +646,7 @@ export default defineComponent({
 <style scoped>
 ion-card-header {
   display: flex;
+  flex-direction: row;
   justify-content: space-between;
   align-items: center;
   padding-bottom: 0px;

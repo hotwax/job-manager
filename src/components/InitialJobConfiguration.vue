@@ -15,8 +15,8 @@
 
       <ion-item>
         <ion-icon slot="start" :icon="timeOutline" />
-        <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
         <ion-select interface="popover" :placeholder="$t('Select')" :value="runTime" @ionChange="updateRunTime($event)">
+          <div slot="label" class="ion-text-wrap">{{ $t("Run time") }}</div>
           <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ $t(runTime.label) }}</ion-select-option>
         </ion-select>
         <ion-modal :is-open="isDateTimeModalOpen" @didDismiss="() => isDateTimeModalOpen = false">
@@ -66,8 +66,8 @@
 
       <ion-item button>
         <ion-icon slot="start" :icon="timeOutline" />
-        <ion-label class="ion-text-wrap">{{ $t("Run time") }}</ion-label>
         <ion-select interface="popover" :placeholder="$t('Select')" :value="runTime" @ionChange="updateRunTime($event)">
+          <div slot="label" class="ion-text-wrap">{{ $t("Run time") }}</div>
           <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ $t(runTime.label) }}</ion-select-option>
         </ion-select>
         <ion-modal class="date-time-modal" :is-open="isDateTimeModalOpen" @didDismiss="() => isDateTimeModalOpen = false">
@@ -84,8 +84,8 @@
 
       <ion-item>
         <ion-icon slot="start" :icon="flagOutline" />
-        <ion-label class="ion-text-wrap">{{ $t("Order status") }}</ion-label>
         <ion-select value="open" :interface-options="customOrderOptions" interface="popover">
+          <div slot="label" class="ion-text-wrap">{{ $t("Order status") }}</div>
           <ion-select-option value="open">{{ $t("Open") }}</ion-select-option>
           <!-- TODO: commenting options for now, enable it once having support -->
           <!-- <ion-select-option value="archived">{{ $t("Archived") }}</ion-select-option>
@@ -95,8 +95,8 @@
 
       <ion-item>
         <ion-icon slot="start" :icon="sendOutline" />
-        <ion-label class="ion-text-wrap">{{ $t("Fulfillment status") }}</ion-label>
         <ion-select value="unshipped" :interface-options="customFulfillmentOptions" interface="popover">
+          <div slot="label" class="ion-text-wrap">{{ $t("Fulfillment status") }}</div>
           <!-- TODO: commenting options for now, enable it once having support -->
           <ion-select-option value="unshipped">{{ $t("Unfulfilled") }}</ion-select-option>
           <!-- <ion-select-option value="partially-fulfilled">{{ $t("Partally fulfilled") }}</ion-select-option>
@@ -106,8 +106,9 @@
       </ion-item>
 
       <ion-item>
-        <ion-label class="ion-text-wrap">{{ $t("Last Shopify Order ID") }}</ion-label>
-        <ion-input v-model="lastShopifyOrderId" :placeholder="$t('Internal Shopify Order ID')" />
+        <ion-input v-model="lastShopifyOrderId" :placeholder="$t('Internal Shopify Order ID')">
+          <div slot="label" class="ion-text-wrap">{{ $t("Last Shopify Order ID") }}</div>
+        </ion-input>
       </ion-item>
 
       <ion-item lines="none">
