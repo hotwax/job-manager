@@ -14,21 +14,6 @@ const login = async (username: string, password: string): Promise <any> => {
 }
 
 
-const getAvailableTimeZones = async (): Promise <any>  => {
-  return api({
-    url: "getAvailableTimeZones",
-    method: "get",
-    cache: true
-  });
-}
-const setUserTimeZone = async (payload: any): Promise <any>  => {
-  return api({
-    url: "setUserTimeZone",
-    method: "post",
-    data: payload
-  });
-}
-
 const getShopifyConfig = async (productStoreId: any, token?: any): Promise <any>  => {
   try {
     const params = {
@@ -363,7 +348,6 @@ const getUserProfile = async (token: any): Promise<any> => {
 export const UserService = {
     createPinnedJobPref,
     login,
-    getAvailableTimeZones,
     getEComStores,
     getEcommerceCatalog,
     getPreOrderBackorderCategory,
@@ -373,7 +357,6 @@ export const UserService = {
     getPreferredStore,
     getUserProfile,
     associatePinnedJobPrefToUser,
-    setUserTimeZone,
     updatePinnedJobPref,
     setUserPreference,
     getUserPermissions
