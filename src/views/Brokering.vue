@@ -41,8 +41,8 @@
               </ion-item>
   
               <ion-item lines="none">
-                <ion-toggle disabled :checked="batchJobEnums[batch?.enumId].unfillable" slot="end">
-                  <div slot="label" class="ion-text-wrap">{{ $t("Unfillable orders") }}</div>
+                <ion-toggle disabled :checked="batchJobEnums[batch?.enumId].unfillable">
+                  <ion-label class="ion-text-wrap">{{ $t("Unfillable orders") }}</ion-label>
                 </ion-toggle>
               </ion-item>
 
@@ -267,6 +267,7 @@ export default defineComponent({
 <style scoped>
 ion-card-header {
   display: flex;
+  flex-direction: row;
   justify-content: space-between;
   align-items: center;
 }

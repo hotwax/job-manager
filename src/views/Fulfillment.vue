@@ -70,8 +70,8 @@
               </ion-button>
             </ion-item>
             <ion-item>
-              <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="autoCancelCheckDaily" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['AUTO_CNCL_DAL'], 'EVERYDAY')">
-                <div slot="label" class="ion-text-wrap">{{ $t("Check daily") }}</div>
+              <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="autoCancelCheckDaily" color="secondary" @ionChange="updateJob($event['detail'].checked, jobEnums['AUTO_CNCL_DAL'], 'EVERYDAY')">
+                <ion-label class="ion-text-wrap">{{ $t("Check daily") }}</ion-label>
               </ion-toggle>
             </ion-item>
             <ion-item lines="none">

@@ -15,7 +15,7 @@
               <ion-card-title>{{ $t("Pre-sell catalog") }}</ion-card-title>
             </ion-card-header>
             <ion-item>
-              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="getStatus(jobEnums['REL_PREODR_CAT'])" @ionChange="updateJob($event['detail'].checked, jobEnums['REL_PREODR_CAT'])">
+              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="getStatus(jobEnums['REL_PREODR_CAT'])" @ionChange="updateJob($event['detail'].checked, jobEnums['REL_PREODR_CAT'])">
                 <ion-label class="ion-text-wrap">{{ $t("Auto refresh pre-sell catalog") }}</ion-label>
               </ion-checkbox>
             </ion-item>
@@ -47,27 +47,27 @@
               <ion-label color="medium">{{ $t("Catalog") }}</ion-label>
             </ion-item-divider>
             <ion-item>
-              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="getStatus(jobEnums['PREORDER_CAT_SYC'])" @ionChange="updateJob($event['detail'].checked, jobEnums['PREORDER_CAT_SYC'])">
+              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="getStatus(jobEnums['PREORDER_CAT_SYC'])" @ionChange="updateJob($event['detail'].checked, jobEnums['PREORDER_CAT_SYC'])">
                 <ion-label class="ion-text-wrap">{{ $t("Sync variant details") }}</ion-label>
               </ion-checkbox>
             </ion-item>
             <ion-item>
-              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="getStatus(jobEnums['ADD_PRODR_TG_SHPFY'])" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_PRODR_TG_SHPFY'])">
+              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="getStatus(jobEnums['ADD_PRODR_TG_SHPFY'])" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_PRODR_TG_SHPFY'])">
                 <ion-label class="ion-text-wrap">{{ $t("Add pre-order tags") }}</ion-label>
               </ion-checkbox>
             </ion-item>
             <ion-item>
-              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="getStatus(jobEnums['REMV_PRODR_TG_SHPFY'])" @ionChange="updateJob($event['detail'].checked, jobEnums['REMV_PRODR_TG_SHPFY'])">
+              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="getStatus(jobEnums['REMV_PRODR_TG_SHPFY'])" @ionChange="updateJob($event['detail'].checked, jobEnums['REMV_PRODR_TG_SHPFY'])">
                 <ion-label class="ion-text-wrap">{{ $t("Remove pre-order tags") }}</ion-label>
               </ion-checkbox>
             </ion-item>
             <ion-item>
-              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="getStatus(jobEnums['ADD_BACKODR_TG_SHPFY'])" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_BACKODR_TG_SHPFY'])">
+              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="getStatus(jobEnums['ADD_BACKODR_TG_SHPFY'])" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_BACKODR_TG_SHPFY'])">
                 <ion-label class="ion-text-wrap">{{ $t("Add backorder tags") }}</ion-label>
               </ion-checkbox>
             </ion-item>
             <ion-item>
-              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="getStatus(jobEnums['REMV_BACKODR_TG_SHPFY'])" @ionChange="updateJob($event['detail'].checked, jobEnums['REMV_BACKODR_TG_SHPFY'])">
+              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="getStatus(jobEnums['REMV_BACKODR_TG_SHPFY'])" @ionChange="updateJob($event['detail'].checked, jobEnums['REMV_BACKODR_TG_SHPFY'])">
                 <ion-label class="ion-text-wrap">{{ $t("Remove backorder tags") }}</ion-label>
               </ion-checkbox>
             </ion-item>
@@ -80,12 +80,12 @@
               <ion-label color="medium">{{ $t("Orders") }}</ion-label>
             </ion-item-divider>
             <ion-item>
-              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="getStatus(jobEnums['ADD_TAG_PREORD'])" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_TAG_PREORD'])">
+              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="getStatus(jobEnums['ADD_TAG_PREORD'])" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_TAG_PREORD'])">
                 <ion-label class="ion-text-wrap">{{ $t("Add pre-order tags") }}</ion-label>
               </ion-checkbox>
             </ion-item>
             <ion-item>
-              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="getStatus(jobEnums['ADD_TAG_BACKORD'])" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_TAG_BACKORD'])">
+              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="getStatus(jobEnums['ADD_TAG_BACKORD'])" @ionChange="updateJob($event['detail'].checked, jobEnums['ADD_TAG_BACKORD'])">
                 <ion-label class="ion-text-wrap">{{ $t("Add backorder tags") }}</ion-label>
               </ion-checkbox>
             </ion-item>
@@ -95,7 +95,7 @@
               </ion-label>
             </ion-item>
             <ion-item>
-              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="getStatus(jobEnums['UL_PRMS_DTE'])" @ionChange="updateJob($event['detail'].checked, jobEnums['UL_PRMS_DTE'])">
+              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="getStatus(jobEnums['UL_PRMS_DTE'])" @ionChange="updateJob($event['detail'].checked, jobEnums['UL_PRMS_DTE'])">
                 <ion-label class="ion-text-wrap">{{ $t("Add promise date") }}</ion-label>
               </ion-checkbox>
             </ion-item>
@@ -105,7 +105,7 @@
               </ion-label>
             </ion-item>
             <ion-item>
-              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="getStatus(jobEnums['UL_PRMS_DTE_UPD'])" @ionChange="updateJob($event['detail'].checked, jobEnums['UL_PRMS_DTE_UPD'])">
+              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="getStatus(jobEnums['UL_PRMS_DTE_UPD'])" @ionChange="updateJob($event['detail'].checked, jobEnums['UL_PRMS_DTE_UPD'])">
                 <ion-label class="ion-text-wrap">{{ $t("Update promise date") }}</ion-label>
               </ion-checkbox>
             </ion-item>
@@ -123,12 +123,12 @@
               <ion-card-title>{{ $t("Promise date change") }}</ion-card-title>
             </ion-card-header>
             <ion-item>
-              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="getStatus(jobEnums['AUTO_SYNC_DT_ODRS'])" @ionChange="updateJob($event['detail'].checked, jobEnums['AUTO_SYNC_DT_ODRS'])">
+              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="getStatus(jobEnums['AUTO_SYNC_DT_ODRS'])" @ionChange="updateJob($event['detail'].checked, jobEnums['AUTO_SYNC_DT_ODRS'])">
                 <ion-label class="ion-text-wrap">{{ $t("Auto sync date to orders") }}</ion-label>
               </ion-checkbox>
             </ion-item>
             <ion-item>
-              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="getStatus(jobEnums['SD_PRMSDDTE_CNG_NOTI'])" @ionChange="updateJob($event['detail'].checked, jobEnums['SD_PRMSDDTE_CNG_NOTI'])">
+              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="getStatus(jobEnums['SD_PRMSDDTE_CNG_NOTI'])" @ionChange="updateJob($event['detail'].checked, jobEnums['SD_PRMSDDTE_CNG_NOTI'])">
                 <ion-label class="ion-text-wrap">{{ $t("Email customers") }}</ion-label>
               </ion-checkbox>
             </ion-item>

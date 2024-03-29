@@ -34,7 +34,7 @@
           </ion-card-header>
           
           <ion-item button v-for="shopifyConfig in shopifyConfigsForEComStore" :key="shopifyConfig?.shopifyConfigId" :value="shopifyConfig?.shopifyConfigId" @click="updateSelectedShopifyConfigs(shopifyConfig.shopId)">
-            <ion-checkbox slot="end" :checked="selectedShopifyConfigs.includes(shopifyConfig.shopId)">
+            <ion-checkbox :checked="selectedShopifyConfigs.includes(shopifyConfig.shopId)">
               <ion-label>{{ shopifyConfig.name ? shopifyConfig.name : shopifyConfig.shopifyConfigName }}</ion-label>
             </ion-checkbox>
           </ion-item>

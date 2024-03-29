@@ -15,7 +15,7 @@
               <ion-card-title>{{ $t("Adjustments") }}</ion-card-title>
             </ion-card-header>
             <ion-item>
-              <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="bopisCorrections" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, this.jobEnums['BOPIS_CORRECTION'])">
+              <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="bopisCorrections" color="secondary" @ionChange="updateJob($event['detail'].checked, this.jobEnums['BOPIS_CORRECTION'])">
                 <ion-label class="ion-text-wrap">{{ $t("BOPIS corrections") }}</ion-label>
               </ion-toggle>
             </ion-item>
@@ -39,7 +39,7 @@
               <ion-card-title>{{ $t("Webhooks") }}</ion-card-title>
             </ion-card-header>
             <ion-item lines="none">
-              <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="isInventoryLevelUpdated" @ionChange="updateWebhook($event['detail'].checked, 'INVENTORY_LEVEL_UPDATE')" slot="end" color="secondary">
+              <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="isInventoryLevelUpdated" @ionChange="updateWebhook($event['detail'].checked, 'INVENTORY_LEVEL_UPDATE')" color="secondary">
                 <ion-label class="ion-text-wrap">{{ $t("Inventory level update") }}</ion-label>
               </ion-toggle>
             </ion-item>
