@@ -36,7 +36,7 @@
         <h1>{{ $t('OMS') }}</h1>
       </div>
       <section>
-        <OmsInstanceNavigator />
+        <DxpOmsInstanceNavigator />
 
         <ion-card>
           <ion-card-header>
