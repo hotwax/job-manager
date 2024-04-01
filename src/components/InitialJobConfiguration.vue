@@ -107,7 +107,7 @@
 
       <ion-item>
         <ion-input v-model="lastShopifyOrderId" :placeholder="$t('Internal Shopify Order ID')">
-          <div slot="label" class="ion-text-wrap">{{ $t("Last Shopify Order ID") }}</div>
+          <div slot="label">{{ $t("Last Shopify Order ID") }}</div>
         </ion-input>
       </ion-item>
 
