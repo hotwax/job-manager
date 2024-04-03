@@ -303,6 +303,8 @@ aside {
   }
 
   main > section {
+    display: grid;
+    grid-template-columns: minmax(400px, 1fr);
     max-width: 50ch;
   }
 
