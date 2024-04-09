@@ -79,6 +79,7 @@
       <ion-item lines="none">
         <ion-icon slot="start" :icon="timerOutline" />
         <ion-select :label="translate('Frequency')" :value="jobStatus" :interface-options="{ header: translate('Frequency') }" interface="popover" :placeholder="translate('Disabled')" @ionChange="jobStatus = $event.detail.value" @ionDismiss="jobStatus == 'CUSTOM' && setCustomFrequency()">
+          <ion-select-option v-for="freq in frequencyOptions" :key="freq.id" :value="freq.id">{{ freq.description }}</ion-select-option> 
         </ion-select>
       </ion-item>
     </ion-card>
