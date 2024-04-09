@@ -4,7 +4,7 @@ import WebhookState from "./WebhookState";
 import { WebhookService } from "@/services/WebhookService";
 import { hasError, showToast } from "@/utils";
 import * as types from './mutations-types'
-import { translate } from '@/i18n'
+import { translate } from '@hotwax/dxp-components'
 import logger from "@/logger";
 
 const actions: ActionTree<WebhookState, RootState> = {

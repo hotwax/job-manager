@@ -6,7 +6,7 @@
           <ion-icon slot="icon-only" :icon="closeOutline" />
         </ion-button>
       </ion-buttons>
-      <ion-title>{{ $t('Custom Parameters') }}</ion-title>
+      <ion-title>{{ translate('Custom Parameters') }}</ion-title>
       <ion-buttons slot="end">
         <ion-button fill="clear" @click="copyToClipboard(getParameters(), 'Copied to clipboard')">
           <ion-icon slot="icon-only" :icon="copyOutline" />
@@ -19,7 +19,7 @@
     <ion-list v-if="customRequiredParameters.length || customOptionalParameters.length">
       <ion-item-group>
         <ion-item-divider v-if="customRequiredParameters.length" color="light">
-          <ion-label>{{ $t('Required Parameters') }}</ion-label>
+          <ion-label>{{ translate('Required Parameters') }}</ion-label>
         </ion-item-divider>
 
         <ion-item :key="index" v-for="(parameter, index) in customRequiredParameters">
@@ -31,7 +31,7 @@
         </ion-item>
 
         <ion-item-divider v-if="customOptionalParameters.length" color="light">
-          <ion-label>{{ $t('Optional Parameters') }}</ion-label>
+          <ion-label>{{ translate('Optional Parameters') }}</ion-label>
         </ion-item-divider>
 
         <ion-item :key="index" v-for="(parameter, index) in customOptionalParameters">
@@ -44,7 +44,7 @@
       </ion-item-group>
     </ion-list>
     <ion-item v-else lines="none">
-      <ion-label class="ion-text-center" >{{ $t('This job does not have any custom parameters.') }}</ion-label>
+      <ion-label class="ion-text-center" >{{ translate('This job does not have any custom parameters.') }}</ion-label>
     </ion-item>
   </ion-content>
 </template>
@@ -70,6 +70,7 @@ import { defineComponent } from 'vue';
 import { closeOutline, copyOutline } from 'ionicons/icons';
 import { useStore } from 'vuex';
 import { copyToClipboard } from "@/utils";
+import { translate } from '@hotwax/dxp-components';
 
 export default defineComponent({
   name: 'JobParameterModal',
@@ -120,7 +121,8 @@ export default defineComponent({
       closeOutline,
       copyOutline,
       copyToClipboard,
-      store
+      store,
+      translate
     };
   },
 });

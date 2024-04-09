@@ -3,7 +3,7 @@
     <ion-header :translucent="true">
       <ion-toolbar>
         <ion-menu-button slot="start" />
-        <ion-title>{{ $t("Inventory") }}</ion-title>
+        <ion-title>{{ translate("Inventory") }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -12,25 +12,25 @@
         <section>
           <ion-card>
             <ion-card-header>
-              <ion-card-title>{{ $t("Adjustments") }}</ion-card-title>
+              <ion-card-title>{{ translate("Adjustments") }}</ion-card-title>
             </ion-card-header>
             <ion-item button @click="viewJobConfiguration({ id: 'HARD_SYNC', status: getJobStatus(jobEnums['HARD_SYNC'])})" detail>
-              <ion-label class="ion-text-wrap">{{ $t("Hard sync") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ translate("Hard sync") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('HARD_SYNC') }}</ion-label>
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
-                <p>{{ $t("Performing a hard sync from HotWax Commerce to Shopify is useful for eliminating any discrepencies.") }}</p>
+                <p>{{ translate("Performing a hard sync from HotWax Commerce to Shopify is useful for eliminating any discrepencies.") }}</p>
               </ion-label>
             </ion-item>
           </ion-card>
           <ion-card>
             <ion-card-header>
-              <ion-card-title>{{ $t("Webhooks") }}</ion-card-title>
+              <ion-card-title>{{ translate("Webhooks") }}</ion-card-title>
             </ion-card-header>
             <ion-item lines="none">
               <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="isInventoryLevelUpdated" @ionChange="updateWebhook($event['detail'].checked, 'INVENTORY_LEVEL_UPDATE')" color="secondary">
-                <ion-label class="ion-text-wrap">{{ $t("Inventory level update") }}</ion-label>
+                <ion-label class="ion-text-wrap">{{ translate("Inventory level update") }}</ion-label>
               </ion-toggle>
             </ion-item>
           </ion-card>
@@ -67,7 +67,7 @@ import JobConfiguration from '@/components/JobConfiguration.vue'
 import { isFutureDate, showToast } from '@/utils';
 import emitter from '@/event-bus';
 import { useRouter } from 'vue-router'
-import { translate } from '@/i18n';
+import { translate } from '@hotwax/dxp-components';
 import MoreJobs from '@/components/MoreJobs.vue';
 import { Actions, hasPermission } from '@/authorization'
 
@@ -163,7 +163,7 @@ export default defineComponent({
     getTemporalExpression(enumId: string) {
       return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
-        this.$t('Disabled')
+        translate('Disabled')
     },
     fetchJobs(){
       this.store.dispatch("job/fetchJobs", {
@@ -193,7 +193,8 @@ export default defineComponent({
       Actions,
       hasPermission,
       store,
-      router
+      router,
+      translate
     }  
   }
 });

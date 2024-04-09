@@ -3,7 +3,7 @@
     <ion-header :translucent="true">
       <ion-toolbar>
         <ion-menu-button slot="start" />
-        <ion-title>{{ $t("Reports") }}</ion-title>
+        <ion-title>{{ translate("Reports") }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -11,10 +11,10 @@
       <main>
         <section>
           <div v-if="!reportsJobs?.length">
-            <p class="ion-text-center">{{ $t("There are no reports jobs right now") }}</p>
+            <p class="ion-text-center">{{ translate("There are no reports jobs right now") }}</p>
             <div class="ion-text-center">
               <ion-button fill="outline" @click="refreshJobs()">
-                {{ $t('retry') }}
+                {{ translate('retry') }}
                 <ion-spinner v-if="isRetrying" name="crescent" />
               </ion-button>
             </div>
@@ -22,14 +22,14 @@
 
           <div v-else>
             <ion-list>
-              <ion-list-header>{{ $t("Reports jobs") }}</ion-list-header>
+              <ion-list-header>{{ translate("Reports jobs") }}</ion-list-header>
               <ion-item v-for="job in reportsJobs" :key="job.jobId" @click="viewJobConfiguration(job)" detail button>
                 <ion-label>{{ job.jobName }}</ion-label>
                 <ion-note slot="end">{{ getJobRuntime(job) }}</ion-note>
               </ion-item>
             </ion-list>
             <ion-infinite-scroll @ionInfinite="loadMoreReportsJobs($event)" threshold="100px" :disabled="!isReportsJobsScrollable">
-              <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="$t('Loading')" />
+              <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="translate('Loading')" />
             </ion-infinite-scroll>
           </div>
         </section>
@@ -68,6 +68,7 @@ import { mapGetters, useStore } from 'vuex'
 import emitter from '@/event-bus';
 import JobConfiguration from '@/components/JobConfiguration.vue';
 import { isFutureDate } from '@/utils';
+import { translate } from '@hotwax/dxp-components';
 
 export default defineComponent({
   name: 'Reports',
@@ -159,7 +160,7 @@ export default defineComponent({
       return DateTime.local().plus(timeDiff).toRelative();
     },
     getJobRuntime(job: any) {
-      return job.statusId !== 'SERVICE_DRAFT' && this.timeFromNow(job.runTime) ? this.timeFromNow(job.runTime) : this.$t('Disabled')
+      return job.statusId !== 'SERVICE_DRAFT' && this.timeFromNow(job.runTime) ? this.timeFromNow(job.runTime) : translate('Disabled')
     }
   },
   setup() {
@@ -169,6 +170,7 @@ export default defineComponent({
     return {
       router,
       store,
+      translate
     };
   },
 })
