@@ -23,10 +23,11 @@
         </ion-item-divider>
 
         <ion-item :key="index" v-for="(parameter, index) in customRequiredParameters">
-          <ion-label>{{ parameter.name }}</ion-label>
-          <ion-input v-if="currentJob.statusId === 'SERVICE_DRAFT'" :placeholder="parameter.name" v-model="parameter.value" slot="end" />
-          <ion-label v-else>{{ parameter.value }}</ion-label>
-          <ion-note slot="helper">{{ parameter.type }}</ion-note>
+          <ion-input :label="parameter.name" v-if="currentJob.statusId === 'SERVICE_DRAFT'" :placeholder="parameter.name" v-model="parameter.value" :helper-text="parameter.type" />
+          <template v-else>
+            <ion-label>{{ parameter.name }}</ion-label>
+            <ion-label>{{ parameter.value }}</ion-label>
+          </template>
         </ion-item>
 
         <ion-item-divider v-if="customOptionalParameters.length" color="light">
@@ -34,10 +35,11 @@
         </ion-item-divider>
 
         <ion-item :key="index" v-for="(parameter, index) in customOptionalParameters">
-          <ion-label>{{ parameter.name }}</ion-label>
-          <ion-input v-if="currentJob.statusId === 'SERVICE_DRAFT'" :placeholder="parameter.name" v-model="parameter.value" slot="end" />
-          <ion-label v-else>{{ parameter.value }}</ion-label>
-          <ion-note slot="helper">{{ parameter.type }}</ion-note>
+          <ion-input v-if="currentJob.statusId === 'SERVICE_DRAFT'" :label="parameter.name" :placeholder="parameter.name" v-model="parameter.value" :helper-text="parameter.type" />
+          <template v-else>
+            <ion-label>{{ parameter.name }}</ion-label>
+            <ion-label>{{ parameter.value }}</ion-label>
+          </template>
         </ion-item>
       </ion-item-group>
     </ion-list>
@@ -60,7 +62,6 @@ import {
   IonItemGroup,
   IonLabel,
   IonList,
-  IonNote,
   IonTitle,
   IonToolbar,
   modalController
@@ -84,7 +85,6 @@ export default defineComponent({
     IonItemGroup,
     IonLabel,
     IonList,
-    IonNote,
     IonTitle,
     IonToolbar,
   },
