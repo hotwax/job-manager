@@ -6,34 +6,34 @@
           <ion-icon slot="icon-only" :icon="closeOutline" />
         </ion-button>
       </ion-buttons>
-      <ion-title>{{ $t('New broker run') }}</ion-title>
+      <ion-title>{{ translate('New broker run') }}</ion-title>
     </ion-toolbar>
   </ion-header>
 
   <ion-content>
     <ion-item>
-      <ion-input :label="$t('Name')" label-placement="fixed" :placeholder="currentDateTime = getCurrentDateTime()" v-model="jobName" />
+      <ion-input :label="translate('Name')" label-placement="fixed" :placeholder="currentDateTime = getCurrentDateTime()" v-model="jobName" />
     </ion-item>
     <ion-item>
       <ion-icon slot="start" :icon="ticketOutline" />
-      <ion-select :label="$t('Order parking')" interface="popover" :value="batchFacilityId" @ionChange="batchFacilityId = $event['detail'].value; updateCustomParameters()">
-        <ion-select-option value="_NA_">{{ $t("Brokering queue") }}</ion-select-option>
-        <ion-select-option value="PRE_ORDER_PARKING">{{ $t("Pre-order parking") }}</ion-select-option>
-        <ion-select-option value="BACKORDER_PARKING">{{ $t("Back-order parking") }}</ion-select-option>
+      <ion-select :label="translate('Order parking')" interface="popover" :value="batchFacilityId" @ionChange="batchFacilityId = $event['detail'].value; updateCustomParameters()">
+        <ion-select-option value="_NA_">{{ translate("Brokering queue") }}</ion-select-option>
+        <ion-select-option value="PRE_ORDER_PARKING">{{ translate("Pre-order parking") }}</ion-select-option>
+        <ion-select-option value="BACKORDER_PARKING">{{ translate("Back-order parking") }}</ion-select-option>
       </ion-select>
     </ion-item>
     <ion-item>
       <ion-icon slot="start" :icon="warningOutline" />
-      <ion-toggle :checked="unfillableOrder" @ionChange="unfillableOrder = !unfillableOrder; updateCustomParameters()">{{ $t('Unfillable orders') }}</ion-toggle>
+      <ion-toggle :checked="unfillableOrder" @ionChange="unfillableOrder = !unfillableOrder; updateCustomParameters()">{{ translate('Unfillable orders') }}</ion-toggle>
     </ion-item>
 
     <ion-list v-if="customOptionalParameters.length || customRequiredParameters.length">
       <ion-item lines="none">
-        <ion-label>{{ $t('More parameters') }}</ion-label>
+        <ion-label>{{ translate('More parameters') }}</ion-label>
       </ion-item>
 
       <ion-item-divider v-if="customRequiredParameters.length" color="light">
-        <ion-label>{{ $t('Required Parameters') }}</ion-label>
+        <ion-label>{{ translate('Required Parameters') }}</ion-label>
       </ion-item-divider>
 
       <ion-item :key="index" v-for="(parameter, index) in customRequiredParameters">
@@ -41,7 +41,7 @@
       </ion-item>
 
       <ion-item-divider v-if="customOptionalParameters.length" color="light">
-        <ion-label>{{ $t('Optional Parameters') }}</ion-label>
+        <ion-label>{{ translate('Optional Parameters') }}</ion-label>
       </ion-item-divider>
 
       <ion-item :key="index" v-for="(parameter, index) in customOptionalParameters">
@@ -50,19 +50,19 @@
     </ion-list>
     <ion-list v-else>
       <ion-item>
-        <ion-label>{{ $t('No parameters available') }}</ion-label>
+        <ion-label>{{ translate('No parameters available') }}</ion-label>
       </ion-item>
     </ion-list>
 
     <ion-card>
       <ion-card-header>
-        <ion-card-title>{{ $t('Schedule') }}</ion-card-title>
+        <ion-card-title>{{ translate('Schedule') }}</ion-card-title>
       </ion-card-header>
 
       <ion-item>
         <ion-icon slot="start" :icon="timeOutline" />
-        <ion-select :label="$t('Run time')" interface="popover" :placeholder="$t('Select')" :value="runTime" @ionChange="updateRunTime($event)">
-          <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ $t(runTime.label) }}</ion-select-option>
+        <ion-select :label="translate('Run time')" interface="popover" :placeholder="translate('Select')" :value="runTime" @ionChange="updateRunTime($event)">
+          <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ translate(runTime.label) }}</ion-select-option>
         </ion-select>
 
         <ion-modal class="date-time-modal" :is-open="isDateTimeModalOpen" @didDismiss="() => isDateTimeModalOpen = false">
@@ -78,8 +78,8 @@
       </ion-item>
       <ion-item lines="none">
         <ion-icon slot="start" :icon="timerOutline" />
-        <ion-select :label="$t('Frequency')" :value="jobStatus" :interface-options="{ header: $t('Frequency') }" interface="popover" :placeholder="$t('Disabled')" @ionChange="jobStatus = $event.detail.value" @ionDismiss="jobStatus == 'CUSTOM' && setCustomFrequency()">
-          <ion-select-option v-for="freq in frequencyOptions" :key="freq.id" :value="freq.id">{{ freq.description }}</ion-select-option>
+        <ion-select :label="translate('Frequency')" :value="jobStatus" :interface-options="{ header: translate('Frequency') }" interface="popover" :placeholder="translate('Disabled')" @ionChange="jobStatus = $event.detail.value" @ionDismiss="jobStatus == 'CUSTOM' && setCustomFrequency()">
+          <ion-select-option v-for="freq in frequencyOptions" :key="freq.id" :value="freq.id">{{ freq.description }}</ion-select-option> 
         </ion-select>
       </ion-item>
     </ion-card>
@@ -122,7 +122,7 @@ import { closeOutline, checkmarkDoneOutline, ticketOutline, timeOutline, timerOu
 import { mapGetters, useStore } from 'vuex';
 import { DateTime } from 'luxon';
 import { handleDateTimeInput, generateAllowedFrequencies, generateAllowedRunTimes, generateJobCustomParameters, generateJobCustomOptions, getNowTimestamp, hasJobDataError, isCustomRunTime, isFutureDate, showToast } from '@/utils';
-import { translate } from '@/i18n'
+import { translate } from '@hotwax/dxp-components'
 import CustomFrequencyModal from '@/components/CustomFrequencyModal.vue';
 import { Actions, hasPermission } from '@/authorization'
 
@@ -295,7 +295,8 @@ export default defineComponent({
       timerOutline,
       warningOutline,
       Actions,
-      DateTime
+      DateTime,
+      translate
     };
   },
 });

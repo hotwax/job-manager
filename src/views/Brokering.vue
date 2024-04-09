@@ -3,24 +3,24 @@
     <ion-header :translucent="true">
       <ion-toolbar>
         <ion-menu-button slot="start" />
-        <ion-title>{{ $t("Brokering") }}</ion-title>
+        <ion-title>{{ translate("Brokering") }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
     <ion-content>
       <main>
         <section>
-          <ion-button expand="block" :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" @click="addBatch()">{{ $t('Create new brokering job') }}</ion-button>
+          <ion-button expand="block" :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" @click="addBatch()">{{ translate('Create new brokering job') }}</ion-button>
 
           <ion-item lines="none">
             <ion-label>
-              <h1>{{ $t('Scheduled Job') }}</h1>
+              <h1>{{ translate('Scheduled Job') }}</h1>
             </ion-label>
           </ion-item>
 
           <ion-card>
             <ion-item @click="viewJobConfiguration({ id: 'REJ_ORDR', status: getJobStatus(jobEnums['REJ_ORDR'])})" detail button>
-              <ion-label class="ion-text-wrap">{{ $t("Rejected orders") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ translate("Rejected orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('REJ_ORDR') }}</ion-label>
             </ion-item>
           </ion-card>
@@ -42,7 +42,7 @@
   
               <ion-item lines="none">
                 <ion-toggle disabled :checked="batchJobEnums[batch?.enumId].unfillable">
-                  <ion-label class="ion-text-wrap">{{ $t("Unfillable orders") }}</ion-label>
+                  <ion-label class="ion-text-wrap">{{ translate("Unfillable orders") }}</ion-label>
                 </ion-toggle>
               </ion-item>
 
@@ -101,7 +101,7 @@ import { generateJobCustomOptions, generateJobCustomParameters, isFutureDate, sh
 import emitter from '@/event-bus';
 import MoreJobs from '@/components/MoreJobs.vue';
 import { Actions, hasPermission } from '@/authorization'
-import { translate } from '@/i18n';
+import { translate } from '@hotwax/dxp-components';
 
 export default defineComponent({
   name: 'Brokering',
@@ -206,7 +206,7 @@ export default defineComponent({
     getTemporalExpression(enumId: string) {
       return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
-        this.$t('Disabled')
+        translate('Disabled')
     },
     async fetchJobs() {
       await this.store.dispatch("job/fetchJobs", {
@@ -259,6 +259,7 @@ export default defineComponent({
       router,
       store,
       trashOutline,
+      translate
     };
   },
 });

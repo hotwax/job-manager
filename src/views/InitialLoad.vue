@@ -3,7 +3,7 @@
     <ion-header :translucent="true">
       <ion-toolbar>
         <ion-menu-button slot="start" />
-        <ion-title>{{ $t("Initial load") }}</ion-title>
+        <ion-title>{{ translate("Initial load") }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -12,42 +12,42 @@
         <section>
           <ion-card>
             <ion-card-header>
-              <ion-card-title>{{ $t("Products") }}</ion-card-title>
+              <ion-card-title>{{ translate("Products") }}</ion-card-title>
             </ion-card-header>
-            <ion-button expand="block" fill="outline" @click="viewJobConfiguration('products', jobEnums['IMP_PRDTS_BLK'])">{{ $t("Import products in bulk") }}</ion-button>
+            <ion-button expand="block" fill="outline" @click="viewJobConfiguration('products', jobEnums['IMP_PRDTS_BLK'])">{{ translate("Import products in bulk") }}</ion-button>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
-                <p>{{ $t("Import all products from Shopify. Make sure you run this before importing orders in bulk during intial setup.") }}</p>
+                <p>{{ translate("Import all products from Shopify. Make sure you run this before importing orders in bulk during intial setup.") }}</p>
               </ion-label>
             </ion-item>
           </ion-card>
 
           <ion-card>
             <ion-card-header>
-              <ion-card-title>{{ $t("Orders") }}</ion-card-title>
+              <ion-card-title>{{ translate("Orders") }}</ion-card-title>
             </ion-card-header>
-            <ion-button expand="block" fill="outline" @click="viewJobConfiguration('orders', jobEnums['IMP_ORDERS_BLK'])">{{ $t("Import orders in bulk") }}</ion-button>
+            <ion-button expand="block" fill="outline" @click="viewJobConfiguration('orders', jobEnums['IMP_ORDERS_BLK'])">{{ translate("Import orders in bulk") }}</ion-button>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
-                <p>{{ $t("Before importing historical orders in bulk, make sure all products are set up or else order import will not run correctly.") }}</p>
+                <p>{{ translate("Before importing historical orders in bulk, make sure all products are set up or else order import will not run correctly.") }}</p>
                 <br />
-                <p>{{ $t("By default only open and unshipped orders will be imported.") }}</p>
+                <p>{{ translate("By default only open and unshipped orders will be imported.") }}</p>
               </ion-label>
             </ion-item>
           </ion-card>
 
           <ion-card>
             <ion-card-header>
-              <ion-card-title>{{ $t("Process Uploads") }}</ion-card-title>
+              <ion-card-title>{{ translate("Process Uploads") }}</ion-card-title>
             </ion-card-header>
             <ion-item>
               <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="fileStatusUpdateWebhook" color="secondary" @ionChange="updateWebhook($event['detail'].checked, 'BULK_OPERATIONS_FINISH')">
-                <ion-label>{{ $t("File upload status") }}</ion-label>
+                <ion-label>{{ translate("File upload status") }}</ion-label>
               </ion-toggle>
             </ion-item>
             <ion-item>
               <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="processPendingUploadsOnShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['UL_PRCS'])">
-                <ion-label class="ion-text-wrap">{{ $t("Upload Pending Process") }}</ion-label>
+                <ion-label class="ion-text-wrap">{{ translate("Upload Pending Process") }}</ion-label>
               </ion-checkbox>
             </ion-item>
           </ion-card>
@@ -85,7 +85,7 @@ import { hasJobDataError, generateJobCustomParameters, isFutureDate, showToast }
 import emitter from '@/event-bus';
 import InitialJobConfiguration from '@/components/InitialJobConfiguration.vue';
 import { useRouter } from 'vue-router';
-import { translate } from '@/i18n';
+import { translate } from '@hotwax/dxp-components';
 import { Actions, hasPermission } from '@/authorization'
 
 export default defineComponent({
@@ -240,7 +240,8 @@ export default defineComponent({
       Actions,
       hasPermission,
       store,
-      router
+      router,
+      translate
     }
   }
 });

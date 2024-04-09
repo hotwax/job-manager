@@ -6,18 +6,18 @@
           <ion-icon slot="icon-only" :icon="closeOutline" />
         </ion-button>
       </ion-buttons>
-      <ion-title>{{ $t("Select jobs") }}</ion-title>
+      <ion-title>{{ translate("Select jobs") }}</ion-title>
     </ion-toolbar>
   </ion-header>
   <ion-content>
-    <ion-searchbar :placeholder="$t('Search jobs')" @keyup.enter="search($event)" />
+    <ion-searchbar :placeholder="translate('Search jobs')" @keyup.enter="search($event)" />
 
     <div v-if="queryString.length === 0" class="ion-text-center">
-      <p>{{ $t("Searched jobs will appear here") }}</p>
+      <p>{{ translate("Searched jobs will appear here") }}</p>
     </div>    
 
     <div v-else-if="jobs.length === 0" class="ion-text-center">
-      <p>{{ $t("No jobs found") }}</p>
+      <p>{{ translate("No jobs found") }}</p>
     </div>
     
     <ion-list v-else v-for="job in jobs" :key="job.jobId">
@@ -26,12 +26,12 @@
           <h2>{{ job.enumName ? job.enumName : job.jobName }}</h2>
         </ion-label>
         <ion-icon v-if="isJobAddedToBulkScheduler(job.jobId)" color="success" :icon="checkmarkCircle" />
-        <ion-button v-else fill="outline" @click="addToBulkScheduler(job)">{{ $t("Add") }}</ion-button>
+        <ion-button v-else fill="outline" @click="addToBulkScheduler(job)">{{ translate("Add") }}</ion-button>
       </ion-item>
     </ion-list>
 
     <ion-infinite-scroll @ionInfinite="loadMoreJobs($event)" threshold="100px" :disabled="!isScrollable">
-      <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="$t('Loading')" />
+      <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="translate('Loading')" />
     </ion-infinite-scroll>
   </ion-content>
 </template>
@@ -58,7 +58,7 @@ import { closeOutline, checkmarkCircle } from 'ionicons/icons';
 import { mapGetters } from 'vuex'
 import { useStore } from "@/store";
 import { showToast, hasError } from '@/utils'
-import { translate } from '@/i18n'
+import { translate } from '@hotwax/dxp-components'
 import { JobService } from '@/services/JobService'
 
 export default defineComponent({
@@ -162,6 +162,7 @@ export default defineComponent({
       closeOutline,
       checkmarkCircle,
       store,
+      translate
     };
   },
 });

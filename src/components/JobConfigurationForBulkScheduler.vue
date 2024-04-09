@@ -7,20 +7,20 @@
       </ion-label>
     </ion-item>
     <ion-item-divider>
-      {{ $t("Parameters") }}
+      {{ translate("Parameters") }}
     </ion-item-divider>
     <ion-item>
-      <ion-label>{{ $t("Store") }}</ion-label>
+      <ion-label>{{ translate("Store") }}</ion-label>
       <ion-note slot="end">{{ eComStoreName }}</ion-note>
     </ion-item>
     <ion-item>
-      <ion-label>{{ $t("eCommerce") }}</ion-label>
-      <ion-badge v-if="selectedShopifyConfigs.length === 0" color="danger">{{ $t("no eCommerce selected") }}</ion-badge>
+      <ion-label>{{ translate("eCommerce") }}</ion-label>
+      <ion-badge v-if="selectedShopifyConfigs.length === 0" color="danger">{{ translate("no eCommerce selected") }}</ion-badge>
       <ion-note v-else slot="end">{{ shopifyConfigNames }}</ion-note>
     </ion-item>
     <ion-item>
-      <ion-select :label="$t('Run time')" interface="popover" :placeholder="$t('Select run time')" :value="job.runTime" @ionChange="updateRunTime($event)">
-        <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ $t(runTime.label) }}</ion-select-option>
+      <ion-select :label="translate('Run time')" interface="popover" :placeholder="translate('Select run time')" :value="job.runTime" @ionChange="updateRunTime($event)">
+        <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ translate(runTime.label) }}</ion-select-option>
       </ion-select>
       <ion-modal class="date-time-modal" :is-open="isDateTimeModalOpen" @didDismiss="() => isDateTimeModalOpen = false">
         <ion-content force-overscroll="false">
@@ -34,14 +34,14 @@
       </ion-modal>
     </ion-item>
     <ion-item>
-      <ion-select :label="$t('Schedule')" :interface-options="{ header: $t('Frequency') }" :value="job.frequency" interface="popover" :placeholder='$t("Bulk schedule")' @ionDismiss="job.frequency == 'CUSTOM' && setCustomFrequency()" @ionChange='setFrequency($event)'>
-        <ion-select-option v-for="freq in frequencyOptions" :key="freq.id" :value="freq.id">{{ $t(freq.description) }}</ion-select-option>
+      <ion-select :label="translate('Schedule')" :interface-options="{ header: translate('Frequency') }" :value="job.frequency" interface="popover" :placeholder='translate("Bulk schedule")' @ionDismiss="job.frequency == 'CUSTOM' && setCustomFrequency()" @ionChange='setFrequency($event)'>
+        <ion-select-option v-for="freq in frequencyOptions" :key="freq.id" :value="freq.id">{{ translate(freq.description) }}</ion-select-option>
       </ion-select>
     </ion-item>
     <div class="actions">
       <ion-button size="small" fill="outline" color="danger" @click="removeJob(job.systemJobEnumId)">
         <ion-icon slot="start" :icon="closeOutline"/>
-        {{ $t("Remove") }}
+        {{ translate("Remove") }}
       </ion-button>
     </div>
   </ion-card>
@@ -79,7 +79,7 @@ import {
 import { mapGetters, useStore } from "vuex";
 import { isCustomRunTime, getNowTimestamp, generateAllowedRunTimes, generateAllowedFrequencies, handleDateTimeInput, showToast } from "@/utils";
 import { DateTime } from 'luxon';
-import { translate } from '@/i18n'
+import { translate } from '@hotwax/dxp-components'
 import { Actions, hasPermission } from '@/authorization'
 import CustomFrequencyModal from '@/components/CustomFrequencyModal.vue';
 
@@ -212,7 +212,8 @@ export default defineComponent({
       syncOutline,
       personCircleOutline,
       pinOutline,
-      closeOutline
+      closeOutline,
+      translate
     };
   }
 });

@@ -6,14 +6,14 @@
           <ion-icon :icon="closeOutline" />
         </ion-button>
       </ion-buttons>
-      <ion-title>{{ $t("Custom frequency") }}</ion-title>
+      <ion-title>{{ translate("Custom frequency") }}</ion-title>
     </ion-toolbar>
   </ion-header>
 
   <ion-content>
     <!-- Empty state -->
     <div class="empty-state" v-if="customFrequencies.length === 0">
-      <p>{{ $t("No frequency found")}}</p>
+      <p>{{ translate("No frequency found")}}</p>
     </div>
 
     <!-- Frequencies -->
@@ -55,6 +55,7 @@ import {
 import { defineComponent } from "vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { useStore } from "@/store";
+import { translate } from "@hotwax/dxp-components";
 
 export default defineComponent({
   name: "CustomFrequencyModal",
@@ -98,7 +99,8 @@ export default defineComponent({
     return {
       closeOutline,
       saveOutline,
-      store
+      store,
+      translate
     };
   }
 });

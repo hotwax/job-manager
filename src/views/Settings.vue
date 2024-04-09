@@ -3,7 +3,7 @@
     <ion-header :translucent="true">
       <ion-toolbar>
         <ion-menu-button slot="start" />
-        <ion-title>{{ $t("Settings") }}</ion-title>
+        <ion-title>{{ translate("Settings") }}</ion-title>
       </ion-toolbar>
     </ion-header>
     
@@ -22,18 +22,18 @@
               <ion-card-title>{{ userProfile?.partyName }}</ion-card-title>
             </ion-card-header>
           </ion-item>
-          <ion-button color="danger" @click="logout()">{{ $t("Logout") }}</ion-button>
+          <ion-button color="danger" @click="logout()">{{ translate("Logout") }}</ion-button>
           <ion-button fill="outline" @click="goToLaunchpad()">
-            {{ $t("Go to Launchpad") }}
+            {{ translate("Go to Launchpad") }}
             <ion-icon slot="end" :icon="openOutline" />
           </ion-button>
           <!-- Commenting this code as we currently do not have reset password functionality -->
-          <!-- <ion-button fill="outline" color="medium">{{ $t("Reset password") }}</ion-button> -->
+          <!-- <ion-button fill="outline" color="medium">{{ translate("Reset password") }}</ion-button> -->
         </ion-card>
       </div>
 
       <div class="section-header">
-        <h1>{{ $t('OMS') }}</h1>
+        <h1>{{ translate('OMS') }}</h1>
       </div>
       <section>
         <OmsInstanceNavigator />
@@ -41,17 +41,17 @@
         <ion-card>
           <ion-card-header>
             <ion-card-subtitle>
-              {{ $t("Product Store") }}
+              {{ translate("Product Store") }}
             </ion-card-subtitle>
             <ion-card-title>
-              {{ $t("Store") }}
+              {{ translate("Store") }}
             </ion-card-title>
           </ion-card-header>
           <ion-card-content>
-            {{ $t('A store represents a company or a unique catalog of products. If your OMS is connected to multiple eCommerce stores sellling different collections of products, you may have multiple Product Stores set up in HotWax Commerce.') }}
+            {{ translate("A store represents a company or a unique catalog of products. If your OMS is connected to multiple eCommerce stores sellling different collections of products, you may have multiple Product Stores set up in HotWax Commerce.") }}
           </ion-card-content>
           <ion-item lines="none">
-            <ion-select :label="$t('Select store')" interface="popover" :value="currentEComStore.productStoreId" @ionChange="setEComStore($event)">
+            <ion-select :label="translate('Select store')" interface="popover" :value="currentEComStore.productStoreId" @ionChange="setEComStore($event)">
               <ion-select-option v-for="store in (userProfile ? userProfile.stores : [])" :key="store.productStoreId" :value="store.productStoreId" >{{ store.storeName }}</ion-select-option>
             </ion-select>
           </ion-item>
@@ -59,17 +59,17 @@
         <ion-card>
           <ion-card-header>
             <ion-card-subtitle>
-              {{ $t("Shopify Config") }}
+              {{ translate("Shopify Config") }}
             </ion-card-subtitle>
             <ion-card-title>
-              {{ $t("eCommerce") }}
+              {{ translate("eCommerce") }}
             </ion-card-title>
           </ion-card-header>
           <ion-card-content>
-            {{ $t('eCommerce stores are directly connected to one Shop Config. If your OMS is connected to multiple eCommerce stores selling the same catalog operating as one Company, you may have multiple Shop Configs for the selected Product Store.') }}
+            {{ translate('eCommerce stores are directly connected to one Shop Config. If your OMS is connected to multiple eCommerce stores selling the same catalog operating as one Company, you may have multiple Shop Configs for the selected Product Store.') }}
           </ion-card-content>
           <ion-item lines="none">
-            <ion-select :label="$t('Select eCommerce')" interface="popover" :value="currentShopifyConfig?.shopifyConfigId" @ionChange="setShopifyConfig($event)">
+            <ion-select :label="translate('Select eCommerce')" interface="popover" :value="currentShopifyConfig?.shopifyConfigId" @ionChange="setShopifyConfig($event)">
               <ion-select-option v-for="shopifyConfig in shopifyConfigs" :key="shopifyConfig.shopifyConfigId" :value="shopifyConfig.shopifyConfigId" >{{ shopifyConfig.name ? shopifyConfig.name : shopifyConfig.shopifyConfigName }}</ion-select-option>
             </ion-select>
           </ion-item>
@@ -79,7 +79,7 @@
 
       <div class="section-header">
         <h1>
-          {{ $t('App') }}
+          {{ translate('App') }}
           <p class="overline" >{{ "Version: " + appVersion }}</p>
         </h1>
         <p class="overline">{{ "Built: " + getDateTime(appInfo.builtTime) }}</p>
@@ -89,17 +89,17 @@
         <ion-card>
           <ion-card-header>
             <ion-card-title>
-              {{ $t('Timezone') }}
+              {{ translate('Timezone') }}
             </ion-card-title>
           </ion-card-header>
 
           <ion-card-content>
-            {{ $t('The timezone you select is used to ensure automations you schedule are always accurate to the time you select.') }}
+            {{ translate('The timezone you select is used to ensure automations you schedule are always accurate to the time you select.') }}
           </ion-card-content>
 
           <ion-item lines="none">
             <ion-label> {{ userProfile && userProfile.userTimeZone ? userProfile.userTimeZone : '-' }} </ion-label>
-            <ion-button @click="changeTimeZone()" slot="end" fill="outline" color="dark">{{ $t("Change") }}</ion-button>
+            <ion-button @click="changeTimeZone()" slot="end" fill="outline" color="dark">{{ translate("Change") }}</ion-button>
           </ion-item>
         </ion-card>
       </section>
@@ -116,6 +116,7 @@ import { useRouter } from 'vue-router';
 import TimeZoneModal from '@/views/TimezoneModal.vue';
 import Image from '@/components/Image.vue'
 import { DateTime } from 'luxon';
+import { translate } from '@hotwax/dxp-components';
 
 export default defineComponent({
   name: 'Settings',
@@ -207,6 +208,7 @@ export default defineComponent({
       router,
       openOutline,
       saveOutline,
+      translate
     }
   }
 });

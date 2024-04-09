@@ -3,7 +3,7 @@
     <ion-header :translucent="true">
       <ion-toolbar>
         <ion-menu-button slot="start" />
-        <ion-title>{{ $t("Fulfillment") }}</ion-title>
+        <ion-title>{{ translate("Fulfillment") }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -12,70 +12,70 @@
         <section>
           <ion-card>
             <ion-card-header>
-              <ion-card-title>{{ $t("Shipping") }}</ion-card-title>
+              <ion-card-title>{{ translate("Shipping") }}</ion-card-title>
             </ion-card-header>
             <ion-item button @click="viewJobConfiguration({ id: 'SHIP_PKD_ODRS', status: getJobStatus(jobEnums['SHIP_PKD_ODRS']) })" detail>
-              <ion-label class="ion-text-wrap">{{ $t("Ship packed orders") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ translate("Ship packed orders") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('SHIP_PKD_ODRS') }}</ion-label>
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
-                <p>{{ $t("Automatically ship orders that are packed and have a tracking number if required.") }}</p>
+                <p>{{ translate("Automatically ship orders that are packed and have a tracking number if required.") }}</p>
               </ion-label>
             </ion-item>
           </ion-card>
 
           <ion-card>
             <ion-card-header>
-              <ion-card-title>{{ $t("History") }}</ion-card-title>
+              <ion-card-title>{{ translate("History") }}</ion-card-title>
             </ion-card-header>
             <ion-item button @click="viewJobConfiguration({ id: 'ODR_FLMNT_HST', status: getJobStatus(jobEnums['ODR_FLMNT_HST']) })" detail>
-              <ion-label class="ion-text-wrap">{{ $t("Order fulfillment") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ translate("Order fulfillment") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('ODR_FLMNT_HST') }}</ion-label>
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
-                <p>{{ $t("Create or update order fulfillment history records from FTP.") }}</p>
+                <p>{{ translate("Create or update order fulfillment history records from FTP.") }}</p>
               </ion-label>
             </ion-item>
           </ion-card>
 
           <ion-card>
             <ion-card-header>
-              <ion-card-title>{{ $t("Notification") }}</ion-card-title>
+              <ion-card-title>{{ translate("Notification") }}</ion-card-title>
             </ion-card-header>
             <ion-item button @click="viewJobConfiguration({ id: 'OPN_BOPIS_ORD_NT', status: getJobStatus(jobEnums['OPN_BOPIS_ORD_NT']) })" detail>
-              <ion-label class="ion-text-wrap">{{ $t("Open BOPIS order notification") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ translate("Open BOPIS order notification") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('OPN_BOPIS_ORD_NT') }}</ion-label>
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
-                <p>{{ $t("Sends notifications for open orders and ready-to-pickup orders.") }}</p>
+                <p>{{ translate("Sends notifications for open orders and ready-to-pickup orders.") }}</p>
               </ion-label>
             </ion-item>
           </ion-card>
           
           <ion-card>
             <ion-card-header>
-              <ion-card-title>{{ $t("Auto cancelations") }}</ion-card-title>
+              <ion-card-title>{{ translate("Auto cancelations") }}</ion-card-title>
             </ion-card-header>
             <ion-item>
-              <ion-input :readonly="!hasPermission(Actions.APP_JOB_UPDATE)" :placeholder="$t('before auto cancelation')" v-model.number="autoCancelDays" type="number">
-                <div slot="label" class="ion-text-wrap">{{ $t("Days") }}</div>
+              <ion-input :readonly="!hasPermission(Actions.APP_JOB_UPDATE)" :placeholder="translate('before auto cancelation')" v-model.number="autoCancelDays" type="number">
+                <div slot="label" class="ion-text-wrap">{{ translate("Days") }}</div>
               </ion-input>
               <!-- The button is enabled when we hover over the button or ion input looses focus and not when the value is changed -->
               <!-- Todo: need to disable the button if value is unchanged -->
               <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" fill="clear" @click="updateAutoCancelDays()" slot="end">
-                {{ $t("Save") }}
+                {{ translate("Save") }}
               </ion-button>
             </ion-item>
             <ion-item>
               <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="autoCancelCheckDaily" color="secondary" @ionChange="updateJob($event['detail'].checked, jobEnums['AUTO_CNCL_DAL'], 'EVERYDAY')">
-                <ion-label class="ion-text-wrap">{{ $t("Check daily") }}</ion-label>
+                <ion-label class="ion-text-wrap">{{ translate("Check daily") }}</ion-label>
               </ion-toggle>
             </ion-item>
             <ion-item lines="none">
-              <ion-label class="ion-text-wrap"><p>{{ $t("Unfulfilled orders that pass their auto cancelation date will be canceled automatically in HotWax Commerce. They will also be canceled in Shopify if upload for canceled orders is enabled.") }}</p></ion-label>
+              <ion-label class="ion-text-wrap"><p>{{ translate("Unfulfilled orders that pass their auto cancelation date will be canceled automatically in HotWax Commerce. They will also be canceled in Shopify if upload for canceled orders is enabled.") }}</p></ion-label>
             </ion-item>
           </ion-card>
           <MoreJobs v-if="getMoreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId).length" :jobs="getMoreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId)" />
@@ -108,7 +108,7 @@ import {
   isPlatform
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
-import { translate } from '@/i18n'
+import { translate } from '@hotwax/dxp-components'
 import { useStore } from "@/store";
 import { useRouter } from 'vue-router'
 import { mapGetters } from "vuex";
@@ -286,7 +286,7 @@ export default defineComponent({
     getTemporalExpression(enumId: string) {
       return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
-        this.$t('Disabled')
+        translate('Disabled')
     }
   },
   mounted () {
@@ -306,7 +306,8 @@ export default defineComponent({
       Actions,
       hasPermission,
       router,
-      store
+      store,
+      translate
     };
   },
 });

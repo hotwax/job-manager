@@ -1,22 +1,22 @@
 <template>
   <ion-content>
     <ion-list>
-      <ion-list-header>{{ $t("More options") }}</ion-list-header>
+      <ion-list-header>{{ translate("More options") }}</ion-list-header>
       <ion-item @click="viewJobHistory(job)" button>
         <ion-icon slot="start" :icon="timeOutline" />
-        {{ $t("History") }}
+        {{ translate("History") }}
       </ion-item>
       <ion-item @click="copyJobInformation(job)" button>
         <ion-icon slot="start" :icon="copyOutline" />
-        {{ $t("Copy details") }}
+        {{ translate("Copy details") }}
       </ion-item>
       <ion-item @click="updatePinnedJobs(job?.systemJobEnumId)" button>
         <ion-icon slot="start" :icon="pinOutline" />
-        {{ $t("Pin job") }}
+        {{ translate("Pin job") }}
       </ion-item>
       <ion-item :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" @click="runJobNow(job)" lines="none" button>
         <ion-icon slot="start" :icon="flashOutline" />
-        {{ $t("Run now") }}
+        {{ translate("Run now") }}
       </ion-item>      
     </ion-list>
   </ion-content>
@@ -40,7 +40,8 @@ import JobHistoryModal from '@/components/JobHistoryModal.vue'
 import { Plugins } from '@capacitor/core';
 import { generateJobCustomParameters, hasJobDataError, showToast } from '@/utils'
 import emitter from "@/event-bus"
-import { Actions, hasPermission } from '@/authorization'
+import { Actions, hasPermission } from '@/authorization';
+import { translate } from "@hotwax/dxp-components";
 
 export default defineComponent({
   name: "JobActionsPopover",
@@ -68,7 +69,7 @@ export default defineComponent({
       await Clipboard.write({
         string: jobDetails
       }).then(() => {
-        showToast(this.$t("Copied job details to clipboard"));
+        showToast(translate("Copied job details to clipboard"));
       })
       this.closePopover();
     },
@@ -97,15 +98,15 @@ export default defineComponent({
     async runJobNow(job: any) {
       const alert = await alertController
         .create({
-          header: this.$t("Run now"),
-          message: this.$t('Running this job now will not replace this job. A copy of this job will be created and run immediately. You may not be able to reverse this action.', { space: '<br/><br/>' }),
+          header: translate("Run now"),
+          message: translate('Running this job now will not replace this job. A copy of this job will be created and run immediately. You may not be able to reverse this action.', { space: '<br/><br/>' }),
           buttons: [
             {
-              text: this.$t("Cancel"),
+              text: translate("Cancel"),
               role: 'cancel',
             },
             {
-              text: this.$t('Run now'),
+              text: translate('Run now'),
               handler: async () => {
                 if(job) {
                   // return if job has missing data or error
@@ -135,7 +136,8 @@ export default defineComponent({
       hasPermission,
       pinOutline,
       store, 
-      timeOutline  
+      timeOutline,
+      translate
     }
   }
 });
