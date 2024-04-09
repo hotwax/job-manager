@@ -12,13 +12,11 @@
 
   <ion-content>
     <ion-item>
-      <ion-label position="fixed">{{ translate('Name') }}</ion-label>
-      <ion-input :placeholder="currentDateTime = getCurrentDateTime()" v-model="jobName" />
+      <ion-input :label="translate('Name')" label-placement="fixed" :placeholder="currentDateTime = getCurrentDateTime()" v-model="jobName" />
     </ion-item>
     <ion-item>
       <ion-icon slot="start" :icon="ticketOutline" />
-      <ion-label>{{ translate('Order parking') }}</ion-label>
-      <ion-select slot="end" interface="popover" :value="batchFacilityId" @ionChange="batchFacilityId = $event['detail'].value; updateCustomParameters()">
+      <ion-select :label="translate('Order parking')" interface="popover" :value="batchFacilityId" @ionChange="batchFacilityId = $event['detail'].value; updateCustomParameters()">
         <ion-select-option value="_NA_">{{ translate("Brokering queue") }}</ion-select-option>
         <ion-select-option value="PRE_ORDER_PARKING">{{ translate("Pre-order parking") }}</ion-select-option>
         <ion-select-option value="BACKORDER_PARKING">{{ translate("Back-order parking") }}</ion-select-option>
@@ -26,8 +24,7 @@
     </ion-item>
     <ion-item>
       <ion-icon slot="start" :icon="warningOutline" />
-      <ion-label>{{ translate('Unfillable orders') }}</ion-label>
-      <ion-toggle slot="end" :checked="unfillableOrder" @ionChange="unfillableOrder = !unfillableOrder; updateCustomParameters()" />
+      <ion-toggle :checked="unfillableOrder" @ionChange="unfillableOrder = !unfillableOrder; updateCustomParameters()">{{ translate('Unfillable orders') }}</ion-toggle>
     </ion-item>
 
     <ion-list v-if="customOptionalParameters.length || customRequiredParameters.length">
@@ -64,8 +61,7 @@
 
       <ion-item>
         <ion-icon slot="start" :icon="timeOutline" />
-        <ion-label>{{ translate('Run time') }}</ion-label>
-        <ion-select interface="popover" :placeholder="translate('Select')" :value="runTime" @ionChange="updateRunTime($event)">
+        <ion-select :label="translate('Run time')" interface="popover" :placeholder="translate('Select')" :value="runTime" @ionChange="updateRunTime($event)">
           <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ translate(runTime.label) }}</ion-select-option>
         </ion-select>
 
@@ -82,9 +78,7 @@
       </ion-item>
       <ion-item lines="none">
         <ion-icon slot="start" :icon="timerOutline" />
-        <ion-label>{{ translate('Frequency') }}</ion-label>
-        <ion-select :value="jobStatus" :interface-options="{ header: translate('Frequency') }" interface="popover" :placeholder="translate('Disabled')" @ionChange="jobStatus = $event.detail.value" @ionDismiss="jobStatus == 'CUSTOM' && setCustomFrequency()">
-          <ion-select-option v-for="freq in frequencyOptions" :key="freq.id" :value="freq.id">{{ freq.description }}</ion-select-option>
+        <ion-select :label="translate('Frequency')" :value="jobStatus" :interface-options="{ header: translate('Frequency') }" interface="popover" :placeholder="translate('Disabled')" @ionChange="jobStatus = $event.detail.value" @ionDismiss="jobStatus == 'CUSTOM' && setCustomFrequency()">
         </ion-select>
       </ion-item>
     </ion-card>
