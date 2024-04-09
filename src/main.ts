@@ -32,7 +32,7 @@ import permissionRules from '@/authorization/Rules';
 import permissionActions from '@/authorization/Actions';
 import { dxpComponents } from '@hotwax/dxp-components'
 import { login, logout, loader } from './user-utils';
-import { getConfig, initialise } from './adapter';
+import { getConfig, initialise,   setUserTimeZone, getAvailableTimeZones } from './adapter';
 import localeMessages from './locales';
 
 
@@ -56,6 +56,8 @@ const app = createApp(App)
     appLoginUrl: process.env.VUE_APP_LOGIN_URL as string,
     getConfig,
     initialise,
+    setUserTimeZone,
+    getAvailableTimeZones,
     localeMessages
   })
 
