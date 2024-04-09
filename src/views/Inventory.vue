@@ -14,16 +14,6 @@
             <ion-card-header>
               <ion-card-title>{{ $t("Adjustments") }}</ion-card-title>
             </ion-card-header>
-            <ion-item>
-              <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="bopisCorrections" color="secondary" @ionChange="updateJob($event['detail'].checked, this.jobEnums['BOPIS_CORRECTION'])">
-                <ion-label class="ion-text-wrap">{{ $t("BOPIS corrections") }}</ion-label>
-              </ion-toggle>
-            </ion-item>
-            <ion-item lines="none">
-              <ion-label class="ion-text-wrap">
-                <p>{{ $t("When using HotWax BOPIS, Shopify isn't aware of the actual inventory consumed. HotWax will automatically restore inventory automatically reduced by Shopify and deduct inventory from the correct store to maintain inventory accuracy.") }}</p>
-              </ion-label>
-            </ion-item>
             <ion-item button @click="viewJobConfiguration({ id: 'HARD_SYNC', status: getJobStatus(jobEnums['HARD_SYNC'])})" detail>
               <ion-label class="ion-text-wrap">{{ $t("Hard sync") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('HARD_SYNC') }}</ion-label>
@@ -74,7 +64,7 @@ import {
 import { defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
 import JobConfiguration from '@/components/JobConfiguration.vue'
-import { generateJobCustomParameters, isFutureDate, showToast, prepareRuntime, hasJobDataError } from '@/utils';
+import { isFutureDate, showToast } from '@/utils';
 import emitter from '@/event-bus';
 import { useRouter } from 'vue-router'
 import { translate } from '@/i18n';
@@ -122,10 +112,6 @@ export default defineComponent({
       getMoreJobs: 'job/getMoreJobs',
       getCachedWebhook: 'webhook/getCachedWebhook',
     }),
-    bopisCorrections(): boolean {
-      const status = this.getJobStatus(this.jobEnums["BOPIS_CORRECTION"]);
-      return status && status !== "SERVICE_DRAFT";
-    },
     isInventoryLevelUpdated (): boolean {
       const webhookTopic = this.webhookEnums['INVENTORY_LEVEL_UPDATE']
       return this.getCachedWebhook[webhookTopic]
@@ -145,41 +131,6 @@ export default defineComponent({
         await this.store.dispatch('webhook/subscribeWebhook', enumId)
       } else {
         await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhook?.id, shopifyConfigId: this.currentShopifyConfig.shopifyConfigId })
-      }
-    },
-    async updateJob(checked: boolean, id: string, status="EVERY_15_MIN") {
-      const job = this.getJob(id);
-
-      // added check that if the job is not present, then display a toast and then return
-      if (!job) {
-        showToast(translate('Configuration missing'))
-        return;
-      }
-
-      // return if job has missing data or error
-      if (hasJobDataError(job)) return;
-
-      // TODO: added this condition to not call the api when the value of the select automatically changes
-      // need to handle this properly
-      if ((checked && job?.status === 'SERVICE_PENDING') || (!checked && job?.status === 'SERVICE_DRAFT')) {
-        return;
-      }
-
-      job['jobStatus'] = status
-
-      // if job runTime is not a valid date then making runTime as empty
-      if (job?.runTime && !isFutureDate(job?.runTime)) {
-        job.runTime = ''
-      }
-
-      if (!checked) {
-        this.store.dispatch('job/cancelJob', job)
-      } else if (job?.status === 'SERVICE_DRAFT') {
-        job.runTime = prepareRuntime(job)
-        const jobCustomParameters = generateJobCustomParameters([], [], job.runtimeData)
-        this.store.dispatch('job/scheduleService', { job, jobCustomParameters })
-      } else if (job?.status === 'SERVICE_PENDING') {
-        this.store.dispatch('job/updateJob', job)
       }
     },
     async viewJobConfiguration(jobInformation: any) {
