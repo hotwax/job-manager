@@ -19,8 +19,7 @@
       <ion-note v-else slot="end">{{ shopifyConfigNames }}</ion-note>
     </ion-item>
     <ion-item>
-      <ion-label>{{ $t("Run time") }}</ion-label>
-      <ion-select interface="popover" :placeholder="$t('Select run time')" :value="job.runTime" @ionChange="updateRunTime($event)">
+      <ion-select :label="$t('Run time')" interface="popover" :placeholder="$t('Select run time')" :value="job.runTime" @ionChange="updateRunTime($event)">
         <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ $t(runTime.label) }}</ion-select-option>
       </ion-select>
       <ion-modal class="date-time-modal" :is-open="isDateTimeModalOpen" @didDismiss="() => isDateTimeModalOpen = false">
@@ -35,8 +34,7 @@
       </ion-modal>
     </ion-item>
     <ion-item>
-      <ion-label>{{ $t("Schedule") }}</ion-label>
-      <ion-select :interface-options="{ header: $t('Frequency') }" :value="job.frequency" interface="popover" :placeholder='$t("Bulk schedule")' @ionDismiss="job.frequency == 'CUSTOM' && setCustomFrequency()" @ionChange='setFrequency($event)'>
+      <ion-select :label="$t('Schedule')" :interface-options="{ header: $t('Frequency') }" :value="job.frequency" interface="popover" :placeholder='$t("Bulk schedule")' @ionDismiss="job.frequency == 'CUSTOM' && setCustomFrequency()" @ionChange='setFrequency($event)'>
         <ion-select-option v-for="freq in frequencyOptions" :key="freq.id" :value="freq.id">{{ $t(freq.description) }}</ion-select-option>
       </ion-select>
     </ion-item>

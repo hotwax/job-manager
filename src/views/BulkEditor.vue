@@ -34,8 +34,9 @@
           </ion-card-header>
           
           <ion-item button v-for="shopifyConfig in shopifyConfigsForEComStore" :key="shopifyConfig?.shopifyConfigId" :value="shopifyConfig?.shopifyConfigId" @click="updateSelectedShopifyConfigs(shopifyConfig.shopId)">
-            <ion-label>{{ shopifyConfig.name ? shopifyConfig.name : shopifyConfig.shopifyConfigName }}</ion-label>
-            <ion-checkbox slot="end" :checked="selectedShopifyConfigs.includes(shopifyConfig.shopId)"/>
+            <ion-checkbox :checked="selectedShopifyConfigs.includes(shopifyConfig.shopId)">
+              <ion-label>{{ shopifyConfig.name ? shopifyConfig.name : shopifyConfig.shopifyConfigName }}</ion-label>
+            </ion-checkbox>
           </ion-item>
             
           <ion-card-content>
@@ -50,8 +51,7 @@
           </ion-card-header>
           <ion-item>
             <ion-icon slot="start" :icon="timeOutline" />
-            <ion-label>{{ $t("Run time") }}</ion-label>
-            <ion-select interface="popover" :placeholder="$t('Select run time')" :value="globalRuntime" @ionChange="updateRunTime($event)">
+            <ion-select :label="$t('Run time')" interface="popover" :placeholder="$t('Select run time')" :value="globalRuntime" @ionChange="updateRunTime($event)">
               <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ $t(runTime.label) }}</ion-select-option>
             </ion-select>
             <ion-modal class="date-time-modal" :is-open="isDateTimeModalOpen" @didDismiss="() => isDateTimeModalOpen = false">
@@ -67,8 +67,7 @@
           </ion-item>
           <ion-item>
             <ion-icon slot="start" :icon="timerOutline" />
-            <ion-label>{{ $t("Schedule") }}</ion-label>
-            <ion-select interface="popover" :interface-options="{ header: $t('Frequency') }" :value="globalFreq" :placeholder='$t("Schedule")' @ionChange=setFrequency($event) @ionDismiss="globalFreq == 'CUSTOM' && setCustomFrequency()">
+            <ion-select :label="$t('Schedule')" interface="popover" :interface-options="{ header: $t('Frequency') }" :value="globalFreq" :placeholder='$t("Schedule")' @ionChange=setFrequency($event) @ionDismiss="globalFreq == 'CUSTOM' && setCustomFrequency()">
               <ion-select-option v-for="freq in frequencyOptions" :key="freq.id" :value="freq.id">{{ $t(freq.description) }}</ion-select-option>
             </ion-select>
           </ion-item>
