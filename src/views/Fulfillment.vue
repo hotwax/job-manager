@@ -60,8 +60,9 @@
               <ion-card-title>{{ translate("Auto cancelations") }}</ion-card-title>
             </ion-card-header>
             <ion-item>
-              <ion-label class="ion-text-wrap">{{ translate("Days") }}</ion-label>
-              <ion-input :readonly="!hasPermission(Actions.APP_JOB_UPDATE)" :placeholder="translate('before auto cancelation')" v-model.number="autoCancelDays" type="number" />
+              <ion-input :readonly="!hasPermission(Actions.APP_JOB_UPDATE)" :placeholder="translate('before auto cancelation')" v-model.number="autoCancelDays" type="number">
+                <div slot="label" class="ion-text-wrap">{{ translate("Days") }}</div>
+              </ion-input>
               <!-- The button is enabled when we hover over the button or ion input looses focus and not when the value is changed -->
               <!-- Todo: need to disable the button if value is unchanged -->
               <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" fill="clear" @click="updateAutoCancelDays()" slot="end">
@@ -69,8 +70,9 @@
               </ion-button>
             </ion-item>
             <ion-item>
-              <ion-label class="ion-text-wrap">{{ translate("Check daily") }}</ion-label>
-              <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="autoCancelCheckDaily" color="secondary" slot="end" @ionChange="updateJob($event['detail'].checked, jobEnums['AUTO_CNCL_DAL'], 'EVERYDAY')" />
+              <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="autoCancelCheckDaily" color="secondary" @ionChange="updateJob($event['detail'].checked, jobEnums['AUTO_CNCL_DAL'], 'EVERYDAY')">
+                <ion-label class="ion-text-wrap">{{ translate("Check daily") }}</ion-label>
+              </ion-toggle>
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap"><p>{{ translate("Unfulfilled orders that pass their auto cancelation date will be canceled automatically in HotWax Commerce. They will also be canceled in Shopify if upload for canceled orders is enabled.") }}</p></ion-label>

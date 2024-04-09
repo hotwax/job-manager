@@ -31,8 +31,9 @@
         <ion-list>
           <ion-radio-group value="rd" v-model="timeZoneId">
             <ion-item :key="timeZone.id" v-for="timeZone in filteredTimeZones">
-              <ion-label>{{ timeZone.label }} ({{ timeZone.id }})</ion-label>
-              <ion-radio :value="timeZone.id" slot="start" />
+              <ion-radio :value="timeZone.id" labelPlacement="end" justify="start">
+                <ion-label>{{ timeZone.label }} ({{ timeZone.id }})</ion-label>
+              </ion-radio>
             </ion-item>
           </ion-radio-group>
         </ion-list>

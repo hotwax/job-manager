@@ -19,8 +19,8 @@
 
       <ion-item>
         <ion-icon slot="start" :icon="timeOutline" />
-        <ion-label class="ion-text-wrap">{{ translate("Run time") }}</ion-label>
         <ion-select interface="popover" :placeholder="translate('Select')" :value="runTime" @ionChange="updateRunTime($event)">
+          <div slot="label" class="ion-text-wrap">{{ translate("Run time") }}</div>
           <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ translate(runTime.label) }}</ion-select-option>
         </ion-select>
         <!-- TODO: display a button when we are not having a runtime and open the datetime component
@@ -42,8 +42,8 @@
 
       <ion-item>
         <ion-icon slot="start" :icon="timerOutline" />
-        <ion-label class="ion-text-wrap">{{ translate("Schedule") }}</ion-label>
         <ion-select :value="jobStatus" :interface-options="{ header: translate('Frequency') }" interface="popover" :placeholder="translate('Disabled')" @ionChange="jobStatus = $event.detail.value" @ionDismiss="jobStatus == 'CUSTOM' && setCustomFrequency()">
+          <div slot="label" class="ion-text-wrap">{{ translate("Schedule") }}</div>
           <ion-select-option v-for="freq in frequencyOptions" :key="freq.id" :value="freq.id">{{ freq.description }}</ion-select-option>
         </ion-select>
       </ion-item>
@@ -107,8 +107,9 @@
     </ion-item>
     <ion-item @click="updatePinnedJobs(currentJob?.systemJobEnumId)" button>
       <ion-icon slot="start" :icon="pinOutline" />
-      {{ translate("Pin job") }}
-      <ion-checkbox slot="end" :checked="pinnedJobs && pinnedJobs.includes(currentJob.systemJobEnumId)" />
+      <ion-checkbox :checked="pinnedJobs && pinnedJobs.includes(currentJob.systemJobEnumId)">
+        <ion-label>{{ translate("Pin job") }}</ion-label>
+      </ion-checkbox>
     </ion-item>
   </div>
 

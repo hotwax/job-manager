@@ -45,20 +45,24 @@
               <ion-card-title>{{ translate("Webhooks") }}</ion-card-title>
             </ion-card-header>
             <ion-item>
-              <ion-label class="ion-text-wrap">{{ translate("New orders") }}</ion-label>
-              <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="isNewOrders" @ionChange="updateWebhook($event['detail'].checked, 'NEW_ORDERS')" slot="end" color="secondary" />
+              <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="isNewOrders" @ionChange="updateWebhook($event['detail'].checked, 'NEW_ORDERS')" color="secondary">
+                <ion-label class="ion-text-wrap">{{ translate("New orders") }}</ion-label>
+              </ion-toggle>
             </ion-item>
             <ion-item>
-              <ion-label class="ion-text-wrap">{{ translate("Cancelled orders") }}</ion-label>
-              <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="isCancelledOrders" @ionChange="updateWebhook($event['detail'].checked, 'CANCELLED_ORDERS')" slot="end" color="secondary" />
+              <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="isCancelledOrders" @ionChange="updateWebhook($event['detail'].checked, 'CANCELLED_ORDERS')" color="secondary">
+                <ion-label class="ion-text-wrap">{{ translate("Cancelled orders") }}</ion-label>
+              </ion-toggle>
             </ion-item>
             <ion-item>
-              <ion-label class="ion-text-wrap">{{ translate("Payment status") }}</ion-label>
-              <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="isPaymentStatus" @ionChange="updateWebhook($event['detail'].checked, 'PAYMENT_STATUS')" slot="end" color="secondary" />
+              <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="isPaymentStatus" @ionChange="updateWebhook($event['detail'].checked, 'PAYMENT_STATUS')" color="secondary">
+                <ion-label class="ion-text-wrap">{{ translate("Payment status") }}</ion-label>
+              </ion-toggle>
             </ion-item>
             <ion-item lines="none">
-              <ion-label class="ion-text-wrap">{{ translate("Returns") }}</ion-label>
-              <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="isReturns" @ionChange="updateWebhook($event['detail'].checked, 'RETURNS')" slot="end" color="secondary" />
+              <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="isReturns" @ionChange="updateWebhook($event['detail'].checked, 'RETURNS')" color="secondary">
+                <ion-label class="ion-text-wrap">{{ translate("Returns") }}</ion-label>
+              </ion-toggle>
             </ion-item>
           </ion-card>
 

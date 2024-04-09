@@ -41,12 +41,14 @@
               <ion-card-title>{{ translate("Process Uploads") }}</ion-card-title>
             </ion-card-header>
             <ion-item>
-              <ion-label class="ion-text-wrap">{{ translate("File upload status") }}</ion-label>
-              <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="fileStatusUpdateWebhook" color="secondary" slot="end" @ionChange="updateWebhook($event['detail'].checked, 'BULK_OPERATIONS_FINISH')" />
+              <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="fileStatusUpdateWebhook" color="secondary" @ionChange="updateWebhook($event['detail'].checked, 'BULK_OPERATIONS_FINISH')">
+                <ion-label>{{ translate("File upload status") }}</ion-label>
+              </ion-toggle>
             </ion-item>
             <ion-item>
-              <ion-label class="ion-text-wrap">{{ translate("Upload Pending Process") }}</ion-label>
-              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" slot="end" :checked="processPendingUploadsOnShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['UL_PRCS'])"/>
+              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="processPendingUploadsOnShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['UL_PRCS'])">
+                <ion-label class="ion-text-wrap">{{ translate("Upload Pending Process") }}</ion-label>
+              </ion-checkbox>
             </ion-item>
           </ion-card>
         </section>

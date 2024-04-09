@@ -40,9 +40,7 @@
       </ion-item-divider>
 
       <ion-item :key="index" v-for="(parameter, index) in customRequiredParameters">
-        <ion-label>{{ parameter.name }}</ion-label>
-        <ion-input :placeholder="parameter.value ? parameter.value : parameter.name" v-model="parameter.value" />
-        <ion-note slot="helper">{{ parameter.type }}</ion-note>
+        <ion-input :label="parameter.name" :placeholder="parameter.value ? parameter.value : parameter.name" v-model="parameter.value" :helper-text="parameter.type" />
       </ion-item>
 
       <ion-item-divider v-if="customOptionalParameters.length" color="light">
@@ -50,9 +48,7 @@
       </ion-item-divider>
 
       <ion-item :key="index" v-for="(parameter, index) in customOptionalParameters">
-        <ion-label>{{ parameter.name }}</ion-label>
-        <ion-input :placeholder="parameter.value ? parameter.value : parameter.name" v-model="parameter.value"/>
-        <ion-note slot="helper">{{ parameter.type }}</ion-note>
+        <ion-input :label="parameter.name" :placeholder="parameter.value ? parameter.value : parameter.name" v-model="parameter.value" :helper-text="parameter.type" />
       </ion-item>
     </ion-list>
     <ion-list v-else>
@@ -119,7 +115,6 @@ import {
   IonLabel,
   IonList,
   IonModal,
-  IonNote,
   IonSelect,
   IonSelectOption,
   IonTitle,
@@ -156,7 +151,6 @@ export default defineComponent({
     IonLabel,
     IonList,
     IonModal,
-    IonNote,
     IonSelect,
     IonSelectOption,
     IonTitle,
