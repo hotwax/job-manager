@@ -41,8 +41,9 @@
               </ion-item>
   
               <ion-item lines="none">
-                <ion-text class="ion-text-wrap">{{ $t("Unfillable orders") }}</ion-text>
-                <ion-toggle disabled :checked="batchJobEnums[batch?.enumId].unfillable" slot="end"/>
+                <ion-toggle disabled :checked="batchJobEnums[batch?.enumId].unfillable">
+                  <ion-label class="ion-text-wrap">{{ $t("Unfillable orders") }}</ion-label>
+                </ion-toggle>
               </ion-item>
 
               <ion-item lines="none" v-if="batch?.status === 'SERVICE_PENDING' && Object.keys(generateCustomParameters(batch)).length">
@@ -82,7 +83,6 @@ import {
   IonMenuButton,
   IonPage,
   IonRow,
-  IonText,
   IonTitle,
   IonToggle,
   IonToolbar,
@@ -121,7 +121,6 @@ export default defineComponent({
     IonMenuButton,
     IonPage,
     IonRow,
-    IonText,
     IonTitle,
     IonToggle,
     IonToolbar,
@@ -268,6 +267,7 @@ export default defineComponent({
 <style scoped>
 ion-card-header {
   display: flex;
+  flex-direction: row;
   justify-content: space-between;
   align-items: center;
 }
