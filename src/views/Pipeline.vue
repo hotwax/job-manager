@@ -86,7 +86,7 @@
             <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
               <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
             </ion-refresher>
-            <ion-infinite-scroll @ionInfinite="loadMorePendingJobs($event)" threshold="100px" :disabled="!isPendingJobsScrollable">
+            <ion-infinite-scroll @ionInfinite="loadMorePendingJobs($event)" threshold="100px" :disabled="!isPendingJobsScrollable" :key="queryString">
               <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="translate('Loading')"/>
             </ion-infinite-scroll>
           </div>
@@ -152,7 +152,7 @@
             <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
               <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
             </ion-refresher>
-            <ion-infinite-scroll @ionInfinite="loadMoreRunningJobs($event)" threshold="100px" :disabled="!isRunningJobsScrollable">
+            <ion-infinite-scroll @ionInfinite="loadMoreRunningJobs($event)" threshold="100px" :disabled="!isRunningJobsScrollable" :key="queryString">
               <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="translate('Loading')"/>
             </ion-infinite-scroll>
           </div> 
@@ -222,7 +222,7 @@
           <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
             <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
           </ion-refresher>   
-          <ion-infinite-scroll @ionInfinite="loadMoreJobHistory($event)" threshold="100px" :disabled="!isHistoryJobsScrollable">
+          <ion-infinite-scroll @ionInfinite="loadMoreJobHistory($event)" threshold="100px" :disabled="!isHistoryJobsScrollable" :key="queryString">
             <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="translate('Loading')"/>
           </ion-infinite-scroll>
           </div>          
