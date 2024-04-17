@@ -9,7 +9,7 @@
       <ion-title>{{ translate("Select jobs") }}</ion-title>
     </ion-toolbar>
   </ion-header>
-  <ion-content>
+  <ion-content ref="contentRef" :scroll-events="true" @ionScroll="enableScrolling()">
     <ion-searchbar :placeholder="translate('Search jobs')" @keyup.enter="search($event)" />
 
     <div v-if="queryString.length === 0" class="ion-text-center">
@@ -30,7 +30,7 @@
       </ion-item>
     </ion-list>
 
-    <ion-infinite-scroll @ionInfinite="loadMoreJobs($event)" threshold="100px" :disabled="!isScrollable" :key="queryString">
+    <ion-infinite-scroll @ionInfinite="loadMoreJobs($event)" threshold="100px" v-show="isScrollingEnabled && isScrollable" ref="infiniteScrollRef">
       <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="translate('Loading')" />
     </ion-infinite-scroll>
   </ion-content>
@@ -84,7 +84,8 @@ export default defineComponent({
       queryString: '',
       jobs: [] as any,
       isScrollable: true,
-      jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any
+      jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
+      isScrollingEnabled: false
     }
   },
   computed: {
@@ -92,6 +93,9 @@ export default defineComponent({
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
       isJobAddedToBulkScheduler: 'job/isJobAddedToBulkScheduler',
     })
+  },
+  async ionViewWillEnter() {
+    this.isScrollingEnabled = false;
   },
   methods: {
     async search(event: any) {
@@ -141,13 +145,24 @@ export default defineComponent({
         showToast(translate("Something went wrong"));
       }
     },
+    enableScrolling() {
+      const parentElement = (this as any).$refs.contentRef.$el
+      const scrollEl = parentElement.shadowRoot.querySelector("main[part='scroll']")
+      let scrollHeight = scrollEl.scrollHeight, infiniteHeight = (this as any).$refs.infiniteScrollRef.$el.offsetHeight, scrollTop = scrollEl.scrollTop, threshold = 100, height = scrollEl.offsetHeight
+      const distanceFromInfinite = scrollHeight - infiniteHeight - scrollTop - threshold - height
+      if(distanceFromInfinite < 0) {
+        this.isScrollingEnabled = false;
+      } else {
+        this.isScrollingEnabled = true;
+      }
+    },
     async loadMoreJobs(event: any) {
       this.getJobs(
         undefined,
         Math.ceil(this.jobs.length / (process.env.VUE_APP_VIEW_SIZE as any)).toString()
-      ).then(() => {
-        event.target.complete();
-      })
+      ).then(async () => {
+        await event.target.complete();
+      });
     },
     addToBulkScheduler(job: any) {
       this.store.dispatch('job/addToBulkScheduler', job);
