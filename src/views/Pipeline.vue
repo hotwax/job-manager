@@ -95,7 +95,7 @@
                 If we do not define an extra variable and just use v-show to check for `isScrollable` then when coming back to the page infinite-scroll is called programatically.
                 We have added an ionScroll event on ionContent to check whether the infiniteScroll can be enabled or not by toggling the value of isScrollingEnabled whenever the height < 0.
               -->
-            <ion-infinite-scroll @ionInfinite="loadMorePendingJobs($event)" threshold="100px" v-show="isScrollingEnabled && isPendingJobsScrollable" ref="infiniteScrollRef">
+            <ion-infinite-scroll @ionInfinite="loadMorePendingJobs($event)" threshold="100px" v-show="isPendingJobsScrollable" ref="infiniteScrollRef">
               <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="translate('Loading')"/>
             </ion-infinite-scroll>
           </div>
@@ -161,7 +161,7 @@
             <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
               <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
             </ion-refresher>
-            <ion-infinite-scroll @ionInfinite="loadMoreRunningJobs($event)" threshold="100px" v-show="isScrollingEnabled && isRunningJobsScrollable" ref="infiniteScrollRef">
+            <ion-infinite-scroll @ionInfinite="loadMoreRunningJobs($event)" threshold="100px" v-show="isRunningJobsScrollable" ref="infiniteScrollRef">
               <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="translate('Loading')"/>
             </ion-infinite-scroll>
           </div> 
@@ -231,7 +231,7 @@
           <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
             <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
           </ion-refresher>   
-          <ion-infinite-scroll @ionInfinite="loadMoreJobHistory($event)" threshold="100px"  v-show="isScrollingEnabled && isHistoryJobsScrollable" ref="infiniteScrollRef">
+          <ion-infinite-scroll @ionInfinite="loadMoreJobHistory($event)" threshold="100px"  v-show="isHistoryJobsScrollable" ref="infiniteScrollRef">
             <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="translate('Loading')"/>
           </ion-infinite-scroll>
           </div>          
@@ -463,6 +463,10 @@ export default defineComponent({
       }
     },
     async loadMoreJobHistory(event: any){
+      // Added this check here as if added on infinite-scroll component the Loading content does not gets displayed
+      if(!(this.isScrollingEnabled && this.isHistoryJobsScrollable)) {
+        await event.target.complete();
+      }
       this.getJobHistory(
         undefined,
         Math.ceil(this.jobHistory.length / (process.env.VUE_APP_VIEW_SIZE as any)).toString()
@@ -471,6 +475,10 @@ export default defineComponent({
       });
     },
     async loadMoreRunningJobs(event: any){
+      // Added this check here as if added on infinite-scroll component the Loading content does not gets displayed
+      if(!(this.isScrollingEnabled && this.isRunningJobsScrollable)) {
+        await event.target.complete();
+      }
       this.getRunningJobs(
         undefined,
         Math.ceil(this.runningJobs.length / (process.env.VUE_APP_VIEW_SIZE as any)).toString()
@@ -479,6 +487,10 @@ export default defineComponent({
       });
     },
     async loadMorePendingJobs (event: any) {
+      // Added this check here as if added on infinite-scroll component the Loading content does not gets displayed
+      if(!(this.isScrollingEnabled && this.isPendingJobsScrollable)) {
+        await event.target.complete();
+      }
       this.getPendingJobs(
         undefined,
         Math.ceil(this.pendingJobs.length / (process.env.VUE_APP_VIEW_SIZE as any)).toString()
