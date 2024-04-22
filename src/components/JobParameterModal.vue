@@ -7,8 +7,8 @@
         </ion-button>
       </ion-buttons>
       <ion-title>{{ translate('Custom Parameters') }}</ion-title>
-      <ion-buttons slot="end">
-        <ion-button fill="clear" v-if="customRequiredParameters.length || customOptionalParameters.length" @click="copyToClipboard(getParameters(), 'Copied to clipboard')">
+      <ion-buttons slot="end" v-if="customRequiredParameters.length || customOptionalParameters.length">
+        <ion-button fill="clear" @click="copyToClipboard(getParameters(), 'Copied to clipboard')">
           <ion-icon slot="icon-only" :icon="copyOutline" />
         </ion-button>
       </ion-buttons>
