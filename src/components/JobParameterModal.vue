@@ -22,7 +22,7 @@
           <ion-label>{{ translate('Required Parameters') }}</ion-label>
         </ion-item-divider>
 
-        <ion-item :key="index" v-for="(parameter, index) in customRequiredParameters">
+        <ion-item :key="index" v-for="(parameter, index) in customRequiredParameters" lines="none">
           <ion-input :label="parameter.name" v-if="currentJob.statusId === 'SERVICE_DRAFT'" :placeholder="parameter.name" v-model="parameter.value" :helper-text="parameter.type" />
           <template v-else>
             <ion-label>{{ parameter.name }}</ion-label>
@@ -34,7 +34,7 @@
           <ion-label>{{ translate('Optional Parameters') }}</ion-label>
         </ion-item-divider>
 
-        <ion-item :key="index" v-for="(parameter, index) in customOptionalParameters">
+        <ion-item :key="index" v-for="(parameter, index) in customOptionalParameters" lines="none">
           <ion-input v-if="currentJob.statusId === 'SERVICE_DRAFT'" :label="parameter.name" :placeholder="parameter.name" v-model="parameter.value" :helper-text="parameter.type" />
           <template v-else>
             <ion-label>{{ parameter.name }}</ion-label>
