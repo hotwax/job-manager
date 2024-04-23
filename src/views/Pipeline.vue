@@ -30,7 +30,7 @@
       </div>
     </ion-header>
 
-    <ion-content id="filter-content">
+    <ion-content ref="contentRef" :scroll-events="true" @ionScroll="enableScrolling()" id="filter-content">
       <main>
         <section v-if="segmentSelected === 'pending'">
           <!-- Empty state -->
@@ -86,7 +86,16 @@
             <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
               <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
             </ion-refresher>
-            <ion-infinite-scroll @ionInfinite="loadMorePendingJobs($event)" threshold="100px" :disabled="!isPendingJobsScrollable">
+              <!--
+                When searching for a keyword, and if the user moves to the last item, then the didFire value inside infinite scroll becomes true and thus the infinite scroll does not trigger again on the same page(https://github.com/hotwax/users/issues/84).
+                Also if we are at the section that has been loaded by infinite-scroll and then move to the details page then the list infinite scroll does not work after coming back to the page
+                In ionic v7.6.0, an issue related to infinite scroll has been fixed that when more items can be added to the DOM, but infinite scroll does not fire as the window is not completely filled with the content(https://github.com/ionic-team/ionic-framework/issues/18071).
+                The above fix in ionic 7.6.0 is resulting in the issue of infinite scroll not being called again.
+                To fix this we have maintained another variable `isScrollingEnabled` to check whether the scrolling can be performed or not.
+                If we do not define an extra variable and just use v-show to check for `isScrollable` then when coming back to the page infinite-scroll is called programatically.
+                We have added an ionScroll event on ionContent to check whether the infiniteScroll can be enabled or not by toggling the value of isScrollingEnabled whenever the height < 0.
+              -->
+            <ion-infinite-scroll @ionInfinite="loadMorePendingJobs($event)" threshold="100px" v-show="isPendingJobsScrollable" ref="infiniteScrollRef">
               <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="translate('Loading')"/>
             </ion-infinite-scroll>
           </div>
@@ -152,7 +161,7 @@
             <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
               <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
             </ion-refresher>
-            <ion-infinite-scroll @ionInfinite="loadMoreRunningJobs($event)" threshold="100px" :disabled="!isRunningJobsScrollable">
+            <ion-infinite-scroll @ionInfinite="loadMoreRunningJobs($event)" threshold="100px" v-show="isRunningJobsScrollable" ref="infiniteScrollRef">
               <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="translate('Loading')"/>
             </ion-infinite-scroll>
           </div> 
@@ -222,7 +231,7 @@
           <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
             <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
           </ion-refresher>   
-          <ion-infinite-scroll @ionInfinite="loadMoreJobHistory($event)" threshold="100px" :disabled="!isHistoryJobsScrollable">
+          <ion-infinite-scroll @ionInfinite="loadMoreJobHistory($event)" threshold="100px"  v-show="isHistoryJobsScrollable" ref="infiniteScrollRef">
             <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="translate('Loading')"/>
           </ion-infinite-scroll>
           </div>          
@@ -350,7 +359,8 @@ export default defineComponent({
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
       isRetrying: false,
-      queryString: '' as any
+      queryString: '' as any,
+      isScrollingEnabled: false
     }
   },
   computed: {
@@ -375,6 +385,9 @@ export default defineComponent({
       } 
       return Object.values(pipelineFilters).some((filter: any) => filter.length > 0) ? 'secondary' : '';
     },
+  },
+  async ionViewWillEnter() {
+    this.isScrollingEnabled = false;
   },
   methods : {
     isPinnedJobSelected(jobEnumId: any) {
@@ -438,29 +451,52 @@ export default defineComponent({
       const timeDiff = DateTime.fromMillis(time).diff(DateTime.local());
       return DateTime.local().plus(timeDiff).toRelative();
     },
+    enableScrolling() {
+      const parentElement = (this as any).$refs.contentRef.$el
+      const scrollEl = parentElement.shadowRoot.querySelector("main[part='scroll']")
+      let scrollHeight = scrollEl.scrollHeight, infiniteHeight = (this as any).$refs.infiniteScrollRef.$el.offsetHeight, scrollTop = scrollEl.scrollTop, threshold = 100, height = scrollEl.offsetHeight
+      const distanceFromInfinite = scrollHeight - infiniteHeight - scrollTop - threshold - height
+      if(distanceFromInfinite < 0) {
+        this.isScrollingEnabled = false;
+      } else {
+        this.isScrollingEnabled = true;
+      }
+    },
     async loadMoreJobHistory(event: any){
+      // Added this check here as if added on infinite-scroll component the Loading content does not gets displayed
+      if(!(this.isScrollingEnabled && this.isHistoryJobsScrollable)) {
+        await event.target.complete();
+      }
       this.getJobHistory(
         undefined,
         Math.ceil(this.jobHistory.length / (process.env.VUE_APP_VIEW_SIZE as any)).toString()
-      ).then(() => {
-        event.target.complete();
-      })
+      ).then(async () => {
+        await event.target.complete();
+      });
     },
     async loadMoreRunningJobs(event: any){
+      // Added this check here as if added on infinite-scroll component the Loading content does not gets displayed
+      if(!(this.isScrollingEnabled && this.isRunningJobsScrollable)) {
+        await event.target.complete();
+      }
       this.getRunningJobs(
         undefined,
         Math.ceil(this.runningJobs.length / (process.env.VUE_APP_VIEW_SIZE as any)).toString()
-      ).then(() => {
-        event.target.complete();
-      })
+      ).then(async () => {
+        await event.target.complete();
+      });
     },
     async loadMorePendingJobs (event: any) {
+      // Added this check here as if added on infinite-scroll component the Loading content does not gets displayed
+      if(!(this.isScrollingEnabled && this.isPendingJobsScrollable)) {
+        await event.target.complete();
+      }
       this.getPendingJobs(
         undefined,
         Math.ceil(this.pendingJobs.length / (process.env.VUE_APP_VIEW_SIZE as any)).toString()
-      ).then(() => {
-        event.target.complete();
-      })
+      ).then(async () => {
+        await event.target.complete();
+      });
     },
     async refreshJobs(event: any, isRetrying = false ) {
       this.isRetrying = isRetrying;
