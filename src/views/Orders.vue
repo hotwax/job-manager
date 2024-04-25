@@ -56,7 +56,7 @@
             </ion-item>
             <ion-item>
               <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="isPaymentStatus" @ionChange="updateWebhook($event['detail'].checked, 'PAYMENT_STATUS')" color="secondary">
-                <ion-label class="ion-text-wrap">{{ translate("Payment status") }}</ion-label>
+                <ion-label class="ion-text-wrap">{{ translate("Get Paid Transactions") }}</ion-label>
               </ion-toggle>
             </ion-item>
             <ion-item lines="none">

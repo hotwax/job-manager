@@ -20,8 +20,8 @@ const webhookParameters = {
     'endpoint': 'cancelOrderShopifyWebhook'
   },
   'PAYMENT_STATUS': {
-    'topic': 'orders/paid',
-    'endpoint': 'orderPaidNotificationFromShopify'
+    'topic': 'order_transactions/create',
+    'endpoint': 'getTransactionAndMarkOrderPaid'
   },
   'RETURNS': {
     'topic': 'refunds/create',
