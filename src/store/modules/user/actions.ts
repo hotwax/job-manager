@@ -233,7 +233,7 @@ const actions: ActionTree<UserState, RootState> = {
   async setCurrentShopifyConfig({ commit, dispatch, state }, payload) {
     let shopifyConfig = {} as any;
 
-    if(payload.shopifyConfigId) {
+    if (payload.shopifyConfigId) {
       shopifyConfig = state.shopifyConfigs.find((configs: any) => configs.shopifyConfigId === payload.shopifyConfigId);
     }
     commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, shopifyConfig ? shopifyConfig : {});
