@@ -9,7 +9,7 @@ import logger from "@/logger";
 
 const actions: ActionTree<WebhookState, RootState> = {
   async fetchWebhooks({ commit }) {
-    await WebhookService.fetchShopifyWebhooks({ shopifyConfigId: this.state.user.currentShopifyConfig }).then(resp => {
+    await WebhookService.fetchShopifyWebhooks({ shopifyConfigId: this.state.user.currentShopifyConfig.shopifyConfigId }).then(resp => {
       if (resp.status == 200 && resp.data.webhooks?.length > 0 && !hasError(resp)) {
         const webhooks = resp.data.webhooks;
         const topics: any = {}
