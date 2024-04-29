@@ -21,7 +21,10 @@ const actions: ActionTree<WebhookState, RootState> = {
       else{
         commit(types.WEBHOOK_UPDATED, []);
       }
-    }).catch(err => logger.error(err))
+    }).catch (err => {
+       logger.error(err);
+       commit(types.WEBHOOK_UPDATED, []);
+    })
   },
   async unsubscribeWebhook({ dispatch }, payload: any) {
 
