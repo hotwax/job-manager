@@ -231,11 +231,11 @@ const actions: ActionTree<UserState, RootState> = {
    * update current shopify config id
    */
   async setCurrentShopifyConfig({ commit, dispatch, state }, payload) {
-    let shopifyConfig = payload.shopifyConfig;
-    if(!shopifyConfig) {
-      shopifyConfig = state.shopifyConfigs.find((configs: any) => configs.shopifyConfigId === payload.shopifyConfigId)
-    }
+    let shopifyConfig = {} as any;
 
+    if (payload.shopifyConfigId) {
+      shopifyConfig = state.shopifyConfigs.find((configs: any) => configs.shopifyConfigId === payload.shopifyConfigId);
+    }
     commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, shopifyConfig ? shopifyConfig : {});
     dispatch('job/clearJobState', null, { root: true });
   },
