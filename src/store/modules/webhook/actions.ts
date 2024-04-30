@@ -17,13 +17,12 @@ const actions: ActionTree<WebhookState, RootState> = {
           topics[webhook.topic] = webhook
         })
         commit(types.WEBHOOK_UPDATED, topics)
-      }
-      else{
+      } else {
         commit(types.WEBHOOK_UPDATED, []);
       }
     }).catch (err => {
-       logger.error(err);
-       commit(types.WEBHOOK_UPDATED, []);
+      logger.error(err);
+      commit(types.WEBHOOK_UPDATED, []);
     })
   },
   async unsubscribeWebhook({ dispatch }, payload: any) {
