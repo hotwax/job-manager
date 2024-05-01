@@ -8,7 +8,7 @@
       </ion-buttons>
       <ion-title>{{ translate('Custom Parameters') }}</ion-title>
       <ion-buttons slot="end">
-        <ion-button color="primary" @click="save()">{{ translate('Save') }}</ion-button>
+        <ion-button color="primary" :disabled="currentJob.statusId === 'SERVICE_PENDING'" @click="save()">{{ translate('Save') }}</ion-button>
       </ion-buttons>
     </ion-toolbar>
   </ion-header>
@@ -116,9 +116,7 @@ export default defineComponent({
           res[param.name] = param.value
         })
       } else {
-        this.customOptionalParametersValue.map((param: any) => {
-          res[param.name] = param.value
-        })
+        this.customOptionalParametersValue.map((param: any) => res[param.name] = param.value)
       }
 
       return JSON.stringify(res);
