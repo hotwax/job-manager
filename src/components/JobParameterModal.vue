@@ -23,7 +23,7 @@
           </ion-button>
         </ion-item-divider>
 
-        <ion-item :key="index" v-for="(parameter, index) in customRequiredParametersValue">
+        <ion-item :key="index" v-for="(parameter, index) in customRequiredParametersValue" :lines="currentJob.statusId === 'SERVICE_DRAFT' ? 'none': ''">
           <ion-input :label="parameter.name" v-if="currentJob.statusId === 'SERVICE_DRAFT'" :placeholder="parameter.name" v-model="parameter.value" :helper-text="parameter.type" />
           <template v-else>
             <ion-label>{{ parameter.name }}</ion-label>
@@ -38,7 +38,7 @@
           </ion-button>
         </ion-item-divider>
 
-        <ion-item :key="index" v-for="(parameter, index) in customOptionalParametersValue">
+        <ion-item :key="index" v-for="(parameter, index) in customOptionalParametersValue" :lines="currentJob.statusId === 'SERVICE_DRAFT' ? 'none': ''">
           <ion-input v-if="currentJob.statusId === 'SERVICE_DRAFT'" :label="parameter.name" :placeholder="parameter.name" v-model="parameter.value" :helper-text="parameter.type" />
           <template v-else>
             <ion-label>{{ parameter.name }}</ion-label>
