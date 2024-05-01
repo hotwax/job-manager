@@ -3,7 +3,7 @@
     <ion-header :translucent="true">
       <ion-toolbar>
         <ion-menu-button slot="start" />
-        <ion-title>{{ $t("Schedule in bulk") }}</ion-title>
+        <ion-title>{{ translate("Schedule in bulk") }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -11,8 +11,8 @@
       <section>
         <ion-card>
           <ion-card-header>
-            <ion-card-subtitle class="overline">{{ $t("Product Store") }}</ion-card-subtitle>
-            <ion-card-title>{{ $t("Stores") }}</ion-card-title>
+            <ion-card-subtitle class="overline">{{ translate("Product Store") }}</ion-card-subtitle>
+            <ion-card-title>{{ translate("Stores") }}</ion-card-title>
           </ion-card-header>
           
           <ion-item>
@@ -23,36 +23,36 @@
           </ion-item>
           
           <ion-card-content>
-            {{ $t("A store repesents a company or a unique catalog of products. If your OMS is connected to multiple eCommerce stores sellling different collections of products, you may have multiple Product Stores set up in HotWax Commerce.") }}
+            {{ translate("A store represents a company or a unique catalog of products. If your OMS is connected to multiple eCommerce stores sellling different collections of products, you may have multiple Product Stores set up in HotWax Commerce.") }}
           </ion-card-content>
         </ion-card> 
             
         <ion-card>
           <ion-card-header>
-            <ion-card-subtitle class="overline">{{ $t("Shop Config") }}</ion-card-subtitle>
-            <ion-card-title>{{ $t("eCommerce") }}</ion-card-title>
+            <ion-card-subtitle class="overline">{{ translate("Shop Config") }}</ion-card-subtitle>
+            <ion-card-title>{{ translate("eCommerce") }}</ion-card-title>
           </ion-card-header>
           
           <ion-item button v-for="shopifyConfig in shopifyConfigsForEComStore" :key="shopifyConfig?.shopifyConfigId" :value="shopifyConfig?.shopifyConfigId" @click="updateSelectedShopifyConfigs(shopifyConfig.shopId)">
-            <ion-label>{{ shopifyConfig.name ? shopifyConfig.name : shopifyConfig.shopifyConfigName }}</ion-label>
-            <ion-checkbox slot="end" :checked="selectedShopifyConfigs.includes(shopifyConfig.shopId)"/>
+            <ion-checkbox :checked="selectedShopifyConfigs.includes(shopifyConfig.shopId)">
+              <ion-label>{{ shopifyConfig.name ? shopifyConfig.name : shopifyConfig.shopifyConfigName }}</ion-label>
+            </ion-checkbox>
           </ion-item>
             
           <ion-card-content>
-            {{ $t("eCommerce stores are directly connected to one Shop Config. If your OMS is connected to multiple eCommerce stores selling the same catalog operating as one Company, you may have multiple Shop Configs for the selected Product Store.") }}
+            {{ translate("eCommerce stores are directly connected to one Shop Config. If your OMS is connected to multiple eCommerce stores selling the same catalog operating as one Company, you may have multiple Shop Configs for the selected Product Store.") }}
           </ion-card-content>
         </ion-card>   
            
         <ion-card>
           <ion-card-header>
-            <ion-card-subtitle class="overline">{{ $t("Shop Config") }}</ion-card-subtitle>
-            <ion-card-title>{{ $t("Scheduler") }}</ion-card-title>
+            <ion-card-subtitle class="overline">{{ translate("Shop Config") }}</ion-card-subtitle>
+            <ion-card-title>{{ translate("Scheduler") }}</ion-card-title>
           </ion-card-header>
           <ion-item>
             <ion-icon slot="start" :icon="timeOutline" />
-            <ion-label>{{ $t("Run time") }}</ion-label>
-            <ion-select interface="popover" :placeholder="$t('Select run time')" :value="globalRuntime" @ionChange="updateRunTime($event)">
-              <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ $t(runTime.label) }}</ion-select-option>
+            <ion-select :label="translate('Run time')" interface="popover" :placeholder="translate('Select run time')" :value="globalRuntime" @ionChange="updateRunTime($event)">
+              <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ translate(runTime.label) }}</ion-select-option>
             </ion-select>
             <ion-modal class="date-time-modal" :is-open="isDateTimeModalOpen" @didDismiss="() => isDateTimeModalOpen = false">
               <ion-content force-overscroll="false">
@@ -67,9 +67,8 @@
           </ion-item>
           <ion-item>
             <ion-icon slot="start" :icon="timerOutline" />
-            <ion-label>{{ $t("Schedule") }}</ion-label>
-            <ion-select interface="popover" :interface-options="{ header: $t('Frequency') }" :value="globalFreq" :placeholder='$t("Schedule")' @ionChange=setFrequency($event) @ionDismiss="globalFreq == 'CUSTOM' && setCustomFrequency()">
-              <ion-select-option v-for="freq in frequencyOptions" :key="freq.id" :value="freq.id">{{ $t(freq.description) }}</ion-select-option>
+            <ion-select :label="translate('Schedule')" interface="popover" :interface-options="{ header: translate('Frequency') }" :value="globalFreq" :placeholder='translate("Schedule")' @ionChange=setFrequency($event) @ionDismiss="globalFreq == 'CUSTOM' && setCustomFrequency()">
+              <ion-select-option v-for="freq in frequencyOptions" :key="freq.id" :value="freq.id">{{ translate(freq.description) }}</ion-select-option>
             </ion-select>
           </ion-item>
         </ion-card>
@@ -77,7 +76,7 @@
         
       <ion-button fill="outline" @click="selectJobs()">
         <ion-icon slot="start" :icon="addOutline"/>
-        {{ $t("select jobs") }}
+        {{ translate("select jobs") }}
       </ion-button>
 
       <section>
@@ -127,7 +126,7 @@ import { useRouter } from 'vue-router';
 import SelectJobsModal from '@/views/SelectJobsModal.vue';
 import { UserService } from '@/services/UserService'
 import { isCustomRunTime, getNowTimestamp, generateAllowedRunTimes, generateAllowedFrequencies, hasError, showToast, handleDateTimeInput } from '@/utils'
-import { translate } from '@/i18n'
+import { translate } from '@hotwax/dxp-components'
 import JobConfigurationForBulkScheduler from '@/components/JobConfigurationForBulkScheduler.vue'
 import { DateTime } from 'luxon';
 import { Actions, hasPermission } from '@/authorization'
@@ -194,7 +193,8 @@ export default defineComponent({
       store,
       router,
       timeOutline,
-      timerOutline
+      timerOutline,
+      translate
     }
   },
   mounted() {
@@ -248,13 +248,13 @@ export default defineComponent({
     async saveChanges() {
       const alert = await alertController
         .create({
-          header: this.$t('Save changes'),
-          message: this.$t('Are you sure you want to schedule these jobs?'),
+          header: translate('Save changes'),
+          message: translate('Are you sure you want to schedule these jobs?'),
           buttons: [{
-            text: this.$t('No'),
+            text: translate('No'),
             role: 'cancel'
           }, {
-            text: this.$t('Yes'),
+            text: translate('Yes'),
             handler: async () => {
               await this.schedule();
             }

@@ -3,7 +3,7 @@
     <ion-header :translucent="true">
       <ion-toolbar>
         <ion-back-button :default-href="'/' + jobCategory" slot="start" />
-        <ion-title>{{ $t("Job details") }}</ion-title>
+        <ion-title>{{ translate("Job details") }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -28,6 +28,7 @@ import JobConfiguration from '@/components/JobConfiguration.vue';
 import InitialJobConfiguration from '@/components/InitialJobConfiguration.vue';
 import { useStore, mapGetters } from "vuex";
 import { isFutureDate } from '@/utils';
+import { translate } from '@hotwax/dxp-components';
 
 export default defineComponent({
   name: 'JobDetails',
@@ -99,7 +100,8 @@ export default defineComponent({
     const store = useStore();
 
     return {
-      store
+      store,
+      translate
     }
   }
 });

@@ -6,18 +6,18 @@
           <ion-icon slot="icon-only" :icon="closeOutline" />
         </ion-button>
       </ion-buttons>
-      <ion-title>{{ $t("Select jobs") }}</ion-title>
+      <ion-title>{{ translate("Select jobs") }}</ion-title>
     </ion-toolbar>
   </ion-header>
-  <ion-content>
-    <ion-searchbar :placeholder="$t('Search jobs')" @keyup.enter="search($event)" />
+  <ion-content ref="contentRef" :scroll-events="true" @ionScroll="enableScrolling()">
+    <ion-searchbar :placeholder="translate('Search jobs')" @keyup.enter="search($event)" />
 
     <div v-if="queryString.length === 0" class="ion-text-center">
-      <p>{{ $t("Searched jobs will appear here") }}</p>
+      <p>{{ translate("Searched jobs will appear here") }}</p>
     </div>    
 
     <div v-else-if="jobs.length === 0" class="ion-text-center">
-      <p>{{ $t("No jobs found") }}</p>
+      <p>{{ translate("No jobs found") }}</p>
     </div>
     
     <ion-list v-else v-for="job in jobs" :key="job.jobId">
@@ -26,12 +26,12 @@
           <h2>{{ job.enumName ? job.enumName : job.jobName }}</h2>
         </ion-label>
         <ion-icon v-if="isJobAddedToBulkScheduler(job.jobId)" color="success" :icon="checkmarkCircle" />
-        <ion-button v-else fill="outline" @click="addToBulkScheduler(job)">{{ $t("Add") }}</ion-button>
+        <ion-button v-else fill="outline" @click="addToBulkScheduler(job)">{{ translate("Add") }}</ion-button>
       </ion-item>
     </ion-list>
 
-    <ion-infinite-scroll @ionInfinite="loadMoreJobs($event)" threshold="100px" :disabled="!isScrollable">
-      <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="$t('Loading')" />
+    <ion-infinite-scroll @ionInfinite="loadMoreJobs($event)" threshold="100px" v-show="isScrollable" ref="infiniteScrollRef">
+      <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="translate('Loading')" />
     </ion-infinite-scroll>
   </ion-content>
 </template>
@@ -58,7 +58,7 @@ import { closeOutline, checkmarkCircle } from 'ionicons/icons';
 import { mapGetters } from 'vuex'
 import { useStore } from "@/store";
 import { showToast, hasError } from '@/utils'
-import { translate } from '@/i18n'
+import { translate } from '@hotwax/dxp-components'
 import { JobService } from '@/services/JobService'
 
 export default defineComponent({
@@ -84,7 +84,8 @@ export default defineComponent({
       queryString: '',
       jobs: [] as any,
       isScrollable: true,
-      jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any
+      jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
+      isScrollingEnabled: false
     }
   },
   computed: {
@@ -92,6 +93,9 @@ export default defineComponent({
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
       isJobAddedToBulkScheduler: 'job/isJobAddedToBulkScheduler',
     })
+  },
+  async ionViewWillEnter() {
+    this.isScrollingEnabled = false;
   },
   methods: {
     async search(event: any) {
@@ -141,13 +145,28 @@ export default defineComponent({
         showToast(translate("Something went wrong"));
       }
     },
+    enableScrolling() {
+      const parentElement = (this as any).$refs.contentRef.$el
+      const scrollEl = parentElement.shadowRoot.querySelector("main[part='scroll']")
+      let scrollHeight = scrollEl.scrollHeight, infiniteHeight = (this as any).$refs.infiniteScrollRef.$el.offsetHeight, scrollTop = scrollEl.scrollTop, threshold = 100, height = scrollEl.offsetHeight
+      const distanceFromInfinite = scrollHeight - infiniteHeight - scrollTop - threshold - height
+      if(distanceFromInfinite < 0) {
+        this.isScrollingEnabled = false;
+      } else {
+        this.isScrollingEnabled = true;
+      }
+    },
     async loadMoreJobs(event: any) {
+      // Added this check here as if added on infinite-scroll component the Loading content does not gets displayed
+      if(!(this.isScrollingEnabled && this.isScrollable)) {
+        await event.target.complete();
+      }
       this.getJobs(
         undefined,
         Math.ceil(this.jobs.length / (process.env.VUE_APP_VIEW_SIZE as any)).toString()
-      ).then(() => {
-        event.target.complete();
-      })
+      ).then(async () => {
+        await event.target.complete();
+      });
     },
     addToBulkScheduler(job: any) {
       this.store.dispatch('job/addToBulkScheduler', job);
@@ -162,6 +181,7 @@ export default defineComponent({
       closeOutline,
       checkmarkCircle,
       store,
+      translate
     };
   },
 });

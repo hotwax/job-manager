@@ -4,7 +4,7 @@ import RootState from '@/store/RootState'
 import UserState from './UserState'
 import * as types from './mutation-types'
 import { hasError, showToast } from '@/utils'
-import { translate } from '@/i18n'
+import { translate } from '@hotwax/dxp-components'
 import { Settings } from 'luxon'
 import { getServerPermissionsFromRules, prepareAppPermissions, resetPermissions, setPermissions } from '@/authorization'
 import { logout, updateInstanceUrl, updateToken, resetConfig } from '@/adapter'
@@ -100,7 +100,7 @@ const actions: ActionTree<UserState, RootState> = {
       // TODO Check if handling of specific status codes is required.
       showToast(translate('Something went wrong while login. Please contact administrator.'));
       logger.error("error: ", err.toString());
-      return Promise.reject(new Error(err))
+      return Promise.reject(err instanceof Object ? err :new Error((err)));
     }
   },
 
@@ -166,20 +166,12 @@ const actions: ActionTree<UserState, RootState> = {
   /**
    * Update user timeZone
    */
-  async setUserTimeZone({ state, commit }, payload) {
+  async setUserTimeZone ( { state, commit }, timeZoneId) {
     const current: any = state.current;
-    // if set the same timezone again, no API call should happen
-    if(current.userTimeZone !== payload.tzId) {
-      const resp = await UserService.setUserTimeZone(payload)
-      if (resp.status === 200 && !hasError(resp)) {
-        current.userTimeZone = payload.tzId;
-        commit(types.USER_INFO_UPDATED, current);
-        Settings.defaultZone = current.userTimeZone;
-        showToast(translate("Time zone updated successfully"));
-      }
-    }
+    current.userTimeZone = timeZoneId;
+    commit(types.USER_INFO_UPDATED, current);
+    Settings.defaultZone = current.userTimeZone;
   },
-
   /**
    * Set User Instance Url
    */
@@ -239,11 +231,11 @@ const actions: ActionTree<UserState, RootState> = {
    * update current shopify config id
    */
   async setCurrentShopifyConfig({ commit, dispatch, state }, payload) {
-    let shopifyConfig = payload.shopifyConfig;
-    if(!shopifyConfig) {
-      shopifyConfig = state.shopifyConfigs.find((configs: any) => configs.shopifyConfigId === payload.shopifyConfigId)
-    }
+    let shopifyConfig = {} as any;
 
+    if (payload.shopifyConfigId) {
+      shopifyConfig = state.shopifyConfigs.find((configs: any) => configs.shopifyConfigId === payload.shopifyConfigId);
+    }
     commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, shopifyConfig ? shopifyConfig : {});
     dispatch('job/clearJobState', null, { root: true });
   },

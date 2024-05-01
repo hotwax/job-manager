@@ -6,9 +6,9 @@
           <ion-icon slot="icon-only" :icon="closeOutline" />
         </ion-button>
       </ion-buttons>
-      <ion-title>{{ $t('Custom Parameters') }}</ion-title>
+      <ion-title>{{ translate('Custom Parameters') }}</ion-title>
       <ion-buttons slot="end">
-        <ion-button color="primary" @click="save()">{{ $t('Save') }}</ion-button>
+        <ion-button color="primary" @click="save()">{{ translate('Save') }}</ion-button>
       </ion-buttons>
     </ion-toolbar>
   </ion-header>
@@ -17,36 +17,38 @@
     <ion-list v-if="customRequiredParameters.length || customOptionalParameters.length">
       <ion-item-group>
         <ion-item-divider v-if="customRequiredParameters.length" color="light">
-          <ion-label>{{ $t('Required Parameters') }}</ion-label>
+          <ion-label>{{ translate('Required Parameters') }}</ion-label>
           <ion-button slot="end" fill="clear" color="medium" @click="copyToClipboard(getParameters('required'), 'Copied to clipboard')">
             <ion-icon slot="icon-only" :icon="copyOutline" />
           </ion-button>
         </ion-item-divider>
 
         <ion-item :key="index" v-for="(parameter, index) in customRequiredParametersValue">
-          <ion-label>{{ parameter.name }}</ion-label>
-          <ion-input v-if="currentJob.statusId === 'SERVICE_DRAFT'" :placeholder="parameter.name" v-model="parameter.value" slot="end" />
-          <ion-label v-else>{{ parameter.value }}</ion-label>
-          <ion-note slot="helper">{{ parameter.type }}</ion-note>
+          <ion-input :label="parameter.name" v-if="currentJob.statusId === 'SERVICE_DRAFT'" :placeholder="parameter.name" v-model="parameter.value" :helper-text="parameter.type" />
+          <template v-else>
+            <ion-label>{{ parameter.name }}</ion-label>
+            <ion-label>{{ parameter.value }}</ion-label>
+          </template>
         </ion-item>
 
         <ion-item-divider v-if="customOptionalParameters.length" color="light">
-          <ion-label>{{ $t('Optional Parameters') }}</ion-label>
+          <ion-label>{{ translate('Optional Parameters') }}</ion-label>
           <ion-button slot="end" fill="clear" color="medium" @click="copyToClipboard(getParameters('optional'), 'Copied to clipboard')">
             <ion-icon slot="icon-only" :icon="copyOutline" />
           </ion-button>
         </ion-item-divider>
 
         <ion-item :key="index" v-for="(parameter, index) in customOptionalParametersValue">
-          <ion-label>{{ parameter.name }}</ion-label>
-          <ion-input v-if="currentJob.statusId === 'SERVICE_DRAFT'" :placeholder="parameter.name" v-model="parameter.value" slot="end" />
-          <ion-label v-else>{{ parameter.value }}</ion-label>
-          <ion-note slot="helper">{{ parameter.type }}</ion-note>
+          <ion-input v-if="currentJob.statusId === 'SERVICE_DRAFT'" :label="parameter.name" :placeholder="parameter.name" v-model="parameter.value" :helper-text="parameter.type" />
+          <template v-else>
+            <ion-label>{{ parameter.name }}</ion-label>
+            <ion-label>{{ parameter.value }}</ion-label>
+          </template>
         </ion-item>
       </ion-item-group>
     </ion-list>
     <ion-item v-else lines="none">
-      <ion-label class="ion-text-center" >{{ $t('This job does not have any custom parameters.') }}</ion-label>
+      <ion-label class="ion-text-center" >{{ translate('This job does not have any custom parameters.') }}</ion-label>
     </ion-item>
   </ion-content>
 </template>
@@ -64,7 +66,6 @@ import {
   IonItemGroup,
   IonLabel,
   IonList,
-  IonNote,
   IonTitle,
   IonToolbar,
   modalController
@@ -73,6 +74,7 @@ import { defineComponent } from 'vue';
 import { closeOutline, copyOutline } from 'ionicons/icons';
 import { useStore } from 'vuex';
 import { copyToClipboard } from "@/utils";
+import { translate } from '@hotwax/dxp-components';
 
 export default defineComponent({
   name: 'JobParameterModal',
@@ -88,7 +90,6 @@ export default defineComponent({
     IonItemGroup,
     IonLabel,
     IonList,
-    IonNote,
     IonTitle,
     IonToolbar,
   },
@@ -133,7 +134,8 @@ export default defineComponent({
       closeOutline,
       copyOutline,
       copyToClipboard,
-      store
+      store,
+      translate
     };
   },
 });

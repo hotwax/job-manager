@@ -1,12 +1,12 @@
 <template>
   <ion-card>
     <ion-card-header>
-      <ion-card-title>{{ $t("More jobs") }}</ion-card-title>
+      <ion-card-title>{{ translate("More jobs") }}</ion-card-title>
     </ion-card-header>
     <ion-list>
       <ion-item v-for="job in jobs" :key="job.jobId" @click="viewJobConfiguration(job)" detail button>
         <ion-label class="ion-text-wrap">{{ job.enumName || job.jobName }}</ion-label>
-        <ion-label slot="end">{{ job.statusId === "SERVICE_PENDING" ? temporalExpr(job.tempExprId)?.description : $t('Disabled') }}</ion-label>
+        <ion-label slot="end">{{ job.statusId === "SERVICE_PENDING" ? temporalExpr(job.tempExprId)?.description : translate('Disabled') }}</ion-label>
       </ion-item>
     </ion-list>
   </ion-card>
@@ -26,6 +26,7 @@ import { mapGetters, useStore } from 'vuex';
 import emitter from '@/event-bus';
 import { useRouter } from 'vue-router'
 import { DateTime } from 'luxon';
+import { translate } from '@hotwax/dxp-components';
 
 export default defineComponent({
   name: 'MoreJobs',
@@ -62,7 +63,8 @@ export default defineComponent({
     const router = useRouter();
     return {
       store,
-      router
+      router,
+      translate
     }  
   }
 });

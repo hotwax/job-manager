@@ -1,4 +1,5 @@
 import { api, client } from '@/adapter';
+import logger from '@/logger';
 import store from '@/store';
 import { hasError } from '@/utils'
 
@@ -13,21 +14,6 @@ const login = async (username: string, password: string): Promise <any> => {
   });
 }
 
-
-const getAvailableTimeZones = async (): Promise <any>  => {
-  return api({
-    url: "getAvailableTimeZones",
-    method: "get",
-    cache: true
-  });
-}
-const setUserTimeZone = async (payload: any): Promise <any>  => {
-  return api({
-    url: "setUserTimeZone",
-    method: "post",
-    data: payload
-  });
-}
 
 const getShopifyConfig = async (productStoreId: any, token?: any): Promise <any>  => {
   try {
@@ -56,13 +42,14 @@ const getShopifyConfig = async (productStoreId: any, token?: any): Promise <any>
     }
     payload.baseURL = store.getters['user/getBaseUrl'];
     const resp = await client(payload);
-    if (hasError(resp)) {
-      return Promise.reject(resp?.data);
-    } else {
+    if (!hasError(resp)) {
       return Promise.resolve(resp?.data.docs);
+    } else {
+      throw resp.data
     }
   } catch(error: any) {
-    return Promise.reject(error)
+    logger.error(error)
+    return Promise.resolve([])
   }
 }
 
@@ -241,13 +228,14 @@ const getPreferredShopifyShop = async (token: any): Promise<any> => {
         'userPrefTypeId': 'FAVORITE_SHOPIFY_SHOP'
       },
     });
-    if (hasError(resp)) {
-      return Promise.reject(resp?.data);
-    } else {
+    if (!hasError(resp)) {
       return Promise.resolve(resp?.data.userPrefValue);
+    } else {
+      throw resp.data
     }
   } catch(error: any) {
-    return Promise.reject(error)
+    logger.error(error)
+    return Promise.resolve(null)
   }
   
 }
@@ -363,7 +351,6 @@ const getUserProfile = async (token: any): Promise<any> => {
 export const UserService = {
     createPinnedJobPref,
     login,
-    getAvailableTimeZones,
     getEComStores,
     getEcommerceCatalog,
     getPreOrderBackorderCategory,
@@ -373,7 +360,6 @@ export const UserService = {
     getPreferredStore,
     getUserProfile,
     associatePinnedJobPrefToUser,
-    setUserTimeZone,
     updatePinnedJobPref,
     setUserPreference,
     getUserPermissions
