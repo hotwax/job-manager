@@ -112,9 +112,7 @@ export default defineComponent({
       let res = {} as any;
 
       if(parameterType === 'required') {
-        this.customRequiredParametersValue.map((param: any) => {
-          res[param.name] = param.value
-        })
+        this.customRequiredParametersValue.map((param: any) => res[param.name] = param.value)
       } else {
         this.customOptionalParametersValue.map((param: any) => res[param.name] = param.value)
       }
