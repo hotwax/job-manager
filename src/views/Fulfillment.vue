@@ -48,6 +48,14 @@
               <ion-label class="ion-text-wrap">{{ translate("Open BOPIS order notification") }}</ion-label>
               <ion-label slot="end">{{ getTemporalExpression('OPN_BOPIS_ORD_NT') }}</ion-label>
             </ion-item>
+            <ion-item button @click="viewJobConfiguration({ id: 'READYPICK_BOPIS_ORD_NT', status: getJobStatus(jobEnums['READYPICK_BOPIS_ORD_NT']) })" detail>
+              <ion-label class="ion-text-wrap">{{ translate("Ready to pick BOPIS order notification") }}</ion-label>
+              <ion-label slot="end">{{ getTemporalExpression('READYPICK_BOPIS_ORD_NT') }}</ion-label>
+            </ion-item>
+            <ion-item button @click="viewJobConfiguration({ id: 'OPEN_SHIPPING_ORD_NT', status: getJobStatus(jobEnums['OPEN_SHIPPING_ORD_NT']) })" detail>
+              <ion-label class="ion-text-wrap">{{ translate("Open shipping order notification") }}</ion-label>
+              <ion-label slot="end">{{ getTemporalExpression('OPEN_SHIPPING_ORD_NT') }}</ion-label>
+            </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
                 <p>{{ translate("Sends notifications for open orders and ready-to-pickup orders.") }}</p>
