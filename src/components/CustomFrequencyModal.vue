@@ -20,8 +20,10 @@
     <div v-else>
       <ion-list>
         <ion-radio-group v-model="frequencyId">
+          <!-- Use ion-label to place the label after the radio button -->
           <ion-item :key="customFrequency.tempExprId" v-for="customFrequency in customFrequencies">
-            <ion-radio :value="customFrequency.tempExprId" slot="start">{{ customFrequency.description }}</ion-radio>
+            <ion-radio :value="customFrequency.tempExprId" slot="start"></ion-radio>
+            <ion-label class="radio-label">{{ customFrequency.description }}</ion-label>
           </ion-item>
         </ion-radio-group>
       </ion-list>
