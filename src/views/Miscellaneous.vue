@@ -3,7 +3,7 @@
     <ion-header :translucent="true">
       <ion-toolbar>
         <ion-menu-button slot="start" />
-        <ion-title>{{ $t("Miscellaneous") }}</ion-title>
+        <ion-title>{{ translate("Miscellaneous") }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -12,10 +12,10 @@
         <section>
           <!-- Empty state -->
           <div v-if="miscellaneousJobs?.length === 0">
-            <p class="ion-text-center">{{ $t("There are no miscellaneous jobs right now")}}</p>
+            <p class="ion-text-center">{{ translate("There are no miscellaneous jobs right now")}}</p>
             <div class="ion-text-center">
               <ion-button fill="outline" @click="refreshJobs()">
-                {{ $t('retry') }}
+                {{ translate('retry') }}
                 <ion-spinner v-if="isRetrying" name="crescent" />
               </ion-button>
             </div>
@@ -23,7 +23,7 @@
 
           <div v-else>
             <ion-list>
-              <ion-list-header>{{ $t("Miscellaneous jobs") }}</ion-list-header>
+              <ion-list-header>{{ translate("Miscellaneous jobs") }}</ion-list-header>
               <ion-item v-for="job in prepareMiscJobs" :key="job.jobId" @click="viewJobConfiguration(job)" detail button>
                 <ion-label>{{ job.jobName }}</ion-label>
                 <ion-note slot="end">{{ getJobRuntime(job) }}</ion-note>
@@ -31,7 +31,7 @@
             </ion-list>
 
             <ion-infinite-scroll @ionInfinite="loadMoreMiscellaneousJobs($event)" threshold="100px" :disabled="!isMiscellaneousJobsScrollable">
-              <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="$t('Loading')"/>
+              <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="translate('Loading')"/>
             </ion-infinite-scroll>
           </div>
         </section>
@@ -70,6 +70,7 @@ import { mapGetters, useStore } from 'vuex'
 import emitter from '@/event-bus';
 import JobConfiguration from '@/components/JobConfiguration.vue';
 import { isFutureDate } from '@/utils';
+import { translate } from '@hotwax/dxp-components';
 
 export default defineComponent({
   name: 'Miscellaneous',
@@ -171,7 +172,7 @@ export default defineComponent({
       return DateTime.local().plus(timeDiff).toRelative();
     },
     getJobRuntime(job: any) {
-      return job.statusId !== 'SERVICE_DRAFT' && this.timeFromNow(job.runTime) ? this.timeFromNow(job.runTime) : this.$t('Disabled')
+      return job.statusId !== 'SERVICE_DRAFT' && this.timeFromNow(job.runTime) ? this.timeFromNow(job.runTime) : translate('Disabled')
     }
   },
   setup() {
@@ -181,6 +182,7 @@ export default defineComponent({
     return {
       router,
       store,
+      translate
     };
   },
 })

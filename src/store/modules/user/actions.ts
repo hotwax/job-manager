@@ -4,7 +4,7 @@ import RootState from '@/store/RootState'
 import UserState from './UserState'
 import * as types from './mutation-types'
 import { hasError, showToast } from '@/utils'
-import { translate } from '@/i18n'
+import { translate } from '@hotwax/dxp-components'
 import { Settings } from 'luxon'
 import { getServerPermissionsFromRules, prepareAppPermissions, resetPermissions, setPermissions } from '@/authorization'
 import { logout, updateInstanceUrl, updateToken, resetConfig } from '@/adapter'
@@ -32,7 +32,7 @@ const actions: ActionTree<UserState, RootState> = {
       if (permissionId) serverPermissionsFromRules.push(permissionId);
 
       const serverPermissions = await UserService.getUserPermissions({
-        permissionIds: serverPermissionsFromRules
+        permissionIds: [...new Set(serverPermissionsFromRules)]
       }, token);
       const appPermissions = prepareAppPermissions(serverPermissions);
 
@@ -41,9 +41,9 @@ const actions: ActionTree<UserState, RootState> = {
       if (permissionId) {
         // As the token is not yet set in the state passing token headers explicitly
         // TODO Abstract this out, how token is handled should be part of the method not the callee
-        const hasPermission = appPermissions.some((appPermissionId: any) => appPermissionId === permissionId );
+        const hasPermission = appPermissions.some((appPermission: any) => appPermission.action === permissionId );
         // If there are any errors or permission check fails do not allow user to login
-        if (hasPermission) {
+        if (!hasPermission) {
           const permissionError = 'You do not have permission to access the app.';
           showToast(translate(permissionError));
           logger.error("error", permissionError);
@@ -72,6 +72,11 @@ const actions: ActionTree<UserState, RootState> = {
       let currentShopifyConfig =  {};
       shopifyConfigs.length > 0 && (currentShopifyConfig = shopifyConfigs[0])
 
+      const preferredShopifyShopId =  await UserService.getPreferredShopifyShop(token);
+      if (preferredShopifyShopId) {
+        currentShopifyConfig = shopifyConfigs.find((shopifyConfig: any) => shopifyConfig.shopId === preferredShopifyShopId);
+      }
+
       /*  ---- Guard clauses ends here --- */
 
       setPermissions(appPermissions);
@@ -95,7 +100,7 @@ const actions: ActionTree<UserState, RootState> = {
       // TODO Check if handling of specific status codes is required.
       showToast(translate('Something went wrong while login. Please contact administrator.'));
       logger.error("error: ", err.toString());
-      return Promise.reject(new Error(err))
+      return Promise.reject(err instanceof Object ? err :new Error((err)));
     }
   },
 
@@ -157,28 +162,16 @@ const actions: ActionTree<UserState, RootState> = {
     }
     commit(types.USER_CURRENT_ECOM_STORE_UPDATED, productStore);
     await dispatch('getShopifyConfig',  productStore.productStoreId);
-    await UserService.setUserPreference({
-      'userPrefTypeId': 'SELECTED_BRAND',
-      'userPrefValue': productStore.productStoreId
-    });
   },
   /**
    * Update user timeZone
    */
-  async setUserTimeZone({ state, commit }, payload) {
+  async setUserTimeZone ( { state, commit }, timeZoneId) {
     const current: any = state.current;
-    // if set the same timezone again, no API call should happen
-    if(current.userTimeZone !== payload.tzId) {
-      const resp = await UserService.setUserTimeZone(payload)
-      if (resp.status === 200 && !hasError(resp)) {
-        current.userTimeZone = payload.tzId;
-        commit(types.USER_INFO_UPDATED, current);
-        Settings.defaultZone = current.userTimeZone;
-        showToast(translate("Time zone updated successfully"));
-      }
-    }
+    current.userTimeZone = timeZoneId;
+    commit(types.USER_INFO_UPDATED, current);
+    Settings.defaultZone = current.userTimeZone;
   },
-
   /**
    * Set User Instance Url
    */
@@ -241,11 +234,11 @@ const actions: ActionTree<UserState, RootState> = {
    * update current shopify config id
    */
   async setCurrentShopifyConfig({ commit, dispatch, state }, payload) {
-    let shopifyConfig = payload.shopifyConfig;
-    if(!shopifyConfig) {
-      shopifyConfig = state.shopifyConfigs.find((configs: any) => configs.shopifyConfigId === payload.shopifyConfigId)
-    }
+    let shopifyConfig = {} as any;
 
+    if (payload.shopifyConfigId) {
+      shopifyConfig = state.shopifyConfigs.find((configs: any) => configs.shopifyConfigId === payload.shopifyConfigId);
+    }
     commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, shopifyConfig ? shopifyConfig : {});
     dispatch('job/clearJobState', null, { root: true });
   },

@@ -6,14 +6,14 @@
           <ion-icon :icon="closeOutline" />
         </ion-button>
       </ion-buttons>
-      <ion-title>{{ $t("Custom frequency") }}</ion-title>
+      <ion-title>{{ translate("Custom frequency") }}</ion-title>
     </ion-toolbar>
   </ion-header>
 
   <ion-content>
     <!-- Empty state -->
     <div class="empty-state" v-if="customFrequencies.length === 0">
-      <p>{{ $t("No frequency found")}}</p>
+      <p>{{ translate("No frequency found")}}</p>
     </div>
 
     <!-- Frequencies -->
@@ -21,8 +21,7 @@
       <ion-list>
         <ion-radio-group v-model="frequencyId">
           <ion-item :key="customFrequency.tempExprId" v-for="customFrequency in customFrequencies">
-            <ion-label>{{ customFrequency.description }}</ion-label>
-            <ion-radio :value="customFrequency.tempExprId" slot="start" />
+            <ion-radio :value="customFrequency.tempExprId" slot="start">{{ customFrequency.description }}</ion-radio>
           </ion-item>
         </ion-radio-group>
       </ion-list>
@@ -46,7 +45,6 @@ import {
   IonHeader,
   IonItem,
   IonIcon,
-  IonLabel,
   IonList,
   IonRadioGroup,
   IonRadio,
@@ -57,6 +55,7 @@ import {
 import { defineComponent } from "vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { useStore } from "@/store";
+import { translate } from "@hotwax/dxp-components";
 
 export default defineComponent({
   name: "CustomFrequencyModal",
@@ -69,7 +68,6 @@ export default defineComponent({
     IonHeader,
     IonIcon,
     IonItem,
-    IonLabel,
     IonList,
     IonRadioGroup,
     IonRadio,
@@ -101,7 +99,8 @@ export default defineComponent({
     return {
       closeOutline,
       saveOutline,
-      store
+      store,
+      translate
     };
   }
 });

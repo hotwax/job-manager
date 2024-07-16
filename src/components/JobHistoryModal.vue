@@ -12,7 +12,7 @@
 
   <ion-content>
     <div v-if="jobHistory?.length === 0">
-      <p class="ion-text-center">{{ $t("No jobs have run yet")}}</p>
+      <p class="ion-text-center">{{ translate("No jobs have run yet")}}</p>
     </div>
 
     <div v-else>
@@ -50,6 +50,7 @@ import { mapGetters, useStore } from 'vuex';
 import { DateTime } from 'luxon';
 import { JobService } from '@/services/JobService'
 import { hasError } from '@/utils';
+import { translate } from '@hotwax/dxp-components';
 
 export default defineComponent({
   name: 'JobHistoryModal',
@@ -75,7 +76,8 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       getCurrentEComStore:'user/getCurrentEComStore',
-      getStatusDesc: 'util/getStatusDesc'
+      getStatusDesc: 'util/getStatusDesc',
+      currentShopifyConfig: 'user/getCurrentShopifyConfig'
     })
   },
   methods: {
@@ -97,7 +99,12 @@ export default defineComponent({
             "productStoreId": this.getCurrentEComStore.productStoreId,
             "statusId": ["SERVICE_CANCELLED", "SERVICE_CRASHED", "SERVICE_FAILED", "SERVICE_FINISHED"],
             "statusId_op": "in",
-            "systemJobEnumId": this.currentJob?.systemJobEnumId
+            "systemJobEnumId": this.currentJob?.systemJobEnumId,
+            "shopId_fld0_value": this.currentShopifyConfig?.shopId,
+            "shopId_fld0_grp": "1",
+            "shopId_fld0_op": "equals",
+            "shopId_fld1_grp": "2",
+            "shopId_fld1_op": "empty"
           },
           "fieldList": [ "runTime", "statusId" ],
           "noConditionFind": "Y",
@@ -122,7 +129,8 @@ export default defineComponent({
 
     return {
       closeOutline,
-      store
+      store,
+      translate
     };
   },
 });

@@ -2,7 +2,7 @@
   <ion-menu side="end" content-id="main-content" type="overlay">
     <ion-header>
       <ion-toolbar>
-        <ion-title>{{ $t("Filters") }}</ion-title>
+        <ion-title>{{ translate("Filters") }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -11,38 +11,41 @@
         <section v-if="segmentSelected === 'history'">
           <ion-item>
             <ion-label class="ion-text-wrap">
-              <p>{{ $t("Status") }}</p>
+              <p>{{ translate("Status") }}</p>
             </ion-label>
           </ion-item>
           <ion-item button v-for="(filter, index) in statusFilters" :key="index" @click="applyFilter(filter.statusId, 'status')">
             <ion-icon slot="start" :ios="filter.iosIcon" :md="filter.mdIcon" />
-            <ion-label>{{ $t(filter.name) }}</ion-label>
-            <ion-checkbox slot="end" :checked="pipelineFilters.status.includes(filter.statusId)" />
+            <ion-checkbox :checked="pipelineFilters.status.includes(filter.statusId)">
+              <ion-label>{{ translate(filter.name) }}</ion-label>
+            </ion-checkbox>
           </ion-item>
         </section>
 
         <section>
           <ion-item>
             <ion-label class="ion-text-wrap">
-              <p>{{ $t("Category") }}</p>
+              <p>{{ translate("Category") }}</p>
             </ion-label>
           </ion-item>
           <ion-item button v-for="(filter, index) in categoryFilters" :key="index" @click="applyFilter(filter.enumTypeId, 'category')">
             <ion-icon slot="start" :ios="filter.iosIcon" :md="filter.mdIcon" />
-            <ion-label>{{ $t(filter.name) }}</ion-label>
-            <ion-checkbox slot="end" :checked="pipelineFilters.category.includes(filter.enumTypeId)" />
+            <ion-checkbox :checked="pipelineFilters.category.includes(filter.enumTypeId)">
+              <ion-label>{{ translate(filter.name) }}</ion-label>
+            </ion-checkbox>
           </ion-item>
         </section>
 
         <section v-if="pinnedJobs && pinnedJobs.length">
           <ion-item>
             <ion-label class="ion-text-wrap">
-              <p>{{ $t("Pinned") }}</p>
+              <p>{{ translate("Pinned") }}</p>
             </ion-label>
           </ion-item>
           <ion-item button v-for="(job, index) in pinnedJobs" :key="index" @click="applyFilter(job, 'enum')">
-            <ion-label>{{ getEnumName(job) }}</ion-label>
-            <ion-checkbox slot="end" :checked="pipelineFilters.enum.includes(job)" />
+            <ion-checkbox :checked="pipelineFilters.enum.includes(job)">
+              {{ getEnumName(job) }}
+            </ion-checkbox>
           </ion-item>
         </section>
       </ion-list>
@@ -65,7 +68,8 @@ import {
 } from "@ionic/vue";
 import { defineComponent } from "vue";
 import { albumsOutline, banOutline, barChartOutline, calendarNumberOutline, checkmarkDoneOutline, closeOutline, compassOutline, filterOutline, iceCreamOutline, libraryOutline, pulseOutline, sendOutline, settings, shirtOutline, ticketOutline } from "ionicons/icons";
-import { mapGetters, useStore } from 'vuex'
+import { mapGetters, useStore } from 'vuex';
+import { translate } from "@hotwax/dxp-components";
 
 export default defineComponent({
   name: "Filters",
@@ -170,7 +174,8 @@ export default defineComponent({
       shirtOutline,
       statusFilters,
       store,
-      ticketOutline
+      ticketOutline,
+      translate
     };
   },
   computed: {

@@ -1,7 +1,6 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router';
-import './registerServiceWorker'
 import { DateTime } from 'luxon';
 import logger from './logger';
 
@@ -27,25 +26,25 @@ import '@ionic/vue/css/display.css';
 import './theme/variables.css';
 import '@hotwax/apps-theme';
 
-import i18n from './i18n'
 import store from './store'
 import permissionPlugin from '@/authorization';
 import permissionRules from '@/authorization/Rules';
 import permissionActions from '@/authorization/Actions';
 import { dxpComponents } from '@hotwax/dxp-components'
 import { login, logout, loader } from './user-utils';
-import { getConfig, initialise } from './adapter';
+import { getConfig, initialise,   setUserTimeZone, getAvailableTimeZones } from './adapter';
 import localeMessages from './locales';
+
 
 const app = createApp(App)
   .use(IonicVue, {
-    mode: 'md'
+    mode: 'md',
+    innerHTMLTemplatesEnabled: true
   })
   .use(logger, {
     level: process.env.VUE_APP_DEFAULT_LOG_LEVEL
   })
   .use(router)
-  .use(i18n)
   .use(store)
   .use(permissionPlugin, {
     rules: permissionRules,
@@ -58,6 +57,8 @@ const app = createApp(App)
     appLoginUrl: process.env.VUE_APP_LOGIN_URL as string,
     getConfig,
     initialise,
+    setUserTimeZone,
+    getAvailableTimeZones,
     localeMessages
   })
 

@@ -3,7 +3,8 @@ import { toastController } from '@ionic/vue';
 import Papa from 'papaparse'
 import { DateTime } from "luxon";
 import logger from "@/logger";
-import { translate } from "@/i18n";
+import { translate } from "@hotwax/dxp-components";
+import { Plugins } from '@capacitor/core';
 
 // TODO Use separate files for specific utilities
 
@@ -200,9 +201,31 @@ const generateAllowedRunTimes = () => {
   }]
 }
 
+// defined this method as we need to convert values to string for trimming and correctly parse the data
+const convertToString = (parameter: any) => {
+  const value = parameter.value;
+
+  if(!value) {
+    return ''
+  }
+
+  try {
+    if(parameter.type === 'Map' || parameter.type === 'List' || parameter.type === 'Object') {
+      return JSON.stringify(value)
+    } else if(parameter.type === 'String') {
+      return value
+    } else {
+      return '' + value;
+    }
+  } catch {
+    logger.error('Unable to parse the defined value', value)
+    return value;
+  }
+}
+
 // converts the entered value to the expected type used by the service
 const convertValue = (parameter: any) => {
-  const value = parameter.value.trim();
+  const value = parameter.value.toString().trim();
 
   if(!value) {
     return ''
@@ -211,7 +234,7 @@ const convertValue = (parameter: any) => {
   // TODO: add support to convert timestamp and double
   try {
     if(parameter.type === 'Map' || parameter.type === 'List' || parameter.type === 'Object') {
-      return JSON.parse(JSON.stringify(value))
+      return JSON.parse(value)
     } else if(parameter.type === 'String' || parameter.type === 'Date' || parameter.type === 'Time') {
       return value
     } else {
@@ -246,7 +269,7 @@ const generateJobCustomParameters = (requiredParameters: any, optionalParameters
 
   optionalParameters.map((parameter: any) => {
     // added this check to not show those optional params in the configuration card whose value is left empty in the parameter modal
-    if(parameter.value.trim()) {
+    if(parameter.value && parameter.value.toString().trim()) {
       jobCustomParameters[parameter.name] = convertValue(parameter)
     }
   })
@@ -266,13 +289,13 @@ const generateJobCustomOptions = (job: any) => {
     if(parameter.optional) {
       optionalParameters.push({
         name: parameter.name,
-        value: job?.runtimeData && job?.runtimeData[parameter.name] && job?.runtimeData[parameter.name] !== 'null' ? '' + job?.runtimeData[parameter.name] : '',   // added check for null as we don't want to pass null as a value in the params
+        value: job?.runtimeData && job?.runtimeData[parameter.name] && job?.runtimeData[parameter.name] !== 'null' ? convertToString({ value: job?.runtimeData[parameter.name], type: parameter.type }) : '',   // added check for null as we don't want to pass null as a value in the params
         type: parameter.type
       })
     } else {
       requiredParameters.push({
         name: parameter.name,
-        value: job?.runtimeData && job?.runtimeData[parameter.name] && job?.runtimeData[parameter.name] !== 'null' ? '' + job?.runtimeData[parameter.name] : '',   // added check for null as we don't want to pass null as a value in the params
+        value: job?.runtimeData && job?.runtimeData[parameter.name] && job?.runtimeData[parameter.name] !== 'null' ? convertToString({ value: job?.runtimeData[parameter.name], type: parameter.type }) : '',   // added check for null as we don't want to pass null as a value in the params
         type: parameter.type
       })
     }
@@ -308,7 +331,19 @@ const hasJobDataError = (job: any) => {
   return false;
 }
 
+const copyToClipboard = async (value: string, text?: string) => {
+  const { Clipboard } = Plugins;
+
+  await Clipboard.write({
+    string: value,
+  }).then(() => {
+    text ? showToast(translate(text)) : showToast(translate("Copied", { value }));
+  });
+}
+
+
 export {
+  copyToClipboard,
   isCustomRunTime,
   getNowTimestamp,
   generateAllowedFrequencies,

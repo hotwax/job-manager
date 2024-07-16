@@ -1,6 +1,6 @@
 import { api } from '@/adapter';
 import { showToast } from '@/utils';
-import { translate } from "@/i18n";
+import { translate } from "@hotwax/dxp-components";
 
 const fetchShopifyWebhooks = async (payload?:  any): Promise <any>  => {
   return api({
@@ -20,8 +20,8 @@ const webhookParameters = {
     'endpoint': 'cancelOrderShopifyWebhook'
   },
   'PAYMENT_STATUS': {
-    'topic': 'orders/paid',
-    'endpoint': 'orderPaidNotificationFromShopify'
+    'topic': 'order_transactions/create',
+    'endpoint': 'getTransactionAndMarkOrderPaid'
   },
   'RETURNS': {
     'topic': 'refunds/create',
