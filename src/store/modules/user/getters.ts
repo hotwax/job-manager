@@ -36,6 +36,9 @@ const getters: GetterTree <UserState, RootState> = {
     getProductStoreCategories(state) {
         return state.productStoreCategories;
     },
+    getPwaState (state) {
+        return state.pwaState;
+    },
     getCurrentEComStore(state) {
         return state.currentEComStore
     },

@@ -180,6 +180,9 @@ const actions: ActionTree<UserState, RootState> = {
     updateInstanceUrl(payload)
   },
 
+  updatePwaState({commit}, payload) {
+    commit(types.USER_PWA_STATE_UPDATED, payload);
+  },
 
   async getShopifyConfig({ commit }, productStoreId) {
     if (!productStoreId) {

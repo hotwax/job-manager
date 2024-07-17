@@ -76,14 +76,7 @@
         </ion-card>
       </section>
       <hr />
-
-      <div class="section-header">
-        <h1>
-          {{ translate('App') }}
-          <p class="overline" >{{ "Version: " + appVersion }}</p>
-        </h1>
-        <p class="overline">{{ "Built: " + getDateTime(appInfo.builtTime) }}</p>
-      </div>
+      <DxpAppVersionInfo />
 
       <section>
         <DxpTimeZoneSwitcher @timeZoneUpdated="timeZoneUpdated" />
@@ -99,7 +92,6 @@ import { codeWorkingOutline, ellipsisVertical, personCircleOutline, openOutline,
 import { mapGetters, useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import Image from '@/components/Image.vue'
-import { DateTime } from 'luxon';
 import { translate } from '@hotwax/dxp-components';
 
 export default defineComponent({
@@ -126,9 +118,7 @@ export default defineComponent({
   },
   data() {
     return {
-      baseURL: process.env.VUE_APP_BASE_URL,
-      appInfo: (process.env.VUE_APP_VERSION_INFO ? JSON.parse(process.env.VUE_APP_VERSION_INFO) : {}) as any,
-      appVersion: ""
+      baseURL: process.env.VUE_APP_BASE_URL
     };
   },
   computed: {
@@ -138,9 +128,6 @@ export default defineComponent({
       shopifyConfigs: 'user/getShopifyConfigs',
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
     })
-  },
-  mounted() {
-    this.appVersion = this.appInfo.branch ? (this.appInfo.branch + "-" + this.appInfo.revision) : this.appInfo.tag;
   },
   methods: {
     setEComStore(event: any) {
@@ -167,9 +154,6 @@ export default defineComponent({
           window.location.href = `${process.env.VUE_APP_LOGIN_URL}?isLoggedOut=true&redirectUrl=${redirectUrl}`
         }
       })
-    },
-    getDateTime(time: any) {
-      return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
     },
     goToLaunchpad() {
       window.location.href = `${process.env.VUE_APP_LOGIN_URL}`
