@@ -74,7 +74,7 @@
         </ion-card>
       </section>
         
-      <ion-button fill="outline" @click="selectJobs()">
+      <ion-button fill="outline" :trackable="JSON.stringify({ label: 'ScheduleInBulk/SelectJobs', id: 'bulk schedule' })" @click="selectJobs() ">
         <ion-icon slot="start" :icon="addOutline"/>
         {{ translate("select jobs") }}
       </ion-button>
@@ -131,6 +131,7 @@ import JobConfigurationForBulkScheduler from '@/components/JobConfigurationForBu
 import { DateTime } from 'luxon';
 import { Actions, hasPermission } from '@/authorization'
 import CustomFrequencyModal from '@/components/CustomFrequencyModal.vue';
+import { useAnalytics } from '@hotwax/dxp-components';
 
 export default defineComponent({
   name: 'BulkEditor',
@@ -181,6 +182,7 @@ export default defineComponent({
     }),
   },
   setup() {
+    useAnalytics();
     const store = useStore();
     const router = useRouter();
 

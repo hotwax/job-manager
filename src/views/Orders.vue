@@ -14,8 +14,8 @@
             <ion-card-header>
               <ion-card-title>{{ translate("Import") }}</ion-card-title>
             </ion-card-header>
-            <ion-item @click="viewJobConfiguration({ id: 'IMP_NEW_ORDERS', status: getJobStatus(jobEnums['IMP_NEW_ORDERS'])})" detail button>
-              <ion-label class="ion-text-wrap">{{ translate("New orders") }}</ion-label>
+            <ion-item :trackable="JSON.stringify({ label: 'order/import/newOrder', id: 'New Order' })" @click="viewJobConfiguration({ id: 'IMP_NEW_ORDERS', status: getJobStatus(jobEnums['IMP_NEW_ORDERS'])})" detail button>
+              <ion-label class="ion-text-wrap">{{ translate("New orders") }}</ion-label >
               <ion-label slot="end">{{ getTemporalExpression('IMP_NEW_ORDERS') }}</ion-label>
             </ion-item>
             <ion-item @click="viewJobConfiguration({ id: 'APR_ORD', status: getJobStatus(jobEnums['APR_ORD'])})" detail button>
@@ -111,7 +111,7 @@ import {
   isPlatform,
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
-import { translate } from '@hotwax/dxp-components'
+import { translate, useAnalytics } from '@hotwax/dxp-components'
 import { useStore } from "@/store";
 import { useRouter } from 'vue-router'
 import { mapGetters } from "vuex";
@@ -286,6 +286,7 @@ export default defineComponent({
     emitter.off('viewJobConfiguration', this.viewJobConfiguration)
   },
   setup() {
+    useAnalytics();
     const store = useStore();
     const router = useRouter();
 
