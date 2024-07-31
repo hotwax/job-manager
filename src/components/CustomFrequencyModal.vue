@@ -21,7 +21,7 @@
       <ion-list>
         <ion-radio-group v-model="frequencyId">
           <ion-item :key="customFrequency.tempExprId" v-for="customFrequency in customFrequencies">
-            <ion-radio :value="customFrequency.tempExprId" slot="start">{{ customFrequency.description }}</ion-radio>
+            <ion-radio :value="customFrequency.tempExprId" label-placement="end" justify="start">{{ customFrequency.description }}</ion-radio>
           </ion-item>
         </ion-radio-group>
       </ion-list>
