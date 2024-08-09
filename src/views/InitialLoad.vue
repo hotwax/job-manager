@@ -8,7 +8,13 @@
     </ion-header>
 
     <ion-content>
-      <main>
+      <div class="empty-state" v-if="jobsLoading">
+        <ion-item lines="none">
+          <ion-spinner name="crescent" slot="start" />
+          {{ translate("Fetching jobs") }}
+        </ion-item>
+      </div>
+      <main v-else>
         <section>
           <ion-card>
             <ion-card-header>
@@ -74,6 +80,7 @@ import {
   IonLabel,
   IonMenuButton,
   IonPage,
+  IonSpinner,
   IonTitle,
   IonToggle,
   IonToolbar,
@@ -103,6 +110,7 @@ export default defineComponent({
     IonLabel,
     IonMenuButton,
     IonPage,
+    IonSpinner,
     IonTitle,
     IonToggle,
     IonToolbar
@@ -115,7 +123,8 @@ export default defineComponent({
       job: {} as any,
       lastShopifyOrderId: '',
       isJobDetailAnimationCompleted: false,
-      isDesktop: isPlatform('desktop')
+      isDesktop: isPlatform('desktop'),
+      jobsLoading: false
     }
   },
   mounted() {
@@ -207,14 +216,21 @@ export default defineComponent({
         this.isJobDetailAnimationCompleted = true;
       }
     },
-    fetchJobs(){
-      this.store.dispatch("job/fetchJobs", {
+    async fetchJobs(){
+      this.jobsLoading = true;
+      this.currentSelectedJobModal = "";
+      await this.store.dispatch('job/updateCurrentJob', { });
+      this.job = {};
+      this.lastShopifyOrderId = "";
+      this.isJobDetailAnimationCompleted = false;
+      await this.store.dispatch("job/fetchJobs", {
         "inputFields":{
           "systemJobEnumId": Object.values(this.jobEnums),
           "systemJobEnumId_op": "in"
         }
       })
       this.store.dispatch('webhook/fetchWebhooks')
+      this.jobsLoading = false;
     },
     async updateWebhook(checked: boolean, enumId: string) {
       const webhook = this.getCachedWebhook[this.webhookEnums[enumId]]
