@@ -8,7 +8,13 @@
     </ion-header>
 
     <ion-content>
-      <main>
+      <div class="empty-state" v-if="jobsLoading">
+        <ion-item lines="none">
+          <ion-spinner name="crescent" slot="start" />
+          {{ translate("Fetching jobs") }}
+        </ion-item>
+      </div>
+      <main v-else>
         <section>
           <ion-card>
             <ion-card-header>
@@ -185,6 +191,7 @@ import {
   IonLabel,
   IonMenuButton,
   IonPage,
+  IonSpinner,
   IonTitle,
   IonToolbar,
   isPlatform
@@ -218,6 +225,7 @@ export default defineComponent({
     IonLabel,
     IonMenuButton,
     IonPage,
+    IonSpinner,
     IonTitle,
     IonToolbar,
     JobConfiguration,
@@ -244,7 +252,8 @@ export default defineComponent({
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
       enumTypeId: 'PRE_ORD_SYS_JOB',
-      preOrderBackorderCategory: {} as any
+      preOrderBackorderCategory: {} as any,
+      jobsLoading: false
     }
   },
   methods: {
@@ -356,16 +365,23 @@ export default defineComponent({
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
         translate('Disabled')
     },
-    fetchJobs(){
-      this.store.dispatch("job/fetchJobs", {
+    async fetchJobs(){
+      await this.store.dispatch("job/fetchJobs", {
         "inputFields":{
           "enumTypeId": "PRE_ORD_SYS_JOB"
         }
       });
     },
-    fetchInitialData() {
-      this.fetchJobs();
-      this.getPreOrderBackorderCategory();
+    async fetchInitialData() {
+      this.jobsLoading = true;
+      this.currentJob = "";
+      await this.store.dispatch('job/updateCurrentJob', { });
+      this.currentJobStatus = ""
+      this.freqType = '';
+      this.isJobDetailAnimationCompleted = false;
+      await this.fetchJobs();
+      await this.getPreOrderBackorderCategory();
+      this.jobsLoading = false;
     }
   },
   mounted () {

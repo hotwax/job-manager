@@ -8,7 +8,13 @@
     </ion-header>
 
     <ion-content>
-      <main>
+      <div class="empty-state" v-if="jobsLoading">
+        <ion-item lines="none">
+          <ion-spinner name="crescent" slot="start" />
+          {{ translate("Fetching jobs") }}
+        </ion-item>
+      </div>
+      <main v-else>
         <section>
           <ion-card>
             <ion-card-header>
@@ -110,6 +116,7 @@ import {
   IonLabel,
   IonMenuButton,
   IonPage,
+  IonSpinner,
   IonTitle,
   IonToggle,
   IonToolbar,
@@ -142,6 +149,7 @@ export default defineComponent({
     IonLabel,
     IonMenuButton,
     IonPage,
+    IonSpinner,
     IonTitle,
     IonToggle,
     IonToolbar,
@@ -159,7 +167,8 @@ export default defineComponent({
       isDesktop: isPlatform('desktop'),
       autoCancelDays: '',
       enumTypeId: 'FULFILLMENT_SYS_JOB',
-      initialLoadJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any
+      initialLoadJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
+      jobsLoading: false
     }
   },
   computed: {
@@ -233,6 +242,12 @@ export default defineComponent({
       }
     },
     async fetchJobs(){
+      this.jobsLoading = true;
+      this.currentJob = "";
+      await this.store.dispatch('job/updateCurrentJob', { });
+      this.currentJobStatus = "";
+      this.freqType = "";
+      this.isJobDetailAnimationCompleted = false;
       await this.store.dispatch("job/fetchJobs", {
         "inputFields": {
           "enumTypeId": "FULFILLMENT_SYS_JOB"
@@ -241,6 +256,7 @@ export default defineComponent({
       if (this.currentEComStore.productStoreId) {
         this.getAutoCancelDays();
       }
+      this.jobsLoading = false;
     },
     async getAutoCancelDays(){
       const payload = {

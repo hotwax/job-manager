@@ -8,7 +8,13 @@
     </ion-header>
 
     <ion-content>
-      <main>
+      <div class="empty-state" v-if="jobsLoading">
+        <ion-item lines="none">
+          <ion-spinner name="crescent" slot="start" />
+          {{ translate("Fetching jobs") }}
+        </ion-item>
+      </div>
+      <main v-else>
         <section>
           <ion-button expand="block" :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" @click="addBatch()">{{ translate('Create new brokering job') }}</ion-button>
 
@@ -58,7 +64,7 @@
           <MoreJobs v-if="getMoreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId).length" :jobs="getMoreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId)" />
         </section>
 
-        <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
+        <aside class="desktop-only" v-if="isDesktop" v-show="currentJob && Object.keys(currentJob).length">
           <JobConfiguration :status="currentJobStatus" :type="freqType" :key="currentJob" :isBrokerJob="orderBatchJobs.includes(currentJob) ? true : false"/>
         </aside>
       </main>
@@ -83,6 +89,7 @@ import {
   IonMenuButton,
   IonPage,
   IonRow,
+  IonSpinner,
   IonTitle,
   IonToggle,
   IonToolbar,
@@ -121,6 +128,7 @@ export default defineComponent({
     IonMenuButton,
     IonPage,
     IonRow,
+    IonSpinner,
     IonTitle,
     IonToggle,
     IonToolbar,
@@ -138,7 +146,8 @@ export default defineComponent({
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
       enumTypeId: 'BROKER_SYS_JOB',
-      initialLoadJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any
+      initialLoadJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
+      jobsLoading: false
     }
   },
   computed: {
@@ -209,6 +218,12 @@ export default defineComponent({
         translate('Disabled')
     },
     async fetchJobs() {
+      this.jobsLoading = true;
+      this.currentJob = "";
+      await this.store.dispatch('job/updateCurrentJob', { });
+      this.currentJobStatus = "";
+      this.freqType = "";
+      this.isJobDetailAnimationCompleted = false;
       await this.store.dispatch("job/fetchJobs", {
         "inputFields": {
           // If we fetch broker sys job by not passing systemJobEnumId filter then this api
@@ -225,6 +240,7 @@ export default defineComponent({
           "systemJobEnumId_op": "in"
         }
       });
+      this.jobsLoading = false;
     },
     timeFromNow(time: any) {
       const timeDiff = DateTime.fromMillis(time).diff(DateTime.local());

@@ -8,7 +8,13 @@
     </ion-header>
 
     <ion-content>
-      <main>
+      <div class="empty-state" v-if="jobsLoading">
+        <ion-item lines="none">
+          <ion-spinner name="crescent" slot="start" />
+          {{ translate("Fetching jobs") }}
+        </ion-item>
+      </div>
+      <main v-else>
         <section>
           <!-- Empty state -->
           <div v-if="miscellaneousJobs?.length === 0">
@@ -108,6 +114,7 @@ export default defineComponent({
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
       isRetrying: false,
+      jobsLoading: false
     }
   },
   computed: {
@@ -150,7 +157,13 @@ export default defineComponent({
       }
     },
     async getMiscellaneousJobs(viewSize = 100, viewIndex = 0) {
+      this.jobsLoading = true;
+      this.currentJob = "";
+      await this.store.dispatch('job/updateCurrentJob', { });
+      this.currentJobStatus = "";
+      this.isJobDetailAnimationCompleted = false;
       await this.store.dispatch('job/fetchMiscellaneousJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex});
+      this.jobsLoading = false;
     },
     async loadMoreMiscellaneousJobs (event: any) {
       this.getMiscellaneousJobs(

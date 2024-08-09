@@ -8,7 +8,13 @@
     </ion-header>
 
     <ion-content>
-      <main>
+      <div class="empty-state" v-if="jobsLoading">
+        <ion-item lines="none">
+          <ion-spinner name="crescent" slot="start" />
+          {{ translate("Fetching jobs") }}
+        </ion-item>
+      </div>
+      <main v-else>
         <section>
           <ion-card>
             <ion-card-header>
@@ -64,6 +70,7 @@ import {
   IonLabel,
   IonMenuButton,
   IonPage,
+  IonSpinner,
   IonTitle,
   IonToolbar,
   IonToggle,
@@ -91,6 +98,7 @@ export default defineComponent({
     IonLabel,
     IonMenuButton,
     IonPage,
+    IonSpinner,
     IonTitle,
     IonToolbar,
     IonToggle,
@@ -126,7 +134,8 @@ export default defineComponent({
       isDesktop: isPlatform('desktop'),
       webhookEnums: JSON.parse(process.env?.VUE_APP_WEBHOOK_ENUMS as string) as any,
       enumTypeId: 'PRODUCT_SYS_JOB',
-      initialLoadJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any
+      initialLoadJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
+      jobsLoading: false
     }
   },
   mounted () {
@@ -187,13 +196,20 @@ export default defineComponent({
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
         translate('Disabled')
     },
-    fetchJobs(){
-      this.store.dispatch("job/fetchJobs", {
+    async fetchJobs(){
+      this.jobsLoading = true;
+      this.currentJob = ""
+      await this.store.dispatch('job/updateCurrentJob', { });
+      this.currentJobStatus = ""
+      this.freqType = ""
+      this.isJobDetailAnimationCompleted = false
+      await this.store.dispatch("job/fetchJobs", {
         "inputFields":{
           "enumTypeId": "PRODUCT_SYS_JOB"
         }
       });
       this.store.dispatch('webhook/fetchWebhooks')
+      this.jobsLoading = false;
     }
   },
   setup() {

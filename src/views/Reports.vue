@@ -8,7 +8,13 @@
     </ion-header>
 
     <ion-content>
-      <main>
+      <div class="empty-state" v-if="jobsLoading">
+        <ion-item lines="none">
+          <ion-spinner name="crescent" slot="start" />
+          {{ translate("Fetching jobs") }}
+        </ion-item>
+      </div>
+      <main v-else>
         <section>
           <div v-if="!reportsJobs?.length">
             <p class="ion-text-center">{{ translate("There are no reports jobs right now") }}</p>
@@ -98,6 +104,7 @@ export default defineComponent({
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
       isRetrying: false,
+      jobsLoading: false
     }
   },
   computed: {
@@ -138,7 +145,13 @@ export default defineComponent({
       }
     },
     async getReportsJobs(viewSize = 200, viewIndex = 0) {
+      this.jobsLoading = true;
+      this.currentJob = "";
+      await this.store.dispatch('job/updateCurrentJob', { });
+      this.currentJobStatus = "";
+      this.isJobDetailAnimationCompleted = false;
       await this.store.dispatch('job/fetchReportsJobs', { eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex });
+      this.jobsLoading = false;
     },
     async loadMoreReportsJobs(event: any) {
       this.getReportsJobs(
