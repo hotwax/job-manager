@@ -31,7 +31,13 @@
     </ion-header>
 
     <ion-content ref="contentRef" :scroll-events="true" @ionScroll="enableScrolling()" id="filter-content">
-      <main>
+      <div class="empty-state" v-if="jobsLoading">
+        <ion-item lines="none">
+          <ion-spinner name="crescent" slot="start" />
+          {{ translate("Fetching jobs") }}
+        </ion-item>
+      </div>
+      <main v-else>
         <section v-if="segmentSelected === 'pending'">
           <!-- Empty state -->
           <div v-if="pendingJobs?.length === 0">
@@ -360,7 +366,8 @@ export default defineComponent({
       isDesktop: isPlatform('desktop'),
       isRetrying: false,
       queryString: '' as any,
-      isScrollingEnabled: false
+      isScrollingEnabled: false,
+      jobsLoading: false
     }
   },
   computed: {
@@ -501,17 +508,17 @@ export default defineComponent({
     async refreshJobs(event: any, isRetrying = false ) {
       this.isRetrying = isRetrying;
       if(this.segmentSelected === 'pending') {
-        this.getPendingJobs().then(() => {
+        await this.getPendingJobs().then(() => {
           if(event) event.target.complete();
           this.isRetrying = false;
         });
       } else if(this.segmentSelected === 'running') {
-        this.getRunningJobs().then(() => {
+        await this.getRunningJobs().then(() => {
           if(event) event.target.complete();
           this.isRetrying = false;
         });
       } else {
-        this.getJobHistory().then(() => {
+        await this.getJobHistory().then(() => {
           if(event) event.target.complete();
           this.isRetrying = false;
         });
@@ -635,6 +642,15 @@ export default defineComponent({
         this.getPendingJobs();
       }
     },
+    async updateProductStoreConfig() {
+      this.jobsLoading = true;
+      await this.store.dispatch('job/updateCurrentJob', { job: {} });
+      this.currentJobStatus = ""
+      this.freqType = ""
+      this.isJobDetailAnimationCompleted = false
+      await this.refreshJobs(undefined, false);
+      this.jobsLoading = false;
+    }
   },
   async created() {
     this.getPendingJobs();
@@ -646,11 +662,11 @@ export default defineComponent({
     await this.store.dispatch('job/updateCurrentJob', { job: {} });
   },
   mounted(){
-    emitter.on("productStoreOrConfigChanged", this.refreshJobs);
+    emitter.on("productStoreOrConfigChanged", this.updateProductStoreConfig);
     emitter.on("pinnedJobsUpdated", (this as any).updateSelectedPinnedJob);
   },
   unmounted(){
-    emitter.off("productStoreOrConfigChanged", this.refreshJobs);
+    emitter.off("productStoreOrConfigChanged", this.updateProductStoreConfig);
     emitter.off('jobUpdated', this.updateJobs);
     emitter.off("pinnedJobsUpdated", (this as any).updateSelectedPinnedJob);
   },
