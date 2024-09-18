@@ -112,31 +112,31 @@
       </ion-checkbox>
     </ion-item>
   </div>
+  <!-- Import logs -->
   <section>
     <ion-item lines="none">
       <h1>Import logs</h1>
-      <ion-button  slot="end">View details</ion-button>
+      <ion-button slot="end" fill="clear" @click="openImportLogsDetails()">View details</ion-button>
     </ion-item>
-
+    <ion-progress-bar></ion-progress-bar>
     <ion-list>
       <ion-item>
         <ion-icon slot="start" :icon="fileTrayFullOutline" />
-        <ion-label class="ion-text-wrap">Files received </ion-label>
-        <ion-label slot="end" class="ion-text-wrap">14</ion-label>
+        <ion-label>Files received</ion-label>
+        <ion-label slot="end">14</ion-label>
       </ion-item>
       <ion-item>
         <ion-icon slot="start" :icon="codeWorkingOutline" />
-        <ion-label class="ion-text-wrap">Files processed</ion-label>
-        <ion-label slot="end" class="ion-text-wrap">14</ion-label>
+        <ion-label>Files processed</ion-label>
+        <ion-label slot="end">14</ion-label>
       </ion-item>
       <ion-item lines="none">
         <ion-icon slot="start" :icon="warningOutline" />
-        <ion-label class="ion-text-wrap">Files with errors</ion-label>
-        <ion-label slot="end" class="ion-text-wrap">14</ion-label>
+        <ion-label>Files with errors</ion-label>
+        <ion-label slot="end">14</ion-label>
       </ion-item>
     </ion-list>
   </section>
-
 </template>
 
 <script lang="ts">
@@ -153,6 +153,7 @@ import {
   IonLabel,
   IonList,
   IonModal,
+  IonProgressBar,
   IonRow,
   IonSelect,
   IonSelectOption,
@@ -200,6 +201,7 @@ export default defineComponent({
     IonLabel,
     IonList,
     IonModal,
+    IonProgressBar,
     IonRow,
     IonSelect,
     IonSelectOption,
@@ -252,6 +254,9 @@ export default defineComponent({
     }
   },
   methods: {
+    openImportLogsDetails() {
+      this.router.push({ name: 'ImportLogsDetail', replace: false });
+    },
     getDateTime(time: any) {
       return DateTime.fromMillis(time).toISO()
     },
