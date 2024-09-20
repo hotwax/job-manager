@@ -256,9 +256,7 @@ export default defineComponent({
   },
   methods: {
     getProcessedFileCount() {
-      if(this.getDataLogs && this.getDataLogs.length) {
-        return this.getDataLogs?.filter((log: any) => log.statusId === "SERVICE_FINISHED").length
-      }
+      return this.getDataLogs?.filter((log: any) => log.statusId === "SERVICE_FINISHED").length
     },
     getErrorFileCount() {
       return this.getDataLogs?.filter((log: any) => log.errorRecordContentId !== null).length
