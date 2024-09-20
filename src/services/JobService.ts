@@ -64,6 +64,23 @@ const cancelJob = async (payload: any): Promise <any> => {
     data: payload
   });
 }
+
+const fetchDataManagerLogs = async (payload: any): Promise <any> => {
+  return api ({
+    url: "performFind",
+    method: "get",
+    params: payload
+  })
+}
+
+const fetchDataManagerConfig = async (payload: any): Promise <any> => {
+  return api ({
+    url: "performFind",
+    method: "get",
+    params: payload
+  })
+}
+
 const fetchJobPreviousOccurrence = async (payload: any): Promise <any>  => {
   try {
     const params = {
@@ -118,5 +135,7 @@ export const JobService = {
   scheduleJob,
   updateAutoCancelDays,
   getAutoCancelDays,
-  cancelJob
+  cancelJob,
+  fetchDataManagerLogs,
+  fetchDataManagerConfig
 }

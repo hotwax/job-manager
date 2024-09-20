@@ -608,6 +608,9 @@ export default defineComponent({
       this.freqType = appFreqType ? appFreqType[1] : "default"
 
       await this.store.dispatch('job/updateCurrentJob', { job });
+      if (job.runtimeData?.configId) {
+        await this.store.dispatch('job/fetchDataManagerLogs', job.runtimeData?.configId)
+      }
       if(!this.isDesktop && job?.jobId) {
         this.router.push({ name: 'JobDetails', params: { jobId: job?.jobId, category: "pipeline" } });
         return;

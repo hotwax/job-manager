@@ -260,6 +260,68 @@ const actions: ActionTree<JobState, RootState> = {
       showToast(translate("Something went wrong"));
     })
   },
+
+  async fetchDataManagerLogs ({ commit }, params) {
+    let logs;
+    const payload = {
+      "inputFields":  {
+        "statusId": ["SERVICE_CANCELLED", "SERVICE_CRASHED", "SERVICE_FAILED", "SERVICE_FINISHED", "SERVICE_PENDING", "SERVICE_RUNNING", "SERVICE_QUEUED"],
+        "statusId_op": "in",
+        "systemJobEnumId_op": "not-empty",
+        "configId": params
+      } as any,
+      "fieldList": ["statusId", "logId", "createdDate", "startDateTime", "finishDateTime", "errorRecordContentId", "contentName"],
+      "noConditionFind": "Y",
+      "viewSize": 10,
+      "viewIndex": 0,
+      "entityName": "DataManagerLogAndContent",
+    }
+
+    await JobService.fetchDataManagerLogs(payload).then((resp: any) => {
+      if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
+        if (resp.data.docs) {
+          logs = resp.data.docs
+          commit(types.JOB_DATA_MANAGER_LOGS, { logs });
+        } else {
+          commit(types.JOB_DATA_MANAGER_LOGS, []);
+        }
+      }
+    }).catch((err) => {
+      commit(types.JOB_DATA_MANAGER_LOGS, []);
+      logger.error(err);
+      showToast(translate("Something went wrong"));
+    })
+    return logs;
+  },
+  
+  async fetchDataManagerConfig({ commit }, params) {
+    let resp;
+    const payload = {
+      "inputFields":  {
+        "configId": params
+      } as any,
+      "fieldList": ["importPath", "multiThreading", "description", "executionModeId"],
+      "noConditionFind": "Y",
+      "viewSize": 1,
+      "viewIndex": 0,
+      "entityName": "DataManagerConfig",
+    }
+    
+    try {
+      resp = await JobService.fetchDataManagerConfig(payload);
+      if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
+        if (resp.data.docs) {
+          return resp.data.docs;
+        } else {
+          throw resp.data
+        }
+      }
+    } catch (err) {
+      logger.error(err);
+    }
+    return resp;
+  },
+
   async fetchMiscellaneousJobs({ commit, dispatch, state }, payload){
     const fetchJobRequests = [];
     const params = {

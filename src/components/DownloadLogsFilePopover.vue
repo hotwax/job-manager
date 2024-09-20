@@ -1,15 +1,15 @@
 <template>
   <ion-content>
     <ion-list>
-      <ion-list-header>Log Id</ion-list-header>
+      <ion-list-header>{{ translate('Log Id') }}</ion-list-header>
       <ion-item button>
-        Log file
+        {{ translate('Log file') }}
       </ion-item>
       <ion-item button>
-        Uploaded file
+        {{ translate('Uploaded file') }}
       </ion-item>
       <ion-item button lines="none">
-        Failed records
+        {{ translate('Failed records') }}
       </ion-item>    
     </ion-list>
   </ion-content>

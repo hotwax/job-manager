@@ -65,9 +65,10 @@ const routes: Array<RouteRecordRaw> = [
     }
   },
   {
-    path: '/import-logs-detail',
+    path: '/import-logs-detail/:jobId',
     name: 'ImportLogsDetail',
     component: ImportLogsDetail,
+    beforeEnter: authGuard,
   },
   {
     path: '/inventory',

@@ -113,27 +113,27 @@
     </ion-item>
   </div>
   <!-- Import logs -->
-  <section>
+  <section v-if="currentJob.runtimeData?.configId">
     <ion-item lines="none">
-      <h1>Import logs</h1>
-      <ion-button slot="end" fill="clear" @click="openImportLogsDetails()">View details</ion-button>
+      <h1>{{ translate('Import logs') }}</h1>
+      <ion-button slot="end" fill="clear" @click="openImportLogsDetails()">{{ translate('View details') }}</ion-button>
     </ion-item>
-    <ion-progress-bar></ion-progress-bar>
+    <ion-progress-bar :value="(getProcessedFileCount() + getErrorFileCount()) / getDataLogs.length * 0.1"></ion-progress-bar>
     <ion-list>
       <ion-item>
         <ion-icon slot="start" :icon="fileTrayFullOutline" />
-        <ion-label>Files received</ion-label>
-        <ion-label slot="end">14</ion-label>
+        <ion-label>{{ translate('Files received') }}</ion-label>
+        <ion-label slot="end">{{ getDataLogs.length }}</ion-label>
       </ion-item>
       <ion-item>
         <ion-icon slot="start" :icon="codeWorkingOutline" />
-        <ion-label>Files processed</ion-label>
-        <ion-label slot="end">14</ion-label>
+        <ion-label>{{ translate('Files processed') }}</ion-label>
+        <ion-label slot="end">{{ getProcessedFileCount() }}</ion-label>
       </ion-item>
       <ion-item lines="none">
         <ion-icon slot="start" :icon="warningOutline" />
-        <ion-label>Files with errors</ion-label>
-        <ion-label slot="end">14</ion-label>
+        <ion-label>{{ translate('Files with errors') }}</ion-label>
+        <ion-label slot="end">{{ getErrorFileCount() }}</ion-label>
       </ion-item>
     </ion-list>
   </section>
@@ -244,6 +244,7 @@ export default defineComponent({
       currentEComStore: 'user/getCurrentEComStore',
       currentJob: 'job/getCurrentJob',
       pendingJobs: 'job/getPendingJobs',
+      getDataLogs: 'job/getDataLogs',
     }),
     isRequiredParametersMissing() {
       return this.customRequiredParameters.some((parameter: any) => !parameter.value?.trim())
@@ -254,8 +255,16 @@ export default defineComponent({
     }
   },
   methods: {
+    getProcessedFileCount() {
+      if(this.getDataLogs && this.getDataLogs.length) {
+        return this.getDataLogs?.filter((log: any) => log.statusId === "SERVICE_FINISHED").length
+      }
+    },
+    getErrorFileCount() {
+      return this.getDataLogs?.filter((log: any) => log.errorRecordContentId !== null).length
+    },
     openImportLogsDetails() {
-      this.router.push({ name: 'ImportLogsDetail', replace: false });
+      this.router.push({ name: 'ImportLogsDetail', params: { jobId: this.currentJob.systemJobEnumId }, replace: true });
     },
     getDateTime(time: any) {
       return DateTime.fromMillis(time).toISO()

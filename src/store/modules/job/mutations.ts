@@ -64,6 +64,9 @@ const mutations: MutationTree <JobState> = {
             runtime: '',
             frequency: ''
         }
+    },
+    [types.JOB_DATA_MANAGER_LOGS] (state, payload) {
+        state.logs = payload.logs
     }
 }
 export default mutations;

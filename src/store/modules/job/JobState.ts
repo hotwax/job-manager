@@ -33,4 +33,5 @@ export default interface JobState {
       runtime: any,
       frequency: any,
     },
+    logs: any
 }
