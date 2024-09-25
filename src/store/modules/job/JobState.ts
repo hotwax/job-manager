@@ -33,5 +33,8 @@ export default interface JobState {
       runtime: any,
       frequency: any,
     },
-    logs: any
+    logs: {
+      list: any,
+      contentDataResource: any
+    }
 }

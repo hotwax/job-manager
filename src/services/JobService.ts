@@ -73,9 +73,25 @@ const fetchDataManagerLogs = async (payload: any): Promise <any> => {
   })
 }
 
+const fetchDataResource = async (payload: any): Promise <any> => {
+  return api ({
+    url: "performFind",
+    method: "get",
+    params: payload
+  })
+}
+
 const fetchDataManagerConfig = async (payload: any): Promise <any> => {
   return api ({
     url: "performFind",
+    method: "get",
+    params: payload
+  })
+}
+
+const downloadCsv = async (payload: any): Promise <any> => {
+  return api ({
+    url: "DownloadCsvFile",
     method: "get",
     params: payload
   })
@@ -137,5 +153,7 @@ export const JobService = {
   getAutoCancelDays,
   cancelJob,
   fetchDataManagerLogs,
-  fetchDataManagerConfig
+  fetchDataResource,
+  fetchDataManagerConfig,
+  downloadCsv
 }

@@ -113,26 +113,26 @@
     </ion-item>
   </div>
   <!-- Import logs -->
-  <section v-if="currentJob.runtimeData?.configId">
+  <section v-if="currentJob.runtimeData?.configId && getDataLogs?.length">
     <ion-item lines="none">
       <h1>{{ translate('Import logs') }}</h1>
       <ion-button slot="end" fill="clear" @click="openImportLogsDetails()">{{ translate('View details') }}</ion-button>
     </ion-item>
-    <ion-progress-bar :value="(getProcessedFileCount() + getErrorFileCount()) / getDataLogs.length * 0.1"></ion-progress-bar>
+    <ion-progress-bar :value="(getProcessedFileCount() - getErrorFileCount()) / getDataLogs.length"></ion-progress-bar>
     <ion-list>
       <ion-item>
         <ion-icon slot="start" :icon="fileTrayFullOutline" />
-        <ion-label>{{ translate('Files received') }}</ion-label>
+        {{ translate('Files received') }}
         <ion-label slot="end">{{ getDataLogs.length }}</ion-label>
       </ion-item>
       <ion-item>
         <ion-icon slot="start" :icon="codeWorkingOutline" />
-        <ion-label>{{ translate('Files processed') }}</ion-label>
+        {{ translate('Files processed') }}
         <ion-label slot="end">{{ getProcessedFileCount() }}</ion-label>
       </ion-item>
       <ion-item lines="none">
         <ion-icon slot="start" :icon="warningOutline" />
-        <ion-label>{{ translate('Files with errors') }}</ion-label>
+        {{ translate('Files with errors') }}
         <ion-label slot="end">{{ getErrorFileCount() }}</ion-label>
       </ion-item>
     </ion-list>
@@ -262,7 +262,7 @@ export default defineComponent({
       return this.getDataLogs?.filter((log: any) => log.errorRecordContentId !== null).length
     },
     openImportLogsDetails() {
-      this.router.push({ name: 'ImportLogsDetail', params: { jobId: this.currentJob.systemJobEnumId }, replace: true });
+      this.router.replace({ path: `/import-logs-detail/${this.currentJob.systemJobEnumId}` })
     },
     getDateTime(time: any) {
       return DateTime.fromMillis(time).toISO()
