@@ -23,7 +23,7 @@
               <ion-item>
                 <ion-icon slot="start" :icon="fileTrayFullOutline" />
                 {{ translate('Files received') }}
-                <ion-label slot="end">{{ getDataLogs.length }}</ion-label>
+                <ion-label slot="end">{{ getDataManagerLogs.length }}</ion-label>
               </ion-item>
               <ion-item>
                 <ion-icon slot="start" :icon="codeWorkingOutline" />
@@ -64,17 +64,17 @@
       </div>
 
       <div class="ion-padding">
-        <ion-chip v-for="(chip, index) in chips" :key="index" outline @click="updateLogs(chip.label)">
-          <ion-label>{{ chip.label }}</ion-label>
-          <ion-icon v-if="selectedChip === chip.label" :icon="checkmarkOutline" />
+        <ion-chip v-for="filter in dataManagerLogFilters" :key="filter.id" outline @click="filterDataManagerLogs(filter.id)">
+          <ion-label>{{ filter.label }}</ion-label>
+          <ion-icon v-if="selectedFilter === filter.id" :icon="checkmarkOutline" />
         </ion-chip>
       </div>
       
       <div class="empty-state" v-if="isLoading">
         <ion-spinner name="crescent" />
       </div>
-      <div v-else-if="filteredLogs?.length" >
-        <div class="list-item" v-for="(log, index) in filteredLogs" :key="index">
+      <div v-else-if="dataManagerLogList?.length" >
+        <div class="list-item" v-for="(log, index) in dataManagerLogList" :key="index">
           <ion-item lines="none">
             <ion-icon slot="start" :icon="documentTextOutline" />
             <ion-label>
@@ -93,12 +93,10 @@
             {{ getDateTime(log.finishDateTime) }}
             <p>{{ translate('Finished') }}</p>
           </ion-label>
+
+          <ion-badge v-if="log.statusId" :color="log.statusId === 'SERVICE_FAILED' ? 'danger' : 'success'">{{ translate(getStatusDesc(log.statusId)) }}</ion-badge>
           
-          <ion-badge color="success" v-if="log.statusId === 'SERVICE_FINISHED'">{{ translate('Finished') }}</ion-badge>
-          <ion-badge color="danger" v-if="log.statusId === 'SERVICE_FAILED'">{{ translate('Failed') }}</ion-badge>
-          <ion-badge color="success" v-if="log.statusId === 'SERVICE_RUNNING' || log.statusId === 'SERVICE_QUEUED'">{{ translate('Running') }}</ion-badge>
-          
-          <div class="ion-text-center" lines="none" v-if="log.errorRecordContentId" button @click="downloadCsv(log?.errorRecordContentId)">
+          <div class="ion-text-center" lines="none" v-if="log.errorRecordContentId" button @click="downloadErrorRecordFile(log)">
             <ion-icon slot="start" :icon="cloudDownloadOutline" />
             <ion-label>
               <p>{{ translate('Failed records') }}</p>
@@ -123,7 +121,7 @@ import { checkmarkOutline, codeWorkingOutline, cloudDownloadOutline, documentTex
 import { IonBackButton, IonBadge, IonButton, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonPage, IonSpinner, IonTitle, IonToolbar, popoverController } from "@ionic/vue";
 import { defineComponent } from 'vue'
 import { mapGetters, useStore } from 'vuex'
-import { responseFileType } from '@/utils';
+import { saveDataFile, hasError } from '@/utils';
 import { translate } from '@hotwax/dxp-components'
 import { DateTime } from 'luxon'
 import DownloadLogsFilePopover from "@/components/DownloadLogsFilePopover.vue";
@@ -151,59 +149,60 @@ export default defineComponent ({
   data() {
     return {
       configDetails: {},
-      selectedChip: 'All',
-      chips: [
-        { label: 'All' },
-        { label: 'Failed logs' },
-        { label: 'Failed records' }
+      selectedFilter: 'All',
+      dataManagerLogFilters: [
+        { id: 'ALL', label: 'All' },
+        { id: 'FAILED_LOGS', label: 'Failed logs' },
+        { id: 'FAILED_RECORDS', label: 'Failed records' }
       ],
-      filteredLogs: [],
+      dataManagerLogList: [],
       isLoading: true,
     }
   },
   computed: {
     ...mapGetters({
       currentJob: 'job/getCurrentJob',
-      getDataLogs: 'job/getDataLogs',
+      getDataManagerLogs: 'job/getDataManagerLogs',
       getJob: 'job/getJob',
-      getDataResourceId: 'job/getDataResourceIds'
+      getStatusDesc: 'util/getStatusDesc',
     }),
   },
   async mounted() {
     await this.fetchJobs();
     const job = await this.getJob(this.$route.params.jobId)
     await this.store.dispatch('job/updateCurrentJob', { job });
-    this.filteredLogs = await this.store.dispatch('job/fetchDataManagerLogs', job.runtimeData?.configId)
-    this.configDetails = await this.store.dispatch('job/fetchDataManagerConfig', job.runtimeData?.configId)
-    this.updateLogs('All');
+    await this.fetchDataManagerConfig(job.runtimeData?.configId)
+    await this.store.dispatch('job/fetchDataManagerLogs', job.runtimeData?.configId)
+    await this.store.dispatch('job/fetchDataResource', this.getDataManagerLogs)
+    this.filterDataManagerLogs('ALL');
     this.isLoading = false;
   },
   methods : {
-    updateLogs(label) {
-      this.selectedChip = label
-      if (label === 'All') {
-        this.filteredLogs = this.getDataLogs
-      } else if (label === 'Failed logs') {
-        this.filteredLogs = this.getDataLogs.filter(log => log.statusId === 'SERVICE_FAILED')
-      } else if (label === 'Failed records') {
-        this.filteredLogs = this.getDataLogs.filter(log => log.errorRecordContentId !== null)
+    filterDataManagerLogs(id) {
+      this.selectedFilter = id
+      if (id === 'ALL') {
+        this.dataManagerLogList = this.getDataManagerLogs
+      } else if (id === 'FAILED_LOGS') {
+        this.dataManagerLogList = this.getDataManagerLogs.filter(log => log.statusId === 'SERVICE_FAILED')
+      } else if (id === 'FAILED_RECORDS') {
+        this.dataManagerLogList = this.getDataManagerLogs.filter(log => log.errorRecordContentId !== null)
       }
     },
     getDateTime(time) {
       return DateTime.fromMillis(time).toFormat("dd/MM/yyyy H:mm a")
     },
     getProcessedFileCount() {
-      return this.getDataLogs.filter((log) => log.statusId === "SERVICE_FINISHED").length
+      return this.getDataManagerLogs.filter((log) => log.statusId === "SERVICE_FINISHED").length
     },
     getErrorFileCount() {
-      return this.getDataLogs.filter((log) => log.errorRecordContentId !== null).length
+      return this.getDataManagerLogs.filter((log) => log.errorRecordContentId !== null).length
     },
-    async openDownloadLogsFilePopover(log, event) {
+    async openDownloadLogsFilePopover(dataManagerLog, event) {
       const popover = await popoverController.create({
         component: DownloadLogsFilePopover,
         showBackdrop: false,
         event: event,
-        componentProps: { log }
+        componentProps: { dataManagerLog }
       });
       return popover.present()
     },
@@ -212,14 +211,36 @@ export default defineComponent ({
         "inputFields": this.$route.params.jobId
       });
     },
-    async downloadCsv(id) {
+    async fetchDataManagerConfig(configId) {
+      let resp = {}
+      const payload = {
+        "inputFields":  {
+          "configId": configId
+        },
+        "fieldList": ["importPath", "multiThreading", "description", "executionModeId"],
+        "noConditionFind": "Y",
+        "viewSize": 1,
+        "entityName": "DataManagerConfig",
+      }
+      
       try {
-        const dataResource = this.getDataResourceId(id);
-        if (dataResource) {
-          const response = await JobService.downloadCsv({
-            dataResourceId: dataResource.dataResourceId
+        resp = await JobService.fetchDataManagerConfig(payload);
+        if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
+          this.configDetails = resp.data.docs[0];
+        } else {
+          throw resp.data
+        }
+      } catch (err) {
+        logger.error(err);
+      }
+    },
+    async downloadErrorRecordFile(dataManagerLog) {
+      try {
+        if (dataManagerLog?.errorRecordDataResourceId) {
+          const response = await JobService.fetchFileData({
+            dataResourceId: dataManagerLog.errorRecordDataResourceId
           });
-          responseFileType(response.data, dataResource.name);
+          saveDataFile(response.data, dataManagerLog?.errorRecordContentName);
         }
       } catch (error) {
         logger.error(error);

@@ -113,17 +113,17 @@
     </ion-item>
   </div>
   <!-- Import logs -->
-  <section v-if="currentJob.runtimeData?.configId && getDataLogs?.length">
+  <section v-if="currentJob.runtimeData?.configId && getDataManagerLogs?.length">
     <ion-item lines="none">
       <h1>{{ translate('Import logs') }}</h1>
       <ion-button slot="end" fill="clear" @click="openImportLogsDetails()">{{ translate('View details') }}</ion-button>
     </ion-item>
-    <ion-progress-bar :value="(getProcessedFileCount() - getErrorFileCount()) / getDataLogs.length"></ion-progress-bar>
+    <ion-progress-bar :value="(getProcessedFileCount() - getErrorFileCount()) / getDataManagerLogs.length"></ion-progress-bar>
     <ion-list>
       <ion-item>
         <ion-icon slot="start" :icon="fileTrayFullOutline" />
         {{ translate('Files received') }}
-        <ion-label slot="end">{{ getDataLogs.length }}</ion-label>
+        <ion-label slot="end">{{ getDataManagerLogs.length }}</ion-label>
       </ion-item>
       <ion-item>
         <ion-icon slot="start" :icon="codeWorkingOutline" />
@@ -244,7 +244,7 @@ export default defineComponent({
       currentEComStore: 'user/getCurrentEComStore',
       currentJob: 'job/getCurrentJob',
       pendingJobs: 'job/getPendingJobs',
-      getDataLogs: 'job/getDataLogs',
+      getDataManagerLogs: 'job/getDataManagerLogs',
     }),
     isRequiredParametersMissing() {
       return this.customRequiredParameters.some((parameter: any) => !parameter.value?.trim())
@@ -256,10 +256,10 @@ export default defineComponent({
   },
   methods: {
     getProcessedFileCount() {
-      return this.getDataLogs?.filter((log: any) => log.statusId === "SERVICE_FINISHED").length
+      return this.getDataManagerLogs?.filter((log: any) => log.statusId === "SERVICE_FINISHED").length
     },
     getErrorFileCount() {
-      return this.getDataLogs?.filter((log: any) => log.errorRecordContentId !== null).length
+      return this.getDataManagerLogs?.filter((log: any) => log.errorRecordContentId !== null).length
     },
     openImportLogsDetails() {
       this.router.replace({ path: `/import-logs-detail/${this.currentJob.systemJobEnumId}` })

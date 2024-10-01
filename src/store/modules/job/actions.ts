@@ -261,15 +261,14 @@ const actions: ActionTree<JobState, RootState> = {
     })
   },
 
-  async fetchDataManagerLogs ({ commit, dispatch }, params) {
+  async fetchDataManagerLogs({ commit, dispatch }, configId) {
     commit(types.JOB_DATA_MANAGER_LOGS_UPDATED, []);
     let logs = [] as any
     const payload = {
       "inputFields":  {
         "statusId": ["SERVICE_CANCELLED", "SERVICE_CRASHED", "SERVICE_FAILED", "SERVICE_FINISHED", "SERVICE_PENDING", "SERVICE_RUNNING", "SERVICE_QUEUED"],
-        "statusId_op": "in",
         "systemJobEnumId_op": "not-empty",
-        "configId": params
+        "configId": configId
       },
       "fieldList": ["statusId", "logId", "createdDate", "startDateTime", "finishDateTime", "logFileContentId", "errorRecordContentId", "contentName", "dataResourceId"],
       "noConditionFind": "Y",
@@ -280,7 +279,6 @@ const actions: ActionTree<JobState, RootState> = {
     await JobService.fetchDataManagerLogs(payload).then((resp: any) => {
       if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
         logs = resp.data.docs
-        dispatch('fetchDataResource', logs)
       } else {
         throw resp.data
       }
@@ -291,8 +289,7 @@ const actions: ActionTree<JobState, RootState> = {
     return logs;
   },
 
-  async fetchDataResource({ commit }, logs) {
-    let dataResourceIds = {};
+  async fetchDataResource({ commit, state }, logs) {
     // Extract logFileContentId and errorRecordContentId from logs
     const contentIds = [].concat(...logs.map((log: any) => [log.logFileContentId, log.errorRecordContentId].filter(id => id)));
   
@@ -308,48 +305,25 @@ const actions: ActionTree<JobState, RootState> = {
   
     await JobService.fetchDataResource(payload).then((resp: any) => {
       if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
-        dataResourceIds = contentIds.reduce((acc: any, id: string) => {
-          const contentId = resp.data.docs.find((doc: any) => doc.coContentId === id);
-          if (contentId) {
-            acc[id] = {
-              dataResourceId: contentId.coDataResourceId,
-              name: contentId.coContentName
-            };
+        logs.forEach((log: any) => {
+          const logFileDataResource = resp.data.docs.find((doc: any) => doc.coContentId === log.logFileContentId);
+          if (logFileDataResource) {
+            log.logFileDataResourceId = logFileDataResource.coDataResourceId;
+            log.logFileContentName = logFileDataResource.coContentName;
           }
-          return acc;
-        }, {});
+  
+          const errorRecordDataResource = resp.data.docs.find((doc: any) => doc.coContentId === log.errorRecordContentId);
+          if (errorRecordDataResource) {
+            log.errorRecordDataResourceId = errorRecordDataResource.coDataResourceId;
+            log.errorRecordContentName = errorRecordDataResource.coContentName;
+          }
+        });
       }
     }).catch((err: any) => {
       logger.error(err);
     })
-    commit(types.JOB_DATA_RESOURCE_IDS_UPDATED, dataResourceIds);
+    commit(types.JOB_DATA_MANAGER_LOGS_UPDATED, logs);
   },
-  
-  async fetchDataManagerConfig({ commit }, params) {
-    let resp = {} as any
-    const payload = {
-      "inputFields":  {
-        "configId": params
-      },
-      "fieldList": ["importPath", "multiThreading", "description", "executionModeId"],
-      "noConditionFind": "Y",
-      "viewSize": 1,
-      "entityName": "DataManagerConfig",
-    }
-    
-    try {
-      resp = await JobService.fetchDataManagerConfig(payload);
-      if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
-        return resp.data.docs[0];
-      } else {
-        throw resp.data
-      }
-    } catch (err) {
-      logger.error(err);
-    }
-    return resp;
-  },
-
   async fetchMiscellaneousJobs({ commit, dispatch, state }, payload){
     const fetchJobRequests = [];
     const params = {

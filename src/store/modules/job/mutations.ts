@@ -66,10 +66,7 @@ const mutations: MutationTree <JobState> = {
         }
     },
     [types.JOB_DATA_MANAGER_LOGS_UPDATED] (state, payload) {
-        state.logs.list = payload
+        state.dataManagerLogs = payload
     },
-    [types.JOB_DATA_RESOURCE_IDS_UPDATED] (state, payload) {
-        state.logs.contentDataResource = payload
-    }
 }
 export default mutations;

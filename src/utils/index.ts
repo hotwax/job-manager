@@ -341,18 +341,15 @@ const copyToClipboard = async (value: string, text?: string) => {
   });
 }
 
-const responseFileType = (response: any, fileName: string) => {
+const saveDataFile = async (response: any, fileName: string) => {
   let data;
-  
+
   if (typeof response === 'object') {
     data = JSON.stringify(response)
   } else {
     data = response
   }
-  saveFile(data, fileName);
-}
 
-const saveFile = async (data: any, fileName: string) => {
   const blob = new Blob([data], {type: "text/plain;charset=utf-8"})
   saveAs(blob, fileName);
 }
@@ -374,5 +371,5 @@ export {
   JsonToCsvOption,
   isFutureDate,
   prepareRuntime,
-  responseFileType
+  saveDataFile
 }

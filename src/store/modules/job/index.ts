@@ -42,10 +42,7 @@ const jobModule: Module<JobState, RootState> = {
         runtime: '',
         frequency: '',
       },
-      logs: {
-        list: [],
-        contentDataResource: []
-      }
+      dataManagerLogs: []
     },
     getters,
     actions,

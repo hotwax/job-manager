@@ -89,7 +89,7 @@ const fetchDataManagerConfig = async (payload: any): Promise <any> => {
   })
 }
 
-const downloadCsv = async (payload: any): Promise <any> => {
+const fetchFileData = async (payload: any): Promise <any> => {
   return api ({
     url: "DownloadCsvFile",
     method: "get",
@@ -155,5 +155,5 @@ export const JobService = {
   fetchDataManagerLogs,
   fetchDataResource,
   fetchDataManagerConfig,
-  downloadCsv
+  fetchFileData
 }
