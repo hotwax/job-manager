@@ -85,6 +85,9 @@ const getters: GetterTree <JobState, RootState> = {
     getGlobalFreq: (state) => {
       return state.bulk.frequency;
     },
+    getDataManagerLogs: (state) => {
+      return state.dataManagerLogs
+    }
   }
 
   export default getters;

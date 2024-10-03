@@ -260,6 +260,69 @@ const actions: ActionTree<JobState, RootState> = {
       showToast(translate("Something went wrong"));
     })
   },
+
+  async fetchDataManagerLogs({ commit }, configId) {
+    commit(types.JOB_DATA_MANAGER_LOGS_UPDATED, []);
+    let logs = [] as any
+    const payload = {
+      "inputFields":  {
+        "systemJobEnumId_op": "not-empty",
+        "configId": configId
+      },
+      "fieldList": ["statusId", "logId", "createdDate", "startDateTime", "finishDateTime", "logFileContentId", "errorRecordContentId", "contentName", "dataResourceId"],
+      "noConditionFind": "Y",
+      "viewSize": 250,
+      "entityName": "DataManagerLogAndContent",
+    }
+
+    await JobService.fetchDataManagerLogs(payload).then((resp: any) => {
+      if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
+        logs = resp.data.docs
+      } else {
+        throw resp.data
+      }
+    }).catch((err) => {
+      logger.error(err);
+    })
+    commit(types.JOB_DATA_MANAGER_LOGS_UPDATED, logs);
+    return logs;
+  },
+
+  async fetchDataResource({ commit }, logs) {
+    // Extract logFileContentId and errorRecordContentId from logs
+    const contentIds = [].concat(...logs.map((log: any) => [log.logFileContentId, log.errorRecordContentId].filter(id => id)));
+  
+    const payload = {
+      "inputFields": {
+        "coContentId": contentIds
+      },
+      "fieldList": ["coContentId", "coDataResourceId", "coContentName"], 
+      "noConditionFind": "Y",
+      "viewSize": 250,
+      "entityName": "DataResourceContentView"
+    }
+  
+    await JobService.fetchDataResource(payload).then((resp: any) => {
+      if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
+        logs.forEach((log: any) => {
+          const logFileDataResource = resp.data.docs.find((doc: any) => doc.coContentId === log.logFileContentId);
+          if (logFileDataResource) {
+            log.logFileDataResourceId = logFileDataResource.coDataResourceId;
+            log.logFileContentName = logFileDataResource.coContentName;
+          }
+  
+          const errorRecordDataResource = resp.data.docs.find((doc: any) => doc.coContentId === log.errorRecordContentId);
+          if (errorRecordDataResource) {
+            log.errorRecordDataResourceId = errorRecordDataResource.coDataResourceId;
+            log.errorRecordContentName = errorRecordDataResource.coContentName;
+          }
+        });
+      }
+    }).catch((err: any) => {
+      logger.error(err);
+    })
+    commit(types.JOB_DATA_MANAGER_LOGS_UPDATED, logs);
+  },
   async fetchMiscellaneousJobs({ commit, dispatch, state }, payload){
     const fetchJobRequests = [];
     const params = {
