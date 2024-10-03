@@ -8,37 +8,35 @@
     </ion-header>
 
     <ion-content>
-      <div class="header">
-        <div class="ion-padding">
-          <section>
-            <ion-item lines="none">
-              <h1>{{ translate('Import logs') }}</h1>
+      <div class="header ion-padding">
+        <section>
+          <ion-item lines="none">
+            <h1>{{ translate('Import logs') }}</h1>
+          </ion-item>
+          <ion-list>
+            <ion-item>
+              <ion-icon slot="start" :icon="pulseOutline" />
+              {{ translate('Job') }}
+              <ion-label slot="end" class="ion-text-wrap">{{ currentJob.jobId }}</ion-label>
             </ion-item>
-            <ion-list>
-              <ion-item>
-                <ion-icon slot="start" :icon="pulseOutline" />
-                {{ translate('Job') }}
-                <ion-label slot="end" class="ion-text-wrap">{{ currentJob.jobId }}</ion-label>
-              </ion-item>
-              <ion-item>
-                <ion-icon slot="start" :icon="fileTrayFullOutline" />
-                {{ translate('Files received') }}
-                <ion-label slot="end">{{ getDataManagerLogs.length }}</ion-label>
-              </ion-item>
-              <ion-item>
-                <ion-icon slot="start" :icon="codeWorkingOutline" />
-                {{ translate('Files processed') }}
-                <ion-label slot="end">{{ getProcessedFileCount() }}</ion-label>
-              </ion-item>
-              <ion-item lines="none">
-                <ion-icon slot="start" :icon="warningOutline" />
-                {{ translate('Files with errors') }}
-                <ion-label slot="end">{{ getErrorFileCount() }}</ion-label>
-              </ion-item>
-            </ion-list>
-          </section>
-        </div>
-        <div class="config ion-padding">
+            <ion-item>
+              <ion-icon slot="start" :icon="fileTrayFullOutline" />
+              {{ translate('Files received') }}
+              <ion-label slot="end">{{ getDataManagerLogs.length }}</ion-label>
+            </ion-item>
+            <ion-item>
+              <ion-icon slot="start" :icon="codeWorkingOutline" />
+              {{ translate('Files processed') }}
+              <ion-label slot="end">{{ getProcessedFileCount() }}</ion-label>
+            </ion-item>
+            <ion-item lines="none">
+              <ion-icon slot="start" :icon="warningOutline" />
+              {{ translate('Files with errors') }}
+              <ion-label slot="end">{{ getErrorFileCount() }}</ion-label>
+            </ion-item>
+          </ion-list>
+        </section>
+        <div class="config-details">
           <ion-label lines="none">
             <p class="overline">{{ currentJob.runtimeData?.configId }}</p>
             <h1>{{ configDetails?.description }}</h1>
@@ -129,7 +127,7 @@ import { JobService } from "@/services/JobService";
 import logger from '@/logger';
 
 export default defineComponent ({
-  name: "ImportLogsDetail",
+  name: "DataManagerLogDetails",
   components: {
     IonBackButton,
     IonBadge,
@@ -270,7 +268,7 @@ export default defineComponent ({
 </script>
 
 <style scoped>
-section {
+.header > section {
   overflow: hidden;
   border: var(--border-medium);
   border-radius: 16px;
@@ -288,9 +286,10 @@ section {
 .header {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
+  grid-gap: var(--spacer-sm);
 }
 
-.config {
+.config-details {
   align-self: end;
 }
 

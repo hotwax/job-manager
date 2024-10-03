@@ -261,12 +261,11 @@ const actions: ActionTree<JobState, RootState> = {
     })
   },
 
-  async fetchDataManagerLogs({ commit, dispatch }, configId) {
+  async fetchDataManagerLogs({ commit }, configId) {
     commit(types.JOB_DATA_MANAGER_LOGS_UPDATED, []);
     let logs = [] as any
     const payload = {
       "inputFields":  {
-        "statusId": ["SERVICE_CANCELLED", "SERVICE_CRASHED", "SERVICE_FAILED", "SERVICE_FINISHED", "SERVICE_PENDING", "SERVICE_RUNNING", "SERVICE_QUEUED"],
         "systemJobEnumId_op": "not-empty",
         "configId": configId
       },
@@ -289,7 +288,7 @@ const actions: ActionTree<JobState, RootState> = {
     return logs;
   },
 
-  async fetchDataResource({ commit, state }, logs) {
+  async fetchDataResource({ commit }, logs) {
     // Extract logFileContentId and errorRecordContentId from logs
     const contentIds = [].concat(...logs.map((log: any) => [log.logFileContentId, log.errorRecordContentId].filter(id => id)));
   
