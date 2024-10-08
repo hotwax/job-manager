@@ -40,7 +40,7 @@
           <ion-label>Sources</ion-label>
         </ion-item>
         <ion-item v-for="section in jobSection" :key="section.id" lines="none">
-          <ion-chip @click="redirectToDoc(section)">
+          <ion-chip outline @click="redirectToDoc(section)">
             <ion-label>{{ section.title }}</ion-label>
             <ion-icon :icon="openOutline" />
           </ion-chip>
