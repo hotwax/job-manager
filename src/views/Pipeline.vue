@@ -71,6 +71,12 @@
                 <ion-label class="ion-text-wrap">{{ job.currentRetryCount }}</ion-label>
               </ion-item>
 
+              <ion-item lines="full">
+                <ion-icon slot="start" :icon="codeWorkingOutline" />
+                <ion-label class="ion-text-wrap">{{ job.systemJobEnumId }}</ion-label>
+                <ion-icon :icon="helpCircleOutline" @click.stop.prevent="openLearnMoreModal(job)"/>
+              </ion-item>
+
               <div class="actions">
                 <div>
                   <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" fill="clear" @click.stop="skipJob(job)">{{ translate("Skip") }}</ion-button>
@@ -300,7 +306,7 @@ import {
   IonButtons
 } from "@ionic/vue";
 import JobConfiguration from '@/components/JobConfiguration.vue'
-import { closeCircleOutline, codeWorkingOutline, copyOutline, ellipsisVerticalOutline, filterOutline, pinOutline, refreshOutline, timeOutline, timerOutline } from "ionicons/icons";
+import { closeCircleOutline, codeWorkingOutline, copyOutline, ellipsisVerticalOutline, filterOutline, helpCircleOutline, pinOutline, refreshOutline, timeOutline, timerOutline } from "ionicons/icons";
 import emitter from '@/event-bus';
 import JobHistoryModal from '@/components/JobHistoryModal.vue';
 import { Plugins } from '@capacitor/core';
@@ -310,6 +316,7 @@ import { Actions, hasPermission } from '@/authorization'
 import Filters from '@/components/Filters.vue';
 import FailedJobReasonModal from '@/views/FailedJobReasonModal.vue'
 import { translate } from '@hotwax/dxp-components';
+import LeareMoreModal from '@/components/LeareMoreModal.vue';
 
 export default defineComponent({
   name: "Pipeline",
@@ -390,6 +397,13 @@ export default defineComponent({
     this.isScrollingEnabled = false;
   },
   methods : {
+    async openLearnMoreModal(job: any) {
+      const openLearnMoreModal = await modalController.create({
+        component: LeareMoreModal,
+        componentProps: {currentJob: job}
+      })
+      return openLearnMoreModal.present()
+    },
     isPinnedJobSelected(jobEnumId: any) {
       return (this as any).pipelineFilters.enum.some((jobId: any) =>  jobId === jobEnumId );
     },
@@ -667,6 +681,7 @@ export default defineComponent({
       store,
       codeWorkingOutline,
       ellipsisVerticalOutline,
+      helpCircleOutline,
       pinOutline,
       refreshOutline,
       timeOutline,
