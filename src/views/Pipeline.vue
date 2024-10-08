@@ -66,7 +66,7 @@
                 <ion-label class="ion-text-wrap">{{ job.tempExprId ? temporalExpr(job.tempExprId)?.description : "🙃"  }}</ion-label>
               </ion-item>
 
-              <ion-item lines="full">
+              <ion-item>
                 <ion-icon slot="start" :icon="refreshOutline" />
                 <ion-label class="ion-text-wrap">{{ job.currentRetryCount }}</ion-label>
               </ion-item>
