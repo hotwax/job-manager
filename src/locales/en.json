@@ -90,6 +90,7 @@
   "Failed": "Failed",
   "Failed job reason": "Failed job reason",
   "Failed to schedule service(s)": "Failed to schedule {count} service(s)",
+  "Fetching jobs": "Fetching jobs",
   "Fetching TimeZones": "Fetching TimeZones",
   "File upload status": "File upload status",
   "Filters": "Filters",
