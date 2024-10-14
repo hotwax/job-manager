@@ -7,6 +7,9 @@ const mutations: MutationTree <UtilState> = {
     payload.map((status: any) => {
       state.statusDesc[status.statusId] = status.description;
     })
+  },
+  [types.UITL_JOB_RECURRENCE_TIME_ZONE_UPDATED] (state, payload) {
+    state.jobRecurrenceTimeZone = payload
   }
 }
 export default mutations;
