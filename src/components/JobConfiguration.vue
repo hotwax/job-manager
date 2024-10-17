@@ -112,7 +112,31 @@
       </ion-checkbox>
     </ion-item>
   </div>
-
+  <!-- Import logs -->
+  <section v-if="currentJob.runtimeData?.configId && getDataManagerLogs?.length">
+    <ion-item lines="none">
+      <h1>{{ translate('Import logs') }}</h1>
+      <ion-button slot="end" fill="clear" @click="openImportLogsDetails()">{{ translate('View details') }}</ion-button>
+    </ion-item>
+    <ion-progress-bar :value="(getProcessedFileCount() - getErrorFileCount()) / getDataManagerLogs.length"></ion-progress-bar>
+    <ion-list>
+      <ion-item>
+        <ion-icon slot="start" :icon="fileTrayFullOutline" />
+        {{ translate('Files received') }}
+        <ion-label slot="end">{{ getDataManagerLogs.length }}</ion-label>
+      </ion-item>
+      <ion-item>
+        <ion-icon slot="start" :icon="codeWorkingOutline" />
+        {{ translate('Files processed') }}
+        <ion-label slot="end">{{ getProcessedFileCount() }}</ion-label>
+      </ion-item>
+      <ion-item lines="none">
+        <ion-icon slot="start" :icon="warningOutline" />
+        {{ translate('Files with errors') }}
+        <ion-label slot="end">{{ getErrorFileCount() }}</ion-label>
+      </ion-item>
+    </ion-list>
+  </section>
 </template>
 
 <script lang="ts">
@@ -129,6 +153,7 @@ import {
   IonLabel,
   IonList,
   IonModal,
+  IonProgressBar,
   IonRow,
   IonSelect,
   IonSelectOption,
@@ -138,7 +163,9 @@ import {
 import {
   addOutline,
   calendarClearOutline,
+  codeWorkingOutline,
   flashOutline,
+  fileTrayFullOutline,
   listCircleOutline,
   copyOutline,
   timeOutline,
@@ -146,7 +173,8 @@ import {
   syncOutline,
   personCircleOutline,
   pinOutline,
-  refreshOutline
+  refreshOutline,
+  warningOutline
 } from "ionicons/icons";
 import JobHistoryModal from '@/components/JobHistoryModal.vue'
 import { Plugins } from '@capacitor/core';
@@ -173,6 +201,7 @@ export default defineComponent({
     IonLabel,
     IonList,
     IonModal,
+    IonProgressBar,
     IonRow,
     IonSelect,
     IonSelectOption,
@@ -215,6 +244,7 @@ export default defineComponent({
       currentEComStore: 'user/getCurrentEComStore',
       currentJob: 'job/getCurrentJob',
       pendingJobs: 'job/getPendingJobs',
+      getDataManagerLogs: 'job/getDataManagerLogs',
     }),
     isRequiredParametersMissing() {
       return this.customRequiredParameters.some((parameter: any) => !parameter.value?.trim())
@@ -225,6 +255,15 @@ export default defineComponent({
     }
   },
   methods: {
+    getProcessedFileCount() {
+      return this.getDataManagerLogs?.filter((log: any) => log.statusId === "SERVICE_FINISHED").length
+    },
+    getErrorFileCount() {
+      return this.getDataManagerLogs?.filter((log: any) => log.errorRecordContentId !== null).length
+    },
+    openImportLogsDetails() {
+      this.router.replace({ path: `/import-logs-detail/${this.currentJob.systemJobEnumId}` })
+    },
     getDateTime(time: any) {
       return DateTime.fromMillis(time).toISO()
     },
@@ -525,10 +564,12 @@ export default defineComponent({
       Actions,
       addOutline,
       calendarClearOutline,
+      codeWorkingOutline,
       copyOutline,
       DateTime,
       listCircleOutline,
       flashOutline,
+      fileTrayFullOutline,
       hasPermission,
       isCustomRunTime,
       getNowTimestamp,
@@ -540,17 +581,18 @@ export default defineComponent({
       personCircleOutline,
       pinOutline,
       refreshOutline,
-      translate
+      translate,
+      warningOutline
     };
   }
 });
 </script>
 
 <style scoped>
-ion-list {
-  margin: 0 0 var(--spacer-base);
+section {
+  margin-top: var(--spacer-sm);
+  margin-bottom: var(--spacer-sm);
 }
-
 .actions > ion-button {
   margin: var(--spacer-sm);
 }
