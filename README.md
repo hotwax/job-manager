@@ -52,7 +52,7 @@ While writing issues, please be as specific as possible. All requests regarding 
 You may find some useful resources for improving the UI / UX of the app <a href="https://www.figma.com/community/file/885791511781717756" target="_blank">here</a>.
 
 # Join the community on Discord
-If you have any questions or ideas feel free to join our <a href="https://discord.gg/SwpJnpdyg3" target="_blank">Discord channel</a>
+If you have any questions or ideas feel free to join our <a href="https://discord.gg/S5zqNtJ9" target="_blank">Discord channel</a>
     
 # The license
 
