@@ -17,7 +17,7 @@
             <ion-item>
               <ion-icon slot="start" :icon="pulseOutline" />
               {{ translate('Job') }}
-              <ion-label slot="end" class="ion-text-wrap">{{ currentJob.jobId }}</ion-label>
+              <ion-label slot="end" class="ion-text-wrap">{{ currentJob?.jobId }}</ion-label>
             </ion-item>
             <ion-item>
               <ion-icon slot="start" :icon="fileTrayFullOutline" />
@@ -38,7 +38,7 @@
         </section>
         <div class="config-details">
           <ion-label lines="none">
-            <p class="overline">{{ currentJob.runtimeData?.configId }}</p>
+            <p class="overline">{{ currentJob?.runtimeData?.configId }}</p>
             <h1>{{ configDetails?.description }}</h1>
           </ion-label>
           <ion-list>
@@ -147,6 +147,7 @@ export default defineComponent ({
   data() {
     return {
       configDetails: {},
+      currentJob: {},
       selectedFilter: 'All',
       dataManagerLogFilters: [
         { id: 'ALL', label: 'All' },
@@ -159,19 +160,16 @@ export default defineComponent ({
   },
   computed: {
     ...mapGetters({
-      currentJob: 'job/getCurrentJob',
       getDataManagerLogs: 'job/getDataManagerLogs',
-      getJob: 'job/getJob',
       getStatusDesc: 'util/getStatusDesc',
     }),
   },
   props: ['jobId'],
   async mounted() {
-    await this.fetchJobs();
-    const job = await this.getJob(this.jobId)
-    await this.store.dispatch('job/updateCurrentJob', { job });
-    await this.fetchDataManagerConfig(job.runtimeData?.configId)
-    await this.store.dispatch('job/fetchDataManagerLogs', job.jobId)
+    this.currentJob = await this.fetchJobHistory(this.jobId);
+    await this.store.dispatch('job/updateCurrentJob', this.currentJob);
+    await this.fetchDataManagerConfig(this.currentJob?.runtimeData.configId)
+    await this.store.dispatch('job/fetchDataManagerLogs', this.currentJob.jobId)
     await this.store.dispatch('job/fetchDataResource', this.getDataManagerLogs)
     this.filterDataManagerLogs('ALL');
     this.isLoading = false;
@@ -205,10 +203,24 @@ export default defineComponent ({
       });
       return popover.present()
     },
-    async fetchJobs(){
-      await this.store.dispatch("job/fetchJobs", {
-        "inputFields": this.$route.params.jobId
-      });
+    async fetchJobHistory(jobId) {
+      let resp;
+
+      try {
+        resp = await JobService.fetchJobInformation({
+          "inputFields": {
+            "jobId": jobId
+          },
+          "noConditionFind": "Y"
+        })
+        if(resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
+          return resp.data.docs[0];
+        } else {
+          return [];
+        }
+      } catch(err) {
+        logger.error(err);
+      }
     },
     async fetchDataManagerConfig(configId) {
       let resp = {}
