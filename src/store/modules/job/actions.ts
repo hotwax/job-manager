@@ -261,13 +261,13 @@ const actions: ActionTree<JobState, RootState> = {
     })
   },
 
-  async fetchDataManagerLogs({ commit }, configId) {
+  async fetchDataManagerLogs({ commit }, jobId) {
     commit(types.JOB_DATA_MANAGER_LOGS_UPDATED, []);
     let logs = [] as any
     const payload = {
       "inputFields":  {
         "systemJobEnumId_op": "not-empty",
-        "configId": configId
+        "createdByJobId": jobId
       },
       "fieldList": ["statusId", "logId", "createdDate", "startDateTime", "finishDateTime", "logFileContentId", "errorRecordContentId", "contentName", "dataResourceId"],
       "noConditionFind": "Y",

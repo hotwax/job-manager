@@ -165,12 +165,13 @@ export default defineComponent ({
       getStatusDesc: 'util/getStatusDesc',
     }),
   },
+  props: ['jobId'],
   async mounted() {
     await this.fetchJobs();
-    const job = await this.getJob(this.$route.params.jobId)
+    const job = await this.getJob(this.jobId)
     await this.store.dispatch('job/updateCurrentJob', { job });
     await this.fetchDataManagerConfig(job.runtimeData?.configId)
-    await this.store.dispatch('job/fetchDataManagerLogs', job.runtimeData?.configId)
+    await this.store.dispatch('job/fetchDataManagerLogs', job.jobId)
     await this.store.dispatch('job/fetchDataResource', this.getDataManagerLogs)
     this.filterDataManagerLogs('ALL');
     this.isLoading = false;

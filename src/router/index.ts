@@ -13,7 +13,7 @@ import Miscellaneous from '@/views/Miscellaneous.vue'
 import Reports from '@/views/Reports.vue'
 import BulkEditor from '@/views/BulkEditor.vue'
 import Settings from "@/views/Settings.vue"
-import DataManagerLogDetails from "@/components/DataManagerLogDetails.vue"
+import DataManagerLogDetails from "@/views/DataManagerLogDetails.vue"
 import store from '@/store'
 import { hasPermission } from '@/authorization';
 import { showToast } from '@/utils'
@@ -69,6 +69,7 @@ const routes: Array<RouteRecordRaw> = [
     name: 'DataManagerLogDetails',
     component: DataManagerLogDetails,
     beforeEnter: authGuard,
+    props: true
   },
   {
     path: '/inventory',

@@ -180,7 +180,7 @@
           </div>
 
           <div v-else>
-          <ion-card v-for="job in jobHistory" :key="job.jobId">
+          <ion-card v-for="job in jobHistory" :key="job.jobId" @click="viewJobConfiguration(job)">
             <ion-card-header>
               <div>
                 <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
@@ -237,8 +237,8 @@
           </div>          
         </section>
 
-        <aside class="desktop-only" v-if="isDesktop" v-show="segmentSelected === 'pending' && currentJob && Object.keys(currentJob).length">
-          <JobConfiguration :status="currentJobStatus" :type="freqType" :key="currentJob"/>
+        <aside class="desktop-only" v-if="isDesktop" v-show="(segmentSelected === 'pending' || segmentSelected === 'history') && currentJob && Object.keys(currentJob).length">
+          <JobConfiguration :status="currentJobStatus" :type="freqType" :historyJobConfig="segmentSelected === 'history'" :key="currentJob"/>
         </aside>
       </main>
     </ion-content>
@@ -609,7 +609,7 @@ export default defineComponent({
 
       await this.store.dispatch('job/updateCurrentJob', { job });
       if (job.runtimeData?.configId) {
-        await this.store.dispatch('job/fetchDataManagerLogs', job.runtimeData?.configId)
+        await this.store.dispatch('job/fetchDataManagerLogs', job.jobId)
       }
       if(!this.isDesktop && job?.jobId) {
         this.router.push({ name: 'JobDetails', params: { jobId: job?.jobId, category: "pipeline" } });
