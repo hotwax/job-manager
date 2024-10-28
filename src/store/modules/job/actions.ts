@@ -275,15 +275,16 @@ const actions: ActionTree<JobState, RootState> = {
       "entityName": "DataManagerLogAndContent",
     }
 
-    await JobService.fetchDataManagerLogs(payload).then((resp: any) => {
-      if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
-        logs = resp.data.docs
+    try {
+      const resp = await JobService.fetchDataManagerLogs(payload);
+      if (resp.data.docs?.length > 0 && !hasError(resp)) {
+        logs = resp.data.docs;
       } else {
-        throw resp.data
+        throw resp.data;
       }
-    }).catch((err) => {
+    } catch (err) {
       logger.error(err);
-    })
+    }
     commit(types.JOB_DATA_MANAGER_LOGS_UPDATED, logs);
     return logs;
   },
@@ -294,7 +295,8 @@ const actions: ActionTree<JobState, RootState> = {
   
     const payload = {
       "inputFields": {
-        "coContentId": contentIds
+        "coContentId": contentIds,
+        "coContentId_op": "in"
       },
       "fieldList": ["coContentId", "coDataResourceId", "coContentName"], 
       "noConditionFind": "Y",
@@ -302,8 +304,9 @@ const actions: ActionTree<JobState, RootState> = {
       "entityName": "DataResourceContentView"
     }
   
-    await JobService.fetchDataResource(payload).then((resp: any) => {
-      if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
+    try {
+      const resp = await JobService.fetchDataResource(payload);
+      if (resp.data.docs?.length > 0 && !hasError(resp)) {
         logs.forEach((log: any) => {
           const logFileDataResource = resp.data.docs.find((doc: any) => doc.coContentId === log.logFileContentId);
           if (logFileDataResource) {
@@ -318,9 +321,9 @@ const actions: ActionTree<JobState, RootState> = {
           }
         });
       }
-    }).catch((err: any) => {
+    } catch (err) {
       logger.error(err);
-    })
+    }
     commit(types.JOB_DATA_MANAGER_LOGS_UPDATED, logs);
   },
   async fetchMiscellaneousJobs({ commit, dispatch, state }, payload){

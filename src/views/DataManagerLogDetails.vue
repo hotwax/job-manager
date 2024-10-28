@@ -213,13 +213,14 @@ export default defineComponent ({
           },
           "noConditionFind": "Y"
         })
-        if(resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
+        if(resp.data.docs?.length > 0 && !hasError(resp)) {
           return resp.data.docs[0];
         } else {
-          return [];
+          return {}
         }
       } catch(err) {
-        logger.error(err);
+        logger.error(err)
+        return {}
       }
     },
     async fetchDataManagerConfig(configId) {
@@ -236,7 +237,7 @@ export default defineComponent ({
       
       try {
         resp = await JobService.fetchDataManagerConfig(payload);
-        if (resp.status === 200 && resp.data.docs?.length > 0 && !hasError(resp)) {
+        if (resp.data.docs?.length > 0 && !hasError(resp)) {
           this.configDetails = resp.data.docs[0];
         } else {
           throw resp.data
