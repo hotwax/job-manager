@@ -27,7 +27,7 @@ import './theme/variables.css';
 import '@hotwax/apps-theme';
 
 import store from './store'
-import permissionPlugin from '@/authorization';
+import permissionPlugin, { Actions, hasPermission } from '@/authorization';
 import permissionRules from '@/authorization/Rules';
 import permissionActions from '@/authorization/Actions';
 import { dxpComponents } from '@hotwax/dxp-components'
@@ -51,6 +51,7 @@ const app = createApp(App)
     actions: permissionActions
   })
   .use(dxpComponents, {
+    Actions,
     login,
     logout,
     loader,
@@ -59,7 +60,8 @@ const app = createApp(App)
     initialise,
     setUserTimeZone,
     getAvailableTimeZones,
-    localeMessages
+    localeMessages,
+    hasPermission
   })
 
 // Filters are removed in Vue 3 and global filter introduced https://v3.vuejs.org/guide/migration/filters.html#global-filters
