@@ -8,7 +8,7 @@
       </ion-buttons>
       <ion-title>{{ translate('Custom Parameters') }}</ion-title>
       <ion-buttons slot="end">
-        <ion-button color="primary" :disabled="isSaveDisabledByStatus(currentJob.statusId)" @click="save()">{{ translate('Save') }}</ion-button>
+        <ion-button color="primary" :disabled="currentJob.statusId !== 'SERVICE_DRAFT'" @click="save()">{{ translate('Save') }}</ion-button>
       </ion-buttons>
     </ion-toolbar>
   </ion-header>
@@ -118,10 +118,6 @@ export default defineComponent({
       }
 
       return JSON.stringify(res);
-    },
-    isSaveDisabledByStatus(statusId: any) {
-      const invalidStatuses = ["SERVICE_PENDING", "SERVICE_CANCELLED", "SERVICE_CRASHED", "SERVICE_FAILED", "SERVICE_FINISHED"];
-      return invalidStatuses.includes(statusId);
     },
     save() {
       modalController.dismiss({ dismissed: true, customOptionalParameters: this.customOptionalParametersValue, customRequiredParameters: this.customRequiredParametersValue })

@@ -180,7 +180,7 @@
           </div>
 
           <div v-else>
-          <ion-card v-for="job in jobHistory" :key="job.jobId" @click="viewJobConfiguration(job)">
+          <ion-card v-for="job in jobHistory" :key="job.jobId" @click="viewJobConfiguration(job)" :button="isDesktop">
             <ion-card-header>
               <div>
                 <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
@@ -608,7 +608,7 @@ export default defineComponent({
       this.freqType = appFreqType ? appFreqType[1] : "default"
 
       await this.store.dispatch('job/updateCurrentJob', { job });
-      if (this.segmentSelected === 'history' && job.runtimeData?.configId) {
+      if (!this.isDesktop && this.segmentSelected === 'history' && job.runtimeData?.configId) {
         await this.store.dispatch('job/fetchDataManagerLogs', job.jobId)
       }
       if(!this.isDesktop && job?.jobId) {

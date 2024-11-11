@@ -6,7 +6,7 @@
       <ion-button fill="outline" slot="end" v-if="isRefreshRequired" @click="refreshCurrentJob">
         <ion-icon :icon="refreshOutline" slot="icon-only" />
       </ion-button>
-      <ion-badge slot="end" color="dark" v-if="currentJob.cancelDateTime || currentJob.finishDateTime">{{ currentJob.statusId == "SERVICE_CANCELLED" || currentJob.statusId == "SERVICE_CRASHED" ?  timeFromNow(currentJob.cancelDateTime) : timeFromNow(currentJob.finishDateTime) }}</ion-badge>
+      <ion-badge slot="end" color="dark" v-if="currentJob.cancelDateTime || currentJob.finishDateTime">{{ currentJob.statusId == "SERVICE_CANCELLED" || currentJob.statusId == "SERVICE_CRASHED" ?  timeTillJob(currentJob.cancelDateTime) : timeTillJob(currentJob.finishDateTime) }}</ion-badge>
       <ion-badge slot="end" color="dark" v-else-if="currentJob?.runTime && currentJob.statusId !== 'SERVICE_DRAFT' && !isRefreshRequired">{{ translate("running") }} {{ timeTillJob(currentJob.runTime) }}</ion-badge>
     </ion-item>
 
@@ -481,10 +481,6 @@ export default defineComponent({
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
     },
     timeTillJob (time: any) {
-      const timeDiff = DateTime.fromMillis(time).diff(DateTime.local());
-      return DateTime.local().plus(timeDiff).toRelative();
-    },
-    timeFromNow (time: any) {
       const timeDiff = DateTime.fromMillis(time).diff(DateTime.local());
       return DateTime.local().plus(timeDiff).toRelative();
     },
