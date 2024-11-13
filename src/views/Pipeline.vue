@@ -180,7 +180,7 @@
           </div>
 
           <div v-else>
-          <ion-card v-for="job in jobHistory" :key="job.jobId">
+          <ion-card v-for="job in jobHistory" :key="job.jobId" @click="viewJobConfiguration(job)" :button="isDesktop">
             <ion-card-header>
               <div>
                 <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
@@ -188,7 +188,7 @@
               </div>
               <div>
                 <ion-badge v-if="job.cancelDateTime || job.finishDateTime" color="dark">{{ job.statusId == "SERVICE_CANCELLED" || job.statusId == "SERVICE_CRASHED" ?  timeFromNow(job.cancelDateTime) : timeFromNow(job.finishDateTime) }}</ion-badge>
-                <ion-badge v-if="job.statusId" :color="job.statusId === 'SERVICE_FINISHED' ? 'success' : 'danger'" @click="job.statusId === 'SERVICE_FAILED' ? openFailedJobReason(job) : ''">{{ job.statusDesc }}</ion-badge>
+                <ion-badge v-if="job.statusId" :color="job.statusId === 'SERVICE_FINISHED' ? 'success' : 'danger'" @click.stop="job.statusId === 'SERVICE_FAILED' ? openFailedJobReason(job) : ''">{{ job.statusDesc }}</ion-badge>
               </div>
             </ion-card-header>
 
@@ -237,8 +237,8 @@
           </div>          
         </section>
 
-        <aside class="desktop-only" v-if="isDesktop" v-show="segmentSelected === 'pending' && currentJob && Object.keys(currentJob).length">
-          <JobConfiguration :status="currentJobStatus" :type="freqType" :key="currentJob"/>
+        <aside class="desktop-only" v-if="isDesktop" v-show="(segmentSelected === 'pending' || segmentSelected === 'history') && currentJob && Object.keys(currentJob).length">
+          <JobConfiguration :status="currentJobStatus" :type="freqType" :historyJobConfig="segmentSelected === 'history'" :key="currentJob"/>
         </aside>
       </main>
     </ion-content>
@@ -608,6 +608,9 @@ export default defineComponent({
       this.freqType = appFreqType ? appFreqType[1] : "default"
 
       await this.store.dispatch('job/updateCurrentJob', { job });
+      if(this.segmentSelected === 'history' && job.runtimeData?.configId) {
+        await this.store.dispatch('job/fetchDataManagerLogs', job.jobId)
+      }
       if(!this.isDesktop && job?.jobId) {
         this.router.push({ name: 'JobDetails', params: { jobId: job?.jobId, category: "pipeline" } });
         return;
