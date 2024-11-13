@@ -609,7 +609,7 @@ export default defineComponent({
 
       await this.store.dispatch('job/updateCurrentJob', { job });
       if(this.segmentSelected === 'history' && job.runtimeData?.configId) {
-        await this.store.dispatch('job/fetchDataManagerLogs', job.jobId)
+        this.store.dispatch('job/fetchDataManagerLogs', job.jobId)
       }
       if(!this.isDesktop && job?.jobId) {
         this.router.push({ name: 'JobDetails', params: { jobId: job?.jobId, category: "pipeline" } });
