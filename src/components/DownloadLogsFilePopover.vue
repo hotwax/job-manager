@@ -2,13 +2,13 @@
   <ion-content>
     <ion-list>
       <ion-list-header>{{ dataManagerLog.logId }}</ion-list-header>
-      <ion-item button @click="downloadLogFile('logFile')">
+      <ion-item button @click="downloadFile('logFile')">
         {{ translate('Log file') }}
       </ion-item>
-      <ion-item button @click="downloadLogFile('uploadedFile')">
+      <ion-item button @click="downloadFile('uploadedFile')">
         {{ translate('Uploaded file') }}
       </ion-item>
-      <ion-item button :disabled="!dataManagerLog?.errorRecordContentId" lines="none" @click="downloadLogFile('failedRecords')">
+      <ion-item button :disabled="!dataManagerLog?.errorRecordContentId" lines="none" @click="downloadFile('failedRecords')">
         {{ translate('Failed records') }}
       </ion-item>
     </ion-list>
@@ -39,7 +39,7 @@ export default defineComponent({
   },
   props: ["dataManagerLog"],
   methods: {
-    async downloadLogFile(type: any) {
+    async downloadFile(type: string) {
       let dataResource = {} as any;
 
       if (type === 'logFile') {
@@ -53,7 +53,7 @@ export default defineComponent({
         dataResource.name = this.dataManagerLog.errorRecordContentName
       }
 
-      if (dataResource) {
+      if (dataResource.dataResourceId) {
         try {
           const response = await JobService.fetchFileData({
             dataResourceId: dataResource.dataResourceId
