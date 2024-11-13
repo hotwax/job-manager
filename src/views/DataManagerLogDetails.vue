@@ -299,7 +299,7 @@ export default defineComponent ({
 
 .header {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(375px, 1fr));
   grid-gap: var(--spacer-sm);
 }
 
