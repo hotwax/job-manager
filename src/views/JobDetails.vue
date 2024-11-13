@@ -9,7 +9,7 @@
 
     <ion-content>
       <InitialJobConfiguration v-if="jobCategory === 'initial-load'" :type='type' :shopifyOrderId='lastShopifyOrderId' :key="currentJob" />
-      <JobConfiguration v-else :status="currentJob?.status === 'SERVICE_DRAFT' ? currentJob?.status : currentJob?.tempExprId" :type="freqType" :key="currentJob"/>
+      <JobConfiguration v-else :status="currentJob?.status === 'SERVICE_DRAFT' ? currentJob?.status : currentJob?.tempExprId" :type="freqType" :key="currentJob" :historyJobConfig="checkJobStatus(currentJob?.statusId)"/>
     </ion-content>
   </ion-page>
 </template>
@@ -87,6 +87,10 @@ export default defineComponent({
         const jobFreqTypeId = (Object.keys(this.jobFrequencyType).find((enumId: any) => enumId === id)) as any;
         this.freqType = (id && jobFreqTypeId) && this.jobFrequencyType[jobFreqTypeId];
       }
+    },
+    checkJobStatus(statusId: string) {
+      const statuses = ["SERVICE_CANCELLED", "SERVICE_CRASHED", "SERVICE_FAILED", "SERVICE_FINISHED", "SERVICE_RUNNING", "SERVICE_QUEUED"];
+      return statuses.includes(statusId);
     }
   },
   mounted() {

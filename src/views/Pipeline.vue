@@ -608,7 +608,7 @@ export default defineComponent({
       this.freqType = appFreqType ? appFreqType[1] : "default"
 
       await this.store.dispatch('job/updateCurrentJob', { job });
-      if (!this.isDesktop && this.segmentSelected === 'history' && job.runtimeData?.configId) {
+      if(this.segmentSelected === 'history' && job.runtimeData?.configId) {
         await this.store.dispatch('job/fetchDataManagerLogs', job.jobId)
       }
       if(!this.isDesktop && job?.jobId) {

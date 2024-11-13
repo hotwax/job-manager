@@ -83,12 +83,12 @@
           </ion-item>
   
           <ion-label>
-            {{ getDateTime(log.startDateTime) }}
+            {{ log.startDateTime ? getDateTime(log.startDateTime) : '-' }}
             <p>{{ translate('Started') }}</p>
           </ion-label>
   
           <ion-label>
-            {{ getDateTime(log.finishDateTime) }}
+            {{ log.finishDateTime ? getDateTime(log.finishDateTime) : '-' }}
             <p>{{ translate('Finished') }}</p>
           </ion-label>
 
