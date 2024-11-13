@@ -118,7 +118,7 @@
       <ion-icon slot="start"  :icon="copyOutline" />
       {{ translate("Copy details") }}
     </ion-item>
-    <ion-item :disabled="historyJobConfig" @click="updatePinnedJobs(currentJob?.systemJobEnumId)" button>
+    <ion-item @click="updatePinnedJobs(currentJob?.systemJobEnumId)" button>
       <ion-icon slot="start" :icon="pinOutline" />
       <ion-checkbox :checked="pinnedJobs && pinnedJobs.includes(currentJob.systemJobEnumId)">
         <ion-label>{{ translate("Pin job") }}</ion-label>
