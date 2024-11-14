@@ -268,6 +268,7 @@
   "Skip job": "Skip job",
   "Skip once": "Skip once",
   "Skipping will run this job at the next occurrence based on the temporal expression.": "Skipping will run this job at the next occurrence based on the temporal expression.",
+  "Some of the app functionality will not work due to missing configuration.": "Some of the app functionality will not work due to missing configuration.",
   "Some jobs have slow frequency type, hence, feasible frequency will be set automatically": "Some jobs have slow frequency type, hence, feasible frequency will be set automatically",
   "Something went wrong": "Something went wrong",
   "Something went wrong while getting complete user permissions.": "Something went wrong while getting complete user permissions.",

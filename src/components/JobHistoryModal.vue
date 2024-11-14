@@ -6,7 +6,7 @@
           <ion-icon slot="icon-only" :icon="closeOutline" />
         </ion-button>
       </ion-buttons>
-      <ion-title>{{ currentJob?.enumName }}</ion-title>
+      <ion-title>{{ currentJob?.enumName ? currentJob.enumName : currentJob?.jobName ? currentJob.jobName : currentJob?.description }}</ion-title>
     </ion-toolbar>
   </ion-header>
 
@@ -16,7 +16,18 @@
     </div>
 
     <div v-else>
-      <ion-list>
+      <ion-list v-if="isMaargJob">
+        <template  v-for="(history, index) in jobHistory" :key="index">
+          <ion-item v-if="history.endTime">
+            <ion-label>
+              <h3>{{ getTime(history.startTime) }}</h3>
+              <p>{{ getDate(history.startTime) }}</p>
+            </ion-label>
+            <ion-badge color="dark" v-if="history.endTime">{{ timeTillRun(history.endTime) }}</ion-badge>
+          </ion-item>
+        </template>
+      </ion-list>
+      <ion-list v-else>
         <ion-item v-for="(job, index) in jobHistory" :key="index">
           <ion-label>
             {{ job.runTime ? getTime(job.runTime) : "-" }}
@@ -49,8 +60,10 @@ import { closeOutline } from 'ionicons/icons';
 import { mapGetters, useStore } from 'vuex';
 import { DateTime } from 'luxon';
 import { JobService } from '@/services/JobService'
-import { hasError } from '@/utils';
+import { hasError, timeTillRun } from '@/utils';
 import { translate } from '@hotwax/dxp-components';
+import logger from '@/logger';
+import { MaargJobService } from '@/services/MaargJobService';
 
 export default defineComponent({
   name: 'JobHistoryModal',
@@ -69,10 +82,10 @@ export default defineComponent({
   },
   data() {
     return {
-      jobHistory: []
+      jobHistory: [] as any
     }
   },
-  props: ['currentJob'],
+  props: ['currentJob', 'isMaargJob'],
   computed: {
     ...mapGetters({
       getCurrentEComStore:'user/getCurrentEComStore',
@@ -119,10 +132,27 @@ export default defineComponent({
       } catch(err) {
         this.$log.error(err);
       }
+    },
+    async fetchMaargJobHistory() {
+      try {
+        const resp = await MaargJobService.fetchMaargJobHistory({
+          jobName: this.currentJob.jobName,
+          pageSize: 200,
+          orderByField: "startTime DESC"
+        });
+
+        if(!hasError(resp)) {
+          this.jobHistory = resp.data
+        } else {
+          throw resp;
+        }
+      } catch(error: any) {
+        logger.error(error);
+      }
     }
   },
   mounted() {
-    this.fetchJobHistory()
+    this.isMaargJob ? this.fetchMaargJobHistory() : this.fetchJobHistory()
   },
   setup() {
     const store = useStore();
@@ -130,6 +160,7 @@ export default defineComponent({
     return {
       closeOutline,
       store,
+      timeTillRun,
       translate
     };
   },

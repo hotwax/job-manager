@@ -8,4 +8,8 @@ export default interface UserState {
     currentShopifyConfig: any;
     productStoreCategories: any;
     pwaState: any;
+    omsRedirectionInfo: {
+      url: string;
+      token: string;
+    }
 }

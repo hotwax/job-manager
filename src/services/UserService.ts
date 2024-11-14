@@ -14,6 +14,33 @@ const login = async (username: string, password: string): Promise <any> => {
   });
 }
 
+const moquiLogin = async (omsRedirectionUrl: string, token: string): Promise <any> => {
+  const baseURL = omsRedirectionUrl.startsWith('http') ? omsRedirectionUrl.includes('/rest/s1/admin') ? omsRedirectionUrl : `${omsRedirectionUrl}/rest/s1/admin/` : `https://${omsRedirectionUrl}.hotwax.io/rest/s1/admin/`;
+  let api_key = ""
+
+  try {
+    const resp = await client({
+      url: "login",
+      method: "post",
+      baseURL,
+      params: {
+        token
+      },
+      headers: {
+        "Content-Type": "application/json"
+      }
+    }) as any;
+
+    if(!hasError(resp) && (resp.data.api_key || resp.data.token)) {
+      api_key = resp.data.api_key || resp.data.token
+    } else {
+      throw "Sorry, login failed. Please try again";
+    }
+  } catch(err) {
+    return Promise.resolve("");
+  }
+  return Promise.resolve(api_key)
+}
 
 const getShopifyConfig = async (productStoreId: any, token?: any): Promise <any>  => {
   try {
@@ -362,5 +389,6 @@ export const UserService = {
     associatePinnedJobPrefToUser,
     updatePinnedJobPref,
     setUserPreference,
-    getUserPermissions
+    getUserPermissions,
+    moquiLogin
 }
