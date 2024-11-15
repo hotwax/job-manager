@@ -8,6 +8,9 @@ const getters: GetterTree <MaargJobState, RootState> = {
   },
   getCurrentMaargJob: (state) => {
     return state.currentMaargJob
+  },
+  getMaargJobEnums (state) {
+    return state.maargJobEnums
   }
 }
 

@@ -9,7 +9,8 @@ const maargJobModule: Module<MaargJobState, RootState> = {
     namespaced: true,
     state: {
       maargJobs: {},
-      currentMaargJob: {}
+      currentMaargJob: {},
+      maargJobEnums: {}
     },
     getters,
     actions,

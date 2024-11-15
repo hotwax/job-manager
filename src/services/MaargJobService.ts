@@ -81,7 +81,24 @@ const fetchMaargJobHistory = async (payload: any): Promise <any>  => {
   });
 }
 
+const fetchMaargJobEnumerations = async (payload: any): Promise <any>  => {
+  const omsRedirectionInfo = store.getters['user/getOmsRedirectionInfo'];
+  const baseURL = store.getters['user/getMaargBaseUrl'];
+
+  return client({
+    url: `enums`,
+    method: "GET",
+    baseURL,
+    params: payload,
+    headers: {
+      "api_key": omsRedirectionInfo.token,
+      "Content-Type": "application/json"
+    }
+  });
+}
+
 export const MaargJobService = {
+  fetchMaargJobEnumerations,
   fetchMaargJobs,
   fetchMaargJobHistory,
   fetchMaargJobInfo,
