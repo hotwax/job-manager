@@ -110,6 +110,10 @@ const actions: ActionTree<JobState, RootState> = {
     }
 
     // Todo: refetch job for the mobile view of job details.
+  },
+
+  async clearMaargJobState({ commit }) {
+    commit(types.MAARGJOB_JOB_ENUMS_UPDATED, {});
   }
 }
 export default actions;

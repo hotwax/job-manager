@@ -11,6 +11,7 @@ import { logout, updateInstanceUrl, updateToken, resetConfig } from '@/adapter'
 import logger from "@/logger";
 import { useAuthStore } from '@hotwax/dxp-components'
 import emitter from '@/event-bus'
+import store from '@/store'
 
 const actions: ActionTree<UserState, RootState> = {
 
@@ -148,7 +149,8 @@ const actions: ActionTree<UserState, RootState> = {
 
     const authStore = useAuthStore()
     // TODO add any other tasks if need
-    dispatch('job/clearJobState', null, { root: true });
+    store.dispatch('job/clearJobState', null, { root: true });
+    store.dispatch('maargJob/clearMaargJobState');
     commit(types.USER_END_SESSION)
     resetConfig();
     resetPermissions();
