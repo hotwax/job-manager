@@ -33,7 +33,6 @@ const actions: ActionTree<JobState, RootState> = {
               paramValue[parameter.parameterName] = parameter.parameterValue
             })
             job["parameterValues"] = paramValue
-            job["enumName"] = maargJobEnums[job.jobTypeEnumId]?.enumName
             job["enumDescription"] = maargJobEnums[job.jobTypeEnumId]?.description
 
             if(Object.keys(paramValue).includes("productStoreIds")) {

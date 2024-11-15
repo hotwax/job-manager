@@ -85,6 +85,8 @@ const fetchMaargJobEnumerations = async (payload: any): Promise <any>  => {
   const omsRedirectionInfo = store.getters['user/getOmsRedirectionInfo'];
   const baseURL = store.getters['user/getMaargBaseUrl'];
 
+  const updatedBaseUrl = baseURL.replace("admin", "available-to-promise")
+
   return client({
     url: `enums`,
     method: "GET",
