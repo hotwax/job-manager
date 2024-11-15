@@ -5,8 +5,7 @@
       <ion-button fill="outline" slot="end" v-if="isRefreshRequired" @click="refreshCurrentJob">
         <ion-icon :icon="refreshOutline" slot="icon-only" />
       </ion-button>
-      <ion-badge slot="end" color="medium" v-if="currentMaargJob.paused === 'Y'">{{ translate("Disabled") }}</ion-badge>
-      <ion-badge slot="end" color="dark" v-else-if="currentMaargJob?.nextExecutionDateTime && !isRefreshRequired">{{ translate("running") }} {{ timeTillJob(currentMaargJob.nextExecutionDateTime) }}</ion-badge>
+      <ion-badge slot="end" color="dark" v-if="currentMaargJob.paused === 'N' && currentMaargJob?.nextExecutionDateTime && !isRefreshRequired">{{ translate("running") }} {{ timeTillJob(currentMaargJob.nextExecutionDateTime) }}</ion-badge>
     </ion-item>
 
     <ion-list>
@@ -123,6 +122,7 @@ import { Actions, hasPermission } from '@/authorization'
 import { MaargJobService } from "@/services/MaargJobService";
 import ScheduleModal from "@/components/ScheduleModal.vue"
 import MaargJobParameterModal from "@/components/MaargJobParameterModal.vue"
+import emitter from '@/event-bus';
 
 export default defineComponent({
   name: "MaargJobConfiguration",
@@ -215,6 +215,13 @@ export default defineComponent({
           }, {
             text: translate('Cancel'),
             handler: async () => {
+              if(this.isRuntimePassed()) {
+                this.isRefreshRequired = true
+                emitter.emit("productStoreOrConfigChanged")
+                showToast(translate("Job runtime has passed. Please refresh to get the latest job data in order to perform any action."))
+                return;
+              }
+
               try {
                 const resp = await MaargJobService.updateMaargJob({ ...job, paused: "Y" })
                 if(!hasError(resp)) {
@@ -243,12 +250,12 @@ export default defineComponent({
         }, {
           text: translate('Confirm'),
           handler: () => {
-            // if(this.isRuntimePassed()) {
-            //   this.isRefreshRequired = true
-            //   emitter.emit("productStoreOrConfigChanged")
-            //   showToast(translate("Job runtime has passed. Please refresh to get the latest job data in order to perform any action."))
-            //   return;
-            // }
+            if(this.isRuntimePassed()) {
+              this.isRefreshRequired = true
+              emitter.emit("productStoreOrConfigChanged")
+              showToast(translate("Job runtime has passed. Please refresh to get the latest job data in order to perform any action."))
+              return;
+            }
 
             this.updateJob();
           }
@@ -269,12 +276,12 @@ export default defineComponent({
           }, {
             text: translate('Save'),
             handler: () => {
-              // if(this.isRuntimePassed()) {
-              //   this.isRefreshRequired = true
-              //   emitter.emit("productStoreOrConfigChanged")
-              //   showToast(translate("Job runtime has passed. Please refresh to get the latest job data in order to perform any action."))
-              //   return;
-              // }
+              if(this.isRuntimePassed()) {
+                this.isRefreshRequired = true
+                emitter.emit("productStoreOrConfigChanged")
+                showToast(translate("Job runtime has passed. Please refresh to get the latest job data in order to perform any action."))
+                return;
+              }
 
               this.updateJob();
             }
@@ -359,7 +366,21 @@ export default defineComponent({
       })
 
       await jobParameterModal.present();
-    }
+    },
+
+    async refreshCurrentJob() {
+      const job = this.getMaargJob(this.currentMaargJob.jobTypeEnumId)
+
+      await this.store.dispatch("maargJob/updateCurrentMaargJob", { job })
+      this.selectedCronExpression = this.currentMaargJob.cronExpression
+      this.customOptionalParameters = generateMaargJobCustomOptions(this.currentMaargJob).optionalParameters;
+      this.customRequiredParameters = generateMaargJobCustomOptions(this.currentMaargJob).requiredParameters;    
+      this.isRefreshRequired = false
+    },
+
+    isRuntimePassed() {
+      return this.currentMaargJob.nextExecutionDateTime <= DateTime.now().toMillis()
+    },
   },
   setup() {
     const store = useStore();
