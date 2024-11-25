@@ -648,7 +648,6 @@ export default defineComponent({
     async updateProductStoreConfig(JobDetailDismissRequired = false) {
       if(JobDetailDismissRequired) {
         this.jobsLoading = true;
-        console.log('if')
         await this.store.dispatch('job/updateCurrentJob', { job: {} });
         this.currentJobStatus = ""
         this.freqType = ""
