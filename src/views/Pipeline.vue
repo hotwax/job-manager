@@ -508,17 +508,17 @@ export default defineComponent({
     async refreshJobs(event: any, isRetrying = false ) {
       this.isRetrying = isRetrying;
       if(this.segmentSelected === 'pending') {
-        await this.getPendingJobs().then(() => {
+        this.getPendingJobs().then(() => {
           if(event) event.target.complete();
           this.isRetrying = false;
         });
       } else if(this.segmentSelected === 'running') {
-        await this.getRunningJobs().then(() => {
+        this.getRunningJobs().then(() => {
           if(event) event.target.complete();
           this.isRetrying = false;
         });
       } else {
-        await this.getJobHistory().then(() => {
+        this.getJobHistory().then(() => {
           if(event) event.target.complete();
           this.isRetrying = false;
         });
@@ -547,7 +547,7 @@ export default defineComponent({
               text: translate('Skip'),
               handler: async () => {
                 if(this.isRuntimePassed(job)) {
-                  await this.refreshJobs(undefined, true)
+                  await this.refreshJobs(undefined)
                   showToast(translate("Job runtime has passed. The job data has refreshed. Please try again."))
                   await this.store.dispatch('job/updateCurrentJob', { job: {} });
                   return;
@@ -593,7 +593,7 @@ export default defineComponent({
               text: translate("CANCEL"),
               handler: async () => {
                 if(this.isRuntimePassed(job)) {
-                  await this.refreshJobs(undefined, true)
+                  await this.refreshJobs(undefined)
                   showToast(translate("Job runtime has passed. The job data has refreshed. Please try again."))
                   await this.store.dispatch('job/updateCurrentJob', { job: {} });
                   return;
@@ -648,7 +648,7 @@ export default defineComponent({
       this.currentJobStatus = ""
       this.freqType = ""
       this.isJobDetailAnimationCompleted = false
-      await this.refreshJobs(undefined, false);
+      await this.refreshJobs(undefined);
       this.jobsLoading = false;
     }
   },
