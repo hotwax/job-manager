@@ -103,7 +103,7 @@ export default defineComponent({
       isDesktop: isPlatform('desktop'),
       enumTypeId: 'INVENTORY_SYS_JOB',
       webhookEnums: JSON.parse(process.env?.VUE_APP_WEBHOOK_ENUMS as string) as any,
-      isLoading: true
+      isLoading: false
     }
   },
   computed: {
@@ -170,6 +170,7 @@ export default defineComponent({
         translate('Disabled')
     },
     async fetchJobs(){
+      this.isLoading = true
       await this.store.dispatch("job/fetchJobs", {
         "inputFields":{
           "enumTypeId": "INVENTORY_SYS_JOB"

@@ -131,7 +131,7 @@ export default defineComponent({
       webhookEnums: JSON.parse(process.env?.VUE_APP_WEBHOOK_ENUMS as string) as any,
       enumTypeId: 'PRODUCT_SYS_JOB',
       initialLoadJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
-      isLoading: true
+      isLoading: false
     }
   },
   mounted () {
@@ -193,6 +193,7 @@ export default defineComponent({
         translate('Disabled')
     },
     async fetchJobs(){
+      this.isLoading = true
       await this.store.dispatch("job/fetchJobs", {
         "inputFields":{
           "enumTypeId": "PRODUCT_SYS_JOB"
