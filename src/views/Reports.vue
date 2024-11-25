@@ -117,11 +117,11 @@ export default defineComponent({
   mounted() {
     emitter.on('jobUpdated', this.getReportsJobs);
     this.getReportsJobs();
-    emitter.on("productStoreOrConfigChanged", this.getReportsJobs);
+    emitter.on("productStoreOrConfigChanged", this.updateProductStoreConfig);
   },
   unmounted() {
     emitter.on('jobUpdated', this.getReportsJobs);
-    emitter.off("productStoreOrConfigChanged", this.getReportsJobs);
+    emitter.off("productStoreOrConfigChanged", this.updateProductStoreConfig);
   },
   methods: {
     async viewJobConfiguration(job: any) {
@@ -145,12 +145,17 @@ export default defineComponent({
       }
     },
     async getReportsJobs(viewSize = 200, viewIndex = 0) {
-      this.jobsLoading = true;
-      this.currentJob = "";
-      await this.store.dispatch('job/updateCurrentJob', { });
-      this.currentJobStatus = "";
-      this.isJobDetailAnimationCompleted = false;
       await this.store.dispatch('job/fetchReportsJobs', { eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex });
+    },
+    async updateProductStoreConfig(JobDetailDismissRequired = false) {
+      if(JobDetailDismissRequired) {
+        this.jobsLoading = true;
+        this.currentJob = "";
+        await this.store.dispatch('job/updateCurrentJob', { });
+        this.currentJobStatus = "";
+        this.isJobDetailAnimationCompleted = false;
+      }
+      await this.getReportsJobs()
       this.jobsLoading = false;
     },
     async loadMoreReportsJobs(event: any) {

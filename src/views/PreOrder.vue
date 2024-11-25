@@ -372,13 +372,15 @@ export default defineComponent({
         }
       });
     },
-    async fetchInitialData() {
-      this.jobsLoading = true;
-      this.currentJob = "";
-      await this.store.dispatch('job/updateCurrentJob', { });
-      this.currentJobStatus = ""
-      this.freqType = '';
-      this.isJobDetailAnimationCompleted = false;
+    async fetchInitialData(JobDetailDismissRequired = false) {
+      if(JobDetailDismissRequired) {
+        this.jobsLoading = true;
+        this.currentJob = "";
+        await this.store.dispatch('job/updateCurrentJob', { });
+        this.currentJobStatus = ""
+        this.freqType = '';
+        this.isJobDetailAnimationCompleted = false;
+      }
       await this.fetchJobs();
       await this.getPreOrderBackorderCategory();
       this.jobsLoading = false;

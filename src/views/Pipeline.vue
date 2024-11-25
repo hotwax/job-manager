@@ -508,17 +508,17 @@ export default defineComponent({
     async refreshJobs(event: any, isRetrying = false ) {
       this.isRetrying = isRetrying;
       if(this.segmentSelected === 'pending') {
-        this.getPendingJobs().then(() => {
+        await this.getPendingJobs().then(() => {
           if(event) event.target.complete();
           this.isRetrying = false;
         });
       } else if(this.segmentSelected === 'running') {
-        this.getRunningJobs().then(() => {
+        await this.getRunningJobs().then(() => {
           if(event) event.target.complete();
           this.isRetrying = false;
         });
       } else {
-        this.getJobHistory().then(() => {
+        await this.getJobHistory().then(() => {
           if(event) event.target.complete();
           this.isRetrying = false;
         });
@@ -645,12 +645,15 @@ export default defineComponent({
         this.getPendingJobs();
       }
     },
-    async updateProductStoreConfig() {
-      this.jobsLoading = true;
-      await this.store.dispatch('job/updateCurrentJob', { job: {} });
-      this.currentJobStatus = ""
-      this.freqType = ""
-      this.isJobDetailAnimationCompleted = false
+    async updateProductStoreConfig(JobDetailDismissRequired = false) {
+      if(JobDetailDismissRequired) {
+        this.jobsLoading = true;
+        console.log('if')
+        await this.store.dispatch('job/updateCurrentJob', { job: {} });
+        this.currentJobStatus = ""
+        this.freqType = ""
+        this.isJobDetailAnimationCompleted = false
+      }
       await this.refreshJobs(undefined);
       this.jobsLoading = false;
     }

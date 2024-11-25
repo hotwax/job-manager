@@ -216,13 +216,15 @@ export default defineComponent({
         this.isJobDetailAnimationCompleted = true;
       }
     },
-    async fetchJobs(){
-      this.jobsLoading = true;
-      this.currentSelectedJobModal = "";
-      await this.store.dispatch('job/updateCurrentJob', { });
-      this.job = {};
-      this.lastShopifyOrderId = "";
-      this.isJobDetailAnimationCompleted = false;
+    async fetchJobs(JobDetailDismissRequired = false){
+      if(JobDetailDismissRequired) {
+        this.jobsLoading = true;
+        this.currentSelectedJobModal = "";
+        await this.store.dispatch('job/updateCurrentJob', { });
+        this.job = {};
+        this.lastShopifyOrderId = "";
+        this.isJobDetailAnimationCompleted = false;
+      }
       await this.store.dispatch("job/fetchJobs", {
         "inputFields":{
           "systemJobEnumId": Object.values(this.jobEnums),

@@ -181,13 +181,15 @@ export default defineComponent({
         }
       });
     },
-    async fetchData() {
-      this.jobsLoading = true;
-      this.currentJob = "";
-      await this.store.dispatch('job/updateCurrentJob', { });
-      this.currentJobStatus = "";
-      this.freqType = "";
-      this.isJobDetailAnimationCompleted = false;
+    async fetchData(JobDetailDismissRequired = false) {
+      if(JobDetailDismissRequired) {
+        this.jobsLoading = true;
+        this.currentJob = "";
+        await this.store.dispatch('job/updateCurrentJob', { });
+        this.currentJobStatus = "";
+        this.freqType = "";
+        this.isJobDetailAnimationCompleted = false;
+      }
       this.store.dispatch('webhook/fetchWebhooks')
       await this.fetchJobs()
       this.jobsLoading = false;

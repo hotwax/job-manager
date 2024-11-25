@@ -83,12 +83,12 @@ export default defineComponent({
     async setEComStore(event: CustomEvent) {
       if(this.userProfile && this.eComStore?.productStoreId !== event.detail.value) {
         await this.store.dispatch('user/setEcomStore', { 'productStoreId': event.detail.value })
-        emitter.emit("productStoreOrConfigChanged")
+        emitter.emit("productStoreOrConfigChanged", true)
       }
     },
     async setShopifyConfig(event: CustomEvent){
       await this.store.dispatch('user/setCurrentShopifyConfig', { 'shopifyConfigId': event.detail.value });
-      emitter.emit("productStoreOrConfigChanged")
+      emitter.emit("productStoreOrConfigChanged", true)
     }
   },
   setup() {
