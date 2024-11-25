@@ -5,7 +5,7 @@
     <ion-header :translucent="true">
       <ion-toolbar>
         <ion-menu-button slot="start" />
-        <ion-title>{{ $t("Pipeline") }}</ion-title>
+        <ion-title>{{ translate("Pipeline") }}</ion-title>
         <ion-buttons slot="end">
           <ion-menu-button menu="end">
             <ion-icon :icon="filterOutline" :color="filterIconColor" />
@@ -14,31 +14,31 @@
       </ion-toolbar>
 
       <div>
-        <ion-searchbar :placeholder="$t('Search jobs')" @ionClear="queryString = ''; segmentSelected === 'pending' ? getPendingJobs() : ( segmentSelected === 'running' ? getRunningJobs() : getJobHistory())" v-model="queryString" @keyup.enter="queryString = $event.target.value; segmentSelected === 'pending' ? getPendingJobs() : ( segmentSelected === 'running' ? getRunningJobs() : getJobHistory())" />
+        <ion-searchbar :placeholder="translate('Search jobs')" @ionClear="queryString = ''; segmentSelected === 'pending' ? getPendingJobs() : ( segmentSelected === 'running' ? getRunningJobs() : getJobHistory())" v-model="queryString" @keyup.enter="queryString = $event.target.value; segmentSelected === 'pending' ? getPendingJobs() : ( segmentSelected === 'running' ? getRunningJobs() : getJobHistory())" />
 
         <ion-segment v-model="segmentSelected" @ionChange="segmentChanged">
           <ion-segment-button value="pending">
-            <ion-label>{{ $t("Pending") }}</ion-label>
+            <ion-label>{{ translate("Pending") }}</ion-label>
           </ion-segment-button>
           <ion-segment-button value="running">
-            <ion-label>{{ $t("Running") }}</ion-label>
+            <ion-label>{{ translate("Running") }}</ion-label>
           </ion-segment-button>
           <ion-segment-button value="history">
-            <ion-label>{{ $t("History") }}</ion-label>
+            <ion-label>{{ translate("History") }}</ion-label>
           </ion-segment-button>
         </ion-segment>
       </div>
     </ion-header>
 
-    <ion-content id="filter-content">
+    <ion-content ref="contentRef" :scroll-events="true" @ionScroll="enableScrolling()" id="filter-content">
       <main>
         <section v-if="segmentSelected === 'pending'">
           <!-- Empty state -->
           <div v-if="pendingJobs?.length === 0">
-            <p class="ion-text-center">{{ $t("There are no jobs pending right now")}}</p>
+            <p class="ion-text-center">{{ translate("There are no jobs pending right now")}}</p>
             <div class="ion-text-center">
               <ion-button fill="outline" @click="refreshJobs(undefined, true)">
-                {{ $t('retry') }}
+                {{ translate('retry') }}
                 <ion-spinner v-if="isRetrying" name="crescent" />
               </ion-button>
             </div>
@@ -73,8 +73,8 @@
 
               <div class="actions">
                 <div>
-                  <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" fill="clear" @click.stop="skipJob(job)">{{ $t("Skip") }}</ion-button>
-                  <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" color="danger" fill="clear" @click.stop="cancelJob(job)">{{ $t("Cancel") }}</ion-button>
+                  <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" fill="clear" @click.stop="skipJob(job)">{{ translate("Skip") }}</ion-button>
+                  <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" color="danger" fill="clear" @click.stop="cancelJob(job)">{{ translate("Cancel") }}</ion-button>
                 </div>
                 <div>
                   <ion-button fill="clear" color="medium" slot="end" @click.stop="openJobActions(job, $event)">
@@ -86,8 +86,17 @@
             <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
               <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
             </ion-refresher>
-            <ion-infinite-scroll @ionInfinite="loadMorePendingJobs($event)" threshold="100px" :disabled="!isPendingJobsScrollable">
-              <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="$t('Loading')"/>
+              <!--
+                When searching for a keyword, and if the user moves to the last item, then the didFire value inside infinite scroll becomes true and thus the infinite scroll does not trigger again on the same page(https://github.com/hotwax/users/issues/84).
+                Also if we are at the section that has been loaded by infinite-scroll and then move to the details page then the list infinite scroll does not work after coming back to the page
+                In ionic v7.6.0, an issue related to infinite scroll has been fixed that when more items can be added to the DOM, but infinite scroll does not fire as the window is not completely filled with the content(https://github.com/ionic-team/ionic-framework/issues/18071).
+                The above fix in ionic 7.6.0 is resulting in the issue of infinite scroll not being called again.
+                To fix this we have maintained another variable `isScrollingEnabled` to check whether the scrolling can be performed or not.
+                If we do not define an extra variable and just use v-show to check for `isScrollable` then when coming back to the page infinite-scroll is called programatically.
+                We have added an ionScroll event on ionContent to check whether the infiniteScroll can be enabled or not by toggling the value of isScrollingEnabled whenever the height < 0.
+              -->
+            <ion-infinite-scroll @ionInfinite="loadMorePendingJobs($event)" threshold="100px" v-show="isPendingJobsScrollable" ref="infiniteScrollRef">
+              <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="translate('Loading')"/>
             </ion-infinite-scroll>
           </div>
         </section>
@@ -95,10 +104,10 @@
         <section v-if="segmentSelected === 'running'">
           <!-- Empty state -->
           <div v-if="runningJobs?.length === 0">
-            <p class="ion-text-center">{{ $t("There are no jobs running right now")}}</p>
+            <p class="ion-text-center">{{ translate("There are no jobs running right now")}}</p>
             <div class="ion-text-center">
               <ion-button fill="outline" @click="refreshJobs(undefined, true)">
-                {{ $t('retry') }}
+                {{ translate('retry') }}
                 <ion-spinner slot="end" v-if="isRetrying" name="crescent" />
               </ion-button>
             </div>
@@ -122,7 +131,7 @@
               <ion-item>
                 <ion-icon slot="start" :icon="timeOutline" />
                 <ion-label class="ion-text-wrap">{{ job.runTime ? getTime(job.runTime) : "-"  }}</ion-label>
-                <ion-note v-if="job.startDateTime" slot="end">{{ $t('Started') }} {{ timeFromNow(job.startDateTime) }}</ion-note>
+                <ion-note v-if="job.startDateTime" slot="end">{{ translate('Started') }} {{ timeFromNow(job.startDateTime) }}</ion-note>
                 <ion-note v-else slot="end">-</ion-note>
               </ion-item>
 
@@ -152,8 +161,8 @@
             <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
               <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
             </ion-refresher>
-            <ion-infinite-scroll @ionInfinite="loadMoreRunningJobs($event)" threshold="100px" :disabled="!isRunningJobsScrollable">
-              <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="$t('Loading')"/>
+            <ion-infinite-scroll @ionInfinite="loadMoreRunningJobs($event)" threshold="100px" v-show="isRunningJobsScrollable" ref="infiniteScrollRef">
+              <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="translate('Loading')"/>
             </ion-infinite-scroll>
           </div> 
         </section>
@@ -161,17 +170,17 @@
         <section v-if="segmentSelected === 'history'">
           <!-- Empty state -->
           <div v-if="jobHistory?.length === 0">
-            <p class="ion-text-center">{{ $t("No jobs have run yet")}}</p>
+            <p class="ion-text-center">{{ translate("No jobs have run yet")}}</p>
             <div class="ion-text-center">
               <ion-button fill="outline" @click="refreshJobs(undefined, true)">
-                {{ $t('retry') }}
+                {{ translate('retry') }}
                 <ion-spinner v-if="isRetrying" name="crescent" />
               </ion-button>
             </div>
           </div>
 
           <div v-else>
-          <ion-card v-for="job in jobHistory" :key="job.jobId">
+          <ion-card v-for="job in jobHistory" :key="job.jobId" @click="viewJobConfiguration(job)" :button="isDesktop">
             <ion-card-header>
               <div>
                 <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
@@ -179,7 +188,7 @@
               </div>
               <div>
                 <ion-badge v-if="job.cancelDateTime || job.finishDateTime" color="dark">{{ job.statusId == "SERVICE_CANCELLED" || job.statusId == "SERVICE_CRASHED" ?  timeFromNow(job.cancelDateTime) : timeFromNow(job.finishDateTime) }}</ion-badge>
-                <ion-badge v-if="job.statusId" :color="job.statusId === 'SERVICE_FINISHED' ? 'success' : 'danger'" @click="job.statusId === 'SERVICE_FAILED' ? openFailedJobReason(job) : ''">{{ job.statusDesc }}</ion-badge>
+                <ion-badge v-if="job.statusId" :color="job.statusId === 'SERVICE_FINISHED' ? 'success' : 'danger'" @click.stop="job.statusId === 'SERVICE_FAILED' ? openFailedJobReason(job) : ''">{{ job.statusDesc }}</ion-badge>
               </div>
             </ion-card-header>
 
@@ -222,14 +231,14 @@
           <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
             <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
           </ion-refresher>   
-          <ion-infinite-scroll @ionInfinite="loadMoreJobHistory($event)" threshold="100px" :disabled="!isHistoryJobsScrollable">
-            <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="$t('Loading')"/>
+          <ion-infinite-scroll @ionInfinite="loadMoreJobHistory($event)" threshold="100px"  v-show="isHistoryJobsScrollable" ref="infiniteScrollRef">
+            <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="translate('Loading')"/>
           </ion-infinite-scroll>
           </div>          
         </section>
 
-        <aside class="desktop-only" v-if="isDesktop" v-show="segmentSelected === 'pending' && currentJob && Object.keys(currentJob).length">
-          <JobConfiguration :status="currentJobStatus" :type="freqType" :key="currentJob"/>
+        <aside class="desktop-only" v-if="isDesktop" v-show="(segmentSelected === 'pending' || segmentSelected === 'history') && currentJob && Object.keys(currentJob).length">
+          <JobConfiguration :status="currentJobStatus" :type="freqType" :historyJobConfig="segmentSelected === 'history'" :key="currentJob"/>
         </aside>
       </main>
     </ion-content>
@@ -237,7 +246,7 @@
     <ion-footer v-if="getPinnedJobs && getPinnedJobs.length">
       <ion-toolbar >
         <ion-title slot="start" class="desktop-only">
-          {{ $t("Pinned jobs") }}
+          {{ translate("Pinned jobs") }}
         </ion-title>
       
         <ion-icon slot="start" class="mobile-only" :icon="pinOutline" />  
@@ -300,6 +309,7 @@ import JobActionsPopover from '@/components/JobActionsPopover.vue'
 import { Actions, hasPermission } from '@/authorization'
 import Filters from '@/components/Filters.vue';
 import FailedJobReasonModal from '@/views/FailedJobReasonModal.vue'
+import { translate } from '@hotwax/dxp-components';
 
 export default defineComponent({
   name: "Pipeline",
@@ -349,7 +359,8 @@ export default defineComponent({
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
       isRetrying: false,
-      queryString: '' as any
+      queryString: '' as any,
+      isScrollingEnabled: false
     }
   },
   computed: {
@@ -374,6 +385,9 @@ export default defineComponent({
       } 
       return Object.values(pipelineFilters).some((filter: any) => filter.length > 0) ? 'secondary' : '';
     },
+  },
+  async ionViewWillEnter() {
+    this.isScrollingEnabled = false;
   },
   methods : {
     isPinnedJobSelected(jobEnumId: any) {
@@ -420,7 +434,7 @@ export default defineComponent({
       await Clipboard.write({
         string: jobDetails
       }).then(() => {
-        showToast(this.$t("Copied job details to clipboard"));
+        showToast(translate("Copied job details to clipboard"));
       })
     },
     async viewJobHistory(job: any) {
@@ -437,29 +451,52 @@ export default defineComponent({
       const timeDiff = DateTime.fromMillis(time).diff(DateTime.local());
       return DateTime.local().plus(timeDiff).toRelative();
     },
+    enableScrolling() {
+      const parentElement = (this as any).$refs.contentRef.$el
+      const scrollEl = parentElement.shadowRoot.querySelector("main[part='scroll']")
+      let scrollHeight = scrollEl.scrollHeight, infiniteHeight = (this as any).$refs.infiniteScrollRef.$el.offsetHeight, scrollTop = scrollEl.scrollTop, threshold = 100, height = scrollEl.offsetHeight
+      const distanceFromInfinite = scrollHeight - infiniteHeight - scrollTop - threshold - height
+      if(distanceFromInfinite < 0) {
+        this.isScrollingEnabled = false;
+      } else {
+        this.isScrollingEnabled = true;
+      }
+    },
     async loadMoreJobHistory(event: any){
+      // Added this check here as if added on infinite-scroll component the Loading content does not gets displayed
+      if(!(this.isScrollingEnabled && this.isHistoryJobsScrollable)) {
+        await event.target.complete();
+      }
       this.getJobHistory(
         undefined,
         Math.ceil(this.jobHistory.length / (process.env.VUE_APP_VIEW_SIZE as any)).toString()
-      ).then(() => {
-        event.target.complete();
-      })
+      ).then(async () => {
+        await event.target.complete();
+      });
     },
     async loadMoreRunningJobs(event: any){
+      // Added this check here as if added on infinite-scroll component the Loading content does not gets displayed
+      if(!(this.isScrollingEnabled && this.isRunningJobsScrollable)) {
+        await event.target.complete();
+      }
       this.getRunningJobs(
         undefined,
         Math.ceil(this.runningJobs.length / (process.env.VUE_APP_VIEW_SIZE as any)).toString()
-      ).then(() => {
-        event.target.complete();
-      })
+      ).then(async () => {
+        await event.target.complete();
+      });
     },
     async loadMorePendingJobs (event: any) {
+      // Added this check here as if added on infinite-scroll component the Loading content does not gets displayed
+      if(!(this.isScrollingEnabled && this.isPendingJobsScrollable)) {
+        await event.target.complete();
+      }
       this.getPendingJobs(
         undefined,
         Math.ceil(this.pendingJobs.length / (process.env.VUE_APP_VIEW_SIZE as any)).toString()
-      ).then(() => {
-        event.target.complete();
-      })
+      ).then(async () => {
+        await event.target.complete();
+      });
     },
     async refreshJobs(event: any, isRetrying = false ) {
       this.isRetrying = isRetrying;
@@ -486,19 +523,29 @@ export default defineComponent({
       this.segmentSelected === 'running' ? this.getRunningJobs():
       this.getJobHistory();
     },
+    isRuntimePassed(job: any) {
+      return job.runTime <= DateTime.now().toMillis()
+    },
     async skipJob (job: any) {
       const alert = await alertController
         .create({
-          header: this.$t('Skip job'),
-          message: this.$t('Skipping will run this job at the next occurrence based on the temporal expression.'),
+          header: translate('Skip job'),
+          message: translate('Skipping will run this job at the next occurrence based on the temporal expression.'),
           buttons: [
             {
-              text: this.$t("Don't skip"),
+              text: translate("Don't skip"),
               role: 'cancel',
             },
             {
-              text: this.$t('Skip'),
+              text: translate('Skip'),
               handler: async () => {
+                if(this.isRuntimePassed(job)) {
+                  await this.refreshJobs(undefined, true)
+                  showToast(translate("Job runtime has passed. The job data has refreshed. Please try again."))
+                  await this.store.dispatch('job/updateCurrentJob', { job: {} });
+                  return;
+                }
+
                 await this.store.dispatch('job/skipJob', job);
                 await this.getPendingJobs();
               },
@@ -528,16 +575,23 @@ export default defineComponent({
     async cancelJob(job: any){
       const alert = await alertController
         .create({
-          header: this.$t('Cancel job'),
-          message: this.$t('Canceling this job will cancel this occurrence and all following occurrences. This job will have to be re-enabled manually to run it again.'),
+          header: translate('Cancel job'),
+          message: translate('Canceling this job will cancel this occurrence and all following occurrences. This job will have to be re-enabled manually to run it again.'),
           buttons: [
             {
-              text: this.$t("DON'T CANCEL"),
+              text: translate("DON'T CANCEL"),
               role: 'cancel',
             },
             {
-              text: this.$t("CANCEL"),
+              text: translate("CANCEL"),
               handler: async () => {
+                if(this.isRuntimePassed(job)) {
+                  await this.refreshJobs(undefined, true)
+                  showToast(translate("Job runtime has passed. The job data has refreshed. Please try again."))
+                  await this.store.dispatch('job/updateCurrentJob', { job: {} });
+                  return;
+                }
+
                 await this.store.dispatch('job/cancelJob', job);
                 await this.getPendingJobs();
               },
@@ -554,6 +608,9 @@ export default defineComponent({
       this.freqType = appFreqType ? appFreqType[1] : "default"
 
       await this.store.dispatch('job/updateCurrentJob', { job });
+      if(this.segmentSelected === 'history' && job.runtimeData?.configId) {
+        this.store.dispatch('job/fetchDataManagerLogs', job.jobId)
+      }
       if(!this.isDesktop && job?.jobId) {
         this.router.push({ name: 'JobDetails', params: { jobId: job?.jobId, category: "pipeline" } });
         return;
@@ -620,7 +677,8 @@ export default defineComponent({
       segmentSelected,
       router,
       filterOutline,
-      hasPermission
+      hasPermission,
+      translate
     };
   }
 });
@@ -629,6 +687,7 @@ export default defineComponent({
 <style scoped>
 ion-card-header {
   display: flex;
+  flex-direction: row;
   justify-content: space-between;
   align-items: center;
   padding-bottom: 0px;

@@ -4,7 +4,7 @@ import WebhookState from "./WebhookState";
 import { WebhookService } from "@/services/WebhookService";
 import { hasError, showToast } from "@/utils";
 import * as types from './mutations-types'
-import { translate } from '@/i18n'
+import { translate } from '@hotwax/dxp-components'
 import logger from "@/logger";
 
 const actions: ActionTree<WebhookState, RootState> = {
@@ -17,8 +17,13 @@ const actions: ActionTree<WebhookState, RootState> = {
           topics[webhook.topic] = webhook
         })
         commit(types.WEBHOOK_UPDATED, topics)
+      } else {
+        commit(types.WEBHOOK_UPDATED, []);
       }
-    }).catch(err => logger.error(err))
+    }).catch (err => {
+      logger.error(err);
+      commit(types.WEBHOOK_UPDATED, []);
+    })
   },
   async unsubscribeWebhook({ dispatch }, payload: any) {
 

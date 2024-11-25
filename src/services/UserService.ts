@@ -1,4 +1,5 @@
 import { api, client } from '@/adapter';
+import logger from '@/logger';
 import store from '@/store';
 import { hasError } from '@/utils'
 
@@ -13,21 +14,6 @@ const login = async (username: string, password: string): Promise <any> => {
   });
 }
 
-
-const getAvailableTimeZones = async (): Promise <any>  => {
-  return api({
-    url: "getAvailableTimeZones",
-    method: "get",
-    cache: true
-  });
-}
-const setUserTimeZone = async (payload: any): Promise <any>  => {
-  return api({
-    url: "setUserTimeZone",
-    method: "post",
-    data: payload
-  });
-}
 
 const getShopifyConfig = async (productStoreId: any, token?: any): Promise <any>  => {
   try {
@@ -56,13 +42,14 @@ const getShopifyConfig = async (productStoreId: any, token?: any): Promise <any>
     }
     payload.baseURL = store.getters['user/getBaseUrl'];
     const resp = await client(payload);
-    if (hasError(resp)) {
-      return Promise.reject(resp?.data);
-    } else {
+    if (!hasError(resp)) {
       return Promise.resolve(resp?.data.docs);
+    } else {
+      throw resp.data
     }
   } catch(error: any) {
-    return Promise.reject(error)
+    logger.error(error)
+    return Promise.resolve([])
   }
 }
 
@@ -211,7 +198,7 @@ const getPreferredStore = async (token: any): Promise<any> => {
         'Content-Type': 'application/json'
       },
       data: {
-        'userPrefTypeId': 'SELECTED_BRAND'
+        'userPrefTypeId': 'FAVORITE_PRODUCT_STORE'
       },
     });
     if (hasError(resp)) {
@@ -221,6 +208,34 @@ const getPreferredStore = async (token: any): Promise<any> => {
     }
   } catch(error: any) {
     return Promise.reject(error)
+  }
+  
+}
+
+const getPreferredShopifyShop = async (token: any): Promise<any> => {
+  const baseURL = store.getters['user/getBaseUrl'];
+  try {
+    const resp = await client({
+      url: "service/getUserPreference",
+      //TODO Due to security reasons service model of OMS 1.0 does not support sending parameters in get request that's why we use post here
+      method: "post",
+      baseURL,
+      headers: {
+        Authorization:  'Bearer ' + token,
+        'Content-Type': 'application/json'
+      },
+      data: {
+        'userPrefTypeId': 'FAVORITE_SHOPIFY_SHOP'
+      },
+    });
+    if (!hasError(resp)) {
+      return Promise.resolve(resp?.data.userPrefValue);
+    } else {
+      throw resp.data
+    }
+  } catch(error: any) {
+    logger.error(error)
+    return Promise.resolve(null)
   }
   
 }
@@ -336,16 +351,15 @@ const getUserProfile = async (token: any): Promise<any> => {
 export const UserService = {
     createPinnedJobPref,
     login,
-    getAvailableTimeZones,
     getEComStores,
     getEcommerceCatalog,
     getPreOrderBackorderCategory,
     getShopifyConfig,
     getPinnedJobs,
+    getPreferredShopifyShop,
     getPreferredStore,
     getUserProfile,
     associatePinnedJobPrefToUser,
-    setUserTimeZone,
     updatePinnedJobPref,
     setUserPreference,
     getUserPermissions

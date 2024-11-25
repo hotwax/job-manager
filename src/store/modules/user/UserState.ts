@@ -7,4 +7,5 @@ export default interface UserState {
     shopifyConfigs: any;
     currentShopifyConfig: any;
     productStoreCategories: any;
+    pwaState: any;
 }

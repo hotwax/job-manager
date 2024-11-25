@@ -3,13 +3,13 @@
     <ion-header :translucent="true">
       <ion-toolbar>
         <ion-back-button :default-href="'/' + jobCategory" slot="start" />
-        <ion-title>{{ $t("Job details") }}</ion-title>
+        <ion-title>{{ translate("Job details") }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
     <ion-content>
       <InitialJobConfiguration v-if="jobCategory === 'initial-load'" :type='type' :shopifyOrderId='lastShopifyOrderId' :key="currentJob" />
-      <JobConfiguration v-else :status="currentJob?.status === 'SERVICE_DRAFT' ? currentJob?.status : currentJob?.tempExprId" :type="freqType" :key="currentJob"/>
+      <JobConfiguration v-else :status="currentJob?.status === 'SERVICE_DRAFT' ? currentJob?.status : currentJob?.tempExprId" :type="freqType" :key="currentJob" :historyJobConfig="checkJobStatus(currentJob?.statusId)"/>
     </ion-content>
   </ion-page>
 </template>
@@ -28,6 +28,7 @@ import JobConfiguration from '@/components/JobConfiguration.vue';
 import InitialJobConfiguration from '@/components/InitialJobConfiguration.vue';
 import { useStore, mapGetters } from "vuex";
 import { isFutureDate } from '@/utils';
+import { translate } from '@hotwax/dxp-components';
 
 export default defineComponent({
   name: 'JobDetails',
@@ -86,6 +87,10 @@ export default defineComponent({
         const jobFreqTypeId = (Object.keys(this.jobFrequencyType).find((enumId: any) => enumId === id)) as any;
         this.freqType = (id && jobFreqTypeId) && this.jobFrequencyType[jobFreqTypeId];
       }
+    },
+    checkJobStatus(statusId: string) {
+      const statuses = ["SERVICE_CANCELLED", "SERVICE_CRASHED", "SERVICE_FAILED", "SERVICE_FINISHED", "SERVICE_RUNNING", "SERVICE_QUEUED"];
+      return statuses.includes(statusId);
     }
   },
   mounted() {
@@ -99,7 +104,8 @@ export default defineComponent({
     const store = useStore();
 
     return {
-      store
+      store,
+      translate
     }
   }
 });

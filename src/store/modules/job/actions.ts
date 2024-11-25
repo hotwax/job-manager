@@ -4,7 +4,7 @@ import JobState from './JobState'
 import * as types from './mutation-types'
 import { isCustomRunTime, generateAllowedFrequencies, hasError, showToast } from '@/utils'
 import { JobService } from '@/services/JobService'
-import { translate } from '@/i18n'
+import { translate } from '@hotwax/dxp-components'
 import { DateTime } from 'luxon';
 import store from '@/store'
 import logger from "@/logger";
@@ -259,6 +259,72 @@ const actions: ActionTree<JobState, RootState> = {
       logger.error(err);
       showToast(translate("Something went wrong"));
     })
+  },
+
+  async fetchDataManagerLogs({ commit }, jobId) {
+    commit(types.JOB_DATA_MANAGER_LOGS_UPDATED, []);
+    let logs = [] as any
+    const payload = {
+      "inputFields":  {
+        "systemJobEnumId_op": "not-empty",
+        "createdByJobId": jobId
+      },
+      "fieldList": ["statusId", "logId", "createdDate", "startDateTime", "finishDateTime", "logFileContentId", "errorRecordContentId", "contentName", "dataResourceId"],
+      "noConditionFind": "Y",
+      "viewSize": 250,
+      "entityName": "DataManagerLogAndContent",
+    }
+
+    try {
+      const resp = await JobService.fetchDataManagerLogs(payload);
+      if (resp.data.docs?.length > 0 && !hasError(resp)) {
+        logs = resp.data.docs;
+      } else {
+        throw resp.data;
+      }
+    } catch (err) {
+      logger.error(err);
+    }
+    commit(types.JOB_DATA_MANAGER_LOGS_UPDATED, logs);
+    return logs;
+  },
+
+  async fetchDataResource({ commit }, logs) {
+    // Extract logFileContentId and errorRecordContentId from logs
+    const contentIds = [].concat(...logs.map((log: any) => [log.logFileContentId, log.errorRecordContentId].filter(id => id)));
+  
+    const payload = {
+      "inputFields": {
+        "coContentId": contentIds,
+        "coContentId_op": "in"
+      },
+      "fieldList": ["coContentId", "coDataResourceId", "coContentName"], 
+      "noConditionFind": "Y",
+      "viewSize": 250,
+      "entityName": "DataResourceContentView"
+    }
+  
+    try {
+      const resp = await JobService.fetchDataResource(payload);
+      if (resp.data.docs?.length > 0 && !hasError(resp)) {
+        logs.forEach((log: any) => {
+          const logFileDataResource = resp.data.docs.find((doc: any) => doc.coContentId === log.logFileContentId);
+          if (logFileDataResource) {
+            log.logFileDataResourceId = logFileDataResource.coDataResourceId;
+            log.logFileContentName = logFileDataResource.coContentName;
+          }
+  
+          const errorRecordDataResource = resp.data.docs.find((doc: any) => doc.coContentId === log.errorRecordContentId);
+          if (errorRecordDataResource) {
+            log.errorRecordDataResourceId = errorRecordDataResource.coDataResourceId;
+            log.errorRecordContentName = errorRecordDataResource.coContentName;
+          }
+        });
+      }
+    } catch (err) {
+      logger.error(err);
+    }
+    commit(types.JOB_DATA_MANAGER_LOGS_UPDATED, logs);
   },
   async fetchMiscellaneousJobs({ commit, dispatch, state }, payload){
     const fetchJobRequests = [];

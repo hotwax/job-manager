@@ -3,7 +3,8 @@ import { toastController } from '@ionic/vue';
 import Papa from 'papaparse'
 import { DateTime } from "luxon";
 import logger from "@/logger";
-import { translate } from "@/i18n";
+import { translate } from "@hotwax/dxp-components";
+import { Plugins } from '@capacitor/core';
 
 // TODO Use separate files for specific utilities
 
@@ -330,7 +331,31 @@ const hasJobDataError = (job: any) => {
   return false;
 }
 
+const copyToClipboard = async (value: string, text?: string) => {
+  const { Clipboard } = Plugins;
+
+  await Clipboard.write({
+    string: value,
+  }).then(() => {
+    text ? showToast(translate(text)) : showToast(translate("Copied", { value }));
+  });
+}
+
+const saveDataFile = async (response: any, fileName: string) => {
+  let data;
+
+  if (typeof response === 'object') {
+    data = JSON.stringify(response)
+  } else {
+    data = response
+  }
+
+  const blob = new Blob([data], {type: "text/plain;charset=utf-8"})
+  saveAs(blob, fileName);
+}
+
 export {
+  copyToClipboard,
   isCustomRunTime,
   getNowTimestamp,
   generateAllowedFrequencies,
@@ -345,5 +370,6 @@ export {
   jsonToCsv,
   JsonToCsvOption,
   isFutureDate,
-  prepareRuntime
+  prepareRuntime,
+  saveDataFile
 }
