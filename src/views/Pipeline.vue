@@ -45,7 +45,7 @@
           </div>
 
           <div v-else>
-            <ion-card v-for="job in pendingJobs" :key="job.jobId" @click="viewJobConfiguration(job)" :button="isDesktop" :class="{ 'job-card-elevated': elevatedJobCard === job.jobId }">
+            <ion-card v-for="job in pendingJobs" :key="job.jobId" @click="viewJobConfiguration(job)" :button="isDesktop" :class="{ 'job-card-elevated': elevateJobCard === job.jobId }">
               <ion-card-header>
                 <ion-card-title>{{ job.enumName }}</ion-card-title>
                 <ion-badge v-if="job.runTime" color="dark">{{ timeFromNow(job.runTime)}}</ion-badge>
