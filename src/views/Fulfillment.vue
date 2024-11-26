@@ -16,7 +16,8 @@
             </ion-card-header>
             <ion-item button @click="viewJobConfiguration({ id: 'SHIP_PKD_ODRS', status: getJobStatus(jobEnums['SHIP_PKD_ODRS']) })" detail>
               <ion-label class="ion-text-wrap">{{ translate("Ship packed orders") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('SHIP_PKD_ODRS') }}</ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('SHIP_PKD_ODRS') }}</ion-label>
+              <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
@@ -31,7 +32,8 @@
             </ion-card-header>
             <ion-item button @click="viewJobConfiguration({ id: 'ODR_FLMNT_HST', status: getJobStatus(jobEnums['ODR_FLMNT_HST']) })" detail>
               <ion-label class="ion-text-wrap">{{ translate("Order fulfillment") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('ODR_FLMNT_HST') }}</ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('ODR_FLMNT_HST') }}</ion-label>
+              <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
@@ -46,15 +48,18 @@
             </ion-card-header>
             <ion-item button @click="viewJobConfiguration({ id: 'OPN_BOPIS_ORD_NT', status: getJobStatus(jobEnums['OPN_BOPIS_ORD_NT']) })" detail>
               <ion-label class="ion-text-wrap">{{ translate("Open BOPIS order notification") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('OPN_BOPIS_ORD_NT') }}</ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('OPN_BOPIS_ORD_NT') }}</ion-label>
+              <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
             <ion-item button @click="viewJobConfiguration({ id: 'READYPICK_BOPIS_ORD_NT', status: getJobStatus(jobEnums['READYPICK_BOPIS_ORD_NT']) })" detail>
               <ion-label class="ion-text-wrap">{{ translate("Ready to pick BOPIS order notification") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('READYPICK_BOPIS_ORD_NT') }}</ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('READYPICK_BOPIS_ORD_NT') }}</ion-label>
+              <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
             <ion-item button @click="viewJobConfiguration({ id: 'OPEN_SHIPPING_ORD_NT', status: getJobStatus(jobEnums['OPEN_SHIPPING_ORD_NT']) })" detail>
               <ion-label class="ion-text-wrap">{{ translate("Open shipping order notification") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('OPEN_SHIPPING_ORD_NT') }}</ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('OPEN_SHIPPING_ORD_NT') }}</ion-label>
+              <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
@@ -110,6 +115,7 @@ import {
   IonLabel,
   IonMenuButton,
   IonPage,
+  IonSkeletonText,
   IonTitle,
   IonToggle,
   IonToolbar,
@@ -142,6 +148,7 @@ export default defineComponent({
     IonLabel,
     IonMenuButton,
     IonPage,
+    IonSkeletonText,
     IonTitle,
     IonToggle,
     IonToolbar,
@@ -159,7 +166,8 @@ export default defineComponent({
       isDesktop: isPlatform('desktop'),
       autoCancelDays: '',
       enumTypeId: 'FULFILLMENT_SYS_JOB',
-      initialLoadJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any
+      initialLoadJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
+      isLoading: false
     }
   },
   computed: {
@@ -233,6 +241,7 @@ export default defineComponent({
       }
     },
     async fetchJobs(){
+      this.isLoading = true
       await this.store.dispatch("job/fetchJobs", {
         "inputFields": {
           "enumTypeId": "FULFILLMENT_SYS_JOB"
@@ -241,6 +250,7 @@ export default defineComponent({
       if (this.currentEComStore.productStoreId) {
         this.getAutoCancelDays();
       }
+      this.isLoading = false
     },
     async getAutoCancelDays(){
       const payload = {

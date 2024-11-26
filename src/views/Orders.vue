@@ -16,27 +16,33 @@
             </ion-card-header>
             <ion-item @click="viewJobConfiguration({ id: 'IMP_NEW_ORDERS', status: getJobStatus(jobEnums['IMP_NEW_ORDERS'])})" detail button>
               <ion-label class="ion-text-wrap">{{ translate("New orders") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('IMP_NEW_ORDERS') }}</ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('IMP_NEW_ORDERS') }}</ion-label>
+              <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
             <ion-item @click="viewJobConfiguration({ id: 'APR_ORD', status: getJobStatus(jobEnums['APR_ORD'])})" detail button>
               <ion-label class="ion-text-wrap">{{ translate("Approve orders") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('APR_ORD') }}</ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('APR_ORD') }}</ion-label>
+              <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
             <ion-item @click="viewJobConfiguration({ id: 'UPDT_ORDS', status: getJobStatus(jobEnums['UPDT_ORDS'])})" detail button>
               <ion-label class="ion-text-wrap">{{ translate("Update orders") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('UPDT_ORDS') }}</ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('UPDT_ORDS') }}</ion-label>
+              <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
             <ion-item @click="viewJobConfiguration({ id: 'IMP_CANCELLED_ORDERS', status: getJobStatus(jobEnums['IMP_CANCELLED_ORDERS'])})" detail button>
               <ion-label class="ion-text-wrap">{{ translate("Cancelled orders") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('IMP_CANCELLED_ORDERS') }}</ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('IMP_CANCELLED_ORDERS') }}</ion-label>
+              <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
             <ion-item @click="viewJobConfiguration({ id: 'IMP_CANCELLED_ITEMS', status: getJobStatus(jobEnums['IMP_CANCELLED_ITEMS'])})" detail button>
               <ion-label class="ion-text-wrap">{{ translate("Cancelled items") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('IMP_CANCELLED_ITEMS') }}</ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('IMP_CANCELLED_ITEMS') }}</ion-label>
+              <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
             <ion-item @click="viewJobConfiguration({ id: 'IMP_RETURNS', status: getJobStatus(jobEnums['IMP_RETURNS'])})" detail button>
               <ion-label class="ion-text-wrap">{{ translate("Returns") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('IMP_RETURNS') }}</ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('IMP_RETURNS') }}</ion-label>
+              <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
           </ion-card>
 
@@ -72,15 +78,18 @@
             </ion-card-header>
             <ion-item @click="viewJobConfiguration({ id: 'UPLD_CMPLT_ORDRS', status: getJobStatus(jobEnums['UPLD_CMPLT_ORDRS'])})" detail button>
               <ion-label class="ion-text-wrap">{{ translate("Completed orders") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('UPLD_CMPLT_ORDRS') }}</ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('UPLD_CMPLT_ORDRS') }}</ion-label>
+              <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
             <ion-item @click="viewJobConfiguration({ id: 'UPLD_CNCLD_ORDRS', status: getJobStatus(jobEnums['UPLD_CNCLD_ORDRS'])})" detail button>
               <ion-label class="ion-text-wrap">{{ translate("Cancelled orders") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('UPLD_CNCLD_ORDRS') }}</ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('UPLD_CNCLD_ORDRS') }}</ion-label>
+              <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
             <ion-item @click="viewJobConfiguration({ id: 'UPLD_REFUNDS', status: getJobStatus(jobEnums['UPLD_REFUNDS'])})" detail button>
               <ion-label class="ion-text-wrap">{{ translate("Refunds") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('UPLD_REFUNDS') }}</ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('UPLD_REFUNDS') }}</ion-label>
+              <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
           </ion-card>
           <MoreJobs v-if="getMoreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId).length" :jobs="getMoreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId)" />
@@ -105,6 +114,7 @@ import {
   IonLabel,
   IonMenuButton,
   IonPage,
+  IonSkeletonText,
   IonTitle,
   IonToggle,
   IonToolbar,
@@ -133,6 +143,7 @@ export default defineComponent({
     IonLabel,
     IonMenuButton,
     IonPage,
+    IonSkeletonText,
     IonTitle,
     IonToggle,
     IonToolbar,
@@ -150,7 +161,8 @@ export default defineComponent({
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
       enumTypeId: 'ORDER_SYS_JOB',
-      initialLoadJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any
+      initialLoadJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
+      isLoading: false
     }
   },
   computed: {
@@ -268,12 +280,14 @@ export default defineComponent({
         translate('Disabled')
     },
     async fetchJobs(){
+      this.isLoading = true;
       this.store.dispatch('webhook/fetchWebhooks')
       await this.store.dispatch("job/fetchJobs", {
         "inputFields": {
           "enumTypeId": "ORDER_SYS_JOB"
         }
       });
+      this.isLoading = false
     }
   },
   mounted () {
