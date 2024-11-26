@@ -51,7 +51,7 @@
           </div>
 
           <div v-else>
-            <ion-card v-for="job in pendingJobs" :key="job.jobId" @click="viewJobConfiguration(job)" :button="isDesktop">
+            <ion-card v-for="job in pendingJobs" :key="job.jobId" @click="viewJobConfiguration(job)" :button="isDesktop" :class="{ 'selected-job': selectedJobId === job.jobId }">
               <ion-card-header>
                 <ion-card-title>{{ job.enumName }}</ion-card-title>
                 <ion-badge v-if="job.runTime" color="dark">{{ timeFromNow(job.runTime)}}</ion-badge>
@@ -186,7 +186,7 @@
           </div>
 
           <div v-else>
-          <ion-card v-for="job in jobHistory" :key="job.jobId" @click="viewJobConfiguration(job)" :button="isDesktop">
+          <ion-card v-for="job in jobHistory" :key="job.jobId" @click="viewJobConfiguration(job)" :button="isDesktop" :class="{ 'selected-job': selectedJobId === job.jobId }">
             <ion-card-header>
               <div>
                 <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
@@ -367,7 +367,8 @@ export default defineComponent({
       isRetrying: false,
       queryString: '' as any,
       isScrollingEnabled: false,
-      jobsLoading: false
+      jobsLoading: false,
+      selectedJobId: '' as any
     }
   },
   computed: {
@@ -609,6 +610,7 @@ export default defineComponent({
        return alert.present();
     },
     async viewJobConfiguration(job: any) {
+      this.selectedJobId = job.jobId
       this.currentJobStatus = job.tempExprId
       const id = Object.entries(this.jobEnums).find((enums) => enums[1] == job.systemJobEnumId) as any
       const appFreqType =  id && (Object.entries(this.jobFrequencyType).find((freq) => freq[0] == id[0]) as any)
@@ -703,6 +705,16 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.selected-job {
+  box-shadow: 0px 8px 10px 0px rgba(0, 0, 0, 0.14), 0px 3px 14px 0px rgba(0, 0, 0, 0.12), 0px 4px 5px 0px rgba(0, 0, 0, 0.20);
+  scale: 1.03;
+  margin-block: var(--spacer-sm);
+}
+
+ion-card {
+  transition: .5s all ease;
+}
+
 ion-card-header {
   display: flex;
   flex-direction: row;
