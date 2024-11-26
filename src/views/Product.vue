@@ -8,13 +8,7 @@
     </ion-header>
 
     <ion-content>
-      <div class="empty-state" v-if="jobsLoading">
-        <ion-item lines="none">
-          <ion-spinner name="crescent" slot="start" />
-          {{ translate("Fetching jobs") }}
-        </ion-item>
-      </div>
-      <main v-else>
+      <main>
         <section>
           <ion-card>
             <ion-card-header>
@@ -22,11 +16,13 @@
             </ion-card-header>
             <ion-item button @click="viewJobConfiguration({ id: 'IMP_PRDTS', status: getJobStatus(jobEnums['IMP_PRDTS'])})" detail>
               <ion-label class="ion-text-wrap">{{ translate("Import products") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('IMP_PRDTS') }}</ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('IMP_PRDTS') }}</ion-label>
+              <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
             <ion-item button @click="viewJobConfiguration({ id: 'SYNC_PRDTS', status: getJobStatus(jobEnums['SYNC_PRDTS'])})" detail>
               <ion-label class="ion-text-wrap">{{ translate("Sync products") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('SYNC_PRDTS') }} </ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('SYNC_PRDTS') }} </ion-label>
+              <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap"><p>{{ translate("Sync products and category structures from Shopify into HotWax Commerce and keep them up to date.") }}</p></ion-label>
@@ -70,7 +66,7 @@ import {
   IonLabel,
   IonMenuButton,
   IonPage,
-  IonSpinner,
+  IonSkeletonText,
   IonTitle,
   IonToolbar,
   IonToggle,
@@ -98,7 +94,7 @@ export default defineComponent({
     IonLabel,
     IonMenuButton,
     IonPage,
-    IonSpinner,
+    IonSkeletonText,
     IonTitle,
     IonToolbar,
     IonToggle,
@@ -135,7 +131,7 @@ export default defineComponent({
       webhookEnums: JSON.parse(process.env?.VUE_APP_WEBHOOK_ENUMS as string) as any,
       enumTypeId: 'PRODUCT_SYS_JOB',
       initialLoadJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
-      jobsLoading: false
+      isLoading: false
     }
   },
   mounted () {
@@ -197,8 +193,8 @@ export default defineComponent({
         translate('Disabled')
     },
     async fetchJobs(JobDetailDismissRequired = false){
+      this.isLoading = true;
       if(JobDetailDismissRequired) {
-        this.jobsLoading = true;
         this.currentJob = ""
         await this.store.dispatch('job/updateCurrentJob', { });
         this.currentJobStatus = ""
@@ -211,7 +207,7 @@ export default defineComponent({
         }
       });
       this.store.dispatch('webhook/fetchWebhooks')
-      this.jobsLoading = false;
+      this.isLoading = false
     }
   },
   setup() {

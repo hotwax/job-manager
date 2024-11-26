@@ -8,13 +8,7 @@
     </ion-header>
 
     <ion-content>
-      <div class="empty-state" v-if="jobsLoading">
-        <ion-item lines="none">
-          <ion-spinner name="crescent" slot="start" />
-          {{ translate("Fetching jobs") }}
-        </ion-item>
-      </div>
-      <main v-else>
+      <main>
         <section>
           <ion-card>
             <ion-card-header>
@@ -22,7 +16,8 @@
             </ion-card-header>
             <ion-item button @click="viewJobConfiguration({ id: 'HARD_SYNC', status: getJobStatus(jobEnums['HARD_SYNC'])})" detail>
               <ion-label class="ion-text-wrap">{{ translate("Hard sync") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('HARD_SYNC') }}</ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('HARD_SYNC') }}</ion-label>
+              <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
@@ -62,7 +57,7 @@ import {
   IonLabel,
   IonMenuButton,
   IonPage,
-  IonSpinner,
+  IonSkeletonText,
   IonTitle,
   IonToggle,
   IonToolbar,
@@ -90,7 +85,7 @@ export default defineComponent({
     IonLabel,
     IonMenuButton,
     IonPage,
-    IonSpinner,
+    IonSkeletonText,
     IonTitle,
     IonToggle,
     IonToolbar,
@@ -108,7 +103,7 @@ export default defineComponent({
       isDesktop: isPlatform('desktop'),
       enumTypeId: 'INVENTORY_SYS_JOB',
       webhookEnums: JSON.parse(process.env?.VUE_APP_WEBHOOK_ENUMS as string) as any,
-      jobsLoading: false
+      isLoading: false
     }
   },
   computed: {
@@ -175,15 +170,16 @@ export default defineComponent({
         translate('Disabled')
     },
     async fetchJobs(){
+      this.isLoading = true
       await this.store.dispatch("job/fetchJobs", {
         "inputFields":{
           "enumTypeId": "INVENTORY_SYS_JOB"
         }
       });
+      this.isLoading = false
     },
     async fetchData(JobDetailDismissRequired = false) {
       if(JobDetailDismissRequired) {
-        this.jobsLoading = true;
         this.currentJob = "";
         await this.store.dispatch('job/updateCurrentJob', { });
         this.currentJobStatus = "";
@@ -192,7 +188,6 @@ export default defineComponent({
       }
       this.store.dispatch('webhook/fetchWebhooks')
       await this.fetchJobs()
-      this.jobsLoading = false;
     }
   },
   mounted () {
