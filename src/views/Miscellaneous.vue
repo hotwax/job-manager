@@ -34,10 +34,28 @@
               <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="translate('Loading')"/>
             </ion-infinite-scroll>
           </div>
+
+          <div>
+            <ion-card>
+              <ion-card-header>
+                <ion-card-title>{{ translate("Shopify bulk query") }}</ion-card-title>
+              </ion-card-header>
+
+              <ion-item button detail :disabled="!isMaargJobFound('BLK_SYS_MESS_SHPFY')" @click="viewMaargJobConfiguration('BLK_SYS_MESS_SHPFY')">
+                <ion-label class="ion-text-wrap">{{ translate("Poll bulk system message") }}</ion-label>
+                <ion-label slot="end" >{{ isMaargJobFound('BLK_SYS_MESS_SHPFY') ? getMaargJobStatus("BLK_SYS_MESS_SHPFY") : translate("Not found") }}</ion-label>
+              </ion-item>
+              <ion-item button detail :disabled="!isMaargJobFound('BLK_RSLT_SHPFY')" @click="viewMaargJobConfiguration('BLK_RSLT_SHPFY')">
+                <ion-label class="ion-text-wrap">{{ translate("Poll bulk operation result") }}</ion-label>
+                <ion-label slot="end" >{{ isMaargJobFound('BLK_RSLT_SHPFY') ? getMaargJobStatus("BLK_RSLT_SHPFY") : translate("Not found") }}</ion-label>
+              </ion-item>
+            </ion-card>
+          </div>
         </section>
 
-        <aside class="desktop-only" v-if="isDesktop" v-show="currentJob && Object.keys(currentJob).length">
-          <JobConfiguration :status="currentJobStatus" :key="currentJob"/>
+        <aside class="desktop-only" v-if="isDesktop" v-show="currentJob || Object.keys(currentMaargJob).length">
+          <JobConfiguration v-if="currentJob" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
+          <MaargJobConfiguration v-else-if="Object.keys(currentMaargJob).length" :key="currentMaargJob" />
         </aside>
       </main>
     </ion-content>
@@ -48,6 +66,9 @@
 import { DateTime } from 'luxon';
 import {
   IonButton,
+  IonCard,
+  IonCardHeader,
+  IonCardTitle,
   IonContent,
   IonHeader,
   IonInfiniteScroll,
@@ -69,13 +90,17 @@ import { useRouter } from 'vue-router'
 import { mapGetters, useStore } from 'vuex'
 import emitter from '@/event-bus';
 import JobConfiguration from '@/components/JobConfiguration.vue';
-import { isFutureDate } from '@/utils';
+import { getCronString, isFutureDate } from '@/utils';
 import { translate } from '@hotwax/dxp-components';
+import MaargJobConfiguration from '@/components/MaargJobConfiguration.vue';
 
 export default defineComponent({
   name: 'Miscellaneous',
   components: {
     IonButton,
+    IonCard,
+    IonCardHeader,
+    IonCardTitle,
     IonContent,
     IonHeader,
     IonInfiniteScroll,
@@ -90,7 +115,8 @@ export default defineComponent({
     IonSpinner,
     IonTitle,
     IonToolbar,
-    JobConfiguration
+    JobConfiguration,
+    MaargJobConfiguration
   },
   mounted() {
     emitter.on('jobUpdated', this.getMiscellaneousJobs);
@@ -108,13 +134,16 @@ export default defineComponent({
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
       isRetrying: false,
+      maargJobEnums: JSON.parse(process.env.VUE_APP_MISC_MAARG_JOB_NAMES as string) as any
     }
   },
   computed: {
     ...mapGetters({
       miscellaneousJobs: 'job/getMiscellaneousJobs',
       getCurrentEComStore:'user/getCurrentEComStore',
-      isMiscellaneousJobsScrollable: 'job/isMiscellaneousJobsScrollable'
+      isMiscellaneousJobsScrollable: 'job/isMiscellaneousJobsScrollable',
+      getMaargJob: 'maargJob/getMaargJob',
+      currentMaargJob: 'maargJob/getCurrentMaargJob'
     }),
     prepareMiscJobs() {
       // preparing the jobs to display single instance of a job if the job is in pending and draft status
@@ -151,6 +180,7 @@ export default defineComponent({
     },
     async getMiscellaneousJobs(viewSize = 100, viewIndex = 0) {
       await this.store.dispatch('job/fetchMiscellaneousJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex});
+      await this.store.dispatch("maargJob/fetchMaargJobs", Object.values(this.maargJobEnums));
     },
     async loadMoreMiscellaneousJobs (event: any) {
       this.getMiscellaneousJobs(
@@ -173,6 +203,25 @@ export default defineComponent({
     },
     getJobRuntime(job: any) {
       return job.statusId !== 'SERVICE_DRAFT' && this.timeFromNow(job.runTime) ? this.timeFromNow(job.runTime) : translate('Disabled')
+    },
+
+    isMaargJobFound(id: string) {
+      const job = this.getMaargJob(this.maargJobEnums[id])
+      return job && Object.keys(job)?.length
+    },
+    getMaargJobStatus(id: string) {
+      const job = this.getMaargJob(this.maargJobEnums[id])
+      return (job?.paused === "N" && job?.cronExpression) ? this.getCronString(job.cronExpression) ? this.getCronString(job.cronExpression) : job.cronExpression : 'Disabled'
+    },
+    async viewMaargJobConfiguration(id: any) {
+      const enumId = this.maargJobEnums[id];
+      const job = this.getMaargJob(enumId);
+      await this.store.dispatch("maargJob/updateCurrentMaargJob", { job })
+      this.currentJob = ""
+      if(!this.isJobDetailAnimationCompleted) {
+        emitter.emit('playAnimation');
+        this.isJobDetailAnimationCompleted = true;
+      }
     }
   },
   setup() {
@@ -180,6 +229,7 @@ export default defineComponent({
     const router = useRouter();
 
     return {
+      getCronString,
       router,
       store,
       translate

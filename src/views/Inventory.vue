@@ -34,11 +34,31 @@
               </ion-toggle>
             </ion-item>
           </ion-card>
+
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>{{ translate("Feed") }}</ion-card-title>
+            </ion-card-header>
+            <ion-item button detail :disabled="!isMaargJobFound('GEN_TO_RCPT_FEED')" @click="viewMaargJobConfiguration('GEN_TO_RCPT_FEED')">
+              <ion-label class="ion-text-wrap">{{ translate("Transfer order feed") }}</ion-label>
+              <ion-label slot="end" >{{ isMaargJobFound('GEN_TO_RCPT_FEED') ? getMaargJobStatus("GEN_TO_RCPT_FEED") : translate("Not found") }}</ion-label>
+            </ion-item>
+            <ion-item button detail :disabled="!isMaargJobFound('GEN_INV_VAR_FEED')" @click="viewMaargJobConfiguration('GEN_INV_VAR_FEED')">
+              <ion-label class="ion-text-wrap">{{ translate("Inventory variance feed") }}</ion-label>
+              <ion-label slot="end">{{ isMaargJobFound('GEN_INV_VAR_FEED') ? getMaargJobStatus("GEN_INV_VAR_FEED") : translate("Not found") }}</ion-label>
+            </ion-item>
+            <ion-item button detail :disabled="!isMaargJobFound('GEN_INVCYC_COUNT_VAR_FEED')" @click="viewMaargJobConfiguration('GEN_INVCYC_COUNT_VAR_FEED')">
+              <ion-label class="ion-text-wrap">{{ translate("Inventory cycle count variance feed") }}</ion-label>
+              <ion-label slot="end">{{ isMaargJobFound('GEN_INVCYC_COUNT_VAR_FEED') ? getMaargJobStatus("GEN_INVCYC_COUNT_VAR_FEED") : translate("Not found") }}</ion-label>
+            </ion-item>
+          </ion-card>
+
           <MoreJobs v-if="getMoreJobs(jobEnums, enumTypeId).length" :jobs="getMoreJobs(jobEnums, enumTypeId)" />
         </section>
 
-        <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
-          <JobConfiguration :status="currentJobStatus" :type="freqType" :key="currentJob"/>
+        <aside class="desktop-only" v-if="isDesktop" v-show="currentJob || Object.keys(currentMaargJob).length">
+          <JobConfiguration v-if="currentJob" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
+          <MaargJobConfiguration v-else-if="Object.keys(currentMaargJob).length" :key="currentMaargJob" />
         </aside>
       </main>
     </ion-content>
@@ -64,12 +84,13 @@ import {
 import { defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
 import JobConfiguration from '@/components/JobConfiguration.vue'
-import { isFutureDate, showToast } from '@/utils';
+import { getCronString, isFutureDate, showToast } from '@/utils';
 import emitter from '@/event-bus';
 import { useRouter } from 'vue-router'
 import { translate } from '@hotwax/dxp-components';
 import MoreJobs from '@/components/MoreJobs.vue';
 import { Actions, hasPermission } from '@/authorization'
+import MaargJobConfiguration from '@/components/MaargJobConfiguration.vue';
 
 export default defineComponent({
   name: 'Inventory',
@@ -87,6 +108,7 @@ export default defineComponent({
     IonToggle,
     IonToolbar,
     JobConfiguration,
+    MaargJobConfiguration,
     MoreJobs
   },
   data() {
@@ -100,6 +122,7 @@ export default defineComponent({
       isDesktop: isPlatform('desktop'),
       enumTypeId: 'INVENTORY_SYS_JOB',
       webhookEnums: JSON.parse(process.env?.VUE_APP_WEBHOOK_ENUMS as string) as any,
+      maargJobEnums: JSON.parse(process.env.VUE_APP_INVENTORY_MAARG_JOB_NAMES as string) as any,
     }
   },
   computed: {
@@ -111,6 +134,8 @@ export default defineComponent({
       getTemporalExpr: 'job/getTemporalExpr',
       getMoreJobs: 'job/getMoreJobs',
       getCachedWebhook: 'webhook/getCachedWebhook',
+      getMaargJob: 'maargJob/getMaargJob',
+      currentMaargJob: 'maargJob/getCurrentMaargJob'
     }),
     isInventoryLevelUpdated (): boolean {
       const webhookTopic = this.webhookEnums['INVENTORY_LEVEL_UPDATE']
@@ -165,17 +190,36 @@ export default defineComponent({
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
         translate('Disabled')
     },
-    fetchJobs(){
+    async fetchJobs(){
       this.store.dispatch("job/fetchJobs", {
         "inputFields":{
           "enumTypeId": "INVENTORY_SYS_JOB"
         }
       });
+      await this.store.dispatch("maargJob/fetchMaargJobs", Object.values(this.maargJobEnums));
     },
     fetchData() {
       this.store.dispatch('webhook/fetchWebhooks')
       this.fetchJobs()
-    }
+    },
+    isMaargJobFound(id: string) {
+      const job = this.getMaargJob(this.maargJobEnums[id])
+      return job && Object.keys(job)?.length
+    },
+    getMaargJobStatus(id: string) {
+      const job = this.getMaargJob(this.maargJobEnums[id])
+      return (job?.paused === "N" && job?.cronExpression) ? this.getCronString(job.cronExpression) ? this.getCronString(job.cronExpression) : job.cronExpression : 'Disabled'
+    },
+    async viewMaargJobConfiguration(id: any) {
+      const enumId = this.maargJobEnums[id];
+      const job = this.getMaargJob(enumId);
+      await this.store.dispatch("maargJob/updateCurrentMaargJob", { job })
+      this.currentJob = ""
+      if(!this.isJobDetailAnimationCompleted) {
+        emitter.emit('playAnimation');
+        this.isJobDetailAnimationCompleted = true;
+      }
+    },
   },
   mounted () {
     this.fetchData();
@@ -191,6 +235,7 @@ export default defineComponent({
     const router = useRouter();
     return {
       Actions,
+      getCronString,
       hasPermission,
       store,
       router,

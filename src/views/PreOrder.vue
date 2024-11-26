@@ -157,7 +157,20 @@
             </ion-item>
           </ion-card>
 
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>{{ translate("Feed") }}</ion-card-title>
+            </ion-card-header>
+            <ion-item button detail :disabled="!isMaargJobFound('PO_RCPT_FEED')" @click="viewMaargJobConfiguration('PO_RCPT_FEED')">
+              <ion-label class="ion-text-wrap">{{ translate("Purchase order receipt feed") }}</ion-label>
+              <ion-label slot="end" >{{ isMaargJobFound('PO_RCPT_FEED') ? getMaargJobStatus("PO_RCPT_FEED") : translate("Not found") }}</ion-label>
+            </ion-item>
+          </ion-card>
 
+          <aside class="desktop-only" v-if="isDesktop" v-show="currentJob || Object.keys(currentMaargJob).length">
+            <JobConfiguration v-if="currentJob" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
+            <MaargJobConfiguration v-else-if="Object.keys(currentMaargJob).length" :key="currentMaargJob" />
+          </aside>
 
           <MoreJobs v-if="getMoreJobs(jobEnums, enumTypeId).length" :jobs="getMoreJobs(jobEnums, enumTypeId)" />
         </section>
@@ -195,12 +208,13 @@ import { mapGetters } from "vuex";
 import { useRouter } from 'vue-router'
 import { alertController } from '@ionic/vue';
 import JobConfiguration from '@/components/JobConfiguration.vue'
-import { generateJobCustomParameters, isFutureDate, showToast, prepareRuntime, hasJobDataError } from '@/utils';
+import { generateJobCustomParameters, getCronString, isFutureDate, showToast, prepareRuntime, hasJobDataError } from '@/utils';
 import emitter from '@/event-bus';
 import { translate } from '@hotwax/dxp-components';
 import MoreJobs from '@/components/MoreJobs.vue';
 import { Actions, hasPermission } from '@/authorization'
 import { openOutline } from 'ionicons/icons'
+import MaargJobConfiguration from '@/components/MaargJobConfiguration.vue';
 
 export default defineComponent({
   name: 'PreOrder',
@@ -221,6 +235,7 @@ export default defineComponent({
     IonTitle,
     IonToolbar,
     JobConfiguration,
+    MaargJobConfiguration,
     MoreJobs
 },
   computed: {
@@ -231,7 +246,9 @@ export default defineComponent({
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
       currentEComStore: 'user/getCurrentEComStore',
       getTemporalExpr: 'job/getTemporalExpr',
-      getMoreJobs: 'job/getMoreJobs'
+      getMoreJobs: 'job/getMoreJobs',
+      getMaargJob: 'maargJob/getMaargJob',
+      currentMaargJob: 'maargJob/getCurrentMaargJob'
     })
   },
   data() {
@@ -244,7 +261,8 @@ export default defineComponent({
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
       enumTypeId: 'PRE_ORD_SYS_JOB',
-      preOrderBackorderCategory: {} as any
+      preOrderBackorderCategory: {} as any,
+      maargJobEnums: JSON.parse(process.env.VUE_APP_PREORD_MAARG_JOB_NAMES as string) as any,
     }
   },
   methods: {
@@ -356,17 +374,36 @@ export default defineComponent({
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
         translate('Disabled')
     },
-    fetchJobs(){
-      this.store.dispatch("job/fetchJobs", {
+    async fetchJobs(){
+      await this.store.dispatch("job/fetchJobs", {
         "inputFields":{
           "enumTypeId": "PRE_ORD_SYS_JOB"
         }
       });
+      await this.store.dispatch("maargJob/fetchMaargJobs", Object.values(this.maargJobEnums));
     },
     fetchInitialData() {
       this.fetchJobs();
       this.getPreOrderBackorderCategory();
-    }
+    },
+    isMaargJobFound(id: string) {
+      const job = this.getMaargJob(this.maargJobEnums[id])
+      return job && Object.keys(job)?.length
+    },
+    getMaargJobStatus(id: string) {
+      const job = this.getMaargJob(this.maargJobEnums[id])
+      return (job?.paused === "N" && job?.cronExpression) ? this.getCronString(job.cronExpression) ? this.getCronString(job.cronExpression) : job.cronExpression : 'Disabled'
+    },
+    async viewMaargJobConfiguration(id: any) {
+      const enumId = this.maargJobEnums[id];
+      const job = this.getMaargJob(enumId);
+      await this.store.dispatch("maargJob/updateCurrentMaargJob", { job })
+      this.currentJob = ""
+      if(!this.isJobDetailAnimationCompleted) {
+        emitter.emit('playAnimation');
+        this.isJobDetailAnimationCompleted = true;
+      }
+    },
   },
   mounted () {
     this.fetchInitialData();
@@ -382,6 +419,7 @@ export default defineComponent({
     const router = useRouter();
     return {
       Actions,
+      getCronString,
       hasPermission,
       openOutline,
       store,

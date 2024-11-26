@@ -99,6 +99,10 @@
               <ion-label class="ion-text-wrap">{{ translate("Send shopify acknowledge feed") }}</ion-label>
               <ion-label slot="end">{{ isMaargJobFound('SND_FF_ACK_FEED') ? getMaargJobStatus("SND_FF_ACK_FEED") : translate("Not found") }}</ion-label>
             </ion-item>
+            <ion-item button detail :disabled="!isMaargJobFound('POL_OMS_FLFLMNT_FEED')" @click="viewMaargJobConfiguration('POL_OMS_FLFLMNT_FEED')">
+              <ion-label class="ion-text-wrap">{{ translate("Poll OMS fulfillment feed") }}</ion-label>
+              <ion-label slot="end">{{ isMaargJobFound('POL_OMS_FLFLMNT_FEED') ? getMaargJobStatus("POL_OMS_FLFLMNT_FEED") : translate("Not found") }}</ion-label>
+            </ion-item>
 
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
