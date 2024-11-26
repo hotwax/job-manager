@@ -689,7 +689,12 @@ export default defineComponent({
 <style scoped>
 .selected-job {
   box-shadow: 0px 8px 10px 0px rgba(0, 0, 0, 0.14), 0px 3px 14px 0px rgba(0, 0, 0, 0.12), 0px 4px 5px 0px rgba(0, 0, 0, 0.20);
-  scale: 1.03
+  scale: 1.03;
+  margin-block: var(--spacer-sm);
+}
+
+ion-card {
+  transition: .5s all ease;
 }
 
 ion-card-header {
