@@ -8,13 +8,7 @@
     </ion-header>
 
     <ion-content>
-      <div class="empty-state" v-if="jobsLoading">
-        <ion-item lines="none">
-          <ion-spinner name="crescent" slot="start" />
-          {{ translate("Fetching jobs") }}
-        </ion-item>
-      </div>
-      <main v-else>
+      <main>
         <section>
           <ion-card>
             <ion-card-header>
@@ -80,7 +74,6 @@ import {
   IonLabel,
   IonMenuButton,
   IonPage,
-  IonSpinner,
   IonTitle,
   IonToggle,
   IonToolbar,
@@ -110,7 +103,6 @@ export default defineComponent({
     IonLabel,
     IonMenuButton,
     IonPage,
-    IonSpinner,
     IonTitle,
     IonToggle,
     IonToolbar
@@ -123,8 +115,7 @@ export default defineComponent({
       job: {} as any,
       lastShopifyOrderId: '',
       isJobDetailAnimationCompleted: false,
-      isDesktop: isPlatform('desktop'),
-      jobsLoading: false
+      isDesktop: isPlatform('desktop')
     }
   },
   mounted() {
@@ -218,7 +209,6 @@ export default defineComponent({
     },
     async fetchJobs(JobDetailDismissRequired = false){
       if(JobDetailDismissRequired) {
-        this.jobsLoading = true;
         this.currentSelectedJobModal = "";
         await this.store.dispatch('job/updateCurrentJob', { });
         this.job = {};
@@ -232,7 +222,6 @@ export default defineComponent({
         }
       })
       this.store.dispatch('webhook/fetchWebhooks')
-      this.jobsLoading = false;
     },
     async updateWebhook(checked: boolean, enumId: string) {
       const webhook = this.getCachedWebhook[this.webhookEnums[enumId]]

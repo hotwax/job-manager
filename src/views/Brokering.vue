@@ -8,13 +8,7 @@
     </ion-header>
 
     <ion-content>
-      <div class="empty-state" v-if="jobsLoading">
-        <ion-item lines="none">
-          <ion-spinner name="crescent" slot="start" />
-          {{ translate("Fetching jobs") }}
-        </ion-item>
-      </div>
-      <main v-else>
+      <main>
         <section>
           <ion-button expand="block" :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" @click="addBatch()">{{ translate('Create new brokering job') }}</ion-button>
 
@@ -89,7 +83,6 @@ import {
   IonMenuButton,
   IonPage,
   IonRow,
-  IonSpinner,
   IonTitle,
   IonToggle,
   IonToolbar,
@@ -128,7 +121,6 @@ export default defineComponent({
     IonMenuButton,
     IonPage,
     IonRow,
-    IonSpinner,
     IonTitle,
     IonToggle,
     IonToolbar,
@@ -146,8 +138,7 @@ export default defineComponent({
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
       enumTypeId: 'BROKER_SYS_JOB',
-      initialLoadJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
-      jobsLoading: false
+      initialLoadJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any
     }
   },
   computed: {
@@ -219,7 +210,6 @@ export default defineComponent({
     },
     async fetchJobs(JobDetailDismissRequired = false) {
       if(JobDetailDismissRequired) {
-        this.jobsLoading = true;
         this.currentJob = "";
         await this.store.dispatch('job/updateCurrentJob', { });
         this.currentJobStatus = "";
@@ -242,7 +232,6 @@ export default defineComponent({
           "systemJobEnumId_op": "in"
         }
       });
-      this.jobsLoading = false;
     },
     timeFromNow(time: any) {
       const timeDiff = DateTime.fromMillis(time).diff(DateTime.local());

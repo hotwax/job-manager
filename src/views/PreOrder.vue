@@ -8,13 +8,7 @@
     </ion-header>
 
     <ion-content>
-      <div class="empty-state" v-if="jobsLoading">
-        <ion-item lines="none">
-          <ion-spinner name="crescent" slot="start" />
-          {{ translate("Fetching jobs") }}
-        </ion-item>
-      </div>
-      <main v-else>
+      <main>
         <section>
           <ion-card>
             <ion-card-header>
@@ -191,7 +185,6 @@ import {
   IonLabel,
   IonMenuButton,
   IonPage,
-  IonSpinner,
   IonTitle,
   IonToolbar,
   isPlatform
@@ -225,7 +218,6 @@ export default defineComponent({
     IonLabel,
     IonMenuButton,
     IonPage,
-    IonSpinner,
     IonTitle,
     IonToolbar,
     JobConfiguration,
@@ -252,8 +244,7 @@ export default defineComponent({
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
       enumTypeId: 'PRE_ORD_SYS_JOB',
-      preOrderBackorderCategory: {} as any,
-      jobsLoading: false
+      preOrderBackorderCategory: {} as any
     }
   },
   methods: {
@@ -374,7 +365,6 @@ export default defineComponent({
     },
     async fetchInitialData(JobDetailDismissRequired = false) {
       if(JobDetailDismissRequired) {
-        this.jobsLoading = true;
         this.currentJob = "";
         await this.store.dispatch('job/updateCurrentJob', { });
         this.currentJobStatus = ""
@@ -383,7 +373,6 @@ export default defineComponent({
       }
       await this.fetchJobs();
       await this.getPreOrderBackorderCategory();
-      this.jobsLoading = false;
     }
   },
   mounted () {
