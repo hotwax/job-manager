@@ -95,7 +95,9 @@
           <ion-badge v-if="log.statusId" :color="getLogStatusColor(log.statusId)">{{ translate(getStatusDesc(log.statusId)) }}</ion-badge>
           
           <div class="ion-text-center" lines="none" v-if="log.errorRecordContentId">
-            <ion-icon color="medium" :icon="cloudDownloadOutline" @click="downloadErrorRecordFile(log)" />
+            <ion-button fill="clear" color="medium" @click="downloadErrorRecordFile(log)">
+              <ion-icon slot="icon-only" :icon="cloudDownloadOutline" />
+            </ion-button>
             <ion-label>
               <p>{{ translate('Failed records') }}</p>
             </ion-label>
