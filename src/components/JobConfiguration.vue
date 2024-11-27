@@ -203,7 +203,7 @@ import emitter from '@/event-bus';
 import { Actions, hasPermission } from '@/authorization'
 import CustomFrequencyModal from '@/components/CustomFrequencyModal.vue';
 import JobParameterModal from '@/components/JobParameterModal.vue'
-import LearnMoreModal from "./LearnMoreModal.vue";
+import LearnMoreModal from "@/components/LearnMoreModal.vue";
 
 export default defineComponent({
   name: "JobConfiguration",

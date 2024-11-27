@@ -7,9 +7,11 @@
         </ion-button>
       </ion-buttons>
       <ion-title>{{ translate("Learn more") }}</ion-title>
-      <ion-button slot="end" fill="clear" @click="redirectToJobsDoc()">
-        <ion-icon color="medium" :icon="openOutline" />
-      </ion-button>
+      <ion-buttons slot="end">
+        <ion-button fill="clear" @click="redirectToJobsDoc()">
+          <ion-icon color="medium" :icon="openOutline" />
+        </ion-button>
+      </ion-buttons>
     </ion-toolbar>
   </ion-header>
 
@@ -21,14 +23,14 @@
       </ion-item>
     </div>
 
-    <div class="empty-state" v-else-if="!askResponse">
+    <div class="empty-state" v-else-if="!Object.keys(askResponse).length">
       <ion-item lines="none">
         <p>{{ translate("The job details is not generating, please try again later.") }}</p>
       </ion-item>
     </div>
     
     <div v-else>
-      <ion-item class="ion-margin-top">
+      <ion-item lines="full" class="ion-margin-top">
         <ion-label>
           {{ queryString }}
           <p>{{  currentJob?.systemJobEnumId }}</p>  
@@ -77,8 +79,8 @@ export default defineComponent({
     IonIcon,
     IonItem,
     IonLabel,
-    IonSpinner,
     IonList,
+    IonSpinner,
     IonTitle,
     IonToolbar
   },
