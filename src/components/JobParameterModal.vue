@@ -8,7 +8,7 @@
       </ion-buttons>
       <ion-title>{{ translate('Custom Parameters') }}</ion-title>
       <ion-buttons slot="end">
-        <ion-button color="primary" :disabled="currentJob.statusId === 'SERVICE_PENDING'" @click="save()">{{ translate('Save') }}</ion-button>
+        <ion-button color="primary" :disabled="currentJob.statusId !== 'SERVICE_DRAFT'" @click="save()">{{ translate('Save') }}</ion-button>
       </ion-buttons>
     </ion-toolbar>
   </ion-header>

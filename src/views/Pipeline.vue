@@ -45,7 +45,7 @@
           </div>
 
           <div v-else>
-            <ion-card v-for="job in pendingJobs" :key="job.jobId" @click="viewJobConfiguration(job)" :button="isDesktop">
+            <ion-card v-for="job in pendingJobs" :key="job.jobId" @click="viewJobConfiguration(job)" :button="isDesktop" :class="{ 'selected-job': selectedJobId === job.jobId }">
               <ion-card-header>
                 <ion-card-title>{{ job.enumName }}</ion-card-title>
                 <ion-badge v-if="job.runTime" color="dark">{{ timeFromNow(job.runTime)}}</ion-badge>
@@ -186,7 +186,7 @@
           </div>
 
           <div v-else>
-          <ion-card v-for="job in jobHistory" :key="job.jobId">
+          <ion-card v-for="job in jobHistory" :key="job.jobId" @click="viewJobConfiguration(job)" :button="isDesktop" :class="{ 'selected-job': selectedJobId === job.jobId }">
             <ion-card-header>
               <div>
                 <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
@@ -194,7 +194,7 @@
               </div>
               <div>
                 <ion-badge v-if="job.cancelDateTime || job.finishDateTime" color="dark">{{ job.statusId == "SERVICE_CANCELLED" || job.statusId == "SERVICE_CRASHED" ?  timeFromNow(job.cancelDateTime) : timeFromNow(job.finishDateTime) }}</ion-badge>
-                <ion-badge v-if="job.statusId" :color="job.statusId === 'SERVICE_FINISHED' ? 'success' : 'danger'" @click="job.statusId === 'SERVICE_FAILED' ? openFailedJobReason(job) : ''">{{ job.statusDesc }}</ion-badge>
+                <ion-badge v-if="job.statusId" :color="job.statusId === 'SERVICE_FINISHED' ? 'success' : 'danger'" @click.stop="job.statusId === 'SERVICE_FAILED' ? openFailedJobReason(job) : ''">{{ job.statusDesc }}</ion-badge>
               </div>
             </ion-card-header>
 
@@ -243,8 +243,8 @@
           </div>          
         </section>
 
-        <aside class="desktop-only" v-if="isDesktop" v-show="segmentSelected === 'pending' && currentJob && Object.keys(currentJob).length">
-          <JobConfiguration :status="currentJobStatus" :type="freqType" :key="currentJob"/>
+        <aside class="desktop-only" v-if="isDesktop" v-show="(segmentSelected === 'pending' || segmentSelected === 'history') && currentJob && Object.keys(currentJob).length">
+          <JobConfiguration :status="currentJobStatus" :type="freqType" :historyJobConfig="segmentSelected === 'history'" :key="currentJob"/>
         </aside>
       </main>
     </ion-content>
@@ -367,7 +367,8 @@ export default defineComponent({
       isDesktop: isPlatform('desktop'),
       isRetrying: false,
       queryString: '' as any,
-      isScrollingEnabled: false
+      isScrollingEnabled: false,
+      selectedJobId: '' as any
     }
   },
   computed: {
@@ -616,12 +617,16 @@ export default defineComponent({
        return alert.present();
     },
     async viewJobConfiguration(job: any) {
+      this.selectedJobId = job.jobId
       this.currentJobStatus = job.tempExprId
       const id = Object.entries(this.jobEnums).find((enums) => enums[1] == job.systemJobEnumId) as any
       const appFreqType =  id && (Object.entries(this.jobFrequencyType).find((freq) => freq[0] == id[0]) as any)
       this.freqType = appFreqType ? appFreqType[1] : "default"
 
       await this.store.dispatch('job/updateCurrentJob', { job });
+      if(this.segmentSelected === 'history' && job.runtimeData?.configId) {
+        this.store.dispatch('job/fetchDataManagerLogs', job.jobId)
+      }
       if(!this.isDesktop && job?.jobId) {
         this.router.push({ name: 'JobDetails', params: { jobId: job?.jobId, category: "pipeline" } });
         return;
@@ -697,6 +702,16 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.selected-job {
+  box-shadow: 0px 8px 10px 0px rgba(0, 0, 0, 0.14), 0px 3px 14px 0px rgba(0, 0, 0, 0.12), 0px 4px 5px 0px rgba(0, 0, 0, 0.20);
+  scale: 1.03;
+  margin-block: var(--spacer-sm);
+}
+
+ion-card {
+  transition: .5s all ease;
+}
+
 ion-card-header {
   display: flex;
   flex-direction: row;

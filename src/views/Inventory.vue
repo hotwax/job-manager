@@ -16,7 +16,8 @@
             </ion-card-header>
             <ion-item button @click="viewJobConfiguration({ id: 'HARD_SYNC', status: getJobStatus(jobEnums['HARD_SYNC'])})" detail>
               <ion-label class="ion-text-wrap">{{ translate("Hard sync") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('HARD_SYNC') }}</ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('HARD_SYNC') }}</ion-label>
+              <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
@@ -56,6 +57,7 @@ import {
   IonLabel,
   IonMenuButton,
   IonPage,
+  IonSkeletonText,
   IonTitle,
   IonToggle,
   IonToolbar,
@@ -83,6 +85,7 @@ export default defineComponent({
     IonLabel,
     IonMenuButton,
     IonPage,
+    IonSkeletonText,
     IonTitle,
     IonToggle,
     IonToolbar,
@@ -100,6 +103,7 @@ export default defineComponent({
       isDesktop: isPlatform('desktop'),
       enumTypeId: 'INVENTORY_SYS_JOB',
       webhookEnums: JSON.parse(process.env?.VUE_APP_WEBHOOK_ENUMS as string) as any,
+      isLoading: false
     }
   },
   computed: {
@@ -165,12 +169,14 @@ export default defineComponent({
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
         translate('Disabled')
     },
-    fetchJobs(){
-      this.store.dispatch("job/fetchJobs", {
+    async fetchJobs(){
+      this.isLoading = true
+      await this.store.dispatch("job/fetchJobs", {
         "inputFields":{
           "enumTypeId": "INVENTORY_SYS_JOB"
         }
       });
+      this.isLoading = false
     },
     fetchData() {
       this.store.dispatch('webhook/fetchWebhooks')

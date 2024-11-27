@@ -6,7 +6,8 @@
       <ion-button fill="outline" slot="end" v-if="isRefreshRequired" @click="refreshCurrentJob">
         <ion-icon :icon="refreshOutline" slot="icon-only" />
       </ion-button>
-      <ion-badge slot="end" color="dark" v-if="currentJob?.runTime && currentJob.statusId !== 'SERVICE_DRAFT' && !isRefreshRequired">{{ translate("running") }} {{ timeTillJob(currentJob.runTime) }}</ion-badge>
+      <ion-badge slot="end" color="dark" v-if="currentJob.cancelDateTime || currentJob.finishDateTime">{{ currentJob.statusId == "SERVICE_CANCELLED" || currentJob.statusId == "SERVICE_CRASHED" ?  timeTillJob(currentJob.cancelDateTime) : timeTillJob(currentJob.finishDateTime) }}</ion-badge>
+      <ion-badge slot="end" color="dark" v-else-if="currentJob?.runTime && currentJob.statusId !== 'SERVICE_DRAFT' && !isRefreshRequired">{{ translate("running") }} {{ timeTillJob(currentJob.runTime) }}</ion-badge>
     </ion-item>
 
     <ion-list>
@@ -21,33 +22,45 @@
 
       <ion-item>
         <ion-icon slot="start" :icon="timeOutline" />
-        <ion-select interface="popover" :placeholder="translate('Select')" :value="runTime" @ionChange="updateRunTime($event)">
-          <div slot="label" class="ion-text-wrap">{{ translate("Run time") }}</div>
-          <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ translate(runTime.label) }}</ion-select-option>
-        </ion-select>
-        <!-- TODO: display a button when we are not having a runtime and open the datetime component
-        on click of that button
-        Currently, when mapping the same datetime component for label and button so it's not working so for
-        now commented the button and added a fallback string -->
-        <!-- <ion-button id="open-run-time-modal" size="small" fill="outline" color="medium" v-show="!currentJob?.runTime">{{ translate("Select run time") }}</ion-button> -->
-        <ion-modal class="date-time-modal" :is-open="isDateTimeModalOpen" @didDismiss="() => isDateTimeModalOpen = false">
-          <ion-content force-overscroll="false">
-            <ion-datetime          
-              show-default-buttons
-              hour-cycle="h23"
-              :value="runTime ? (isCustomRunTime(runTime) ? getDateTime(runTime) : getDateTime(DateTime.now().toMillis() + runTime)) : getNowTimestamp()"
-              @ionChange="updateCustomTime($event)"
-            />
-          </ion-content>
-        </ion-modal>
+        <template v-if="historyJobConfig">
+          <ion-label class="ion-text-wrap">{{ translate("Run time") }}</ion-label>
+          <ion-label slot="end">{{ currentJob.runTime ? getTime(currentJob.runTime) : '' }}</ion-label>
+        </template>
+        <template v-else>
+          <ion-select interface="popover" :placeholder="translate('Select')" :value="runTime" @ionChange="updateRunTime($event)">
+            <div slot="label" class="ion-text-wrap">{{ translate("Run time") }}</div>
+            <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ translate(runTime.label) }}</ion-select-option>
+          </ion-select>
+          <!-- TODO: display a button when we are not having a runtime and open the datetime component
+          on click of that button
+          Currently, when mapping the same datetime component for label and button so it's not working so for
+          now commented the button and added a fallback string -->
+          <!-- <ion-button id="open-run-time-modal" size="small" fill="outline" color="medium" v-show="!currentJob?.runTime">{{ translate("Select run time") }}</ion-button> -->
+          <ion-modal class="date-time-modal" :is-open="isDateTimeModalOpen" @didDismiss="() => isDateTimeModalOpen = false">
+            <ion-content force-overscroll="false">
+              <ion-datetime          
+                show-default-buttons
+                hour-cycle="h23"
+                :value="runTime ? (isCustomRunTime(runTime) ? getDateTime(runTime) : getDateTime(DateTime.now().toMillis() + runTime)) : getNowTimestamp()"
+                @ionChange="updateCustomTime($event)"
+              />
+            </ion-content>
+          </ion-modal>
+        </template>
       </ion-item>
 
       <ion-item>
         <ion-icon slot="start" :icon="timerOutline" />
-        <ion-select :value="jobStatus" :interface-options="{ header: translate('Frequency') }" interface="popover" :placeholder="translate('Disabled')" @ionChange="jobStatus = $event.detail.value" @ionDismiss="jobStatus == 'CUSTOM' && setCustomFrequency()">
-          <div slot="label" class="ion-text-wrap">{{ translate("Schedule") }}</div>
-          <ion-select-option v-for="freq in frequencyOptions" :key="freq.id" :value="freq.id">{{ freq.description }}</ion-select-option>
-        </ion-select>
+        <template v-if="historyJobConfig">
+          <ion-label class="ion-text-wrap">{{ translate("Schedule") }}</ion-label>
+          <ion-label slot="end">{{ currentJob.tempExprId ? temporalExpr(currentJob.tempExprId)?.description : "🙃" }}</ion-label>
+        </template>
+        <template v-else>
+          <ion-select :value="jobStatus" :interface-options="{ header: translate('Frequency') }" interface="popover" :placeholder="translate('Disabled')" @ionChange="jobStatus = $event.detail.value" @ionDismiss="jobStatus == 'CUSTOM' && setCustomFrequency()">
+            <div slot="label" class="ion-text-wrap">{{ translate("Schedule") }}</div>
+            <ion-select-option v-for="freq in frequencyOptions" :key="freq.id" :value="freq.id">{{ freq.description }}</ion-select-option>
+          </ion-select>
+        </template>
       </ion-item>
 
       <ion-item lines="none">
@@ -78,20 +91,20 @@
       </ion-item> -->
     </ion-list>
 
-    <div class="actions desktop-only">
+    <div class="actions desktop-only" :disabled="historyJobConfig">
       <div>
-        <ion-button size="small" fill="outline" color="medium" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || currentJob.statusId === 'SERVICE_DRAFT' || isRefreshRequired" @click="skipJob(currentJob)">{{ translate("Skip once") }}</ion-button>
-        <ion-button size="small" fill="outline" color="danger" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || currentJob.statusId === 'SERVICE_DRAFT' || isRefreshRequired" @click="cancelJob(currentJob)">{{ translate("Disable") }}</ion-button>
+        <ion-button size="small" fill="outline" color="medium" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || currentJob.statusId === 'SERVICE_DRAFT' || isRefreshRequired || historyJobConfig" @click="skipJob(currentJob)">{{ translate("Skip once") }}</ion-button>
+        <ion-button size="small" fill="outline" color="danger" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || currentJob.statusId === 'SERVICE_DRAFT' || isRefreshRequired || historyJobConfig" @click="cancelJob(currentJob)">{{ translate("Disable") }}</ion-button>
       </div>
       <div>
-        <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || isRequiredParametersMissing || isRefreshRequired" size="small" fill="outline" @click="saveChanges()">{{ translate("Save changes") }}</ion-button>
+        <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || isRequiredParametersMissing || isRefreshRequired || historyJobConfig" size="small" fill="outline" @click="saveChanges()">{{ translate("Save changes") }}</ion-button>
       </div>
     </div>
 
     <div class=" actions mobile-only">
-      <ion-button size="small" expand="block" fill="outline" color="medium" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || status === 'SERVICE_DRAFT' || isRefreshRequired" @click="skipJob(currentJob)">{{ translate("Skip once") }}</ion-button>
-      <ion-button size="small" expand="block" fill="outline" color="danger" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || status === 'SERVICE_DRAFT' || isRefreshRequired" @click="cancelJob(currentJob)">{{ translate("Disable") }}</ion-button>
-      <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || isRequiredParametersMissing || isRefreshRequired" expand="block" @click="saveChanges()">{{ translate("Save changes") }}</ion-button>
+      <ion-button size="small" expand="block" fill="outline" color="medium" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || status === 'SERVICE_DRAFT' || isRefreshRequired || historyJobConfig" @click="skipJob(currentJob)">{{ translate("Skip once") }}</ion-button>
+      <ion-button size="small" expand="block" fill="outline" color="danger" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || status === 'SERVICE_DRAFT' || isRefreshRequired || historyJobConfig" @click="cancelJob(currentJob)">{{ translate("Disable") }}</ion-button>
+      <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || isRequiredParametersMissing || isRefreshRequired || historyJobConfig" expand="block" @click="saveChanges()">{{ translate("Save changes") }}</ion-button>
     </div>
   </section>
   <div class="more-actions">
@@ -99,7 +112,7 @@
       <ion-icon slot="start" :icon="timeOutline" />
       {{ translate("History") }}
     </ion-item>
-    <ion-item :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" @click="runNow(currentJob)" button>
+    <ion-item :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || historyJobConfig" @click="runNow(currentJob)" button>
       <ion-icon slot="start" :icon="flashOutline" />
       {{ translate("Run now") }}
     </ion-item>
@@ -114,7 +127,31 @@
       </ion-checkbox>
     </ion-item>
   </div>
-
+  <!-- Import logs -->
+  <section v-if="historyJobConfig && currentJob.runtimeData?.configId && getDataManagerLogs?.length">
+    <ion-item lines="none">
+      <h1>{{ translate('Import logs') }}</h1>
+      <ion-button slot="end" fill="clear" @click="openImportLogsDetails()">{{ translate('View details') }}</ion-button>
+    </ion-item>
+    <ion-progress-bar :value="(getProcessedFileCount() - getErrorFileCount()) / getDataManagerLogs.length"></ion-progress-bar>
+    <ion-list>
+      <ion-item>
+        <ion-icon slot="start" :icon="fileTrayFullOutline" />
+        {{ translate('Files received') }}
+        <ion-label slot="end">{{ getDataManagerLogs.length }}</ion-label>
+      </ion-item>
+      <ion-item>
+        <ion-icon slot="start" :icon="codeWorkingOutline" />
+        {{ translate('Files processed') }}
+        <ion-label slot="end">{{ getProcessedFileCount() }}</ion-label>
+      </ion-item>
+      <ion-item lines="none">
+        <ion-icon slot="start" :icon="warningOutline" />
+        {{ translate('Files with errors') }}
+        <ion-label slot="end">{{ getErrorFileCount() }}</ion-label>
+      </ion-item>
+    </ion-list>
+  </section>
 </template>
 
 <script lang="ts">
@@ -131,6 +168,7 @@ import {
   IonLabel,
   IonList,
   IonModal,
+  IonProgressBar,
   IonRow,
   IonSelect,
   IonSelectOption,
@@ -141,7 +179,9 @@ import {
 import {
   addOutline,
   calendarClearOutline,
+  codeWorkingOutline,
   flashOutline,
+  fileTrayFullOutline,
   listCircleOutline,
   copyOutline,
   timeOutline,
@@ -149,7 +189,8 @@ import {
   syncOutline,
   personCircleOutline,
   pinOutline,
-  refreshOutline
+  refreshOutline,
+  warningOutline
 } from "ionicons/icons";
 import JobHistoryModal from '@/components/JobHistoryModal.vue'
 import { Plugins } from '@capacitor/core';
@@ -177,6 +218,7 @@ export default defineComponent({
     IonLabel,
     IonList,
     IonModal,
+    IonProgressBar,
     IonRow,
     IonSelect,
     IonSelectOption,
@@ -210,7 +252,7 @@ export default defineComponent({
     this.generateRunTimes(this.runTime)
     this.generateFrequencyOptions(this.jobStatus)
   },
-  props: ["isBrokerJob", "status", "type"],
+  props: ["isBrokerJob", "status", "type", "historyJobConfig"],
   computed: {
     ...mapGetters({
       pinnedJobs: 'user/getPinnedJobs',
@@ -220,6 +262,8 @@ export default defineComponent({
       currentEComStore: 'user/getCurrentEComStore',
       currentJob: 'job/getCurrentJob',
       pendingJobs: 'job/getPendingJobs',
+      getDataManagerLogs: 'job/getDataManagerLogs',
+      temporalExpr: 'job/getTemporalExpr'
     }),
     isRequiredParametersMissing() {
       return this.customRequiredParameters.some((parameter: any) => !parameter.value?.trim())
@@ -230,6 +274,16 @@ export default defineComponent({
     }
   },
   methods: {
+    getProcessedFileCount() {
+      return this.getDataManagerLogs?.filter((log: any) => log.statusId === "SERVICE_FINISHED").length
+    },
+    getErrorFileCount() {
+      return this.getDataManagerLogs?.filter((log: any) => log.errorRecordContentId !== null).length
+    },
+    openImportLogsDetails() {
+      const jobId = this.currentJob.jobId
+      this.router.push({ name: 'DataManagerLogDetails', params: { jobId } })
+    },
     async openLearnMoreModal() {
       const openLearnMoreModal = await modalController.create({
         component: LeareMoreModal,
@@ -537,10 +591,12 @@ export default defineComponent({
       Actions,
       addOutline,
       calendarClearOutline,
+      codeWorkingOutline,
       copyOutline,
       DateTime,
       listCircleOutline,
       flashOutline,
+      fileTrayFullOutline,
       hasPermission,
       isCustomRunTime,
       getNowTimestamp,
@@ -552,7 +608,8 @@ export default defineComponent({
       personCircleOutline,
       pinOutline,
       refreshOutline,
-      translate
+      translate,
+      warningOutline
     };
   }
 });
@@ -563,11 +620,10 @@ export default defineComponent({
   font-size: 14px;
   cursor: pointer;
 }
-
-ion-list {
-  margin: 0 0 var(--spacer-base);
+section {
+  margin-top: var(--spacer-sm);
+  margin-bottom: var(--spacer-sm);
 }
-
 .actions > ion-button {
   margin: var(--spacer-sm);
 }
