@@ -150,10 +150,10 @@ export default defineComponent({
       }
     },
     async redirectToDoc(section: any) {
-      window.open(`https://docs.hotwax.co/documents/retail-operations/${section.path}`, "_blank")
+      window.open(`https://docs.hotwax.co/documents/retail-operations/${section.path}`, "_blank", "noopener, noreferrer")
     },
     async redirectToJobsDoc() {
-      window.open(`${process.env.VUE_APP_GITBOOK_JOBS_DOCS_URL}`, "_blank")
+      window.open(`${process.env.VUE_APP_GITBOOK_JOBS_DOCS_URL}`, "_blank", "noopener, noreferrer")
     },
     async closeModal() {
       modalController.dismiss({ dismissed: true });
