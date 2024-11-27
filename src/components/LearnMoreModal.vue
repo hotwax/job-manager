@@ -8,8 +8,8 @@
       </ion-buttons>
       <ion-title>{{ translate("Learn more") }}</ion-title>
       <ion-buttons slot="end">
-        <ion-button fill="clear" @click="redirectToJobsDoc()">
-          <ion-icon color="medium" :icon="openOutline" />
+        <ion-button fill="clear" color="medium" @click="redirectToJobsDoc()">
+          <ion-icon slot="icon-only" :icon="openOutline" />
         </ion-button>
       </ion-buttons>
     </ion-toolbar>
@@ -33,7 +33,7 @@
       <ion-item lines="full" class="ion-margin-top">
         <ion-label>
           {{ queryString }}
-          <p>{{  currentJob?.systemJobEnumId }}</p>  
+          <p>{{ currentJob?.systemJobEnumId }}</p>  
         </ion-label>
       </ion-item>
 

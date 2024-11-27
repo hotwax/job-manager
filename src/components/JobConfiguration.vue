@@ -15,7 +15,7 @@
       <ion-item v-if="currentJob.description" lines="none">
         <ion-label class="ion-text-wrap">
           <p>{{ currentJob.description }}
-            <ion-text class="learn-more-text" color="primary" @click="openLearnMoreModal()">Learn more</ion-text>
+            <ion-text class="learn-more-text" color="primary" @click="openLearnMoreModal()">{{ translate("Learn more") }}</ion-text>
           </p>
         </ion-label>
       </ion-item>
