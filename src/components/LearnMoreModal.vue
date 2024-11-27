@@ -6,18 +6,18 @@
           <ion-icon slot="icon-only" :icon="closeOutline" />
         </ion-button>
       </ion-buttons>
-      <ion-title>{{ translate('Learn more.') }}</ion-title>
+      <ion-title>{{ translate("Learn more") }}</ion-title>
       <ion-button slot="end" fill="clear" @click="redirectToJobsDoc()">
-        <ion-icon  color="dark" :icon="openOutline" />
+        <ion-icon color="medium" :icon="openOutline" />
       </ion-button>
     </ion-toolbar>
   </ion-header>
 
   <ion-content>
-    <div class="empty-state" v-if="isGenratingAnswer">
+    <div class="empty-state" v-if="isGeneratingAnswer">
       <ion-item lines="none">
         <ion-spinner name="crescent" slot="start" />
-        {{ translate("Genrating answer...") }}
+        {{ translate("Generating answer...") }}
       </ion-item>
     </div>
 
@@ -37,7 +37,7 @@
 
       <ion-list>
         <ion-item lines="none">
-          <ion-label>Sources</ion-label>
+          <ion-label>{{ translate("Sources") }}</ion-label>
         </ion-item>
         <ion-item v-for="section in jobSection" :key="section.id" lines="none">
           <ion-chip outline @click="redirectToDoc(section)">
@@ -49,7 +49,7 @@
   
       <ion-item>
         <ion-label>
-          <p class="overline">Summary</p>
+          <p class="overline">{{ translate("Summary") }}</p>
           {{ askResponse?.text }}
         </ion-label>
       </ion-item>
@@ -64,6 +64,7 @@ import { translate } from '@hotwax/dxp-components';
 import { defineComponent } from "vue";
 import { hasError } from '@/utils'
 import { askQuery, searchQuery } from "@/adapter";
+import logger from "@/logger";
 
 export default defineComponent({
   name: "LearnMoreModal",
@@ -86,10 +87,10 @@ export default defineComponent({
       queryString: '',
       askResponse: {} as any,
       jobSection: {} as any,
-      isGenratingAnswer: true
+      isGeneratingAnswer: true
     }
   },
-  props: ['currentJob'],
+  props: ["currentJob"],
   mounted() {
     this.askQuery();
   },
@@ -112,13 +113,13 @@ export default defineComponent({
               this.jobSection.push(...filteredPage.sections);
             }
           });
-          this.isGenratingAnswer = false;
+          this.isGeneratingAnswer = false;
         } else {
           throw resp.data;
         }
       } catch(error: any) {
-        console.error(error);
-        this.isGenratingAnswer = false;
+        logger.error(error);
+        this.isGeneratingAnswer = false;
       }
     },
     async askQuery() {
@@ -136,14 +137,14 @@ export default defineComponent({
             const pageIds = this.askResponse?.sources.map((source: any) => source.page);
             this.searchQuery(pageIds);
           } else {
-            this.isGenratingAnswer = false;
+            this.isGeneratingAnswer = false;
           }
         } else {
           throw resp.data;
         }
       } catch(error: any) {
-        console.error(error);
-        this.isGenratingAnswer = false;
+        logger.error(error);
+        this.isGeneratingAnswer = false;
       }
     },
     async redirectToDoc(section: any) {
@@ -157,7 +158,6 @@ export default defineComponent({
     }
   },
   setup() {
-
     return {
       closeOutline, 
       openOutline,

@@ -316,7 +316,7 @@ import { Actions, hasPermission } from '@/authorization'
 import Filters from '@/components/Filters.vue';
 import FailedJobReasonModal from '@/views/FailedJobReasonModal.vue'
 import { translate } from '@hotwax/dxp-components';
-import LeareMoreModal from '@/components/LeareMoreModal.vue';
+import LearnMoreModal from '@/components/LearnMoreModal.vue';
 
 export default defineComponent({
   name: "Pipeline",
@@ -399,11 +399,11 @@ export default defineComponent({
   },
   methods : {
     async openLearnMoreModal(job: any) {
-      const openLearnMoreModal = await modalController.create({
-        component: LeareMoreModal,
+      const learnMoreModal = await modalController.create({
+        component: LearnMoreModal,
         componentProps: {currentJob: job}
       })
-      return openLearnMoreModal.present()
+      return learnMoreModal.present()
     },
     isPinnedJobSelected(jobEnumId: any) {
       return (this as any).pipelineFilters.enum.some((jobId: any) =>  jobId === jobEnumId );

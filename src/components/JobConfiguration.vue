@@ -203,7 +203,7 @@ import emitter from '@/event-bus';
 import { Actions, hasPermission } from '@/authorization'
 import CustomFrequencyModal from '@/components/CustomFrequencyModal.vue';
 import JobParameterModal from '@/components/JobParameterModal.vue'
-import LeareMoreModal from "./LeareMoreModal.vue";
+import LearnMoreModal from "./LearnMoreModal.vue";
 
 export default defineComponent({
   name: "JobConfiguration",
@@ -285,11 +285,11 @@ export default defineComponent({
       this.router.push({ name: 'DataManagerLogDetails', params: { jobId } })
     },
     async openLearnMoreModal() {
-      const openLearnMoreModal = await modalController.create({
-        component: LeareMoreModal,
+      const learnMoreModal = await modalController.create({
+        component: LearnMoreModal,
         componentProps: {currentJob: this.currentJob}
       })
-      return openLearnMoreModal.present()
+      return learnMoreModal.present()
     },
     getDateTime(time: any) {
       return DateTime.fromMillis(time).toISO()
