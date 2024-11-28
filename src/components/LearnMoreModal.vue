@@ -41,7 +41,7 @@
         <ion-item lines="none">
           <ion-label>{{ translate("Sources") }}</ion-label>
         </ion-item>
-        <ion-row class="ion-padding" v-for="section in jobSection" :key="section.id" lines="none">
+        <ion-row class="ion-padding" v-for="section in jobSection" :key="section.id">
           <ion-chip outline @click="redirectToDoc(section)">
             <ion-label>{{ section.title }}</ion-label>
             <ion-icon :icon="openOutline" />
