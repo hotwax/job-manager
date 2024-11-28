@@ -184,7 +184,7 @@ const actions: ActionTree<UserState, RootState> = {
     commit(types.USER_PWA_STATE_UPDATED, payload);
   },
 
-  async getShopifyConfig({ commit }, productStoreId) {
+  async getShopifyConfig({ commit, state }, productStoreId) {
     if (!productStoreId) {
       commit(types.USER_SHOPIFY_CONFIGS_UPDATED, []);
       commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, {});
@@ -192,7 +192,7 @@ const actions: ActionTree<UserState, RootState> = {
     }
 
     try {      
-      const shopifyConfigs =  await UserService.getShopifyConfig(productStoreId);
+      const shopifyConfigs =  await UserService.getShopifyConfig(productStoreId, state?.token);
         // TODO store and get preferred config
       let currentShopifyConfig =  {};
       shopifyConfigs.length > 0 && (currentShopifyConfig = shopifyConfigs[0])
