@@ -60,7 +60,7 @@
 </template>
 
 <script lang="ts">
-import { IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList,, IonRow, IonSpinner, IonTitle, IonToolbar, modalController } from "@ionic/vue";
+import { IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonRow, IonSpinner, IonTitle, IonToolbar, modalController } from "@ionic/vue";
 import { closeOutline, openOutline } from 'ionicons/icons'
 import { translate } from '@hotwax/dxp-components';
 import { defineComponent } from "vue";
