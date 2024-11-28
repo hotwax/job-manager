@@ -41,12 +41,12 @@
         <ion-item lines="none">
           <ion-label>{{ translate("Sources") }}</ion-label>
         </ion-item>
-        <ion-item v-for="section in jobSection" :key="section.id" lines="none">
+        <ion-row class="ion-padding" v-for="section in jobSection" :key="section.id" lines="none">
           <ion-chip outline @click="redirectToDoc(section)">
             <ion-label>{{ section.title }}</ion-label>
             <ion-icon :icon="openOutline" />
           </ion-chip>
-        </ion-item>
+        </ion-row>
       </ion-list>
   
       <ion-item>
@@ -60,7 +60,7 @@
 </template>
 
 <script lang="ts">
-import { IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonSpinner, IonTitle, IonToolbar, modalController } from "@ionic/vue";
+import { IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList,, IonRow, IonSpinner, IonTitle, IonToolbar, modalController } from "@ionic/vue";
 import { closeOutline, openOutline } from 'ionicons/icons'
 import { translate } from '@hotwax/dxp-components';
 import { defineComponent } from "vue";
@@ -80,6 +80,7 @@ export default defineComponent({
     IonItem,
     IonLabel,
     IonList,
+    IonRow,
     IonSpinner,
     IonTitle,
     IonToolbar
