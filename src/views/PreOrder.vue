@@ -382,9 +382,16 @@ export default defineComponent({
       });
       await this.store.dispatch("maargJob/fetchMaargJobs", Object.values(this.maargJobEnums));
     },
-    fetchInitialData() {
-      this.fetchJobs();
-      this.getPreOrderBackorderCategory();
+    async fetchInitialData(isCurrentJobUpdateRequired = false) {
+      if(isCurrentJobUpdateRequired) {
+        this.currentJob = "";
+        await this.store.dispatch('job/updateCurrentJob', { });
+        this.currentJobStatus = ""
+        this.freqType = '';
+        this.isJobDetailAnimationCompleted = false;
+      }
+      await this.fetchJobs();
+      await this.getPreOrderBackorderCategory();
     },
     isMaargJobFound(id: string) {
       const job = this.getMaargJob(this.maargJobEnums[id])

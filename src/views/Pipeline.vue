@@ -31,7 +31,13 @@
     </ion-header>
 
     <ion-content ref="contentRef" :scroll-events="true" @ionScroll="enableScrolling()" id="filter-content">
-      <main>
+      <div class="empty-state" v-if="jobsLoading">
+        <ion-item lines="none">
+          <ion-spinner name="crescent" slot="start" />
+          {{ translate("Fetching jobs") }}
+        </ion-item>
+      </div>
+      <main v-else>
         <section v-if="segmentSelected === 'pending'">
           <!-- Empty state -->
           <div v-if="pendingJobs?.length === 0">
@@ -45,7 +51,7 @@
           </div>
 
           <div v-else>
-            <ion-card v-for="job in pendingJobs" :key="job.jobId" @click="viewJobConfiguration(job)" :button="isDesktop">
+            <ion-card v-for="job in pendingJobs" :key="job.jobId" @click="viewJobConfiguration(job)" :button="isDesktop" :class="{ 'selected-job': selectedJobId === job.jobId }">
               <ion-card-header>
                 <ion-card-title>{{ job.enumName }}</ion-card-title>
                 <ion-badge v-if="job.runTime" color="dark">{{ timeFromNow(job.runTime)}}</ion-badge>
@@ -66,9 +72,15 @@
                 <ion-label class="ion-text-wrap">{{ job.tempExprId ? temporalExpr(job.tempExprId)?.description : "🙃"  }}</ion-label>
               </ion-item>
 
-              <ion-item lines="full">
+              <ion-item>
                 <ion-icon slot="start" :icon="refreshOutline" />
                 <ion-label class="ion-text-wrap">{{ job.currentRetryCount }}</ion-label>
+              </ion-item>
+
+              <ion-item lines="full">
+                <ion-icon slot="start" :icon="codeWorkingOutline" />
+                <ion-label class="ion-text-wrap">{{ job.systemJobEnumId }}</ion-label>
+                <ion-icon :icon="helpCircleOutline" @click.stop.prevent="openLearnMoreModal(job)"/>
               </ion-item>
 
               <div class="actions">
@@ -180,7 +192,7 @@
           </div>
 
           <div v-else>
-          <ion-card v-for="job in jobHistory" :key="job.jobId" @click="viewJobConfiguration(job)" :button="isDesktop">
+          <ion-card v-for="job in jobHistory" :key="job.jobId" @click="viewJobConfiguration(job)" :button="isDesktop" :class="{ 'selected-job': selectedJobId === job.jobId }">
             <ion-card-header>
               <div>
                 <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
@@ -300,7 +312,7 @@ import {
   IonButtons
 } from "@ionic/vue";
 import JobConfiguration from '@/components/JobConfiguration.vue'
-import { closeCircleOutline, codeWorkingOutline, copyOutline, ellipsisVerticalOutline, filterOutline, pinOutline, refreshOutline, timeOutline, timerOutline } from "ionicons/icons";
+import { closeCircleOutline, codeWorkingOutline, copyOutline, ellipsisVerticalOutline, filterOutline, helpCircleOutline, pinOutline, refreshOutline, timeOutline, timerOutline } from "ionicons/icons";
 import emitter from '@/event-bus';
 import JobHistoryModal from '@/components/JobHistoryModal.vue';
 import { Plugins } from '@capacitor/core';
@@ -310,6 +322,7 @@ import { Actions, hasPermission } from '@/authorization'
 import Filters from '@/components/Filters.vue';
 import FailedJobReasonModal from '@/views/FailedJobReasonModal.vue'
 import { translate } from '@hotwax/dxp-components';
+import LearnMoreModal from '@/components/LearnMoreModal.vue';
 
 export default defineComponent({
   name: "Pipeline",
@@ -360,7 +373,9 @@ export default defineComponent({
       isDesktop: isPlatform('desktop'),
       isRetrying: false,
       queryString: '' as any,
-      isScrollingEnabled: false
+      isScrollingEnabled: false,
+      jobsLoading: false,
+      selectedJobId: '' as any
     }
   },
   computed: {
@@ -390,6 +405,13 @@ export default defineComponent({
     this.isScrollingEnabled = false;
   },
   methods : {
+    async openLearnMoreModal(job: any) {
+      const learnMoreModal = await modalController.create({
+        component: LearnMoreModal,
+        componentProps: {currentJob: job}
+      })
+      return learnMoreModal.present()
+    },
     isPinnedJobSelected(jobEnumId: any) {
       return (this as any).pipelineFilters.enum.some((jobId: any) =>  jobId === jobEnumId );
     },
@@ -501,17 +523,17 @@ export default defineComponent({
     async refreshJobs(event: any, isRetrying = false ) {
       this.isRetrying = isRetrying;
       if(this.segmentSelected === 'pending') {
-        this.getPendingJobs().then(() => {
+        await this.getPendingJobs().then(() => {
           if(event) event.target.complete();
           this.isRetrying = false;
         });
       } else if(this.segmentSelected === 'running') {
-        this.getRunningJobs().then(() => {
+        await this.getRunningJobs().then(() => {
           if(event) event.target.complete();
           this.isRetrying = false;
         });
       } else {
-        this.getJobHistory().then(() => {
+        await this.getJobHistory().then(() => {
           if(event) event.target.complete();
           this.isRetrying = false;
         });
@@ -540,7 +562,7 @@ export default defineComponent({
               text: translate('Skip'),
               handler: async () => {
                 if(this.isRuntimePassed(job)) {
-                  await this.refreshJobs(undefined, true)
+                  await this.refreshJobs(undefined)
                   showToast(translate("Job runtime has passed. The job data has refreshed. Please try again."))
                   await this.store.dispatch('job/updateCurrentJob', { job: {} });
                   return;
@@ -586,7 +608,7 @@ export default defineComponent({
               text: translate("CANCEL"),
               handler: async () => {
                 if(this.isRuntimePassed(job)) {
-                  await this.refreshJobs(undefined, true)
+                  await this.refreshJobs(undefined)
                   showToast(translate("Job runtime has passed. The job data has refreshed. Please try again."))
                   await this.store.dispatch('job/updateCurrentJob', { job: {} });
                   return;
@@ -602,6 +624,7 @@ export default defineComponent({
        return alert.present();
     },
     async viewJobConfiguration(job: any) {
+      this.selectedJobId = job.jobId
       this.currentJobStatus = job.tempExprId
       const id = Object.entries(this.jobEnums).find((enums) => enums[1] == job.systemJobEnumId) as any
       const appFreqType =  id && (Object.entries(this.jobFrequencyType).find((freq) => freq[0] == id[0]) as any)
@@ -638,6 +661,17 @@ export default defineComponent({
         this.getPendingJobs();
       }
     },
+    async updateProductStoreConfig(isCurrentJobUpdateRequired = false) {
+      if(isCurrentJobUpdateRequired) {
+        this.jobsLoading = true;
+        await this.store.dispatch('job/updateCurrentJob', { job: {} });
+        this.currentJobStatus = ""
+        this.freqType = ""
+        this.isJobDetailAnimationCompleted = false
+      }
+      await this.refreshJobs(undefined);
+      this.jobsLoading = false;
+    }
   },
   async created() {
     this.getPendingJobs();
@@ -649,11 +683,11 @@ export default defineComponent({
     await this.store.dispatch('job/updateCurrentJob', { job: {} });
   },
   mounted(){
-    emitter.on("productStoreOrConfigChanged", this.refreshJobs);
+    emitter.on("productStoreOrConfigChanged", this.updateProductStoreConfig);
     emitter.on("pinnedJobsUpdated", (this as any).updateSelectedPinnedJob);
   },
   unmounted(){
-    emitter.off("productStoreOrConfigChanged", this.refreshJobs);
+    emitter.off("productStoreOrConfigChanged", this.updateProductStoreConfig);
     emitter.off('jobUpdated', this.updateJobs);
     emitter.off("pinnedJobsUpdated", (this as any).updateSelectedPinnedJob);
   },
@@ -670,6 +704,7 @@ export default defineComponent({
       store,
       codeWorkingOutline,
       ellipsisVerticalOutline,
+      helpCircleOutline,
       pinOutline,
       refreshOutline,
       timeOutline,
@@ -685,6 +720,16 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.selected-job {
+  box-shadow: 0px 8px 10px 0px rgba(0, 0, 0, 0.14), 0px 3px 14px 0px rgba(0, 0, 0, 0.12), 0px 4px 5px 0px rgba(0, 0, 0, 0.20);
+  scale: 1.03;
+  margin-block: var(--spacer-sm);
+}
+
+ion-card {
+  transition: .5s all ease;
+}
+
 ion-card-header {
   display: flex;
   flex-direction: row;

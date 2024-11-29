@@ -16,7 +16,8 @@
             </ion-card-header>
             <ion-item button @click="viewJobConfiguration({ id: 'HARD_SYNC', status: getJobStatus(jobEnums['HARD_SYNC'])})" detail>
               <ion-label class="ion-text-wrap">{{ translate("Hard sync") }}</ion-label>
-              <ion-label slot="end">{{ getTemporalExpression('HARD_SYNC') }}</ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('HARD_SYNC') }}</ion-label>
+              <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
@@ -76,6 +77,7 @@ import {
   IonLabel,
   IonMenuButton,
   IonPage,
+  IonSkeletonText,
   IonTitle,
   IonToggle,
   IonToolbar,
@@ -104,6 +106,7 @@ export default defineComponent({
     IonLabel,
     IonMenuButton,
     IonPage,
+    IonSkeletonText,
     IonTitle,
     IonToggle,
     IonToolbar,
@@ -123,6 +126,7 @@ export default defineComponent({
       enumTypeId: 'INVENTORY_SYS_JOB',
       webhookEnums: JSON.parse(process.env?.VUE_APP_WEBHOOK_ENUMS as string) as any,
       maargJobEnums: JSON.parse(process.env.VUE_APP_INVENTORY_MAARG_JOB_NAMES as string) as any,
+      isLoading: false
     }
   },
   computed: {
@@ -172,7 +176,7 @@ export default defineComponent({
       }
 
       if(!this.isDesktop && this.currentJob) {
-        this.router.push({ name: 'JobDetails', params: { jobId: this.currentJob.jobId, category: "inventory" } });
+        this.router.push({ name: 'JsobDetails', params: { jobId: this.currentJob.jobId, category: "inventory" } });
         return;
       }
 
@@ -191,16 +195,25 @@ export default defineComponent({
         translate('Disabled')
     },
     async fetchJobs(){
-      this.store.dispatch("job/fetchJobs", {
+      this.isLoading = true
+      await this.store.dispatch("job/fetchJobs", {
         "inputFields":{
           "enumTypeId": "INVENTORY_SYS_JOB"
         }
       });
       await this.store.dispatch("maargJob/fetchMaargJobs", Object.values(this.maargJobEnums));
+      this.isLoading = false
     },
-    fetchData() {
+    async fetchData(isCurrentJobUpdateRequired = false) {
+      if(isCurrentJobUpdateRequired) {
+        this.currentJob = "";
+        await this.store.dispatch('job/updateCurrentJob', { });
+        this.currentJobStatus = "";
+        this.freqType = "";
+        this.isJobDetailAnimationCompleted = false;
+      }
       this.store.dispatch('webhook/fetchWebhooks')
-      this.fetchJobs()
+      await this.fetchJobs()
     },
     isMaargJobFound(id: string) {
       const job = this.getMaargJob(this.maargJobEnums[id])
