@@ -59,7 +59,6 @@ import {
   IonMenuButton,
   IonNote,
   IonPage,
-  IonSpinner,
   IonTitle,
   IonToolbar,
   isPlatform,
@@ -87,7 +86,6 @@ export default defineComponent({
     IonMenuButton,
     IonNote,
     IonPage,
-    IonSpinner,
     IonTitle,
     IonToolbar,
     JobConfiguration
@@ -95,10 +93,10 @@ export default defineComponent({
   mounted() {
     emitter.on('jobUpdated', this.getMiscellaneousJobs);
     this.getMiscellaneousJobs();
-    emitter.on("productStoreOrConfigChanged", this.getMiscellaneousJobs);
+    emitter.on("productStoreOrConfigChanged", this.updateProductStoreConfig);
   },
   unmounted() {
-    emitter.off("productStoreOrConfigChanged", this.getMiscellaneousJobs);
+    emitter.off("productStoreOrConfigChanged", this.updateProductStoreConfig);
     emitter.off('jobUpdated', this.getMiscellaneousJobs);
   },
   data() {
@@ -107,7 +105,7 @@ export default defineComponent({
       currentJobStatus: '',
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
-      isRetrying: false,
+      isRetrying: false
     }
   },
   computed: {
@@ -151,6 +149,15 @@ export default defineComponent({
     },
     async getMiscellaneousJobs(viewSize = 100, viewIndex = 0) {
       await this.store.dispatch('job/fetchMiscellaneousJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex});
+    },
+    async updateProductStoreConfig(isCurrentJobUpdateRequired = false) {
+      if(isCurrentJobUpdateRequired) {
+        this.currentJob = "";
+        await this.store.dispatch('job/updateCurrentJob', { });
+        this.currentJobStatus = "";
+        this.isJobDetailAnimationCompleted = false;
+      }
+      this.getMiscellaneousJobs();
     },
     async loadMoreMiscellaneousJobs (event: any) {
       this.getMiscellaneousJobs(

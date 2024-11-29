@@ -192,8 +192,15 @@ export default defineComponent({
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
         translate('Disabled')
     },
-    async fetchJobs(){
-      this.isLoading = true
+    async fetchJobs(isCurrentJobUpdateRequired = false){
+      this.isLoading = true;
+      if(isCurrentJobUpdateRequired) {
+        this.currentJob = ""
+        await this.store.dispatch('job/updateCurrentJob', { });
+        this.currentJobStatus = ""
+        this.freqType = ""
+        this.isJobDetailAnimationCompleted = false
+      }
       await this.store.dispatch("job/fetchJobs", {
         "inputFields":{
           "enumTypeId": "PRODUCT_SYS_JOB"

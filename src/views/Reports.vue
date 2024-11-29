@@ -57,7 +57,6 @@ import {
   IonMenuButton,
   IonNote,
   IonPage,
-  IonSpinner,
   IonTitle,
   IonToolbar,
   isPlatform,
@@ -85,7 +84,6 @@ export default defineComponent({
     IonMenuButton,
     IonNote,
     IonPage,
-    IonSpinner,
     IonTitle,
     IonToolbar,
     JobConfiguration
@@ -97,7 +95,7 @@ export default defineComponent({
       currentJobStatus: '',
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
-      isRetrying: false,
+      isRetrying: false
     }
   },
   computed: {
@@ -110,11 +108,11 @@ export default defineComponent({
   mounted() {
     emitter.on('jobUpdated', this.getReportsJobs);
     this.getReportsJobs();
-    emitter.on("productStoreOrConfigChanged", this.getReportsJobs);
+    emitter.on("productStoreOrConfigChanged", this.updateProductStoreConfig);
   },
   unmounted() {
     emitter.on('jobUpdated', this.getReportsJobs);
-    emitter.off("productStoreOrConfigChanged", this.getReportsJobs);
+    emitter.off("productStoreOrConfigChanged", this.updateProductStoreConfig);
   },
   methods: {
     async viewJobConfiguration(job: any) {
@@ -139,6 +137,15 @@ export default defineComponent({
     },
     async getReportsJobs(viewSize = 200, viewIndex = 0) {
       await this.store.dispatch('job/fetchReportsJobs', { eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex });
+    },
+    async updateProductStoreConfig(isCurrentJobUpdateRequired = false) {
+      if(isCurrentJobUpdateRequired) {
+        this.currentJob = "";
+        await this.store.dispatch('job/updateCurrentJob', { });
+        this.currentJobStatus = "";
+        this.isJobDetailAnimationCompleted = false;
+      }
+      await this.getReportsJobs()
     },
     async loadMoreReportsJobs(event: any) {
       this.getReportsJobs(

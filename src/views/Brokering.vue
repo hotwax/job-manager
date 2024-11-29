@@ -58,7 +58,7 @@
           <MoreJobs v-if="getMoreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId).length" :jobs="getMoreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId)" />
         </section>
 
-        <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
+        <aside class="desktop-only" v-if="isDesktop" v-show="currentJob && Object.keys(currentJob).length">
           <JobConfiguration :status="currentJobStatus" :type="freqType" :key="currentJob" :isBrokerJob="orderBatchJobs.includes(currentJob) ? true : false"/>
         </aside>
       </main>
@@ -208,7 +208,14 @@ export default defineComponent({
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
         translate('Disabled')
     },
-    async fetchJobs() {
+    async fetchJobs(isCurrentJobUpdateRequired = false) {
+      if(isCurrentJobUpdateRequired) {
+        this.currentJob = "";
+        await this.store.dispatch('job/updateCurrentJob', { });
+        this.currentJobStatus = "";
+        this.freqType = "";
+        this.isJobDetailAnimationCompleted = false;
+      }
       await this.store.dispatch("job/fetchJobs", {
         "inputFields": {
           // If we fetch broker sys job by not passing systemJobEnumId filter then this api

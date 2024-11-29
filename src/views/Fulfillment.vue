@@ -240,8 +240,15 @@ export default defineComponent({
         this.store.dispatch('job/updateJob', job)
       }
     },
-    async fetchJobs(){
-      this.isLoading = true
+    async fetchJobs(isCurrentJobUpdateRequired = false){
+      this.isLoading = true;
+      if(isCurrentJobUpdateRequired) {
+        this.currentJob = "";
+        await this.store.dispatch('job/updateCurrentJob', { });
+        this.currentJobStatus = "";
+        this.freqType = "";
+        this.isJobDetailAnimationCompleted = false;
+      }
       await this.store.dispatch("job/fetchJobs", {
         "inputFields": {
           "enumTypeId": "FULFILLMENT_SYS_JOB"

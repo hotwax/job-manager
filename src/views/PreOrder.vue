@@ -356,16 +356,23 @@ export default defineComponent({
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
         translate('Disabled')
     },
-    fetchJobs(){
-      this.store.dispatch("job/fetchJobs", {
+    async fetchJobs(){
+      await this.store.dispatch("job/fetchJobs", {
         "inputFields":{
           "enumTypeId": "PRE_ORD_SYS_JOB"
         }
       });
     },
-    fetchInitialData() {
-      this.fetchJobs();
-      this.getPreOrderBackorderCategory();
+    async fetchInitialData(isCurrentJobUpdateRequired = false) {
+      if(isCurrentJobUpdateRequired) {
+        this.currentJob = "";
+        await this.store.dispatch('job/updateCurrentJob', { });
+        this.currentJobStatus = ""
+        this.freqType = '';
+        this.isJobDetailAnimationCompleted = false;
+      }
+      await this.fetchJobs();
+      await this.getPreOrderBackorderCategory();
     }
   },
   mounted () {

@@ -178,9 +178,16 @@ export default defineComponent({
       });
       this.isLoading = false
     },
-    fetchData() {
+    async fetchData(isCurrentJobUpdateRequired = false) {
+      if(isCurrentJobUpdateRequired) {
+        this.currentJob = "";
+        await this.store.dispatch('job/updateCurrentJob', { });
+        this.currentJobStatus = "";
+        this.freqType = "";
+        this.isJobDetailAnimationCompleted = false;
+      }
       this.store.dispatch('webhook/fetchWebhooks')
-      this.fetchJobs()
+      await this.fetchJobs()
     }
   },
   mounted () {
