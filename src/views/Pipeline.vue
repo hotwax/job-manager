@@ -72,9 +72,15 @@
                 <ion-label class="ion-text-wrap">{{ job.tempExprId ? temporalExpr(job.tempExprId)?.description : "🙃"  }}</ion-label>
               </ion-item>
 
-              <ion-item lines="full">
+              <ion-item>
                 <ion-icon slot="start" :icon="refreshOutline" />
                 <ion-label class="ion-text-wrap">{{ job.currentRetryCount }}</ion-label>
+              </ion-item>
+
+              <ion-item lines="full">
+                <ion-icon slot="start" :icon="codeWorkingOutline" />
+                <ion-label class="ion-text-wrap">{{ job.systemJobEnumId }}</ion-label>
+                <ion-icon :icon="helpCircleOutline" @click.stop.prevent="openLearnMoreModal(job)"/>
               </ion-item>
 
               <div class="actions">
@@ -306,7 +312,7 @@ import {
   IonButtons
 } from "@ionic/vue";
 import JobConfiguration from '@/components/JobConfiguration.vue'
-import { closeCircleOutline, codeWorkingOutline, copyOutline, ellipsisVerticalOutline, filterOutline, pinOutline, refreshOutline, timeOutline, timerOutline } from "ionicons/icons";
+import { closeCircleOutline, codeWorkingOutline, copyOutline, ellipsisVerticalOutline, filterOutline, helpCircleOutline, pinOutline, refreshOutline, timeOutline, timerOutline } from "ionicons/icons";
 import emitter from '@/event-bus';
 import JobHistoryModal from '@/components/JobHistoryModal.vue';
 import { Plugins } from '@capacitor/core';
@@ -316,6 +322,7 @@ import { Actions, hasPermission } from '@/authorization'
 import Filters from '@/components/Filters.vue';
 import FailedJobReasonModal from '@/views/FailedJobReasonModal.vue'
 import { translate } from '@hotwax/dxp-components';
+import LearnMoreModal from '@/components/LearnMoreModal.vue';
 
 export default defineComponent({
   name: "Pipeline",
@@ -398,6 +405,13 @@ export default defineComponent({
     this.isScrollingEnabled = false;
   },
   methods : {
+    async openLearnMoreModal(job: any) {
+      const learnMoreModal = await modalController.create({
+        component: LearnMoreModal,
+        componentProps: {currentJob: job}
+      })
+      return learnMoreModal.present()
+    },
     isPinnedJobSelected(jobEnumId: any) {
       return (this as any).pipelineFilters.enum.some((jobId: any) =>  jobId === jobEnumId );
     },
@@ -690,6 +704,7 @@ export default defineComponent({
       store,
       codeWorkingOutline,
       ellipsisVerticalOutline,
+      helpCircleOutline,
       pinOutline,
       refreshOutline,
       timeOutline,

@@ -14,7 +14,9 @@
 
       <ion-item v-if="currentJob.description" lines="none">
         <ion-label class="ion-text-wrap">
-          <p>{{ currentJob.description }}</p>
+          <p>{{ currentJob.description }}
+            <ion-text class="learn-more-text" color="primary" @click="openLearnMoreModal()">{{ translate("Learn more") }}</ion-text>
+          </p>
         </ion-label>
       </ion-item>
 
@@ -170,6 +172,7 @@ import {
   IonRow,
   IonSelect,
   IonSelectOption,
+  IonText,
   alertController,
   modalController,
 } from "@ionic/vue";
@@ -200,6 +203,7 @@ import emitter from '@/event-bus';
 import { Actions, hasPermission } from '@/authorization'
 import CustomFrequencyModal from '@/components/CustomFrequencyModal.vue';
 import JobParameterModal from '@/components/JobParameterModal.vue'
+import LearnMoreModal from "@/components/LearnMoreModal.vue";
 
 export default defineComponent({
   name: "JobConfiguration",
@@ -218,7 +222,8 @@ export default defineComponent({
     IonRow,
     IonSelect,
     IonSelectOption,
-    IonCheckbox
+    IonCheckbox,
+    IonText
   },
   data() {
     return {
@@ -278,6 +283,13 @@ export default defineComponent({
     openImportLogsDetails() {
       const jobId = this.currentJob.jobId
       this.router.push({ name: 'DataManagerLogDetails', params: { jobId } })
+    },
+    async openLearnMoreModal() {
+      const learnMoreModal = await modalController.create({
+        component: LearnMoreModal,
+        componentProps: {currentJob: this.currentJob}
+      })
+      return learnMoreModal.present()
     },
     getDateTime(time: any) {
       return DateTime.fromMillis(time).toISO()
@@ -604,6 +616,10 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.learn-more-text {
+  font-size: 14px;
+  cursor: pointer;
+}
 section {
   margin-top: var(--spacer-sm);
   margin-bottom: var(--spacer-sm);
