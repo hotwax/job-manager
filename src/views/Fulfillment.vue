@@ -240,9 +240,9 @@ export default defineComponent({
         this.store.dispatch('job/updateJob', job)
       }
     },
-    async fetchJobs(JobDetailDismissRequired = false){
+    async fetchJobs(isCurrentJobUpdateRequired = false){
       this.isLoading = true;
-      if(JobDetailDismissRequired) {
+      if(isCurrentJobUpdateRequired) {
         this.currentJob = "";
         await this.store.dispatch('job/updateCurrentJob', { });
         this.currentJobStatus = "";

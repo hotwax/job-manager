@@ -150,8 +150,8 @@ export default defineComponent({
     async getMiscellaneousJobs(viewSize = 100, viewIndex = 0) {
       await this.store.dispatch('job/fetchMiscellaneousJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex});
     },
-    async updateProductStoreConfig(JobDetailDismissRequired = false) {
-      if(JobDetailDismissRequired) {
+    async updateProductStoreConfig(isCurrentJobUpdateRequired = false) {
+      if(isCurrentJobUpdateRequired) {
         this.currentJob = "";
         await this.store.dispatch('job/updateCurrentJob', { });
         this.currentJobStatus = "";

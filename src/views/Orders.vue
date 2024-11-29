@@ -279,9 +279,9 @@ export default defineComponent({
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
         translate('Disabled')
     },
-    async fetchJobs(JobDetailDismissRequired = false){
+    async fetchJobs(isCurrentJobUpdateRequired = false){
       this.isLoading = true;
-      if(JobDetailDismissRequired) {
+      if(isCurrentJobUpdateRequired) {
         this.currentJob = ""
         await this.store.dispatch('job/updateCurrentJob', { });
         this.currentJobStatus = ""

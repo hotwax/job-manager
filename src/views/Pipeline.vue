@@ -647,8 +647,8 @@ export default defineComponent({
         this.getPendingJobs();
       }
     },
-    async updateProductStoreConfig(JobDetailDismissRequired = false) {
-      if(JobDetailDismissRequired) {
+    async updateProductStoreConfig(isCurrentJobUpdateRequired = false) {
+      if(isCurrentJobUpdateRequired) {
         this.jobsLoading = true;
         await this.store.dispatch('job/updateCurrentJob', { job: {} });
         this.currentJobStatus = ""

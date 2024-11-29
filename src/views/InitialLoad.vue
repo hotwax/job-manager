@@ -207,8 +207,8 @@ export default defineComponent({
         this.isJobDetailAnimationCompleted = true;
       }
     },
-    async fetchJobs(JobDetailDismissRequired = false){
-      if(JobDetailDismissRequired) {
+    async fetchJobs(isCurrentJobUpdateRequired = false){
+      if(isCurrentJobUpdateRequired) {
         this.currentSelectedJobModal = "";
         await this.store.dispatch('job/updateCurrentJob', { });
         this.job = {};
