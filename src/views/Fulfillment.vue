@@ -195,7 +195,7 @@ export default defineComponent({
       autoCancelDays: '',
       enumTypeId: 'FULFILLMENT_SYS_JOB',
       initialLoadJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
-      maargJobEnums: JSON.parse(process.env.VUE_APP_FULFILLMENT_MAARG_JOB_NAMES as string) as any,
+      maargJobEnums: JSON.parse(process.env.VUE_APP_FULFILLMENT_MAARG_JOB_ENUMS as string) as any,
       isLoading: false
     }
   },

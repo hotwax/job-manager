@@ -132,7 +132,7 @@ export default defineComponent({
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
       isRetrying: false,
-      maargJobEnums: JSON.parse(process.env.VUE_APP_MISC_MAARG_JOB_NAMES as string) as any
+      maargJobEnums: JSON.parse(process.env.VUE_APP_MISC_MAARG_JOB_ENUMS as string) as any
     }
   },
   computed: {

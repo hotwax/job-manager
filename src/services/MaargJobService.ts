@@ -88,7 +88,7 @@ const fetchMaargJobEnumerations = async (payload: any): Promise <any>  => {
   const updatedBaseUrl = baseURL.replace("admin", "available-to-promise")
 
   return client({
-    url: `enums`,
+    url: "enums",
     method: "GET",
     baseURL,
     params: payload,

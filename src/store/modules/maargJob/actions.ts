@@ -51,7 +51,7 @@ const actions: ActionTree<JobState, RootState> = {
       logger.error(error);
     }
 
-    commit(types.MAARGJOB_MAARG_JOBS_UPDATED, maargJobs);
+    commit(types.MAARGJOB_UPDATED, maargJobs);
   },
 
   async updateMaargJob({ commit, state }, jobEnumId) {
@@ -70,8 +70,8 @@ const actions: ActionTree<JobState, RootState> = {
         currentJob["parameterValues"] = paramValue
 
         jobs[jobEnumId] = currentJob
-        commit(types.MAARGJOB_MAARG_JOBS_UPDATED, jobs);
-        commit(types.MAARGJOB_CURRENT_JOB_UPDATED, currentJob);
+        commit(types.MAARGJOB_UPDATED, jobs);
+        commit(types.MAARGJOB_CURRENT_UPDATED, currentJob);
       } else {
         throw resp;
       }
@@ -99,12 +99,12 @@ const actions: ActionTree<JobState, RootState> = {
     } catch(error) {
       logger.error(error);
     }
-    commit(types.MAARGJOB_JOB_ENUMS_UPDATED, jobEnums);
+    commit(types.MAARGJOB_ENUMS_UPDATED, jobEnums);
   },
 
   async updateCurrentMaargJob({ commit }, payload) {
     if(payload?.job) {
-      commit(types.MAARGJOB_CURRENT_JOB_UPDATED, payload.job);
+      commit(types.MAARGJOB_CURRENT_UPDATED, payload.job);
       return payload?.job;
     }
 
@@ -112,7 +112,7 @@ const actions: ActionTree<JobState, RootState> = {
   },
 
   async clearMaargJobState({ commit }) {
-    commit(types.MAARGJOB_JOB_ENUMS_UPDATED, {});
+    commit(types.MAARGJOB_ENUMS_UPDATED, {});
   }
 }
 export default actions;

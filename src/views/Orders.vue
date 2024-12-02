@@ -184,7 +184,7 @@ export default defineComponent({
       isDesktop: isPlatform('desktop'),
       enumTypeId: 'ORDER_SYS_JOB',
       initialLoadJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
-      maargJobEnums: JSON.parse(process.env.VUE_APP_ORDERS_MAARG_JOB_NAMES as string) as any,
+      maargJobEnums: JSON.parse(process.env.VUE_APP_ORDERS_MAARG_JOB_ENUMS as string) as any,
       isLoading: false
     }
   },

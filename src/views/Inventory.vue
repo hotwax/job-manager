@@ -125,7 +125,7 @@ export default defineComponent({
       isDesktop: isPlatform('desktop'),
       enumTypeId: 'INVENTORY_SYS_JOB',
       webhookEnums: JSON.parse(process.env?.VUE_APP_WEBHOOK_ENUMS as string) as any,
-      maargJobEnums: JSON.parse(process.env.VUE_APP_INVENTORY_MAARG_JOB_NAMES as string) as any,
+      maargJobEnums: JSON.parse(process.env.VUE_APP_INVENTORY_MAARG_JOB_ENUMS as string) as any,
       isLoading: false
     }
   },

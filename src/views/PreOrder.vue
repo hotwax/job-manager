@@ -262,7 +262,7 @@ export default defineComponent({
       isDesktop: isPlatform('desktop'),
       enumTypeId: 'PRE_ORD_SYS_JOB',
       preOrderBackorderCategory: {} as any,
-      maargJobEnums: JSON.parse(process.env.VUE_APP_PREORD_MAARG_JOB_NAMES as string) as any,
+      maargJobEnums: JSON.parse(process.env.VUE_APP_PREORD_MAARG_JOB_ENUMS as string) as any,
     }
   },
   methods: {
