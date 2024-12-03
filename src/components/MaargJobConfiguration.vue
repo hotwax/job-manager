@@ -316,7 +316,7 @@ export default defineComponent({
       try {
         const resp = await MaargJobService.updateMaargJob(payload)
         if(!hasError(resp)) {
-          showToast(translate("Service updated successfully."))
+          showToast(translate("Service updated successfully"))
           this.store.dispatch("maargJob/updateMaargJob", job.jobTypeEnumId)
         } else {
           throw resp.data

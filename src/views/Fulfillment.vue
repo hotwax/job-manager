@@ -112,12 +112,6 @@
               <ion-label class="ion-text-wrap">{{ translate("Generate TO order items feed") }}</ion-label>
               <ion-label slot="end">{{ isMaargJobFound('GNRT_TO_FLFLD_ITM_FEED') ? getMaargJobStatus("GNRT_TO_FLFLD_ITM_FEED") : translate("Not found") }}</ion-label>
             </ion-item>
-
-            <ion-item lines="none">
-              <ion-label class="ion-text-wrap">
-                <p>{{ translate("Generated order items feed and send fulfillment acknowlegment feed to shopify.") }}</p>
-              </ion-label>
-            </ion-item>
           </ion-card>
           
           <MoreJobs v-if="getMoreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId).length" :jobs="getMoreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId)" />
