@@ -42,12 +42,20 @@
               </ion-card-header>
 
               <ion-item button detail :disabled="!isMaargJobFound('BLK_SYS_MESS_SHPFY')" @click="viewMaargJobConfiguration('BLK_SYS_MESS_SHPFY')">
-                <ion-label class="ion-text-wrap">{{ translate("Poll bulk system message") }}</ion-label>
+                <ion-label class="ion-text-wrap">{{ translate("Send next bulk query system message in queue") }}</ion-label>
                 <ion-label slot="end" >{{ isMaargJobFound('BLK_SYS_MESS_SHPFY') ? getMaargJobStatus("BLK_SYS_MESS_SHPFY") : translate("Not found") }}</ion-label>
               </ion-item>
               <ion-item button detail :disabled="!isMaargJobFound('BLK_RSLT_SHPFY')" @click="viewMaargJobConfiguration('BLK_RSLT_SHPFY')">
-                <ion-label class="ion-text-wrap">{{ translate("Poll bulk operation result") }}</ion-label>
+                <ion-label class="ion-text-wrap">{{ translate("Poll current bulk operation query result") }}</ion-label>
                 <ion-label slot="end" >{{ isMaargJobFound('BLK_RSLT_SHPFY') ? getMaargJobStatus("BLK_RSLT_SHPFY") : translate("Not found") }}</ion-label>
+              </ion-item>
+              <ion-item button detail :disabled="!isMaargJobFound('ALL_RCVD_SYS_MSG')" @click="viewMaargJobConfiguration('ALL_RCVD_SYS_MSG')">
+                <ion-label class="ion-text-wrap">{{ translate("Consume All Received System Messages") }}</ion-label>
+                <ion-label slot="end" >{{ isMaargJobFound('ALL_RCVD_SYS_MSG') ? getMaargJobStatus("ALL_RCVD_SYS_MSG") : translate("Not found") }}</ion-label>
+              </ion-item>
+              <ion-item button detail :disabled="!isMaargJobFound('ALL_PRDCD_SYS_MSG')" @click="viewMaargJobConfiguration('ALL_PRDCD_SYS_MSG')">
+                <ion-label class="ion-text-wrap">{{ translate("Send All Produced System Messages") }}</ion-label>
+                <ion-label slot="end" >{{ isMaargJobFound('ALL_PRDCD_SYS_MSG') ? getMaargJobStatus("ALL_PRDCD_SYS_MSG") : translate("Not found") }}</ion-label>
               </ion-item>
             </ion-card>
           </div>

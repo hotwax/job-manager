@@ -40,16 +40,16 @@
             <ion-card-header>
               <ion-card-title>{{ translate("Feed") }}</ion-card-title>
             </ion-card-header>
-            <ion-item button detail :disabled="!isMaargJobFound('GEN_TO_RCPT_FEED')" @click="viewMaargJobConfiguration('GEN_TO_RCPT_FEED')">
-              <ion-label class="ion-text-wrap">{{ translate("Transfer order feed") }}</ion-label>
-              <ion-label slot="end" >{{ isMaargJobFound('GEN_TO_RCPT_FEED') ? getMaargJobStatus("GEN_TO_RCPT_FEED") : translate("Not found") }}</ion-label>
+            <ion-item button detail :disabled="!isMaargJobFound('GNRT_SHIP_RCPT_FEED')" @click="viewMaargJobConfiguration('GNRT_SHIP_RCPT_FEED')">
+              <ion-label class="ion-text-wrap">{{ translate("Generate Shipments Receipt Feed") }}</ion-label>
+              <ion-label slot="end" >{{ isMaargJobFound('GNRT_SHIP_RCPT_FEED') ? getMaargJobStatus("GNRT_SHIP_RCPT_FEED") : translate("Not found") }}</ion-label>
             </ion-item>
             <ion-item button detail :disabled="!isMaargJobFound('GEN_INV_VAR_FEED')" @click="viewMaargJobConfiguration('GEN_INV_VAR_FEED')">
-              <ion-label class="ion-text-wrap">{{ translate("Inventory variance feed") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ translate("Generate inventory variance feed") }}</ion-label>
               <ion-label slot="end">{{ isMaargJobFound('GEN_INV_VAR_FEED') ? getMaargJobStatus("GEN_INV_VAR_FEED") : translate("Not found") }}</ion-label>
             </ion-item>
             <ion-item button detail :disabled="!isMaargJobFound('GEN_INVCYC_COUNT_VAR_FEED')" @click="viewMaargJobConfiguration('GEN_INVCYC_COUNT_VAR_FEED')">
-              <ion-label class="ion-text-wrap">{{ translate("Inventory cycle count variance feed") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ translate("Generate inventory cycle count variance feed") }}</ion-label>
               <ion-label slot="end">{{ isMaargJobFound('GEN_INVCYC_COUNT_VAR_FEED') ? getMaargJobStatus("GEN_INVCYC_COUNT_VAR_FEED") : translate("Not found") }}</ion-label>
             </ion-item>
           </ion-card>

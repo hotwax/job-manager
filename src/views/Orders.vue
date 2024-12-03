@@ -98,15 +98,15 @@
               <ion-card-title>{{ translate("Generate Feed") }}</ion-card-title>
             </ion-card-header>
             <ion-item button detail :disabled="!isMaargJobFound('GEN_BRKD_ORDITM_FEED')" @click="viewMaargJobConfiguration('GEN_BRKD_ORDITM_FEED')">
-              <ion-label class="ion-text-wrap">{{ translate("Brokered order items feed") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ translate("Generate Brokered order items feed") }}</ion-label>
               <ion-label slot="end" >{{ isMaargJobFound('GEN_BRKD_ORDITM_FEED') ? getMaargJobStatus("GEN_BRKD_ORDITM_FEED") : translate("Not found") }}</ion-label>
             </ion-item>
             <ion-item button detail :disabled="!isMaargJobFound('GEN_APPEASE_FIN_FEED')" @click="viewMaargJobConfiguration('GEN_APPEASE_FIN_FEED')">
-              <ion-label class="ion-text-wrap">{{ translate("Appeasements financial feed") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ translate("Generate appeasements financial feed") }}</ion-label>
               <ion-label slot="end">{{ isMaargJobFound('GEN_APPEASE_FIN_FEED') ? getMaargJobStatus("GEN_APPEASE_FIN_FEED") : translate("Not found") }}</ion-label>
             </ion-item>
             <ion-item button detail :disabled="!isMaargJobFound('GEN_RTRN_FIN_FEED')" @click="viewMaargJobConfiguration('GEN_RTRN_FIN_FEED')">
-              <ion-label class="ion-text-wrap">{{ translate("Returns financial feed") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ translate("Generate returns financial feed") }}</ion-label>
               <ion-label slot="end">{{ isMaargJobFound('GEN_RTRN_FIN_FEED') ? getMaargJobStatus("GEN_RTRN_FIN_FEED") : translate("Not found") }}</ion-label>
             </ion-item>
           </ion-card>

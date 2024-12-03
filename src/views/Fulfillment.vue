@@ -101,12 +101,16 @@
               <ion-label slot="end" >{{ isMaargJobFound('GNRT_FF_ORD_ITM_FEED') ? getMaargJobStatus("GNRT_FF_ORD_ITM_FEED") : translate("Not found") }}</ion-label>
             </ion-item>
             <ion-item button detail :disabled="!isMaargJobFound('SND_FF_ACK_FEED')" @click="viewMaargJobConfiguration('SND_FF_ACK_FEED')">
-              <ion-label class="ion-text-wrap">{{ translate("Send shopify acknowledge feed") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ translate("Send shopify fulfillment ack feed") }}</ion-label>
               <ion-label slot="end">{{ isMaargJobFound('SND_FF_ACK_FEED') ? getMaargJobStatus("SND_FF_ACK_FEED") : translate("Not found") }}</ion-label>
             </ion-item>
             <ion-item button detail :disabled="!isMaargJobFound('POL_OMS_FLFLMNT_FEED')" @click="viewMaargJobConfiguration('POL_OMS_FLFLMNT_FEED')">
-              <ion-label class="ion-text-wrap">{{ translate("Poll OMS fulfillment feed") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ translate("Poll OMS fulfilled items feed") }}</ion-label>
               <ion-label slot="end">{{ isMaargJobFound('POL_OMS_FLFLMNT_FEED') ? getMaargJobStatus("POL_OMS_FLFLMNT_FEED") : translate("Not found") }}</ion-label>
+            </ion-item>
+            <ion-item button detail :disabled="!isMaargJobFound('GNRT_TO_FLFLD_ITM_FEED')" @click="viewMaargJobConfiguration('GNRT_TO_FLFLD_ITM_FEED')">
+              <ion-label class="ion-text-wrap">{{ translate("Generate TO order items feed") }}</ion-label>
+              <ion-label slot="end">{{ isMaargJobFound('GNRT_TO_FLFLD_ITM_FEED') ? getMaargJobStatus("GNRT_TO_FLFLD_ITM_FEED") : translate("Not found") }}</ion-label>
             </ion-item>
 
             <ion-item lines="none">

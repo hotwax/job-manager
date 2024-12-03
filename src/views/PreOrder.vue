@@ -162,7 +162,7 @@
               <ion-card-title>{{ translate("Feed") }}</ion-card-title>
             </ion-card-header>
             <ion-item button detail :disabled="!isMaargJobFound('PO_RCPT_FEED')" @click="viewMaargJobConfiguration('PO_RCPT_FEED')">
-              <ion-label class="ion-text-wrap">{{ translate("Purchase order receipt feed") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ translate("Generate PO shipment receipt feed") }}</ion-label>
               <ion-label slot="end" >{{ isMaargJobFound('PO_RCPT_FEED') ? getMaargJobStatus("PO_RCPT_FEED") : translate("Not found") }}</ion-label>
             </ion-item>
           </ion-card>
