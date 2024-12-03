@@ -209,10 +209,24 @@
                 <p>{{ job.description }}</p>
               </ion-label>
             </ion-item>
+
+            <ion-item>
+              <ion-icon slot="start" :icon="personOutline" />
+              <ion-label class="ion-text-wrap">{{ translate("Created by", { userLogin: job.createdByUserLogin }) }}</ion-label>
+              <ion-label slot="end">{{ job.createdDate ? getDateTime(job.createdDate) : "-" }}</ion-label>
+            </ion-item>
+
+            <ion-item>
+              <ion-icon slot="start" :icon="peopleOutline" />
+              <ion-label class="ion-text-wrap">{{ translate("Updated by", { userLogin: job.lastModifiedByUserLogin }) }}</ion-label>
+              <ion-label slot="end">{{ job.lastUpdatedStamp ?  getDateTime(job.lastUpdatedStamp) : "-" }}</ion-label>
+            </ion-item>
+
             <ion-item>
               <ion-icon slot="start" :icon="timeOutline" />
               <ion-label class="ion-text-wrap">
                 {{ job.runTime ? getTime(job.runTime) : "-"  }}
+                <p>{{ job.recurrenceTimeZone }}</p>
               </ion-label>
               <ion-note slot="end">{{ job.statusId == "SERVICE_CANCELLED" || job.statusId == "SERVICE_CRASHED" ? getJobExecutionTime(job.startDateTime, job.cancelDateTime) : getJobExecutionTime(job.startDateTime, job.finishDateTime) }}</ion-note>
             </ion-item>
@@ -312,7 +326,7 @@ import {
   IonButtons
 } from "@ionic/vue";
 import JobConfiguration from '@/components/JobConfiguration.vue'
-import { closeCircleOutline, codeWorkingOutline, copyOutline, ellipsisVerticalOutline, filterOutline, helpCircleOutline, pinOutline, refreshOutline, timeOutline, timerOutline } from "ionicons/icons";
+import { closeCircleOutline, codeWorkingOutline, copyOutline, ellipsisVerticalOutline, filterOutline, helpCircleOutline, peopleOutline, personOutline, pinOutline, refreshOutline, timeOutline, timerOutline } from "ionicons/icons";
 import emitter from '@/event-bus';
 import JobHistoryModal from '@/components/JobHistoryModal.vue';
 import { Plugins } from '@capacitor/core';
@@ -468,6 +482,9 @@ export default defineComponent({
     },
     getTime (time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.TIME_SIMPLE);
+    },
+    getDateTime (time: any) {
+      return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
     },
     timeFromNow (time: any) {
       const timeDiff = DateTime.fromMillis(time).diff(DateTime.local());
@@ -705,6 +722,8 @@ export default defineComponent({
       codeWorkingOutline,
       ellipsisVerticalOutline,
       helpCircleOutline,
+      peopleOutline,
+      personOutline,
       pinOutline,
       refreshOutline,
       timeOutline,
