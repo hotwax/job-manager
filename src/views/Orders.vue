@@ -95,7 +95,7 @@
 
           <ion-card>
             <ion-card-header>
-              <ion-card-title>{{ translate("Generate Feed") }}</ion-card-title>
+              <ion-card-title>{{ translate("Feed") }}</ion-card-title>
             </ion-card-header>
             <ion-item button detail :disabled="!isMaargJobFound('GEN_BRKD_ORDITM_FEED')" @click="viewMaargJobConfiguration('GEN_BRKD_ORDITM_FEED')">
               <ion-label class="ion-text-wrap">{{ translate("Generate Brokered order items feed") }}</ion-label>

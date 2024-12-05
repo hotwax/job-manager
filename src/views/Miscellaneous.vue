@@ -24,6 +24,30 @@
           <div v-else>
             <ion-list>
               <ion-list-header>{{ translate("Miscellaneous jobs") }}</ion-list-header>
+
+              <ion-card>
+                <ion-card-header>
+                  <ion-card-title>{{ translate("Shopify bulk query") }}</ion-card-title>
+                </ion-card-header>
+
+                <ion-item button detail :disabled="!isMaargJobFound('BLK_SYS_MESS_SHPFY')" @click="viewMaargJobConfiguration('BLK_SYS_MESS_SHPFY')">
+                  <ion-label>{{ translate("Send next bulk query system message in queue") }}</ion-label>
+                  <ion-note slot="end" >{{ isMaargJobFound('BLK_SYS_MESS_SHPFY') ? getMaargJobStatus("BLK_SYS_MESS_SHPFY") : translate("Not found") }}</ion-note>
+                </ion-item>
+                <ion-item button detail :disabled="!isMaargJobFound('BLK_RSLT_SHPFY')" @click="viewMaargJobConfiguration('BLK_RSLT_SHPFY')">
+                  <ion-label>{{ translate("Poll current bulk operation query result") }}</ion-label>
+                  <ion-note slot="end" >{{ isMaargJobFound('BLK_RSLT_SHPFY') ? getMaargJobStatus("BLK_RSLT_SHPFY") : translate("Not found") }}</ion-note>
+                </ion-item>
+                <ion-item button detail :disabled="!isMaargJobFound('ALL_RCVD_SYS_MSG')" @click="viewMaargJobConfiguration('ALL_RCVD_SYS_MSG')">
+                  <ion-label>{{ translate("Consume All Received System Messages") }}</ion-label>
+                  <ion-note slot="end" >{{ isMaargJobFound('ALL_RCVD_SYS_MSG') ? getMaargJobStatus("ALL_RCVD_SYS_MSG") : translate("Not found") }}</ion-note>
+                </ion-item>
+                <ion-item button detail :disabled="!isMaargJobFound('ALL_PRDCD_SYS_MSG')" @click="viewMaargJobConfiguration('ALL_PRDCD_SYS_MSG')">
+                  <ion-label>{{ translate("Send All Produced System Messages") }}</ion-label>
+                  <ion-note slot="end" >{{ isMaargJobFound('ALL_PRDCD_SYS_MSG') ? getMaargJobStatus("ALL_PRDCD_SYS_MSG") : translate("Not found") }}</ion-note>
+                </ion-item>
+              </ion-card>
+
               <ion-item v-for="job in prepareMiscJobs" :key="job.jobId" @click="viewJobConfiguration(job)" detail button>
                 <ion-label>{{ job.jobName }}</ion-label>
                 <ion-note slot="end">{{ getJobRuntime(job) }}</ion-note>
@@ -33,31 +57,6 @@
             <ion-infinite-scroll @ionInfinite="loadMoreMiscellaneousJobs($event)" threshold="100px" :disabled="!isMiscellaneousJobsScrollable">
               <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="translate('Loading')"/>
             </ion-infinite-scroll>
-          </div>
-
-          <div>
-            <ion-card>
-              <ion-card-header>
-                <ion-card-title>{{ translate("Shopify bulk query") }}</ion-card-title>
-              </ion-card-header>
-
-              <ion-item button detail :disabled="!isMaargJobFound('BLK_SYS_MESS_SHPFY')" @click="viewMaargJobConfiguration('BLK_SYS_MESS_SHPFY')">
-                <ion-label class="ion-text-wrap">{{ translate("Send next bulk query system message in queue") }}</ion-label>
-                <ion-label slot="end" >{{ isMaargJobFound('BLK_SYS_MESS_SHPFY') ? getMaargJobStatus("BLK_SYS_MESS_SHPFY") : translate("Not found") }}</ion-label>
-              </ion-item>
-              <ion-item button detail :disabled="!isMaargJobFound('BLK_RSLT_SHPFY')" @click="viewMaargJobConfiguration('BLK_RSLT_SHPFY')">
-                <ion-label class="ion-text-wrap">{{ translate("Poll current bulk operation query result") }}</ion-label>
-                <ion-label slot="end" >{{ isMaargJobFound('BLK_RSLT_SHPFY') ? getMaargJobStatus("BLK_RSLT_SHPFY") : translate("Not found") }}</ion-label>
-              </ion-item>
-              <ion-item button detail :disabled="!isMaargJobFound('ALL_RCVD_SYS_MSG')" @click="viewMaargJobConfiguration('ALL_RCVD_SYS_MSG')">
-                <ion-label class="ion-text-wrap">{{ translate("Consume All Received System Messages") }}</ion-label>
-                <ion-label slot="end" >{{ isMaargJobFound('ALL_RCVD_SYS_MSG') ? getMaargJobStatus("ALL_RCVD_SYS_MSG") : translate("Not found") }}</ion-label>
-              </ion-item>
-              <ion-item button detail :disabled="!isMaargJobFound('ALL_PRDCD_SYS_MSG')" @click="viewMaargJobConfiguration('ALL_PRDCD_SYS_MSG')">
-                <ion-label class="ion-text-wrap">{{ translate("Send All Produced System Messages") }}</ion-label>
-                <ion-label slot="end" >{{ isMaargJobFound('ALL_PRDCD_SYS_MSG') ? getMaargJobStatus("ALL_PRDCD_SYS_MSG") : translate("Not found") }}</ion-label>
-              </ion-item>
-            </ion-card>
           </div>
         </section>
 
