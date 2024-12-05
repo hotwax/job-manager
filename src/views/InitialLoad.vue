@@ -14,7 +14,7 @@
             <ion-card-header>
               <ion-card-title>{{ translate("Products") }}</ion-card-title>
             </ion-card-header>
-            <ion-button expand="block" fill="outline" @click="viewJobConfiguration('products', jobEnums['IMP_PRDTS_BLK'])">{{ translate("Import products in bulk") }}</ion-button>
+            <ion-button expand="block" fill="outline" @click="viewInitialJobConfiguration('products', jobEnums['IMP_PRDTS_BLK'])">{{ translate("Import products in bulk") }}</ion-button>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
                 <p>{{ translate("Import all products from Shopify. Make sure you run this before importing orders in bulk during intial setup.") }}</p>
@@ -26,7 +26,7 @@
             <ion-card-header>
               <ion-card-title>{{ translate("Orders") }}</ion-card-title>
             </ion-card-header>
-            <ion-button expand="block" fill="outline" @click="viewJobConfiguration('orders', jobEnums['IMP_ORDERS_BLK'])">{{ translate("Import orders in bulk") }}</ion-button>
+            <ion-button expand="block" fill="outline" @click="viewInitialJobConfiguration('orders', jobEnums['IMP_ORDERS_BLK'])">{{ translate("Import orders in bulk") }}</ion-button>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
                 <p>{{ translate("Before importing historical orders in bulk, make sure all products are set up or else order import will not run correctly.") }}</p>
@@ -40,6 +40,11 @@
             <ion-card-header>
               <ion-card-title>{{ translate("Process Uploads") }}</ion-card-title>
             </ion-card-header>
+            <ion-item button @click="viewJobConfiguration({ id: 'JOB_IMP_QUEUE', status: getJobStatus(jobEnums['JOB_IMP_QUEUE']) })" detail>
+              <ion-label class="ion-text-wrap">{{ translate("Import queue") }}</ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('JOB_IMP_QUEUE') }}</ion-label>
+              <ion-skeleton-text v-else style="width: 30%;" animated />
+            </ion-item>
             <ion-item>
               <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="fileStatusUpdateWebhook" color="secondary" @ionChange="updateWebhook($event['detail'].checked, 'BULK_OPERATIONS_FINISH')">
                 <ion-label>{{ translate("File upload status") }}</ion-label>
@@ -53,8 +58,9 @@
           </ion-card>
         </section>
 
-        <aside class="desktop-only" v-if="isDesktop" v-show="currentSelectedJobModal">
-          <InitialJobConfiguration :type='currentSelectedJobModal' :shopifyOrderId='lastShopifyOrderId' :key="job" />
+        <aside class="desktop-only" v-if="isDesktop" v-show="currentSelectedJobModal || Object.keys(currentJob)?.length">
+          <InitialJobConfiguration v-if="currentSelectedJobModal" :type='currentSelectedJobModal' :shopifyOrderId='lastShopifyOrderId' :key="job" />
+          <JobConfiguration v-else :status="currentJobStatus" :type="freqType" :key="currentJob"/>
         </aside>
       </main>
     </ion-content>
@@ -74,6 +80,7 @@ import {
   IonLabel,
   IonMenuButton,
   IonPage,
+  IonSkeletonText,
   IonTitle,
   IonToggle,
   IonToolbar,
@@ -84,6 +91,7 @@ import { mapGetters, useStore } from 'vuex';
 import { hasJobDataError, generateJobCustomParameters, isFutureDate, showToast } from '@/utils';
 import emitter from '@/event-bus';
 import InitialJobConfiguration from '@/components/InitialJobConfiguration.vue';
+import JobConfiguration from '@/components/JobConfiguration.vue';
 import { useRouter } from 'vue-router';
 import { translate } from '@hotwax/dxp-components';
 import { Actions, hasPermission } from '@/authorization'
@@ -91,6 +99,7 @@ import { Actions, hasPermission } from '@/authorization'
 export default defineComponent({
   name: 'InitialLoad',
   components: {
+    JobConfiguration,
     InitialJobConfiguration,
     IonButton,
     IonCard,
@@ -103,6 +112,7 @@ export default defineComponent({
     IonLabel,
     IonMenuButton,
     IonPage,
+    IonSkeletonText,
     IonTitle,
     IonToggle,
     IonToolbar
@@ -111,11 +121,16 @@ export default defineComponent({
     return {
       jobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
       webhookEnums: JSON.parse(process.env?.VUE_APP_WEBHOOK_ENUMS as string) as any,
+      jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
       currentSelectedJobModal: '',
       job: {} as any,
       lastShopifyOrderId: '',
       isJobDetailAnimationCompleted: false,
-      isDesktop: isPlatform('desktop')
+      isDesktop: isPlatform('desktop'),
+      isLoading: false,
+      currentJob: '' as any,
+      currentJobStatus: '',
+      freqType: '',
     }
   },
   mounted() {
@@ -131,7 +146,8 @@ export default defineComponent({
       getJob: 'job/getJob',
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
       currentEComStore: 'user/getCurrentEComStore',
-      getCachedWebhook: 'webhook/getCachedWebhook'
+      getCachedWebhook: 'webhook/getCachedWebhook',
+      getTemporalExpr: 'job/getTemporalExpr',
     }),
     fileStatusUpdateWebhook(): boolean {
       const webhookTopic = this.webhookEnums['BULK_OPERATIONS_FINISH']
@@ -177,7 +193,7 @@ export default defineComponent({
         this.store.dispatch('job/updateJob', job)
       }
     },
-    async viewJobConfiguration(label: string, id: string) {
+    async viewInitialJobConfiguration(label: string, id: string) {
       this.currentSelectedJobModal = label;
       this.job = this.getJob(id);
 
@@ -192,6 +208,7 @@ export default defineComponent({
       const job = await this.store.dispatch('job/updateCurrentJob', { job: this.job, jobId: id });
       if(job) {
         this.job = job
+        this.currentJob = {}
       } else {
         showToast(translate('Configuration missing'))
         return;
@@ -207,7 +224,38 @@ export default defineComponent({
         this.isJobDetailAnimationCompleted = true;
       }
     },
+    async viewJobConfiguration(jobInformation: any) {
+      this.currentJob = jobInformation.job || this.getJob(this.jobEnums[jobInformation.id])
+      this.currentJobStatus = jobInformation.status
+      this.freqType = jobInformation.id && this.jobFrequencyType[jobInformation.id]
+
+      // if job runTime is not a valid date then making runTime as empty
+      if (this.currentJob?.runTime && !isFutureDate(this.currentJob?.runTime)) {
+        this.currentJob.runTime = ''
+      }
+
+      const job = await this.store.dispatch('job/updateCurrentJob', { job: this.currentJob, jobId: this.jobEnums[jobInformation.id] });
+      if(job) {
+        this.currentJob = job
+        this.job = {}
+        this.currentSelectedJobModal = ""
+        this.lastShopifyOrderId = ""
+      } else {
+        showToast(translate('Configuration missing'))
+        return;
+      }
+
+      if(!this.isDesktop && this.currentJob) {
+        this.router.push({ name: 'JobDetails', params: { jobId: this.currentJob.jobId, category: "orders" } });
+        return;
+      }
+      if (this.currentJob && !this.isJobDetailAnimationCompleted) {
+        emitter.emit('playAnimation');
+        this.isJobDetailAnimationCompleted = true;
+      }
+    },
     async fetchJobs(isCurrentJobUpdateRequired = false){
+      this.isLoading = true
       if(isCurrentJobUpdateRequired) {
         this.currentSelectedJobModal = "";
         await this.store.dispatch('job/updateCurrentJob', { });
@@ -222,6 +270,7 @@ export default defineComponent({
         }
       })
       this.store.dispatch('webhook/fetchWebhooks')
+      this.isLoading = false
     },
     async updateWebhook(checked: boolean, enumId: string) {
       const webhook = this.getCachedWebhook[this.webhookEnums[enumId]]
@@ -237,6 +286,11 @@ export default defineComponent({
       } else {
         await this.store.dispatch('webhook/unsubscribeWebhook', { webhookId: webhook?.id, shopifyConfigId: this.currentShopifyConfig.shopifyConfigId })
       }
+    },
+    getTemporalExpression(enumId: string) {
+      return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
+        this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
+        translate('Disabled')
     }
   },
   setup() {
