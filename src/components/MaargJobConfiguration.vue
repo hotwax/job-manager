@@ -83,29 +83,20 @@ import {
   IonButton,
   IonCheckbox,
   IonChip,
-  IonContent,
-  IonDatetime,
   IonIcon,
   IonItem,
   IonLabel,
-  IonList,
-  IonModal,
   IonRow,
-  IonSelect,
-  IonSelectOption,
   alertController,
   modalController,
 } from "@ionic/vue";
 import {
   addOutline,
-  calendarClearOutline,
   flashOutline,
   listCircleOutline,
   copyOutline,
   timeOutline,
   timerOutline,
-  syncOutline,
-  personCircleOutline,
   pinOutline,
   refreshOutline
 } from "ionicons/icons";
@@ -117,7 +108,6 @@ import { useRouter } from "vue-router";
 import { DateTime } from "luxon";
 import { translate } from "@hotwax/dxp-components";
 import logger from "@/logger";
-import cronstrue from "cronstrue"
 import { Actions, hasPermission } from '@/authorization'
 import { MaargJobService } from "@/services/MaargJobService";
 import ScheduleModal from "@/components/ScheduleModal.vue"
@@ -130,9 +120,11 @@ export default defineComponent({
     IonBadge,
     IonButton,
     IonCheckbox,
+    IonChip,
     IonIcon,
     IonItem,
-    IonLabel
+    IonLabel,
+    IonRow
   },
   data() {
     return {

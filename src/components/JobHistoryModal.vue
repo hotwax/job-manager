@@ -19,7 +19,7 @@
     <div v-else>
       <ion-list v-if="isMaargJob">
         <template  v-for="(history, index) in jobHistory" :key="index">
-          <ion-item v-if="history.endTime">
+          <ion-item>
             <ion-label>
               <h3>{{ getTime(history.startTime) }}</h3>
               <p>{{ getDate(history.startTime) }}</p>
