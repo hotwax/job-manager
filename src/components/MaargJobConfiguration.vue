@@ -86,6 +86,7 @@ import {
   IonIcon,
   IonItem,
   IonLabel,
+  IonList,
   IonRow,
   alertController,
   modalController,
@@ -123,6 +124,7 @@ export default defineComponent({
     IonIcon,
     IonItem,
     IonLabel,
+    IonList,
     IonRow
   },
   data() {
