@@ -238,8 +238,7 @@ const convertValue = (parameter: any) => {
       return JSON.parse(value)
     } else if(parameter.type === 'String' || parameter.type === 'Date' || parameter.type === 'Time') {
       return value
-    }
-    else {
+    } else {
       return JSON.parse(value);
     }
   } catch {

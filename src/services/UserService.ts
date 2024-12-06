@@ -37,6 +37,7 @@ const moquiLogin = async (omsRedirectionUrl: string, token: string): Promise <an
       throw "Sorry, login failed. Please try again";
     }
   } catch(err) {
+    logger.error(err)
     return Promise.resolve("");
   }
   return Promise.resolve(api_key)

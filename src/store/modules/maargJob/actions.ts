@@ -2,7 +2,7 @@ import { ActionTree } from 'vuex'
 import RootState from '@/store/RootState'
 import JobState from './MaargJobState'
 import * as types from './mutation-types'
-import { isCustomRunTime, generateAllowedFrequencies, hasError, showToast } from '@/utils'
+import { hasError } from '@/utils'
 import store from '@/store'
 import logger from "@/logger";
 import { MaargJobService } from '@/services/MaargJobService'
@@ -27,16 +27,16 @@ const actions: ActionTree<JobState, RootState> = {
         responses.map((response: any) => {
           if(response.status === "fulfilled") {
             const job = response.value.data.jobDetail
-            const paramValue = {} as any;
+            const paramValues = {} as any;
 
             job.serviceJobParameters.map((parameter: any) => {
-              paramValue[parameter.parameterName] = parameter.parameterValue
+              paramValues[parameter.parameterName] = parameter.parameterValue
             })
-            job["parameterValues"] = paramValue
+            job["parameterValues"] = paramValues
             job["enumDescription"] = maargJobEnums[job.jobTypeEnumId]?.description
 
-            if(Object.keys(paramValue).includes("productStoreIds")) {
-              if(paramValue["productStoreIds"] === productStoreId) {
+            if(Object.hasOwn(paramValues, "productStoreIds")) {
+              if(paramValues["productStoreIds"] === productStoreId) {
                 maargJobs[job.jobTypeEnumId] = job 
               }
             } else {

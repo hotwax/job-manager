@@ -90,7 +90,7 @@ const fetchMaargJobEnumerations = async (payload: any): Promise <any>  => {
   return client({
     url: "enums",
     method: "GET",
-    baseURL,
+    baseURL: updatedBaseUrl,
     params: payload,
     headers: {
       "api_key": omsRedirectionInfo.token,

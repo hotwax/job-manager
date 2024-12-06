@@ -91,11 +91,11 @@ const actions: ActionTree<UserState, RootState> = {
           dispatch("setOmsRedirectionInfo", { url: omsRedirectionUrl, token: api_key })
         } else {
           showToast(translate("Some of the app functionality will not work due to missing configuration."))
-          console.error("Some of the app functionality will not work due to missing configuration.");
+          logger.error("Some of the app functionality will not work due to missing configuration.");
         }
       } else {
         showToast(translate("Some of the app functionality will not work due to missing configuration."))
-        console.error("Some of the app functionality will not work due to missing configuration.")
+        logger.error("Some of the app functionality will not work due to missing configuration.")
       }
 
       // TODO user single mutation
