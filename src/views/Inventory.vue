@@ -228,6 +228,11 @@ export default defineComponent({
       const job = this.getMaargJob(enumId);
       await this.store.dispatch("maargJob/updateCurrentMaargJob", { job })
       this.currentJob = ""
+      if(!this.isDesktop && this.currentMaargJob?.jobName) {
+        this.router.push({ name: 'JobDetails', params: { jobId: this.currentMaargJob.jobTypeEnumId, category: "initial-load-maarg" } });
+        return;
+      }
+
       if(!this.isJobDetailAnimationCompleted) {
         emitter.emit('playAnimation');
         this.isJobDetailAnimationCompleted = true;

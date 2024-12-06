@@ -58,12 +58,21 @@ const actions: ActionTree<JobState, RootState> = {
     commit(types.MAARGJOB_UPDATED, maargJobs);
   },
 
-  async updateMaargJob({ commit, state }, jobEnumId) {
-    const jobs = JSON.parse(JSON.stringify(state.maargJobs));
-    const currentJob = jobs[jobEnumId]
+  async updateMaargJob({ commit, dispatch, state }, jobEnumId) {
+    let resp = {} as any;
+    let jobs = JSON.parse(JSON.stringify(state.maargJobs));
+    let currentJob = jobs[jobEnumId]
 
     try {
-      const resp = await MaargJobService.fetchMaargJobInfo(currentJob.jobName);
+      if(!currentJob?.jobName) {
+        await dispatch("fetchMaargJobs", [jobEnumId]);
+        jobs = JSON.parse(JSON.stringify(state.maargJobs));
+        currentJob = jobs[jobEnumId]
+        commit(types.MAARGJOB_CURRENT_UPDATED, currentJob);
+        return;
+      }
+
+      resp = await MaargJobService.fetchMaargJobInfo(currentJob.jobName);
       if(!hasError(resp)) {
         const currentJob = resp.data?.jobDetail
         
@@ -106,13 +115,31 @@ const actions: ActionTree<JobState, RootState> = {
     commit(types.MAARGJOB_ENUMS_UPDATED, jobEnums);
   },
 
-  async updateCurrentMaargJob({ commit }, payload) {
+  async updateCurrentMaargJob({ commit, dispatch, state }, payload) {
+    const maargJobs = state.maargJobs;
+    const getMaargJob = store.getters["maargJob/getMaargJob"]
+
     if(payload?.job) {
       commit(types.MAARGJOB_CURRENT_UPDATED, payload.job);
       return payload?.job;
     }
 
-    // Todo: refetch job for the mobile view of job details.
+    if(!payload.jobId) {
+      commit(types.MAARGJOB_CURRENT_UPDATED, {});
+      return;
+    }
+
+    let currentMaargJob = maargJobs[payload.jobId];
+    if(currentMaargJob) {
+      commit(types.MAARGJOB_CURRENT_UPDATED, currentMaargJob);
+      return currentMaargJob;
+    }
+
+    await dispatch("updateMaargJob", payload.jobId);
+    currentMaargJob = getMaargJob(payload.jobId)
+
+    commit(types.MAARGJOB_CURRENT_UPDATED, currentMaargJob ? currentMaargJob : {});
+    return currentMaargJob;
   },
 
   async clearMaargJobState({ commit }) {
