@@ -1,5 +1,5 @@
 import store from '@/store';
-import { api, client } from '@/adapter';
+import { client } from '@/adapter';
 
 
 const fetchMaargJobs = async (payload: any): Promise <any>  => {

@@ -121,7 +121,7 @@ const actions: ActionTree<UserState, RootState> = {
   /**
    * Logout user
    */
-  async logout ({ commit, dispatch }, payload) {
+  async logout ({ commit }, payload) {
     // store the url on which we need to redirect the user after logout api completes in case of SSO enabled
     let redirectionUrl = ''
 
