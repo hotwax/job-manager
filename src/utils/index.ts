@@ -236,8 +236,11 @@ const convertValue = (parameter: any) => {
   try {
     if(parameter.type === 'Map' || parameter.type === 'List' || parameter.type === 'Object') {
       return JSON.parse(value)
-    } else {
+    } else if(parameter.type === 'String' || parameter.type === 'Date' || parameter.type === 'Time') {
       return value
+    }
+    else {
+      return JSON.parse(value);
     }
   } catch {
     logger.error('Unable to parse the defined value', value)
