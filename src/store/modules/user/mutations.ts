@@ -17,6 +17,10 @@ const mutations: MutationTree <UserState> = {
       state.shopifyConfigs = []
       state.permissions = []
       state.productStoreCategories =  {}
+      state.omsRedirectionInfo = {
+        url: "",
+        token: ""
+      }
     },
     [types.USER_INFO_UPDATED] (state, payload) {
         state.current = { ...state.current,  ...payload}
@@ -43,5 +47,8 @@ const mutations: MutationTree <UserState> = {
     [types.USER_PERMISSIONS_UPDATED] (state, payload) {
         state.permissions = payload
     },
+    [types.USER_OMS_REDIRECTION_INFO_UPDATED](state, payload) {
+        state.omsRedirectionInfo = payload;
+    }
 }
 export default mutations;

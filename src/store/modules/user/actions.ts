@@ -11,6 +11,7 @@ import { logout, updateInstanceUrl, updateToken, resetConfig } from '@/adapter'
 import logger from "@/logger";
 import { useAuthStore } from '@hotwax/dxp-components'
 import emitter from '@/event-bus'
+import store from '@/store'
 
 const actions: ActionTree<UserState, RootState> = {
 
@@ -22,7 +23,7 @@ const actions: ActionTree<UserState, RootState> = {
    */
   async login({ commit, dispatch }, payload) {
     try {
-      const { token, oms } = payload
+      const { token, oms, omsRedirectionUrl } = payload
       dispatch("setUserInstanceUrl", oms);
 
       // Getting the permissions list from server
@@ -84,6 +85,19 @@ const actions: ActionTree<UserState, RootState> = {
         Settings.defaultZone = userProfile.userTimeZone;
       }
 
+      if(omsRedirectionUrl) {
+        const api_key = await UserService.moquiLogin(omsRedirectionUrl, token)
+        if(api_key) {
+          dispatch("setOmsRedirectionInfo", { url: omsRedirectionUrl, token: api_key })
+        } else {
+          showToast(translate("Some of the app functionality will not work due to missing configuration."))
+          logger.error("Some of the app functionality will not work due to missing configuration.");
+        }
+      } else {
+        showToast(translate("Some of the app functionality will not work due to missing configuration."))
+        logger.error("Some of the app functionality will not work due to missing configuration.")
+      }
+
       // TODO user single mutation
       commit(types.USER_CURRENT_ECOM_STORE_UPDATED, preferredStore);
       commit(types.USER_INFO_UPDATED, userProfile);
@@ -107,7 +121,7 @@ const actions: ActionTree<UserState, RootState> = {
   /**
    * Logout user
    */
-  async logout ({ commit, dispatch }, payload) {
+  async logout ({ commit }, payload) {
     // store the url on which we need to redirect the user after logout api completes in case of SSO enabled
     let redirectionUrl = ''
 
@@ -135,7 +149,8 @@ const actions: ActionTree<UserState, RootState> = {
 
     const authStore = useAuthStore()
     // TODO add any other tasks if need
-    dispatch('job/clearJobState', null, { root: true });
+    store.dispatch('job/clearJobState', null, { root: true });
+    store.dispatch('maargJob/clearMaargJobState');
     commit(types.USER_END_SESSION)
     resetConfig();
     resetPermissions();
@@ -178,6 +193,10 @@ const actions: ActionTree<UserState, RootState> = {
   setUserInstanceUrl ({ commit }, payload){
     commit(types.USER_INSTANCE_URL_UPDATED, payload)
     updateInstanceUrl(payload)
+  },
+
+  setOmsRedirectionInfo({ commit }, payload) {
+    commit(types.USER_OMS_REDIRECTION_INFO_UPDATED, payload)
   },
 
   updatePwaState({commit}, payload) {

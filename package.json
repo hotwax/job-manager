@@ -24,6 +24,8 @@
     "@ionic/vue-router": "^7.6.0",
     "@types/file-saver": "^2.0.4",
     "@types/papaparse": "^5.3.1",
+    "cronstrue": "^2.50.0",
+    "cron-parser": "^4.9.0",
     "boon-js": "^2.0.3",
     "core-js": "^3.6.5",
     "file-saver": "^2.0.5",

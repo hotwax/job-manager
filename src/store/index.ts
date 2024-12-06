@@ -10,6 +10,7 @@ import jobModule from "./modules/job"
 import utilModule from "./modules/util"
 import webhookModule from "./modules/webhook"
 import { setPermissions } from '@/authorization'
+import maargJobModule from "./modules/maargJob"
 
 
 // TODO check how to register it from the components only
@@ -22,7 +23,7 @@ const state: any = {
 }
 
 const persistState = createPersistedState({
-    paths: ['user', 'util'],
+    paths: ['user', 'util', 'maargJob.maargJobEnums'],
     fetchBeforeUse: true
 })
 
@@ -38,6 +39,7 @@ const store = createStore<RootState>({
         'product': productModule,
         'job': jobModule,
         'util': utilModule,
+        'maargJob': maargJobModule,
         'webhook': webhookModule
     },
 })

@@ -44,6 +44,13 @@ const getters: GetterTree <UserState, RootState> = {
     },
     getPinnedJobs(state) {
         return state.current ? (state.current as any)['pinnedJobs']?.jobs : []
+    },
+    getMaargBaseUrl (state) {
+        const url = state.omsRedirectionInfo.url
+        return url.startsWith('http') ? url.includes('/rest/s1/admin') ? url : `${url}/rest/s1/admin/` : `https://${url}.hotwax.io/rest/s1/admin/`;
+    },
+    getOmsRedirectionInfo(state) {
+        return state.omsRedirectionInfo
     }
 }
 export default getters;
