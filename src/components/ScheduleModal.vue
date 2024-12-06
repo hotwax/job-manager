@@ -60,7 +60,6 @@ import {
   IonRadio,
   IonRadioGroup,
   IonToolbar,
-  alertController,
   modalController,
 } from "@ionic/vue";
 import {
@@ -74,7 +73,6 @@ import { mapGetters, useStore } from "vuex";
 import { translate } from "@hotwax/dxp-components";
 import logger from "@/logger";
 import { Actions, hasPermission } from '@/authorization'
-import cronstrue from "cronstrue";
 import cronParser from "cron-parser";
 export default defineComponent({
   name: "MaargJobConfiguration",

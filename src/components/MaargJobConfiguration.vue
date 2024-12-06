@@ -59,7 +59,7 @@
       <ion-icon slot="start" :icon="timeOutline" />
       {{ translate("History") }}
     </ion-item>
-    <ion-item :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" @click="runNow(currentMaargJob)" button>
+    <ion-item :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" @click="runNow()" button>
       <ion-icon slot="start" :icon="flashOutline" />
       {{ translate("Run now") }}
     </ion-item>
@@ -104,7 +104,6 @@ import JobHistoryModal from '@/components/JobHistoryModal.vue'
 import { Plugins } from '@capacitor/core';
 import { getCronString, getDateAndTime, generateJobCustomParameters, generateMaargJobCustomOptions, hasError, showToast } from "@/utils";
 import { mapGetters, useStore } from "vuex";
-import { useRouter } from "vue-router";
 import { DateTime } from "luxon";
 import { translate } from "@hotwax/dxp-components";
 import logger from "@/logger";
@@ -164,7 +163,7 @@ export default defineComponent({
         showToast(translate("Copied job details to clipboard"));
       })
     },
-    async runNow(job: any) {
+    async runNow() {
       const jobAlert = await alertController
         .create({
           header: translate("Run now"),
@@ -376,7 +375,6 @@ export default defineComponent({
   },
   setup() {
     const store = useStore();
-    const router = useRouter();
 
     return {
       Actions,
