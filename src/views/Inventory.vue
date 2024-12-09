@@ -176,7 +176,7 @@ export default defineComponent({
       }
 
       if(!this.isDesktop && this.currentJob) {
-        this.router.push({ name: 'JsobDetails', params: { jobId: this.currentJob.jobId, category: "inventory" } });
+        this.router.push({ name: 'JobDetails', params: { jobId: this.currentJob.jobId, category: "inventory" } });
         return;
       }
 
@@ -229,7 +229,7 @@ export default defineComponent({
       await this.store.dispatch("maargJob/updateCurrentMaargJob", { job })
       this.currentJob = ""
       if(!this.isDesktop && this.currentMaargJob?.jobName) {
-        this.router.push({ name: 'JobDetails', params: { jobId: this.currentMaargJob.jobTypeEnumId, category: "initial-load-maarg" } });
+        this.router.push({ name: 'JobDetails', params: { jobId: this.currentMaargJob.jobTypeEnumId, category: "inventory-maarg" } });
         return;
       }
 
