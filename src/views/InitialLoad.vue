@@ -246,7 +246,7 @@ export default defineComponent({
       }
 
       if(!this.isDesktop && this.currentJob) {
-        this.router.push({ name: 'JobDetails', params: { jobId: this.currentJob.jobId, category: "orders" } });
+        this.router.push({ name: 'JobDetails', params: { jobId: this.currentJob.jobId, category: "initial-load" } });
         return;
       }
       if (this.currentJob && !this.isJobDetailAnimationCompleted) {

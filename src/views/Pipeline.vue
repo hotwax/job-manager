@@ -708,6 +708,9 @@ export default defineComponent({
     emitter.off('jobUpdated', this.updateJobs);
     emitter.off("pinnedJobsUpdated", (this as any).updateSelectedPinnedJob);
   },
+  async ionViewWillLeave() {
+    await this.store.dispatch("maargJob/clearCurrentMaargJob");
+  },
   setup() {
     const router = useRouter();
     const store = useStore();
