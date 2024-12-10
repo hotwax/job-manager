@@ -110,6 +110,9 @@ export default defineComponent({
       }
     })
   },
+  async ionViewWillLeave() {
+    await this.store.dispatch("maargJob/clearCurrentMaargJob");
+  },
   setup() {
     const store = useStore();
 

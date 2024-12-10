@@ -240,7 +240,10 @@ export default defineComponent({
         emitter.emit('playAnimation');
         this.isJobDetailAnimationCompleted = true;
       }
-    }
+    },
+  },
+  async ionViewWillLeave() {
+    await this.store.dispatch("maargJob/clearCurrentMaargJob");
   },
   setup() {
     const store = useStore();

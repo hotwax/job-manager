@@ -248,6 +248,9 @@ export default defineComponent({
     emitter.off("productStoreOrConfigChanged", this.fetchData);
     emitter.off('viewJobConfiguration', this.viewJobConfiguration)
   },
+  async ionViewWillLeave() {
+    await this.store.dispatch("maargJob/clearCurrentMaargJob");
+  },
   setup() {
     const store = useStore();
     const router = useRouter();

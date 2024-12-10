@@ -364,7 +364,7 @@ export default defineComponent({
         this.router.push({ name: 'JobDetails', params: { jobId: this.currentMaargJob.jobTypeEnumId, category: "fulfillment-maarg" } });
         return;
       }
-
+      
       if(!this.isJobDetailAnimationCompleted) {
         emitter.emit('playAnimation');
         this.isJobDetailAnimationCompleted = true;
@@ -379,6 +379,9 @@ export default defineComponent({
   unmounted() {
     emitter.off("productStoreOrConfigChanged", this.fetchJobs);
     emitter.off('viewJobConfiguration', this.viewJobConfiguration)
+  },
+  async ionViewWillLeave() {
+    await this.store.dispatch("maargJob/clearCurrentMaargJob");
   },
   setup() {
     const store = useStore();

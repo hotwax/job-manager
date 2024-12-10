@@ -142,6 +142,10 @@ const actions: ActionTree<JobState, RootState> = {
     return currentMaargJob;
   },
 
+  async clearCurrentMaargJob({ commit }) {
+    commit(types.MAARGJOB_CURRENT_UPDATED, {});
+  },
+
   async clearMaargJobState({ commit }) {
     commit(types.MAARGJOB_ENUMS_UPDATED, {});
   }
