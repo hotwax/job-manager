@@ -406,6 +406,11 @@ export default defineComponent({
       const job = this.getMaargJob(enumId);
       await this.store.dispatch("maargJob/updateCurrentMaargJob", { job })
       this.currentJob = ""
+      if(!this.isDesktop && this.currentMaargJob?.jobName) {
+        this.router.push({ name: 'JobDetails', params: { jobId: this.currentMaargJob.jobTypeEnumId, category: "pre-order-maarg" } });
+        return;
+      }
+
       if(!this.isJobDetailAnimationCompleted) {
         emitter.emit('playAnimation');
         this.isJobDetailAnimationCompleted = true;
@@ -420,6 +425,9 @@ export default defineComponent({
   unmounted() {
     emitter.on('viewJobConfiguration', this.viewJobConfiguration)
     emitter.off("productStoreOrConfigChanged", this.fetchJobs);
+  },
+  async ionViewWillLeave() {
+    await this.store.dispatch("maargJob/clearCurrentMaargJob");
   },
   setup() {
     const store = useStore();
