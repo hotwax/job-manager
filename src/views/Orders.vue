@@ -76,11 +76,6 @@
             <ion-card-header>
               <ion-card-title>{{ translate("Upload") }}</ion-card-title>
             </ion-card-header>
-            <ion-item @click="viewJobConfiguration({ id: 'UPLD_CMPLT_ORDRS', status: getJobStatus(jobEnums['UPLD_CMPLT_ORDRS'])})" detail button>
-              <ion-label class="ion-text-wrap">{{ translate("Completed orders") }}</ion-label>
-              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('UPLD_CMPLT_ORDRS') }}</ion-label>
-              <ion-skeleton-text v-else style="width: 30%;" animated />
-            </ion-item>
             <ion-item @click="viewJobConfiguration({ id: 'UPLD_CNCLD_ORDRS', status: getJobStatus(jobEnums['UPLD_CNCLD_ORDRS'])})" detail button>
               <ion-label class="ion-text-wrap">{{ translate("Cancelled orders") }}</ion-label>
               <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('UPLD_CNCLD_ORDRS') }}</ion-label>
