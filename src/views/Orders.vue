@@ -39,6 +39,11 @@
               <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('IMP_CANCELLED_ITEMS') }}</ion-label>
               <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
+            <ion-item @click="viewJobConfiguration({ id: 'IMP_MISS_ORD', status: getJobStatus(jobEnums['IMP_MISS_ORD'])})" detail button>
+              <ion-label class="ion-text-wrap">{{ translate("Import last day orders from Shopify") }}</ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('IMP_MISS_ORD') }}</ion-label>
+              <ion-skeleton-text v-else style="width: 30%;" animated />
+            </ion-item>
             <ion-item @click="viewJobConfiguration({ id: 'IMP_RETURNS', status: getJobStatus(jobEnums['IMP_RETURNS'])})" detail button>
               <ion-label class="ion-text-wrap">{{ translate("Returns") }}</ion-label>
               <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('IMP_RETURNS') }}</ion-label>
