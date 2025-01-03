@@ -19,6 +19,11 @@
               <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('HARD_SYNC') }}</ion-label>
               <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
+            <ion-item button @click="viewJobConfiguration({ id: 'IMP_PROD_FACILITY', status: getJobStatus(jobEnums['IMP_PROD_FACILITY'])})" detail>
+              <ion-label class="ion-text-wrap">{{ translate("Import product facility") }}</ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('IMP_PROD_FACILITY') }}</ion-label>
+              <ion-skeleton-text v-else style="width: 30%;" animated />
+            </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
                 <p>{{ translate("Performing a hard sync from HotWax Commerce to Shopify is useful for eliminating any discrepencies.") }}</p>
