@@ -23,7 +23,7 @@
       </ion-item>
     </div>
 
-    <div class="empty-state" v-else-if="!(askResponse).text">
+    <div class="empty-state" v-else-if="!askResponse.text">
       <ion-item lines="none">
         <p>{{ translate("The job details is not generating, please try again later.") }}</p>
       </ion-item>
