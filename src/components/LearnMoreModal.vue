@@ -23,7 +23,7 @@
       </ion-item>
     </div>
 
-    <div class="empty-state" v-else-if="!Object.keys(askResponse).length">
+    <div class="empty-state" v-else-if="!(askResponse).text">
       <ion-item lines="none">
         <p>{{ translate("The job details is not generating, please try again later.") }}</p>
       </ion-item>
@@ -37,11 +37,11 @@
         </ion-label>
       </ion-item>
 
-      <ion-list>
+      <ion-list v-if="jobSection.length">
         <ion-item lines="none">
           <ion-label>{{ translate("Sources") }}</ion-label>
         </ion-item>
-        <ion-row class="ion-padding" v-for="section in jobSection" :key="section.id">
+        <ion-row class="ion-padding-start" v-for="section in jobSection" :key="section.id">
           <ion-chip outline @click="redirectToDoc(section)">
             <ion-label>{{ section.title }}</ion-label>
             <ion-icon :icon="openOutline" />
@@ -138,7 +138,7 @@ export default defineComponent({
           this.askResponse = resp.data.answer;
           if(this.askResponse) {
             const pageIds = this.askResponse?.sources.map((source: any) => source.page);
-            this.searchQuery(pageIds);
+            pageIds && pageIds.length ? this.searchQuery(pageIds) : this.isGeneratingAnswer = false
           } else {
             this.isGeneratingAnswer = false;
           }
