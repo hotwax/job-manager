@@ -78,7 +78,7 @@
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
-                <p>{{ translate("Sends notifications for  open , ready-for-pickup BOPIS orders and brokered, packed, and completed Sales orders.") }}</p>
+                <p>{{ translate("Sends notifications for open, ready-for-pickup BOPIS orders and brokered, packed, and completed Sales orders.") }}</p>
               </ion-label>
             </ion-item>
           </ion-card>
