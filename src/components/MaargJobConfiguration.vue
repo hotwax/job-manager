@@ -294,9 +294,17 @@ export default defineComponent({
 
       const paramValues = generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters, {});
 
-      job.serviceJobParameters.map((parameter: any) => {
-        if(paramValues[parameter.parameterName]) {
-          parameter.parameterValue = paramValues[parameter.parameterName]
+      Object.keys(paramValues).map((paramName: any) => {
+        const existingParameter = job.serviceJobParameters.find((parameter: any) => parameter.parameterName === paramName);
+
+        if(existingParameter) {
+          existingParameter.parameterValue = paramValues[paramName]
+        } else {
+          job.serviceJobParameters.push({
+            parameterName: paramName,
+            parameterValue: paramValues[paramName],
+            jobName: job.jobName
+          })
         }
       })
 
