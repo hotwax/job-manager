@@ -289,7 +289,7 @@
   "Send next bulk query system message in queue": "Send next bulk query system message in queue",
   "Send Packed Order Mail": "Send Packed Order Mail",
   "Send shopify fulfillment ack feed": "Send shopify fulfillment ack feed",
-  "Sends notifications for  open , ready-for-pickup BOPIS orders and brokered, packed, and completed Sales orders.": "Sends notifications for open , ready-for-pickup BOPIS orders and brokered, packed, and completed Sales orders.",
+  "Sends notifications for open, ready-for-pickup BOPIS orders and brokered, packed, and completed Sales orders.": "Sends notifications for open, ready-for-pickup BOPIS orders and brokered, packed, and completed Sales orders.",
   "Service has been scheduled": "Service has been scheduled",
   "Service updated successfully": "Service updated successfully",
   "Services have been scheduled in bulk": "Services have been scheduled in bulk",
