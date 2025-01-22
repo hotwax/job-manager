@@ -38,7 +38,7 @@
         </ion-item>
       </div>
       <main v-else>
-        <section v-if="segmentSelected === 'pending'">
+        <section id="pending" v-if="segmentSelected === 'pending'">
           <!-- Empty state -->
           <div v-if="pendingJobs?.length === 0">
             <p class="ion-text-center">{{ translate("There are no jobs pending right now")}}</p>
@@ -113,7 +113,7 @@
           </div>
         </section>
 
-        <section v-if="segmentSelected === 'running'">
+        <section id="running" v-if="segmentSelected === 'running'">
           <!-- Empty state -->
           <div v-if="runningJobs?.length === 0">
             <p class="ion-text-center">{{ translate("There are no jobs running right now")}}</p>
@@ -179,7 +179,7 @@
           </div> 
         </section>
 
-        <section v-if="segmentSelected === 'history'">
+        <section id="history" v-if="segmentSelected === 'history'">
           <!-- Empty state -->
           <div v-if="jobHistory?.length === 0">
             <p class="ion-text-center">{{ translate("No jobs have run yet")}}</p>
@@ -256,11 +256,11 @@
 
           <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
             <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
-          </ion-refresher>   
+          </ion-refresher>
           <ion-infinite-scroll @ionInfinite="loadMoreJobHistory($event)" threshold="100px"  v-show="isHistoryJobsScrollable" ref="infiniteScrollRef">
             <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="translate('Loading')"/>
           </ion-infinite-scroll>
-          </div>          
+          </div>
         </section>
 
         <aside class="desktop-only" v-if="isDesktop" v-show="(segmentSelected === 'pending' || segmentSelected === 'history') && currentJob && Object.keys(currentJob).length">
@@ -821,5 +821,25 @@ ion-chip {
   ion-toolbar > div > ion-chip:first-child {
     margin-left: var(--spacer-3xl);
   }
+
+  /* overriding global main element CSS */
+  main {
+    margin-block-start: none;
+    /* limit height to visibile canvas */
+    height: 100%;
+    overflow-y: hidden;
+  }
+
+  /* allow both columns to scroll independently */
+  section, aside {
+    height: 100%;
+    overflow: scroll;
+    padding-block-start: var(--spacer-base);
+  }
+
+  aside {
+    padding-block-end: var(--spacer-base);
+  }
+
 }
 </style>
