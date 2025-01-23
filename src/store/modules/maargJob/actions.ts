@@ -62,7 +62,6 @@ const actions: ActionTree<JobState, RootState> = {
     let resp = {} as any;
     let jobs = JSON.parse(JSON.stringify(state.maargJobs));
     let currentJob = jobs[jobEnumId]
-    const maargJobEnums = store.getters["maargJob/getMaargJobEnums"]
 
     try {
       if(!currentJob?.jobName) {
@@ -81,12 +80,12 @@ const actions: ActionTree<JobState, RootState> = {
         updatedJob.serviceJobParameters.map((parameter: any) => {
           paramValue[parameter.parameterName] = parameter.parameterValue
         })
-        updatedJob["parameterValues"] = paramValue
-        updatedJob["enumDescription"] = maargJobEnums[updatedJob.jobTypeEnumId]?.description
 
-        jobs[jobEnumId] = updatedJob
+        currentJob = { ...currentJob, parameterValues: paramValue, ...updatedJob }
+
+        jobs[jobEnumId] = currentJob
         commit(types.MAARGJOB_UPDATED, jobs);
-        commit(types.MAARGJOB_CURRENT_UPDATED, updatedJob);
+        commit(types.MAARGJOB_CURRENT_UPDATED, currentJob);
       } else {
         throw resp;
       }
