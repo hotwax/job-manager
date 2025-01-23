@@ -24,6 +24,11 @@
               <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('SYNC_PRDTS') }} </ion-label>
               <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
+            <ion-item button @click="viewJobConfiguration({ id: 'ACT_PROD_SHPFY', status: getJobStatus(jobEnums['ACT_PROD_SHPFY'])})" detail>
+              <ion-label class="ion-text-wrap">{{ translate("Activate products on Shopify") }}</ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('ACT_PROD_SHPFY') }} </ion-label>
+              <ion-skeleton-text v-else style="width: 30%;" animated />
+            </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap"><p>{{ translate("Sync products and category structures from Shopify into HotWax Commerce and keep them up to date.") }}</p></ion-label>
             </ion-item>
