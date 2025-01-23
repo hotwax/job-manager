@@ -74,13 +74,14 @@ const actions: ActionTree<JobState, RootState> = {
 
       resp = await MaargJobService.fetchMaargJobInfo(currentJob.jobName);
       if(!hasError(resp)) {
-        const currentJob = resp.data?.jobDetail
+        const updatedJob = resp.data?.jobDetail
         
         const paramValue = {} as any;
-        currentJob.serviceJobParameters.map((parameter: any) => {
+        updatedJob.serviceJobParameters.map((parameter: any) => {
           paramValue[parameter.parameterName] = parameter.parameterValue
         })
-        currentJob["parameterValues"] = paramValue
+
+        currentJob = { ...currentJob, parameterValues: paramValue, ...updatedJob }
 
         jobs[jobEnumId] = currentJob
         commit(types.MAARGJOB_UPDATED, jobs);
