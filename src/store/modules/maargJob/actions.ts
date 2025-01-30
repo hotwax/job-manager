@@ -10,7 +10,6 @@ import { MaargJobService } from '@/services/MaargJobService'
 const actions: ActionTree<JobState, RootState> = {
   async fetchMaargJobs({ commit, dispatch }, jobTypeEnumIds){
     const productStoreId = store.getters["user/getCurrentEComStore"]?.productStoreId
-    const maargJobEnums = store.getters["maargJob/getMaargJobEnums"]
 
     let resp = {} as any;
     const maargJobs = {} as any;
@@ -23,6 +22,7 @@ const actions: ActionTree<JobState, RootState> = {
         
         const responses = await Promise.allSettled(jobs.map((job: any) => MaargJobService.fetchMaargJobInfo(job.jobName)))
         await dispatch("fetchMaargJobEnums", jobEnumIdsToFetch)
+        const maargJobEnums = store.getters["maargJob/getMaargJobEnums"]
 
         responses.map((response: any) => {
           if(response.status === "fulfilled") {
