@@ -3,7 +3,7 @@ import { toastController } from '@ionic/vue';
 import Papa from 'papaparse'
 import { DateTime } from "luxon";
 import logger from "@/logger";
-import { translate } from "@hotwax/dxp-components";
+import { translate, useUserStore } from "@hotwax/dxp-components";
 import { Plugins } from '@capacitor/core';
 import cronstrue from "cronstrue"
 
@@ -406,6 +406,11 @@ const generateMaargJobCustomOptions = (job: any) => {
   }
 }
 
+const getProductStoreId = () => {
+  const currentEComStore: any = useUserStore().getCurrentEComStore;
+  return currentEComStore.productStoreId
+};
+
 export {
   copyToClipboard,
   isCustomRunTime,
@@ -417,6 +422,7 @@ export {
   generateMaargJobCustomOptions,
   getCronString,
   getDateAndTime,
+  getProductStoreId,
   handleDateTimeInput,
   hasJobDataError,
   showToast,

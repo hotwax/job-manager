@@ -56,13 +56,13 @@ import {
   IonToolbar,
   modalController
 } from '@ionic/vue';
-import { defineComponent } from 'vue';
+import { computed, defineComponent } from 'vue';
 import { closeOutline } from 'ionicons/icons';
 import { mapGetters, useStore } from 'vuex';
 import { DateTime } from 'luxon';
 import { JobService } from '@/services/JobService'
 import { hasError, timeTillRun } from '@/utils';
-import { translate } from '@hotwax/dxp-components';
+import { translate, useUserStore } from '@hotwax/dxp-components';
 import logger from '@/logger';
 import { MaargJobService } from '@/services/MaargJobService';
 
@@ -89,7 +89,6 @@ export default defineComponent({
   props: ['currentJob', 'isMaargJob'],
   computed: {
     ...mapGetters({
-      getCurrentEComStore:'user/getCurrentEComStore',
       getStatusDesc: 'util/getStatusDesc',
       currentShopifyConfig: 'user/getCurrentShopifyConfig'
     })
@@ -110,7 +109,7 @@ export default defineComponent({
       try {
         resp = await JobService.fetchJobInformation({
           "inputFields": {
-            "productStoreId": this.getCurrentEComStore.productStoreId,
+            "productStoreId": this.currentEComStore.productStoreId,
             "statusId": ["SERVICE_CANCELLED", "SERVICE_CRASHED", "SERVICE_FAILED", "SERVICE_FINISHED"],
             "statusId_op": "in",
             "systemJobEnumId": this.currentJob?.systemJobEnumId,
@@ -157,9 +156,12 @@ export default defineComponent({
   },
   setup() {
     const store = useStore();
+    const userStore = useUserStore()
+    let currentEComStore: any = computed(() => userStore.getCurrentEComStore)
 
     return {
       closeOutline,
+      currentEComStore,
       store,
       timeTillRun,
       translate

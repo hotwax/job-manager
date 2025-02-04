@@ -61,13 +61,13 @@ import {
   IonToolbar,
   isPlatform,
 } from '@ionic/vue';
-import { defineComponent } from 'vue';
+import { computed, defineComponent } from 'vue';
 import { useRouter } from 'vue-router'
 import { mapGetters, useStore } from 'vuex'
 import emitter from '@/event-bus';
 import JobConfiguration from '@/components/JobConfiguration.vue';
 import { isFutureDate } from '@/utils';
-import { translate } from '@hotwax/dxp-components';
+import { translate, useUserStore } from '@hotwax/dxp-components';
 
 export default defineComponent({
   name: 'Reports',
@@ -101,7 +101,6 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       reportsJobs: 'job/getReportsJobs',
-      getCurrentEComStore: 'user/getCurrentEComStore',
       isReportsJobsScrollable: 'job/isReportsJobsScrollable'
     })
   },
@@ -136,7 +135,7 @@ export default defineComponent({
       }
     },
     async getReportsJobs(viewSize = 200, viewIndex = 0) {
-      await this.store.dispatch('job/fetchReportsJobs', { eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex });
+      await this.store.dispatch('job/fetchReportsJobs', { eComStoreId: this.currentEComStore.productStoreId, viewSize, viewIndex });
     },
     async updateProductStoreConfig(isCurrentJobUpdateRequired = false) {
       if(isCurrentJobUpdateRequired) {
@@ -173,8 +172,11 @@ export default defineComponent({
   setup() {
     const store = useStore();
     const router = useRouter();
+    const userStore = useUserStore()
+    let currentEComStore: any = computed(() => userStore.getCurrentEComStore)
 
     return {
+      currentEComStore,
       router,
       store,
       translate

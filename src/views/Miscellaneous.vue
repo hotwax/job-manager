@@ -91,13 +91,13 @@ import {
   IonToolbar,
   isPlatform,
 } from '@ionic/vue';
-import { defineComponent } from 'vue';
+import { computed, defineComponent } from 'vue';
 import { useRouter } from 'vue-router'
 import { mapGetters, useStore } from 'vuex'
 import emitter from '@/event-bus';
 import JobConfiguration from '@/components/JobConfiguration.vue';
 import { getCronString, isFutureDate } from '@/utils';
-import { translate } from '@hotwax/dxp-components';
+import { translate, useUserStore } from '@hotwax/dxp-components';
 import MaargJobConfiguration from '@/components/MaargJobConfiguration.vue';
 
 export default defineComponent({
@@ -145,7 +145,6 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       miscellaneousJobs: 'job/getMiscellaneousJobs',
-      getCurrentEComStore:'user/getCurrentEComStore',
       isMiscellaneousJobsScrollable: 'job/isMiscellaneousJobsScrollable',
       getMaargJob: 'maargJob/getMaargJob',
       currentMaargJob: 'maargJob/getCurrentMaargJob'
@@ -184,7 +183,7 @@ export default defineComponent({
       }
     },
     async getMiscellaneousJobs(viewSize = 100, viewIndex = 0) {
-      await this.store.dispatch('job/fetchMiscellaneousJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex});
+      await this.store.dispatch('job/fetchMiscellaneousJobs', {eComStoreId: this.currentEComStore.productStoreId, viewSize, viewIndex});
       await this.store.dispatch("maargJob/fetchMaargJobs", Object.values(this.maargJobEnums));
     },
     async updateProductStoreConfig(isCurrentJobUpdateRequired = false) {
@@ -248,8 +247,11 @@ export default defineComponent({
   setup() {
     const store = useStore();
     const router = useRouter();
+    const userStore = useUserStore()
+    let currentEComStore: any = computed(() => userStore.getCurrentEComStore)
 
     return {
+      currentEComStore,
       getCronString,
       router,
       store,

@@ -1,6 +1,7 @@
 import { hasError } from '@/utils'
 import store from '@/store';
 import { api } from '@/adapter';
+import { getProductStoreId } from '@/utils';
 
 const fetchJobInformation = async (payload: any): Promise <any>  => {
   return api({
@@ -111,10 +112,10 @@ const fetchJobPreviousOccurrence = async (payload: any): Promise <any>  => {
       "viewIndex": 0,
       "orderBy": "runTime DESC"
     }
-    if (store.state.user.currentEComStore?.productStoreId) {
+    if (getProductStoreId()) {
       params.inputFields = {
         ...params.inputFields,
-        "productStoreId": store.state.user.currentEComStore?.productStoreId,
+        "productStoreId": getProductStoreId(),
         "shopId_fld0_value": store.state.user.currentShopifyConfig?.shopId,
         "shopId_fld0_grp": "1",
         "shopId_fld0_op": "equals",

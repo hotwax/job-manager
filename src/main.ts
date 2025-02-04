@@ -32,7 +32,7 @@ import permissionRules from '@/authorization/Rules';
 import permissionActions from '@/authorization/Actions';
 import { dxpComponents } from '@hotwax/dxp-components'
 import { login, logout, loader } from './user-utils';
-import { getConfig, initialise,   setUserTimeZone, getAvailableTimeZones } from './adapter';
+import { getConfig, initialise,   setUserTimeZone, getAvailableTimeZones, getUserPreference, setUserPreference } from './adapter';
 import localeMessages from './locales';
 
 
@@ -60,6 +60,8 @@ const app = createApp(App)
     initialise,
     setUserTimeZone,
     getAvailableTimeZones,
+    getUserPreference, 
+    setUserPreference,
     localeMessages,
     hasPermission
   })

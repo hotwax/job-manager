@@ -39,9 +39,6 @@ const getters: GetterTree <UserState, RootState> = {
     getPwaState (state) {
         return state.pwaState;
     },
-    getCurrentEComStore(state) {
-        return state.currentEComStore
-    },
     getPinnedJobs(state) {
         return state.current ? (state.current as any)['pinnedJobs']?.jobs : []
     },

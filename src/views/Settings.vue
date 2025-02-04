@@ -37,25 +37,7 @@
       </div>
       <section>
         <DxpOmsInstanceNavigator />
-
-        <ion-card>
-          <ion-card-header>
-            <ion-card-subtitle>
-              {{ translate("Product Store") }}
-            </ion-card-subtitle>
-            <ion-card-title>
-              {{ translate("Store") }}
-            </ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            {{ translate("A store represents a company or a unique catalog of products. If your OMS is connected to multiple eCommerce stores sellling different collections of products, you may have multiple Product Stores set up in HotWax Commerce.") }}
-          </ion-card-content>
-          <ion-item lines="none">
-            <ion-select :label="translate('Select store')" interface="popover" :value="currentEComStore.productStoreId" @ionChange="setEComStore($event)">
-              <ion-select-option v-for="store in (userProfile ? userProfile.stores : [])" :key="store.productStoreId" :value="store.productStoreId" >{{ store.storeName }}</ion-select-option>
-            </ion-select>
-          </ion-item>
-        </ion-card>
+        <DxpProductStoreSelector @updateEComStore="updateEComStore($event)"/>
         <ion-card>
           <ion-card-header>
             <ion-card-subtitle>
@@ -124,21 +106,13 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       userProfile: 'user/getUserProfile',
-      currentEComStore: 'user/getCurrentEComStore',
       shopifyConfigs: 'user/getShopifyConfigs',
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
     })
   },
   methods: {
-    setEComStore(event: any) {
-      // If the value is same, no need to update
-      // Handled case for programmatical changes
-      // https://github.com/ionic-team/ionic-framework/discussions/25532
-      // https://github.com/ionic-team/ionic-framework/issues/20106
-      // https://github.com/ionic-team/ionic-framework/pull/25858
-      if(this.userProfile && this.currentEComStore?.productStoreId !== event.detail.value) {
-        this.store.dispatch('user/setEcomStore', { 'productStoreId': event.detail.value })
-      }
+    updateEComStore(selectedProductStore: any) {
+      this.store.dispatch('user/setEComStore', selectedProductStore?.productStoreId)
     },
     setShopifyConfig(event: any){
       this.store.dispatch('user/setCurrentShopifyConfig', { 'shopifyConfigId': event.detail.value });

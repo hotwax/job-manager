@@ -14,10 +14,6 @@ const userModule: Module<UserState, RootState> = {
       instanceUrl: '',
       shopifyConfigs: [],
       currentShopifyConfig: {},
-      currentEComStore: {
-        productStoreId: "",
-        storeName: "None"
-      },
       productStoreCategories: {},
       pwaState: {
         updateExists: false,

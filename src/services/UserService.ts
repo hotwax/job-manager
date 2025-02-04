@@ -81,38 +81,6 @@ const getShopifyConfig = async (productStoreId: any, token?: any): Promise <any>
   }
 }
 
-const getEComStores = async (token: any): Promise<any> => {
-  try {
-    const params = {
-      "inputFields": {
-        "storeName_op": "not-empty"
-      },
-      "fieldList": ["productStoreId", "storeName"],
-      "entityName": "ProductStore",
-      "distinct": "Y",
-      "noConditionFind": "Y"
-    }
-    const baseURL = store.getters['user/getBaseUrl'];
-    const resp = await client({
-      url: "performFind",
-      method: "get",
-      baseURL,
-      params,
-      headers: {
-        Authorization:  'Bearer ' + token,
-        'Content-Type': 'application/json'
-      }
-    });
-    if (hasError(resp)) {
-      return Promise.reject(resp?.data);
-    } else {
-      return Promise.resolve(resp?.data.docs);
-    }
-  } catch(error: any) {
-    return Promise.reject(error)
-  }
-}
-
 const getEcommerceCatalog = async (productStoreId: any): Promise<any> => {
   try {
     const params = {
@@ -379,7 +347,6 @@ const getUserProfile = async (token: any): Promise<any> => {
 export const UserService = {
     createPinnedJobPref,
     login,
-    getEComStores,
     getEcommerceCatalog,
     getPreOrderBackorderCategory,
     getShopifyConfig,

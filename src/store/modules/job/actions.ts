@@ -2,7 +2,7 @@ import { ActionTree } from 'vuex'
 import RootState from '@/store/RootState'
 import JobState from './JobState'
 import * as types from './mutation-types'
-import { isCustomRunTime, generateAllowedFrequencies, hasError, showToast } from '@/utils'
+import { isCustomRunTime, generateAllowedFrequencies, getProductStoreId, hasError, showToast } from '@/utils'
 import { JobService } from '@/services/JobService'
 import { translate } from '@hotwax/dxp-components'
 import { DateTime } from 'luxon';
@@ -475,7 +475,7 @@ const actions: ActionTree<JobState, RootState> = {
 
     // Fetching pending jobs
     params.inputFields.statusId = "SERVICE_PENDING";
-    params.inputFields.productStoreId = this.state.user.currentEComStore.productStoreId;
+    params.inputFields.productStoreId = getProductStoreId();
     params.inputFields.tempExprId_op = "not-empty";
     fetchJobRequests.push(JobService.fetchJobInformation(params).catch((err) => {
       return err;
@@ -627,7 +627,7 @@ const actions: ActionTree<JobState, RootState> = {
       'SERVICE_TEMP_EXPR': job.jobStatus,
       'SERVICE_RUN_AS_SYSTEM':'Y',
       'jobFields': {
-        'productStoreId': this.state.user.currentEComStore.productStoreId,
+        'productStoreId': getProductStoreId(),
         'systemJobEnumId': job.systemJobEnumId,
         'tempExprId': job.jobStatus, // Need to remove this as we are passing frequency in SERVICE_TEMP_EXPR, currently kept it for backward compatibility
         'maxRecurrenceCount': '-1',
@@ -656,7 +656,7 @@ const actions: ActionTree<JobState, RootState> = {
     }
 
     // checking if the runtimeData has productStoreId, and if present then adding it on root level
-    job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.state.user.currentEComStore.productStoreId)
+    job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = getProductStoreId())
     job?.priority && (payload['SERVICE_PRIORITY'] = job.priority.toString())
     job?.runTime && (payload['SERVICE_TIME'] = job.runTime.toString())
     job?.sinceId && (payload['sinceId'] = job.sinceId)
@@ -758,7 +758,7 @@ const actions: ActionTree<JobState, RootState> = {
       'SERVICE_COUNT': '0',
       'SERVICE_TEMP_EXPR': job.jobStatus,
       'jobFields': {
-        'productStoreId': job.status === "SERVICE_PENDING" ? job.productStoreId : this.state.user.currentEComStore.productStoreId,
+        'productStoreId': job.status === "SERVICE_PENDING" ? job.productStoreId : getProductStoreId(),
         'systemJobEnumId': job.systemJobEnumId,
         'tempExprId': job.jobStatus, // Need to remove this as we are passing frequency in SERVICE_TEMP_EXPR, currently kept it for backward compatibility
         'parentJobId': job.parentJobId,
@@ -771,7 +771,7 @@ const actions: ActionTree<JobState, RootState> = {
       ...params.jobCustomParameters
     } as any
     // checking if the runtimeData has productStoreId, and if present then adding it on root level
-    job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = job.status === "SERVICE_PENDING" ? job.productStoreId : this.state.user.currentEComStore.productStoreId)
+    job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = job.status === "SERVICE_PENDING" ? job.productStoreId : getProductStoreId())
     job?.priority && (payload['SERVICE_PRIORITY'] = job.priority.toString())
     job?.sinceId && (payload['sinceId'] = job.sinceId)
 

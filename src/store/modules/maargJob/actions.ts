@@ -2,14 +2,13 @@ import { ActionTree } from 'vuex'
 import RootState from '@/store/RootState'
 import JobState from './MaargJobState'
 import * as types from './mutation-types'
-import { hasError } from '@/utils'
+import { hasError, getProductStoreId } from '@/utils'
 import store from '@/store'
 import logger from "@/logger";
 import { MaargJobService } from '@/services/MaargJobService'
 
 const actions: ActionTree<JobState, RootState> = {
   async fetchMaargJobs({ commit, dispatch }, jobTypeEnumIds){
-    const productStoreId = store.getters["user/getCurrentEComStore"]?.productStoreId
     const maargJobEnums = store.getters["maargJob/getMaargJobEnums"]
 
     let resp = {} as any;
@@ -36,7 +35,7 @@ const actions: ActionTree<JobState, RootState> = {
             job["enumDescription"] = maargJobEnums[job.jobTypeEnumId]?.description
 
             if(Object.hasOwn(paramValues, "productStoreIds")) {
-              if(paramValues["productStoreIds"] === productStoreId) {
+              if(paramValues["productStoreIds"] === getProductStoreId()) {
                 maargJobs[job.jobTypeEnumId] = job 
               }
             } else {

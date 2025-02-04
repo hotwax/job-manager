@@ -3,13 +3,14 @@ import { ActionTree } from 'vuex'
 import RootState from '@/store/RootState'
 import UserState from './UserState'
 import * as types from './mutation-types'
-import { hasError, showToast } from '@/utils'
+import { hasError, getProductStoreId, showToast } from '@/utils'
 import { translate } from '@hotwax/dxp-components'
 import { Settings } from 'luxon'
 import { getServerPermissionsFromRules, prepareAppPermissions, resetPermissions, setPermissions } from '@/authorization'
-import { logout, updateInstanceUrl, updateToken, resetConfig } from '@/adapter'
+import { logout, getEComStores, updateInstanceUrl, updateToken, resetConfig } from '@/adapter'
 import logger from "@/logger";
 import { useAuthStore } from '@hotwax/dxp-components'
+import { useUserStore } from '@hotwax/dxp-components'
 import emitter from '@/event-bus'
 import store from '@/store'
 
@@ -53,20 +54,15 @@ const actions: ActionTree<UserState, RootState> = {
       }
 
       const userProfile = await UserService.getUserProfile(token);
-      userProfile.stores = await UserService.getEComStores(token);
-
+      userProfile.stores = await getEComStores(token, store.getters['user/getBaseUrl'], 100)
+      useUserStore().eComStores = userProfile.stores;
       // In Job Manager application, we have jobs which may not be associated with any product store
       userProfile.stores.push({
         productStoreId: "",
         storeName: "None"
       })
-      let preferredStore = userProfile.stores[0]
-
-      const preferredStoreId =  await UserService.getPreferredStore(token);
-      if (preferredStoreId) {
-        const store = userProfile.stores.find((store: any) => store.productStoreId === preferredStoreId);
-        store && (preferredStore = store)
-      }
+      await useUserStore().getEComStorePreference('SELECTED_BRAND');
+      const preferredStore: any = useUserStore().getCurrentEComStore
 
       const shopifyConfigs =  await UserService.getShopifyConfig(preferredStore.productStoreId, token);
       // TODO store and get preferred config
@@ -99,7 +95,6 @@ const actions: ActionTree<UserState, RootState> = {
       }
 
       // TODO user single mutation
-      commit(types.USER_CURRENT_ECOM_STORE_UPDATED, preferredStore);
       commit(types.USER_INFO_UPDATED, userProfile);
       commit(types.USER_SHOPIFY_CONFIGS_UPDATED, shopifyConfigs);
       commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, currentShopifyConfig);
@@ -169,14 +164,9 @@ const actions: ActionTree<UserState, RootState> = {
   /**
    * update current eComStore information
    */
-  async setEcomStore({ commit, dispatch }, payload) {
+  async setEComStore({ commit, dispatch }, productStoreId) {
     dispatch('job/clearJobState', null, { root: true });
-    let productStore = payload.productStore;
-    if(!productStore) {
-      productStore = this.state.user.current.stores.find((store: any) => store.productStoreId === payload.productStoreId);
-    }
-    commit(types.USER_CURRENT_ECOM_STORE_UPDATED, productStore);
-    await dispatch('getShopifyConfig',  productStore.productStoreId);
+    await dispatch('getShopifyConfig', productStoreId);
   },
   /**
    * Update user timeZone
@@ -225,7 +215,7 @@ const actions: ActionTree<UserState, RootState> = {
   },
 
   async getPreOrderBackorderCategory({ state, commit }) {
-    const productStoreId =  (state.currentEComStore as any).productStoreId
+    const productStoreId =  getProductStoreId()
     if (!productStoreId) {
       logger.warn("No productStoreId provided. Not fetching pre-order/backorder categories");
       return;

@@ -119,14 +119,14 @@ import {
   alertController,
   modalController
 } from '@ionic/vue';
-import { defineComponent } from 'vue';
+import { computed, defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
 import { addOutline, iceCreamOutline, timeOutline, timerOutline } from 'ionicons/icons';
 import { useRouter } from 'vue-router';
 import SelectJobsModal from '@/views/SelectJobsModal.vue';
 import { UserService } from '@/services/UserService'
 import { isCustomRunTime, getNowTimestamp, generateAllowedRunTimes, generateAllowedFrequencies, hasError, showToast, handleDateTimeInput } from '@/utils'
-import { translate } from '@hotwax/dxp-components'
+import { translate, useUserStore } from '@hotwax/dxp-components'
 import JobConfigurationForBulkScheduler from '@/components/JobConfigurationForBulkScheduler.vue'
 import { DateTime } from 'luxon';
 import { Actions, hasPermission } from '@/authorization'
@@ -172,7 +172,6 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       userProfile: 'user/getUserProfile',
-      currentEComStore: 'user/getCurrentEComStore',
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
       bulkJobs: 'job/getBulkJobs',
       globalRuntime: 'job/getGlobalRuntime',
@@ -183,9 +182,12 @@ export default defineComponent({
   setup() {
     const store = useStore();
     const router = useRouter();
+    const userStore = useUserStore()
+    let currentEComStore: any = computed(() => userStore.getCurrentEComStore)
 
     return {
       addOutline,
+      currentEComStore,
       DateTime,
       iceCreamOutline,
       isCustomRunTime,

@@ -66,10 +66,10 @@ import {
   IonTitle,
   IonToolbar
 } from "@ionic/vue";
-import { defineComponent } from "vue";
+import { computed, defineComponent } from "vue";
 import { albumsOutline, banOutline, barChartOutline, calendarNumberOutline, checkmarkDoneOutline, closeOutline, compassOutline, filterOutline, iceCreamOutline, libraryOutline, pulseOutline, sendOutline, settings, shirtOutline, ticketOutline } from "ionicons/icons";
 import { mapGetters, useStore } from 'vuex';
-import { translate } from "@hotwax/dxp-components";
+import { translate, useUserStore } from "@hotwax/dxp-components";
 
 export default defineComponent({
   name: "Filters",
@@ -88,6 +88,9 @@ export default defineComponent({
   props: ["segmentSelected", "queryString"],
   setup() {
     const store = useStore();
+    const userStore = useUserStore()
+    let currentEComStore: any = computed(() => userStore.getCurrentEComStore)
+
     const statusFilters = [
       {
         name: "Finished",
@@ -166,6 +169,7 @@ export default defineComponent({
       checkmarkDoneOutline,
       categoryFilters,
       closeOutline,
+      currentEComStore,
       filterOutline,
       iceCreamOutline,
       libraryOutline,
@@ -181,7 +185,6 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       getEnumName: 'job/getEnumName',
-      currentEComStore: 'user/getCurrentEComStore',
       pinnedJobs: 'user/getPinnedJobs',
       pipelineFilters: 'job/getPipelineFilters'
     })

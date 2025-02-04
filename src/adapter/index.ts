@@ -1,4 +1,4 @@
-import { api, askQuery, client, getConfig, initialise, logout, resetConfig, searchQuery, updateInstanceUrl, updateToken, setUserTimeZone, getAvailableTimeZones} from '@hotwax/oms-api'
+import { api, askQuery, client, getConfig, initialise, logout, resetConfig, searchQuery, updateInstanceUrl, updateToken, setUserTimeZone, getAvailableTimeZones, getEComStores, getUserPreference, setUserPreference } from '@hotwax/oms-api'
 
 export {
   api,
@@ -12,5 +12,8 @@ export {
   updateToken,
   searchQuery,
   setUserTimeZone,
-  getAvailableTimeZones
+  getAvailableTimeZones,
+  getEComStores, 
+  getUserPreference, 
+  setUserPreference
 }

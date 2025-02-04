@@ -160,8 +160,8 @@ import {
   IonToolbar,
   isPlatform
 } from '@ionic/vue';
-import { defineComponent } from 'vue';
-import { translate } from '@hotwax/dxp-components'
+import { computed, defineComponent } from 'vue';
+import { translate, useUserStore } from '@hotwax/dxp-components'
 import { useStore } from "@/store";
 import { useRouter } from 'vue-router'
 import { mapGetters } from "vuex";
@@ -216,7 +216,6 @@ export default defineComponent({
     ...mapGetters({
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
-      currentEComStore: 'user/getCurrentEComStore',
       getTemporalExpr: 'job/getTemporalExpr',
       getMoreJobs: 'job/getMoreJobs',
       getMaargJob: 'maargJob/getMaargJob',
@@ -401,9 +400,12 @@ export default defineComponent({
   setup() {
     const store = useStore();
     const router = useRouter();
+    const userStore = useUserStore()
+    let currentEComStore: any = computed(() => userStore.getCurrentEComStore)
 
     return {
       Actions,
+      currentEComStore,
       getCronString,
       hasPermission,
       router,
