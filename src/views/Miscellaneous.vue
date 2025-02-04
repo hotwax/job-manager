@@ -25,26 +25,13 @@
             <ion-list>
               <ion-list-header>{{ translate("Miscellaneous jobs") }}</ion-list-header>
 
-              <ion-card>
+              <ion-card v-if="maargJobs?.length">
                 <ion-card-header>
                   <ion-card-title>{{ translate("Shopify bulk query") }}</ion-card-title>
                 </ion-card-header>
-
-                <ion-item button detail :disabled="!isMaargJobFound('BLK_SYS_MESS_SHPFY')" @click="viewMaargJobConfiguration('BLK_SYS_MESS_SHPFY')">
-                  <ion-label>{{ translate("Send next bulk query system message in queue") }}</ion-label>
-                  <ion-note slot="end" >{{ isMaargJobFound('BLK_SYS_MESS_SHPFY') ? getMaargJobStatus("BLK_SYS_MESS_SHPFY") : translate("Not found") }}</ion-note>
-                </ion-item>
-                <ion-item button detail :disabled="!isMaargJobFound('BLK_RSLT_SHPFY')" @click="viewMaargJobConfiguration('BLK_RSLT_SHPFY')">
-                  <ion-label>{{ translate("Poll current bulk operation query result") }}</ion-label>
-                  <ion-note slot="end" >{{ isMaargJobFound('BLK_RSLT_SHPFY') ? getMaargJobStatus("BLK_RSLT_SHPFY") : translate("Not found") }}</ion-note>
-                </ion-item>
-                <ion-item button detail :disabled="!isMaargJobFound('ALL_RCVD_SYS_MSG')" @click="viewMaargJobConfiguration('ALL_RCVD_SYS_MSG')">
-                  <ion-label>{{ translate("Consume All Received System Messages") }}</ion-label>
-                  <ion-note slot="end" >{{ isMaargJobFound('ALL_RCVD_SYS_MSG') ? getMaargJobStatus("ALL_RCVD_SYS_MSG") : translate("Not found") }}</ion-note>
-                </ion-item>
-                <ion-item button detail :disabled="!isMaargJobFound('ALL_PRDCD_SYS_MSG')" @click="viewMaargJobConfiguration('ALL_PRDCD_SYS_MSG')">
-                  <ion-label>{{ translate("Send All Produced System Messages") }}</ion-label>
-                  <ion-note slot="end" >{{ isMaargJobFound('ALL_PRDCD_SYS_MSG') ? getMaargJobStatus("ALL_PRDCD_SYS_MSG") : translate("Not found") }}</ion-note>
+                <ion-item v-for="(job, index) in maargJobs" :key="index" button detail @click="viewMaargJobConfiguration(job.jobTypeEnumId)">
+                  <ion-label class="ion-text-wrap">{{ job.enumDescription ? job.enumDescription : job.jobName }}</ion-label>
+                  <ion-label slot="end" >{{ getMaargJobStatus(job.jobTypeEnumId) }}</ion-label>
                 </ion-item>
               </ion-card>
 
@@ -138,8 +125,7 @@ export default defineComponent({
       currentJobStatus: '',
       isJobDetailAnimationCompleted: false,
       isDesktop: isPlatform('desktop'),
-      isRetrying: false,
-      maargJobEnums: JSON.parse(process.env.VUE_APP_MISC_MAARG_JOB_ENUMS as string) as any
+      isRetrying: false
     }
   },
   computed: {
@@ -148,6 +134,7 @@ export default defineComponent({
       getCurrentEComStore:'user/getCurrentEComStore',
       isMiscellaneousJobsScrollable: 'job/isMiscellaneousJobsScrollable',
       getMaargJob: 'maargJob/getMaargJob',
+      maargJobs: 'maargJob/getMaargJobsList',
       currentMaargJob: 'maargJob/getCurrentMaargJob'
     }),
     prepareMiscJobs() {
@@ -185,7 +172,7 @@ export default defineComponent({
     },
     async getMiscellaneousJobs(viewSize = 100, viewIndex = 0) {
       await this.store.dispatch('job/fetchMiscellaneousJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex});
-      await this.store.dispatch("maargJob/fetchMaargJobs", Object.values(this.maargJobEnums));
+      await this.store.dispatch("maargJob/fetchMaargJobs", "MISC_SYS_JOB");
     },
     async updateProductStoreConfig(isCurrentJobUpdateRequired = false) {
       if(isCurrentJobUpdateRequired) {
@@ -218,17 +205,11 @@ export default defineComponent({
     getJobRuntime(job: any) {
       return job.statusId !== 'SERVICE_DRAFT' && this.timeFromNow(job.runTime) ? this.timeFromNow(job.runTime) : translate('Disabled')
     },
-
-    isMaargJobFound(id: string) {
-      const job = this.getMaargJob(this.maargJobEnums[id])
-      return job && Object.keys(job)?.length
-    },
     getMaargJobStatus(id: string) {
-      const job = this.getMaargJob(this.maargJobEnums[id])
+      const job = this.getMaargJob(id)
       return (job?.paused === "N" && job?.cronExpression) ? this.getCronString(job.cronExpression) ? this.getCronString(job.cronExpression) : job.cronExpression : 'Disabled'
     },
-    async viewMaargJobConfiguration(id: any) {
-      const enumId = this.maargJobEnums[id];
+    async viewMaargJobConfiguration(enumId: any) {
       const job = this.getMaargJob(enumId);
       await this.store.dispatch("maargJob/updateCurrentMaargJob", { job })
       this.currentJob = ""

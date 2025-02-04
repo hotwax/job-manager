@@ -50,17 +50,13 @@
             </ion-item>
           </ion-card>
 
-          <ion-card>
+          <ion-card v-if="maargJobs?.length">
             <ion-card-header>
               <ion-card-title>{{ translate("Feed") }}</ion-card-title>
             </ion-card-header>
-            <ion-item button detail :disabled="!isMaargJobFound('QUEUE_CRTD_PRD_FEED')" @click="viewMaargJobConfiguration('QUEUE_CRTD_PRD_FEED')">
-              <ion-label class="ion-text-wrap">{{ translate("Queue created product feed") }}</ion-label>
-              <ion-label slot="end" >{{ isMaargJobFound('QUEUE_CRTD_PRD_FEED') ? getMaargJobStatus("QUEUE_CRTD_PRD_FEED") : translate("Not found") }}</ion-label>
-            </ion-item>
-            <ion-item button detail :disabled="!isMaargJobFound('QUEUE_UPDT_PRD_FEED')" @click="viewMaargJobConfiguration('QUEUE_UPDT_PRD_FEED')">
-              <ion-label class="ion-text-wrap">{{ translate("Queue updated product feed") }}</ion-label>
-              <ion-label slot="end">{{ isMaargJobFound('QUEUE_UPDT_PRD_FEED') ? getMaargJobStatus("QUEUE_UPDT_PRD_FEED") : translate("Not found") }}</ion-label>
+            <ion-item v-for="(job, index) in maargJobs" :key="index" button detail @click="viewMaargJobConfiguration(job.jobTypeEnumId)">
+              <ion-label class="ion-text-wrap">{{ job.enumDescription ? job.enumDescription : job.jobName }}</ion-label>
+              <ion-label slot="end" >{{ getMaargJobStatus(job.jobTypeEnumId) }}</ion-label>
             </ion-item>
           </ion-card>
 
@@ -133,6 +129,7 @@ export default defineComponent({
       getCachedWebhook: 'webhook/getCachedWebhook',
       getMoreJobs: 'job/getMoreJobs',
       getMaargJob: 'maargJob/getMaargJob',
+      maargJobs: 'maargJob/getMaargJobsList',
       currentMaargJob: 'maargJob/getCurrentMaargJob'
     }),
     newProductsWebhook(): boolean {
@@ -157,7 +154,6 @@ export default defineComponent({
       enumTypeId: 'PRODUCT_SYS_JOB',
       initialLoadJobEnums: JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
       isLoading: false,
-      maargJobEnums: JSON.parse(process.env.VUE_APP_PRD_MAARG_JOB_ENUMS as string) as any,
     }
   },
   mounted () {
@@ -232,20 +228,15 @@ export default defineComponent({
           "enumTypeId": "PRODUCT_SYS_JOB"
         }
       });
-      await this.store.dispatch("maargJob/fetchMaargJobs", Object.values(this.maargJobEnums));
+      await this.store.dispatch("maargJob/fetchMaargJobs", "PRODUCT_SYS_JOB");
       this.store.dispatch('webhook/fetchWebhooks')
       this.isLoading = false
     },
-    isMaargJobFound(id: string) {
-      const job = this.getMaargJob(this.maargJobEnums[id])
-      return job && Object.keys(job)?.length
-    },
     getMaargJobStatus(id: string) {
-      const job = this.getMaargJob(this.maargJobEnums[id])
+      const job = this.getMaargJob(id)
       return (job?.paused === "N" && job?.cronExpression) ? this.getCronString(job.cronExpression) ? this.getCronString(job.cronExpression) : job.cronExpression : 'Disabled'
     },
-    async viewMaargJobConfiguration(id: any) {
-      const enumId = this.maargJobEnums[id];
+    async viewMaargJobConfiguration(enumId: any) {
       const job = this.getMaargJob(enumId);
       await this.store.dispatch("maargJob/updateCurrentMaargJob", { job })
       this.currentJob = ""
