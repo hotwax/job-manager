@@ -54,8 +54,9 @@ const actions: ActionTree<UserState, RootState> = {
       }
 
       const userProfile = await UserService.getUserProfile(token);
-      userProfile.stores = await getEComStores(token, store.getters['user/getBaseUrl'], 100)
-      useUserStore().eComStores = userProfile.stores;
+      userProfile.stores = await useUserStore().getEComStores()
+      if(!userProfile.stores.length) throw "Unable to login. User is not associated with any product store"
+
       // In Job Manager application, we have jobs which may not be associated with any product store
       userProfile.stores.push({
         productStoreId: "",
