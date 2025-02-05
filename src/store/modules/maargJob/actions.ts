@@ -8,14 +8,14 @@ import logger from "@/logger";
 import { MaargJobService } from '@/services/MaargJobService'
 
 const actions: ActionTree<JobState, RootState> = {
-  async fetchMaargJobs({ commit, dispatch }, jobTypeEnumIds){
+  async fetchMaargJobs({ commit, dispatch }, enumTypeId){
     const productStoreId = store.getters["user/getCurrentEComStore"]?.productStoreId
 
     let resp = {} as any;
     const maargJobs = {} as any;
 
     try {
-      resp = await MaargJobService.fetchMaargJobs({ jobTypeEnumId: jobTypeEnumIds, jobTypeEnumId_op: "in" })
+      resp = await MaargJobService.fetchMaargJobs({ enumTypeId })
       if(!hasError(resp) && resp.data?.length) {
         const jobs = resp.data;
         const jobEnumIdsToFetch = jobs.map((job: any) => job.jobTypeEnumId);

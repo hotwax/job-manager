@@ -6,6 +6,9 @@ const getters: GetterTree <MaargJobState, RootState> = {
   getMaargJob: (state) => (jobTypeEnumId: string): any => {
     return state.maargJobs[jobTypeEnumId] ? state.maargJobs[jobTypeEnumId] : {}
   },
+  getMaargJobsList: (state) => {
+    return state.maargJobs ? Object.values(state.maargJobs) : []
+  },
   getCurrentMaargJob: (state) => {
     return state.currentMaargJob
   },

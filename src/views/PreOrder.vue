@@ -157,13 +157,13 @@
             </ion-item>
           </ion-card>
 
-          <ion-card>
+          <ion-card v-if="maargJobs?.length">
             <ion-card-header>
               <ion-card-title>{{ translate("Feed") }}</ion-card-title>
             </ion-card-header>
-            <ion-item button detail :disabled="!isMaargJobFound('PO_RCPT_FEED')" @click="viewMaargJobConfiguration('PO_RCPT_FEED')">
-              <ion-label class="ion-text-wrap">{{ translate("Generate PO shipment receipt feed") }}</ion-label>
-              <ion-label slot="end" >{{ isMaargJobFound('PO_RCPT_FEED') ? getMaargJobStatus("PO_RCPT_FEED") : translate("Not found") }}</ion-label>
+            <ion-item v-for="(job, index) in maargJobs" :key="index" button detail @click="viewMaargJobConfiguration(job.jobTypeEnumId)">
+              <ion-label class="ion-text-wrap">{{ job.enumDescription ? job.enumDescription : job.jobName }}</ion-label>
+              <ion-label slot="end" >{{ getMaargJobStatus(job.jobTypeEnumId) }}</ion-label>
             </ion-item>
           </ion-card>
 
@@ -248,6 +248,7 @@ export default defineComponent({
       getTemporalExpr: 'job/getTemporalExpr',
       getMoreJobs: 'job/getMoreJobs',
       getMaargJob: 'maargJob/getMaargJob',
+      maargJobs: 'maargJob/getMaargJobsList',
       currentMaargJob: 'maargJob/getCurrentMaargJob'
     })
   },
@@ -262,7 +263,6 @@ export default defineComponent({
       isDesktop: isPlatform('desktop'),
       enumTypeId: 'PRE_ORD_SYS_JOB',
       preOrderBackorderCategory: {} as any,
-      maargJobEnums: JSON.parse(process.env.VUE_APP_PREORD_MAARG_JOB_ENUMS as string) as any,
     }
   },
   methods: {
@@ -380,7 +380,7 @@ export default defineComponent({
           "enumTypeId": "PRE_ORD_SYS_JOB"
         }
       });
-      await this.store.dispatch("maargJob/fetchMaargJobs", Object.values(this.maargJobEnums));
+      await this.store.dispatch("maargJob/fetchMaargJobs", "PRE_ORD_SYS_JOB");
     },
     async fetchInitialData(isCurrentJobUpdateRequired = false) {
       if(isCurrentJobUpdateRequired) {
@@ -393,16 +393,11 @@ export default defineComponent({
       await this.fetchJobs();
       await this.getPreOrderBackorderCategory();
     },
-    isMaargJobFound(id: string) {
-      const job = this.getMaargJob(this.maargJobEnums[id])
-      return job && Object.keys(job)?.length
-    },
     getMaargJobStatus(id: string) {
-      const job = this.getMaargJob(this.maargJobEnums[id])
+      const job = this.getMaargJob(id)
       return (job?.paused === "N" && job?.cronExpression) ? this.getCronString(job.cronExpression) ? this.getCronString(job.cronExpression) : job.cronExpression : 'Disabled'
     },
-    async viewMaargJobConfiguration(id: any) {
-      const enumId = this.maargJobEnums[id];
+    async viewMaargJobConfiguration(enumId: any) {
       const job = this.getMaargJob(enumId);
       await this.store.dispatch("maargJob/updateCurrentMaargJob", { job })
       this.currentJob = ""
