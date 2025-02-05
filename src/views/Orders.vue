@@ -311,7 +311,7 @@ export default defineComponent({
           "enumTypeId": "ORDER_SYS_JOB"
         }
       });
-      await this.store.dispatch("maargJob/fetchMaargJobs", "ORD_SYS_JOB");
+      await this.store.dispatch("maargJob/fetchMaargJobs", "ORDER_SYS_JOB");
       this.isLoading = false
     },
     getMaargJobStatus(id: string) {
