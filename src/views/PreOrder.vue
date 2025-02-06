@@ -167,16 +167,12 @@
             </ion-item>
           </ion-card>
 
-          <aside class="desktop-only" v-if="isDesktop" v-show="currentJob || Object.keys(currentMaargJob).length">
-            <JobConfiguration v-if="currentJob" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
-            <MaargJobConfiguration v-else-if="Object.keys(currentMaargJob).length" :key="currentMaargJob" />
-          </aside>
-
           <MoreJobs v-if="getMoreJobs(jobEnums, enumTypeId).length" :jobs="getMoreJobs(jobEnums, enumTypeId)" />
         </section>
 
-        <aside class="desktop-only" v-if="isDesktop" v-show="currentJob">
-          <JobConfiguration :status="currentJobStatus" :type="freqType" :key="currentJob"/>
+        <aside class="desktop-only" v-if="isDesktop" v-show="currentJob || Object.keys(currentMaargJob).length">
+          <JobConfiguration v-if="currentJob" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
+          <MaargJobConfiguration v-else-if="Object.keys(currentMaargJob).length" :key="currentMaargJob" />
         </aside>
       </main>
     </ion-content>
