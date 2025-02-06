@@ -8,8 +8,8 @@
     </ion-header>
 
     <ion-content>
-      <div class="header ion-padding">
-        <section>
+      <div class="header">
+        <section class="ion-margin">
           <ion-item lines="none">
             <h1>{{ translate('Import logs') }}</h1>
           </ion-item>
@@ -37,10 +37,10 @@
           </ion-list>
         </section>
         <div class="config-details">
-          <ion-label lines="none">
+          <ion-item lines="none">
             <p class="overline">{{ currentJob?.runtimeData?.configId }}</p>
             <h1>{{ configDetails?.description }}</h1>
-          </ion-label>
+          </ion-item>
           <ion-list>
             <ion-item>
               <ion-icon slot="start" :icon="shareSocialOutline" />
@@ -71,9 +71,9 @@
       <div class="empty-state" v-if="isLoading">
         <ion-spinner name="crescent" />
       </div>
-      <div v-else-if="dataManagerLogList?.length" >
+      <template v-else-if="dataManagerLogList?.length" >
         <div class="list-item" v-for="(log, index) in dataManagerLogList" :key="index">
-          <ion-item lines="none">
+          <ion-item class="file-name" lines="none">
             <ion-icon slot="start" :icon="documentTextOutline" />
             <ion-label>
               <p class="overline">{{ log.logId }}</p>
@@ -82,19 +82,19 @@
             </ion-label>
           </ion-item>
   
-          <ion-label>
+          <ion-label class="file-start-time">
             {{ log.startDateTime ? getDateTime(log.startDateTime) : '-' }}
             <p>{{ translate('Started') }}</p>
           </ion-label>
   
-          <ion-label>
+          <ion-label class="file-end-time">
             {{ log.finishDateTime ? getDateTime(log.finishDateTime) : '-' }}
             <p>{{ translate('Finished') }}</p>
           </ion-label>
 
-          <ion-badge v-if="log.statusId" :color="getLogStatusColor(log.statusId)">{{ translate(getStatusDesc(log.statusId)) }}</ion-badge>
+          <ion-badge class="file-status tablet" v-if="log.statusId" :color="getLogStatusColor(log.statusId)">{{ translate(getStatusDesc(log.statusId)) }}</ion-badge>
           
-          <div class="ion-text-center" lines="none" v-if="log.errorRecordContentId">
+          <div class="file-status tablet ion-text-center" v-if="log.errorRecordContentId">
             <ion-button fill="clear" color="medium" @click="downloadErrorRecordFile(log)">
               <ion-icon slot="icon-only" :icon="cloudDownloadOutline" />
             </ion-button>
@@ -102,13 +102,13 @@
               <p>{{ translate('Failed records') }}</p>
             </ion-label>
           </div>
-          <div v-else></div>
+          <div class="tablet" v-else></div>
   
           <ion-button fill="clear" color="medium" @click="openDownloadLogsFilePopover(log, $event)">
             <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
           </ion-button>
         </div>
-      </div>
+      </template>
       <div v-else class="empty-state">
         {{ translate('No logs found') }}
       </div>
@@ -302,7 +302,8 @@ export default defineComponent ({
 }
 
 .list-item {
-  --columns-desktop: 6;
+  --columns-desktop: 7;
+  --columns-tablet: 5;
   border-bottom : 1px solid var(--ion-color-medium);
 }
 
@@ -320,9 +321,19 @@ export default defineComponent ({
   align-self: end;
 }
 
+@media (min-width: 700px) {
+  .file-name {
+    grid-column: span 2;
+  }
+}
+
 @media (max-width: 991px) {
   .header {
-    grid-template-columns: 1fr;
+    display: block;
+  }
+
+  .config-details {
+    margin-top: var(--spacer-base);
   }
 }
 </style> 

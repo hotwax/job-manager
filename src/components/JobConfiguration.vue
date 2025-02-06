@@ -130,7 +130,7 @@
   <!-- Import logs -->
   <section v-if="historyJobConfig && currentJob.runtimeData?.configId && getDataManagerLogs?.length">
     <ion-item lines="none">
-      <h1>{{ translate('Import logs') }}</h1>
+      <h3>{{ translate('Import logs') }}</h3>
       <ion-button slot="end" fill="clear" @click="openImportLogsDetails()">{{ translate('View details') }}</ion-button>
     </ion-item>
     <ion-progress-bar :value="(getProcessedFileCount() - getErrorFileCount()) / getDataManagerLogs.length"></ion-progress-bar>
