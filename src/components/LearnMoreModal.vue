@@ -43,7 +43,7 @@
         </ion-item>
         <ion-row class="ion-padding-start" v-for="section in jobSection" :key="section.id">
           <ion-chip outline @click="redirectToDoc(section)">
-            <ion-label>{{ section.title }}</ion-label>
+            <ion-label>{{ section.title ? section.title : currentJob?.enumName}}</ion-label>
             <ion-icon :icon="openOutline" />
           </ion-chip>
         </ion-row>
@@ -137,6 +137,8 @@ export default defineComponent({
         if(!hasError(resp)) {
           this.askResponse = resp.data.answer;
           if(this.askResponse) {
+            const answerData = this.askResponse.answer;
+            if(answerData?.document?.nodes) this.askResponse.text = this.extractTextFromAnswer(answerData.document.nodes);
             const pageIds = this.askResponse?.sources.map((source: any) => source.page);
             pageIds && pageIds.length ? this.searchQuery(pageIds) : this.isGeneratingAnswer = false
           } else {
@@ -149,6 +151,21 @@ export default defineComponent({
         logger.error(error);
         this.isGeneratingAnswer = false;
       }
+    },
+    extractTextFromAnswer(nodes: any) {
+      let text = ''
+      nodes.map((node: any) => {
+        if(node.type === 'paragraph') {
+          node.nodes.map((paragraphNode: any) => {
+            if(paragraphNode.object === 'text') {
+              paragraphNode.leaves.map((leaf: any) => {
+                text = `${text}${leaf.text}`
+              });
+            }
+          });
+        }
+      });
+      return text;
     },
     async redirectToDoc(section: any) {
       window.open(`https://docs.hotwax.co/documents/retail-operations/${section.path}`, "_blank", "noopener, noreferrer")
