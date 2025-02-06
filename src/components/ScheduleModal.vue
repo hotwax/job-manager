@@ -75,7 +75,7 @@ import logger from "@/logger";
 import { Actions, hasPermission } from '@/authorization'
 import cronParser from "cron-parser";
 export default defineComponent({
-  name: "MaargJobConfiguration",
+  name: "ScheduleModal",
   components: {
     IonButton,
     IonButtons,
