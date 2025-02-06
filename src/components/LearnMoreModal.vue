@@ -51,7 +51,7 @@
   
       <ion-item>
         <ion-label>
-          <p class="overline">{{ translate("Summary") }}</p>
+          <p class="overline ion-padding-bottom">{{ translate("Summary") }}</p>
           {{ askResponse?.text }}
         </ion-label>
       </ion-item>
