@@ -320,4 +320,28 @@ aside {
     width: 0px;
     opacity: 0;
   }
+
+  /* select which slot to give wrap preference to */
+  ion-item[data-wrap-pref="even"] {
+    --start-flex: 1 1 0;
+    --end-flex: 1 1 0;
+  }
+  
+  ion-item[data-wrap-pref="start"] {
+    --start-flex: 1 1 0;
+    --end-flex: 1 0 0;
+  }
+  
+  ion-item[data-wrap-pref="end"] {
+    --start-flex: 1 0 0;
+    --end-flex: 1 1 0;
+  }
+  
+  ion-item ::slotted([slot=end]) {
+    flex: var(--end-flex, 1 1 0);
+  }
+  
+  ion-item ::slotted(ion-label:not([slot=end])) {
+    flex: var(--start-flex, 1 1 0);
+  }
 }
