@@ -43,7 +43,7 @@
         </ion-item>
         <ion-row class="ion-padding-start" v-for="section in jobSection" :key="section.id">
           <ion-chip outline @click="redirectToDoc(section)">
-            <ion-label>{{ section.title ? section.title : currentJob?.enumName}}</ion-label>
+            <ion-label>{{ section.title ? section.title : currentJob?.enumName }}</ion-label>
             <ion-icon :icon="openOutline" />
           </ion-chip>
         </ion-row>
