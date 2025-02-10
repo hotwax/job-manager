@@ -325,23 +325,29 @@ aside {
   ion-item[data-wrap-pref="even"] {
     --start-flex: 1 1 0;
     --end-flex: 1 1 0;
+    --label-gap: var(--spacer-xl);
+    /* divide gap between both items */
+    --label-gap-start: calc(var(--label-gap) / 2);
+    --label-gap-end: calc(var(--label-gap) / 2);
   }
   
-  ion-item[data-wrap-pref="start"] {
-    --start-flex: 1 1 0;
+  ion-item[data-allow-wrap-pref="start"] {
     --end-flex: 1 0 0;
   }
   
   ion-item[data-wrap-pref="end"] {
     --start-flex: 1 0 0;
-    --end-flex: 1 1 0;
   }
-  
-  ion-item ::slotted([slot=end]) {
-    flex: var(--end-flex, 1 1 0);
+
+  ion-item ::slotted([slot=end]), ion-item[data-wrap-pref=]>[slot=end] {
+    /* using important flag here to override Ionic styling which also uses important flag */
+    flex: var(--end-flex, 1 1 0) !important; 
+    margin-inline-start: var(--label-gap, 32px);
+    text-align: end;
   }
   
   ion-item ::slotted(ion-label:not([slot=end])) {
     flex: var(--start-flex, 1 1 0);
+    margin-inline-end: var(--label-gap, 0px);
   }
 }
