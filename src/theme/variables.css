@@ -334,7 +334,7 @@ aside {
     --end-flex: 1 1 0;
   }
   
-  ion-item[data-allow-wrap-pref="start"] {
+  ion-item[data-wrap-pref="start"] {
     --end-flex: 1 0 0;
   }
   
