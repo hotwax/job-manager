@@ -342,13 +342,13 @@ aside {
     --start-flex: 1 0 0;
   }
 
-  ion-item[data-wrap-pref] ::slotted([slot=end]), ion-item[data-wrap-pref]>[slot=end] {
+  ion-item[data-wrap-pref] ::slotted([slot="end"]), ion-item[data-wrap-pref]>[slot="end"] {
     flex: var(--end-flex, 1 1 0) !important; /* using important flag here to override Ionic styling which also uses important flag */
     margin-inline-start: var(--label-gap-end, 32px); /* default value is same as Ionic */
     text-align: end;
   }
   
-  ion-item[data-wrap-pref] ::slotted(ion-label:not([slot=end])) {
+  ion-item[data-wrap-pref] ::slotted(ion-label:not([slot="end"])) {
     flex: var(--start-flex, 1 1 0);
     margin-inline-end: var(--label-gap-start, 0px);
   }
