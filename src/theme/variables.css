@@ -321,14 +321,19 @@ aside {
     opacity: 0;
   }
 
+  
+
+  /* divide gap between both items */
+  ion-item[data-wrap-pref] {
+    --label-gap: var(--spacer-xl);
+    --label-gap-start: calc(var(--label-gap) / 2);
+    --label-gap-end: calc(var(--label-gap) / 2);
+  }
+
   /* select which slot to give wrap preference to */
   ion-item[data-wrap-pref="even"] {
     --start-flex: 1 1 0;
     --end-flex: 1 1 0;
-    --label-gap: var(--spacer-xl);
-    /* divide gap between both items */
-    --label-gap-start: calc(var(--label-gap) / 2);
-    --label-gap-end: calc(var(--label-gap) / 2);
   }
   
   ion-item[data-allow-wrap-pref="start"] {
@@ -339,7 +344,7 @@ aside {
     --start-flex: 1 0 0;
   }
 
-  ion-item ::slotted([slot=end]), ion-item[data-wrap-pref=]>[slot=end] {
+  ion-item[data-wrap-pref] ::slotted([slot=end]), ion-item[data-wrap-pref]>[slot=end] {
     /* using important flag here to override Ionic styling which also uses important flag */
     flex: var(--end-flex, 1 1 0) !important; 
     margin-inline-start: var(--label-gap, 32px);
