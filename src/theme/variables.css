@@ -334,11 +334,15 @@ aside {
     --flex-end: 1 1 0;
   }
   
+  /* try wrapping start label by turning off shrink on end */
   ion-item[data-wrap-pref="start"] {
     --flex-end: 1 0 0;
+    --flex-start: 1 1 0;
   }
   
+  /* try wrapping end label by turning off shrink on start */
   ion-item[data-wrap-pref="end"] {
+    --flex-end: 1 1 0;
     --flex-start: 1 0 0;
   }
 
