@@ -23,7 +23,7 @@
       </ion-item>
     </div>
 
-    <div class="empty-state" v-else-if="!askResponse.text">
+    <div class="empty-state" v-else-if="!askResponse.answer?.markdown">
       <ion-item lines="none">
         <p>{{ translate("The job details is not generating, please try again later.") }}</p>
       </ion-item>
@@ -52,7 +52,7 @@
       <ion-item>
         <ion-label>
           <p class="overline ion-padding-bottom">{{ translate("Summary") }}</p>
-          {{ askResponse?.text }}
+          <vue-markdown :source="askResponse.answer?.markdown" />
         </ion-label>
       </ion-item>
     </div>
@@ -67,6 +67,7 @@ import { defineComponent } from "vue";
 import { hasError } from '@/utils'
 import { askQuery, searchQuery } from "@/adapter";
 import logger from "@/logger";
+import VueMarkdown from 'vue-markdown-render'
 
 export default defineComponent({
   name: "LearnMoreModal",
@@ -83,7 +84,8 @@ export default defineComponent({
     IonRow,
     IonSpinner,
     IonTitle,
-    IonToolbar
+    IonToolbar,
+    VueMarkdown
   },
   data() {
     return {
@@ -137,8 +139,6 @@ export default defineComponent({
         if(!hasError(resp)) {
           this.askResponse = resp.data.answer;
           if(this.askResponse) {
-            const answerData = this.askResponse.answer;
-            if(answerData?.document?.nodes) this.askResponse.text = this.extractTextFromAnswer(answerData.document.nodes);
             const pageIds = this.askResponse?.sources.map((source: any) => source.page);
             pageIds && pageIds.length ? this.searchQuery(pageIds) : this.isGeneratingAnswer = false
           } else {
@@ -151,21 +151,6 @@ export default defineComponent({
         logger.error(error);
         this.isGeneratingAnswer = false;
       }
-    },
-    extractTextFromAnswer(nodes: any) {
-      let text = ''
-      nodes.map((node: any) => {
-        if(node.type === 'paragraph') {
-          node.nodes.map((paragraphNode: any) => {
-            if(paragraphNode.object === 'text') {
-              paragraphNode.leaves.map((leaf: any) => {
-                text = `${text}${leaf.text}`
-              });
-            }
-          });
-        }
-      });
-      return text;
     },
     async redirectToDoc(section: any) {
       window.open(`https://docs.hotwax.co/documents/retail-operations/${section.path}`, "_blank", "noopener, noreferrer")
