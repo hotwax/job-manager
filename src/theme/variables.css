@@ -330,26 +330,26 @@ aside {
 
   /* select which slot to give wrap preference to */
   ion-item[data-wrap-pref="even"] {
-    --start-flex: 1 1 0;
-    --end-flex: 1 1 0;
+    --flex-start: 1 1 0;
+    --flex-end: 1 1 0;
   }
   
   ion-item[data-wrap-pref="start"] {
-    --end-flex: 1 0 0;
+    --flex-end: 1 0 0;
   }
   
   ion-item[data-wrap-pref="end"] {
-    --start-flex: 1 0 0;
+    --flex-start: 1 0 0;
   }
 
   ion-item[data-wrap-pref]>[slot="end"] {
-    flex: var(--end-flex, 1 1 0) !important; /* using important flag here to override Ionic styling which also uses important flag */
+    flex: var(--flex-end) !important; /* using important flag here to override Ionic styling which also uses important flag */
     margin-inline-start: var(--label-gap-end, 32px); /* default value is same as Ionic */
     text-align: end;
   }
   
   ion-item[data-wrap-pref]>ion-label:not([slot="end"]) {
-    flex: var(--start-flex, 1 1 0);
+    flex: var(--flex-start);
     margin-inline-end: var(--label-gap-start, 0px);
   }
 }
