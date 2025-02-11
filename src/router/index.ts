@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { RouteRecordRaw } from 'vue-router';
-import Brokering from '@/views/Brokering.vue';
 import Fulfillment from '@/views/Fulfillment.vue';
 import Inventory from '@/views/Inventory.vue'
 import Product from '@/views/Product.vue'
@@ -10,7 +9,6 @@ import Orders from '@/views/Orders.vue'
 import JobDetails from '@/views/JobDetails.vue'
 import InitialLoad from '@/views/InitialLoad.vue'
 import Miscellaneous from '@/views/Miscellaneous.vue'
-import Reports from '@/views/Reports.vue'
 import BulkEditor from '@/views/BulkEditor.vue'
 import Settings from "@/views/Settings.vue"
 import DataManagerLogDetails from "@/views/DataManagerLogDetails.vue"
@@ -105,15 +103,6 @@ const routes: Array<RouteRecordRaw> = [
     beforeEnter: authGuard,
     meta: {
       permissionId: "APP_ORDERS_VIEW"
-    }
-  },
-  {
-    path: '/brokering',
-    name: 'Brokering',
-    component: Brokering,
-    beforeEnter: authGuard,
-    meta: {
-      permissionId: "APP_BROKERING_VIEW"
     }
   },
   {   
