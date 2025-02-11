@@ -163,15 +163,6 @@ const routes: Array<RouteRecordRaw> = [
     }
   },
   {
-    path: '/reports',
-    name: 'Reports',
-    component: Reports,
-    beforeEnter: authGuard,
-    meta: {
-      permissionId: "APP_REPORT_VIEW"
-    }
-  },
-  {
     path: '/login',
     name: 'Login',
     component: DxpLogin,

@@ -16,10 +16,6 @@ export default interface JobState {
       list: any,
       total: 0
     }
-    reports: {
-      list: any,
-      total: 0
-    }
     current: any;
     temporalExp: any;
     enumIds: any;
