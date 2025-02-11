@@ -142,15 +142,6 @@ export default defineComponent({
         }
       },
       {
-        title: "Brokering",
-        url: "/brokering",
-        iosIcon: compassOutline,
-        mdIcon: compassOutline,
-        dependsOnBaseURL: false,
-        meta: {
-        }
-      },
-      {
         title: "Fulfillment",
         url: "/fulfillment",
         iosIcon: sendOutline,

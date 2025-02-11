@@ -1,6 +1,5 @@
 export default {
     "APP_PIPELINE_VIEW": "",
-    "APP_BROKERING_VIEW": "",
     "APP_FULFILLMENT_VIEW": "",
     "APP_INVENTORY_VIEW": "",
     "APP_PRODUCT_VIEW": "",
