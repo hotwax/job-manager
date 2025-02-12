@@ -327,10 +327,6 @@ export default defineComponent({
 
       if(this.$route.path === '/pipeline') {
         job = this.pendingJobs.find((job: any) => job.systemJobEnumId === this.currentJob.systemJobEnumId)
-      } else if(this.$route.path === '/brokering') {
-        // In brokering page, we may have multiple batch jobs for a single systemJobEnumId.
-        // Hence uniquely identifying current job using parentJobId.
-        job = this.getJob(this.currentJob.systemJobEnumId)?.find((job: any) => job.parentJobId === this.currentJob.parentJobId)
       } else {
         job = this.getJob(this.currentJob.systemJobEnumId)
       }
