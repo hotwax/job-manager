@@ -64,7 +64,7 @@
       </div>
 
       <div class="ion-padding">
-        <ion-chip v-for="filter in dataManagerLogFilters" :key="filter.id" :outline="selectedFilter == filter.id ? 'false' : 'true'" @click="filterDataManagerLogs(filter.id)">
+        <ion-chip v-for="filter in dataManagerLogFilters" :key="filter.id" :outline="selectedFilter !== filter.id" @click="filterDataManagerLogs(filter.id)">
           <ion-label>{{ filter.label }}</ion-label>
         </ion-chip>
       </div>
