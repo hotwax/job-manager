@@ -23,7 +23,7 @@
       </ion-item>
     </div>
 
-    <div class="empty-state" v-else-if="!askResponse.text">
+    <div class="empty-state" v-else-if="!askResponse.answer?.markdown">
       <ion-item lines="none">
         <p>{{ translate("The job details is not generating, please try again later.") }}</p>
       </ion-item>
@@ -43,7 +43,7 @@
         </ion-item>
         <ion-row class="ion-padding-start" v-for="section in jobSection" :key="section.id">
           <ion-chip outline @click="redirectToDoc(section)">
-            <ion-label>{{ section.title }}</ion-label>
+            <ion-label>{{ section.title ? section.title : currentJob?.enumName }}</ion-label>
             <ion-icon :icon="openOutline" />
           </ion-chip>
         </ion-row>
@@ -51,8 +51,8 @@
   
       <ion-item>
         <ion-label>
-          <p class="overline">{{ translate("Summary") }}</p>
-          {{ askResponse?.text }}
+          <p class="overline ion-padding-bottom">{{ translate("Summary") }}</p>
+          <vue-markdown :source="askResponse.answer?.markdown" />
         </ion-label>
       </ion-item>
     </div>
@@ -67,6 +67,7 @@ import { defineComponent } from "vue";
 import { hasError } from '@/utils'
 import { askQuery, searchQuery } from "@/adapter";
 import logger from "@/logger";
+import VueMarkdown from 'vue-markdown-render'
 
 export default defineComponent({
   name: "LearnMoreModal",
@@ -83,7 +84,8 @@ export default defineComponent({
     IonRow,
     IonSpinner,
     IonTitle,
-    IonToolbar
+    IonToolbar,
+    VueMarkdown
   },
   data() {
     return {
