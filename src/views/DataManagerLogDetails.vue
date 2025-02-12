@@ -9,7 +9,7 @@
 
     <ion-content>
       <div class="header ion-padding">
-        <section>
+        <section class="ion-margin">
           <ion-item lines="none">
             <h1>{{ translate('Import logs') }}</h1>
           </ion-item>
@@ -37,10 +37,12 @@
           </ion-list>
         </section>
         <div class="config-details">
-          <ion-label lines="none">
-            <p class="overline">{{ currentJob?.runtimeData?.configId }}</p>
-            <h1>{{ configDetails?.description }}</h1>
-          </ion-label>
+          <ion-item lines="none">
+            <ion-label>
+              <p class="overline">{{ currentJob?.runtimeData?.configId }}</p>
+              <h1>{{ configDetails?.description }}</h1>
+            </ion-label>
+          </ion-item>
           <ion-list>
             <ion-item>
               <ion-icon slot="start" :icon="shareSocialOutline" />
@@ -62,18 +64,17 @@
       </div>
 
       <div class="ion-padding">
-        <ion-chip v-for="filter in dataManagerLogFilters" :key="filter.id" outline @click="filterDataManagerLogs(filter.id)">
+        <ion-chip v-for="filter in dataManagerLogFilters" :key="filter.id" :outline="selectedFilter !== filter.id" @click="filterDataManagerLogs(filter.id)">
           <ion-label>{{ filter.label }}</ion-label>
-          <ion-icon v-if="selectedFilter === filter.id" :icon="checkmarkOutline" />
         </ion-chip>
       </div>
       
       <div class="empty-state" v-if="isLoading">
         <ion-spinner name="crescent" />
       </div>
-      <div v-else-if="dataManagerLogList?.length" >
+      <template v-else-if="dataManagerLogList?.length" >
         <div class="list-item" v-for="(log, index) in dataManagerLogList" :key="index">
-          <ion-item lines="none">
+          <ion-item class="file-name" lines="none">
             <ion-icon slot="start" :icon="documentTextOutline" />
             <ion-label>
               <p class="overline">{{ log.logId }}</p>
@@ -92,9 +93,9 @@
             <p>{{ translate('Finished') }}</p>
           </ion-label>
 
-          <ion-badge v-if="log.statusId" :color="getLogStatusColor(log.statusId)">{{ translate(getStatusDesc(log.statusId)) }}</ion-badge>
+          <ion-badge class="tablet" v-if="log.statusId" :color="getLogStatusColor(log.statusId)">{{ translate(getStatusDesc(log.statusId)) }}</ion-badge>
           
-          <div class="ion-text-center" lines="none" v-if="log.errorRecordContentId">
+          <div class="tablet ion-text-center" lines="none" v-if="log.errorRecordContentId">
             <ion-button fill="clear" color="medium" @click="downloadErrorRecordFile(log)">
               <ion-icon slot="icon-only" :icon="cloudDownloadOutline" />
             </ion-button>
@@ -102,13 +103,13 @@
               <p>{{ translate('Failed records') }}</p>
             </ion-label>
           </div>
-          <div v-else></div>
+          <div class="tablet" v-else></div>
   
           <ion-button fill="clear" color="medium" @click="openDownloadLogsFilePopover(log, $event)">
             <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
           </ion-button>
         </div>
-      </div>
+      </template>
       <div v-else class="empty-state">
         {{ translate('No logs found') }}
       </div>
@@ -117,7 +118,7 @@
 </template>
 
 <script>
-import { checkmarkOutline, codeWorkingOutline, cloudDownloadOutline, documentTextOutline, ellipsisVerticalOutline, fileTrayFullOutline, globeOutline, optionsOutline, pulseOutline, shareSocialOutline, warningOutline } from "ionicons/icons";
+import { codeWorkingOutline, cloudDownloadOutline, documentTextOutline, ellipsisVerticalOutline, fileTrayFullOutline, globeOutline, optionsOutline, pulseOutline, shareSocialOutline, warningOutline } from "ionicons/icons";
 import { IonBackButton, IonBadge, IonButton, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonPage, IonSpinner, IonTitle, IonToolbar, popoverController } from "@ionic/vue";
 import { defineComponent } from 'vue'
 import { mapGetters, useStore } from 'vuex'
@@ -276,7 +277,6 @@ export default defineComponent ({
     const store = useStore();
 
     return {
-      checkmarkOutline,
       codeWorkingOutline,
       cloudDownloadOutline,
       documentTextOutline,
@@ -302,7 +302,8 @@ export default defineComponent ({
 }
 
 .list-item {
-  --columns-desktop: 6;
+  --columns-desktop: 7;
+  --columns-tablet: 5;
   border-bottom : 1px solid var(--ion-color-medium);
 }
 
@@ -320,9 +321,19 @@ export default defineComponent ({
   align-self: end;
 }
 
+@media (min-width: 700px) {
+  .file-name {
+    grid-column: span 2;
+  }
+}
+
 @media (max-width: 991px) {
   .header {
-    grid-template-columns: 1fr;
+    display: block;
+  }
+
+  .config-details {
+    margin-top: var(--spacer-base);
   }
 }
 </style> 
