@@ -2,7 +2,7 @@
   <section>
     <ion-item lines="none">
       <!-- Adding conditional check for currentJob.jobName as currentJob is undefined when i18n runs translate -->
-      <h1>{{ isBrokerJob ? currentJob.jobName : currentJob.enumName ? currentJob.enumName : currentJob.jobName ? currentJob.jobName : '' }}</h1>
+      <h1>{{ currentJob.enumName ? currentJob.enumName : currentJob.jobName ? currentJob.jobName : '' }}</h1>
       <ion-button fill="outline" slot="end" v-if="isRefreshRequired" @click="refreshCurrentJob">
         <ion-icon :icon="refreshOutline" slot="icon-only" />
       </ion-button>
@@ -252,7 +252,7 @@ export default defineComponent({
     this.generateRunTimes(this.runTime)
     this.generateFrequencyOptions(this.jobStatus)
   },
-  props: ["isBrokerJob", "status", "type", "historyJobConfig"],
+  props: ["status", "type", "historyJobConfig"],
   computed: {
     ...mapGetters({
       pinnedJobs: 'user/getPinnedJobs',
