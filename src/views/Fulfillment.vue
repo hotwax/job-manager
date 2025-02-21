@@ -61,11 +61,6 @@
               <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('OPEN_SHIPPING_ORD_NT') }}</ion-label>
               <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
-            <ion-item button @click="viewJobConfiguration({ id: 'BROKER_MAIL_ODR', status: getJobStatus(jobEnums['BROKER_MAIL_ODR']) })" detail>
-              <ion-label class="ion-text-wrap">{{ translate("Send Broker Order Mail") }}</ion-label>
-              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('BROKER_MAIL_ODR') }}</ion-label>
-              <ion-skeleton-text v-else style="width: 30%;" animated />
-            </ion-item>
             <ion-item button @click="viewJobConfiguration({ id: 'PACKED_MAIL_ODR', status: getJobStatus(jobEnums['PACKED_MAIL_ODR']) })" detail>
               <ion-label class="ion-text-wrap">{{ translate("Send Packed Order Mail") }}</ion-label>
               <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('PACKED_MAIL_ODR') }}</ion-label>
@@ -78,7 +73,7 @@
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
-                <p>{{ translate("Sends notifications for open, ready-for-pickup BOPIS orders and brokered, packed, and completed Sales orders.") }}</p>
+                <p>{{ translate("Sends notifications for open, ready-for-pickup BOPIS orders, packed, and completed Sales orders.") }}</p>
               </ion-label>
             </ion-item>
           </ion-card>
