@@ -382,6 +382,7 @@ export default defineComponent({
       if(isCurrentJobUpdateRequired) {
         this.currentJob = "";
         await this.store.dispatch('job/updateCurrentJob', { });
+        await this.store.dispatch("maargJob/updateCurrentMaargJob", { job: {} })
         this.currentJobStatus = ""
         this.freqType = '';
         this.isJobDetailAnimationCompleted = false;
