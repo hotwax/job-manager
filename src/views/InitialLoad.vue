@@ -259,7 +259,7 @@ export default defineComponent({
       if(isCurrentJobUpdateRequired) {
         this.currentSelectedJobModal = "";
         await this.store.dispatch('job/updateCurrentJob', { });
-        await this.store.dispatch("maargJob/updateCurrentMaargJob", { job: {} })
+        await this.store.dispatch("maargJob/clearCurrentMaargJob")
         this.job = {};
         this.lastShopifyOrderId = "";
         this.isJobDetailAnimationCompleted = false;
