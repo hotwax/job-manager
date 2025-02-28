@@ -682,6 +682,7 @@ export default defineComponent({
       if(isCurrentJobUpdateRequired) {
         this.jobsLoading = true;
         await this.store.dispatch('job/updateCurrentJob', { job: {} });
+        await this.store.dispatch("maargJob/clearCurrentMaargJob")
         this.currentJobStatus = ""
         this.freqType = ""
         this.isJobDetailAnimationCompleted = false
