@@ -45,11 +45,11 @@
               <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('JOB_IMP_QUEUE') }}</ion-label>
               <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
-            <ion-item>
+            <!-- <ion-item>
               <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="fileStatusUpdateWebhook" color="secondary" @ionChange="updateWebhook($event['detail'].checked, 'BULK_OPERATIONS_FINISH')">
                 <ion-label>{{ translate("File upload status") }}</ion-label>
               </ion-toggle>
-            </ion-item>
+            </ion-item> -->
             <ion-item>
               <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="processPendingUploadsOnShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['UL_PRCS'])">
                 <ion-label class="ion-text-wrap">{{ translate("Upload Pending Process") }}</ion-label>
@@ -82,7 +82,6 @@ import {
   IonPage,
   IonSkeletonText,
   IonTitle,
-  IonToggle,
   IonToolbar,
   isPlatform
 } from '@ionic/vue';
@@ -114,7 +113,6 @@ export default defineComponent({
     IonPage,
     IonSkeletonText,
     IonTitle,
-    IonToggle,
     IonToolbar
   },
   data() {
