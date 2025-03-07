@@ -51,7 +51,7 @@
             </ion-item>
           </ion-card>
 
-          <ion-card>
+          <!-- <ion-card>
             <ion-card-header>
               <ion-card-title>{{ translate("Webhooks") }}</ion-card-title>
             </ion-card-header>
@@ -75,7 +75,7 @@
                 <ion-label class="ion-text-wrap">{{ translate("Returns") }}</ion-label>
               </ion-toggle>
             </ion-item>
-          </ion-card>
+          </ion-card> -->
 
           <ion-card>
             <ion-card-header>
@@ -128,7 +128,6 @@ import {
   IonPage,
   IonSkeletonText,
   IonTitle,
-  IonToggle,
   IonToolbar,
   isPlatform,
 } from '@ionic/vue';
@@ -158,7 +157,6 @@ export default defineComponent({
     IonPage,
     IonSkeletonText,
     IonTitle,
-    IonToggle,
     IonToolbar,
     JobConfiguration,
     MaargJobConfiguration,
