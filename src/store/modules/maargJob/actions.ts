@@ -35,11 +35,13 @@ const actions: ActionTree<JobState, RootState> = {
             job["parameterValues"] = paramValues
             job["enumDescription"] = maargJobEnums[job.jobTypeEnumId]?.description
 
+            // Check for whether job is productStore dependent or not.
             if(Object.hasOwn(paramValues, "productStoreIds")) {
+              // Checks if a product store-dependent job has the current product store set in its parameters.
               if(paramValues["productStoreIds"] && paramValues["productStoreIds"] === productStoreId) {
                 maargJobs[job.jobTypeEnumId] = job 
-              } else if(!paramValues["productStoreIds"]) {
-                if(!maargJobs[job.jobTypeEnumId]) maargJobs[job.jobTypeEnumId] = { ...job, isDraftJob: true }
+              } else if(!paramValues["productStoreIds"] && !maargJobs[job.jobTypeEnumId]) {
+                maargJobs[job.jobTypeEnumId] = { ...job, isDraftJob: true }
               }
             } else {
               // For handling case where we have childs jobs for the productstore independent job
