@@ -138,7 +138,8 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       currentMaargJob: 'maargJob/getCurrentMaargJob',
-      getMaargJob: 'maargJob/getMaargJob'
+      getMaargJob: 'maargJob/getMaargJob',
+      currentEComStore: 'user/getCurrentEComStore',
     }),
     generateCustomParameters() {
       // passing runTimeData params as empty, as we don't need to show the runTimeData information on UI as all the options from runtimeData might not be available in serviceInParams
@@ -179,7 +180,31 @@ export default defineComponent({
               text: translate('Run now'),
               handler: async () => {
                 try {
-                  const resp = await MaargJobService.runNow(this.currentMaargJob.jobName)
+                  let resp;
+
+                  if(this.currentMaargJob.isDraftJob) {
+                    const clonedJob = await this.cloneJob();
+                    if(!clonedJob.jobName) {
+                      showToast(translate("Failed to schedule service"));
+                      return;
+                    }
+                    clonedJob.serviceJobParameters.find((parameter: any) => {
+                      if(parameter.parameterName === "productStoreIds") {
+                        parameter.paramterValue = this.currentEComStore.productStoreIds
+                        return true;
+                      }
+                      return false;
+                    })
+
+                    resp = await MaargJobService.updateMaargJob(clonedJob)
+                    if(!hasError(resp)) {
+                      await this.store.dispatch("maargJob/updateMaargJob", { jobEnumId: clonedJob.jobTypeEnumId, job: clonedJob })
+                    } else {
+                      throw resp.data;
+                    }
+                  }
+                  
+                  resp = await MaargJobService.runNow(this.currentMaargJob.jobName)
                   if(!hasError(resp) && resp.data.jobRunId) {
                     showToast(translate("Service has been scheduled"))
                   } else {
@@ -219,7 +244,7 @@ export default defineComponent({
                 const resp = await MaargJobService.updateMaargJob({ ...job, paused: "Y" })
                 if(!hasError(resp)) {
                   showToast(translate("Job has been cancelled succesfully."))
-                  this.store.dispatch("maargJob/updateMaargJob", job.jobTypeEnumId)
+                  this.store.dispatch("maargJob/updateMaargJob", { jobEnumId: job.jobTypeEnumId })
                 } else {
                   throw resp.data
                 }
@@ -284,12 +309,28 @@ export default defineComponent({
     },
 
     async updateJob() {
-      const job = this.currentMaargJob
+      let job = this.currentMaargJob
 
       if(!job.cronExpression) {
         showToast(translate("Please select a scheduling for job"))
         logger.error("Please select a scheduling for job")
         return;
+      }
+
+      if(this.currentMaargJob.isDraftJob) {
+        const clonedJob = await this.cloneJob();
+        if(!clonedJob.jobName) {
+          showToast(translate("Failed to update service"));
+          return;
+        }
+        clonedJob.serviceJobParameters.find((parameter: any) => {
+          if(parameter.parameterName === "productStoreIds") {
+            parameter.paramterValue = this.currentEComStore.productStoreIds
+            return true;
+          }
+          return false;
+        })
+        job = clonedJob
       }
 
       const paramValues = generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters, {});
@@ -318,13 +359,40 @@ export default defineComponent({
         const resp = await MaargJobService.updateMaargJob(payload)
         if(!hasError(resp)) {
           showToast(translate("Service updated successfully"))
-          this.store.dispatch("maargJob/updateMaargJob", job.jobTypeEnumId)
+          this.store.dispatch("maargJob/updateMaargJob", this.currentMaargJob.isDraftJob ? { jobEnumId: job.jobTypeEnumId, job: payload } : { jobEnumId: job.jobTypeEnumId })
         } else {
           throw resp.data
         }
       } catch(err) {
         showToast(translate("Failed to update service"))
         logger.error(err)
+      }
+    },
+
+    async cloneJob() {
+      const newJobName = `${this.currentMaargJob.jobName.startsWith("template_") ? this.currentMaargJob.jobName.replace("template_", "") : this.currentMaargJob.jobName}_${this.currentEComStore.productStoreId}`
+      try {
+        const resp = await MaargJobService.cloneMaargJob({
+          jobName: this.currentMaargJob.jobName,
+          newJobName,
+          copyParameters: true
+        })
+
+        if(!hasError(resp)) {
+          const job = JSON.parse(JSON.stringify(this.currentMaargJob));
+          job["jobName"] = newJobName;
+          job["paused"] = "Y"
+          job["isDraftJob"] = false
+          job.serviceJobParameters.map((parameter: any) => {
+            parameter.jobName = newJobName
+          })
+          return job
+        } else {
+          throw resp.data;
+        }
+      } catch(error) {
+        logger.error(error);
+        return {};
       }
     },
 
