@@ -15,7 +15,7 @@ const actions: ActionTree<JobState, RootState> = {
     const maargJobs = {} as any;
 
     try {
-      resp = await MaargJobService.fetchMaargJobs({ enumTypeId })
+      resp = await MaargJobService.fetchMaargJobs({ enumTypeId, pageSize: 200 })
       if(!hasError(resp) && resp.data?.length) {
         const jobs = resp.data;
         const jobEnumIdsToFetch = jobs.map((job: any) => job.jobTypeEnumId);
@@ -36,8 +36,10 @@ const actions: ActionTree<JobState, RootState> = {
             job["enumDescription"] = maargJobEnums[job.jobTypeEnumId]?.description
 
             if(Object.hasOwn(paramValues, "productStoreIds")) {
-              if(paramValues["productStoreIds"] === productStoreId) {
+              if(paramValues["productStoreIds"] && paramValues["productStoreIds"] === productStoreId) {
                 maargJobs[job.jobTypeEnumId] = job 
+              } else if(!paramValues["productStoreIds"]) {
+                if(!maargJobs[job.jobTypeEnumId]) maargJobs[job.jobTypeEnumId] = { ...job, isDraftJob: true }
               }
             } else {
               // For handling case where we have childs jobs for the productstore independent job
@@ -58,16 +60,16 @@ const actions: ActionTree<JobState, RootState> = {
     commit(types.MAARGJOB_UPDATED, maargJobs);
   },
 
-  async updateMaargJob({ commit, dispatch, state }, jobEnumId) {
+  async updateMaargJob({ commit, dispatch, state }, payload) {
     let resp = {} as any;
     let jobs = JSON.parse(JSON.stringify(state.maargJobs));
-    let currentJob = jobs[jobEnumId]
+    let currentJob = payload.job ? payload.job : jobs[payload.jobEnumId]
 
     try {
       if(!currentJob?.jobName) {
-        await dispatch("fetchMaargJobs", [jobEnumId]);
+        await dispatch("fetchMaargJobs", [payload.jobEnumId]);
         jobs = JSON.parse(JSON.stringify(state.maargJobs));
-        currentJob = jobs[jobEnumId]
+        currentJob = jobs[payload.jobEnumId]
         commit(types.MAARGJOB_CURRENT_UPDATED, currentJob);
         return;
       }
@@ -83,7 +85,7 @@ const actions: ActionTree<JobState, RootState> = {
 
         currentJob = { ...currentJob, parameterValues: paramValue, ...updatedJob }
 
-        jobs[jobEnumId] = currentJob
+        jobs[payload.jobEnumId] = currentJob
         commit(types.MAARGJOB_UPDATED, jobs);
         commit(types.MAARGJOB_CURRENT_UPDATED, currentJob);
       } else {
@@ -136,7 +138,7 @@ const actions: ActionTree<JobState, RootState> = {
       return currentMaargJob;
     }
 
-    await dispatch("updateMaargJob", payload.jobId);
+    await dispatch("updateMaargJob", { jobEnumId: payload.jobId });
     currentMaargJob = getMaargJob(payload.jobId)
 
     commit(types.MAARGJOB_CURRENT_UPDATED, currentMaargJob ? currentMaargJob : {});
