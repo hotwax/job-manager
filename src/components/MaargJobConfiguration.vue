@@ -188,8 +188,13 @@ export default defineComponent({
                       showToast(translate("Failed to schedule service"));
                       return;
                     }
-                    const storeParam = clonedJob.serviceJobParameters.find((parameter: any) => parameter.parameterName === "productStoreIds")
-                    storeParam.parameterValue = this.currentEComStore.productStoreId
+                    clonedJob.serviceJobParameters.find((parameter: any) => {
+                      if(parameter.parameterName === "productStoreIds") {
+                        parameter.paramterValue = this.currentEComStore.productStoreIds
+                        return true;
+                      }
+                      return false;
+                    })
 
                     resp = await MaargJobService.updateMaargJob(clonedJob)
                     if(!hasError(resp)) {
@@ -318,8 +323,13 @@ export default defineComponent({
           showToast(translate("Failed to update service"));
           return;
         }
-        const storeParam = clonedJob.serviceJobParameters.find((parameter: any) => parameter.parameterName === "productStoreIds")
-        storeParam.parameterValue = this.currentEComStore.productStoreId
+        clonedJob.serviceJobParameters.find((parameter: any) => {
+          if(parameter.parameterName === "productStoreIds") {
+            parameter.paramterValue = this.currentEComStore.productStoreIds
+            return true;
+          }
+          return false;
+        })
         job = clonedJob
       }
 
