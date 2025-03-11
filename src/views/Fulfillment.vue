@@ -113,7 +113,7 @@
             </ion-card-header>
             <ion-item v-for="(job, index) in maargJobs" :key="index" button detail @click="viewMaargJobConfiguration(job.jobTypeEnumId)">
               <ion-label class="ion-text-wrap">{{ job.enumDescription ? job.enumDescription : job.jobName }}</ion-label>
-              <ion-label slot="end" >{{ getMaargJobStatus(job.jobTypeEnumId) }}</ion-label>
+              <ion-label class="ion-text-end ion-text-wrap">{{ getMaargJobStatus(job.jobTypeEnumId) }}</ion-label>
             </ion-item>
           </ion-card>
           
