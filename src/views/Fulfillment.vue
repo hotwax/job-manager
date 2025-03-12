@@ -317,6 +317,11 @@ export default defineComponent({
       }
     },
     async viewJobConfiguration(jobInformation: any) {
+      if(this.isMaargJobAvailable(jobInformation.id)) {
+        this.viewMaargJobConfiguration(this.jobEnums[jobInformation.id])
+        return;
+      }
+
       this.currentJob = jobInformation.job || this.getJob(this.jobEnums[jobInformation.id])
       this.currentJobStatus = jobInformation.status
       this.freqType = jobInformation.id && this.jobFrequencyType[jobInformation.id]
