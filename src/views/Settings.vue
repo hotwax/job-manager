@@ -80,6 +80,8 @@
 
       <section>
         <DxpTimeZoneSwitcher @timeZoneUpdated="timeZoneUpdated" />
+
+        <ExecutionTimeZoneSwitcher />
       </section>
     </ion-content>
   </ion-page>
@@ -93,6 +95,7 @@ import { mapGetters, useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import Image from '@/components/Image.vue'
 import { translate } from '@hotwax/dxp-components';
+import ExecutionTimeZoneSwitcher from "@/components/ExecutionTimeZoneSwitcher.vue"
 
 export default defineComponent({
   name: 'Settings',
@@ -114,7 +117,8 @@ export default defineComponent({
     IonSelectOption,
     IonTitle, 
     IonToolbar,
-    Image
+    Image,
+    ExecutionTimeZoneSwitcher
   },
   data() {
     return {
