@@ -92,7 +92,7 @@ import { defineComponent } from 'vue';
 import { mapGetters, useStore } from 'vuex';
 import JobConfiguration from '@/components/JobConfiguration.vue'
 import MaargJobConfiguration from '@/components/MaargJobConfiguration.vue';
-import { getCronString, hasError, isFutureDate, showToast } from '@/utils';
+import { getCronString, isFutureDate, showToast } from '@/utils';
 import emitter from '@/event-bus';
 import { useRouter } from 'vue-router'
 import MoreJobs from '@/components/MoreJobs.vue'
@@ -128,8 +128,8 @@ export default defineComponent({
       getMoreJobs: 'job/getMoreJobs',
       getMaargJob: 'maargJob/getMaargJob',
       maargJobs: 'maargJob/getMaargJobsList',
-      maargJobIds: 'maargJob/getMaargJobIds',
-      currentMaargJob: 'maargJob/getCurrentMaargJob'
+      currentMaargJob: 'maargJob/getCurrentMaargJob',
+      isMaargJobAvailable: 'maargJob/isMaargJobAvailable'
     }),
     newProductsWebhook(): boolean {
       const webhookTopic = this.webhookEnums['NEW_PRODUCTS']
@@ -182,7 +182,7 @@ export default defineComponent({
       }
     },
     async viewJobConfiguration(jobInformation: any) {
-      if(this.isMaargJobAvailable(jobInformation.id)) {
+      if(this.isMaargJobAvailable(this.jobEnums[jobInformation.id])) {
         this.viewMaargJobConfiguration(this.jobEnums[jobInformation.id])
         return;
       }
@@ -214,7 +214,7 @@ export default defineComponent({
       }
     },
     getTemporalExpression(enumId: string, isMaargJob = false) {
-      if(isMaargJob || this.isMaargJobAvailable(enumId)) {
+      if(isMaargJob || this.isMaargJobAvailable(this.jobEnums[enumId])) {
         const job = this.getMaargJob(enumId)
         return (job?.paused === "N" && job?.cronExpression && !job.isDraftJob) ? this.getCronString(job.cronExpression) ? this.getCronString(job.cronExpression) : job.cronExpression : 'Disabled'  
       }
@@ -251,9 +251,6 @@ export default defineComponent({
     },
     getFilteredMaargJobs() {
       return this.maargJobs?.filter((job: any) => !Object.values(this.jobEnums).includes(job.jobTypeEnumId))
-    },
-    isMaargJobAvailable(enumdId: any) {
-      return this.maargJobIds.includes(this.jobEnums[enumdId]);
     }
   },
   setup() {

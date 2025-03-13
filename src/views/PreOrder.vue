@@ -245,8 +245,8 @@ export default defineComponent({
       getMoreJobs: 'job/getMoreJobs',
       getMaargJob: 'maargJob/getMaargJob',
       maargJobs: 'maargJob/getMaargJobsList',
-      maargJobIds: 'maargJob/getMaargJobIds',
-      currentMaargJob: 'maargJob/getCurrentMaargJob'
+      currentMaargJob: 'maargJob/getCurrentMaargJob',
+      isMaargJobAvailable: 'maargJob/isMaargJobAvailable'
     })
   },
   data() {
@@ -340,7 +340,7 @@ export default defineComponent({
       return jobAlert.present();
     },
     async viewJobConfiguration(jobInformation: any) {
-      if(this.isMaargJobAvailable(jobInformation.id)) {
+      if(this.isMaargJobAvailable(this.jobEnums[jobInformation.id])) {
         this.viewMaargJobConfiguration(this.jobEnums[jobInformation.id])
         return;
       }
@@ -372,7 +372,7 @@ export default defineComponent({
       }
     },
     getTemporalExpression(enumId: string, isMaargJob = false) {
-      if(isMaargJob || this.isMaargJobAvailable(enumId)) {
+      if(isMaargJob || this.isMaargJobAvailable(this.jobEnums[enumId])) {
         const job = this.getMaargJob(enumId)
         return (job?.paused === "N" && job?.cronExpression && !job.isDraftJob) ? this.getCronString(job.cronExpression) ? this.getCronString(job.cronExpression) : job.cronExpression : 'Disabled'  
       }
@@ -415,9 +415,6 @@ export default defineComponent({
     },
     getFilteredMaargJobs() {
       return this.maargJobs?.filter((job: any) => !Object.values(this.jobEnums).includes(job.jobTypeEnumId))
-    },
-    isMaargJobAvailable(enumdId: any) {
-      return this.maargJobIds.includes(this.jobEnums[enumdId]);
     }
   },
   mounted () {
