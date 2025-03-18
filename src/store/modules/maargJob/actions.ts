@@ -34,6 +34,7 @@ const actions: ActionTree<JobState, RootState> = {
             })
             job["parameterValues"] = paramValues
             job["enumDescription"] = maargJobEnums[job.jobTypeEnumId]?.description
+            job["permissions"] = job.jobPermissions?.map((permission: any) => permission.userPermissionId)
 
             // Check for whether job is productStore dependent or not.
             if(Object.hasOwn(paramValues, "productStoreIds")) {
