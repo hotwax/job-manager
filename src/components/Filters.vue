@@ -128,6 +128,12 @@ export default defineComponent({
         enumTypeId: "INVENTORY_SYS_JOB"
       },
       {
+        name: "Brokering",
+        iosIcon: compassOutline,
+        mdIcon: compassOutline,
+        enumTypeId: "BROKER_SYS_JOB"
+      },
+      {
         name: "Fulfillment",
         iosIcon: sendOutline,
         mdIcon: sendOutline,
