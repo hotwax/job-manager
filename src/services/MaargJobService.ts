@@ -71,7 +71,7 @@ const updateMaargJob = async (payload: any): Promise <any>  => {
 
   return client({
     url: `serviceJobs/${payload.jobName}`,
-    method: "POST",
+    method: "PUT",
     baseURL,
     data: payload,
     headers: {
