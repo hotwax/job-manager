@@ -361,7 +361,7 @@ export default defineComponent({
       const payload = { jobName: updatedJob.jobName } as any;
 
       if(this.currentMaargJob.paused === "Y") payload["paused"] = "N"
-      if(updatedJob.cronExpression !== this.currentMaargJob.cronExpression) payload["cronExpression"] = this.selectedCronExpression
+      if(this.isJobUpdated()) payload["cronExpression"] = this.selectedCronExpression
       const isParametersUpdated = updatedJob.serviceJobParameters.some((parameter: any) => parameter.parameterValue !== this.currentMaargJob.parameterValues[parameter.parameterName])
       if(isParametersUpdated) payload["serviceJobParameters"] = updatedJob.serviceJobParameters
 
