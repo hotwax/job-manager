@@ -49,7 +49,7 @@
       </div>
       <div>
         <ion-button v-if="currentMaargJob.paused === 'Y'" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || !hasJobPermission(Actions.APP_MAARG_JOB_PARAMETERS_UPDATE)" size="small" fill="outline" @click="enableJob()">{{ translate("Enable") }}</ion-button>
-        <ion-button v-else :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || isRefreshRequired || !isJobUpdated()" size="small" fill="outline" @click="saveChanges()">{{ translate("Save changes") }}</ion-button>
+        <ion-button v-else :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || isRefreshRequired || !isCronExpressionUpdated()" size="small" fill="outline" @click="saveChanges()">{{ translate("Save changes") }}</ion-button>
       </div>
     </div>
   </section>
@@ -361,7 +361,7 @@ export default defineComponent({
       const payload = { jobName: updatedJob.jobName } as any;
 
       if(this.currentMaargJob.paused === "Y") payload["paused"] = "N"
-      if(this.isJobUpdated()) payload["cronExpression"] = this.selectedCronExpression
+      if(this.isCronExpressionUpdated()) payload["cronExpression"] = this.selectedCronExpression
       const isParametersUpdated = updatedJob.serviceJobParameters.some((parameter: any) => parameter.parameterValue !== this.currentMaargJob.parameterValues[parameter.parameterName])
       if(isParametersUpdated) payload["serviceJobParameters"] = updatedJob.serviceJobParameters
 
@@ -465,7 +465,7 @@ export default defineComponent({
       return this.currentMaargJob.permissions?.length ? this.currentMaargJob.permissions.includes(permissionId) : true
     },
 
-    isJobUpdated() {
+    isCronExpressionUpdated() {
       return this.selectedCronExpression !== this.currentMaargJob.cronExpression
     }
   },
