@@ -190,7 +190,7 @@ export default defineComponent({
                     }
                     clonedJob.serviceJobParameters.find((parameter: any) => {
                       if(parameter.parameterName === "productStoreIds") {
-                        parameter.paramterValue = this.currentEComStore.productStoreIds
+                        parameter.parameterValue = this.currentEComStore.productStoreId
                         return true;
                       }
                       return false;
