@@ -6,9 +6,11 @@
           <ion-icon slot="icon-only" :icon="closeOutline" />
         </ion-button>
       </ion-buttons>
-      <ion-title>{{ translate('Custom Parameters') }}</ion-title>
+      <ion-title>{{ translate('Run now') }}</ion-title>
       <ion-buttons slot="end">
-        <ion-button color="primary" :disabled="currentJob.statusId !== 'SERVICE_DRAFT'" @click="save()">{{ translate('Save') }}</ion-button>
+        <ion-button v-if="runNow" @click="confirmRunNow()" color="primary">{{ translate('Save') }}</ion-button>
+        <ion-button v-if="runNow" @click="closeModal">{{ translate('Close') }}</ion-button>
+        <ion-button v-else color="primary" :disabled="currentJob.statusId !== 'SERVICE_DRAFT'" @click="save()">{{ translate('Save') }}</ion-button>
       </ion-buttons>
     </ion-toolbar>
   </ion-header>
@@ -39,7 +41,7 @@
         </ion-item-divider>
 
         <ion-item :key="index" v-for="(parameter, index) in customOptionalParametersValue" :lines="currentJob.statusId === 'SERVICE_DRAFT' ? 'none': ''">
-          <ion-input v-if="currentJob.statusId === 'SERVICE_DRAFT'" :label="parameter.name" :placeholder="parameter.name" v-model="parameter.value" :helper-text="parameter.type" />
+          <ion-input v-if="currentJob.statusId === 'SERVICE_DRAFT' || runNow" :label="parameter.name" :placeholder="parameter.name" v-model="parameter.value" :helper-text="parameter.type" />
           <template v-else>
             <ion-label>{{ parameter.name }}</ion-label>
             <ion-label>{{ parameter.value }}</ion-label>
@@ -68,12 +70,13 @@ import {
   IonList,
   IonTitle,
   IonToolbar,
-  modalController
+  modalController,
+  alertController
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { closeOutline, copyOutline } from 'ionicons/icons';
 import { useStore } from 'vuex';
-import { copyToClipboard } from "@/utils";
+import { copyToClipboard, generateJobCustomParameters, hasJobDataError } from "@/utils";
 import { translate } from '@hotwax/dxp-components';
 
 export default defineComponent({
@@ -93,7 +96,7 @@ export default defineComponent({
     IonTitle,
     IonToolbar,
   },
-  props: ['currentJob', 'customRequiredParameters', 'customOptionalParameters'],
+  props: ['currentJob', 'customRequiredParameters', 'customOptionalParameters', 'runNow'],
   data() {
     return {
       customOptionalParametersValue: {} as any,
@@ -121,6 +124,30 @@ export default defineComponent({
     },
     save() {
       modalController.dismiss({ dismissed: true, customOptionalParameters: this.customOptionalParametersValue, customRequiredParameters: this.customRequiredParametersValue })
+    },
+    async confirmRunNow() {
+      const jobAlert = await alertController.create({
+        header: translate("Run now"),
+        message: translate('Running this job now will not replace this job. A copy of this job will be created and run immediately. You may not be able to reverse this action.', { space: '<br/><br/>' }),
+        buttons: [
+          {
+            text: translate("Cancel"),
+            role: 'cancel',
+          },
+          {
+            text: translate('Run now'),
+            handler: () => {
+              if (this.currentJob && !hasJobDataError(this.currentJob)) {
+                // preparing the custom parameters those needs to passed with the job
+                const jobCustomParameters = generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters, this.currentJob.runtimeData)
+                this.store.dispatch('job/runServiceNow', { job: this.currentJob, jobCustomParameters })
+              }
+              this.closeModal()
+            }
+          }
+        ]
+      });
+      return jobAlert.present();
     }
   },
   setup() {
