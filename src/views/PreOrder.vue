@@ -28,11 +28,11 @@
               <ion-label color="medium">{{ translate("View catalog") }}</ion-label>
             </ion-item-divider>
             <div class="actions">
-              <ion-button :disabled="!preOrderBackorderCategory.preorder" @click.stop="goToOmsCategoryPage('/commerce/control/ViewCategory?productCategoryId=' + preOrderBackorderCategory.preorder)" fill="clear">
+              <ion-button :disabled="!preOrderBackorderCategory.preorder" @click.stop="goToPreOrderProductAudit()" fill="clear">
                 {{ translate('Pre-Order') }}
                 <ion-icon slot="end" :icon="openOutline" />
               </ion-button>
-              <ion-button :disabled="!preOrderBackorderCategory.backorder" @click.stop="goToOmsCategoryPage('/commerce/control/ViewCategory?productCategoryId=' + preOrderBackorderCategory.backorder)" fill="clear">
+              <ion-button :disabled="!preOrderBackorderCategory.backorder" @click.stop="goToPreOrderProductAudit()" fill="clear">
                 {{ translate('Backorder') }}
                 <ion-icon slot="end" :icon="openOutline" />
               </ion-button>
@@ -267,8 +267,8 @@ export default defineComponent({
       const preOrderBackorderCategory = await this.store.dispatch("user/getPreOrderBackorderCategory");
       preOrderBackorderCategory && (this.preOrderBackorderCategory = preOrderBackorderCategory);
     },
-    goToOmsCategoryPage(path: any) {
-      window.open((this.instanceUrl.startsWith('http') ? this.instanceUrl.replace('api/', "") : `https://${this.instanceUrl}.hotwax.io/`) + path, '_blank', 'noopener, noreferrer');
+    goToPreOrderProductAudit() {
+      window.open('https://preorder.hotwax.io/catalog', '_blank', 'noopener, noreferrer');
     },
     getStatus(enumId: any): boolean {
       const status = this.getJobStatus(enumId);
