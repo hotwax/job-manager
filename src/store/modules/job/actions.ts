@@ -502,9 +502,9 @@ const actions: ActionTree<JobState, RootState> = {
     // TODO: this needs to be updated when we will be storing the draft and pending jobs separately
     const batchJobEnums = JSON.parse(process.env?.VUE_APP_BATCH_JOB_ENUMS as string)
     let batchJobEnumIds = Object.values(batchJobEnums)?.map((job: any) => job.id);
-    // If query is for single systemJobEnumId only update it
+    // If query is for single systemJobEnumId only update it 
     if (typeof payload.inputFields.systemJobEnumId === "string" && batchJobEnumIds.includes(payload.inputFields.systemJobEnumId)) {
-      batchJobEnumIds = [payload.inputFields.systemJobEnumId];
+      batchJobEnumIds = [payload.inputFields.systemJobEnumId ];
     } else if (payload.inputFields.systemJobEnumId && typeof payload.inputFields.systemJobEnumId === "object") {
       batchJobEnumIds = batchJobEnumIds.filter((batchJobEnumId: any) => payload.inputFields.systemJobEnumId.includes(batchJobEnumId));
     } else {
@@ -524,7 +524,7 @@ const actions: ActionTree<JobState, RootState> = {
         return batchBrokeringJobs;
       }, [])
     })
-
+    
     // added condition to store multiple pending jobs in the state for order batch jobs
     responseJobs.filter((job: any) => !batchJobEnumIds.includes(job.systemJobEnumId) && job.statusId === 'SERVICE_PENDING').reduce((cached: any, job: any) => {
       cached[job.systemJobEnumId] = {
