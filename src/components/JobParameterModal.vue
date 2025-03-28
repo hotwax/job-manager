@@ -8,7 +8,7 @@
       </ion-buttons>
       <ion-title>{{ translate('Run now') }}</ion-title>
       <ion-buttons slot="end">
-        <ion-button v-if="runNow" @click="confirmRunNow()" color="primary">{{ translate('Save') }}</ion-button>
+        <ion-button v-if="runNow" @click="confirmRunNow();" color="primary">{{ translate('Save') }}</ion-button>
         <ion-button v-if="runNow" @click="closeModal">{{ translate('Close') }}</ion-button>
         <ion-button v-else color="primary" :disabled="currentJob.statusId !== 'SERVICE_DRAFT'" @click="save()">{{ translate('Save') }}</ion-button>
       </ion-buttons>
@@ -139,7 +139,7 @@ export default defineComponent({
             handler: () => {
               if (this.currentJob && !hasJobDataError(this.currentJob)) {
                 // preparing the custom parameters those needs to passed with the job
-                const jobCustomParameters = generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters, this.currentJob.runtimeData)
+                const jobCustomParameters = generateJobCustomParameters( this.customOptionalParametersValue, this.customRequiredParametersValue, this.currentJob.runtimeData)
                 this.store.dispatch('job/runServiceNow', { job: this.currentJob, jobCustomParameters })
               }
               this.closeModal()
