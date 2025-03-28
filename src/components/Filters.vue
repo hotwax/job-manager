@@ -140,16 +140,16 @@ export default defineComponent({
         enumTypeId: "FULFILLMENT_SYS_JOB"
       },
       {
-        name: "Reports",
-        iosIcon: barChartOutline,
-        mdIcon: barChartOutline,
-        enumTypeId: "REPORT_SYS_JOB"
-      },
-      {
         name: "Product",
         iosIcon: shirtOutline,
         mdIcon: shirtOutline,
         enumTypeId: "PRODUCT_SYS_JOB"
+      },
+      {
+        name: "Reports",
+        iosIcon: barChartOutline,
+        mdIcon: barChartOutline,
+        enumTypeId: "REPORT_SYS_JOB"
       },
       {
         name: "Miscellaneous",

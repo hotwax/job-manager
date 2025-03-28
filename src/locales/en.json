@@ -260,7 +260,7 @@
   "Select time zone": "Select time zone",
   "Send Completed Order Mail": "Send Completed Order Mail",
   "Send Packed Order Mail": "Send Packed Order Mail",
-  "Sends notifications for open, ready-for-pickup BOPIS orders, packed, and completed Sales orders.": "Sends notifications for open, ready-for-pickup BOPIS orders, packed, and completed Sales orders.",
+  "Sends notifications for open, ready-for-pickup BOPIS orders and brokered, packed, and completed Sales orders.": "Sends notifications for open, ready-for-pickup BOPIS orders and brokered, packed, and completed Sales orders.",
   "Service has been scheduled": "Service has been scheduled",
   "Service updated successfully": "Service updated successfully",
   "Services have been scheduled in bulk": "Services have been scheduled in bulk",
