@@ -9,18 +9,6 @@ const getters: GetterTree <JobState, RootState> = {
     getPendingJobs (state){
       return state.pending.list;
     },
-    getOrderBatchJobs (state){
-      const batchJobEnums = JSON.parse(process.env?.VUE_APP_BATCH_JOB_ENUMS as string)
-      const batchJobEnumIds = Object.values(batchJobEnums)?.map((job: any) => job.id);
-
-      return batchJobEnumIds.reduce((batches: any, batchJobEnumId: string) => {
-        const jobs = state.cached[batchJobEnumId];
-        if (jobs) {
-          batches = [ ...batches, ...jobs];
-        }
-        return batches;
-      }, [])
-    },
     getTemporalExpr: (state) => (id: string): any  => {
       return state.temporalExp[id];
     },
@@ -53,12 +41,6 @@ const getters: GetterTree <JobState, RootState> = {
     },
     isMiscellaneousJobsScrollable: (state) => {
       return state.miscellaneous.list?.length > 0 && state.miscellaneous.list?.length < state.miscellaneous.total
-    },
-    getReportsJobs (state){
-      return state.reports.list;
-    },
-    isReportsJobsScrollable: (state) => {
-      return state.reports.list?.length > 0 && state.reports.list?.length < state.reports.total
     },
     getMoreJobs: (state) => (jobEnums: any, enumTypeId: string): any => {
       const orderJobEnumIds = Object.values(jobEnums) as any;

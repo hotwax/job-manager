@@ -1,6 +1,5 @@
 export default {
     "APP_PIPELINE_VIEW": "",
-    "APP_BROKERING_VIEW": "",
     "APP_FULFILLMENT_VIEW": "",
     "APP_INVENTORY_VIEW": "",
     "APP_PRODUCT_VIEW": "",
@@ -9,7 +8,6 @@ export default {
     "APP_JOB_DETAILS_VIEW": "",
     "APP_INITIAL_LOAD_VIEW": "",
     "APP_MISC_VIEW": "",
-    "APP_REPORT_VIEW": "",
     "APP_BULK_EDITOR_VIEW": "COMMON_ADMIN OR JOB_MANAGER_ADMIN",
     "APP_JOB_VIEW": "",
     "APP_JOB_UPDATE": "COMMON_ADMIN OR JOB_MANAGER_ADMIN",
