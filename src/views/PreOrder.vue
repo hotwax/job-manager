@@ -424,7 +424,7 @@ export default defineComponent({
   },
   unmounted() {
     emitter.on('viewJobConfiguration', this.viewJobConfiguration)
-    emitter.off("productStoreOrConfigChanged", this.fetchJobs);
+    emitter.off("productStoreOrConfigChanged", this.fetchInitialData);
   },
   async ionViewWillLeave() {
     await this.store.dispatch("maargJob/clearCurrentMaargJob");
