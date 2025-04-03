@@ -21,12 +21,12 @@
         <ion-label slot="end">{{ currentMaargJob.paused === 'N' ? getDateAndTime(currentMaargJob.nextExecutionDateTime) : "-" }}</ion-label>
       </ion-item>
 
-      <ion-item detail button @click="openScheduleModal()">
+      <ion-item detail button :disabled="!hasJobPermission(Actions.APP_MAARG_JOB_CRON_UPDATE)" @click="openScheduleModal()">
         <ion-icon slot="start" :icon="timerOutline"/>
         <ion-label>{{ getCronString(selectedCronExpression) || selectedCronExpression }}</ion-label>
       </ion-item>
 
-      <ion-item lines="none">
+      <ion-item lines="none" :disabled="!hasJobPermission(Actions.APP_MAARG_JOB_PARAMETERS_UPDATE)">
         <ion-chip @click="openJobCustomParameterModal" outline v-if="!Object.keys(generateCustomParameters).length">
           <ion-icon :icon="addOutline" />
           <ion-label>{{ translate('Add custom parameters') }}</ion-label>
@@ -45,11 +45,11 @@
     <div class="actions desktop-only">
       <div>
         <ion-button size="small" fill="outline" color="medium" disabled>{{ translate("Skip once") }}</ion-button>
-        <ion-button size="small" fill="outline" color="danger" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || currentMaargJob.paused === 'Y' || isRefreshRequired" @click="cancelJob(currentMaargJob)">{{ translate("Disable") }}</ion-button>
+        <ion-button size="small" fill="outline" color="danger" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || !hasJobPermission(Actions.APP_MAARG_JOB_STATUS_UPDATE) || currentMaargJob.paused === 'Y' || isRefreshRequired" @click="cancelJob(currentMaargJob)">{{ translate("Disable") }}</ion-button>
       </div>
       <div>
-        <ion-button v-if="currentMaargJob.paused === 'Y'" :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" size="small" fill="outline" @click="enableJob()">{{ translate("Enable") }}</ion-button>
-        <ion-button v-else :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || isRefreshRequired" size="small" fill="outline" @click="saveChanges()">{{ translate("Save changes") }}</ion-button>
+        <ion-button v-if="currentMaargJob.paused === 'Y'" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || !hasJobPermission(Actions.APP_MAARG_JOB_STATUS_UPDATE)" size="small" fill="outline" @click="enableJob()">{{ translate("Enable") }}</ion-button>
+        <ion-button v-else :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || isRefreshRequired || !isCronExpressionUpdated()" size="small" fill="outline" @click="saveChanges()">{{ translate("Save changes") }}</ion-button>
       </div>
     </div>
   </section>
@@ -59,7 +59,7 @@
       <ion-icon slot="start" :icon="timeOutline" />
       {{ translate("History") }}
     </ion-item>
-    <ion-item :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" @click="runNow()" button>
+    <ion-item :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || !hasJobPermission(Actions.APP_MAARG_JOB_RUN_NOW_UPDATE)" @click="runNow()" button>
       <ion-icon slot="start" :icon="flashOutline" />
       {{ translate("Run now") }}
     </ion-item>
@@ -138,7 +138,8 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       currentMaargJob: 'maargJob/getCurrentMaargJob',
-      getMaargJob: 'maargJob/getMaargJob'
+      getMaargJob: 'maargJob/getMaargJob',
+      currentEComStore: 'user/getCurrentEComStore',
     }),
     generateCustomParameters() {
       // passing runTimeData params as empty, as we don't need to show the runTimeData information on UI as all the options from runtimeData might not be available in serviceInParams
@@ -179,7 +180,34 @@ export default defineComponent({
               text: translate('Run now'),
               handler: async () => {
                 try {
-                  const resp = await MaargJobService.runNow(this.currentMaargJob.jobName)
+                  let resp;
+
+                  if(this.currentMaargJob.isDraftJob) {
+                    const clonedJob = await this.cloneJob();
+                    if(!clonedJob.jobName) {
+                      showToast(translate("Failed to schedule service"));
+                      return;
+                    }
+                    clonedJob.serviceJobParameters.find((parameter: any) => {
+                      if(parameter.parameterName === "productStoreIds") {
+                        parameter.parameterValue = this.currentEComStore.productStoreId
+                        return true;
+                      }
+                      return false;
+                    })
+
+                    resp = await MaargJobService.updateMaargJob({
+                      jobName: clonedJob.jobName,
+                      serviceJobParameters: clonedJob.serviceJobParameters
+                    })
+                    if(!hasError(resp)) {
+                      await this.store.dispatch("maargJob/updateMaargJob", { jobEnumId: clonedJob.jobTypeEnumId, job: clonedJob })
+                    } else {
+                      throw resp.data;
+                    }
+                  }
+                  
+                  resp = await MaargJobService.runNow(this.currentMaargJob.jobName)
                   if(!hasError(resp) && resp.data.jobRunId) {
                     showToast(translate("Service has been scheduled"))
                   } else {
@@ -216,10 +244,10 @@ export default defineComponent({
               }
 
               try {
-                const resp = await MaargJobService.updateMaargJob({ ...job, paused: "Y" })
+                const resp = await MaargJobService.updateMaargJob({ jobName: job.jobName, paused: "Y" })
                 if(!hasError(resp)) {
                   showToast(translate("Job has been cancelled succesfully."))
-                  this.store.dispatch("maargJob/updateMaargJob", job.jobTypeEnumId)
+                  this.store.dispatch("maargJob/updateMaargJob", { jobEnumId: job.jobTypeEnumId })
                 } else {
                   throw resp.data
                 }
@@ -284,12 +312,28 @@ export default defineComponent({
     },
 
     async updateJob() {
-      const job = this.currentMaargJob
+      let job = this.currentMaargJob
 
       if(!job.cronExpression) {
         showToast(translate("Please select a scheduling for job"))
         logger.error("Please select a scheduling for job")
         return;
+      }
+
+      if(this.currentMaargJob.isDraftJob) {
+        const clonedJob = await this.cloneJob();
+        if(!clonedJob.jobName) {
+          showToast(translate("Failed to update service"));
+          return;
+        }
+        clonedJob.serviceJobParameters.find((parameter: any) => {
+          if(parameter.parameterName === "productStoreIds") {
+            parameter.parameterValue = this.currentEComStore.productStoreId
+            return true;
+          }
+          return false;
+        })
+        job = clonedJob
       }
 
       const paramValues = generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters, {});
@@ -308,23 +352,57 @@ export default defineComponent({
         }
       })
 
-      const payload = {
+      const updatedJob = {
         ...job,
         paused: "N",
         cronExpression: this.selectedCronExpression
       }
 
+      const payload = { jobName: updatedJob.jobName } as any;
+
+      if(this.currentMaargJob.paused === "Y") payload["paused"] = "N"
+      if(this.isCronExpressionUpdated()) payload["cronExpression"] = this.selectedCronExpression
+      const isParametersUpdated = updatedJob.serviceJobParameters.some((parameter: any) => parameter.parameterValue !== this.currentMaargJob.parameterValues[parameter.parameterName])
+      if(isParametersUpdated) payload["serviceJobParameters"] = updatedJob.serviceJobParameters
+
       try {
         const resp = await MaargJobService.updateMaargJob(payload)
         if(!hasError(resp)) {
           showToast(translate("Service updated successfully"))
-          this.store.dispatch("maargJob/updateMaargJob", job.jobTypeEnumId)
+          this.store.dispatch("maargJob/updateMaargJob", this.currentMaargJob.isDraftJob ? { jobEnumId: job.jobTypeEnumId, job: updatedJob } : { jobEnumId: job.jobTypeEnumId })
         } else {
           throw resp.data
         }
       } catch(err) {
         showToast(translate("Failed to update service"))
         logger.error(err)
+      }
+    },
+
+    async cloneJob() {
+      const newJobName = `${this.currentMaargJob.jobName.startsWith("template_") ? this.currentMaargJob.jobName.replace("template_", "") : this.currentMaargJob.jobName}_${this.currentEComStore.productStoreId}`
+      try {
+        const resp = await MaargJobService.cloneMaargJob({
+          jobName: this.currentMaargJob.jobName,
+          newJobName,
+          copyParameters: true
+        })
+
+        if(!hasError(resp)) {
+          const job = JSON.parse(JSON.stringify(this.currentMaargJob));
+          job["jobName"] = newJobName;
+          job["paused"] = "Y"
+          job["isDraftJob"] = false
+          job.serviceJobParameters.map((parameter: any) => {
+            parameter.jobName = newJobName
+          })
+          return job
+        } else {
+          throw resp.data;
+        }
+      } catch(error) {
+        logger.error(error);
+        return {};
       }
     },
 
@@ -382,6 +460,14 @@ export default defineComponent({
     isRuntimePassed() {
       return this.currentMaargJob.nextExecutionDateTime <= DateTime.now().toMillis()
     },
+
+    hasJobPermission(permissionId: string) {
+      return this.currentMaargJob.permissions?.length ? this.currentMaargJob.permissions.includes(permissionId) : true
+    },
+
+    isCronExpressionUpdated() {
+      return this.selectedCronExpression !== this.currentMaargJob.cronExpression
+    }
   },
   setup() {
     const store = useStore();

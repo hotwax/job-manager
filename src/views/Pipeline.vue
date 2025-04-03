@@ -30,7 +30,7 @@
       </div>
     </ion-header>
 
-    <ion-content ref="contentRef" :scroll-events="true" @ionScroll="enableScrolling()" id="filter-content">
+    <ion-content ref="contentRef" id="filter-content">
       <div class="empty-state" v-if="jobsLoading">
         <ion-item lines="none">
           <ion-spinner name="crescent" slot="start" />
@@ -38,7 +38,7 @@
         </ion-item>
       </div>
       <main v-else>
-        <section v-if="segmentSelected === 'pending'">
+        <section v-if="segmentSelected === 'pending'" class="ion-content-scroll-host" :scroll-events="true" @scroll="enableScrolling()">
           <!-- Empty state -->
           <div v-if="pendingJobs?.length === 0">
             <p class="ion-text-center">{{ translate("There are no jobs pending right now")}}</p>
@@ -107,13 +107,13 @@
                 If we do not define an extra variable and just use v-show to check for `isScrollable` then when coming back to the page infinite-scroll is called programatically.
                 We have added an ionScroll event on ionContent to check whether the infiniteScroll can be enabled or not by toggling the value of isScrollingEnabled whenever the height < 0.
               -->
-            <ion-infinite-scroll @ionInfinite="loadMorePendingJobs($event)" threshold="100px" v-show="isPendingJobsScrollable" ref="infiniteScrollRef">
+            <ion-infinite-scroll @ionInfinite="loadMorePendingJobs($event)" threshold="300px" v-show="isPendingJobsScrollable" ref="infiniteScrollRef">
               <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="translate('Loading')"/>
             </ion-infinite-scroll>
           </div>
         </section>
 
-        <section v-if="segmentSelected === 'running'">
+        <section v-if="segmentSelected === 'running'" class="ion-content-scroll-host" :scroll-events="true" @scroll="enableScrolling()">
           <!-- Empty state -->
           <div v-if="runningJobs?.length === 0">
             <p class="ion-text-center">{{ translate("There are no jobs running right now")}}</p>
@@ -173,13 +173,13 @@
             <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
               <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
             </ion-refresher>
-            <ion-infinite-scroll @ionInfinite="loadMoreRunningJobs($event)" threshold="100px" v-show="isRunningJobsScrollable" ref="infiniteScrollRef">
+            <ion-infinite-scroll @ionInfinite="loadMoreRunningJobs($event)" threshold="300px" v-show="isRunningJobsScrollable" ref="infiniteScrollRef">
               <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="translate('Loading')"/>
             </ion-infinite-scroll>
           </div> 
         </section>
 
-        <section v-if="segmentSelected === 'history'">
+        <section v-if="segmentSelected === 'history'" class="ion-content-scroll-host" :scroll-events="true" @scroll="enableScrolling()">
           <!-- Empty state -->
           <div v-if="jobHistory?.length === 0">
             <p class="ion-text-center">{{ translate("No jobs have run yet")}}</p>
@@ -257,7 +257,7 @@
           <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
             <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
           </ion-refresher>   
-          <ion-infinite-scroll @ionInfinite="loadMoreJobHistory($event)" threshold="100px"  v-show="isHistoryJobsScrollable" ref="infiniteScrollRef">
+          <ion-infinite-scroll @ionInfinite="loadMoreJobHistory($event)" threshold="300px"  v-show="isHistoryJobsScrollable" ref="infiniteScrollRef">
             <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="translate('Loading')"/>
           </ion-infinite-scroll>
           </div>          
@@ -492,7 +492,7 @@ export default defineComponent({
     },
     enableScrolling() {
       const parentElement = (this as any).$refs.contentRef.$el
-      const scrollEl = parentElement.shadowRoot.querySelector("main[part='scroll']")
+      const scrollEl = parentElement.querySelector("main > section")
       let scrollHeight = scrollEl.scrollHeight, infiniteHeight = (this as any).$refs.infiniteScrollRef.$el.offsetHeight, scrollTop = scrollEl.scrollTop, threshold = 100, height = scrollEl.offsetHeight
       const distanceFromInfinite = scrollHeight - infiniteHeight - scrollTop - threshold - height
       if(distanceFromInfinite < 0) {
@@ -682,6 +682,7 @@ export default defineComponent({
       if(isCurrentJobUpdateRequired) {
         this.jobsLoading = true;
         await this.store.dispatch('job/updateCurrentJob', { job: {} });
+        await this.store.dispatch("maargJob/clearCurrentMaargJob")
         this.currentJobStatus = ""
         this.freqType = ""
         this.isJobDetailAnimationCompleted = false
@@ -745,7 +746,7 @@ export default defineComponent({
 .selected-job {
   box-shadow: 0px 8px 10px 0px rgba(0, 0, 0, 0.14), 0px 3px 14px 0px rgba(0, 0, 0, 0.12), 0px 4px 5px 0px rgba(0, 0, 0, 0.20);
   scale: 1.03;
-  margin-block: var(--spacer-sm);
+  margin-block: var(--spacer-base);
 }
 
 ion-card {
@@ -811,6 +812,24 @@ ion-toolbar > div > ion-chip:first-child {
 
 ion-chip {
   flex: 1 0 auto;
+}
+/* overriding global main element CSS */
+main {
+  margin-block-start: 0;
+  height: 100%;
+  overflow-y: hidden;
+}
+/* allow both columns to scroll independently */
+section, aside {
+  height: 100%;
+  overflow-y: scroll;
+  scrollbar-width: none;
+  scrollbar-color: transparent;
+  padding-block-start: var(--spacer-base);
+}
+
+aside {
+  padding-block-end: var(--spacer-base);
 }
 
 @media (min-width: 991px) {

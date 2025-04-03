@@ -178,6 +178,7 @@ export default defineComponent({
       if(isCurrentJobUpdateRequired) {
         this.currentJob = "";
         await this.store.dispatch('job/updateCurrentJob', { });
+        await this.store.dispatch("maargJob/clearCurrentMaargJob")
         this.currentJobStatus = "";
         this.isJobDetailAnimationCompleted = false;
       }
@@ -207,7 +208,7 @@ export default defineComponent({
     },
     getMaargJobStatus(id: string) {
       const job = this.getMaargJob(id)
-      return (job?.paused === "N" && job?.cronExpression) ? this.getCronString(job.cronExpression) ? this.getCronString(job.cronExpression) : job.cronExpression : 'Disabled'
+      return (job?.paused === "N" && job?.cronExpression && !job.isDraftJob) ? this.getCronString(job.cronExpression) ? this.getCronString(job.cronExpression) : job.cronExpression : 'Disabled'
     },
     async viewMaargJobConfiguration(enumId: any) {
       const job = this.getMaargJob(enumId);

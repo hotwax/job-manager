@@ -157,13 +157,13 @@
             </ion-item>
           </ion-card>
 
-          <ion-card v-if="maargJobs?.length">
+          <ion-card v-if="getFilteredMaargJobs()?.length">
             <ion-card-header>
               <ion-card-title>{{ translate("Feed") }}</ion-card-title>
             </ion-card-header>
-            <ion-item v-for="(job, index) in maargJobs" :key="index" button detail @click="viewMaargJobConfiguration(job.jobTypeEnumId)">
+            <ion-item v-for="(job, index) in getFilteredMaargJobs()" :key="index" button detail @click="viewMaargJobConfiguration(job.jobTypeEnumId)">
               <ion-label class="ion-text-wrap">{{ job.enumDescription ? job.enumDescription : job.jobName }}</ion-label>
-              <ion-label slot="end" >{{ getMaargJobStatus(job.jobTypeEnumId) }}</ion-label>
+              <ion-label slot="end" >{{ getTemporalExpression(job.jobTypeEnumId, true) }}</ion-label>
             </ion-item>
           </ion-card>
 
@@ -245,7 +245,8 @@ export default defineComponent({
       getMoreJobs: 'job/getMoreJobs',
       getMaargJob: 'maargJob/getMaargJob',
       maargJobs: 'maargJob/getMaargJobsList',
-      currentMaargJob: 'maargJob/getCurrentMaargJob'
+      currentMaargJob: 'maargJob/getCurrentMaargJob',
+      isMaargJobAvailable: 'maargJob/isMaargJobAvailable'
     })
   },
   data() {
@@ -339,6 +340,11 @@ export default defineComponent({
       return jobAlert.present();
     },
     async viewJobConfiguration(jobInformation: any) {
+      if(this.isMaargJobAvailable(this.jobEnums[jobInformation.id])) {
+        this.viewMaargJobConfiguration(this.jobEnums[jobInformation.id])
+        return;
+      }
+
       this.currentJob = jobInformation.job || this.getJob(this.jobEnums[jobInformation.id])
       this.currentJobStatus = jobInformation.status;
       this.freqType = jobInformation.id && this.jobFrequencyType[jobInformation.id]
@@ -365,10 +371,13 @@ export default defineComponent({
         this.isJobDetailAnimationCompleted = true;
       }
     },
-    getTemporalExpression(enumId: string) {
-      return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
-        this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
-        translate('Disabled')
+    getTemporalExpression(enumId: string, isMaargJob = false) {
+      if(isMaargJob || this.isMaargJobAvailable(this.jobEnums[enumId])) {
+        const job = this.getMaargJob(enumId)
+        return (job?.paused === "N" && job?.cronExpression && !job.isDraftJob) ? this.getCronString(job.cronExpression) ? this.getCronString(job.cronExpression) : job.cronExpression : 'Disabled'  
+      }
+ 
+      return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ? this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description : translate('Disabled')
     },
     async fetchJobs(){
       await this.store.dispatch("job/fetchJobs", {
@@ -382,16 +391,13 @@ export default defineComponent({
       if(isCurrentJobUpdateRequired) {
         this.currentJob = "";
         await this.store.dispatch('job/updateCurrentJob', { });
+        await this.store.dispatch("maargJob/clearCurrentMaargJob")
         this.currentJobStatus = ""
         this.freqType = '';
         this.isJobDetailAnimationCompleted = false;
       }
       await this.fetchJobs();
       await this.getPreOrderBackorderCategory();
-    },
-    getMaargJobStatus(id: string) {
-      const job = this.getMaargJob(id)
-      return (job?.paused === "N" && job?.cronExpression) ? this.getCronString(job.cronExpression) ? this.getCronString(job.cronExpression) : job.cronExpression : 'Disabled'
     },
     async viewMaargJobConfiguration(enumId: any) {
       const job = this.getMaargJob(enumId);
@@ -407,6 +413,9 @@ export default defineComponent({
         this.isJobDetailAnimationCompleted = true;
       }
     },
+    getFilteredMaargJobs() {
+      return this.maargJobs?.filter((job: any) => !Object.values(this.jobEnums).includes(job.jobTypeEnumId))
+    }
   },
   mounted () {
     this.fetchInitialData();
@@ -415,7 +424,7 @@ export default defineComponent({
   },
   unmounted() {
     emitter.on('viewJobConfiguration', this.viewJobConfiguration)
-    emitter.off("productStoreOrConfigChanged", this.fetchJobs);
+    emitter.off("productStoreOrConfigChanged", this.fetchInitialData);
   },
   async ionViewWillLeave() {
     await this.store.dispatch("maargJob/clearCurrentMaargJob");

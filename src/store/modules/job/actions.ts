@@ -496,37 +496,9 @@ const actions: ActionTree<JobState, RootState> = {
       delete cached[payload.inputFields.systemJobEnumId];
     }
 
-    // added condition to store multiple pending jobs in the state for order batch jobs,
-    // getting job with status Service draft as well, as this information will be needed when scheduling
-    // a new batch
-    // TODO: this needs to be updated when we will be storing the draft and pending jobs separately
-    const batchJobEnums = JSON.parse(process.env?.VUE_APP_BATCH_JOB_ENUMS as string)
-    let batchJobEnumIds = Object.values(batchJobEnums)?.map((job: any) => job.id);
-    // If query is for single systemJobEnumId only update it 
-    if (typeof payload.inputFields.systemJobEnumId === "string" && batchJobEnumIds.includes(payload.inputFields.systemJobEnumId)) {
-      batchJobEnumIds = [ payload.inputFields.systemJobEnumId ];
-    } else if (payload.inputFields.systemJobEnumId && typeof payload.inputFields.systemJobEnumId === "object") {
-      batchJobEnumIds = batchJobEnumIds.filter((batchJobEnumId: any) => payload.inputFields.systemJobEnumId.includes(batchJobEnumId));
-    } else {
-      // If we are not explicitly getting the batch jobs skip updating it in cache
-      batchJobEnumIds = [];
-    }
-    batchJobEnumIds.map((batchBrokeringJobEnum: any) => {
-      cached[batchBrokeringJobEnum] = responseJobs.filter((job: any) => job.systemJobEnumId === batchBrokeringJobEnum).reduce((batchBrokeringJobs: any, job: any) => {
-        if (job.statusId === 'SERVICE_DRAFT') delete job.runTime;
-        batchBrokeringJobs.push({
-          ...job,
-          id: job.jobId,
-          frequency: job.tempExprId,
-          enumId: job.systemJobEnumId,
-          status: job.statusId
-        })
-        return batchBrokeringJobs;
-      }, [])
-    })
     
     // added condition to store multiple pending jobs in the state for order batch jobs  
-    responseJobs.filter((job: any) => !batchJobEnumIds.includes(job.systemJobEnumId) && job.statusId === 'SERVICE_PENDING').reduce((cached: any, job: any) => {
+    responseJobs.filter((job: any) => job.statusId === 'SERVICE_PENDING').reduce((cached: any, job: any) => {
       cached[job.systemJobEnumId] = {
         ...job,
         id: job.jobId,
@@ -1059,89 +1031,6 @@ const actions: ActionTree<JobState, RootState> = {
   removeBulkJobs({ commit, state }, scheduledJobs) {
     const bulkJobs = JSON.parse(JSON.stringify(state.bulk.jobs)).filter((job: any) => !scheduledJobs.includes(job.systemJobEnumId));
     commit(types.JOB_BULK_UPDATED, bulkJobs);
-  },
-  async fetchReportsJobs({ commit, dispatch, state }, payload){
-    const fetchJobRequests = [];
-    const params = {
-      "inputFields": {
-        "enumTypeId": "REPORT_SYS_JOB",
-        "statusId": "SERVICE_DRAFT",
-        "systemJobEnumId_op": "not-empty",
-        "shopId_fld0_value": store.state.user.currentShopifyConfig?.shopId,
-        "shopId_fld0_grp": "1",
-        "shopId_fld0_op": "equals",
-        "shopId_fld1_grp": "2",
-        "shopId_fld1_op": "empty"
-      } as any,
-      "fieldList": [ "systemJobEnumId", "runTime", "tempExprId", "parentJobId", "serviceName", "jobId", "jobName", "currentRetryCount", "statusId", "productStoreId", "runtimeDataId", "enumName", "shopId", "description" ],
-      "noConditionFind": "Y",
-      "viewSize": payload.viewSize,
-      "viewIndex": payload.viewIndex,
-    }
-
-    fetchJobRequests.push(JobService.fetchJobInformation(JSON.parse(JSON.stringify(params))).catch((err) => {
-      return err;
-    }))
-
-    params.inputFields.statusId = "SERVICE_PENDING";
-    if (payload.eComStoreId) {
-      params.inputFields["productStoreId"] = payload.eComStoreId
-    } else {
-      params.inputFields["productStoreId_op"] = "empty"
-    }
-
-    fetchJobRequests.push(JobService.fetchJobInformation(JSON.parse(JSON.stringify(params))).catch((err) => {
-      return err;
-    }))
-    
-    let jobs = [], total = 0;
-    let draft = {}, pending = {}
-    try {
-      const resp = await Promise.all(fetchJobRequests)
-
-      if (resp[0].status === 200 && !hasError(resp[0]) && resp[0].data.docs?.length > 0) {
-        total += +resp[0].data.count
-        draft = resp[0].data.docs.reduce((jobs: any, job: any) => {
-          delete job.runTime
-          jobs[job.systemJobEnumId] = job
-          return jobs
-        }, {})
-      }
-
-      if (resp[1].status === 200 && !hasError(resp[1]) && resp[1].data.docs?.length > 0) {
-        total += +resp[1].data.count
-        pending = resp[1].data.docs.reduce((jobs: any, job: any) => {
-          jobs[job.systemJobEnumId] = job
-          return jobs
-        }, {})
-      }
-
-      const responseJobs = {...draft, ...pending}
-      jobs = Object.values(responseJobs)
-
-      jobs = jobs.map((job: any) => {
-        return { ...job, 'status': job.statusId }
-      })
-
-      if (payload.viewIndex > 0) jobs = state.reports.list.concat(jobs);
-
-      const tempExprList = [] as any;
-      const enumIds = [] as any;
-
-      jobs.map((job: any) => {
-        enumIds.push(job.systemJobEnumId);
-        tempExprList.push(job.tempExprId);
-      })
-
-      const tempExpr = [...new Set(tempExprList)];
-      dispatch('fetchTemporalExpression', tempExpr);
-      dispatch('fetchJobDescription', enumIds);
-    } catch (err) {
-      logger.error(err);
-      showToast(translate("Something went wrong"));
-    } finally {
-      commit(types.JOB_REPORTS_UPDATED, { jobs: jobs, total: total ? total : 0 });
-    }
   },
 }
 export default actions;

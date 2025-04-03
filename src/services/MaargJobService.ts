@@ -49,13 +49,29 @@ const runNow = async (jobName: any): Promise <any>  => {
   });
 }
 
+const cloneMaargJob = async (payload: any): Promise <any>  => {
+  const omsRedirectionInfo = store.getters['user/getOmsRedirectionInfo'];
+  const baseURL = store.getters['user/getMaargBaseUrl'];
+
+  return client({
+    url: `serviceJobs/${payload.jobName}/clone`,
+    method: "POST",
+    baseURL,
+    data: payload,
+    headers: {
+      "api_key": omsRedirectionInfo.token,
+      "Content-Type": "application/json"
+    }
+  });
+}
+
 const updateMaargJob = async (payload: any): Promise <any>  => {
   const omsRedirectionInfo = store.getters['user/getOmsRedirectionInfo'];
   const baseURL = store.getters['user/getMaargBaseUrl'];
 
   return client({
     url: `serviceJobs/${payload.jobName}`,
-    method: "POST",
+    method: "PUT",
     baseURL,
     data: payload,
     headers: {
@@ -100,6 +116,7 @@ const fetchMaargJobEnumerations = async (payload: any): Promise <any>  => {
 }
 
 export const MaargJobService = {
+  cloneMaargJob,
   fetchMaargJobEnumerations,
   fetchMaargJobs,
   fetchMaargJobHistory,

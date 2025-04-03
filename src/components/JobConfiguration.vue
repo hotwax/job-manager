@@ -2,7 +2,7 @@
   <section>
     <ion-item lines="none">
       <!-- Adding conditional check for currentJob.jobName as currentJob is undefined when i18n runs translate -->
-      <h1>{{ isBrokerJob ? currentJob.jobName : currentJob.enumName ? currentJob.enumName : currentJob.jobName ? currentJob.jobName : '' }}</h1>
+      <h1>{{ currentJob.enumName ? currentJob.enumName : currentJob.jobName ? currentJob.jobName : '' }}</h1>
       <ion-button fill="outline" slot="end" v-if="isRefreshRequired" @click="refreshCurrentJob">
         <ion-icon :icon="refreshOutline" slot="icon-only" />
       </ion-button>
@@ -130,7 +130,7 @@
   <!-- Import logs -->
   <section v-if="historyJobConfig && currentJob.runtimeData?.configId && getDataManagerLogs?.length">
     <ion-item lines="none">
-      <h1>{{ translate('Import logs') }}</h1>
+      <h3>{{ translate('Import logs') }}</h3>
       <ion-button slot="end" fill="clear" @click="openImportLogsDetails()">{{ translate('View details') }}</ion-button>
     </ion-item>
     <ion-progress-bar :value="(getProcessedFileCount() - getErrorFileCount()) / getDataManagerLogs.length"></ion-progress-bar>
@@ -252,7 +252,7 @@ export default defineComponent({
     this.generateRunTimes(this.runTime)
     this.generateFrequencyOptions(this.jobStatus)
   },
-  props: ["isBrokerJob", "status", "type", "historyJobConfig"],
+  props: ["status", "type", "historyJobConfig"],
   computed: {
     ...mapGetters({
       pinnedJobs: 'user/getPinnedJobs',
@@ -327,10 +327,6 @@ export default defineComponent({
 
       if(this.$route.path === '/pipeline') {
         job = this.pendingJobs.find((job: any) => job.systemJobEnumId === this.currentJob.systemJobEnumId)
-      } else if(this.$route.path === '/brokering') {
-        // In brokering page, we may have multiple batch jobs for a single systemJobEnumId.
-        // Hence uniquely identifying current job using parentJobId.
-        job = this.getJob(this.currentJob.systemJobEnumId)?.find((job: any) => job.parentJobId === this.currentJob.parentJobId)
       } else {
         job = this.getJob(this.currentJob.systemJobEnumId)
       }
