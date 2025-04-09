@@ -15,12 +15,6 @@
 
       <ion-item>
         <ion-icon slot="start" :icon="timeOutline" />
-        <!-- <template v-if="nextOccurrenceJob?.jobId">
-          <ion-label class="ion-text-wrap">{{ translate("Run time") }}</ion-label>
-          <ion-label class="ion-text-wrap" slot="end">{{ getTime(nextOccurrenceJob.runTime) }}</ion-label>
-        </template>
-        <template v-else>
-        </template> -->
         <ion-select interface="popover" :placeholder="translate('Select')" :disabled="isPendingJob()" :value="runTime" @ionChange="updateRunTime($event)">
           <div slot="label" class="ion-text-wrap">{{ translate("Run time") }}</div>
           <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ translate(runTime.label) }}</ion-select-option>
@@ -199,8 +193,7 @@ export default defineComponent({
       runTime: '' as any,
       runTimes: [] as any,
       customOptionalParameters: [] as any,
-      customRequiredParameters: [] as any,
-      nextJobOccurenceParameters: {} as any
+      customRequiredParameters: [] as any
     }
   },
   async mounted() {
