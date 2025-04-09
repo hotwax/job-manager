@@ -97,10 +97,25 @@ const fetchFileData = async (payload: any): Promise <any> => {
   })
 }
 
-const fetchJobPreviousOccurrence = async (payload: any): Promise <any>  => {
-  try {
-    const params = {
+const fetchJobOccurrences = async (payload: any): Promise <any>  => {
+  const jobOccurrences = {} as any;
+  const storeFilter = (store.state.user.currentEComStore?.productStoreId) ? {
+    "productStoreId": store.state.user.currentEComStore?.productStoreId,
+    "shopId_fld0_value": store.state.user.currentShopifyConfig?.shopId,
+    "shopId_fld0_grp": "1",
+    "shopId_fld0_op": "equals",
+    "shopId_fld1_grp": "2",
+    "shopId_fld1_op": "empty" 
+  } : {
+    "productStoreId_op": "empty"
+  }
+
+  const pastPayload = {
+    url: "/findJobs",
+    method: "get",
+    params: {
       "inputFields": {
+        ...storeFilter,
         "systemJobEnumId": payload.systemJobEnumId,
         "statusId": ["SERVICE_DRAFT","SERVICE_PENDING","SERVICE_RUNNING", "SERVICE_QUEUED"],
         "statusId_op": "not-in"
@@ -111,41 +126,39 @@ const fetchJobPreviousOccurrence = async (payload: any): Promise <any>  => {
       "viewIndex": 0,
       "orderBy": "runTime DESC"
     }
-    if (store.state.user.currentEComStore?.productStoreId) {
-      params.inputFields = {
-        ...params.inputFields,
-        "productStoreId": store.state.user.currentEComStore?.productStoreId,
-        "shopId_fld0_value": store.state.user.currentShopifyConfig?.shopId,
-        "shopId_fld0_grp": "1",
-        "shopId_fld0_op": "equals",
-        "shopId_fld1_grp": "2",
-        "shopId_fld1_op": "empty"
-      }
-    } else {
-      params.inputFields["productStoreId_op"] = "empty"
-    }
-    const resp = await api({
-      url: "/findJobs",
-      method: "get",
-      params: params,
-      cache: true
-    });
-    if (hasError(resp)) {
-      return Promise.reject(resp?.data);
-    } else {
-      // if there are no records response has { error: "No record found" } which is handled in if block
-      // We will have atleast a single record 
-      return Promise.resolve(resp?.data.docs[0].runTime);
-    }
-  } catch(error: any) {
-    return Promise.reject(error)
   }
+
+  const upcomingPayload = {
+    url: "/findJobs",
+    method: "get",
+    params: {
+      "inputFields": {
+        ...storeFilter,
+        "systemJobEnumId": payload.systemJobEnumId,
+        "statusId": ["SERVICE_PENDING","SERVICE_RUNNING", "SERVICE_QUEUED"],
+        "statusId_op": "in"
+      } as any,
+      "noConditionFind": "Y",
+      "viewSize": 1,
+      "viewIndex": 0,
+      "orderBy": "runTime ASC"
+    }
+  }
+
+  const responses = await Promise.allSettled([api(pastPayload), api(upcomingPayload)])
+  if(responses[0].status === "fulfilled" && !hasError(responses[0].value) && responses[0].value?.data.docs?.length) {
+    jobOccurrences["previousOccurrence"] = responses[0].value.data.docs[0].runTime
+  }
+  if(responses[1].status === "fulfilled" && !hasError(responses[1].value) && responses[1].value?.data.docs?.length) {
+    jobOccurrences["nextOccurrenceJob"] = responses[1].value.data.docs[0]
+  }
+  return jobOccurrences;
 }
 
 export const JobService = {
   fetchJobDescription,
   fetchJobInformation,
-  fetchJobPreviousOccurrence,
+  fetchJobOccurrences,
   fetchTemporalExpression,
   updateJob,
   scheduleJob,
