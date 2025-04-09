@@ -9,7 +9,6 @@ import Orders from '@/views/Orders.vue'
 import JobDetails from '@/views/JobDetails.vue'
 import InitialLoad from '@/views/InitialLoad.vue'
 import Miscellaneous from '@/views/Miscellaneous.vue'
-import BulkEditor from '@/views/BulkEditor.vue'
 import Settings from "@/views/Settings.vue"
 import DataManagerLogDetails from "@/views/DataManagerLogDetails.vue"
 import store from '@/store'
@@ -140,15 +139,6 @@ const routes: Array<RouteRecordRaw> = [
     beforeEnter: authGuard,
     meta: {
       permissionId: "APP_MISC_VIEW"
-    }
-  },
-  {  
-    path: '/bulk-editor',
-    name: 'BulkEditor',
-    component: BulkEditor,
-    beforeEnter: authGuard,
-    meta: {
-      permissionId: "APP_BULK_EDITOR_VIEW"
     }
   },
   {

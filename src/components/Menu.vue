@@ -182,22 +182,6 @@ export default defineComponent({
         }
       },
       {
-        title: "Bulk editor",
-        meta: {
-          permissionId: "APP_BULK_EDITOR_VIEW"
-        }
-      },
-      {
-        title: "Schedule in bulk",
-        url: "/bulk-editor",
-        iosIcon: terminalOutline,
-        mdIcon: terminalOutline,
-        dependsOnBaseURL: false,
-        meta: {
-          permissionId: "APP_BULK_EDITOR_VIEW"
-        }
-      },
-      {
         title: "Settings",
         url: "/settings",
         iosIcon: settingsOutline,
