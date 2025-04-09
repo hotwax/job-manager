@@ -24,10 +24,5 @@ export default interface JobState {
       category: any,
       enum: any
     },
-    bulk: {
-      jobs: any,
-      runtime: any,
-      frequency: any,
-    },
     dataManagerLogs: any
 }
