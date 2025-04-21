@@ -33,6 +33,7 @@ const actions: ActionTree<JobState, RootState> = {
               paramValues[parameter.parameterName] = parameter.parameterValue
             })
             job["parameterValues"] = paramValues
+            job["enumName"] = maargJobEnums[job.jobTypeEnumId]?.enumName
             job["enumDescription"] = maargJobEnums[job.jobTypeEnumId]?.description
             job["permissions"] = job.jobPermissions?.map((permission: any) => permission.userPermissionId)
 

@@ -1,7 +1,7 @@
 <template>
   <section>
     <ion-item lines="none">
-      <h1>{{ currentMaargJob?.enumDescription ? currentMaargJob.enumDescription : currentMaargJob?.jobName }}</h1>
+      <h1>{{ currentMaargJob?.enumName ? currentMaargJob.enumName : currentMaargJob?.jobName }}</h1>
       <ion-button fill="outline" slot="end" v-if="isRefreshRequired" @click="refreshCurrentJob">
         <ion-icon :icon="refreshOutline" slot="icon-only" />
       </ion-button>
@@ -9,9 +9,9 @@
     </ion-item>
 
     <ion-list>
-      <ion-item v-if="currentMaargJob.description" lines="none">
+      <ion-item v-if="currentMaargJob.enumDescription" lines="none">
         <ion-label class="ion-text-wrap">
-          <p>{{ currentMaargJob.description }}</p>
+          <p>{{ currentMaargJob.enumDescription }}</p>
         </ion-label>
       </ion-item>
 
