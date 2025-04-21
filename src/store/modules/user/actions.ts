@@ -109,6 +109,7 @@ const actions: ActionTree<UserState, RootState> = {
       // Getting service status description
       // TODO check if we could move it to logic for fetching jobs
       this.dispatch('util/getServiceStatusDesc')
+      this.dispatch('util/getJobRecurrenceTimeZone', preferredStore.productStoreId);
     } catch (err: any) {
       // If any of the API call in try block has status code other than 2xx it will be handled in common catch block.
       // TODO Check if handling of specific status codes is required.
@@ -177,6 +178,7 @@ const actions: ActionTree<UserState, RootState> = {
     }
     commit(types.USER_CURRENT_ECOM_STORE_UPDATED, productStore);
     await dispatch('getShopifyConfig',  productStore.productStoreId);
+    this.dispatch('util/getForceScanSetting', productStore.productStoreId)
   },
   /**
    * Update user timeZone
