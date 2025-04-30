@@ -28,11 +28,11 @@
               <ion-label color="medium">{{ translate("View catalog") }}</ion-label>
             </ion-item-divider>
             <div class="actions">
-              <ion-button :disabled="!preOrderBackorderCategory.preorder" @click.stop="goToPreOrderProductAudit()" fill="clear">
+              <ion-button :disabled="!preOrderBackorderCategory.preorder" @click.stop="goToPreOrderProductAudit('PCCT_PREORDR')" fill="clear">
                 {{ translate('Pre-Order') }}
                 <ion-icon slot="end" :icon="openOutline" />
               </ion-button>
-              <ion-button :disabled="!preOrderBackorderCategory.backorder" @click.stop="goToPreOrderProductAudit()" fill="clear">
+              <ion-button :disabled="!preOrderBackorderCategory.backorder" @click.stop="goToPreOrderProductAudit('PCCT_BACKORDER')" fill="clear">
                 {{ translate('Backorder') }}
                 <ion-icon slot="end" :icon="openOutline" />
               </ion-button>
@@ -206,7 +206,7 @@ import { alertController } from '@ionic/vue';
 import JobConfiguration from '@/components/JobConfiguration.vue'
 import { generateJobCustomParameters, getCronString, isFutureDate, showToast, prepareRuntime, hasJobDataError } from '@/utils';
 import emitter from '@/event-bus';
-import { translate } from '@hotwax/dxp-components';
+import { useAuthStore, translate } from '@hotwax/dxp-components';
 import MoreJobs from '@/components/MoreJobs.vue';
 import { Actions, hasPermission } from '@/authorization'
 import { openOutline } from 'ionicons/icons'
@@ -267,8 +267,9 @@ export default defineComponent({
       const preOrderBackorderCategory = await this.store.dispatch("user/getPreOrderBackorderCategory");
       preOrderBackorderCategory && (this.preOrderBackorderCategory = preOrderBackorderCategory);
     },
-    goToPreOrderProductAudit() {
-      window.open('https://preorder.hotwax.io/catalog', '_blank', 'noopener, noreferrer');
+    goToPreOrderProductAudit(category: string) {
+      const link = `${process.env.VUE_APP_PREORDER_LOGIN_URL}?oms=${this.authStore.oms}&token=${this.authStore.token.value}&expirationTime=${this.authStore.token.expiration}&categoryId=${category}`
+      window.open(link, '_blank', 'noopener, noreferrer');
     },
     getStatus(enumId: any): boolean {
       const status = this.getJobStatus(enumId);
@@ -432,8 +433,11 @@ export default defineComponent({
   setup() {
     const store = useStore();
     const router = useRouter();
+    const authStore = useAuthStore()
+
     return {
       Actions,
+      authStore,
       getCronString,
       hasPermission,
       openOutline,
