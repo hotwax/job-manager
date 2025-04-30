@@ -98,8 +98,11 @@
               <ion-card-title>{{ translate("Feed") }}</ion-card-title>
             </ion-card-header>
             <ion-item v-for="(job, index) in getFilteredMaargJobs()" :key="index" button detail @click="viewMaargJobConfiguration(job.jobTypeEnumId)">
-              <ion-label class="ion-text-wrap">{{ job.enumDescription ? job.enumDescription : job.jobName }}</ion-label>
-              <ion-label slot="end" >{{ getTemporalExpression(job.jobTypeEnumId, true) }}</ion-label>
+              <ion-label class="ion-text-wrap">
+                {{ job.enumDescription ? job.enumDescription : job.jobName }}
+                <p>{{ getTemporalExpression(job.jobTypeEnumId, true) }}</p>
+              </ion-label>
+              <ion-label slot="end">{{ translate(job.paused === "N" ? "Enabled" : "Disabled") }}</ion-label>
             </ion-item>
           </ion-card>
 
@@ -298,7 +301,7 @@ export default defineComponent({
     getTemporalExpression(enumId: string, isMaargJob = false) {
       if(isMaargJob || this.isMaargJobAvailable(this.jobEnums[enumId])) {
         const job = this.getMaargJob(enumId)
-        return (job?.paused === "N" && job?.cronExpression && !job.isDraftJob) ? this.getCronString(job.cronExpression) ? this.getCronString(job.cronExpression) : job.cronExpression : 'Disabled'  
+        return job?.cronExpression ? this.getCronString(job.cronExpression) ? this.getCronString(job.cronExpression) : job.cronExpression : "-"
       }
 
       return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ? this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description : translate('Disabled')
