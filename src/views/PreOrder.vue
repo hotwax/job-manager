@@ -162,7 +162,7 @@
               <ion-card-title>{{ translate("Feed") }}</ion-card-title>
             </ion-card-header>
             <ion-item v-for="(job, index) in getFilteredMaargJobs()" :key="index" button detail @click="viewMaargJobConfiguration(job.jobTypeEnumId)">
-              <ion-label class="ion-text-wrap">{{ job.enumDescription ? job.enumDescription : job.jobName }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ job.enumName ? job.enumName : job.jobName }}</ion-label>
               <ion-label slot="end" >{{ getTemporalExpression(job.jobTypeEnumId, true) }}</ion-label>
             </ion-item>
           </ion-card>
@@ -424,7 +424,7 @@ export default defineComponent({
   },
   unmounted() {
     emitter.on('viewJobConfiguration', this.viewJobConfiguration)
-    emitter.off("productStoreOrConfigChanged", this.fetchJobs);
+    emitter.off("productStoreOrConfigChanged", this.fetchInitialData);
   },
   async ionViewWillLeave() {
     await this.store.dispatch("maargJob/clearCurrentMaargJob");

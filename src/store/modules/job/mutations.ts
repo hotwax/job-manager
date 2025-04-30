@@ -35,10 +35,6 @@ const mutations: MutationTree <JobState> = {
         state.miscellaneous.list = payload.jobs;
         state.miscellaneous.total = payload.total;
     },
-    [types.JOB_REPORTS_UPDATED] (state, payload){
-        state.reports.list = payload.jobs;
-        state.reports.total = payload.total;
-    },
     [types.JOB_PIPELINE_FILTERS_UPDATED] (state, payload){
         state.pipelineFilters = payload.pipelineFilters;
     },
@@ -47,22 +43,6 @@ const mutations: MutationTree <JobState> = {
             status: [],
             category: [],
             enum: []
-        }
-    },
-    [types.JOB_BULK_UPDATED] (state, payload){
-        state.bulk.jobs = payload;
-    },
-    [types.JOB_BULK_FREQUENCY_UPDATED] (state, payload) {
-        state.bulk.frequency = payload.frequency;
-    },
-    [types.JOB_BULK_RUNTIME_UPDATED] (state, payload) {
-        state.bulk.runtime = payload.runtime;
-    },
-    [types.JOB_BULK_CLEARED] (state) {
-        state.bulk = {
-            jobs: [],
-            runtime: '',
-            frequency: ''
         }
     },
     [types.JOB_DATA_MANAGER_LOGS_UPDATED] (state, payload) {
