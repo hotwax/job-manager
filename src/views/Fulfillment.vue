@@ -116,6 +116,16 @@
               <ion-label slot="end" >{{ getTemporalExpression(job.jobTypeEnumId, true) }}</ion-label>
             </ion-item>
           </ion-card>
+
+          <ion-card v-if="getFilteredMaargJobs(true)?.length">
+            <ion-card-header>
+              <ion-card-title>{{ translate("Netsuite") }}</ion-card-title>
+            </ion-card-header>
+            <ion-item v-for="(job, index) in getFilteredMaargJobs(true)" :key="index" button detail @click="viewMaargJobConfiguration(job.jobTypeEnumId)">
+              <ion-label class="ion-text-wrap">{{ job.enumName ? job.enumName : job.jobName }}</ion-label>
+              <ion-label slot="end" >{{ getTemporalExpression(job.jobTypeEnumId, true) }}</ion-label>
+            </ion-item>
+          </ion-card>
           
           <MoreJobs v-if="getMoreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId).length" :jobs="getMoreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId)" />
         </section>
@@ -372,8 +382,8 @@ export default defineComponent({
         this.isJobDetailAnimationCompleted = true;
       }
     },
-    getFilteredMaargJobs() {
-      return this.maargJobs?.filter((job: any) => !Object.values(this.jobEnums).includes(job.jobTypeEnumId))
+    getFilteredMaargJobs(isNetsuiteJob = false) {
+      return isNetsuiteJob ? this.maargJobs?.filter((job: any) => !Object.values(this.jobEnums).includes(job.jobTypeEnumId) && job.permissionGroupId === "NETSUITE") : this.maargJobs?.filter((job: any) => !Object.values(this.jobEnums).includes(job.jobTypeEnumId) && job.permissionGroupId !== "NETSUITE")
     }
   },
   mounted () {
