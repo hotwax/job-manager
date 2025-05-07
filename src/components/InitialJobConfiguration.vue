@@ -15,7 +15,7 @@
 
       <ion-item>
         <ion-icon slot="start" :icon="timeOutline" />
-        <ion-select interface="popover" :placeholder="translate('Select')" :value="runTime" @ionChange="updateRunTime($event)">
+        <ion-select interface="popover" :placeholder="translate('Select')" :disabled="isPendingJob()" :value="runTime" @ionChange="updateRunTime($event)">
           <div slot="label" class="ion-text-wrap">{{ translate("Run time") }}</div>
           <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ translate(runTime.label) }}</ion-select-option>
         </ion-select>
@@ -47,7 +47,7 @@
       </ion-item>
     </ion-list>
 
-    <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || isRequiredParametersMissing" size="small" fill="outline" expand="block" @click="runJob('Products')">{{ translate("Run import") }}</ion-button>
+    <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || isRequiredParametersMissing || isPendingJob()" size="small" fill="outline" expand="block" @click="runJob('Products')">{{ translate("Run import") }}</ion-button>
   </section>
 
   <section v-else>
@@ -127,7 +127,7 @@
       </ion-item>
     </ion-list>
 
-    <ion-button size="small" fill="outline" expand="block" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || isRequiredParametersMissing" @click="runJob('Orders')">{{ translate("Run import") }}</ion-button>
+    <ion-button size="small" fill="outline" expand="block" :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || isRequiredParametersMissing ||isPendingJob()" @click="runJob('Orders')">{{ translate("Run import") }}</ion-button>
   </section>
 </template>
 
@@ -196,10 +196,10 @@ export default defineComponent({
       customRequiredParameters: [] as any
     }
   },
-  mounted() {
+  async mounted() {
     // Component is mounted even if there is no current job, do fetch previous occurrence if no current job
     if (this.currentJob && Object.keys(this.currentJob).length) {
-      this.fetchPreviousOccurrence();
+      await this.fetchJobOccurrences();
       // Appendng and setting the previous run time
       this.runTime = this.currentJob?.runTime
       this.generateRunTimes(this.runTime)
@@ -232,10 +232,16 @@ export default defineComponent({
       this.runTime = currentRunTime
       this.runTimes = runTimes
     },
-    async fetchPreviousOccurrence() {
-      this.previousOccurrence = await JobService.fetchJobPreviousOccurrence({
+    async fetchJobOccurrences() {
+      const jobOccurrences = await JobService.fetchJobOccurrences({
         systemJobEnumId: this.currentJob?.systemJobEnumId
-      })
+      }) as any;
+
+      this.previousOccurrence = jobOccurrences?.previousOccurrence
+      const nextJob = jobOccurrences?.nextOccurrenceJob
+      if(nextJob?.jobId) {
+        await this.store.dispatch('job/updateCurrentJob', { job: nextJob, jobId: this.currentJob.systemJobEnumId })
+      }
     },
     async runJob(header: string) {
       const alert = await alertController
@@ -320,6 +326,9 @@ export default defineComponent({
       })
 
       await jobParameterModal.present();
+    },
+    isPendingJob() {
+      return ["SERVICE_PENDING","SERVICE_RUNNING", "SERVICE_QUEUED"].includes(this.currentJob.statusId);
     }
   },
   setup() {
