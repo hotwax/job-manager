@@ -46,11 +46,18 @@
               <ion-card-title>{{ translate("Feed") }}</ion-card-title>
             </ion-card-header>
             <ion-item v-for="(job, index) in getFilteredMaargJobs()" :key="index" button detail @click="viewMaargJobConfiguration(job.jobTypeEnumId)">
-              <ion-label class="ion-text-wrap">
-                {{ job.enumDescription ? job.enumDescription : job.jobName }}
-                <p>{{ getTemporalExpression(job.jobTypeEnumId, true) }}</p>
-              </ion-label>
-              <ion-label slot="end">{{ translate(job.paused === "N" ? "Enabled" : "Disabled") }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ job.enumName ? job.enumName : job.jobName }}</ion-label>
+              <ion-label slot="end" >{{ getTemporalExpression(job.jobTypeEnumId, true) }}</ion-label>
+            </ion-item>
+          </ion-card>
+
+          <ion-card v-if="getFilteredMaargJobs(true)?.length">
+            <ion-card-header>
+              <ion-card-title>{{ translate("NetSuite") }}</ion-card-title>
+            </ion-card-header>
+            <ion-item v-for="(job, index) in getFilteredMaargJobs(true)" :key="index" button detail @click="viewMaargJobConfiguration(job.jobTypeEnumId)">
+              <ion-label class="ion-text-wrap">{{ job.enumName ? job.enumName : job.jobName }}</ion-label>
+              <ion-label slot="end" >{{ getTemporalExpression(job.jobTypeEnumId, true) }}</ion-label>
             </ion-item>
           </ion-card>
 
@@ -237,8 +244,8 @@ export default defineComponent({
         this.isJobDetailAnimationCompleted = true;
       }
     },
-    getFilteredMaargJobs() {
-      return this.maargJobs?.filter((job: any) => !Object.values(this.jobEnums).includes(job.jobTypeEnumId))
+    getFilteredMaargJobs(isNetSuiteJob = false) {
+      return isNetSuiteJob ? this.maargJobs?.filter((job: any) => !Object.values(this.jobEnums).includes(job.jobTypeEnumId) && job.permissionGroupId === "NETSUITE") : this.maargJobs?.filter((job: any) => !Object.values(this.jobEnums).includes(job.jobTypeEnumId) && job.permissionGroupId !== "NETSUITE")
     }
   },
   mounted () {
