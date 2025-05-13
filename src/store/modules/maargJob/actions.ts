@@ -18,7 +18,6 @@ const actions: ActionTree<JobState, RootState> = {
       resp = await MaargJobService.fetchMaargJobs({ enumTypeId, pageSize: 200 })
       if(!hasError(resp) && resp.data?.length) {
         const jobs = resp.data;
-        const jobEnumIdsToFetch = jobs.map((job: any) => job.jobTypeEnumId);
         
         const responses = await Promise.allSettled(jobs.map((job: any) => MaargJobService.fetchMaargJobInfo(job.jobName)))
         
