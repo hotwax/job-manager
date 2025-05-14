@@ -8,7 +8,7 @@ import logger from "@/logger";
 import { MaargJobService } from '@/services/MaargJobService'
 
 const actions: ActionTree<JobState, RootState> = {
-  async fetchMaargJobs({ commit, dispatch }, enumTypeId){
+  async fetchMaargJobs({ commit }, enumTypeId){
     const productStoreId = store.getters["user/getCurrentEComStore"]?.productStoreId
 
     let resp = {} as any;
@@ -18,12 +18,9 @@ const actions: ActionTree<JobState, RootState> = {
       resp = await MaargJobService.fetchMaargJobs({ enumTypeId, pageSize: 200 })
       if(!hasError(resp) && resp.data?.length) {
         const jobs = resp.data;
-        const jobEnumIdsToFetch = jobs.map((job: any) => job.jobTypeEnumId);
         
         const responses = await Promise.allSettled(jobs.map((job: any) => MaargJobService.fetchMaargJobInfo(job.jobName)))
-        await dispatch("fetchMaargJobEnums", jobEnumIdsToFetch)
-        const maargJobEnums = store.getters["maargJob/getMaargJobEnums"]
-
+        
         responses.map((response: any) => {
           if(response.status === "fulfilled") {
             const job = response.value.data.jobDetail
@@ -33,8 +30,6 @@ const actions: ActionTree<JobState, RootState> = {
               paramValues[parameter.parameterName] = parameter.parameterValue
             })
             job["parameterValues"] = paramValues
-            job["enumName"] = maargJobEnums[job.jobTypeEnumId]?.enumName
-            job["enumDescription"] = maargJobEnums[job.jobTypeEnumId]?.description
             job["permissions"] = job.jobPermissions?.map((permission: any) => permission.userPermissionId)
 
             // Check for whether job is productStore dependent or not.
@@ -48,7 +43,7 @@ const actions: ActionTree<JobState, RootState> = {
             } else {
               // For handling case where we have childs jobs for the productstore independent job
               // We'll give preference to job with parentJobName and then the job without parentJobName
-              if(!maargJobs[job.jobTypeEnumId] || (maargJobEnums[job.jobTypeEnumId] && !maargJobEnums[job.jobTypeEnumId]?.parentJobName)) {
+              if(!maargJobs[job.jobTypeEnumId] || !job.parentJobName) {
                 maargJobs[job.jobTypeEnumId] = job
               }
             }
@@ -98,29 +93,7 @@ const actions: ActionTree<JobState, RootState> = {
     } catch(error: any) {
       logger.error(error);
     }
-  },
-
-  async fetchMaargJobEnums({ commit }, enumIds) {
-    const jobEnums = JSON.parse(JSON.stringify(store.getters["maargJob/getMaargJobEnums"]))
-    const enumIdsToFetch = enumIds.filter((enumId: any) => !jobEnums[enumId])
-
-    if(!enumIdsToFetch.length) return;
-
-    try {
-      const resp = await MaargJobService.fetchMaargJobEnumerations({ enumId: enumIdsToFetch, enumId_op: "in" });
-
-      if(!hasError(resp)) {
-        resp.data.map((enumeration: any) => {
-          jobEnums[enumeration.enumId] = enumeration
-        })
-      } else {
-        throw resp;
-      }
-    } catch(error) {
-      logger.error(error);
-    }
-    commit(types.MAARGJOB_ENUMS_UPDATED, jobEnums);
-  },
+  },  
 
   async updateCurrentMaargJob({ commit, dispatch, state }, payload) {
     const maargJobs = state.maargJobs;
@@ -152,9 +125,5 @@ const actions: ActionTree<JobState, RootState> = {
   async clearCurrentMaargJob({ commit }) {
     commit(types.MAARGJOB_CURRENT_UPDATED, {});
   },
-
-  async clearMaargJobState({ commit }) {
-    commit(types.MAARGJOB_ENUMS_UPDATED, {});
-  }
 }
 export default actions;

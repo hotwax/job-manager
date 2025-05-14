@@ -97,27 +97,8 @@ const fetchMaargJobHistory = async (payload: any): Promise <any>  => {
   });
 }
 
-const fetchMaargJobEnumerations = async (payload: any): Promise <any>  => {
-  const omsRedirectionInfo = store.getters['user/getOmsRedirectionInfo'];
-  const baseURL = store.getters['user/getMaargBaseUrl'];
-
-  const updatedBaseUrl = baseURL.replace("admin", "available-to-promise")
-
-  return client({
-    url: "enums",
-    method: "GET",
-    baseURL: updatedBaseUrl,
-    params: payload,
-    headers: {
-      "api_key": omsRedirectionInfo.token,
-      "Content-Type": "application/json"
-    }
-  });
-}
-
 export const MaargJobService = {
   cloneMaargJob,
-  fetchMaargJobEnumerations,
   fetchMaargJobs,
   fetchMaargJobHistory,
   fetchMaargJobInfo,
