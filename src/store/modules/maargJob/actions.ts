@@ -8,7 +8,7 @@ import logger from "@/logger";
 import { MaargJobService } from '@/services/MaargJobService'
 
 const actions: ActionTree<JobState, RootState> = {
-  async fetchMaargJobs({ commit, dispatch }, enumTypeId){
+  async fetchMaargJobs({ commit }, enumTypeId){
     const productStoreId = store.getters["user/getCurrentEComStore"]?.productStoreId
 
     let resp = {} as any;
@@ -125,9 +125,5 @@ const actions: ActionTree<JobState, RootState> = {
   async clearCurrentMaargJob({ commit }) {
     commit(types.MAARGJOB_CURRENT_UPDATED, {});
   },
-
-  async clearMaargJobState({ commit }) {
-    commit(types.MAARGJOB_ENUMS_UPDATED, {});
-  }
 }
 export default actions;
