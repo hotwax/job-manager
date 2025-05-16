@@ -23,7 +23,7 @@ const state: any = {
 }
 
 const persistState = createPersistedState({
-    paths: ['user', 'util', 'maargJob.maargJobEnums'],
+    paths: ['user', 'util'],
     fetchBeforeUse: true
 })
 
