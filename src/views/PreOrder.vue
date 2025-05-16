@@ -28,11 +28,11 @@
               <ion-label color="medium">{{ translate("View catalog") }}</ion-label>
             </ion-item-divider>
             <div class="actions">
-              <ion-button :disabled="!preOrderBackorderCategory.preorder" @click.stop="goToOmsCategoryPage('/commerce/control/ViewCategory?productCategoryId=' + preOrderBackorderCategory.preorder)" fill="clear">
+              <ion-button :disabled="!preOrderBackorderCategory.preorder" @click.stop="goToPreOrderProductAudit('PCCT_PREORDR')" fill="clear">
                 {{ translate('Pre-Order') }}
                 <ion-icon slot="end" :icon="openOutline" />
               </ion-button>
-              <ion-button :disabled="!preOrderBackorderCategory.backorder" @click.stop="goToOmsCategoryPage('/commerce/control/ViewCategory?productCategoryId=' + preOrderBackorderCategory.backorder)" fill="clear">
+              <ion-button :disabled="!preOrderBackorderCategory.backorder" @click.stop="goToPreOrderProductAudit('PCCT_BACKORDER')" fill="clear">
                 {{ translate('Backorder') }}
                 <ion-icon slot="end" :icon="openOutline" />
               </ion-button>
@@ -162,7 +162,17 @@
               <ion-card-title>{{ translate("Feed") }}</ion-card-title>
             </ion-card-header>
             <ion-item v-for="(job, index) in getFilteredMaargJobs()" :key="index" button detail @click="viewMaargJobConfiguration(job.jobTypeEnumId)">
-              <ion-label class="ion-text-wrap">{{ job.enumDescription ? job.enumDescription : job.jobName }}</ion-label>
+              <ion-label class="ion-text-wrap">{{ job.enumName ? job.enumName : job.jobName }}</ion-label>
+              <ion-label slot="end" >{{ getTemporalExpression(job.jobTypeEnumId, true) }}</ion-label>
+            </ion-item>
+          </ion-card>
+
+          <ion-card v-if="getFilteredMaargJobs(true)?.length">
+            <ion-card-header>
+              <ion-card-title>{{ translate("NetSuite") }}</ion-card-title>
+            </ion-card-header>
+            <ion-item v-for="(job, index) in getFilteredMaargJobs(true)" :key="index" button detail @click="viewMaargJobConfiguration(job.jobTypeEnumId)">
+              <ion-label class="ion-text-wrap">{{ job.enumName ? job.enumName : job.jobName }}</ion-label>
               <ion-label slot="end" >{{ getTemporalExpression(job.jobTypeEnumId, true) }}</ion-label>
             </ion-item>
           </ion-card>
@@ -206,7 +216,7 @@ import { alertController } from '@ionic/vue';
 import JobConfiguration from '@/components/JobConfiguration.vue'
 import { generateJobCustomParameters, getCronString, isFutureDate, showToast, prepareRuntime, hasJobDataError } from '@/utils';
 import emitter from '@/event-bus';
-import { translate } from '@hotwax/dxp-components';
+import { useAuthStore, translate } from '@hotwax/dxp-components';
 import MoreJobs from '@/components/MoreJobs.vue';
 import { Actions, hasPermission } from '@/authorization'
 import { openOutline } from 'ionicons/icons'
@@ -267,8 +277,9 @@ export default defineComponent({
       const preOrderBackorderCategory = await this.store.dispatch("user/getPreOrderBackorderCategory");
       preOrderBackorderCategory && (this.preOrderBackorderCategory = preOrderBackorderCategory);
     },
-    goToOmsCategoryPage(path: any) {
-      window.open((this.instanceUrl.startsWith('http') ? this.instanceUrl.replace('api/', "") : `https://${this.instanceUrl}.hotwax.io/`) + path, '_blank', 'noopener, noreferrer');
+    goToPreOrderProductAudit(category: string) {
+      const link = `${process.env.VUE_APP_PREORDER_LOGIN_URL}?oms=${this.authStore.oms}&token=${this.authStore.token.value}&expirationTime=${this.authStore.token.expiration}&categoryId=${category}`
+      window.open(link, '_blank', 'noopener, noreferrer');
     },
     getStatus(enumId: any): boolean {
       const status = this.getJobStatus(enumId);
@@ -413,8 +424,8 @@ export default defineComponent({
         this.isJobDetailAnimationCompleted = true;
       }
     },
-    getFilteredMaargJobs() {
-      return this.maargJobs?.filter((job: any) => !Object.values(this.jobEnums).includes(job.jobTypeEnumId))
+    getFilteredMaargJobs(isNetSuiteJob = false) {
+      return isNetSuiteJob ? this.maargJobs?.filter((job: any) => !Object.values(this.jobEnums).includes(job.jobTypeEnumId) && job.permissionGroupId === "NETSUITE") : this.maargJobs?.filter((job: any) => !Object.values(this.jobEnums).includes(job.jobTypeEnumId) && job.permissionGroupId !== "NETSUITE")
     }
   },
   mounted () {
@@ -432,8 +443,11 @@ export default defineComponent({
   setup() {
     const store = useStore();
     const router = useRouter();
+    const authStore = useAuthStore()
+
     return {
       Actions,
+      authStore,
       getCronString,
       hasPermission,
       openOutline,

@@ -6,7 +6,7 @@
           <ion-icon slot="icon-only" :icon="closeOutline" />
         </ion-button>
       </ion-buttons>
-      <ion-title v-if="isMaargJob">{{ currentJob?.enumDescription ? currentJob.enumDescription : currentJob.jobName }}</ion-title>
+      <ion-title v-if="isMaargJob">{{ currentJob?.enumName ? currentJob.enumName : currentJob.jobName }}</ion-title>
       <ion-title v-else>{{ currentJob?.enumName ? currentJob.enumName : currentJob?.description }}</ion-title>
     </ion-toolbar>
   </ion-header>
