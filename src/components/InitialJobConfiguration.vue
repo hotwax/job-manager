@@ -66,7 +66,7 @@
 
       <ion-item button>
         <ion-icon slot="start" :icon="timeOutline" />
-        <ion-select interface="popover" :placeholder="translate('Select')" :value="runTime" @ionChange="updateRunTime($event)">
+        <ion-select interface="popover" :placeholder="translate('Select')" :disabled="isPendingJob()" :value="runTime" @ionChange="updateRunTime($event)">
           <div slot="label" class="ion-text-wrap">{{ translate("Run time") }}</div>
           <ion-select-option v-for="runTime in runTimes" :key="runTime.value" :value="runTime.value">{{ translate(runTime.label) }}</ion-select-option>
         </ion-select>
@@ -84,7 +84,7 @@
 
       <ion-item>
         <ion-icon slot="start" :icon="flagOutline" />
-        <ion-select value="open" :interface-options="customOrderOptions" interface="popover">
+        <ion-select value="open" :interface-options="customOrderOptions" interface="popover" :disabled="isPendingJob()">
           <div slot="label" class="ion-text-wrap">{{ translate("Order status") }}</div>
           <ion-select-option value="open">{{ translate("Open") }}</ion-select-option>
           <!-- TODO: commenting options for now, enable it once having support -->
@@ -95,7 +95,7 @@
 
       <ion-item>
         <ion-icon slot="start" :icon="sendOutline" />
-        <ion-select value="unshipped" :interface-options="customFulfillmentOptions" interface="popover">
+        <ion-select value="unshipped" :interface-options="customFulfillmentOptions" interface="popover" :disabled="isPendingJob()">
           <div slot="label" class="ion-text-wrap">{{ translate("Fulfillment status") }}</div>
           <!-- TODO: commenting options for now, enable it once having support -->
           <ion-select-option value="unshipped">{{ translate("Unfulfilled") }}</ion-select-option>
@@ -106,7 +106,7 @@
       </ion-item>
 
       <ion-item>
-        <ion-input v-model="lastShopifyOrderId" :placeholder="translate('Internal Shopify Order ID')">
+        <ion-input v-model="lastShopifyOrderId" :placeholder="translate('Internal Shopify Order ID')" :disabled="isPendingJob()">
           <div slot="label">{{ translate("Last Shopify Order ID") }}</div>
         </ion-input>
       </ion-item>
@@ -237,7 +237,7 @@ export default defineComponent({
         systemJobEnumId: this.currentJob?.systemJobEnumId
       }) as any;
 
-      this.previousOccurrence = jobOccurrences?.previousOccurrence
+      this.previousOccurrence = jobOccurrences?.previousOccurrence?.runTime
       const nextJob = jobOccurrences?.nextOccurrenceJob
       if(nextJob?.jobId) {
         await this.store.dispatch('job/updateCurrentJob', { job: nextJob, jobId: this.currentJob.systemJobEnumId })

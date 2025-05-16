@@ -110,7 +110,7 @@ const fetchJobOccurrences = async (payload: any): Promise <any>  => {
     "productStoreId_op": "empty"
   }
 
-  const pastPayload = {
+  const finishedJobPayload = {
     url: "/findJobs",
     method: "get",
     params: {
@@ -128,7 +128,7 @@ const fetchJobOccurrences = async (payload: any): Promise <any>  => {
     }
   }
 
-  const upcomingPayload = {
+  const pendingJobPayload = {
     url: "/findJobs",
     method: "get",
     params: {
@@ -145,9 +145,9 @@ const fetchJobOccurrences = async (payload: any): Promise <any>  => {
     }
   }
 
-  const responses = await Promise.allSettled([api(pastPayload), api(upcomingPayload)])
+  const responses = await Promise.allSettled([api(finishedJobPayload), api(pendingJobPayload)])
   if(responses[0].status === "fulfilled" && !hasError(responses[0].value) && responses[0].value?.data.docs?.length) {
-    jobOccurrences["previousOccurrence"] = responses[0].value.data.docs[0].runTime
+    jobOccurrences["previousOccurrence"] = responses[0].value.data.docs[0]
   }
   if(responses[1].status === "fulfilled" && !hasError(responses[1].value) && responses[1].value?.data.docs?.length) {
     jobOccurrences["nextOccurrenceJob"] = responses[1].value.data.docs[0]
