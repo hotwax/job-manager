@@ -22,7 +22,7 @@ const actions: ActionTree<JobState, RootState> = {
         const responses = await Promise.allSettled(jobs.map((job: any) => MaargJobService.fetchMaargJobInfo(job.jobName)))
         
         responses.map((response: any) => {
-          if(response.status === "fulfilled") {
+          if(response.status === "fulfilled" && response.value.data?.jobDetail) {
             const job = response.value.data.jobDetail
             const paramValues = {} as any;
 
