@@ -43,7 +43,7 @@ const actions: ActionTree<JobState, RootState> = {
             } else {
               // For handling case where we have childs jobs for the productstore independent job
               // We'll give preference to job with parentJobName and then the job without parentJobName
-              if(!maargJobs[job.jobTypeEnumId] || !job.parentJobName) {
+              if(!maargJobs[job.jobTypeEnumId] || job.parentJobName) {
                 maargJobs[job.jobTypeEnumId] = job
               }
             }
