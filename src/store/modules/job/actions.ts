@@ -601,6 +601,7 @@ const actions: ActionTree<JobState, RootState> = {
       'jobFields': {
         'productStoreId': this.state.user.currentEComStore.productStoreId,
         'systemJobEnumId': job.systemJobEnumId,
+        'instanceOfProductId': job.systemJobEnumId,
         'tempExprId': job.jobStatus, // Need to remove this as we are passing frequency in SERVICE_TEMP_EXPR, currently kept it for backward compatibility
         'maxRecurrenceCount': '-1',
         'parentJobId': job.parentJobId,
@@ -731,6 +732,7 @@ const actions: ActionTree<JobState, RootState> = {
       'jobFields': {
         'productStoreId': job.status === "SERVICE_PENDING" ? job.productStoreId : this.state.user.currentEComStore.productStoreId,
         'systemJobEnumId': job.systemJobEnumId,
+        'instanceOfProductId': job.systemJobEnumId,
         'tempExprId': job.jobStatus, // Need to remove this as we are passing frequency in SERVICE_TEMP_EXPR, currently kept it for backward compatibility
         'parentJobId': job.parentJobId,
         'recurrenceTimeZone': this.state.user.current.userTimeZone,

@@ -12,9 +12,6 @@ const getters: GetterTree <MaargJobState, RootState> = {
   getCurrentMaargJob: (state) => {
     return state.currentMaargJob
   },
-  getMaargJobEnums (state) {
-    return state.maargJobEnums
-  },
   isMaargJobAvailable: (state) => (enumId: string): any => {
     return Object.keys(state.maargJobs).includes(enumId);
   }
