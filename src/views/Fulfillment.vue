@@ -14,12 +14,12 @@
             <ion-card-header>
               <ion-card-title>{{ translate("Shipping") }}</ion-card-title>
             </ion-card-header>
-            <ion-item button @click="viewJobConfiguration({ id: 'GEN_FLFLD_ORD_ITM_FD', status: getJobStatus(jobEnums['GEN_FLFLD_ORD_ITM_FD']) })" detail>
+            <ion-item button @click="viewJobConfiguration({ id: 'SHIP_PKD_ODRS', status: getJobStatus(jobEnums['SHIP_PKD_ODRS']) })" detail>
               <ion-label class="ion-text-wrap">
                 {{ translate("Ship packed orders") }}
-                <p>{{ getTemporalExpression("GEN_FLFLD_ORD_ITM_FD", isMaargJobAvailable(jobEnums['GEN_FLFLD_ORD_ITM_FD'])) }}</p>
+                <p>{{ getTemporalExpression("SHIP_PKD_ODRS", isMaargJobAvailable(jobEnums['SHIP_PKD_ODRS'])) }}</p>
               </ion-label>
-              <ion-label v-if="!isLoading" slot="end">{{ getJobScheduleStatus("GEN_FLFLD_ORD_ITM_FD", isMaargJobAvailable(jobEnums['GEN_FLFLD_ORD_ITM_FD'])) }}</ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getJobScheduleStatus("SHIP_PKD_ODRS", isMaargJobAvailable(jobEnums['SHIP_PKD_ODRS'])) }}</ion-label>
               <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
             <ion-item lines="none">
