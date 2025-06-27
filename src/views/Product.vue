@@ -15,18 +15,27 @@
               <ion-card-title>{{ translate("Sync") }}</ion-card-title>
             </ion-card-header>
             <ion-item button @click="viewJobConfiguration({ id: 'IMP_PRDTS', status: getJobStatus(jobEnums['IMP_PRDTS'])})" detail>
-              <ion-label class="ion-text-wrap">{{ translate("Import products") }}</ion-label>
-              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('IMP_PRDTS') }}</ion-label>
+              <ion-label class="ion-text-wrap">
+                {{ translate("Import products") }}
+                <p>{{ getTemporalExpression("IMP_PRDTS", isMaargJobAvailable(jobEnums['IMP_PRDTS'])) }}</p>
+              </ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getJobScheduleStatus("IMP_PRDTS", isMaargJobAvailable(jobEnums['IMP_PRDTS'])) }}</ion-label>
               <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
             <ion-item button @click="viewJobConfiguration({ id: 'SYNC_PRDTS', status: getJobStatus(jobEnums['SYNC_PRDTS'])})" detail>
-              <ion-label class="ion-text-wrap">{{ translate("Sync products") }}</ion-label>
-              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('SYNC_PRDTS') }} </ion-label>
+              <ion-label class="ion-text-wrap">
+                {{ translate("Sync products") }}
+                <p>{{ getTemporalExpression("SYNC_PRDTS", isMaargJobAvailable(jobEnums['SYNC_PRDTS'])) }}</p>
+              </ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getJobScheduleStatus("SYNC_PRDTS", isMaargJobAvailable(jobEnums['SYNC_PRDTS'])) }}</ion-label>
               <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
             <ion-item button @click="viewJobConfiguration({ id: 'ACT_PROD_SHPFY', status: getJobStatus(jobEnums['ACT_PROD_SHPFY'])})" detail>
-              <ion-label class="ion-text-wrap">{{ translate("Activate products on Shopify") }}</ion-label>
-              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('ACT_PROD_SHPFY') }} </ion-label>
+              <ion-label class="ion-text-wrap">
+                {{ translate("Activate products on Shopify") }}
+                <p>{{ getTemporalExpression("ACT_PROD_SHPFY", isMaargJobAvailable(jobEnums['ACT_PROD_SHPFY'])) }}</p>
+              </ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getJobScheduleStatus("ACT_PROD_SHPFY", isMaargJobAvailable(jobEnums['ACT_PROD_SHPFY'])) }}</ion-label>
               <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
             <ion-item lines="none">
@@ -55,8 +64,11 @@
               <ion-card-title>{{ translate("Feed") }}</ion-card-title>
             </ion-card-header>
             <ion-item v-for="(job, index) in getFilteredMaargJobs()" :key="index" button detail @click="viewMaargJobConfiguration(job.jobTypeEnumId)">
-              <ion-label class="ion-text-wrap">{{ job.enumName ? job.enumName : job.jobName }}</ion-label>
-              <ion-label slot="end" >{{ getTemporalExpression(job.jobTypeEnumId, true) }}</ion-label>
+              <ion-label class="ion-text-wrap">
+                {{ job.enumName ? job.enumName : job.jobName }}
+                <p>{{ getTemporalExpression(job.jobTypeEnumId, true) }}</p>
+              </ion-label>
+              <ion-label slot="end">{{ getJobScheduleStatus(job.jobTypeEnumId, true) }}</ion-label>
             </ion-item>
           </ion-card>
 
@@ -65,8 +77,11 @@
               <ion-card-title>{{ translate("NetSuite") }}</ion-card-title>
             </ion-card-header>
             <ion-item v-for="(job, index) in getFilteredMaargJobs(true)" :key="index" button detail @click="viewMaargJobConfiguration(job.jobTypeEnumId)">
-              <ion-label class="ion-text-wrap">{{ job.enumName ? job.enumName : job.jobName }}</ion-label>
-              <ion-label slot="end" >{{ getTemporalExpression(job.jobTypeEnumId, true) }}</ion-label>
+              <ion-label class="ion-text-wrap">
+                {{ job.enumName ? job.enumName : job.jobName }}
+                <p>{{ getTemporalExpression(job.jobTypeEnumId, true) }}</p>
+              </ion-label>
+              <ion-label slot="end">{{ getJobScheduleStatus(job.jobTypeEnumId, true) }}</ion-label>
             </ion-item>
           </ion-card>
 
@@ -226,10 +241,10 @@ export default defineComponent({
     getTemporalExpression(enumId: string, isMaargJob = false) {
       if(isMaargJob || this.isMaargJobAvailable(this.jobEnums[enumId])) {
         const job = this.getMaargJob(enumId)
-        return (job?.paused === "N" && job?.cronExpression && !job.isDraftJob) ? this.getCronString(job.cronExpression) ? this.getCronString(job.cronExpression) : job.cronExpression : 'Disabled'  
+        return job?.cronExpression ? this.getCronString(job.cronExpression) ? this.getCronString(job.cronExpression) : job.cronExpression : ""
       }
 
-      return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ? this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description : translate('Disabled')
+      return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ? this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description : ""
     },
     async fetchJobs(isCurrentJobUpdateRequired = false){
       this.isLoading = true;
@@ -261,6 +276,15 @@ export default defineComponent({
     },
     getFilteredMaargJobs(isNetSuiteJob = false) {
       return isNetSuiteJob ? this.maargJobs?.filter((job: any) => !Object.values(this.jobEnums).includes(job.jobTypeEnumId) && job.permissionGroupId === "NETSUITE") : this.maargJobs?.filter((job: any) => !Object.values(this.jobEnums).includes(job.jobTypeEnumId) && job.permissionGroupId !== "NETSUITE")
+    },
+    getJobScheduleStatus(enumId: string, isMaargJob = false) {
+      if(isMaargJob || this.isMaargJobAvailable(this.jobEnums[enumId])) {
+        const job = this.getMaargJob(enumId)
+        return job?.paused === "Y" ? "Disabled" : "Enabled"
+      }
+
+      const job = this.getJob(this.jobEnums[enumId])
+      return job?.status === "SERVICE_DRAFT" ? "Disabled" : "Enabled"
     }
   },
   setup() {

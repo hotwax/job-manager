@@ -81,6 +81,7 @@
   "eCommerce stores are directly connected to one Shop Config. If your OMS is connected to multiple eCommerce stores selling the same catalog operating as one Company, you may have multiple Shop Configs for the selected Product Store.": "eCommerce stores are directly connected to one Shop Config. If your OMS is connected to multiple eCommerce stores selling the same catalog operating as one Company, you may have multiple Shop Configs for the selected Product Store.",
   "Email customers": "Email customers",
   "Enable": "Enable",
+  "Enabled": "Enabled",
   "Enable job": "Enable job",
   "Every 15 minutes": "Every 15 minutes",
   "Every 30 minutes": "Every 30 minutes",

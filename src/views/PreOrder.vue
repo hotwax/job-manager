@@ -162,8 +162,11 @@
               <ion-card-title>{{ translate("Feed") }}</ion-card-title>
             </ion-card-header>
             <ion-item v-for="(job, index) in getFilteredMaargJobs()" :key="index" button detail @click="viewMaargJobConfiguration(job.jobTypeEnumId)">
-              <ion-label class="ion-text-wrap">{{ job.enumName ? job.enumName : job.jobName }}</ion-label>
-              <ion-label slot="end" >{{ getTemporalExpression(job.jobTypeEnumId, true) }}</ion-label>
+              <ion-label class="ion-text-wrap">
+                {{ job.enumName ? job.enumName : job.jobName }}
+                <p>{{ getTemporalExpression(job.jobTypeEnumId, true) }}</p>
+              </ion-label>
+              <ion-label slot="end">{{ getJobScheduleStatus(job.jobTypeEnumId, true) }}</ion-label>
             </ion-item>
           </ion-card>
 
@@ -172,8 +175,11 @@
               <ion-card-title>{{ translate("NetSuite") }}</ion-card-title>
             </ion-card-header>
             <ion-item v-for="(job, index) in getFilteredMaargJobs(true)" :key="index" button detail @click="viewMaargJobConfiguration(job.jobTypeEnumId)">
-              <ion-label class="ion-text-wrap">{{ job.enumName ? job.enumName : job.jobName }}</ion-label>
-              <ion-label slot="end" >{{ getTemporalExpression(job.jobTypeEnumId, true) }}</ion-label>
+              <ion-label class="ion-text-wrap">
+                {{ job.enumName ? job.enumName : job.jobName }}
+                <p>{{ getTemporalExpression(job.jobTypeEnumId, true) }}</p>
+              </ion-label>
+              <ion-label slot="end" >{{ getJobScheduleStatus(job.jobTypeEnumId, true) }}</ion-label>
             </ion-item>
           </ion-card>
 
@@ -385,10 +391,10 @@ export default defineComponent({
     getTemporalExpression(enumId: string, isMaargJob = false) {
       if(isMaargJob || this.isMaargJobAvailable(this.jobEnums[enumId])) {
         const job = this.getMaargJob(enumId)
-        return (job?.paused === "N" && job?.cronExpression && !job.isDraftJob) ? this.getCronString(job.cronExpression) ? this.getCronString(job.cronExpression) : job.cronExpression : 'Disabled'  
+        return job?.cronExpression ? this.getCronString(job.cronExpression) ? this.getCronString(job.cronExpression) : job.cronExpression : ""
       }
  
-      return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ? this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description : translate('Disabled')
+      return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ? this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description : ""
     },
     async fetchJobs(){
       await this.store.dispatch("job/fetchJobs", {
@@ -426,6 +432,15 @@ export default defineComponent({
     },
     getFilteredMaargJobs(isNetSuiteJob = false) {
       return isNetSuiteJob ? this.maargJobs?.filter((job: any) => !Object.values(this.jobEnums).includes(job.jobTypeEnumId) && job.permissionGroupId === "NETSUITE") : this.maargJobs?.filter((job: any) => !Object.values(this.jobEnums).includes(job.jobTypeEnumId) && job.permissionGroupId !== "NETSUITE")
+    },
+    getJobScheduleStatus(enumId: string, isMaargJob = false) {
+      if(isMaargJob || this.isMaargJobAvailable(this.jobEnums[enumId])) {
+        const job = this.getMaargJob(enumId)
+        return job?.paused === "Y" ? "Disabled" : "Enabled"
+      }
+
+      const job = this.getJob(this.jobEnums[enumId])
+      return job?.status === "SERVICE_DRAFT" ? "Disabled" : "Enabled"
     }
   },
   mounted () {
