@@ -41,8 +41,11 @@
               <ion-card-title>{{ translate("Process Uploads") }}</ion-card-title>
             </ion-card-header>
             <ion-item button @click="viewJobConfiguration({ id: 'JOB_IMP_QUEUE', status: getJobStatus(jobEnums['JOB_IMP_QUEUE']) })" detail>
-              <ion-label class="ion-text-wrap">{{ translate("Import queue") }}</ion-label>
-              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('JOB_IMP_QUEUE') }}</ion-label>
+              <ion-label class="ion-text-wrap">
+                {{ translate("Import queue") }}
+                <p>{{ getTemporalExpression('JOB_IMP_QUEUE') }}</p>
+              </ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ translate(getJob(jobEnums['JOB_IMP_QUEUE'])?.status === "SERVICE_DRAFT" ? "Disabled" : "Enabled") }}</ion-label>
               <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
             <!-- <ion-item>
@@ -289,7 +292,7 @@ export default defineComponent({
     getTemporalExpression(enumId: string) {
       return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ?
         this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description :
-        translate('Disabled')
+        ""
     }
   },
   setup() {

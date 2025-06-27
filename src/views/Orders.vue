@@ -15,38 +15,59 @@
               <ion-card-title>{{ translate("Import") }}</ion-card-title>
             </ion-card-header>
             <ion-item @click="viewJobConfiguration({ id: 'IMP_NEW_ORDERS', status: getJobStatus(jobEnums['IMP_NEW_ORDERS'])})" detail button>
-              <ion-label class="ion-text-wrap">{{ translate("New orders") }}</ion-label>
-              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('IMP_NEW_ORDERS') }}</ion-label>
+              <ion-label class="ion-text-wrap">
+                {{ translate("New orders") }}
+                <p>{{ getTemporalExpression("IMP_NEW_ORDERS", isMaargJobAvailable(jobEnums['IMP_NEW_ORDERS'])) }}</p>
+              </ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getJobScheduleStatus("IMP_NEW_ORDERS", isMaargJobAvailable(jobEnums['IMP_NEW_ORDERS'])) }}</ion-label>
               <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
             <ion-item @click="viewJobConfiguration({ id: 'APR_ORD', status: getJobStatus(jobEnums['APR_ORD'])})" detail button>
-              <ion-label class="ion-text-wrap">{{ translate("Approve orders") }}</ion-label>
-              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('APR_ORD') }}</ion-label>
+              <ion-label class="ion-text-wrap">
+                {{ translate("Approve orders") }}
+                <p>{{ getTemporalExpression("APR_ORD", isMaargJobAvailable(jobEnums['APR_ORD'])) }}</p>
+              </ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getJobScheduleStatus("APR_ORD", isMaargJobAvailable(jobEnums['APR_ORD'])) }}</ion-label>
               <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
             <ion-item @click="viewJobConfiguration({ id: 'UPDT_ORDS', status: getJobStatus(jobEnums['UPDT_ORDS'])})" detail button>
-              <ion-label class="ion-text-wrap">{{ translate("Update orders") }}</ion-label>
-              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('UPDT_ORDS') }}</ion-label>
+              <ion-label class="ion-text-wrap">
+                {{ translate("Update orders") }}
+                <p>{{ getTemporalExpression("UPDT_ORDS", isMaargJobAvailable(jobEnums['UPDT_ORDS'])) }}</p>
+              </ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getJobScheduleStatus("UPDT_ORDS", isMaargJobAvailable(jobEnums['UPDT_ORDS'])) }}</ion-label>
               <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
             <ion-item @click="viewJobConfiguration({ id: 'IMP_CANCELLED_ORDERS', status: getJobStatus(jobEnums['IMP_CANCELLED_ORDERS'])})" detail button>
-              <ion-label class="ion-text-wrap">{{ translate("Cancelled orders") }}</ion-label>
-              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('IMP_CANCELLED_ORDERS') }}</ion-label>
+              <ion-label class="ion-text-wrap">
+                {{ translate("Cancelled orders") }}
+                <p>{{ getTemporalExpression("IMP_CANCELLED_ORDERS", isMaargJobAvailable(jobEnums['IMP_CANCELLED_ORDERS'])) }}</p>
+              </ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getJobScheduleStatus("IMP_CANCELLED_ORDERS", isMaargJobAvailable(jobEnums['IMP_CANCELLED_ORDERS'])) }}</ion-label>
               <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
             <ion-item @click="viewJobConfiguration({ id: 'IMP_CANCELLED_ITEMS', status: getJobStatus(jobEnums['IMP_CANCELLED_ITEMS'])})" detail button>
-              <ion-label class="ion-text-wrap">{{ translate("Cancelled items") }}</ion-label>
-              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('IMP_CANCELLED_ITEMS') }}</ion-label>
+              <ion-label class="ion-text-wrap">
+                {{ translate("Cancelled items") }}
+                <p>{{ getTemporalExpression("IMP_CANCELLED_ITEMS", isMaargJobAvailable(jobEnums['IMP_CANCELLED_ITEMS'])) }}</p>
+              </ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getJobScheduleStatus("IMP_CANCELLED_ITEMS", isMaargJobAvailable(jobEnums['IMP_CANCELLED_ITEMS'])) }}</ion-label>
               <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
             <ion-item @click="viewJobConfiguration({ id: 'IMP_MISS_ORD', status: getJobStatus(jobEnums['IMP_MISS_ORD'])})" detail button>
-              <ion-label class="ion-text-wrap">{{ translate("Import last day orders from Shopify") }}</ion-label>
-              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('IMP_MISS_ORD') }}</ion-label>
+              <ion-label class="ion-text-wrap">
+                {{ translate("Import last day orders from Shopify") }}
+                <p>{{ getTemporalExpression("IMP_MISS_ORD", isMaargJobAvailable(jobEnums['IMP_MISS_ORD'])) }}</p>
+              </ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getJobScheduleStatus("IMP_MISS_ORD", isMaargJobAvailable(jobEnums['IMP_MISS_ORD'])) }}</ion-label>
               <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
             <ion-item @click="viewJobConfiguration({ id: 'IMP_RETURNS', status: getJobStatus(jobEnums['IMP_RETURNS'])})" detail button>
-              <ion-label class="ion-text-wrap">{{ translate("Returns") }}</ion-label>
-              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('IMP_RETURNS') }}</ion-label>
+              <ion-label class="ion-text-wrap">
+                {{ translate("Returns") }}
+                <p>{{ getTemporalExpression("IMP_RETURNS", isMaargJobAvailable(jobEnums['IMP_RETURNS'])) }}</p>
+              </ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getJobScheduleStatus("IMP_RETURNS", isMaargJobAvailable(jobEnums['IMP_RETURNS'])) }}</ion-label>
               <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
           </ion-card>
@@ -82,13 +103,19 @@
               <ion-card-title>{{ translate("Upload") }}</ion-card-title>
             </ion-card-header>
             <ion-item @click="viewJobConfiguration({ id: 'UPLD_CNCLD_ORDRS', status: getJobStatus(jobEnums['UPLD_CNCLD_ORDRS'])})" detail button>
-              <ion-label class="ion-text-wrap">{{ translate("Cancelled orders") }}</ion-label>
-              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('UPLD_CNCLD_ORDRS') }}</ion-label>
+              <ion-label class="ion-text-wrap">
+                {{ translate("Cancelled orders") }}
+                <p>{{ getTemporalExpression("UPLD_CNCLD_ORDRS", isMaargJobAvailable(jobEnums['UPLD_CNCLD_ORDRS'])) }}</p>
+              </ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getJobScheduleStatus("UPLD_CNCLD_ORDRS", isMaargJobAvailable(jobEnums['UPLD_CNCLD_ORDRS'])) }}</ion-label>
               <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
             <ion-item @click="viewJobConfiguration({ id: 'UPLD_REFUNDS', status: getJobStatus(jobEnums['UPLD_REFUNDS'])})" detail button>
-              <ion-label class="ion-text-wrap">{{ translate("Refunds") }}</ion-label>
-              <ion-label v-if="!isLoading" slot="end">{{ getTemporalExpression('UPLD_REFUNDS') }}</ion-label>
+              <ion-label class="ion-text-wrap">
+                {{ translate("Refunds") }}
+                <p>{{ getTemporalExpression("UPLD_REFUNDS", isMaargJobAvailable(jobEnums['UPLD_REFUNDS'])) }}</p>
+              </ion-label>
+              <ion-label v-if="!isLoading" slot="end">{{ getJobScheduleStatus("UPLD_REFUNDS", isMaargJobAvailable(jobEnums['UPLD_REFUNDS'])) }}</ion-label>
               <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
           </ion-card>
@@ -98,8 +125,11 @@
               <ion-card-title>{{ translate("Feed") }}</ion-card-title>
             </ion-card-header>
             <ion-item v-for="(job, index) in getFilteredMaargJobs()" :key="index" button detail @click="viewMaargJobConfiguration(job.jobTypeEnumId)">
-              <ion-label class="ion-text-wrap">{{ job.enumName ? job.enumName : job.jobName }}</ion-label>
-              <ion-label slot="end" >{{ getTemporalExpression(job.jobTypeEnumId, true) }}</ion-label>
+              <ion-label class="ion-text-wrap">
+                {{ job.enumName ? job.enumName : job.jobName }}
+                <p>{{ getTemporalExpression(job.jobTypeEnumId, true) }}</p>
+              </ion-label>
+              <ion-label slot="end">{{ getJobScheduleStatus(job.jobTypeEnumId, true) }}</ion-label>
             </ion-item>
           </ion-card>
 
@@ -108,8 +138,11 @@
               <ion-card-title>{{ translate("NetSuite") }}</ion-card-title>
             </ion-card-header>
             <ion-item v-for="(job, index) in getFilteredMaargJobs(true)" :key="index" button detail @click="viewMaargJobConfiguration(job.jobTypeEnumId)">
-              <ion-label class="ion-text-wrap">{{ job.enumName ? job.enumName : job.jobName }}</ion-label>
-              <ion-label slot="end" >{{ getTemporalExpression(job.jobTypeEnumId, true) }}</ion-label>
+              <ion-label class="ion-text-wrap">
+                {{ job.enumName ? job.enumName : job.jobName }}
+                <p>{{ getTemporalExpression(job.jobTypeEnumId, true) }}</p>
+              </ion-label>
+              <ion-label slot="end">{{ getJobScheduleStatus(job.jobTypeEnumId, true) }}</ion-label>
             </ion-item>
           </ion-card>
 
@@ -308,10 +341,10 @@ export default defineComponent({
     getTemporalExpression(enumId: string, isMaargJob = false) {
       if(isMaargJob || this.isMaargJobAvailable(this.jobEnums[enumId])) {
         const job = this.getMaargJob(enumId)
-        return job?.cronExpression ? this.getCronString(job.cronExpression) ? this.getCronString(job.cronExpression) : job.cronExpression : "-"
+        return job?.cronExpression ? this.getCronString(job.cronExpression) ? this.getCronString(job.cronExpression) : job.cronExpression : ""
       }
 
-      return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ? this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description : translate('Disabled')
+      return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ? this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description : ""
     },
     async fetchJobs(isCurrentJobUpdateRequired = false){
       this.isLoading = true;
@@ -347,6 +380,15 @@ export default defineComponent({
     },
     getFilteredMaargJobs(isNetSuiteJob = false) {
       return isNetSuiteJob ? this.maargJobs?.filter((job: any) => !Object.values(this.jobEnums).includes(job.jobTypeEnumId) && job.permissionGroupId === "NETSUITE") : this.maargJobs?.filter((job: any) => !Object.values(this.jobEnums).includes(job.jobTypeEnumId) && job.permissionGroupId !== "NETSUITE")
+    },
+    getJobScheduleStatus(enumId: string, isMaargJob = false) {
+      if(isMaargJob || this.isMaargJobAvailable(this.jobEnums[enumId])) {
+        const job = this.getMaargJob(enumId)
+        return job?.paused === "Y" ? "Disabled" : "Enabled"
+      }
+
+      const job = this.getJob(this.jobEnums[enumId])
+      return job?.status === "SERVICE_DRAFT" ? "Disabled" : "Enabled"
     }
   },
   mounted () {
