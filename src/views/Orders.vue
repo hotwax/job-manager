@@ -110,14 +110,6 @@
               <ion-label v-if="!isLoading" slot="end">{{ getJobScheduleStatus("UPLD_CNCLD_ORDRS", isMaargJobAvailable(jobEnums['UPLD_CNCLD_ORDRS'])) }}</ion-label>
               <ion-skeleton-text v-else style="width: 30%;" animated />
             </ion-item>
-            <ion-item @click="viewJobConfiguration({ id: 'UPLD_REFUNDS', status: getJobStatus(jobEnums['UPLD_REFUNDS'])})" detail button>
-              <ion-label class="ion-text-wrap">
-                {{ translate("Refunds") }}
-                <p>{{ getTemporalExpression("UPLD_REFUNDS", isMaargJobAvailable(jobEnums['UPLD_REFUNDS'])) }}</p>
-              </ion-label>
-              <ion-label v-if="!isLoading" slot="end">{{ getJobScheduleStatus("UPLD_REFUNDS", isMaargJobAvailable(jobEnums['UPLD_REFUNDS'])) }}</ion-label>
-              <ion-skeleton-text v-else style="width: 30%;" animated />
-            </ion-item>
           </ion-card>
 
           <ion-card v-if="getFilteredMaargJobs()?.length">
