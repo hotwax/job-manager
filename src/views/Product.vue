@@ -8,87 +8,89 @@
     </ion-header>
 
     <ion-content>
-      <main>
-        <section>
-          <ion-card>
-            <ion-card-header>
-              <ion-card-title>{{ translate("Sync") }}</ion-card-title>
-            </ion-card-header>
-            <ion-item button @click="viewJobConfiguration({ id: 'IMP_PRDTS', status: getJobStatus(jobEnums['IMP_PRDTS'])})" detail>
-              <ion-label class="ion-text-wrap">
-                {{ translate("Import products") }}
-                <p>{{ getTemporalExpression("IMP_PRDTS", isMaargJobAvailable(jobEnums['IMP_PRDTS'])) }}</p>
-              </ion-label>
-              <ion-label v-if="!isLoading" slot="end">{{ getJobScheduleStatus("IMP_PRDTS", isMaargJobAvailable(jobEnums['IMP_PRDTS'])) }}</ion-label>
-              <ion-skeleton-text v-else style="width: 30%;" animated />
-            </ion-item>
-            <ion-item button @click="viewJobConfiguration({ id: 'SYNC_PRDTS', status: getJobStatus(jobEnums['SYNC_PRDTS'])})" detail>
-              <ion-label class="ion-text-wrap">
-                {{ translate("Sync products") }}
-                <p>{{ getTemporalExpression("SYNC_PRDTS", isMaargJobAvailable(jobEnums['SYNC_PRDTS'])) }}</p>
-              </ion-label>
-              <ion-label v-if="!isLoading" slot="end">{{ getJobScheduleStatus("SYNC_PRDTS", isMaargJobAvailable(jobEnums['SYNC_PRDTS'])) }}</ion-label>
-              <ion-skeleton-text v-else style="width: 30%;" animated />
-            </ion-item>
-            <ion-item button @click="viewJobConfiguration({ id: 'ACT_PROD_SHPFY', status: getJobStatus(jobEnums['ACT_PROD_SHPFY'])})" detail>
-              <ion-label class="ion-text-wrap">
-                {{ translate("Activate products on Shopify") }}
-                <p>{{ getTemporalExpression("ACT_PROD_SHPFY", isMaargJobAvailable(jobEnums['ACT_PROD_SHPFY'])) }}</p>
-              </ion-label>
-              <ion-label v-if="!isLoading" slot="end">{{ getJobScheduleStatus("ACT_PROD_SHPFY", isMaargJobAvailable(jobEnums['ACT_PROD_SHPFY'])) }}</ion-label>
-              <ion-skeleton-text v-else style="width: 30%;" animated />
-            </ion-item>
-            <ion-item lines="none">
-              <ion-label class="ion-text-wrap"><p>{{ translate("Sync products and category structures from Shopify into HotWax Commerce and keep them up to date.") }}</p></ion-label>
-            </ion-item>
-          </ion-card>
+      <main class="independent-scroll-main">
+        <section class="independent-scroll-child">
+          <div>
+            <ion-card>
+              <ion-card-header>
+                <ion-card-title>{{ translate("Sync") }}</ion-card-title>
+              </ion-card-header>
+              <ion-item button @click="viewJobConfiguration({ id: 'IMP_PRDTS', status: getJobStatus(jobEnums['IMP_PRDTS'])})" detail>
+                <ion-label class="ion-text-wrap">
+                  {{ translate("Import products") }}
+                  <p>{{ getTemporalExpression("IMP_PRDTS", isMaargJobAvailable(jobEnums['IMP_PRDTS'])) }}</p>
+                </ion-label>
+                <ion-label v-if="!isLoading" slot="end">{{ getJobScheduleStatus("IMP_PRDTS", isMaargJobAvailable(jobEnums['IMP_PRDTS'])) }}</ion-label>
+                <ion-skeleton-text v-else style="width: 30%;" animated />
+              </ion-item>
+              <ion-item button @click="viewJobConfiguration({ id: 'SYNC_PRDTS', status: getJobStatus(jobEnums['SYNC_PRDTS'])})" detail>
+                <ion-label class="ion-text-wrap">
+                  {{ translate("Sync products") }}
+                  <p>{{ getTemporalExpression("SYNC_PRDTS", isMaargJobAvailable(jobEnums['SYNC_PRDTS'])) }}</p>
+                </ion-label>
+                <ion-label v-if="!isLoading" slot="end">{{ getJobScheduleStatus("SYNC_PRDTS", isMaargJobAvailable(jobEnums['SYNC_PRDTS'])) }}</ion-label>
+                <ion-skeleton-text v-else style="width: 30%;" animated />
+              </ion-item>
+              <ion-item button @click="viewJobConfiguration({ id: 'ACT_PROD_SHPFY', status: getJobStatus(jobEnums['ACT_PROD_SHPFY'])})" detail>
+                <ion-label class="ion-text-wrap">
+                  {{ translate("Activate products on Shopify") }}
+                  <p>{{ getTemporalExpression("ACT_PROD_SHPFY", isMaargJobAvailable(jobEnums['ACT_PROD_SHPFY'])) }}</p>
+                </ion-label>
+                <ion-label v-if="!isLoading" slot="end">{{ getJobScheduleStatus("ACT_PROD_SHPFY", isMaargJobAvailable(jobEnums['ACT_PROD_SHPFY'])) }}</ion-label>
+                <ion-skeleton-text v-else style="width: 30%;" animated />
+              </ion-item>
+              <ion-item lines="none">
+                <ion-label class="ion-text-wrap"><p>{{ translate("Sync products and category structures from Shopify into HotWax Commerce and keep them up to date.") }}</p></ion-label>
+              </ion-item>
+            </ion-card>
 
-          <!-- <ion-card>
-            <ion-card-header>
-              <ion-card-title>{{ translate("Webhooks") }}</ion-card-title>
-            </ion-card-header>
-            <ion-item>
-              <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="newProductsWebhook" @ionChange="updateWebhook($event['detail'].checked, 'NEW_PRODUCTS')" color="secondary">
-                <ion-label class="ion-text-wrap">{{ translate("New products") }}</ion-label>
-              </ion-toggle>
-            </ion-item>
-            <ion-item lines="none">
-              <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="deleteProductsWebhook" @ionChange="updateWebhook($event['detail'].checked, 'DELETE_PRODUCTS')" color="secondary">
-                <ion-label class="ion-text-wrap">{{ translate("Delete products") }}</ion-label>
-              </ion-toggle>
-            </ion-item>
-          </ion-card> -->
+            <!-- <ion-card>
+              <ion-card-header>
+                <ion-card-title>{{ translate("Webhooks") }}</ion-card-title>
+              </ion-card-header>
+              <ion-item>
+                <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="newProductsWebhook" @ionChange="updateWebhook($event['detail'].checked, 'NEW_PRODUCTS')" color="secondary">
+                  <ion-label class="ion-text-wrap">{{ translate("New products") }}</ion-label>
+                </ion-toggle>
+              </ion-item>
+              <ion-item lines="none">
+                <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="deleteProductsWebhook" @ionChange="updateWebhook($event['detail'].checked, 'DELETE_PRODUCTS')" color="secondary">
+                  <ion-label class="ion-text-wrap">{{ translate("Delete products") }}</ion-label>
+                </ion-toggle>
+              </ion-item>
+            </ion-card> -->
 
-          <ion-card v-if="getFilteredMaargJobs()?.length">
-            <ion-card-header>
-              <ion-card-title>{{ translate("Feed") }}</ion-card-title>
-            </ion-card-header>
-            <ion-item v-for="(job, index) in getFilteredMaargJobs()" :key="index" button detail @click="viewMaargJobConfiguration(job.jobTypeEnumId)">
-              <ion-label class="ion-text-wrap">
-                {{ job.enumName ? job.enumName : job.jobName }}
-                <p>{{ getTemporalExpression(job.jobTypeEnumId, true) }}</p>
-              </ion-label>
-              <ion-label slot="end">{{ getJobScheduleStatus(job.jobTypeEnumId, true) }}</ion-label>
-            </ion-item>
-          </ion-card>
+            <ion-card v-if="getFilteredMaargJobs()?.length">
+              <ion-card-header>
+                <ion-card-title>{{ translate("Feed") }}</ion-card-title>
+              </ion-card-header>
+              <ion-item v-for="(job, index) in getFilteredMaargJobs()" :key="index" button detail @click="viewMaargJobConfiguration(job.jobTypeEnumId)">
+                <ion-label class="ion-text-wrap">
+                  {{ job.enumName ? job.enumName : job.jobName }}
+                  <p>{{ getTemporalExpression(job.jobTypeEnumId, true) }}</p>
+                </ion-label>
+                <ion-label slot="end">{{ getJobScheduleStatus(job.jobTypeEnumId, true) }}</ion-label>
+              </ion-item>
+            </ion-card>
 
-          <ion-card v-if="getFilteredMaargJobs(true)?.length">
-            <ion-card-header>
-              <ion-card-title>{{ translate("NetSuite") }}</ion-card-title>
-            </ion-card-header>
-            <ion-item v-for="(job, index) in getFilteredMaargJobs(true)" :key="index" button detail @click="viewMaargJobConfiguration(job.jobTypeEnumId)">
-              <ion-label class="ion-text-wrap">
-                {{ job.enumName ? job.enumName : job.jobName }}
-                <p>{{ getTemporalExpression(job.jobTypeEnumId, true) }}</p>
-              </ion-label>
-              <ion-label slot="end">{{ getJobScheduleStatus(job.jobTypeEnumId, true) }}</ion-label>
-            </ion-item>
-          </ion-card>
+            <ion-card v-if="getFilteredMaargJobs(true)?.length">
+              <ion-card-header>
+                <ion-card-title>{{ translate("NetSuite") }}</ion-card-title>
+              </ion-card-header>
+              <ion-item v-for="(job, index) in getFilteredMaargJobs(true)" :key="index" button detail @click="viewMaargJobConfiguration(job.jobTypeEnumId)">
+                <ion-label class="ion-text-wrap">
+                  {{ job.enumName ? job.enumName : job.jobName }}
+                  <p>{{ getTemporalExpression(job.jobTypeEnumId, true) }}</p>
+                </ion-label>
+                <ion-label slot="end">{{ getJobScheduleStatus(job.jobTypeEnumId, true) }}</ion-label>
+              </ion-item>
+            </ion-card>
+            <MoreJobs v-if="getMoreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId).length" :jobs="getMoreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId)" />
+          </div>
 
-          <MoreJobs v-if="getMoreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId).length" :jobs="getMoreJobs({...jobEnums, ...initialLoadJobEnums}, enumTypeId)" />
         </section>
 
-        <aside class="desktop-only" v-if="isDesktop" v-show="currentJob || Object.keys(currentMaargJob).length">
+        <aside class="desktop-only independent-scroll-child" v-if="isDesktop" v-show="currentJob || Object.keys(currentMaargJob).length">
           <JobConfiguration v-if="currentJob" :status="currentJobStatus" :type="freqType" :key="currentJob"/>
           <MaargJobConfiguration v-else-if="Object.keys(currentMaargJob).length" :key="currentMaargJob" />
         </aside>

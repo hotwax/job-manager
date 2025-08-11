@@ -8,60 +8,62 @@
     </ion-header>
 
     <ion-content>
-      <main>
-        <section>
-          <ion-card>
-            <ion-card-header>
-              <ion-card-title>{{ translate("Products") }}</ion-card-title>
-            </ion-card-header>
-            <ion-button expand="block" fill="outline" @click="viewInitialJobConfiguration('products', jobEnums['IMP_PRDTS_BLK'])">{{ translate("Import products in bulk") }}</ion-button>
-            <ion-item lines="none">
-              <ion-label class="ion-text-wrap">
-                <p>{{ translate("Import all products from Shopify. Make sure you run this before importing orders in bulk during intial setup.") }}</p>
-              </ion-label>
-            </ion-item>
-          </ion-card>
+      <main class="independent-scroll-main">
+        <section class="independent-scroll-child">
+          <div>
+            <ion-card>
+              <ion-card-header>
+                <ion-card-title>{{ translate("Products") }}</ion-card-title>
+              </ion-card-header>
+              <ion-button expand="block" fill="outline" @click="viewInitialJobConfiguration('products', jobEnums['IMP_PRDTS_BLK'])">{{ translate("Import products in bulk") }}</ion-button>
+              <ion-item lines="none">
+                <ion-label class="ion-text-wrap">
+                  <p>{{ translate("Import all products from Shopify. Make sure you run this before importing orders in bulk during intial setup.") }}</p>
+                </ion-label>
+              </ion-item>
+            </ion-card>
 
-          <ion-card>
-            <ion-card-header>
-              <ion-card-title>{{ translate("Orders") }}</ion-card-title>
-            </ion-card-header>
-            <ion-button expand="block" fill="outline" @click="viewInitialJobConfiguration('orders', jobEnums['IMP_ORDERS_BLK'])">{{ translate("Import orders in bulk") }}</ion-button>
-            <ion-item lines="none">
-              <ion-label class="ion-text-wrap">
-                <p>{{ translate("Before importing historical orders in bulk, make sure all products are set up or else order import will not run correctly.") }}</p>
-                <br />
-                <p>{{ translate("By default only open and unshipped orders will be imported.") }}</p>
-              </ion-label>
-            </ion-item>
-          </ion-card>
+            <ion-card>
+              <ion-card-header>
+                <ion-card-title>{{ translate("Orders") }}</ion-card-title>
+              </ion-card-header>
+              <ion-button expand="block" fill="outline" @click="viewInitialJobConfiguration('orders', jobEnums['IMP_ORDERS_BLK'])">{{ translate("Import orders in bulk") }}</ion-button>
+              <ion-item lines="none">
+                <ion-label class="ion-text-wrap">
+                  <p>{{ translate("Before importing historical orders in bulk, make sure all products are set up or else order import will not run correctly.") }}</p>
+                  <br />
+                  <p>{{ translate("By default only open and unshipped orders will be imported.") }}</p>
+                </ion-label>
+              </ion-item>
+            </ion-card>
 
-          <ion-card>
-            <ion-card-header>
-              <ion-card-title>{{ translate("Process Uploads") }}</ion-card-title>
-            </ion-card-header>
-            <ion-item button @click="viewJobConfiguration({ id: 'JOB_IMP_QUEUE', status: getJobStatus(jobEnums['JOB_IMP_QUEUE']) })" detail>
-              <ion-label class="ion-text-wrap">
-                {{ translate("Import queue") }}
-                <p>{{ getTemporalExpression('JOB_IMP_QUEUE') }}</p>
-              </ion-label>
-              <ion-label v-if="!isLoading" slot="end">{{ translate(getJob(jobEnums['JOB_IMP_QUEUE'])?.status === "SERVICE_DRAFT" ? "Disabled" : "Enabled") }}</ion-label>
-              <ion-skeleton-text v-else style="width: 30%;" animated />
-            </ion-item>
-            <!-- <ion-item>
-              <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="fileStatusUpdateWebhook" color="secondary" @ionChange="updateWebhook($event['detail'].checked, 'BULK_OPERATIONS_FINISH')">
-                <ion-label>{{ translate("File upload status") }}</ion-label>
-              </ion-toggle>
-            </ion-item> -->
-            <ion-item>
-              <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="processPendingUploadsOnShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['UL_PRCS'])">
-                <ion-label class="ion-text-wrap">{{ translate("Upload Pending Process") }}</ion-label>
-              </ion-checkbox>
-            </ion-item>
-          </ion-card>
+            <ion-card>
+              <ion-card-header>
+                <ion-card-title>{{ translate("Process Uploads") }}</ion-card-title>
+              </ion-card-header>
+              <ion-item button @click="viewJobConfiguration({ id: 'JOB_IMP_QUEUE', status: getJobStatus(jobEnums['JOB_IMP_QUEUE']) })" detail>
+                <ion-label class="ion-text-wrap">
+                  {{ translate("Import queue") }}
+                  <p>{{ getTemporalExpression('JOB_IMP_QUEUE') }}</p>
+                </ion-label>
+                <ion-label v-if="!isLoading" slot="end">{{ translate(getJob(jobEnums['JOB_IMP_QUEUE'])?.status === "SERVICE_DRAFT" ? "Disabled" : "Enabled") }}</ion-label>
+                <ion-skeleton-text v-else style="width: 30%;" animated />
+              </ion-item>
+              <!-- <ion-item>
+                <ion-toggle :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="fileStatusUpdateWebhook" color="secondary" @ionChange="updateWebhook($event['detail'].checked, 'BULK_OPERATIONS_FINISH')">
+                  <ion-label>{{ translate("File upload status") }}</ion-label>
+                </ion-toggle>
+              </ion-item> -->
+              <ion-item>
+                <ion-checkbox :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" :checked="processPendingUploadsOnShopify" @ionChange="updateJob($event['detail'].checked, jobEnums['UL_PRCS'])">
+                  <ion-label class="ion-text-wrap">{{ translate("Upload Pending Process") }}</ion-label>
+                </ion-checkbox>
+              </ion-item>
+            </ion-card>
+          </div>
         </section>
 
-        <aside class="desktop-only" v-if="isDesktop" v-show="currentSelectedJobModal || Object.keys(currentJob)?.length">
+        <aside class="desktop-only independent-scroll-child" v-if="isDesktop" v-show="currentSelectedJobModal || Object.keys(currentJob)?.length">
           <InitialJobConfiguration v-if="currentSelectedJobModal" :type='currentSelectedJobModal' :shopifyOrderId='lastShopifyOrderId' :key="job" />
           <JobConfiguration v-else :status="currentJobStatus" :type="freqType" :key="currentJob"/>
         </aside>
