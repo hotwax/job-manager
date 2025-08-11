@@ -75,7 +75,7 @@
           </ion-item>
           <ion-item lines="none" v-else>
             <ion-label>
-              {{ translate(`No eCommerce stores connected to this ${currentEComStore.storeName} store.`) }}
+              {{ translate(`No eCommerce stores connected to this ${currentEComStore.storeName}`) }}
             </ion-label>
           </ion-item>
         </ion-card>
