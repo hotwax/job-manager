@@ -68,10 +68,13 @@
           <ion-card-content>
             {{ translate('eCommerce stores are directly connected to one Shop Config. If your OMS is connected to multiple eCommerce stores selling the same catalog operating as one Company, you may have multiple Shop Configs for the selected Product Store.') }}
           </ion-card-content>
-          <ion-item lines="none">
+          <ion-item lines="none" v-if="shopifyConfigs.length > 0">
             <ion-select :label="translate('Select eCommerce')" interface="popover" :value="currentShopifyConfig?.shopifyConfigId" @ionChange="setShopifyConfig($event)">
               <ion-select-option v-for="shopifyConfig in shopifyConfigs" :key="shopifyConfig.shopifyConfigId" :value="shopifyConfig.shopifyConfigId" >{{ shopifyConfig.name ? shopifyConfig.name : shopifyConfig.shopifyConfigName }}</ion-select-option>
             </ion-select>
+          </ion-item>
+          <ion-item lines="none" v-else>
+            {{ translate("No eCommerce stores connected to this store.") }}
           </ion-item>
         </ion-card>
       </section>
