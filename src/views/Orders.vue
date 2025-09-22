@@ -217,7 +217,6 @@ export default defineComponent({
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
-      currentEComStore: 'user/getCurrentEComStore',
       getTemporalExpr: 'job/getTemporalExpr',
       getCachedWebhook: 'webhook/getCachedWebhook',
       getMoreJobs: 'job/getMoreJobs',

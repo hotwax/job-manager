@@ -53,7 +53,7 @@ const actions: ActionTree<UserState, RootState> = {
       }
 
       const userProfile = await UserService.getUserProfile(token);
-      userProfile.stores = await UserService.getEComStores(token);
+      userProfile.stores = await UserService.getProductStores(token);
 
       // In Job Manager application, we have jobs which may not be associated with any product store
       userProfile.stores.push({
@@ -99,7 +99,7 @@ const actions: ActionTree<UserState, RootState> = {
       }
 
       // TODO user single mutation
-      commit(types.USER_CURRENT_ECOM_STORE_UPDATED, preferredStore);
+      commit(types.USER_CURRENT_PRODUCT_STORE_UPDATED, preferredStore);
       commit(types.USER_INFO_UPDATED, userProfile);
       commit(types.USER_SHOPIFY_CONFIGS_UPDATED, shopifyConfigs);
       commit(types.USER_CURRENT_SHOPIFY_CONFIG_UPDATED, currentShopifyConfig);
@@ -167,15 +167,15 @@ const actions: ActionTree<UserState, RootState> = {
   },
 
   /**
-   * update current eComStore information
+   * update current ProductStore information
    */
-  async setEcomStore({ commit, dispatch }, payload) {
+  async setProductStore({ commit, dispatch }, payload) {
     dispatch('job/clearJobState', null, { root: true });
     let productStore = payload.productStore;
     if(!productStore) {
       productStore = this.state.user.current.stores.find((store: any) => store.productStoreId === payload.productStoreId);
     }
-    commit(types.USER_CURRENT_ECOM_STORE_UPDATED, productStore);
+    commit(types.USER_CURRENT_PRODUCT_STORE_UPDATED, productStore);
     await dispatch('getShopifyConfig',  productStore.productStoreId);
   },
   /**
@@ -225,7 +225,7 @@ const actions: ActionTree<UserState, RootState> = {
   },
 
   async getPreOrderBackorderCategory({ state, commit }) {
-    const productStoreId =  (state.currentEComStore as any).productStoreId
+    const productStoreId =  (state.currentProductStore as any).productStoreId
     if (!productStoreId) {
       logger.warn("No productStoreId provided. Not fetching pre-order/backorder categories");
       return;

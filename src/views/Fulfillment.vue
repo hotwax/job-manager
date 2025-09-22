@@ -243,7 +243,7 @@ export default defineComponent({
     ...mapGetters({
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
-      currentEComStore: 'user/getCurrentEComStore',
+      currentProductStore: 'user/getCurrentProductStore',
       getTemporalExpr: 'job/getTemporalExpr',
       getMoreJobs: 'job/getMoreJobs',
       getMaargJob: 'maargJob/getMaargJob',
@@ -258,9 +258,9 @@ export default defineComponent({
   },
   methods: {
     async updateAutoCancelDays() {
-      if (this.currentEComStore.productStoreId) {
+      if (this.currentProductStore.productStoreId) {
         const payload = {
-          'productStoreId': this.currentEComStore.productStoreId,
+          'productStoreId': this.currentProductStore.productStoreId,
           'daysToCancelNonPay': this.autoCancelDays
         }
         try {
@@ -329,7 +329,7 @@ export default defineComponent({
         }
       });
       await this.store.dispatch("maargJob/fetchMaargJobs", "FULFILLMENT_SYS_JOB");
-      if (this.currentEComStore.productStoreId) {
+      if (this.currentProductStore.productStoreId) {
         this.getAutoCancelDays();
       }
       this.isLoading = false
@@ -337,7 +337,7 @@ export default defineComponent({
     async getAutoCancelDays(){
       const payload = {
         "inputFields": {
-          'productStoreId': this.currentEComStore.productStoreId,
+          'productStoreId': this.currentProductStore.productStoreId,
         },
         "fieldList": ["productStoreId", "daysToCancelNonPay"],
         "entityName": "ProductStore",

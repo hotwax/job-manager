@@ -134,7 +134,7 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       miscellaneousJobs: 'job/getMiscellaneousJobs',
-      getCurrentEComStore:'user/getCurrentEComStore',
+      getCurrentProductStore:'user/getCurrentProductStore',
       isMiscellaneousJobsScrollable: 'job/isMiscellaneousJobsScrollable',
       getMaargJob: 'maargJob/getMaargJob',
       maargJobs: 'maargJob/getMaargJobsList',
@@ -174,7 +174,7 @@ export default defineComponent({
       }
     },
     async getMiscellaneousJobs(viewSize = 100, viewIndex = 0) {
-      await this.store.dispatch('job/fetchMiscellaneousJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex});
+      await this.store.dispatch('job/fetchMiscellaneousJobs', {productStoreId: this.getCurrentProductStore.productStoreId, viewSize, viewIndex});
       await this.store.dispatch("maargJob/fetchMaargJobs", "MISC_SYS_JOB");
     },
     async updateProductStoreConfig(isCurrentJobUpdateRequired = false) {

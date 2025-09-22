@@ -9,7 +9,7 @@ import { MaargJobService } from '@/services/MaargJobService'
 
 const actions: ActionTree<JobState, RootState> = {
   async fetchMaargJobs({ commit }, enumTypeId){
-    const productStoreId = store.getters["user/getCurrentEComStore"]?.productStoreId
+    const productStoreId = store.getters["user/getCurrentProductStore"]?.productStoreId
 
     let resp = {} as any;
     const maargJobs = {} as any;

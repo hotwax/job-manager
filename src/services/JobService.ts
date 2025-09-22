@@ -111,10 +111,10 @@ const fetchJobPreviousOccurrence = async (payload: any): Promise <any>  => {
       "viewIndex": 0,
       "orderBy": "runTime DESC"
     }
-    if (store.state.user.currentEComStore?.productStoreId) {
+    if (store.state.user.currentProductStore?.productStoreId) {
       params.inputFields = {
         ...params.inputFields,
-        "productStoreId": store.state.user.currentEComStore?.productStoreId,
+        "productStoreId": store.state.user.currentProductStore?.productStoreId,
         "shopId_fld0_value": store.state.user.currentShopifyConfig?.shopId,
         "shopId_fld0_grp": "1",
         "shopId_fld0_op": "equals",

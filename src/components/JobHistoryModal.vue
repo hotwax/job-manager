@@ -89,7 +89,7 @@ export default defineComponent({
   props: ['currentJob', 'isMaargJob'],
   computed: {
     ...mapGetters({
-      getCurrentEComStore:'user/getCurrentEComStore',
+      getCurrentProductStore:'user/getCurrentProductStore',
       getStatusDesc: 'util/getStatusDesc',
       currentShopifyConfig: 'user/getCurrentShopifyConfig'
     })
@@ -110,7 +110,7 @@ export default defineComponent({
       try {
         resp = await JobService.fetchJobInformation({
           "inputFields": {
-            "productStoreId": this.getCurrentEComStore.productStoreId,
+            "productStoreId": this.getCurrentProductStore.productStoreId,
             "statusId": ["SERVICE_CANCELLED", "SERVICE_CRASHED", "SERVICE_FAILED", "SERVICE_FINISHED"],
             "statusId_op": "in",
             "systemJobEnumId": this.currentJob?.systemJobEnumId,

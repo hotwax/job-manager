@@ -51,7 +51,7 @@
             {{ translate("A store represents a company or a unique catalog of products. If your OMS is connected to multiple eCommerce stores sellling different collections of products, you may have multiple Product Stores set up in HotWax Commerce.") }}
           </ion-card-content>
           <ion-item lines="none">
-            <ion-select :label="translate('Select store')" interface="popover" :value="currentEComStore.productStoreId" @ionChange="setEComStore($event)">
+            <ion-select :label="translate('Select store')" interface="popover" :value="currentProductStore.productStoreId" @ionChange="setProductStore($event)">
               <ion-select-option v-for="store in (userProfile ? userProfile.stores : [])" :key="store.productStoreId" :value="store.productStoreId" >{{ store.storeName }}</ion-select-option>
             </ion-select>
           </ion-item>
@@ -62,11 +62,11 @@
               {{ translate("Shopify Config") }}
             </ion-card-subtitle>
             <ion-card-title>
-              {{ translate("eCommerce") }}
+              {{ translate("ProductStore") }}
             </ion-card-title>
           </ion-card-header>
           <ion-card-content>
-            {{ translate('eCommerce stores are directly connected to one Shop Config. If your OMS is connected to multiple eCommerce stores selling the same catalog operating as one Company, you may have multiple Shop Configs for the selected Product Store.') }}
+            {{ translate('Product stores are directly connected to one Shop Config. If your OMS is connected to multiple eCommerce stores selling the same catalog operating as one Company, you may have multiple Shop Configs for the selected Product Store.') }}
           </ion-card-content>
           <ion-item lines="none" v-if="shopifyConfigs.length > 0">
             <ion-select :label="translate('Select eCommerce')" interface="popover" :value="currentShopifyConfig?.shopifyConfigId" @ionChange="setShopifyConfig($event)">
@@ -75,7 +75,7 @@
           </ion-item>
           <ion-item lines="none" v-else>
             <ion-label>
-              {{ translate("No eCommerce stores connected to", { eCommStore : currentEComStore.storeName ? currentEComStore.storeName : currentEComStore.productStoreId }) }}
+              {{ translate("No eCommerce stores connected to", { eCommStore : currentProductStore.storeName ? currentProductStore.storeName : currentProductStore.productStoreId }) }}
             </ion-label>
           </ion-item>
         </ion-card>
@@ -130,20 +130,20 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       userProfile: 'user/getUserProfile',
-      currentEComStore: 'user/getCurrentEComStore',
+      currentProductStore: 'user/getCurrentProductStore',
       shopifyConfigs: 'user/getShopifyConfigs',
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
     })
   },
   methods: {
-    setEComStore(event: any) {
+    setProductStore(event: any) {
       // If the value is same, no need to update
       // Handled case for programmatical changes
       // https://github.com/ionic-team/ionic-framework/discussions/25532
       // https://github.com/ionic-team/ionic-framework/issues/20106
       // https://github.com/ionic-team/ionic-framework/pull/25858
-      if(this.userProfile && this.currentEComStore?.productStoreId !== event.detail.value) {
-        this.store.dispatch('user/setEcomStore', { 'productStoreId': event.detail.value })
+      if(this.userProfile && this.currentProductStore?.productStoreId !== event.detail.value) {
+        this.store.dispatch('user/setProductStore', { 'productStoreId': event.detail.value })
       }
     },
     setShopifyConfig(event: any){

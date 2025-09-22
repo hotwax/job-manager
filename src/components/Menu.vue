@@ -25,7 +25,7 @@
         </ion-menu-toggle>
       </ion-list>
     </ion-content>
-    <DxpMenuFooterNavigation @update-ecom-store="setEComStore($event)" @update-shopify-config="setShopifyConfig($event)" />
+    <DxpMenuFooterNavigation @update-ecom-store="setProductStore($event)" @update-shopify-config="setShopifyConfig($event)" />
   </ion-menu>
 </template>
 
@@ -71,18 +71,18 @@ export default defineComponent({
     ...mapGetters({
       isUserAuthenticated: 'user/isUserAuthenticated',
       currentFacility: 'user/getCurrentFacility',
-      eComStore: 'user/getCurrentEComStore',
+      productStore: 'user/getCurrentProductStore',
       instanceUrl: 'user/getInstanceUrl',
       userProfile: 'user/getUserProfile',
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
-      currentEComStore: 'user/getCurrentEComStore',
+      currentProductStore: 'user/getCurrentProductStore',
       shopifyConfigs: 'user/getShopifyConfigs',
     })
   },
   methods: {
-    async setEComStore(event: CustomEvent) {
-      if(this.userProfile && this.eComStore?.productStoreId !== event.detail.value) {
-        await this.store.dispatch('user/setEcomStore', { 'productStoreId': event.detail.value })
+    async setProductStore(event: CustomEvent) {
+      if(this.userProfile && this.productStore?.productStoreId !== event.detail.value) {
+        await this.store.dispatch('user/setProductStore', { 'productStoreId': event.detail.value })
         emitter.emit("productStoreOrConfigChanged", true)
       }
     },
