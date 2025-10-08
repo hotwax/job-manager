@@ -3,7 +3,7 @@
     <ion-item lines="none">
       <!-- Adding conditional check for currentJob.jobName as currentJob is undefined when i18n runs translate -->
       <h1>{{ currentJob.enumName ? currentJob.enumName : currentJob.jobName ? currentJob.jobName : '' }}</h1>
-      <ion-button fill="outline" slot="end" v-if="isRefreshRequired" @click="refreshCurrentJob">
+      <ion-button size="default" fill="outline" slot="end" v-if="isRefreshRequired" @click="refreshCurrentJob">
         <ion-icon :icon="refreshOutline" slot="icon-only" />
       </ion-button>
       <ion-badge slot="end" color="dark" v-if="currentJob.cancelDateTime || currentJob.finishDateTime">{{ currentJob.statusId == "SERVICE_CANCELLED" || currentJob.statusId == "SERVICE_CRASHED" ?  timeTillJob(currentJob.cancelDateTime) : timeTillJob(currentJob.finishDateTime) }}</ion-badge>
@@ -73,7 +73,7 @@
             {{ name }}: {{ value }}
           </ion-chip>
         </ion-row>
-        <ion-button @click="openJobCustomParameterModal" id="open-modal" slot="end" fill="clear">
+        <ion-button size="default" @click="openJobCustomParameterModal" id="open-modal" slot="end" fill="clear">
           <ion-icon slot="icon-only" :icon="listCircleOutline"/>
         </ion-button>
       </ion-item>
