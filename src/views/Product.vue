@@ -23,14 +23,6 @@
                 <ion-label v-if="!isLoading" slot="end">{{ getJobScheduleStatus("IMP_PRDTS", isMaargJobAvailable(jobEnums['IMP_PRDTS'])) }}</ion-label>
                 <ion-skeleton-text v-else style="width: 30%;" animated />
               </ion-item>
-              <ion-item button @click="viewJobConfiguration({ id: 'SYNC_PRDTS', status: getJobStatus(jobEnums['SYNC_PRDTS'])})" detail>
-                <ion-label class="ion-text-wrap">
-                  {{ translate("Sync products") }}
-                  <p>{{ getTemporalExpression("SYNC_PRDTS", isMaargJobAvailable(jobEnums['SYNC_PRDTS'])) }}</p>
-                </ion-label>
-                <ion-label v-if="!isLoading" slot="end">{{ getJobScheduleStatus("SYNC_PRDTS", isMaargJobAvailable(jobEnums['SYNC_PRDTS'])) }}</ion-label>
-                <ion-skeleton-text v-else style="width: 30%;" animated />
-              </ion-item>
               <ion-item button @click="viewJobConfiguration({ id: 'ACT_PROD_SHPFY', status: getJobStatus(jobEnums['ACT_PROD_SHPFY'])})" detail>
                 <ion-label class="ion-text-wrap">
                   {{ translate("Activate products on Shopify") }}
