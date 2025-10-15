@@ -68,8 +68,8 @@ const actions: ActionTree<JobState, RootState> = {
       params.inputFields["systemJobEnumId_op"] = "in"
     }
 
-    if (payload.eComStoreId) {
-      params.inputFields["productStoreId"] = payload.eComStoreId
+    if (payload.productStoreId) {
+      params.inputFields["productStoreId"] = payload.productStoreId
     } else {
       params.inputFields["productStoreId_op"] = "empty"
     }
@@ -141,8 +141,8 @@ const actions: ActionTree<JobState, RootState> = {
       params.inputFields["systemJobEnumId_op"] = "in"
     }
 
-    if (payload.eComStoreId) {
-      params.inputFields["productStoreId"] = payload.eComStoreId
+    if (payload.productStoreId) {
+      params.inputFields["productStoreId"] = payload.productStoreId
     } else {
       params.inputFields["productStoreId_op"] = "empty"
     }
@@ -212,8 +212,8 @@ const actions: ActionTree<JobState, RootState> = {
       params.inputFields["systemJobEnumId_op"] = "in"
     }
     
-    if(payload.eComStoreId) {
-      params.inputFields["productStoreId"] = payload.eComStoreId
+    if(payload.productStoreId) {
+      params.inputFields["productStoreId"] = payload.productStoreId
     } else {
       params.inputFields["productStoreId_op"] = "empty"
     }
@@ -350,8 +350,8 @@ const actions: ActionTree<JobState, RootState> = {
     }))
 
     params.inputFields.statusId = "SERVICE_PENDING";
-    if (payload.eComStoreId) {
-      params.inputFields["productStoreId"] = payload.eComStoreId
+    if (payload.productStoreId) {
+      params.inputFields["productStoreId"] = payload.productStoreId
     } else {
       params.inputFields["productStoreId_op"] = "empty"
     }
@@ -475,7 +475,7 @@ const actions: ActionTree<JobState, RootState> = {
 
     // Fetching pending jobs
     params.inputFields.statusId = "SERVICE_PENDING";
-    params.inputFields.productStoreId = this.state.user.currentEComStore.productStoreId;
+    params.inputFields.productStoreId = this.state.user.currentProductStore.productStoreId;
     params.inputFields.tempExprId_op = "not-empty";
     fetchJobRequests.push(JobService.fetchJobInformation(params).catch((err) => {
       return err;
@@ -599,7 +599,7 @@ const actions: ActionTree<JobState, RootState> = {
       'SERVICE_TEMP_EXPR': job.jobStatus,
       'SERVICE_RUN_AS_SYSTEM':'Y',
       'jobFields': {
-        'productStoreId': this.state.user.currentEComStore.productStoreId,
+        'productStoreId': this.state.user.currentProductStore.productStoreId,
         'systemJobEnumId': job.systemJobEnumId,
         'instanceOfProductId': job.systemJobEnumId,
         'tempExprId': job.jobStatus, // Need to remove this as we are passing frequency in SERVICE_TEMP_EXPR, currently kept it for backward compatibility
@@ -629,7 +629,7 @@ const actions: ActionTree<JobState, RootState> = {
     }
 
     // checking if the runtimeData has productStoreId, and if present then adding it on root level
-    job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.state.user.currentEComStore.productStoreId)
+    job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = this.state.user.currentProductStore.productStoreId)
     job?.priority && (payload['SERVICE_PRIORITY'] = job.priority.toString())
     job?.runTime && (payload['SERVICE_TIME'] = job.runTime.toString())
     job?.sinceId && (payload['sinceId'] = job.sinceId)
@@ -730,7 +730,7 @@ const actions: ActionTree<JobState, RootState> = {
       'SERVICE_COUNT': '0',
       'SERVICE_TEMP_EXPR': job.jobStatus,
       'jobFields': {
-        'productStoreId': job.status === "SERVICE_PENDING" ? job.productStoreId : this.state.user.currentEComStore.productStoreId,
+        'productStoreId': job.status === "SERVICE_PENDING" ? job.productStoreId : this.state.user.currentProductStore.productStoreId,
         'systemJobEnumId': job.systemJobEnumId,
         'instanceOfProductId': job.systemJobEnumId,
         'tempExprId': job.jobStatus, // Need to remove this as we are passing frequency in SERVICE_TEMP_EXPR, currently kept it for backward compatibility
@@ -744,7 +744,7 @@ const actions: ActionTree<JobState, RootState> = {
       ...params.jobCustomParameters
     } as any
     // checking if the runtimeData has productStoreId, and if present then adding it on root level
-    job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = job.status === "SERVICE_PENDING" ? job.productStoreId : this.state.user.currentEComStore.productStoreId)
+    job?.runtimeData?.productStoreId?.length >= 0 && (payload['productStoreId'] = job.status === "SERVICE_PENDING" ? job.productStoreId : this.state.user.currentProductStore.productStoreId)
     job?.priority && (payload['SERVICE_PRIORITY'] = job.priority.toString())
     job?.sinceId && (payload['sinceId'] = job.sinceId)
 

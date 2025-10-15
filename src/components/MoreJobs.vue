@@ -47,7 +47,6 @@ export default defineComponent({
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
-      currentEComStore: 'user/getCurrentEComStore',
       temporalExpr: 'job/getTemporalExpr',
     })
   },

@@ -81,7 +81,7 @@ const getShopifyConfig = async (productStoreId: any, token?: any): Promise <any>
   }
 }
 
-const getEComStores = async (token: any): Promise<any> => {
+const getProductStores = async (token: any): Promise<any> => {
   try {
     const params = {
       "inputFields": {
@@ -379,7 +379,7 @@ const getUserProfile = async (token: any): Promise<any> => {
 export const UserService = {
     createPinnedJobPref,
     login,
-    getEComStores,
+    getProductStores,
     getEcommerceCatalog,
     getPreOrderBackorderCategory,
     getShopifyConfig,

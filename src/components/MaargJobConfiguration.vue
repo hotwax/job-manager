@@ -139,7 +139,7 @@ export default defineComponent({
     ...mapGetters({
       currentMaargJob: 'maargJob/getCurrentMaargJob',
       getMaargJob: 'maargJob/getMaargJob',
-      currentEComStore: 'user/getCurrentEComStore',
+      currentProductStore: 'user/getCurrentProductStore',
     }),
     generateCustomParameters() {
       // passing runTimeData params as empty, as we don't need to show the runTimeData information on UI as all the options from runtimeData might not be available in serviceInParams
@@ -190,7 +190,7 @@ export default defineComponent({
                     }
                     clonedJob.serviceJobParameters.find((parameter: any) => {
                       if(parameter.parameterName === "productStoreIds") {
-                        parameter.parameterValue = this.currentEComStore.productStoreId
+                        parameter.parameterValue = this.currentProductStore.productStoreId
                         return true;
                       }
                       return false;
@@ -328,7 +328,7 @@ export default defineComponent({
         }
         clonedJob.serviceJobParameters.find((parameter: any) => {
           if(parameter.parameterName === "productStoreIds") {
-            parameter.parameterValue = this.currentEComStore.productStoreId
+            parameter.parameterValue = this.currentProductStore.productStoreId
             return true;
           }
           return false;
@@ -380,7 +380,7 @@ export default defineComponent({
     },
 
     async cloneJob() {
-      const newJobName = `${this.currentMaargJob.jobName.startsWith("template_") ? this.currentMaargJob.jobName.replace("template_", "") : this.currentMaargJob.jobName}_${this.currentEComStore.productStoreId}`
+      const newJobName = `${this.currentMaargJob.jobName.startsWith("template_") ? this.currentMaargJob.jobName.replace("template_", "") : this.currentMaargJob.jobName}_${this.currentProductStore.productStoreId}`
       try {
         const resp = await MaargJobService.cloneMaargJob({
           jobName: this.currentMaargJob.jobName,

@@ -174,7 +174,7 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       getEnumName: 'job/getEnumName',
-      currentEComStore: 'user/getCurrentEComStore',
+      currentProductStore: 'user/getCurrentProductStore',
       pinnedJobs: 'user/getPinnedJobs',
       pipelineFilters: 'job/getPipelineFilters'
     })
@@ -191,13 +191,13 @@ export default defineComponent({
       this.getFilteredJobHistory();
     },
     async getFilteredPendingJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
-      await this.store.dispatch('job/fetchPendingJobs', { eComStoreId: this.currentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, enumTypeId: this.pipelineFilters.category, systemJobEnumId: this.pipelineFilters.enum, statusId: this.pipelineFilters.status });
+      await this.store.dispatch('job/fetchPendingJobs', { productStoreId: this.currentProductStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, enumTypeId: this.pipelineFilters.category, systemJobEnumId: this.pipelineFilters.enum, statusId: this.pipelineFilters.status });
     },
     async getFilteredRunningJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
-      await this.store.dispatch('job/fetchRunningJobs', { eComStoreId: this.currentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, enumTypeId: this.pipelineFilters.category, systemJobEnumId: this.pipelineFilters.enum, statusId: this.pipelineFilters.status });
+      await this.store.dispatch('job/fetchRunningJobs', { productStoreId: this.currentProductStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, enumTypeId: this.pipelineFilters.category, systemJobEnumId: this.pipelineFilters.enum, statusId: this.pipelineFilters.status });
     },
     async getFilteredJobHistory(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
-      await this.store.dispatch('job/fetchJobHistory', { eComStoreId: this.currentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, enumTypeId: this.pipelineFilters.category, systemJobEnumId: this.pipelineFilters.enum, statusId: this.pipelineFilters.status });
+      await this.store.dispatch('job/fetchJobHistory', { productStoreId: this.currentProductStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, enumTypeId: this.pipelineFilters.category, systemJobEnumId: this.pipelineFilters.enum, statusId: this.pipelineFilters.status });
     },
   },
 });
