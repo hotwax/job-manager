@@ -2,7 +2,7 @@
   <section>
     <ion-item lines="none">
       <h1>{{ currentMaargJob?.enumName ? currentMaargJob.enumName : currentMaargJob?.jobName }}</h1>
-      <ion-button fill="outline" slot="end" v-if="isRefreshRequired" @click="refreshCurrentJob">
+      <ion-button size="default" fill="outline" slot="end" v-if="isRefreshRequired" @click="refreshCurrentJob">
         <ion-icon :icon="refreshOutline" slot="icon-only" />
       </ion-button>
       <ion-badge slot="end" color="dark" v-if="currentMaargJob.paused === 'N' && currentMaargJob?.nextExecutionDateTime && !isRefreshRequired">{{ translate("running") }} {{ timeTillJob(currentMaargJob.nextExecutionDateTime) }}</ion-badge>
@@ -36,7 +36,7 @@
             {{ name }}: {{ value }}
           </ion-chip>
         </ion-row>
-        <ion-button @click="openJobCustomParameterModal" id="open-modal" slot="end" fill="clear">
+        <ion-button size="default" @click="openJobCustomParameterModal" id="open-modal" slot="end" fill="clear">
           <ion-icon slot="icon-only" :icon="listCircleOutline"/>
         </ion-button>
       </ion-item>

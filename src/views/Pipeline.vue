@@ -38,7 +38,7 @@
         </ion-item>
       </div>
       <main v-else>
-        <section v-if="segmentSelected === 'pending'" class="ion-content-scroll-host" :scroll-events="true" @scroll="enableScrolling()">
+        <section v-if="segmentSelected === 'pending'" class="ion-content-scroll-host">
           <!-- Empty state -->
           <div v-if="pendingJobs?.length === 0">
             <p class="ion-text-center">{{ translate("There are no jobs pending right now")}}</p>
@@ -113,7 +113,7 @@
           </div>
         </section>
 
-        <section v-if="segmentSelected === 'running'" class="ion-content-scroll-host" :scroll-events="true" @scroll="enableScrolling()">
+        <section v-if="segmentSelected === 'running'" class="ion-content-scroll-host">
           <!-- Empty state -->
           <div v-if="runningJobs?.length === 0">
             <p class="ion-text-center">{{ translate("There are no jobs running right now")}}</p>
@@ -179,7 +179,7 @@
           </div> 
         </section>
 
-        <section v-if="segmentSelected === 'history'" class="ion-content-scroll-host" :scroll-events="true" @scroll="enableScrolling()">
+        <section v-if="segmentSelected === 'history'" class="ion-content-scroll-host">
           <!-- Empty state -->
           <div v-if="jobHistory?.length === 0">
             <p class="ion-text-center">{{ translate("No jobs have run yet")}}</p>
@@ -387,7 +387,6 @@ export default defineComponent({
       isDesktop: isPlatform('desktop'),
       isRetrying: false,
       queryString: '' as any,
-      isScrollingEnabled: false,
       jobsLoading: false,
       selectedJobId: '' as any
     }
@@ -414,9 +413,6 @@ export default defineComponent({
       } 
       return Object.values(pipelineFilters).some((filter: any) => filter.length > 0) ? 'secondary' : '';
     },
-  },
-  async ionViewWillEnter() {
-    this.isScrollingEnabled = false;
   },
   methods : {
     async openLearnMoreModal(job: any) {
@@ -490,22 +486,7 @@ export default defineComponent({
       const timeDiff = DateTime.fromMillis(time).diff(DateTime.local());
       return DateTime.local().plus(timeDiff).toRelative();
     },
-    enableScrolling() {
-      const parentElement = (this as any).$refs.contentRef.$el
-      const scrollEl = parentElement.querySelector("main > section")
-      let scrollHeight = scrollEl.scrollHeight, infiniteHeight = (this as any).$refs.infiniteScrollRef.$el.offsetHeight, scrollTop = scrollEl.scrollTop, threshold = 100, height = scrollEl.offsetHeight
-      const distanceFromInfinite = scrollHeight - infiniteHeight - scrollTop - threshold - height
-      if(distanceFromInfinite < 0) {
-        this.isScrollingEnabled = false;
-      } else {
-        this.isScrollingEnabled = true;
-      }
-    },
     async loadMoreJobHistory(event: any){
-      // Added this check here as if added on infinite-scroll component the Loading content does not gets displayed
-      if(!(this.isScrollingEnabled && this.isHistoryJobsScrollable)) {
-        await event.target.complete();
-      }
       this.getJobHistory(
         undefined,
         Math.ceil(this.jobHistory.length / (process.env.VUE_APP_VIEW_SIZE as any)).toString()
@@ -514,10 +495,6 @@ export default defineComponent({
       });
     },
     async loadMoreRunningJobs(event: any){
-      // Added this check here as if added on infinite-scroll component the Loading content does not gets displayed
-      if(!(this.isScrollingEnabled && this.isRunningJobsScrollable)) {
-        await event.target.complete();
-      }
       this.getRunningJobs(
         undefined,
         Math.ceil(this.runningJobs.length / (process.env.VUE_APP_VIEW_SIZE as any)).toString()
@@ -526,10 +503,6 @@ export default defineComponent({
       });
     },
     async loadMorePendingJobs (event: any) {
-      // Added this check here as if added on infinite-scroll component the Loading content does not gets displayed
-      if(!(this.isScrollingEnabled && this.isPendingJobsScrollable)) {
-        await event.target.complete();
-      }
       this.getPendingJobs(
         undefined,
         Math.ceil(this.pendingJobs.length / (process.env.VUE_APP_VIEW_SIZE as any)).toString()
