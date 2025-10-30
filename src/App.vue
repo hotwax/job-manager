@@ -140,8 +140,4 @@ export default defineComponent({
 });
 </script>
 
-<style scoped>
-ion-split-pane {
-  --side-width: 304px;
-}
-</style>
+
