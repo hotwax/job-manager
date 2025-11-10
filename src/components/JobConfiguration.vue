@@ -502,33 +502,6 @@ export default defineComponent({
         jobHistoryModal.dismiss({ dismissed: true });
       })
     },
-    async runNow(job: any) {
-      const jobAlert = await alertController
-        .create({
-          header: translate("Run now"),
-          message: translate('Running this job now will not replace this job. A copy of this job will be created and run immediately. You may not be able to reverse this action.', { space: '<br/><br/>' }),
-          buttons: [
-            {
-              text: translate("Cancel"),
-              role: 'cancel',
-            },
-            {
-              text: translate('Run now'),
-              handler: () => {
-                if (job && !hasJobDataError(job)) {
-
-                  // preparing the custom parameters those needs to passed with the job
-                  const jobCustomParameters = generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters, job.runtimeData)
-
-                  this.store.dispatch('job/runServiceNow', { job, jobCustomParameters })
-                }
-              }
-            }
-          ]
-        });
-
-      return jobAlert.present();
-    },
     async copyJobInformation(job: any) {
       const { Clipboard } = Plugins;
       const jobDetails = `jobId: ${job.jobId}, jobName: ${job.enumName}, jobDescription: ${job.description} ${job.runtimeData ? (", runtimeData: " + JSON.stringify(job.runtimeData)) : ""}`;
