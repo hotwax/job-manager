@@ -575,7 +575,7 @@ export default defineComponent({
       });
 
       jobParameterModal.onDidDismiss().then((result) => {
-        if(result.data?.customOptionalParameters) {
+        if(result.data?.customOptionalParameters && !runNow) {
           this.customOptionalParameters = result.data.customOptionalParameters
           this.customRequiredParameters = result.data.customRequiredParameters
         }

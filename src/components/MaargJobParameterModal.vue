@@ -6,9 +6,13 @@
           <ion-icon slot="icon-only" :icon="closeOutline" />
         </ion-button>
       </ion-buttons>
-      <ion-title>{{ translate('Custom Parameters') }}</ion-title>
+      <ion-title>{{ translate(runNow ? "Run Now" : 'Custom Parameters') }}</ion-title>
       <ion-buttons slot="end">
-        <ion-button color="primary" :disabled="currentJob.paused === 'N'" @click="save()">{{ translate('Save') }}</ion-button>
+        <template v-if="runNow">
+          <ion-button @click="confirmRunNow()" color="primary">{{ translate('Save') }}</ion-button>
+          <ion-button @click="closeModal">{{ translate('Close') }}</ion-button>
+        </template>
+        <ion-button v-else color="primary" :disabled="currentJob.paused === 'N'" @click="save()">{{ translate('Save') }}</ion-button>
       </ion-buttons>
     </ion-toolbar>
   </ion-header>
@@ -23,8 +27,8 @@
           </ion-button>
         </ion-item-divider>
 
-        <ion-item :key="index" v-for="(parameter, index) in customRequiredParametersValue" :lines="currentJob.paused === 'Y' ? 'none': ''">
-          <ion-input :label="parameter.name" v-if="currentJob.paused === 'Y'" :placeholder="parameter.name" v-model="parameter.value" :helper-text="parameter.type" />
+        <ion-item :key="index" v-for="(parameter, index) in customRequiredParametersValue" :lines="currentJob.paused === 'Y' || runNow ? 'none': ''">
+          <ion-input :label="parameter.name" v-if="currentJob.paused === 'Y' || runNow" :placeholder="parameter.name" v-model="parameter.value" :helper-text="parameter.type" />
           <template v-else>
             <ion-label>{{ parameter.name }}</ion-label>
             <ion-label>{{ parameter.value }}</ion-label>
@@ -38,8 +42,8 @@
           </ion-button>
         </ion-item-divider>
 
-        <ion-item :key="index" v-for="(parameter, index) in customOptionalParametersValue" :lines="currentJob.paused === 'Y' ? 'none': ''">
-          <ion-input v-if="currentJob.paused === 'Y'" :label="parameter.name" :placeholder="parameter.name" v-model="parameter.value" :helper-text="parameter.type" />
+        <ion-item :key="index" v-for="(parameter, index) in customOptionalParametersValue" :lines="currentJob.paused === 'Y' || runNow ? 'none': ''">
+          <ion-input v-if="currentJob.paused === 'Y' || runNow" :label="parameter.name" :placeholder="parameter.name" v-model="parameter.value" :helper-text="parameter.type" />
           <template v-else>
             <ion-label>{{ parameter.name }}</ion-label>
             <ion-label>{{ parameter.value }}</ion-label>
@@ -68,13 +72,17 @@ import {
   IonList,
   IonTitle,
   IonToolbar,
-  modalController
+  modalController,
+  alertController
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { closeOutline, copyOutline } from 'ionicons/icons';
-import { useStore } from 'vuex';
-import { copyToClipboard } from "@/utils";
+import { mapGetters, useStore } from 'vuex';
+import { copyToClipboard, hasError, showToast } from "@/utils";
 import { translate } from '@hotwax/dxp-components';
+import { MaargJobService } from '@/services/MaargJobService';
+import logger from '@/logger';
+
 export default defineComponent({
   name: 'MaargJobParameterModal',
   components: {
@@ -92,12 +100,17 @@ export default defineComponent({
     IonTitle,
     IonToolbar,
   },
-  props: ['currentJob', 'customRequiredParameters', 'customOptionalParameters'],
+  props: ['currentJob', 'customRequiredParameters', 'customOptionalParameters', 'runNow'],
   data() {
     return {
       customOptionalParametersValue: {} as any,
       customRequiredParametersValue: {} as any
     }
+  },
+  computed: {
+    ...mapGetters({
+      currentEComStore: 'user/getCurrentEComStore',
+    })
   },
   mounted() {
     this.customOptionalParametersValue = JSON.parse(JSON.stringify(this.customOptionalParameters))
@@ -118,7 +131,91 @@ export default defineComponent({
     },
     save() {
       modalController.dismiss({ dismissed: true, customOptionalParameters: this.customOptionalParametersValue, customRequiredParameters: this.customRequiredParametersValue })
-    }
+    },
+    async cloneJob() {
+      const newJobName = `${this.currentJob.jobName.startsWith("template_") ? this.currentJob.jobName.replace("template_", "") : this.currentJob.jobName}_${this.currentEComStore.productStoreId}`
+      try {
+        const resp = await MaargJobService.cloneMaargJob({
+          jobName: this.currentJob.jobName,
+          newJobName,
+          copyParameters: true
+        })
+
+        if(!hasError(resp)) {
+          const job = JSON.parse(JSON.stringify(this.currentJob));
+          job["jobName"] = newJobName;
+          job["paused"] = "Y"
+          job["isDraftJob"] = false
+          job.serviceJobParameters.map((parameter: any) => {
+            parameter.jobName = newJobName
+          })
+          return job
+        } else {
+          throw resp.data;
+        }
+      } catch(error) {
+        logger.error(error);
+        return {};
+      }
+    },
+    async confirmRunNow() {
+      const jobAlert = await alertController
+        .create({
+          header: translate("Run now"),
+          message: translate('Running this job now will not replace this job. A copy of this job will be created and run immediately. You may not be able to reverse this action.', { space: '<br/><br/>' }),
+          buttons: [
+            {
+              text: translate("Cancel"),
+              role: 'cancel',
+            },
+            {
+              text: translate('Run now'),
+              handler: async () => {
+                try {
+                  let resp;
+
+                  if(this.currentJob.isDraftJob) {
+                    const clonedJob = await this.cloneJob();
+                    if(!clonedJob.jobName) {
+                      showToast(translate("Failed to schedule service"));
+                      return;
+                    }
+                    clonedJob.serviceJobParameters.find((parameter: any) => {
+                      if(parameter.parameterName === "productStoreIds") {
+                        parameter.parameterValue = this.currentEComStore.productStoreId
+                        return true;
+                      }
+                      return false;
+                    })
+
+                    resp = await MaargJobService.updateMaargJob({
+                      jobName: clonedJob.jobName,
+                      serviceJobParameters: clonedJob.serviceJobParameters
+                    })
+                    if(!hasError(resp)) {
+                      await this.store.dispatch("maargJob/updateMaargJob", { jobEnumId: clonedJob.jobTypeEnumId, job: clonedJob })
+                    } else {
+                      throw resp.data;
+                    }
+                  }
+
+                  resp = await MaargJobService.runNow(this.currentJob.jobName)
+                  if(!hasError(resp) && resp.data.jobRunId) {
+                    showToast(translate("Service has been scheduled"))
+                  } else {
+                    throw resp.data
+                  }
+                } catch(err) {
+                  showToast(translate("Failed to schedule service"))
+                  logger.error(err)
+                }
+              }
+            }
+          ]
+        });
+
+      return jobAlert.present();
+    },
   },
   setup() {
     const store = useStore();

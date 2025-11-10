@@ -6,10 +6,12 @@
           <ion-icon slot="icon-only" :icon="closeOutline" />
         </ion-button>
       </ion-buttons>
-      <ion-title>{{ translate('Run now') }}</ion-title>
+      <ion-title>{{ translate(runNow ? 'Run now' : 'Custom Parameters') }}</ion-title>
       <ion-buttons slot="end">
-        <ion-button v-if="runNow" @click="confirmRunNow();" color="primary">{{ translate('Save') }}</ion-button>
-        <ion-button v-if="runNow" @click="closeModal">{{ translate('Close') }}</ion-button>
+        <template v-if="runNow">
+          <ion-button @click="confirmRunNow()" color="primary">{{ translate('Save') }}</ion-button>
+          <ion-button @click="closeModal">{{ translate('Close') }}</ion-button>
+        </template>
         <ion-button v-else color="primary" :disabled="currentJob.statusId !== 'SERVICE_DRAFT'" @click="save()">{{ translate('Save') }}</ion-button>
       </ion-buttons>
     </ion-toolbar>
@@ -25,8 +27,8 @@
           </ion-button>
         </ion-item-divider>
 
-        <ion-item :key="index" v-for="(parameter, index) in customRequiredParametersValue" :lines="currentJob.statusId === 'SERVICE_DRAFT' ? 'none': ''">
-          <ion-input :label="parameter.name" v-if="currentJob.statusId === 'SERVICE_DRAFT'" :placeholder="parameter.name" v-model="parameter.value" :helper-text="parameter.type" />
+        <ion-item :key="index" v-for="(parameter, index) in customRequiredParametersValue" :lines="currentJob.statusId === 'SERVICE_DRAFT' || runNow ? 'none': ''">
+          <ion-input :label="parameter.name" v-if="currentJob.statusId === 'SERVICE_DRAFT' || runNow" :placeholder="parameter.name" v-model="parameter.value" :helper-text="parameter.type" />
           <template v-else>
             <ion-label>{{ parameter.name }}</ion-label>
             <ion-label>{{ parameter.value }}</ion-label>
@@ -40,7 +42,7 @@
           </ion-button>
         </ion-item-divider>
 
-        <ion-item :key="index" v-for="(parameter, index) in customOptionalParametersValue" :lines="currentJob.statusId === 'SERVICE_DRAFT' ? 'none': ''">
+        <ion-item :key="index" v-for="(parameter, index) in customOptionalParametersValue" :lines="currentJob.statusId === 'SERVICE_DRAFT' || runNow ? 'none': ''">
           <ion-input v-if="currentJob.statusId === 'SERVICE_DRAFT' || runNow" :label="parameter.name" :placeholder="parameter.name" v-model="parameter.value" :helper-text="parameter.type" />
           <template v-else>
             <ion-label>{{ parameter.name }}</ion-label>
@@ -139,7 +141,7 @@ export default defineComponent({
             handler: () => {
               if (this.currentJob && !hasJobDataError(this.currentJob)) {
                 // preparing the custom parameters those needs to passed with the job
-                const jobCustomParameters = generateJobCustomParameters( this.customOptionalParametersValue, this.customRequiredParametersValue, this.currentJob.runtimeData)
+                const jobCustomParameters = generateJobCustomParameters( this.customRequiredParametersValue, this.customOptionalParametersValue, this.currentJob.runtimeData)
                 this.store.dispatch('job/runServiceNow', { job: this.currentJob, jobCustomParameters })
               }
               this.closeModal()

@@ -27,16 +27,16 @@
       </ion-item>
 
       <ion-item lines="none" :disabled="!hasJobPermission(Actions.APP_MAARG_JOB_PARAMETERS_UPDATE)">
-        <ion-chip @click="openJobCustomParameterModal" outline v-if="!Object.keys(generateCustomParameters).length">
+        <ion-chip @click="openJobCustomParameterModal()" outline v-if="!Object.keys(generateCustomParameters).length">
           <ion-icon :icon="addOutline" />
           <ion-label>{{ translate('Add custom parameters') }}</ion-label>
         </ion-chip>
         <ion-row v-else>
-          <ion-chip @click="openJobCustomParameterModal" outline :color="value ? undefined :'danger'" :key="name" v-for="(value, name) in generateCustomParameters">
+          <ion-chip @click="openJobCustomParameterModal()" outline :color="value ? undefined :'danger'" :key="name" v-for="(value, name) in generateCustomParameters">
             {{ name }}: {{ value }}
           </ion-chip>
         </ion-row>
-        <ion-button size="default" @click="openJobCustomParameterModal" id="open-modal" slot="end" fill="clear">
+        <ion-button size="default" @click="openJobCustomParameterModal()" id="open-modal" slot="end" fill="clear">
           <ion-icon slot="icon-only" :icon="listCircleOutline"/>
         </ion-button>
       </ion-item>
@@ -59,7 +59,7 @@
       <ion-icon slot="start" :icon="timeOutline" />
       {{ translate("History") }}
     </ion-item>
-    <ion-item :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || !hasJobPermission(Actions.APP_MAARG_JOB_RUN_NOW_UPDATE)" @click="runNow()" button>
+    <ion-item :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || !hasJobPermission(Actions.APP_MAARG_JOB_RUN_NOW_UPDATE)" @click="openJobCustomParameterModal(true)" button>
       <ion-icon slot="start" :icon="flashOutline" />
       {{ translate("Run now") }}
     </ion-item>
@@ -429,10 +429,15 @@ export default defineComponent({
 
       scheduleModal.present();
     },
-    async openJobCustomParameterModal() {
+    async openJobCustomParameterModal(runNow = false) {
       const jobParameterModal = await modalController.create({
       component: MaargJobParameterModal,
-        componentProps: { customOptionalParameters: this.customOptionalParameters, customRequiredParameters: this.customRequiredParameters, currentJob: this.currentMaargJob },
+        componentProps: {
+          customOptionalParameters: runNow ? JSON.parse(JSON.stringify(this.customOptionalParameters)) : this.customOptionalParameters,
+          customRequiredParameters: runNow ? JSON.parse(JSON.stringify(this.customRequiredParameters)) : this.customRequiredParameters,
+          currentJob: runNow ? JSON.parse(JSON.stringify(this.currentMaargJob)) : this.currentMaargJob,
+          runNow
+        },
         breakpoints: [0, 0.25, 0.5, 0.75, 1],
         initialBreakpoint: 0.75
       });
