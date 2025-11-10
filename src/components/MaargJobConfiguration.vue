@@ -27,16 +27,16 @@
       </ion-item>
 
       <ion-item lines="none" :disabled="!hasJobPermission(Actions.APP_MAARG_JOB_PARAMETERS_UPDATE)">
-        <ion-chip @click="openJobCustomParameterModal" outline v-if="!Object.keys(generateCustomParameters).length">
+        <ion-chip @click="openJobCustomParameterModal()" outline v-if="!Object.keys(generateCustomParameters).length">
           <ion-icon :icon="addOutline" />
           <ion-label>{{ translate('Add custom parameters') }}</ion-label>
         </ion-chip>
         <ion-row v-else>
-          <ion-chip @click="openJobCustomParameterModal" outline :color="value ? undefined :'danger'" :key="name" v-for="(value, name) in generateCustomParameters">
+          <ion-chip @click="openJobCustomParameterModal()" outline :color="value ? undefined :'danger'" :key="name" v-for="(value, name) in generateCustomParameters">
             {{ name }}: {{ value }}
           </ion-chip>
         </ion-row>
-        <ion-button size="default" @click="openJobCustomParameterModal" id="open-modal" slot="end" fill="clear">
+        <ion-button size="default" @click="openJobCustomParameterModal()" id="open-modal" slot="end" fill="clear">
           <ion-icon slot="icon-only" :icon="listCircleOutline"/>
         </ion-button>
       </ion-item>
@@ -59,7 +59,7 @@
       <ion-icon slot="start" :icon="timeOutline" />
       {{ translate("History") }}
     </ion-item>
-    <ion-item :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || !hasJobPermission(Actions.APP_MAARG_JOB_RUN_NOW_UPDATE)" @click="runNow()" button>
+    <ion-item :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || !hasJobPermission(Actions.APP_MAARG_JOB_RUN_NOW_UPDATE)" @click="openJobCustomParameterModal(true)" button>
       <ion-icon slot="start" :icon="flashOutline" />
       {{ translate("Run now") }}
     </ion-item>
@@ -166,65 +166,6 @@ export default defineComponent({
         showToast(translate("Copied job details to clipboard"));
       })
     },
-    async runNow() {
-      const jobAlert = await alertController
-        .create({
-          header: translate("Run now"),
-          message: translate('Running this job now will not replace this job. A copy of this job will be created and run immediately. You may not be able to reverse this action.', { space: '<br/><br/>' }),
-          buttons: [
-            {
-              text: translate("Cancel"),
-              role: 'cancel',
-            },
-            {
-              text: translate('Run now'),
-              handler: async () => {
-                try {
-                  let resp;
-
-                  if(this.currentMaargJob.isDraftJob) {
-                    const clonedJob = await this.cloneJob();
-                    if(!clonedJob.jobName) {
-                      showToast(translate("Failed to schedule service"));
-                      return;
-                    }
-                    clonedJob.serviceJobParameters.find((parameter: any) => {
-                      if(parameter.parameterName === "productStoreIds") {
-                        parameter.parameterValue = this.currentEComStore.productStoreId
-                        return true;
-                      }
-                      return false;
-                    })
-
-                    resp = await MaargJobService.updateMaargJob({
-                      jobName: clonedJob.jobName,
-                      serviceJobParameters: clonedJob.serviceJobParameters
-                    })
-                    if(!hasError(resp)) {
-                      await this.store.dispatch("maargJob/updateMaargJob", { jobEnumId: clonedJob.jobTypeEnumId, job: clonedJob })
-                    } else {
-                      throw resp.data;
-                    }
-                  }
-                  
-                  resp = await MaargJobService.runNow(this.currentMaargJob.jobName)
-                  if(!hasError(resp) && resp.data.jobRunId) {
-                    showToast(translate("Service has been scheduled"))
-                  } else {
-                    throw resp.data
-                  }
-                } catch(err) {
-                  showToast(translate("Failed to schedule service"))
-                  logger.error(err)
-                }
-              }
-            }
-          ]
-        });
-
-      return jobAlert.present();
-    },
-
     async cancelJob(job: any) {
       const alert = await alertController
         .create({
@@ -429,10 +370,15 @@ export default defineComponent({
 
       scheduleModal.present();
     },
-    async openJobCustomParameterModal() {
+    async openJobCustomParameterModal(runNow = false) {
       const jobParameterModal = await modalController.create({
       component: MaargJobParameterModal,
-        componentProps: { customOptionalParameters: this.customOptionalParameters, customRequiredParameters: this.customRequiredParameters, currentJob: this.currentMaargJob },
+        componentProps: {
+          customOptionalParameters: runNow ? JSON.parse(JSON.stringify(this.customOptionalParameters)) : this.customOptionalParameters,
+          customRequiredParameters: runNow ? JSON.parse(JSON.stringify(this.customRequiredParameters)) : this.customRequiredParameters,
+          currentJob: runNow ? JSON.parse(JSON.stringify(this.currentMaargJob)) : this.currentMaargJob,
+          runNow
+        },
         breakpoints: [0, 0.25, 0.5, 0.75, 1],
         initialBreakpoint: 0.75
       });

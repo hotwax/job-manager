@@ -64,16 +64,16 @@
       </ion-item>
 
       <ion-item lines="none">
-        <ion-chip @click="openJobCustomParameterModal" outline v-if="!Object.keys(generateCustomParameters).length">
+        <ion-chip @click="openJobCustomParameterModal()" outline v-if="!Object.keys(generateCustomParameters).length">
           <ion-icon :icon="addOutline" />
           <ion-label>{{ translate('Add custom parameters') }}</ion-label>
         </ion-chip>
         <ion-row v-else>
-          <ion-chip @click="openJobCustomParameterModal" outline :color="value ? undefined :'danger'" :key="name" v-for="(value, name) in generateCustomParameters">
+          <ion-chip @click="openJobCustomParameterModal()" outline :color="value ? undefined :'danger'" :key="name" v-for="(value, name) in generateCustomParameters">
             {{ name }}: {{ value }}
           </ion-chip>
         </ion-row>
-        <ion-button size="default" @click="openJobCustomParameterModal" id="open-modal" slot="end" fill="clear">
+        <ion-button size="default" @click="openJobCustomParameterModal()" id="open-modal" slot="end" fill="clear">
           <ion-icon slot="icon-only" :icon="listCircleOutline"/>
         </ion-button>
       </ion-item>
@@ -112,7 +112,7 @@
       <ion-icon slot="start" :icon="timeOutline" />
       {{ translate("History") }}
     </ion-item>
-    <ion-item :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || historyJobConfig" @click="runNow(currentJob)" button>
+    <ion-item :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || historyJobConfig" @click="openJobCustomParameterModal(true)" button>
       <ion-icon slot="start" :icon="flashOutline" />
       {{ translate("Run now") }}
     </ion-item>
@@ -502,33 +502,6 @@ export default defineComponent({
         jobHistoryModal.dismiss({ dismissed: true });
       })
     },
-    async runNow(job: any) {
-      const jobAlert = await alertController
-        .create({
-          header: translate("Run now"),
-          message: translate('Running this job now will not replace this job. A copy of this job will be created and run immediately. You may not be able to reverse this action.', { space: '<br/><br/>' }),
-          buttons: [
-            {
-              text: translate("Cancel"),
-              role: 'cancel',
-            },
-            {
-              text: translate('Run now'),
-              handler: () => {
-                if (job && !hasJobDataError(job)) {
-
-                  // preparing the custom parameters those needs to passed with the job
-                  const jobCustomParameters = generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters, job.runtimeData)
-
-                  this.store.dispatch('job/runServiceNow', { job, jobCustomParameters })
-                }
-              }
-            }
-          ]
-        });
-
-      return jobAlert.present();
-    },
     async copyJobInformation(job: any) {
       const { Clipboard } = Plugins;
       const jobDetails = `jobId: ${job.jobId}, jobName: ${job.enumName}, jobDescription: ${job.description} ${job.runtimeData ? (", runtimeData: " + JSON.stringify(job.runtimeData)) : ""}`;
@@ -561,16 +534,21 @@ export default defineComponent({
       if (setTime > currTime) this.generateRunTimes(setTime)
       else showToast(translate("Provide a future date and time"))
     },
-    async openJobCustomParameterModal() {
+    async openJobCustomParameterModal(runNow?: boolean) {
       const jobParameterModal = await modalController.create({
       component: JobParameterModal,
-        componentProps: { customOptionalParameters: this.customOptionalParameters, customRequiredParameters: this.customRequiredParameters, currentJob: this.currentJob },
+      componentProps: {
+          customOptionalParameters: runNow ? JSON.parse(JSON.stringify(this.customOptionalParameters)) : this.customOptionalParameters,
+          customRequiredParameters: runNow ? JSON.parse(JSON.stringify(this.customRequiredParameters)) : this.customRequiredParameters,
+          currentJob: runNow ? JSON.parse(JSON.stringify(this.currentJob)) : this.currentJob,
+          runNow
+        },
         breakpoints: [0, 0.25, 0.5, 0.75, 1],
         initialBreakpoint: 0.75
       });
 
       jobParameterModal.onDidDismiss().then((result) => {
-        if(result.data?.customOptionalParameters) {
+        if(result.data?.customOptionalParameters && !runNow) {
           this.customOptionalParameters = result.data.customOptionalParameters
           this.customRequiredParameters = result.data.customRequiredParameters
         }
