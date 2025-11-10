@@ -67,7 +67,7 @@ import {
   IonToolbar
 } from "@ionic/vue";
 import { defineComponent } from "vue";
-import { albumsOutline, banOutline, barChartOutline, calendarNumberOutline, checkmarkDoneOutline, closeOutline, compassOutline, filterOutline, iceCreamOutline, libraryOutline, pulseOutline, sendOutline, settings, shirtOutline, ticketOutline } from "ionicons/icons";
+import { albumsOutline, banOutline, calendarNumberOutline, checkmarkDoneOutline, closeOutline, compassOutline, filterOutline, iceCreamOutline, libraryOutline, pulseOutline, sendOutline, settings, shirtOutline, ticketOutline } from "ionicons/icons";
 import { mapGetters, useStore } from 'vuex';
 import { translate } from "@hotwax/dxp-components";
 
@@ -146,12 +146,6 @@ export default defineComponent({
         enumTypeId: "PRODUCT_SYS_JOB"
       },
       {
-        name: "Reports",
-        iosIcon: barChartOutline,
-        mdIcon: barChartOutline,
-        enumTypeId: "REPORT_SYS_JOB"
-      },
-      {
         name: "Miscellaneous",
         iosIcon: libraryOutline,
         mdIcon: libraryOutline,
@@ -161,7 +155,6 @@ export default defineComponent({
     return {
       albumsOutline,
       banOutline,
-      barChartOutline,
       calendarNumberOutline,
       checkmarkDoneOutline,
       categoryFilters,

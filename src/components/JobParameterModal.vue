@@ -20,7 +20,7 @@
       <ion-item-group>
         <ion-item-divider v-if="customRequiredParameters.length" color="light">
           <ion-label>{{ translate('Required Parameters') }}</ion-label>
-          <ion-button slot="end" fill="clear" color="medium" @click="copyToClipboard(getParameters('required'), 'Copied to clipboard')">
+          <ion-button size="default" slot="end" fill="clear" color="medium" @click="copyToClipboard(getParameters('required'), 'Copied to clipboard')">
             <ion-icon slot="icon-only" :icon="copyOutline" />
           </ion-button>
         </ion-item-divider>
@@ -35,7 +35,7 @@
 
         <ion-item-divider v-if="customOptionalParameters.length" color="light">
           <ion-label>{{ translate('Optional Parameters') }}</ion-label>
-          <ion-button slot="end" fill="clear" color="medium" @click="copyToClipboard(getParameters('optional'), 'Copied to clipboard')">
+          <ion-button size="default" slot="end" fill="clear" color="medium" @click="copyToClipboard(getParameters('optional'), 'Copied to clipboard')">
             <ion-icon slot="icon-only" :icon="copyOutline" />
           </ion-button>
         </ion-item-divider>

@@ -23,7 +23,7 @@
             </ion-card-header>
           </ion-item>
           <ion-button color="danger" @click="logout()">{{ translate("Logout") }}</ion-button>
-          <ion-button fill="outline" @click="goToLaunchpad()">
+          <ion-button :standalone-hidden="!hasPermission(Actions.APP_PWA_STANDALONE_ACCESS)" fill="outline" @click="goToLaunchpad()">
             {{ translate("Go to Launchpad") }}
             <ion-icon slot="end" :icon="openOutline" />
           </ion-button>
@@ -68,10 +68,15 @@
           <ion-card-content>
             {{ translate('eCommerce stores are directly connected to one Shop Config. If your OMS is connected to multiple eCommerce stores selling the same catalog operating as one Company, you may have multiple Shop Configs for the selected Product Store.') }}
           </ion-card-content>
-          <ion-item lines="none">
+          <ion-item lines="none" v-if="shopifyConfigs.length > 0">
             <ion-select :label="translate('Select eCommerce')" interface="popover" :value="currentShopifyConfig?.shopifyConfigId" @ionChange="setShopifyConfig($event)">
               <ion-select-option v-for="shopifyConfig in shopifyConfigs" :key="shopifyConfig.shopifyConfigId" :value="shopifyConfig.shopifyConfigId" >{{ shopifyConfig.name ? shopifyConfig.name : shopifyConfig.shopifyConfigName }}</ion-select-option>
             </ion-select>
+          </ion-item>
+          <ion-item lines="none" v-else>
+            <ion-label>
+              {{ translate("No eCommerce stores connected to", { eCommStore : currentEComStore.storeName ? currentEComStore.storeName : currentEComStore.productStoreId }) }}
+            </ion-label>
           </ion-item>
         </ion-card>
       </section>
@@ -86,9 +91,10 @@
 </template>
 
 <script lang="ts">
-import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonContent, IonHeader,IonIcon, IonItem, IonMenuButton, IonPage, IonSelect, IonSelectOption, IonTitle, IonToolbar } from '@ionic/vue';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonContent, IonHeader,IonIcon, IonItem, IonLabel, IonMenuButton, IonPage, IonSelect, IonSelectOption, IonTitle, IonToolbar } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { codeWorkingOutline, ellipsisVertical, personCircleOutline, openOutline, saveOutline, timeOutline } from 'ionicons/icons'
+import { Actions, hasPermission } from '@/authorization';
 import { mapGetters, useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import Image from '@/components/Image.vue'
@@ -114,7 +120,8 @@ export default defineComponent({
     IonSelectOption,
     IonTitle, 
     IonToolbar,
-    Image
+    Image,
+    IonLabel
   },
   data() {
     return {
@@ -164,8 +171,10 @@ export default defineComponent({
     const router = useRouter();
 
     return {
+      Actions,
       codeWorkingOutline,
       ellipsisVertical,
+      hasPermission,
       personCircleOutline,
       store,
       timeOutline,
@@ -200,5 +209,12 @@ export default defineComponent({
     justify-content: space-between;
     align-items: center;
     padding: var(--spacer-xs) 10px 0px;
+  }
+
+  /* Added conditional hiding in standalone mode that respects user permissions */
+  @media (display-mode: standalone) {
+    [standalone-hidden] {
+      display: none;
+    }
   }
 </style>

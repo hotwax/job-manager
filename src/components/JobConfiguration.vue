@@ -2,8 +2,8 @@
   <section>
     <ion-item lines="none">
       <!-- Adding conditional check for currentJob.jobName as currentJob is undefined when i18n runs translate -->
-      <h1>{{ isBrokerJob ? currentJob.jobName : currentJob.enumName ? currentJob.enumName : currentJob.jobName ? currentJob.jobName : '' }}</h1>
-      <ion-button fill="outline" slot="end" v-if="isRefreshRequired" @click="refreshCurrentJob">
+      <h1>{{ currentJob.enumName ? currentJob.enumName : currentJob.jobName ? currentJob.jobName : '' }}</h1>
+      <ion-button size="default" fill="outline" slot="end" v-if="isRefreshRequired" @click="refreshCurrentJob">
         <ion-icon :icon="refreshOutline" slot="icon-only" />
       </ion-button>
       <ion-badge slot="end" color="dark" v-if="currentJob.cancelDateTime || currentJob.finishDateTime">{{ currentJob.statusId == "SERVICE_CANCELLED" || currentJob.statusId == "SERVICE_CRASHED" ?  timeTillJob(currentJob.cancelDateTime) : timeTillJob(currentJob.finishDateTime) }}</ion-badge>
@@ -73,7 +73,7 @@
             {{ name }}: {{ value }}
           </ion-chip>
         </ion-row>
-        <ion-button @click="openJobCustomParameterModal()" id="open-modal" slot="end" fill="clear">
+        <ion-button size="default" @click="openJobCustomParameterModal()" id="open-modal" slot="end" fill="clear">
           <ion-icon slot="icon-only" :icon="listCircleOutline"/>
         </ion-button>
       </ion-item>
@@ -252,7 +252,7 @@ export default defineComponent({
     this.generateRunTimes(this.runTime)
     this.generateFrequencyOptions(this.jobStatus)
   },
-  props: ["isBrokerJob", "status", "type", "historyJobConfig"],
+  props: ["status", "type", "historyJobConfig"],
   computed: {
     ...mapGetters({
       pinnedJobs: 'user/getPinnedJobs',
@@ -327,10 +327,6 @@ export default defineComponent({
 
       if(this.$route.path === '/pipeline') {
         job = this.pendingJobs.find((job: any) => job.systemJobEnumId === this.currentJob.systemJobEnumId)
-      } else if(this.$route.path === '/brokering') {
-        // In brokering page, we may have multiple batch jobs for a single systemJobEnumId.
-        // Hence uniquely identifying current job using parentJobId.
-        job = this.getJob(this.currentJob.systemJobEnumId)?.find((job: any) => job.parentJobId === this.currentJob.parentJobId)
       } else {
         job = this.getJob(this.currentJob.systemJobEnumId)
       }

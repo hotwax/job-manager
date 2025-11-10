@@ -41,7 +41,7 @@
             {{ name }}: {{ value }}
           </ion-chip>
         </ion-row>
-        <ion-button @click="openJobCustomParameterModal" id="open-modal" slot="end" fill="clear">
+        <ion-button size="default" @click="openJobCustomParameterModal" id="open-modal" slot="end" fill="clear">
           <ion-icon slot="icon-only" :icon="listCircleOutline"/>
         </ion-button>
       </ion-item>
@@ -121,7 +121,7 @@
             {{ name }}: {{ value }}
           </ion-chip>
         </ion-row>
-        <ion-button @click="openJobCustomParameterModal" id="open-modal" slot="end" fill="clear">
+        <ion-button size="default" @click="openJobCustomParameterModal" id="open-modal" slot="end" fill="clear">
           <ion-icon slot="icon-only" :icon="listCircleOutline"/>
         </ion-button>
       </ion-item>

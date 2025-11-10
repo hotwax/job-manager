@@ -45,7 +45,7 @@ import {
 } from "@ionic/vue";
 import { computed, defineComponent } from "vue";
 import { mapGetters } from "vuex";
-import { albumsOutline, barChartOutline, calendarNumberOutline, compassOutline, iceCreamOutline, libraryOutline, pulseOutline, settingsOutline, sendOutline, shirtOutline, terminalOutline, ticketOutline } from "ionicons/icons";
+import { albumsOutline, calendarNumberOutline, compassOutline, iceCreamOutline, libraryOutline, pulseOutline, settingsOutline, sendOutline, shirtOutline, terminalOutline, ticketOutline } from "ionicons/icons";
 import { useStore } from "@/store";
 import emitter from "@/event-bus"
 import { hasPermission } from "@/authorization";
@@ -142,16 +142,6 @@ export default defineComponent({
         }
       },
       {
-        title: "Brokering",
-        url: "/brokering",
-        iosIcon: compassOutline,
-        mdIcon: compassOutline,
-        dependsOnBaseURL: false,
-        meta: {
-          permissionId: "APP_BROKERING_VIEW"
-        }
-      },
-      {
         title: "Fulfillment",
         url: "/fulfillment",
         iosIcon: sendOutline,
@@ -182,16 +172,6 @@ export default defineComponent({
         }
       },
       {
-        title: "Reports",
-        url: "/reports",
-        iosIcon: barChartOutline,
-        mdIcon: barChartOutline,
-        dependsOnBaseURL: false,
-        meta: {
-          permissionId: "APP_REPORT_VIEW"
-        }
-      },
-      {
         title: "Miscellaneous",
         url: "/miscellaneous",
         iosIcon: libraryOutline,
@@ -199,22 +179,6 @@ export default defineComponent({
         dependsOnBaseURL: false,
         meta: {
           permissionId: "APP_MISC_VIEW"
-        }
-      },
-      {
-        title: "Bulk editor",
-        meta: {
-          permissionId: "APP_BULK_EDITOR_VIEW"
-        }
-      },
-      {
-        title: "Schedule in bulk",
-        url: "/bulk-editor",
-        iosIcon: terminalOutline,
-        mdIcon: terminalOutline,
-        dependsOnBaseURL: false,
-        meta: {
-          permissionId: "APP_BULK_EDITOR_VIEW"
         }
       },
       {
@@ -238,7 +202,6 @@ export default defineComponent({
       albumsOutline,
       appPages,
       compassOutline,
-      barChartOutline,
       calendarNumberOutline,
       getValidMenuItems,
       hasPermission,
