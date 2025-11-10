@@ -166,65 +166,6 @@ export default defineComponent({
         showToast(translate("Copied job details to clipboard"));
       })
     },
-    async runNow() {
-      const jobAlert = await alertController
-        .create({
-          header: translate("Run now"),
-          message: translate('Running this job now will not replace this job. A copy of this job will be created and run immediately. You may not be able to reverse this action.', { space: '<br/><br/>' }),
-          buttons: [
-            {
-              text: translate("Cancel"),
-              role: 'cancel',
-            },
-            {
-              text: translate('Run now'),
-              handler: async () => {
-                try {
-                  let resp;
-
-                  if(this.currentMaargJob.isDraftJob) {
-                    const clonedJob = await this.cloneJob();
-                    if(!clonedJob.jobName) {
-                      showToast(translate("Failed to schedule service"));
-                      return;
-                    }
-                    clonedJob.serviceJobParameters.find((parameter: any) => {
-                      if(parameter.parameterName === "productStoreIds") {
-                        parameter.parameterValue = this.currentEComStore.productStoreId
-                        return true;
-                      }
-                      return false;
-                    })
-
-                    resp = await MaargJobService.updateMaargJob({
-                      jobName: clonedJob.jobName,
-                      serviceJobParameters: clonedJob.serviceJobParameters
-                    })
-                    if(!hasError(resp)) {
-                      await this.store.dispatch("maargJob/updateMaargJob", { jobEnumId: clonedJob.jobTypeEnumId, job: clonedJob })
-                    } else {
-                      throw resp.data;
-                    }
-                  }
-                  
-                  resp = await MaargJobService.runNow(this.currentMaargJob.jobName)
-                  if(!hasError(resp) && resp.data.jobRunId) {
-                    showToast(translate("Service has been scheduled"))
-                  } else {
-                    throw resp.data
-                  }
-                } catch(err) {
-                  showToast(translate("Failed to schedule service"))
-                  logger.error(err)
-                }
-              }
-            }
-          ]
-        });
-
-      return jobAlert.present();
-    },
-
     async cancelJob(job: any) {
       const alert = await alertController
         .create({

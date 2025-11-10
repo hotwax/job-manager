@@ -78,7 +78,7 @@ import {
 import { defineComponent } from 'vue';
 import { closeOutline, copyOutline } from 'ionicons/icons';
 import { mapGetters, useStore } from 'vuex';
-import { copyToClipboard, hasError, showToast } from "@/utils";
+import { copyToClipboard, generateJobCustomParameters, hasError, showToast } from "@/utils";
 import { translate } from '@hotwax/dxp-components';
 import { MaargJobService } from '@/services/MaargJobService';
 import logger from '@/logger';
@@ -110,6 +110,7 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       currentEComStore: 'user/getCurrentEComStore',
+      currentMaargJob: 'maargJob/getCurrentMaargJob',
     })
   },
   mounted() {
@@ -172,6 +173,7 @@ export default defineComponent({
               text: translate('Run now'),
               handler: async () => {
                 try {
+                  let job = JSON.parse(JSON.stringify(this.currentJob)) as any
                   let resp;
 
                   if(this.currentJob.isDraftJob) {
@@ -187,19 +189,38 @@ export default defineComponent({
                       }
                       return false;
                     })
-
-                    resp = await MaargJobService.updateMaargJob({
-                      jobName: clonedJob.jobName,
-                      serviceJobParameters: clonedJob.serviceJobParameters
-                    })
-                    if(!hasError(resp)) {
-                      await this.store.dispatch("maargJob/updateMaargJob", { jobEnumId: clonedJob.jobTypeEnumId, job: clonedJob })
-                    } else {
-                      throw resp.data;
-                    }
+                    job = clonedJob
                   }
 
-                  resp = await MaargJobService.runNow(this.currentJob.jobName)
+                  const paramValues = generateJobCustomParameters(this.customRequiredParametersValue, this.customOptionalParametersValue, {});
+
+                  Object.keys(paramValues).map((paramName: any) => {
+                    const existingParameter = job.serviceJobParameters.find((parameter: any) => parameter.parameterName === paramName);
+
+                    if(existingParameter) {
+                      existingParameter.parameterValue = paramValues[paramName]
+                    } else {
+                      job.serviceJobParameters.push({
+                        parameterName: paramName,
+                        parameterValue: paramValues[paramName],
+                        jobName: job.jobName
+                      })
+                    }
+                  })
+
+                  // Updating job on backend, as maarg run now api does not support passing custom params
+                  // so we need to first update the job and then run that job using the jobName
+                  resp = await MaargJobService.updateMaargJob({
+                    jobName: job.jobName,
+                    serviceJobParameters: job.serviceJobParameters
+                  })
+                  if(!hasError(resp)) {
+                    await this.store.dispatch("maargJob/updateMaargJob", { jobEnumId: job.jobTypeEnumId, job })
+                  } else {
+                    throw resp.data;
+                  }
+
+                  resp = await MaargJobService.runNow(job.jobName)
                   if(!hasError(resp) && resp.data.jobRunId) {
                     showToast(translate("Service has been scheduled"))
                   } else {
@@ -209,6 +230,8 @@ export default defineComponent({
                   showToast(translate("Failed to schedule service"))
                   logger.error(err)
                 }
+
+                this.closeModal()
               }
             }
           ]
