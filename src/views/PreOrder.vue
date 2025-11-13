@@ -343,7 +343,7 @@ export default defineComponent({
           runNow: true
         },
         breakpoints: [0, 0.25, 0.5, 0.75, 1],
-        initialBreakpoint: 0.75
+        initialBreakpoint: 1
       });
       await jobParameterModal.present();
     },

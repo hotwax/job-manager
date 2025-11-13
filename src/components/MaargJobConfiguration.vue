@@ -380,7 +380,7 @@ export default defineComponent({
           runNow
         },
         breakpoints: [0, 0.25, 0.5, 0.75, 1],
-        initialBreakpoint: 0.75
+        initialBreakpoint: 1
       });
 
       jobParameterModal.onDidDismiss().then((result) => {
