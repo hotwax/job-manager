@@ -27,14 +27,6 @@ const webhookParameters = {
     'topic': 'refunds/create',
     'endpoint': 'returnOrderShopifyWebhook'
   },
-  'NEW_PRODUCTS': {
-    'topic': 'products/create',
-    'endpoint': 'createProductShopifyWebhook'
-  },
-  'DELETE_PRODUCTS': {
-    'topic': 'products/delete',
-    'endpoint': 'deleteProductFromShopify'
-  },
   'BULK_OPERATIONS_FINISH': {
     'topic': 'bulk_operations/finish',
     'endpoint': 'uploadedFileStatusUpdateFromShopify'

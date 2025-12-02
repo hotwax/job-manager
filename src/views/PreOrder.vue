@@ -150,7 +150,7 @@
             </ion-item>
             <ion-item>
               <ion-label class="ion-text-wrap">{{ translate("Release preorders")}}</ion-label>
-              <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" fill="outline" @click="runJob(jobEnums['AUTO_RELSE_DAILY'])">{{ translate("Release") }}</ion-button>
+              <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" fill="outline" @click="openJobCustomParameterModal(jobEnums['AUTO_RELSE_DAILY'])">{{ translate("Release") }}</ion-button>
             </ion-item>
             <ion-item lines="none">
               <ion-label class="ion-text-wrap"><p>{{ translate("Auto releasing pre-orders will find pre-orders that have promise dates that have passed and release them for fulfillment.") }}</p></ion-label>
@@ -162,8 +162,11 @@
               <ion-card-title>{{ translate("Feed") }}</ion-card-title>
             </ion-card-header>
             <ion-item v-for="(job, index) in getFilteredMaargJobs()" :key="index" button detail @click="viewMaargJobConfiguration(job.jobTypeEnumId)">
-              <ion-label class="ion-text-wrap">{{ job.enumName ? job.enumName : job.jobName }}</ion-label>
-              <ion-label slot="end" >{{ getTemporalExpression(job.jobTypeEnumId, true) }}</ion-label>
+              <ion-label class="ion-text-wrap">
+                {{ job.enumName ? job.enumName : job.jobName }}
+                <p>{{ getTemporalExpression(job.jobTypeEnumId, true) }}</p>
+              </ion-label>
+              <ion-label slot="end">{{ getJobScheduleStatus(job.jobTypeEnumId, true) }}</ion-label>
             </ion-item>
           </ion-card>
 
@@ -172,8 +175,11 @@
               <ion-card-title>{{ translate("NetSuite") }}</ion-card-title>
             </ion-card-header>
             <ion-item v-for="(job, index) in getFilteredMaargJobs(true)" :key="index" button detail @click="viewMaargJobConfiguration(job.jobTypeEnumId)">
-              <ion-label class="ion-text-wrap">{{ job.enumName ? job.enumName : job.jobName }}</ion-label>
-              <ion-label slot="end" >{{ getTemporalExpression(job.jobTypeEnumId, true) }}</ion-label>
+              <ion-label class="ion-text-wrap">
+                {{ job.enumName ? job.enumName : job.jobName }}
+                <p>{{ getTemporalExpression(job.jobTypeEnumId, true) }}</p>
+              </ion-label>
+              <ion-label slot="end" >{{ getJobScheduleStatus(job.jobTypeEnumId, true) }}</ion-label>
             </ion-item>
           </ion-card>
 
@@ -206,21 +212,22 @@ import {
   IonPage,
   IonTitle,
   IonToolbar,
-  isPlatform
+  isPlatform,
+  modalController
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { useStore } from "@/store";
 import { mapGetters } from "vuex";
 import { useRouter } from 'vue-router'
-import { alertController } from '@ionic/vue';
 import JobConfiguration from '@/components/JobConfiguration.vue'
-import { generateJobCustomParameters, getCronString, isFutureDate, showToast, prepareRuntime, hasJobDataError } from '@/utils';
+import { generateJobCustomParameters, getCronString, isFutureDate, showToast, prepareRuntime, hasJobDataError, generateJobCustomOptions } from '@/utils';
 import emitter from '@/event-bus';
 import { useAuthStore, translate } from '@hotwax/dxp-components';
 import MoreJobs from '@/components/MoreJobs.vue';
 import { Actions, hasPermission } from '@/authorization'
 import { openOutline } from 'ionicons/icons'
 import MaargJobConfiguration from '@/components/MaargJobConfiguration.vue';
+import JobParameterModal from '@/components/JobParameterModal.vue'
 
 export default defineComponent({
   name: 'PreOrder',
@@ -325,30 +332,20 @@ export default defineComponent({
         this.store.dispatch('job/updateJob', job)
       }
     },
-    async runJob(id: string) {
+    async openJobCustomParameterModal(id: string) {
       const job = this.getJob(id)
-      const jobAlert = await alertController
-        .create({
-          header: translate("Run now"),
-          message: translate('Running this job now will not replace this job. A copy of this job will be created and run immediately. You may not be able to reverse this action.', { space: '<br/><br/>' }),
-          buttons: [
-            {
-              text: translate("Cancel"),
-              role: 'cancel',
-            },
-            {
-              text: translate('Run now'),
-              handler: () => {
-                if (job && !hasJobDataError(job)) {
-                  const jobCustomParameters = generateJobCustomParameters([], [], job.runtimeData)
-                  this.store.dispatch('job/runServiceNow', { job, jobCustomParameters })
-                }
-              }
-            }
-          ]
-        });
-
-      return jobAlert.present();
+      const jobParameterModal = await modalController.create({
+        component: JobParameterModal,
+        componentProps: {
+          customOptionalParameters: generateJobCustomOptions(job).optionalParameters,
+          customRequiredParameters: generateJobCustomOptions(job).requiredParameters,
+          currentJob: job,
+          runNow: true
+        },
+        breakpoints: [0, 0.25, 0.5, 0.75, 1],
+        initialBreakpoint: 1
+      });
+      await jobParameterModal.present();
     },
     async viewJobConfiguration(jobInformation: any) {
       if(this.isMaargJobAvailable(this.jobEnums[jobInformation.id])) {
@@ -385,10 +382,10 @@ export default defineComponent({
     getTemporalExpression(enumId: string, isMaargJob = false) {
       if(isMaargJob || this.isMaargJobAvailable(this.jobEnums[enumId])) {
         const job = this.getMaargJob(enumId)
-        return (job?.paused === "N" && job?.cronExpression && !job.isDraftJob) ? this.getCronString(job.cronExpression) ? this.getCronString(job.cronExpression) : job.cronExpression : 'Disabled'  
+        return job?.cronExpression ? this.getCronString(job.cronExpression) ? this.getCronString(job.cronExpression) : job.cronExpression : ""
       }
  
-      return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ? this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description : translate('Disabled')
+      return this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description ? this.getTemporalExpr(this.getJobStatus(this.jobEnums[enumId]))?.description : ""
     },
     async fetchJobs(){
       await this.store.dispatch("job/fetchJobs", {
@@ -426,6 +423,15 @@ export default defineComponent({
     },
     getFilteredMaargJobs(isNetSuiteJob = false) {
       return isNetSuiteJob ? this.maargJobs?.filter((job: any) => !Object.values(this.jobEnums).includes(job.jobTypeEnumId) && job.permissionGroupId === "NETSUITE") : this.maargJobs?.filter((job: any) => !Object.values(this.jobEnums).includes(job.jobTypeEnumId) && job.permissionGroupId !== "NETSUITE")
+    },
+    getJobScheduleStatus(enumId: string, isMaargJob = false) {
+      if(isMaargJob || this.isMaargJobAvailable(this.jobEnums[enumId])) {
+        const job = this.getMaargJob(enumId)
+        return job?.paused === "Y" ? "Disabled" : "Enabled"
+      }
+
+      const job = this.getJob(this.jobEnums[enumId])
+      return job?.status === "SERVICE_DRAFT" ? "Disabled" : "Enabled"
     }
   },
   mounted () {

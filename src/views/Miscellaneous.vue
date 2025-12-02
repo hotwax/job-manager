@@ -30,8 +30,11 @@
                   <ion-card-title>{{ translate("Shopify bulk query") }}</ion-card-title>
                 </ion-card-header>
                 <ion-item v-for="(job, index) in maargJobs" :key="index" button detail @click="viewMaargJobConfiguration(job.jobTypeEnumId)">
-                  <ion-label class="ion-text-wrap">{{ job.enumName ? job.enumName : job.jobName }}</ion-label>
-                  <ion-label slot="end" >{{ getMaargJobStatus(job.jobTypeEnumId) }}</ion-label>
+                  <ion-label class="ion-text-wrap">
+                    {{ job.enumName ? job.enumName : job.jobName }}
+                    <p>{{ getMaargJobStatus(job.jobTypeEnumId) }}</p>
+                  </ion-label>
+                  <ion-label slot="end">{{ translate(job?.paused === "N" ? "Enabled" : "Disabled") }}</ion-label>
                 </ion-item>
               </ion-card>
 
@@ -208,7 +211,7 @@ export default defineComponent({
     },
     getMaargJobStatus(id: string) {
       const job = this.getMaargJob(id)
-      return (job?.paused === "N" && job?.cronExpression && !job.isDraftJob) ? this.getCronString(job.cronExpression) ? this.getCronString(job.cronExpression) : job.cronExpression : 'Disabled'
+      return (job?.paused === "N" && job?.cronExpression && !job.isDraftJob) ? this.getCronString(job.cronExpression) ? this.getCronString(job.cronExpression) : job.cronExpression : ""
     },
     async viewMaargJobConfiguration(enumId: any) {
       const job = this.getMaargJob(enumId);

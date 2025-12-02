@@ -291,6 +291,21 @@ aside {
 .empty-state > p {
   text-align: center;
 }
+.independent-scroll-main{
+  margin-block-start: 0;
+  height: 100%;
+  overflow-y: hidden;
+}
+.independent-scroll-child{
+  height: 100%;
+  overflow-y: scroll;
+  scrollbar-width: none;
+  scrollbar-color: transparent;
+  padding-block-start: var(--spacer-base);
+}
+.independent-scroll-child aside{
+  padding-block-end: var(--spacer-base);
+}
 
 @media (min-width: 991px) {
   main {

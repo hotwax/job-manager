@@ -234,9 +234,7 @@ const convertValue = (parameter: any) => {
 
   // TODO: add support to convert timestamp and double
   try {
-    if(parameter.type === 'Map' || parameter.type === 'List' || parameter.type === 'Object') {
-      return JSON.parse(value)
-    } else if(parameter.type === 'String' || parameter.type === 'Date' || parameter.type === 'Time') {
+    if(parameter.type === 'String' || parameter.type === 'Date' || parameter.type === 'Time') {
       return value
     } else {
       return JSON.parse(value);
