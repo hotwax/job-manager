@@ -4,17 +4,15 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import { mapGetters } from "vuex";
 
 export default defineComponent({
   name: "Image",
   props: ['src'],
-  components: {},
-  created() {
-    if (
-      process.env.VUE_APP_RESOURCE_URL
-    ) {
-      this.resourceUrl = process.env.VUE_APP_RESOURCE_URL;
-    }
+  computed: {
+    ...mapGetters({
+      baseUrl: "user/getBaseUrl"
+    })
   },
   mounted() {
     this.setImageUrl();
@@ -24,7 +22,6 @@ export default defineComponent({
   },
   data() {
     return {
-      resourceUrl: '',
       imageUrl: require("@/assets/images/defaultImage.png")
     }
   },
@@ -54,8 +51,7 @@ export default defineComponent({
             this.$log.warn("Image doesn't exist", this.src);
           })
         } else {
-          // Image is from resource server, hence append to base resource url, check for existence and assign
-          const imageUrl = this.resourceUrl.concat(this.src)
+          const imageUrl = this.baseUrl.replace("/api", "").concat(this.src)
           this.checkIfImageExists(imageUrl).then(() => {
             this.imageUrl = imageUrl;
           }).catch(() => {
