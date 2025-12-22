@@ -3,7 +3,7 @@
     <ion-header :translucent="true">
       <ion-toolbar>
         <ion-menu-button slot="start" />
-        <ion-title>{{ translate("Schedule in bulk") }}</ion-title>
+        <ion-title>{{ translate("Manual upload") }}</ion-title>
       </ion-toolbar>
     </ion-header>
 

@@ -3,7 +3,7 @@
     <ion-header :translucent="true">
       <ion-toolbar>
         <ion-menu-button slot="start" />
-        <ion-title>{{ translate("Product") }}</ion-title>
+        <ion-title>{{ translate("Catalog") }}</ion-title>
       </ion-toolbar>
     </ion-header>
 

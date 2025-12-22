@@ -1,843 +1,344 @@
 <template>
   <ion-page>
-    <Filters content-id="filter-content" :segmentSelected="segmentSelected" :queryString="queryString" />
-
     <ion-header :translucent="true">
       <ion-toolbar>
         <ion-menu-button slot="start" />
-        <ion-title>{{ translate("Pipeline") }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-menu-button menu="end">
-            <ion-icon :icon="filterOutline" :color="filterIconColor" />
-          </ion-menu-button>
-        </ion-buttons>
+        <ion-title>{{ translate("Dashboard") }}</ion-title>
       </ion-toolbar>
-
-      <div>
-        <ion-searchbar :placeholder="translate('Search jobs')" @ionClear="queryString = ''; segmentSelected === 'pending' ? getPendingJobs() : ( segmentSelected === 'running' ? getRunningJobs() : getJobHistory())" v-model="queryString" @keyup.enter="queryString = $event.target.value; segmentSelected === 'pending' ? getPendingJobs() : ( segmentSelected === 'running' ? getRunningJobs() : getJobHistory())" />
-
-        <ion-segment v-model="segmentSelected" @ionChange="segmentChanged">
-          <ion-segment-button value="pending">
-            <ion-label>{{ translate("Pending") }}</ion-label>
-          </ion-segment-button>
-          <ion-segment-button value="running">
-            <ion-label>{{ translate("Running") }}</ion-label>
-          </ion-segment-button>
-          <ion-segment-button value="history">
-            <ion-label>{{ translate("History") }}</ion-label>
-          </ion-segment-button>
-        </ion-segment>
-      </div>
     </ion-header>
 
-    <ion-content ref="contentRef" id="filter-content">
-      <div class="empty-state" v-if="jobsLoading">
-        <ion-item lines="none">
-          <ion-spinner name="crescent" slot="start" />
-          {{ translate("Fetching jobs") }}
-        </ion-item>
-      </div>
-      <main v-else>
-        <section v-if="segmentSelected === 'pending'" class="ion-content-scroll-host" :scroll-events="true" @scroll="enableScrolling()">
-          <!-- Empty state -->
-          <div v-if="pendingJobs?.length === 0">
-            <p class="ion-text-center">{{ translate("There are no jobs pending right now")}}</p>
-            <div class="ion-text-center">
-              <ion-button fill="outline" @click="refreshJobs(undefined, true)">
-                {{ translate('retry') }}
-                <ion-spinner v-if="isRetrying" name="crescent" />
-              </ion-button>
-            </div>
+    <ion-content class="dashboard-content">
+      <div class="dashboard-container">
+        <!-- Global Dashboard Header -->
+        <div class="dashboard-header">
+          <div>
+            <h1>{{ translate("Global Dashboard") }}</h1>
+            <p class="subtitle">{{ translate("System status overview and quick triage.") }}</p>
           </div>
+          <ion-chip color="success" :outline="true">
+            <ion-icon :icon="ellipse" />
+            <ion-label>{{ translate("Live Updates Active") }}</ion-label>
+          </ion-chip>
+        </div>
 
-          <div v-else>
-            <ion-card v-for="job in pendingJobs" :key="job.jobId" @click="viewJobConfiguration(job)" :button="isDesktop" :class="{ 'selected-job': selectedJobId === job.jobId }">
-              <ion-card-header>
-                <ion-card-title>{{ job.enumName }}</ion-card-title>
-                <ion-badge v-if="job.runTime" color="dark">{{ timeFromNow(job.runTime)}}</ion-badge>
-              </ion-card-header>
-
-              <ion-item lines="none">
-                <ion-label class="ion-text-wrap">
-                  <p>{{ job.description }}</p>
-                </ion-label>
-              </ion-item>
-              <ion-item>
-                <ion-icon slot="start" :icon="timeOutline" />
-                <ion-label class="ion-text-wrap">{{ job.runTime ? getTime(job.runTime) : "-"  }}</ion-label>
-              </ion-item>
-
-              <ion-item>
-                <ion-icon slot="start" :icon="timerOutline" />
-                <ion-label class="ion-text-wrap">{{ job.tempExprId ? temporalExpr(job.tempExprId)?.description : "🙃"  }}</ion-label>
-              </ion-item>
-
-              <ion-item>
-                <ion-icon slot="start" :icon="refreshOutline" />
-                <ion-label class="ion-text-wrap">{{ job.currentRetryCount }}</ion-label>
-              </ion-item>
-
-              <ion-item lines="full">
-                <ion-icon slot="start" :icon="codeWorkingOutline" />
-                <ion-label class="ion-text-wrap">{{ job.systemJobEnumId }}</ion-label>
-                <ion-icon :icon="helpCircleOutline" @click.stop.prevent="openLearnMoreModal(job)"/>
-              </ion-item>
-
-              <div class="actions">
-                <div>
-                  <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" fill="clear" @click.stop="skipJob(job)">{{ translate("Skip") }}</ion-button>
-                  <ion-button :disabled="!hasPermission(Actions.APP_JOB_UPDATE)" color="danger" fill="clear" @click.stop="cancelJob(job)">{{ translate("Cancel") }}</ion-button>
-                </div>
-                <div>
-                  <ion-button fill="clear" color="medium" slot="end" @click.stop="openJobActions(job, $event)">
-                    <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
-                  </ion-button>
-                </div>
-              </div> 
-            </ion-card>
-            <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
-              <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
-            </ion-refresher>
-              <!--
-                When searching for a keyword, and if the user moves to the last item, then the didFire value inside infinite scroll becomes true and thus the infinite scroll does not trigger again on the same page(https://github.com/hotwax/users/issues/84).
-                Also if we are at the section that has been loaded by infinite-scroll and then move to the details page then the list infinite scroll does not work after coming back to the page
-                In ionic v7.6.0, an issue related to infinite scroll has been fixed that when more items can be added to the DOM, but infinite scroll does not fire as the window is not completely filled with the content(https://github.com/ionic-team/ionic-framework/issues/18071).
-                The above fix in ionic 7.6.0 is resulting in the issue of infinite scroll not being called again.
-                To fix this we have maintained another variable `isScrollingEnabled` to check whether the scrolling can be performed or not.
-                If we do not define an extra variable and just use v-show to check for `isScrollable` then when coming back to the page infinite-scroll is called programatically.
-                We have added an ionScroll event on ionContent to check whether the infiniteScroll can be enabled or not by toggling the value of isScrollingEnabled whenever the height < 0.
-              -->
-            <ion-infinite-scroll @ionInfinite="loadMorePendingJobs($event)" threshold="300px" v-show="isPendingJobsScrollable" ref="infiniteScrollRef">
-              <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="translate('Loading')"/>
-            </ion-infinite-scroll>
-          </div>
-        </section>
-
-        <section v-if="segmentSelected === 'running'" class="ion-content-scroll-host" :scroll-events="true" @scroll="enableScrolling()">
-          <!-- Empty state -->
-          <div v-if="runningJobs?.length === 0">
-            <p class="ion-text-center">{{ translate("There are no jobs running right now")}}</p>
-            <div class="ion-text-center">
-              <ion-button fill="outline" @click="refreshJobs(undefined, true)">
-                {{ translate('retry') }}
-                <ion-spinner slot="end" v-if="isRetrying" name="crescent" />
-              </ion-button>
-            </div>
-          </div>
-
-          <div v-else>
-            <ion-card v-for="job in runningJobs" :key="job.jobId">
-              <ion-card-header>
-                <div>
-                  <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
-                  <ion-card-title>{{ job.enumName }}</ion-card-title>
-                </div>
-                <ion-badge color="dark">{{ job.statusDesc }}</ion-badge>
-              </ion-card-header>
-
-              <ion-item lines="none">
-                <ion-label class="ion-text-wrap">
-                  <p>{{ job.description }}</p>
-                </ion-label>
-              </ion-item>
-              <ion-item>
-                <ion-icon slot="start" :icon="timeOutline" />
-                <ion-label class="ion-text-wrap">{{ job.runTime ? getTime(job.runTime) : "-"  }}</ion-label>
-                <ion-note v-if="job.startDateTime" slot="end">{{ translate('Started') }} {{ timeFromNow(job.startDateTime) }}</ion-note>
-                <ion-note v-else slot="end">-</ion-note>
-              </ion-item>
-
-              <ion-item>
-                <ion-icon slot="start" :icon="timerOutline" />
-                <ion-label class="ion-text-wrap">{{ job.tempExprId ? temporalExpr(job.tempExprId)?.description : "🙃"  }}</ion-label>
-              </ion-item>
-
-              <ion-item lines="full">
-                <ion-icon slot="start" :icon="codeWorkingOutline" />
-                <ion-label class="ion-text-wrap">{{ job.serviceName }}</ion-label>
-              </ion-item>
-
-              <div class="actions">
-                <div></div>
-                <div>
-                  <ion-button fill="clear" color="medium" @click.stop="copyJobInformation(job)">
-                    <ion-icon slot="icon-only" :icon="copyOutline" />
-                  </ion-button>
-                  <ion-button fill="clear" color="medium" @click.stop="viewJobHistory(job)">
-                    <ion-icon slot="icon-only" :icon="timeOutline" />
-                  </ion-button>
+        <!-- Summary Cards -->
+        <div class="summary-cards">
+          <ion-card>
+            <ion-card-content>
+              <div class="card-header">
+                <ion-note>{{ translate("ACTIVE INTEGRATIONS") }}</ion-note>
+                <div class="icon-wrapper blue">
+                  <ion-icon :icon="gitNetworkOutline" />
                 </div>
               </div>
-            </ion-card>
-
-            <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
-              <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
-            </ion-refresher>
-            <ion-infinite-scroll @ionInfinite="loadMoreRunningJobs($event)" threshold="300px" v-show="isRunningJobsScrollable" ref="infiniteScrollRef">
-              <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="translate('Loading')"/>
-            </ion-infinite-scroll>
-          </div> 
-        </section>
-
-        <section v-if="segmentSelected === 'history'" class="ion-content-scroll-host" :scroll-events="true" @scroll="enableScrolling()">
-          <!-- Empty state -->
-          <div v-if="jobHistory?.length === 0">
-            <p class="ion-text-center">{{ translate("No jobs have run yet")}}</p>
-            <div class="ion-text-center">
-              <ion-button fill="outline" @click="refreshJobs(undefined, true)">
-                {{ translate('retry') }}
-                <ion-spinner v-if="isRetrying" name="crescent" />
-              </ion-button>
-            </div>
-          </div>
-
-          <div v-else>
-          <ion-card v-for="job in jobHistory" :key="job.jobId" @click="viewJobConfiguration(job)" :button="isDesktop" :class="{ 'selected-job': selectedJobId === job.jobId }">
-            <ion-card-header>
-              <div>
-                <ion-card-subtitle class="overline">{{ job.parentJobId }}</ion-card-subtitle>
-                <ion-card-title>{{ job.enumName }}</ion-card-title>
-              </div>
-              <div>
-                <ion-badge v-if="job.cancelDateTime || job.finishDateTime" color="dark">{{ job.statusId == "SERVICE_CANCELLED" || job.statusId == "SERVICE_CRASHED" ?  timeFromNow(job.cancelDateTime) : timeFromNow(job.finishDateTime) }}</ion-badge>
-                <ion-badge v-if="job.statusId" :color="job.statusId === 'SERVICE_FINISHED' ? 'success' : 'danger'" @click.stop="job.statusId === 'SERVICE_FAILED' ? openFailedJobReason(job) : ''">{{ job.statusDesc }}</ion-badge>
-              </div>
-            </ion-card-header>
-
-            <ion-item lines="none">
-              <ion-label class="ion-text-wrap">
-                <p>{{ job.description }}</p>
-              </ion-label>
-            </ion-item>
-
-            <ion-item>
-              <ion-icon slot="start" :icon="personOutline" />
-              <ion-label class="ion-text-wrap">{{ translate("Created by", { userLogin: job.createdByUserLogin }) }}</ion-label>
-              <ion-label slot="end">{{ job.createdDate ? getDateTime(job.createdDate) : "-" }}</ion-label>
-            </ion-item>
-
-            <ion-item>
-              <ion-icon slot="start" :icon="peopleOutline" />
-              <ion-label class="ion-text-wrap">{{ translate("Updated by", { userLogin: job.lastModifiedByUserLogin }) }}</ion-label>
-              <ion-label slot="end">{{ job.lastUpdatedStamp ?  getDateTime(job.lastUpdatedStamp) : "-" }}</ion-label>
-            </ion-item>
-
-            <ion-item>
-              <ion-icon slot="start" :icon="timeOutline" />
-              <ion-label class="ion-text-wrap">
-                {{ job.runTime ? getTime(job.runTime) : "-"  }}
-                <p>{{ job.recurrenceTimeZone }}</p>
-              </ion-label>
-              <ion-note slot="end">{{ job.statusId == "SERVICE_CANCELLED" || job.statusId == "SERVICE_CRASHED" ? getJobExecutionTime(job.startDateTime, job.cancelDateTime) : getJobExecutionTime(job.startDateTime, job.finishDateTime) }}</ion-note>
-            </ion-item>
-
-            <ion-item>
-              <ion-icon slot="start" :icon="timerOutline" />
-              <ion-label class="ion-text-wrap">{{ job.tempExprId ? temporalExpr(job.tempExprId)?.description : "🙃"  }}</ion-label>
-            </ion-item>
-
-            <ion-item lines="full">
-              <ion-icon slot="start" :icon="codeWorkingOutline" />
-              <ion-label class="ion-text-wrap">{{ job.serviceName }}</ion-label>
-            </ion-item>
-
-            <div class="actions">
-              <div></div>
-              <div>
-                <ion-button fill="clear" color="medium" @click.stop="copyJobInformation(job)">
-                  <ion-icon slot="icon-only" :icon="copyOutline" />
-                </ion-button>
-                <ion-button fill="clear" color="medium" @click.stop="viewJobHistory(job)">
-                  <ion-icon slot="icon-only" :icon="timeOutline" />
-                </ion-button>
-              </div>
-            </div>
+              <div class="card-value">24</div>
+            </ion-card-content>
           </ion-card>
 
-          <ion-refresher slot="fixed" @ionRefresh="refreshJobs($event)">
-            <ion-refresher-content pullingIcon="crescent" refreshingSpinner="crescent" />
-          </ion-refresher>   
-          <ion-infinite-scroll @ionInfinite="loadMoreJobHistory($event)" threshold="300px"  v-show="isHistoryJobsScrollable" ref="infiniteScrollRef">
-            <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="translate('Loading')"/>
-          </ion-infinite-scroll>
-          </div>          
-        </section>
+          <ion-card>
+            <ion-card-content>
+              <div class="card-header">
+                <ion-note>{{ translate("24H SUCCESS RATE") }}</ion-note>
+                <div class="icon-wrapper green">
+                  <ion-icon :icon="pulseOutline" />
+                </div>
+              </div>
+              <div class="card-value green-text">94.2%</div>
+            </ion-card-content>
+          </ion-card>
 
-        <aside class="desktop-only" v-if="isDesktop" v-show="(segmentSelected === 'pending' || segmentSelected === 'history') && currentJob && Object.keys(currentJob).length">
-          <JobConfiguration :status="currentJobStatus" :type="freqType" :historyJobConfig="segmentSelected === 'history'" :key="currentJob"/>
-        </aside>
-      </main>
+          <ion-card class="error-card">
+            <ion-card-content>
+              <div class="card-header">
+                <ion-note>{{ translate("OPEN ERRORS") }}</ion-note>
+                <div class="icon-wrapper red">
+                  <ion-icon :icon="alertCircleOutline" />
+                </div>
+              </div>
+              <div class="card-value red-text">3</div>
+            </ion-card-content>
+          </ion-card>
+        </div>
+
+        <!-- Partner Systems -->
+        <h2 class="section-title">
+          <ion-icon :icon="serverOutline" />
+          {{ translate("Partner Systems") }}
+        </h2>
+
+        <div class="partner-grid">
+          <ion-card v-for="(system, index) in partnerSystems" :key="index" class="partner-card" button @click="viewPartnerDetails(system.name)">
+            <ion-item lines="none" class="partner-item">
+              <ion-thumbnail slot="start">
+                {{ system.code }}
+              </ion-thumbnail>
+              <ion-label>
+                <h3>{{ system.name }}</h3>
+                <p>{{ system.type }}</p>
+              </ion-label>
+              <ion-badge slot="end" :color="system.statusColor">{{ system.status }}</ion-badge>
+            </ion-item>
+            <ion-card-content>
+              <div class="metric">
+                <span>{{ translate("Success Rate") }}</span>
+                <strong>{{ system.successRate }}%</strong>
+              </div>
+              
+              <ion-progress-bar :value="system.successRate / 100" :color="system.statusColor"></ion-progress-bar>
+               <!-- Mock chart line placeholder -->
+               <div class="mini-chart">
+                 <svg viewBox="0 0 100 20" preserveAspectRatio="none">
+                    <polyline fill="none" :stroke="getStrokeColor(system.statusColor)" stroke-width="2" points="0,15 10,12 20,16 30,10 40,14 50,8 60,12 70,14 80,6 90,10 100,8" />
+                 </svg>
+               </div>
+            </ion-card-content>
+          </ion-card>
+        </div>
+      </div>
     </ion-content>
-
-    <ion-footer v-if="getPinnedJobs && getPinnedJobs.length">
-      <ion-toolbar >
-        <ion-title slot="start" class="desktop-only">
-          {{ translate("Pinned jobs") }}
-        </ion-title>
-      
-        <ion-icon slot="start" class="mobile-only" :icon="pinOutline" />  
-
-        <div>
-          <ion-chip v-for="(job, index) in getPinnedJobs" :key="index" @click="updateSelectedPinnedJob(job)" :outline="!isPinnedJobSelected(job)">
-            <ion-label>{{ getEnumName(job) }}</ion-label>
-            <ion-icon @click.stop="updatePinnedJobs(job)" :icon="closeCircleOutline" />
-          </ion-chip>  
-        </div>     
-      </ion-toolbar>  
-    </ion-footer>
   </ion-page>
 </template>
+
 <script lang="ts">
-import { DateTime } from 'luxon';
-import { mapGetters, useStore } from 'vuex'
-import { useRouter } from 'vue-router'
-import { defineComponent, ref } from "vue";
+import { defineComponent } from 'vue';
 import {
-  IonBadge,
-  IonButton,
-  IonContent,
-  IonCard,
-  IonCardHeader,
-  IonCardSubtitle,
-  IonCardTitle,
-  IonChip,
-  IonFooter,
-  IonHeader,
-  IonIcon,
-  IonItem,
-  IonLabel,
-  IonMenuButton,
-  IonNote,
   IonPage,
-  IonRefresher,
-  IonRefresherContent,
+  IonHeader,
   IonToolbar,
   IonTitle,
-  IonInfiniteScroll,
-  IonInfiniteScrollContent,
-  alertController,
-  IonSearchbar,
-  IonSegment,
-  IonSegmentButton,
-  IonSpinner,
-  isPlatform,
-  modalController,
-  popoverController,
-  IonButtons
-} from "@ionic/vue";
-import JobConfiguration from '@/components/JobConfiguration.vue'
-import { closeCircleOutline, codeWorkingOutline, copyOutline, ellipsisVerticalOutline, filterOutline, helpCircleOutline, peopleOutline, personOutline, pinOutline, refreshOutline, timeOutline, timerOutline } from "ionicons/icons";
-import emitter from '@/event-bus';
-import JobHistoryModal from '@/components/JobHistoryModal.vue';
-import { Plugins } from '@capacitor/core';
-import { showToast } from '@/utils'
-import JobActionsPopover from '@/components/JobActionsPopover.vue'
-import { Actions, hasPermission } from '@/authorization'
-import Filters from '@/components/Filters.vue';
-import FailedJobReasonModal from '@/views/FailedJobReasonModal.vue'
+  IonContent,
+  IonCard,
+  IonCardContent,
+  IonIcon,
+  IonLabel,
+  IonChip,
+  IonNote,
+  IonBadge,
+  IonProgressBar,
+  IonMenuButton,
+  IonItem,
+  IonThumbnail
+} from '@ionic/vue';
+import { 
+  ellipse, 
+  gitNetworkOutline, 
+  pulseOutline, 
+  alertCircleOutline, 
+  serverOutline 
+} from 'ionicons/icons';
+import { useRouter } from 'vue-router'
 import { translate } from '@hotwax/dxp-components';
-import LearnMoreModal from '@/components/LearnMoreModal.vue';
 
 export default defineComponent({
-  name: "Pipeline",
+  name: "Dashboard",
   components: {
-    IonBadge,
-    IonButton,
-    IonContent,
-    IonCard,
-    IonCardHeader,
-    IonCardSubtitle,
-    IonCardTitle,
-    IonChip,
-    IonFooter,
-    IonHeader,
-    IonIcon,
-    IonItem,
-    IonLabel,
-    IonMenuButton,
-    IonNote,
     IonPage,
-    IonRefresher,
-    IonRefresherContent,
+    IonHeader,
     IonToolbar,
     IonTitle,
-    IonInfiniteScroll,
-    IonInfiniteScrollContent,
-    IonSearchbar,
-    IonSegment,
-    IonSegmentButton,
-    IonSpinner,
-    IonButtons,
-    JobConfiguration,
-    Filters
-},
-  data() {
-    return {
-      jobFrequencyType: JSON.parse(process.env?.VUE_APP_JOB_FREQUENCY_TYPE as string) as any,
-      jobEnums: {
-        ...JSON.parse(process.env?.VUE_APP_ODR_JOB_ENUMS as string) as any,
-        ...JSON.parse(process.env?.VUE_APP_PRODR_JOB_ENUMS as string) as any,
-        ...JSON.parse(process.env?.VUE_APP_PRD_JOB_ENUMS as string) as any,
-        ...JSON.parse(process.env?.VUE_APP_INV_JOB_ENUMS as string) as any,
-        ...JSON.parse(process.env?.VUE_APP_INITIAL_JOB_ENUMS as string) as any,
-      },
-      currentJobStatus: '',
-      freqType: '' as any,
-      isJobDetailAnimationCompleted: false,
-      isDesktop: isPlatform('desktop'),
-      isRetrying: false,
-      queryString: '' as any,
-      isScrollingEnabled: false,
-      jobsLoading: false,
-      selectedJobId: '' as any
-    }
-  },
-  computed: {
-    ...mapGetters({
-      jobHistory: 'job/getJobHistory',
-      pendingJobs: 'job/getPendingJobs',
-      runningJobs: 'job/getRunningJobs',
-      temporalExpr: 'job/getTemporalExpr',
-      getEnumName: 'job/getEnumName',
-      getCurrentEComStore:'user/getCurrentEComStore',
-      isPendingJobsScrollable: 'job/isPendingJobsScrollable',
-      isRunningJobsScrollable: 'job/isRunningJobsScrollable',
-      isHistoryJobsScrollable: 'job/isHistoryJobsScrollable',
-      getPinnedJobs: 'user/getPinnedJobs',
-      currentJob: 'job/getCurrentJob',
-      pipelineFilters: 'job/getPipelineFilters',
-    }),
-    filterIconColor: function() {
-      const pipelineFilters = JSON.parse(JSON.stringify(this.pipelineFilters));
-      if(this.segmentSelected !== 'history') {
-        delete pipelineFilters.status;
-      } 
-      return Object.values(pipelineFilters).some((filter: any) => filter.length > 0) ? 'secondary' : '';
-    },
-  },
-  async ionViewWillEnter() {
-    this.isScrollingEnabled = false;
-  },
-  methods : {
-    async openLearnMoreModal(job: any) {
-      const learnMoreModal = await modalController.create({
-        component: LearnMoreModal,
-        componentProps: {currentJob: job}
-      })
-      return learnMoreModal.present()
-    },
-    isPinnedJobSelected(jobEnumId: any) {
-      return (this as any).pipelineFilters.enum.some((jobId: any) =>  jobId === jobEnumId );
-    },
-    updateSelectedPinnedJob(jobEnumId: any) {
-      const index = (this as any).pipelineFilters.enum.indexOf(jobEnumId);
-      if ((this as any).pipelineFilters.enum.includes(jobEnumId) || !this.getPinnedJobs.includes(jobEnumId)) {
-        if (index != -1) (this as any).pipelineFilters.enum.splice(index, 1)
-      } else {
-        (this as any).pipelineFilters.enum.push(jobEnumId)
-      }
-
-      this.segmentSelected === 'pending' ? this.getPendingJobs():
-      this.segmentSelected === 'running' ? this.getRunningJobs():
-      this.getJobHistory();
-    },
-    async openFailedJobReason(job: any) {
-      const jobHistoryModal = await modalController.create({
-        component: FailedJobReasonModal,
-        componentProps: { job }
-      });
-
-      return jobHistoryModal.present();
-    },
-    getJobExecutionTime(startTime: any, endTime: any){
-      if (startTime && endTime) {
-        const timeDiff = DateTime.fromMillis(endTime).diff( DateTime.fromMillis(startTime))
-        const hours =  timeDiff.hours
-        const minutes = timeDiff.minutes
-        const seconds =  timeDiff
-        let format = ""
-        if(hours) format += "hh 'hr' "
-        if(minutes) format += "mm 'min' "
-        if(seconds) format += "ss 'sec'"
-        if (format) return timeDiff.toFormat(format);
-      }
-      return
-    },
-    async copyJobInformation(job: any) {
-      const { Clipboard } = Plugins;
-      const jobDetails = `jobId: ${job.jobId}, jobName: ${job.enumName}, jobDescription: ${job.description} ${job.runtimeData ? (", runtimeData: " + JSON.stringify(job.runtimeData)) : ""}`;
-
-      await Clipboard.write({
-        string: jobDetails
-      }).then(() => {
-        showToast(translate("Copied job details to clipboard"));
-      })
-    },
-    async viewJobHistory(job: any) {
-      const jobHistoryModal = await modalController.create({
-        component: JobHistoryModal,
-        componentProps: { currentJob: job }
-      });
-      return jobHistoryModal.present();
-    },
-    getTime (time: any) {
-      return DateTime.fromMillis(time).toLocaleString(DateTime.TIME_SIMPLE);
-    },
-    getDateTime (time: any) {
-      return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
-    },
-    timeFromNow (time: any) {
-      const timeDiff = DateTime.fromMillis(time).diff(DateTime.local());
-      return DateTime.local().plus(timeDiff).toRelative();
-    },
-    enableScrolling() {
-      const parentElement = (this as any).$refs.contentRef.$el
-      const scrollEl = parentElement.querySelector("main > section")
-      let scrollHeight = scrollEl.scrollHeight, infiniteHeight = (this as any).$refs.infiniteScrollRef.$el.offsetHeight, scrollTop = scrollEl.scrollTop, threshold = 100, height = scrollEl.offsetHeight
-      const distanceFromInfinite = scrollHeight - infiniteHeight - scrollTop - threshold - height
-      if(distanceFromInfinite < 0) {
-        this.isScrollingEnabled = false;
-      } else {
-        this.isScrollingEnabled = true;
-      }
-    },
-    async loadMoreJobHistory(event: any){
-      // Added this check here as if added on infinite-scroll component the Loading content does not gets displayed
-      if(!(this.isScrollingEnabled && this.isHistoryJobsScrollable)) {
-        await event.target.complete();
-      }
-      this.getJobHistory(
-        undefined,
-        Math.ceil(this.jobHistory.length / (process.env.VUE_APP_VIEW_SIZE as any)).toString()
-      ).then(async () => {
-        await event.target.complete();
-      });
-    },
-    async loadMoreRunningJobs(event: any){
-      // Added this check here as if added on infinite-scroll component the Loading content does not gets displayed
-      if(!(this.isScrollingEnabled && this.isRunningJobsScrollable)) {
-        await event.target.complete();
-      }
-      this.getRunningJobs(
-        undefined,
-        Math.ceil(this.runningJobs.length / (process.env.VUE_APP_VIEW_SIZE as any)).toString()
-      ).then(async () => {
-        await event.target.complete();
-      });
-    },
-    async loadMorePendingJobs (event: any) {
-      // Added this check here as if added on infinite-scroll component the Loading content does not gets displayed
-      if(!(this.isScrollingEnabled && this.isPendingJobsScrollable)) {
-        await event.target.complete();
-      }
-      this.getPendingJobs(
-        undefined,
-        Math.ceil(this.pendingJobs.length / (process.env.VUE_APP_VIEW_SIZE as any)).toString()
-      ).then(async () => {
-        await event.target.complete();
-      });
-    },
-    async refreshJobs(event: any, isRetrying = false ) {
-      this.isRetrying = isRetrying;
-      if(this.segmentSelected === 'pending') {
-        await this.getPendingJobs().then(() => {
-          if(event) event.target.complete();
-          this.isRetrying = false;
-        });
-      } else if(this.segmentSelected === 'running') {
-        await this.getRunningJobs().then(() => {
-          if(event) event.target.complete();
-          this.isRetrying = false;
-        });
-      } else {
-        await this.getJobHistory().then(() => {
-          if(event) event.target.complete();
-          this.isRetrying = false;
-        });
-      }
-    },
-    segmentChanged (e: CustomEvent) {
-      this.segmentSelected = e.detail.value
-      this.segmentSelected === 'pending' ? this.getPendingJobs():
-      this.segmentSelected === 'running' ? this.getRunningJobs():
-      this.getJobHistory();
-    },
-    isRuntimePassed(job: any) {
-      return job.runTime <= DateTime.now().toMillis()
-    },
-    async skipJob (job: any) {
-      const alert = await alertController
-        .create({
-          header: translate('Skip job'),
-          message: translate('Skipping will run this job at the next occurrence based on the temporal expression.'),
-          buttons: [
-            {
-              text: translate("Don't skip"),
-              role: 'cancel',
-            },
-            {
-              text: translate('Skip'),
-              handler: async () => {
-                if(this.isRuntimePassed(job)) {
-                  await this.refreshJobs(undefined)
-                  showToast(translate("Job runtime has passed. The job data has refreshed. Please try again."))
-                  await this.store.dispatch('job/updateCurrentJob', { job: {} });
-                  return;
-                }
-
-                await this.store.dispatch('job/skipJob', job);
-                await this.getPendingJobs();
-              },
-            }
-          ]
-        });
-      return alert.present();
-    },
-    async getPendingJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
-      await this.store.dispatch('job/fetchPendingJobs', { eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, systemJobEnumId: this.pipelineFilters.enum, enumTypeId: this.pipelineFilters.category, statusId: this.pipelineFilters.status });
-    },
-    async getRunningJobs(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
-      await this.store.dispatch('job/fetchRunningJobs', { eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, systemJobEnumId: this.pipelineFilters.enum, enumTypeId: this.pipelineFilters.category, statusId: this.pipelineFilters.status });
-    },
-    async getJobHistory(viewSize = process.env.VUE_APP_VIEW_SIZE, viewIndex = '0') {
-      await this.store.dispatch('job/fetchJobHistory', { eComStoreId: this.getCurrentEComStore.productStoreId, viewSize, viewIndex, queryString: this.queryString, systemJobEnumId: this.pipelineFilters.enum, enumTypeId: this.pipelineFilters.category, statusId: this.pipelineFilters.status});
-    },
-    async openJobActions(job: any, ev: Event) {
-      const popover = await popoverController.create({
-        component: JobActionsPopover,
-        showBackdrop: false,
-        event: ev,
-        componentProps: { job }
-      });
-      return popover.present()
-    },
-    async cancelJob(job: any){
-      const alert = await alertController
-        .create({
-          header: translate('Cancel job'),
-          message: translate('Canceling this job will cancel this occurrence and all following occurrences. This job will have to be re-enabled manually to run it again.'),
-          buttons: [
-            {
-              text: translate("DON'T CANCEL"),
-              role: 'cancel',
-            },
-            {
-              text: translate("CANCEL"),
-              handler: async () => {
-                if(this.isRuntimePassed(job)) {
-                  await this.refreshJobs(undefined)
-                  showToast(translate("Job runtime has passed. The job data has refreshed. Please try again."))
-                  await this.store.dispatch('job/updateCurrentJob', { job: {} });
-                  return;
-                }
-
-                await this.store.dispatch('job/cancelJob', job);
-                await this.getPendingJobs();
-              },
-            }
-          ],
-        });
-
-       return alert.present();
-    },
-    async viewJobConfiguration(job: any) {
-      this.selectedJobId = job.jobId
-      this.currentJobStatus = job.tempExprId
-      const id = Object.entries(this.jobEnums).find((enums) => enums[1] == job.systemJobEnumId) as any
-      const appFreqType =  id && (Object.entries(this.jobFrequencyType).find((freq) => freq[0] == id[0]) as any)
-      this.freqType = appFreqType ? appFreqType[1] : "default"
-
-      await this.store.dispatch('job/updateCurrentJob', { job });
-      if(this.segmentSelected === 'history' && job.runtimeData?.configId) {
-        this.store.dispatch('job/fetchDataManagerLogs', job.jobId)
-      }
-      if(!this.isDesktop && job?.jobId) {
-        this.router.push({ name: 'JobDetails', params: { jobId: job?.jobId, category: "pipeline" } });
-        return;
-      }
-
-      if (job && !this.isJobDetailAnimationCompleted) {
-        emitter.emit('playAnimation');
-        this.isJobDetailAnimationCompleted = true;
-      }
-    },
-    async updatePinnedJobs(enumId: any) {
-      const pinnedJobs = new Set(this.getPinnedJobs);
-      if (pinnedJobs.has(enumId)) {
-        pinnedJobs.delete(enumId);
-      }
-
-      await this.store.dispatch('user/updatePinnedJobs', { pinnedJobs: [...pinnedJobs] });
-      this.updateSelectedPinnedJob(enumId)
-    },
-    updateJobs() {
-      if (this.isDesktop) {
-        if (this.currentJob) {
-          this.viewJobConfiguration(this.currentJob);
-        }
-        this.getPendingJobs();
-      }
-    },
-    async updateProductStoreConfig(isCurrentJobUpdateRequired = false) {
-      if(isCurrentJobUpdateRequired) {
-        this.jobsLoading = true;
-        await this.store.dispatch('job/updateCurrentJob', { job: {} });
-        this.currentJobStatus = ""
-        this.freqType = ""
-        this.isJobDetailAnimationCompleted = false
-      }
-      await this.refreshJobs(undefined);
-      this.jobsLoading = false;
-    }
-  },
-  async created() {
-    this.getPendingJobs();
-    this.store.dispatch('user/getPinnedJobs');
-    emitter.on('jobUpdated', this.updateJobs);
-    // TODO: improved this to manage the current job using local variable
-    // setting the current job as empty because when coming back to the pipeline page the currentJob
-    // state does not gets updated and hence the job configuration component takes it space in DOM
-    await this.store.dispatch('job/updateCurrentJob', { job: {} });
-  },
-  mounted(){
-    emitter.on("productStoreOrConfigChanged", this.updateProductStoreConfig);
-    emitter.on("pinnedJobsUpdated", (this as any).updateSelectedPinnedJob);
-  },
-  unmounted(){
-    emitter.off("productStoreOrConfigChanged", this.updateProductStoreConfig);
-    emitter.off('jobUpdated', this.updateJobs);
-    emitter.off("pinnedJobsUpdated", (this as any).updateSelectedPinnedJob);
-  },
-  async ionViewWillLeave() {
-    await this.store.dispatch("maargJob/clearCurrentMaargJob");
+    IonContent,
+    IonCard,
+    IonCardContent,
+    IonIcon,
+    IonLabel,
+    IonChip,
+    IonNote,
+    IonBadge,
+    IonProgressBar,
+    IonMenuButton,
+    IonItem,
+    IonThumbnail
   },
   setup() {
-    const router = useRouter();
-    const store = useStore();
-    const segmentSelected = ref('pending');
+    const partnerSystems = [
+      {
+        code: 'SH',
+        name: 'Shopify',
+        type: 'eCommerce',
+        status: 'Healthy',
+        statusColor: 'success',
+        successRate: 99.1
+      },
+      {
+        code: 'NE',
+        name: 'NetSuite',
+        type: 'ERP',
+        status: 'Warning',
+        statusColor: 'warning',
+        successRate: 88.5
+      },
+      {
+        code: 'IN',
+        name: 'Internal FTP',
+        type: 'Legacy',
+        status: 'Critical',
+        statusColor: 'danger',
+        successRate: 65.4
+      },
+      {
+        code: 'AV',
+        name: 'Avalara',
+        type: 'Tax',
+        status: 'Healthy',
+        statusColor: 'success',
+        successRate: 100
+      }
+    ];
 
+    const getStrokeColor = (status: string) => {
+        const colors: any = {
+            success: '#2dd36f',
+            warning: '#ffc409',
+            danger: '#eb445a'
+        };
+        return colors[status] || '#ccc';
+    }
+
+    const router = useRouter();
+    const viewPartnerDetails = (name: string) => {
+      router.push({ name: 'PartnerDetails', params: { name } });
+    }
 
     return {
-      Actions,
-      closeCircleOutline,
-      copyOutline,
-      store,
-      codeWorkingOutline,
-      ellipsisVerticalOutline,
-      helpCircleOutline,
-      peopleOutline,
-      personOutline,
-      pinOutline,
-      refreshOutline,
-      timeOutline,
-      timerOutline,
-      segmentSelected,
-      router,
-      filterOutline,
-      hasPermission,
-      translate
+      translate,
+      ellipse,
+      gitNetworkOutline,
+      pulseOutline,
+      alertCircleOutline,
+      serverOutline,
+      partnerSystems,
+      getStrokeColor,
+      viewPartnerDetails
     };
   }
 });
 </script>
 
 <style scoped>
-.selected-job {
-  box-shadow: 0px 8px 10px 0px rgba(0, 0, 0, 0.14), 0px 3px 14px 0px rgba(0, 0, 0, 0.12), 0px 4px 5px 0px rgba(0, 0, 0, 0.20);
-  scale: 1.03;
-  margin-block: var(--spacer-base);
+.dashboard-container {
+  padding: 32px;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
-ion-card {
-  transition: .5s all ease;
-}
-
-ion-card-header {
+.dashboard-header {
   display: flex;
-  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32px;
+}
+
+.dashboard-header h1 {
+  font-size: 32px;
+  font-weight: 800;
+  margin: 0;
+  color: #111;
+}
+
+.subtitle {
+  color: #666;
+  margin-top: 8px;
+  font-size: 16px;
+}
+
+/* Summary Cards */
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-bottom: 48px;
+}
+
+.summary-cards ion-card {
+  margin: 0;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.card-header {
+  display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 0px;
+  margin-bottom: 16px;
 }
 
-ion-card-header :last-child {
+.icon-wrapper {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
   display: flex;
-  flex-direction: column;
-  align-items: end;
-  row-gap: 4px;
-  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
 }
 
-ion-item {
-  --background: transparent;
+.icon-wrapper.blue { background: rgba(66, 133, 244, 0.2); color: #8ab4f8; }
+.icon-wrapper.green { background: rgba(52, 168, 83, 0.2); color: #81c995; }
+.icon-wrapper.red { background: rgba(234, 67, 53, 0.2); color: #f28b82; }
+
+.card-value {
+  font-size: 36px;
+  font-weight: 700;
+  color: #202124;
 }
 
-.actions {
+.card-value.green-text { color: #34a853; }
+.card-value.red-text { color: #ea4335; }
+
+@media (prefers-color-scheme: dark) {
+  .card-value { color: #e8eaed; }
+  .card-value.green-text { color: #81c995; }
+  .card-value.red-text { color: #f28b82; }
+}
+
+
+
+/* Partner Systems */
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.partner-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.partner-card {
+  margin: 0;
+  position: relative;
+}
+
+.metric {
   display: flex;
   justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 14px;
 }
 
-ion-title {
-  flex-grow: 0;
+.mini-chart {
+  height: 40px;
+  opacity: 0.5;
 }
 
-ion-footer > ion-toolbar > ion-title,
-ion-footer > ion-toolbar > ion-icon {
-  position: absolute;
-  z-index: 2;
-  padding: var(--spacer-sm);
-}
-
-ion-footer > ion-toolbar > ion-title {
-  background: linear-gradient(to right, var(--ion-toolbar-background, var(--ion-background-color, #fff)) 85%, transparent);
-}
-
-ion-footer > ion-toolbar > ion-icon {
-  font-size: 24px;
-  background: linear-gradient(to right, var(--ion-toolbar-background, var(--ion-background-color, #fff)) 50%, transparent);
-}
-
-ion-toolbar > div {
-  display: flex;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  max-width: max-content;
-  margin-left: auto;
-}
-
-ion-toolbar > div > ion-chip:first-child {
-  margin-left: var(--spacer-2xl);
-}
-
-ion-chip {
-  flex: 1 0 auto;
-}
-/* overriding global main element CSS */
-main {
-  margin-block-start: 0;
+.mini-chart svg {
+  width: 100%;
   height: 100%;
-  overflow-y: hidden;
-}
-/* allow both columns to scroll independently */
-section, aside {
-  height: 100%;
-  overflow-y: scroll;
-  scrollbar-width: none;
-  scrollbar-color: transparent;
-  padding-block-start: var(--spacer-base);
 }
 
-aside {
-  padding-block-end: var(--spacer-base);
-}
-
-@media (min-width: 991px) {
-  ion-header > div {
-    display: flex;
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 16px;
   }
-
-  ion-toolbar > div > ion-chip:first-child {
-    margin-left: var(--spacer-3xl);
+  
+  .dashboard-header {
+    flex-direction: column;
+    gap: 16px;
   }
 }
 </style>

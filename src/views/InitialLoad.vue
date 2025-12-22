@@ -3,7 +3,7 @@
     <ion-header :translucent="true">
       <ion-toolbar>
         <ion-menu-button slot="start" />
-        <ion-title>{{ translate("Initial load") }}</ion-title>
+        <ion-title>{{ translate("Import monitor") }}</ion-title>
       </ion-toolbar>
     </ion-header>
 

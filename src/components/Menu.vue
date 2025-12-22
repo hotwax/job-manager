@@ -102,7 +102,7 @@ export default defineComponent({
 
     let appPages = [
       {
-        title: "Pipeline",
+        title: "Dashboard",
         url: "/pipeline",
         iosIcon: pulseOutline,
         mdIcon: pulseOutline,
@@ -112,67 +112,7 @@ export default defineComponent({
         }
       },
       {
-        title: "Initial load",
-        url: "/initial-load",
-        iosIcon: iceCreamOutline,
-        mdIcon: iceCreamOutline,
-        dependsOnBaseURL: false,
-        meta: {
-          permissionId: "APP_INITIAL_LOAD_VIEW"
-        }
-      },
-      {
-        title: "Pre-order",
-        url: "/pre-order",
-        iosIcon: calendarNumberOutline,
-        mdIcon: calendarNumberOutline,
-        dependsOnBaseURL: false,
-        meta: {
-          permissionId: "APP_PREORDER_VIEW"
-        }
-      },
-      {
-        title: "Orders",
-        url: "/orders",
-        iosIcon: ticketOutline,
-        mdIcon: ticketOutline,
-        dependsOnBaseURL: false,
-        meta: {
-          permissionId: "APP_ORDERS_VIEW"
-        }
-      },
-      {
-        title: "Brokering",
-        url: "/brokering",
-        iosIcon: compassOutline,
-        mdIcon: compassOutline,
-        dependsOnBaseURL: false,
-        meta: {
-          permissionId: "APP_BROKERING_VIEW"
-        }
-      },
-      {
-        title: "Fulfillment",
-        url: "/fulfillment",
-        iosIcon: sendOutline,
-        mdIcon: sendOutline,
-        dependsOnBaseURL: false,
-        meta: {
-          permissionId: "APP_FULFILLMENT_VIEW"
-        }
-      },
-      {
-        title: "Inventory",
-        url: "/inventory",
-        iosIcon: albumsOutline,
-        mdIcon: albumsOutline,
-        dependsOnBaseURL: false,
-        meta: {
-          permissionId: "APP_INVENTORY_VIEW"
-        }
-      },
-      {
-        title: "Products",
+        title: "Catalog",
         url: "/product",
         iosIcon: shirtOutline,
         mdIcon: shirtOutline,
@@ -182,7 +122,17 @@ export default defineComponent({
         }
       },
       {
-        title: "Reports",
+        title: "Import monitor",
+        url: "/initial-load",
+        iosIcon: iceCreamOutline,
+        mdIcon: iceCreamOutline,
+        dependsOnBaseURL: false,
+        meta: {
+          permissionId: "APP_INITIAL_LOAD_VIEW"
+        }
+      },
+      {
+        title: "File history",
         url: "/reports",
         iosIcon: barChartOutline,
         mdIcon: barChartOutline,
@@ -192,23 +142,7 @@ export default defineComponent({
         }
       },
       {
-        title: "Miscellaneous",
-        url: "/miscellaneous",
-        iosIcon: libraryOutline,
-        mdIcon: libraryOutline,
-        dependsOnBaseURL: false,
-        meta: {
-          permissionId: "APP_MISC_VIEW"
-        }
-      },
-      {
-        title: "Bulk editor",
-        meta: {
-          permissionId: "APP_BULK_EDITOR_VIEW"
-        }
-      },
-      {
-        title: "Schedule in bulk",
+        title: "Manual upload",
         url: "/bulk-editor",
         iosIcon: terminalOutline,
         mdIcon: terminalOutline,
@@ -216,13 +150,6 @@ export default defineComponent({
         meta: {
           permissionId: "APP_BULK_EDITOR_VIEW"
         }
-      },
-      {
-        title: "Settings",
-        url: "/settings",
-        iosIcon: settingsOutline,
-        mdIcon: settingsOutline,
-        dependsOnBaseURL: true
       }
     ] as any;
     if (process.env.VUE_APP_BASE_URL) {
