@@ -45,7 +45,7 @@
                             </ion-badge>
 
                             <ion-label>
-                                <span class="ion-hide-md-up label">{{ translate("Last Run") }}: </span>
+                                <span class="ion-hide-md-up">{{ translate("Last Run") }}: </span>
                                 {{ job.lastRun }}
                             </ion-label>
 
@@ -186,11 +186,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-main {
-    display: block;
-    max-width: 1200px;
-    margin: 0 auto;
-}
 
 .jobs-card {
     margin: 0;
@@ -198,21 +193,11 @@ main {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 
-.table-header {
-    padding: 16px;
-    background: var(--ion-color-light);
-}
 
 .job-name code {
     background: var(--ion-color-light);
     padding: 2px 4px;
     border-radius: 4px;
-}
-
-
-.label {
-    color: #5f6368;
-    margin-right: 4px;
 }
 
 @media (max-width: 992px) {

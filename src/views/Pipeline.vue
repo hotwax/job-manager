@@ -8,12 +8,12 @@
     </ion-header>
 
     <ion-content class="dashboard-content">
-      <div class="dashboard-container">
+      <main class="dashboard-container">
         <!-- Global Dashboard Header -->
         <div class="dashboard-header">
           <div>
             <h1>{{ translate("Global Dashboard") }}</h1>
-            <p class="subtitle">{{ translate("System status overview and quick triage.") }}</p>
+            <p>{{ translate("System status overview and quick triage.") }}</p>
           </div>
           <ion-chip color="success" :outline="true">
             <ion-icon :icon="ellipse" />
@@ -24,37 +24,37 @@
         <!-- Summary Cards -->
         <div class="summary-cards">
           <ion-card>
-            <ion-card-content>
-              <div class="card-header">
-                <ion-note>{{ translate("ACTIVE INTEGRATIONS") }}</ion-note>
-                <div class="icon-wrapper blue">
-                  <ion-icon :icon="gitNetworkOutline" />
-                </div>
+            <ion-card-header>
+              <ion-card-subtitle>{{ translate("Active Integrations") }}</ion-card-subtitle>
+              <div class="icon-wrapper blue">
+                <ion-icon :icon="gitNetworkOutline" />
               </div>
+            </ion-card-header>
+            <ion-card-content>
               <div class="card-value">24</div>
             </ion-card-content>
           </ion-card>
 
           <ion-card>
-            <ion-card-content>
-              <div class="card-header">
-                <ion-note>{{ translate("24H SUCCESS RATE") }}</ion-note>
-                <div class="icon-wrapper green">
-                  <ion-icon :icon="pulseOutline" />
-                </div>
+            <ion-card-header>
+              <ion-card-subtitle>{{ translate("24H Success Rate") }}</ion-card-subtitle>
+              <div class="icon-wrapper green">
+                <ion-icon :icon="pulseOutline" />
               </div>
+            </ion-card-header>
+            <ion-card-content>
               <div class="card-value green-text">94.2%</div>
             </ion-card-content>
           </ion-card>
 
           <ion-card class="error-card">
-            <ion-card-content>
-              <div class="card-header">
-                <ion-note>{{ translate("OPEN ERRORS") }}</ion-note>
-                <div class="icon-wrapper red">
-                  <ion-icon :icon="alertCircleOutline" />
-                </div>
+            <ion-card-header>
+              <ion-card-subtitle>{{ translate("Open Errors") }}</ion-card-subtitle>
+              <div class="icon-wrapper red">
+                <ion-icon :icon="alertCircleOutline" />
               </div>
+            </ion-card-header>
+            <ion-card-content>
               <div class="card-value red-text">3</div>
             </ion-card-content>
           </ion-card>
@@ -94,7 +94,7 @@
             </ion-card-content>
           </ion-card>
         </div>
-      </div>
+      </main>
     </ion-content>
   </ion-page>
 </template>
@@ -108,11 +108,12 @@ import {
   IonTitle,
   IonContent,
   IonCard,
+  IonCardHeader,
+  IonCardSubtitle,
   IonCardContent,
   IonIcon,
   IonLabel,
   IonChip,
-  IonNote,
   IonBadge,
   IonProgressBar,
   IonMenuButton,
@@ -138,11 +139,12 @@ export default defineComponent({
     IonTitle,
     IonContent,
     IonCard,
+    IonCardHeader,
+    IonCardSubtitle,
     IonCardContent,
     IonIcon,
     IonLabel,
     IonChip,
-    IonNote,
     IonBadge,
     IonProgressBar,
     IonMenuButton,
@@ -216,9 +218,7 @@ export default defineComponent({
 
 <style scoped>
 .dashboard-container {
-  padding: 32px;
   max-width: 1400px;
-  margin: 0 auto;
 }
 
 .dashboard-header {
@@ -226,19 +226,6 @@ export default defineComponent({
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 32px;
-}
-
-.dashboard-header h1 {
-  font-size: 32px;
-  font-weight: 800;
-  margin: 0;
-  color: #111;
-}
-
-.subtitle {
-  color: #666;
-  margin-top: 8px;
-  font-size: 16px;
 }
 
 /* Summary Cards */
@@ -257,11 +244,11 @@ export default defineComponent({
   overflow: hidden;
 }
 
-.card-header {
+ion-card-header {
   display: flex;
+  flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
 }
 
 .icon-wrapper {

@@ -113,7 +113,7 @@ export default defineComponent({
       },
       {
         title: "Catalog",
-        url: "/product",
+        url: "/catalog",
         iosIcon: shirtOutline,
         mdIcon: shirtOutline,
         dependsOnBaseURL: false,
@@ -123,7 +123,7 @@ export default defineComponent({
       },
       {
         title: "Import monitor",
-        url: "/initial-load",
+        url: "/import-monitor",
         iosIcon: iceCreamOutline,
         mdIcon: iceCreamOutline,
         dependsOnBaseURL: false,
@@ -131,26 +131,7 @@ export default defineComponent({
           permissionId: "APP_INITIAL_LOAD_VIEW"
         }
       },
-      {
-        title: "File history",
-        url: "/reports",
-        iosIcon: barChartOutline,
-        mdIcon: barChartOutline,
-        dependsOnBaseURL: false,
-        meta: {
-          permissionId: "APP_REPORT_VIEW"
-        }
-      },
-      {
-        title: "Manual upload",
-        url: "/bulk-editor",
-        iosIcon: terminalOutline,
-        mdIcon: terminalOutline,
-        dependsOnBaseURL: false,
-        meta: {
-          permissionId: "APP_BULK_EDITOR_VIEW"
-        }
-      }
+
     ] as any;
     if (process.env.VUE_APP_BASE_URL) {
       appPages = appPages.filter((page : any) => page.dependsOnBaseURL);

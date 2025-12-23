@@ -13,7 +13,7 @@
     </ion-header>
 
     <ion-content>
-      <div class="container">
+      <main>
         <!-- Main Partner Header Card -->
         <ion-card class="main-header-card">
           <ion-item lines="none">
@@ -74,7 +74,7 @@
             </ion-card-content>
           </ion-card>
         </div>
-      </div>
+      </main>
     </ion-content>
   </ion-page>
 </template>
@@ -217,11 +217,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.container {
-  padding: 24px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
 
 .main-header-card {
   margin-bottom: 32px;

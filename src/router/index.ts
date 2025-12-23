@@ -1,10 +1,8 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { RouteRecordRaw } from 'vue-router';
-import Product from '@/views/Product.vue'
+import Catalog from '@/views/catalog.vue'
 import Pipeline from '@/views/Pipeline.vue'
-import InitialLoad from '@/views/InitialLoad.vue'
-import Reports from '@/views/Reports.vue'
-import BulkEditor from '@/views/BulkEditor.vue'
+import ImportMonitor from '@/views/ImportMonitor.vue'
 import Settings from "@/views/Settings.vue"
 import DataManagerLogDetails from "@/views/DataManagerLogDetails.vue"
 import PartnerDetails from "@/views/PartnerDetails.vue"
@@ -68,39 +66,21 @@ const routes: Array<RouteRecordRaw> = [
     props: true
   },
   {  
-    path: '/product',
-    name: 'Product',
-    component: Product,
+    path: '/catalog',
+    name: 'Catalog',
+    component: Catalog,
     beforeEnter: authGuard,
     meta: {
       permissionId: "APP_PRODUCT_VIEW"
     }
   },
   {  
-    path: '/initial-load',
-    name: 'InitialLoad',
-    component: InitialLoad,
+    path: '/import-monitor',
+    name: 'ImportMonitor',
+    component: ImportMonitor,
     beforeEnter: authGuard,
     meta: {
       permissionId: "APP_INITIAL_LOAD_VIEW"
-    }
-  },
-  {  
-    path: '/bulk-editor',
-    name: 'BulkEditor',
-    component: BulkEditor,
-    beforeEnter: authGuard,
-    meta: {
-      permissionId: "APP_BULK_EDITOR_VIEW"
-    }
-  },
-  {
-    path: '/reports',
-    name: 'Reports',
-    component: Reports,
-    beforeEnter: authGuard,
-    meta: {
-      permissionId: "APP_REPORT_VIEW"
     }
   },
   {
