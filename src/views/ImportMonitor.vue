@@ -8,8 +8,8 @@
     </ion-header>
 
     <ion-content>
-    
-        <div class="header ion-padding">
+      <main>
+        <div class="header">
             <div class="title">
                 <h1>Bulk Import Monitor</h1>
                 <p>Real-time status of data ingestion queues.</p>
@@ -19,30 +19,34 @@
             </ion-button>
         </div>
     
-      <div class="queues">
-        <ion-card v-for="queue in queues" :key="queue.id">
-          <ion-card-header>
-            <div class="queue-header">
-              <ion-card-title>{{ queue.name }}</ion-card-title>
-              <ion-badge :color="getPriorityColor(queue.priority)">{{ queue.priority }}</ion-badge>
-            </div>
-          </ion-card-header>
+        <div class="queues">
+            <ion-card v-for="queue in queues" :key="queue.id">
+            <ion-card-header>
+                <ion-card-title>{{ queue.name }}</ion-card-title>
+                <ion-badge :color="getPriorityColor(queue.priority)">{{ queue.priority }}</ion-badge>
+            </ion-card-header>
 
-          <ion-card-content>
-            <p>{{ queue.description }}</p>
-            <ion-item lines="none">
-              <ion-label>
-                <h2>{{ queue.pendingFiles }}</h2>
-                <p>{{ translate("Pending files") }}</p>
-              </ion-label>
-              <ion-label slot="end" class="ion-text-end">
-                <h2>{{ queue.avgSpeed }}</h2>
-                <p>{{ translate("Avg. speed/file") }}</p>
-              </ion-label>
-            </ion-item>
-          </ion-card-content>
-        </ion-card>
-      </div>
+            <ion-card-content>
+                <p>{{ queue.description }}</p>
+                <ion-item lines="none">
+                <ion-label>
+                    {{ queue.pendingFiles }}
+                    <p>{{ translate("Pending files") }}</p>
+                </ion-label>
+                <ion-label slot="end" class="ion-text-end">
+                    {{ queue.avgSpeed }}
+                    <p>{{ translate("Avg. speed/file") }}</p>
+                </ion-label>
+                </ion-item>
+
+                <ion-button expand="block" fill="outline" @click="viewPendingFiles()">
+                {{ translate("View pending files") }}
+                </ion-button>
+                
+            </ion-card-content>
+            </ion-card>
+        </div>
+      </main>
     </ion-content>
   </ion-page>
 </template>
@@ -66,6 +70,7 @@ import {
   IonIcon
 } from '@ionic/vue';
 import { defineComponent, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { translate } from '@hotwax/dxp-components';
 import { refreshOutline } from 'ionicons/icons';
 
@@ -131,6 +136,11 @@ export default defineComponent({
       refreshOutline,
       translate
     }
+  },
+  methods: {
+    viewPendingFiles() {
+      this.$router.push('/import-queue');
+    }
   }
 });
 </script>
@@ -146,14 +156,14 @@ export default defineComponent({
 .queues {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 16px;
-  padding: 16px;
+  gap: var(--spacer-base);
 }
 
-.queue-header {
+ion-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-direction: row;
 }
 
 ion-card {

@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { RouteRecordRaw } from 'vue-router';
-import Catalog from '@/views/catalog.vue'
+import Catalog from '@/views/Catalog.vue'
 import Pipeline from '@/views/Pipeline.vue'
 import ImportMonitor from '@/views/ImportMonitor.vue'
 import Settings from "@/views/Settings.vue"
@@ -8,6 +8,9 @@ import DataManagerLogDetails from "@/views/DataManagerLogDetails.vue"
 import PartnerDetails from "@/views/PartnerDetails.vue"
 import CategoryJobs from "@/views/CategoryJobs.vue"
 import JobDetailConfig from "@/views/JobDetailConfig.vue"
+import ImportQueue from "@/views/ImportQueue.vue"
+import FileHistory from "@/views/FileHistory.vue"
+import FileDetail from "@/views/FileDetail.vue"
 import store from '@/store'
 import { hasPermission } from '@/authorization';
 import { showToast } from '@/utils'
@@ -115,6 +118,36 @@ const routes: Array<RouteRecordRaw> = [
     component: JobDetailConfig,
     beforeEnter: authGuard,
     props: true
+  },
+  {
+    path: "/import-queue",
+    name: "ImportQueue",
+    component: ImportQueue,
+    beforeEnter: authGuard
+  },
+  {
+    path: "/file-history",
+    name: "FileHistory",
+    component: FileHistory,
+    beforeEnter: authGuard
+  },
+  {
+    path: "/file-history/:id",
+    name: "FileDetail",
+    component: FileDetail,
+    beforeEnter: authGuard
+  },
+  {
+    path: '/manual-uploads/:type',
+    name: 'ImportDetail',
+    component: () => import('@/views/ImportDetail.vue'),
+    beforeEnter: authGuard
+  },
+  {
+    path: '/manual-uploads',
+    name: 'ManualUploads',
+    component: () => import('@/views/ManualUploads.vue'),
+    beforeEnter: authGuard
   }
 ]
 

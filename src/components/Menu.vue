@@ -45,7 +45,7 @@ import {
 } from "@ionic/vue";
 import { computed, defineComponent } from "vue";
 import { mapGetters } from "vuex";
-import { albumsOutline, barChartOutline, calendarNumberOutline, compassOutline, iceCreamOutline, libraryOutline, pulseOutline, settingsOutline, sendOutline, shirtOutline, terminalOutline, ticketOutline } from "ionicons/icons";
+import { albumsOutline, barChartOutline, calendarNumberOutline, compassOutline, hourglassOutline, libraryOutline, pulseOutline, settingsOutline, sendOutline, terminalOutline, ticketOutline, timeOutline, cloudUploadOutline } from "ionicons/icons";
 import { useStore } from "@/store";
 import emitter from "@/event-bus"
 import { hasPermission } from "@/authorization";
@@ -114,8 +114,8 @@ export default defineComponent({
       {
         title: "Catalog",
         url: "/catalog",
-        iosIcon: shirtOutline,
-        mdIcon: shirtOutline,
+        iosIcon: albumsOutline,
+        mdIcon: albumsOutline,
         dependsOnBaseURL: false,
         meta: {
           permissionId: "APP_PRODUCT_VIEW"
@@ -124,12 +124,26 @@ export default defineComponent({
       {
         title: "Import monitor",
         url: "/import-monitor",
-        iosIcon: iceCreamOutline,
-        mdIcon: iceCreamOutline,
+        iosIcon: hourglassOutline,
+        mdIcon: hourglassOutline,
         dependsOnBaseURL: false,
         meta: {
           permissionId: "APP_INITIAL_LOAD_VIEW"
         }
+      },
+      {
+        title: "File history",
+        url: "/file-history",
+        iosIcon: timeOutline,
+        mdIcon: timeOutline,
+        dependsOnBaseURL: false,
+      },
+      {
+        title: "Manual Uploads",
+        url: "/manual-uploads",
+        iosIcon: cloudUploadOutline,
+        mdIcon: cloudUploadOutline,
+        dependsOnBaseURL: false,
       },
 
     ] as any;
@@ -145,21 +159,22 @@ export default defineComponent({
     return {
       albumsOutline,
       appPages,
+      cloudUploadOutline,
       compassOutline,
       barChartOutline,
       calendarNumberOutline,
       getValidMenuItems,
       hasPermission,
-      iceCreamOutline,
+      hourglassOutline,
       libraryOutline,
       pulseOutline,
       selectedIndex,
       settingsOutline,
       sendOutline,
-      shirtOutline,
       store,
       terminalOutline,
       ticketOutline,
+      timeOutline,
       translate
     };
   }

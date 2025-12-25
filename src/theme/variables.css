@@ -253,7 +253,7 @@ main {
 }
 
 .table-header.list-item {
-  padding: 12px 16px;
+  padding: var(--spacer-sm) var(--spacer-base);
   background: var(--ion-color-light);
   border-bottom: 1px solid var(--ion-color-light-shade);
 }

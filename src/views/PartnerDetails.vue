@@ -30,7 +30,7 @@
                 <ion-note>System ID: NETSUITE_PROD_01</ion-note>
               </div>
             </ion-label>
-            <ion-button slot="end" fill="outline">
+            <ion-button slot="end" fill="outline" @click="router.push('/catalog')">
               <ion-icon :icon="bookOutline" slot="start" />
               {{ translate("Job Catalog") }}
             </ion-button>
@@ -49,25 +49,25 @@
             </ion-item>
 
             <ion-card-content>
-              <div class="data-flow">
-                <ion-note>{{ translate("Data Flow") }}</ion-note>
-                <ion-chip :outline="true">
+              <ion-item lines="none" class="data-flow">
+                <ion-note>{{ translate("Data flow") }}</ion-note>
+                <ion-chip :outline="true" slot="end">
                   {{ metric.flow }}
                 </ion-chip>
-              </div>
+              </ion-item>
 
               <div class="queue-health">
                 <div class="health-header">
-                  <ion-note>{{ translate("QUEUE HEALTH") }}</ion-note>
+                  <ion-note>{{ translate("Queue health") }}</ion-note>
                   <strong :class="metric.pendingColor">{{ metric.pending }} {{ translate("Pending") }}</strong>
                 </div>
                 <ion-progress-bar :value="metric.progress" :color="metric.pendingColor"></ion-progress-bar>
               </div>
 
               <ion-item lines="none" class="card-footer">
-                <ion-note slot="start">{{ metric.jobsCount }} {{ translate("Jobs Configured") }}</ion-note>
+                <ion-label>{{ metric.jobsCount }} {{ translate("Jobs configured") }}</ion-label>
                 <ion-button slot="end" fill="clear" size="small" @click="viewCategoryJobs(metric.title)">
-                  {{ translate("Drill Down") }}
+                  {{ translate("Drill down") }}
                   <ion-icon :icon="arrowForwardOutline" slot="end" />
                 </ion-button>
               </ion-item>
@@ -210,7 +210,8 @@ export default defineComponent({
       arrowForwardOutline,
       partnerCode,
       metrics,
-      viewCategoryJobs
+      viewCategoryJobs,
+      router
     }
   }
 });
