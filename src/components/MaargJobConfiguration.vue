@@ -181,6 +181,7 @@ export default defineComponent({
               handler: async () => {
                 try {
                   let resp;
+                  let jobName = this.currentMaargJob?.jobName
 
                   if(this.currentMaargJob.isDraftJob) {
                     const clonedJob = await this.cloneJob();
@@ -201,13 +202,14 @@ export default defineComponent({
                       serviceJobParameters: clonedJob.serviceJobParameters
                     })
                     if(!hasError(resp)) {
+                      jobName = clonedJob.jobName
                       await this.store.dispatch("maargJob/updateMaargJob", { jobEnumId: clonedJob.jobTypeEnumId, job: clonedJob })
                     } else {
                       throw resp.data;
                     }
                   }
 
-                  resp = await MaargJobService.runNow(this.currentMaargJob.jobName)
+                  resp = await MaargJobService.runNow(jobName)
                   if(!hasError(resp) && resp.data.jobRunId) {
                     showToast(translate("Service has been scheduled"))
                   } else {
