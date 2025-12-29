@@ -59,7 +59,7 @@
       <ion-icon slot="start" :icon="timeOutline" />
       {{ translate("History") }}
     </ion-item>
-    <ion-item :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || !hasJobPermission(Actions.APP_MAARG_JOB_RUN_NOW_UPDATE)" @click="openJobCustomParameterModal(true)" button>
+    <ion-item :disabled="!hasPermission(Actions.APP_JOB_UPDATE) || !hasJobPermission(Actions.APP_MAARG_JOB_RUN_NOW_UPDATE)" @click="hasJobPermission(Actions.APP_MAARG_JOB_PARAMETERS_UPDATE) ? openJobCustomParameterModal(true) : runNow()" button>
       <ion-icon slot="start" :icon="flashOutline" />
       {{ translate("Run now") }}
     </ion-item>
@@ -165,6 +165,66 @@ export default defineComponent({
       }).then(() => {
         showToast(translate("Copied job details to clipboard"));
       })
+    },
+    async runNow() {
+      const jobAlert = await alertController
+        .create({
+          header: translate("Run now"),
+          message: translate('Running this job now will not replace this job. A copy of this job will be created and run immediately. You may not be able to reverse this action.', { space: '<br/><br/>' }),
+          buttons: [
+            {
+              text: translate("Cancel"),
+              role: 'cancel',
+            },
+            {
+              text: translate('Run now'),
+              handler: async () => {
+                try {
+                  let resp;
+                  let jobName = this.currentMaargJob?.jobName
+
+                  if(this.currentMaargJob.isDraftJob) {
+                    const clonedJob = await this.cloneJob();
+                    if(!clonedJob.jobName) {
+                      showToast(translate("Failed to schedule service"));
+                      return;
+                    }
+                    clonedJob.serviceJobParameters.find((parameter: any) => {
+                      if(parameter.parameterName === "productStoreIds") {
+                        parameter.parameterValue = this.currentEComStore.productStoreId
+                        return true;
+                      }
+                      return false;
+                    })
+
+                    resp = await MaargJobService.updateMaargJob({
+                      jobName: clonedJob.jobName,
+                      serviceJobParameters: clonedJob.serviceJobParameters
+                    })
+                    if(!hasError(resp)) {
+                      jobName = clonedJob.jobName
+                      await this.store.dispatch("maargJob/updateMaargJob", { jobEnumId: clonedJob.jobTypeEnumId, job: clonedJob })
+                    } else {
+                      throw resp.data;
+                    }
+                  }
+
+                  resp = await MaargJobService.runNow(jobName)
+                  if(!hasError(resp) && resp.data.jobRunId) {
+                    showToast(translate("Service has been scheduled"))
+                  } else {
+                    throw resp.data
+                  }
+                } catch(err) {
+                  showToast(translate("Failed to schedule service"))
+                  logger.error(err)
+                }
+              }
+            }
+          ]
+        });
+
+      return jobAlert.present();
     },
     async cancelJob(job: any) {
       const alert = await alertController
