@@ -1,3 +1,58 @@
+# Job Manager
+
+## 1. Repository Overview
+- **Logical Name**: Job Manager (English name; not a Sanskrit word).
+- **Business Purpose**: The Job Manager app is a front-end control plane for configuring, scheduling, and monitoring operational jobs in the HotWax Commerce OMS ecosystem. It gives operations teams a single place to run, pause, and inspect automated workflows (imports, fulfillment, inventory sync, preorder releases, etc.) that keep commerce data flowing between OMS and external channels. It also surfaces job history, failures, and configuration so teams can keep automations healthy without direct backend access.
+
+## 2. Core Responsibilities & Business Logic
+- **Primary domains handled**:
+  - Job scheduling and configuration for OMS services (enable/disable, frequency, parameters, and run-now actions).
+  - Job monitoring and pipeline visibility (pending/running/history views with status and timestamps).
+  - Order workflows (imports, approvals, updates, cancellations, returns, and brokered order jobs).
+  - Fulfillment workflows (shipment notifications, BOPIS notifications, auto-cancel rules).
+  - Inventory workflows (hard sync, facility imports, inventory level updates).
+  - Preorder/backorder workflows (catalog sync, tag management, release scheduling).
+  - Initial data load workflows (bulk product/order imports, queue processing).
+  - Shopify webhook management for order, return, and inventory events.
+  - User preferences and permissions for job visibility/pinning and store context.
+
+- **Core business logic & workflows implemented**:
+  - **Job discovery + categorization**: The app loads job definitions and maps them into business categories (Orders, Fulfillment, Inventory, Product, Preorder, Initial Load, Misc) using environment-provided job enum maps, then renders them per domain view for operations teams.【F:.env.example†L1-L16】
+  - **Job configuration lifecycle**: Users can open a job configuration modal, update its schedule or parameters, and persist changes to the OMS services layer (updateJobSandbox/scheduleService/cancelScheduledJob).【F:src/services/JobService.ts†L5-L80】
+  - **Job execution monitoring**: The pipeline view queries pending/running/history job records and surfaces status, run times, and runtime data for triage and operational visibility.【F:src/store/modules/job/actions.ts†L45-L240】
+  - **Immediate execution**: For Maarg/ServiceJobs-backed tasks, the app can issue a “run now,” clone, and update job definitions via the ServiceJobs API, enabling ad-hoc job execution for operational exceptions.【F:src/services/MaargJobService.ts†L5-L104】
+  - **Store and channel context**: User/session configuration pulls OMS store and Shopify configuration, then filters job data and preferences based on the selected store or shop context.【F:src/services/UserService.ts†L51-L154】
+  - **Webhook orchestration**: Shopify webhook subscriptions are listed and managed so the OMS can receive key commerce events (orders, cancellations, refunds, inventory updates).【F:src/services/WebhookService.ts†L1-L76】
+
+## 3. Dependencies & Architecture
+- **Tech Stack**:
+  - Vue 3 + Vue Router + Vuex for application structure and state management.
+  - Ionic Vue UI and Capacitor for a mobile-friendly app shell.
+  - HotWax OMS API SDK (`@hotwax/oms-api`) and DXP component libraries for API communication and UI building blocks.
+  - Supporting libraries: Luxon (dates), Cron parser/formatter, CASL (authorization), and Cypress (E2E tests).【F:package.json†L1-L55】
+
+- **Dependency Map (App Repo)**:
+  - **HotWax OMS REST APIs** via `@hotwax/oms-api`:
+    - Job lifecycle endpoints: `findJobs`, `scheduleService`, `service/updateJobSandbox`, `service/cancelScheduledJob`, `performFind` for entity lookup, and `DownloadCsvFile` for exports.【F:src/services/JobService.ts†L5-L102】
+    - User/session endpoints: `login`, `getPermissions`, `user-profile`, store/shopify configuration lookups.【F:src/services/UserService.ts†L6-L198】
+  - **Maarg ServiceJobs API** for job execution and configuration operations (run-now, clone, update, job history).【F:src/services/MaargJobService.ts†L5-L104】
+  - **Shopify webhook services** for subscribing/unsubscribing webhooks related to order and inventory events.【F:src/services/WebhookService.ts†L1-L76】
+
+## 4. Technical Context
+- **Run locally**:
+  1. Install dependencies: `npm install`
+  2. Create a `.env` file based on `.env.example` and set `VUE_APP_BASE_URL` to the OMS instance.
+  3. Start the app: `npm run serve`
+
+- **Key environment variables**:
+  - `VUE_APP_BASE_URL`: Base URL for the OMS REST API instance the app connects to.
+  - `VUE_APP_*_JOB_ENUMS`: Job enum mappings for Orders, Fulfillment, Inventory, Product, Preorder, and Initial Load domains.
+  - `VUE_APP_PERMISSION_ID`: Permission required to view the app.
+  - `VUE_APP_LOGIN_URL` / `VUE_APP_PREORDER_LOGIN_URL`: External login entry points for related apps.
+  - `VUE_APP_WEBHOOK_ENUMS`: Shopify webhook topic mappings used by the webhook manager.
+  - `VUE_APP_CRON_EXPRESSIONS`: Default schedule presets for job configuration.
+  - `VUE_APP_GITBOOK_*`: Documentation lookup configuration for job workflows.【F:.env.example†L1-L18】
+
 HotWax Commerce Job Manager App
 
 # Prerequisite
@@ -57,3 +112,4 @@ If you have any questions or ideas feel free to join our <a href="https://discor
 # The license
 
 Job Manager app is completely free and released under the Apache v2.0 License. Check <a href="https://github.com/hotwax/job-manager/blob/main/LICENSE" target="_blank">LICENSE</a> for more details.
+
