@@ -139,13 +139,19 @@ export default defineComponent({
         dependsOnBaseURL: false,
       },
       {
-        title: "Manual Uploads",
+        title: "Manual uploads",
         url: "/manual-uploads",
         iosIcon: cloudUploadOutline,
         mdIcon: cloudUploadOutline,
         dependsOnBaseURL: false,
       },
-
+      {
+        title: "Settings",
+        url: "/settings",
+        iosIcon: settingsOutline,
+        mdIcon: settingsOutline,
+        dependsOnBaseURL: false,
+      },
     ] as any;
     if (process.env.VUE_APP_BASE_URL) {
       appPages = appPages.filter((page : any) => page.dependsOnBaseURL);
