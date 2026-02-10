@@ -108,7 +108,7 @@ export default defineComponent({
         mdIcon: pulseOutline,
         dependsOnBaseURL: true,
         meta: {
-          permissionId: "APP_PIPELINE_VIEW"
+          permissionId: "APP_DASHBOARD_VIEW"
         }
       },
       {
@@ -118,7 +118,7 @@ export default defineComponent({
         mdIcon: albumsOutline,
         dependsOnBaseURL: false,
         meta: {
-          permissionId: "APP_PRODUCT_VIEW"
+          permissionId: "APP_CATALOG_VIEW"
         }
       },
       {
@@ -128,7 +128,7 @@ export default defineComponent({
         mdIcon: hourglassOutline,
         dependsOnBaseURL: false,
         meta: {
-          permissionId: "APP_INITIAL_LOAD_VIEW"
+          permissionId: "APP_IMPORT_MONITOR_VIEW"
         }
       },
       {

@@ -58,7 +58,7 @@ const routes: Array<RouteRecordRaw> = [
     component: Pipeline,
     beforeEnter: authGuard,
     meta: {
-      permissionId: "APP_PIPELINE_VIEW"
+      permissionId: "APP_DASHBOARD_VIEW"
     }
   },
   {
@@ -74,7 +74,7 @@ const routes: Array<RouteRecordRaw> = [
     component: Catalog,
     beforeEnter: authGuard,
     meta: {
-      permissionId: "APP_PRODUCT_VIEW"
+      permissionId: "APP_CATALOG_VIEW"
     }
   },
   {  
@@ -83,7 +83,7 @@ const routes: Array<RouteRecordRaw> = [
     component: ImportMonitor,
     beforeEnter: authGuard,
     meta: {
-      permissionId: "APP_INITIAL_LOAD_VIEW"
+      permissionId: "APP_IMPORT_MONITOR_VIEW"
     }
   },
   {
