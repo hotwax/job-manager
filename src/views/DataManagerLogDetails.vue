@@ -122,12 +122,7 @@ import { codeWorkingOutline, cloudDownloadOutline, documentTextOutline, ellipsis
 import { IonBackButton, IonBadge, IonButton, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonPage, IonSpinner, IonTitle, IonToolbar, popoverController } from "@ionic/vue";
 import { defineComponent } from 'vue'
 import { mapGetters, useStore } from 'vuex'
-import { saveDataFile, hasError } from '@/utils';
 import { translate } from '@hotwax/dxp-components'
-import { DateTime } from 'luxon'
-import DownloadLogsFilePopover from "@/components/DownloadLogsFilePopover.vue";
-import { JobService } from "@/services/JobService";
-import logger from '@/logger';
 
 export default defineComponent ({
   name: "DataManagerLogDetails",
@@ -166,112 +161,6 @@ export default defineComponent ({
       getDataManagerLogs: 'job/getDataManagerLogs',
       getStatusDesc: 'util/getStatusDesc',
     }),
-  },
-  props: ['jobId'],
-  async mounted() {
-    this.currentJob = await this.fetchJobHistory(this.jobId);
-    await this.store.dispatch('job/updateCurrentJob', this.currentJob);
-    await this.fetchDataManagerConfig(this.currentJob?.runtimeData.configId)
-    await this.store.dispatch('job/fetchDataManagerLogs', this.currentJob.jobId)
-    await this.store.dispatch('job/fetchDataResource', this.getDataManagerLogs)
-    this.filterDataManagerLogs('ALL');
-    this.isLoading = false;
-  },
-  methods : {
-    filterDataManagerLogs(id) {
-      this.selectedFilter = id
-      if (id === 'ALL') {
-        this.dataManagerLogList = this.getDataManagerLogs
-      } else if (id === 'FAILED_LOGS') {
-        this.dataManagerLogList = this.getDataManagerLogs.filter(log => log.statusId === 'SERVICE_FAILED')
-      } else if (id === 'FAILED_RECORDS') {
-        this.dataManagerLogList = this.getDataManagerLogs.filter(log => log.errorRecordContentId !== null)
-      }
-    },
-    getDateTime(time) {
-      return DateTime.fromMillis(time).toFormat("dd/MM/yyyy H:mm a")
-    },
-    getProcessedFileCount() {
-      return this.getDataManagerLogs.filter((log) => log.statusId === "SERVICE_FINISHED").length
-    },
-    getErrorFileCount() {
-      return this.getDataManagerLogs.filter((log) => log.errorRecordContentId !== null).length
-    },
-    async openDownloadLogsFilePopover(dataManagerLog, event) {
-      const popover = await popoverController.create({
-        component: DownloadLogsFilePopover,
-        showBackdrop: false,
-        event: event,
-        componentProps: { dataManagerLog }
-      });
-      return popover.present()
-    },
-    async fetchJobHistory(jobId) {
-      let resp;
-
-      try {
-        resp = await JobService.fetchJobInformation({
-          "inputFields": {
-            "jobId": jobId
-          },
-          "noConditionFind": "Y"
-        })
-        if(resp.data.docs?.length > 0 && !hasError(resp)) {
-          return resp.data.docs[0];
-        } else {
-          return {}
-        }
-      } catch(err) {
-        logger.error(err)
-        return {}
-      }
-    },
-    async fetchDataManagerConfig(configId) {
-      let resp = {}
-      const payload = {
-        "inputFields":  {
-          "configId": configId
-        },
-        "fieldList": ["importPath", "multiThreading", "description", "executionModeId"],
-        "noConditionFind": "Y",
-        "viewSize": 1,
-        "entityName": "DataManagerConfig",
-      }
-      
-      try {
-        resp = await JobService.fetchDataManagerConfig(payload);
-        if (resp.data.docs?.length > 0 && !hasError(resp)) {
-          this.configDetails = resp.data.docs[0];
-        } else {
-          throw resp.data
-        }
-      } catch (err) {
-        logger.error(err);
-      }
-    },
-    async downloadErrorRecordFile(dataManagerLog) {
-      try {
-        if (dataManagerLog?.errorRecordDataResourceId) {
-          const response = await JobService.fetchFileData({
-            dataResourceId: dataManagerLog.errorRecordDataResourceId
-          });
-          saveDataFile(response.data, dataManagerLog?.errorRecordContentName);
-        }
-      } catch (error) {
-        logger.error(error);
-      }
-    },
-    getLogStatusColor(statusId) {
-      if (statusId === 'SERVICE_FINISHED') {
-        return 'success';
-      } else if (statusId === 'SERVICE_RUNNING') {
-        return 'dark';
-      } else if (statusId === 'SERVICE_FAILED') {
-        return 'danger';
-      } else {
-        return 'medium';
-      }
-    }
   },
   setup() {
     const store = useStore();

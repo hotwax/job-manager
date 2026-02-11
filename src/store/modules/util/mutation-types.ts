@@ -1,2 +1,0 @@
-export const SN_UTIL = 'util'
-export const UTIL_SERVICE_STATUS_DESC_UPDATED = SN_UTIL + '/SERVICE_STATUS_DESC_UPDATED'
