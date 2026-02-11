@@ -1,65 +1,65 @@
 <template>
-    <ion-page>
-        <ion-header>
-            <ion-toolbar>
-                <ion-buttons slot="start">
-                    <ion-back-button :default-href="'/partner/' + partner"></ion-back-button>
-                </ion-buttons>
-                <ion-breadcrumbs>
-                    <ion-breadcrumb :href="'/partner/' + partner">{{ partner }}</ion-breadcrumb>
-                    <ion-breadcrumb>{{ category }} {{ translate("Monitor") }}</ion-breadcrumb>
-                </ion-breadcrumbs>
-            </ion-toolbar>
-        </ion-header>
+  <ion-page>
+    <ion-header>
+      <ion-toolbar>
+        <ion-buttons slot="start">
+          <ion-back-button :default-href="'/partner/' + partner"></ion-back-button>
+        </ion-buttons>
+        <ion-breadcrumbs>
+          <ion-breadcrumb :href="'/partner/' + partner">{{ partner }}</ion-breadcrumb>
+          <ion-breadcrumb>{{ category }} {{ translate("Monitor") }}</ion-breadcrumb>
+        </ion-breadcrumbs>
+      </ion-toolbar>
+    </ion-header>
 
-        <ion-content>
-            <main>
-                <!-- Header Section -->
-                <div>
-                    <h1>{{ category }} {{ translate("Jobs") }}</h1>
-                    <p>{{ translate("Detailed status of all") }} {{ jobs.length }} {{ translate("jobs in this group.") }}</p>
-                </div>
+    <ion-content>
+      <main>
+        <!-- Header Section -->
+        <div>
+          <h1>{{ category }} {{ translate("Jobs") }}</h1>
+          <p>{{ translate("Detailed status of all") }} {{ jobs.length }} {{ translate("jobs in this group.") }}</p>
+        </div>
 
-                <!-- Jobs List Card -->
-                <ion-card class="jobs-card">
-                    <!-- Table Header (hidden on mobile, visible on desktop) -->
+        <!-- Jobs List Card -->
+        <ion-card class="jobs-card">
+          <!-- Table Header (hidden on mobile, visible on desktop) -->
 
-                    <ion-list>
-                        <div class="table-header list-item job ion-hide-sm-down">
-                            <ion-label>{{ translate("Job name") }}</ion-label>
-                            <ion-label>{{ translate("Status") }}</ion-label>
-                            <ion-label>{{ translate("Last run") }}</ion-label>
-                            <ion-label class="ion-text-end">{{ translate("Action") }}</ion-label>
-                        </div>
-                        <div class="list-item job" v-for="(job, index) in jobs" :key="index" @click="viewJobDetails(job.id)">
-                            <ion-item lines="none">
-                                <ion-label class="job-name">
-                                    {{ job.name }}
-                                    <p><code>{{ job.code }}</code></p>
-                                </ion-label>
-                            </ion-item>
+          <ion-list>
+            <div class="table-header list-item job ion-hide-sm-down">
+              <ion-label>{{ translate("Job name") }}</ion-label>
+              <ion-label>{{ translate("Status") }}</ion-label>
+              <ion-label>{{ translate("Last run") }}</ion-label>
+              <ion-label class="ion-text-end">{{ translate("Action") }}</ion-label>
+            </div>
+            <div class="list-item job" v-for="(job, index) in jobs" :key="index" @click="viewJobDetails(job.id)">
+              <ion-item lines="none">
+                <ion-label class="job-name">
+                  {{ job.name }}
+                  <p><code>{{ job.code }}</code></p>
+                </ion-label>
+              </ion-item>
 
-                            <ion-badge :color="job.statusColor">
-                                <ion-icon :icon="job.statusIcon" v-if="job.statusIcon" />
-                                {{ job.status }}
-                            </ion-badge>
+              <ion-badge :color="job.statusColor">
+                <ion-icon :icon="job.statusIcon" v-if="job.statusIcon" />
+                {{ job.status }}
+              </ion-badge>
 
-                            <ion-label>
-                                <span class="ion-hide-md-up">{{ translate("Last Run") }}: </span>
-                                {{ job.lastRun }}
-                            </ion-label>
+              <ion-label>
+                <span class="ion-hide-md-up">{{ translate("Last Run") }}: </span>
+                {{ job.lastRun }}
+              </ion-label>
 
-                            <ion-button fill="clear" size="small">
-                                {{ translate("Details") }}
-                                <ion-icon :icon="chevronForwardOutline" slot="end" />
-                            </ion-button>
-                        </div>
-                    </ion-list>
+              <ion-button fill="clear" size="small">
+                {{ translate("Details") }}
+                <ion-icon :icon="chevronForwardOutline" slot="end" />
+              </ion-button>
+            </div>
+          </ion-list>
 
-                </ion-card>
-            </main>
-        </ion-content>
-    </ion-page>
+        </ion-card>
+      </main>
+    </ion-content>
+  </ion-page>
 </template>
 
 <script lang="ts">
@@ -188,43 +188,42 @@ export default defineComponent({
 <style scoped>
 
 .jobs-card {
-    margin: 0;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  margin: 0;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 
-
 .job-name code {
-    background: var(--ion-color-light);
-    padding: 2px 4px;
-    border-radius: 4px;
+  background: var(--ion-color-light);
+  padding: 2px 4px;
+  border-radius: 4px;
 }
 
 @media (max-width: 992px) {
-    .table-header {
-        display: none;
-    }
+  .table-header {
+    display: none;
+  }
 }
 
 .list-item .job {
-    --columns-desktop: 4;
-    border-bottom: 1px solid var(--ion-color-medium);
-    cursor: pointer;
+  --columns-desktop: 4;
+  border-bottom: 1px solid var(--ion-color-medium);
+  cursor: pointer;
 }
 
 .list-item:hover {
-    background-color: var(--ion-color-light);
+  background-color: var(--ion-color-light);
 }
 
 .list-item>ion-item {
-    width: 100%;
+  width: 100%;
 }
 
 @media (min-width: 992px) {
-    .list-item {
-        display: grid;
-        grid-template-columns: 5fr 2fr 3fr 2fr;
-        align-items: center;
-    }
+  .list-item {
+    display: grid;
+    grid-template-columns: 5fr 2fr 3fr 2fr;
+    align-items: center;
+  }
 }
 </style>

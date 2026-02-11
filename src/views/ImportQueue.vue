@@ -9,43 +9,43 @@
       </ion-toolbar>
     </ion-header>
 
-        <ion-content>
-            <main>
-                <div class="header">
-                    <div class="title">
-                        <h1>{{ translate("pending queue") }}</h1>
-                        <p>Waiting in Queue 1 - High priority</p>
-                    </div>
-                    <ion-button fill="outline" color="danger">
-                        <ion-icon slot="start" :icon="trashOutline" />
-                        {{ translate("Clear queue") }}
-                    </ion-button>
-                </div>
+    <ion-content>
+      <main>
+        <div class="header">
+          <div class="title">
+            <h1>{{ translate("pending queue") }}</h1>
+            <p>Waiting in Queue 1 - High priority</p>
+          </div>
+          <ion-button fill="outline" color="danger">
+            <ion-icon slot="start" :icon="trashOutline" />
+            {{ translate("Clear queue") }}
+          </ion-button>
+        </div>
 
-                <ion-list>
-                    <div class="list-item table-header log">
-                        <ion-label>{{ translate("Log Id") }}</ion-label>
-                        <ion-label class="file-name">{{ translate("File name") }}</ion-label>
-                        <ion-label>{{ translate("Status") }}</ion-label>
-                        <ion-label>{{ translate("Origin") }}</ion-label>
-                        <ion-label>{{ translate("Uploaded") }}</ion-label>
-                    </div>
-                    <div class="list-item log">
-                        <ion-label>123456789</ion-label>
-                        <ion-item lines="none" class="file-name">
-                            <ion-icon slot="start" :icon="documentOutline" />
-                            <ion-label>
-                                <code>File_1.csv</code>
-                                <p>1.2mb</p>
-                            </ion-label>
-                        </ion-item>
-                        <ion-label>{{ translate("System") }}</ion-label>
-                        <ion-label>{{ translate("Pending") }}</ion-label>
-                        <ion-label>2 hours ago</ion-label>
-                    </div>
-                </ion-list>
-            </main>
-        </ion-content>
+        <ion-list>
+          <div class="list-item table-header log">
+            <ion-label>{{ translate("Log Id") }}</ion-label>
+            <ion-label class="file-name">{{ translate("File name") }}</ion-label>
+            <ion-label>{{ translate("Status") }}</ion-label>
+            <ion-label>{{ translate("Origin") }}</ion-label>
+            <ion-label>{{ translate("Uploaded") }}</ion-label>
+          </div>
+          <div class="list-item log">
+            <ion-label>123456789</ion-label>
+            <ion-item lines="none" class="file-name">
+              <ion-icon slot="start" :icon="documentOutline" />
+              <ion-label>
+                <code>File_1.csv</code>
+                <p>1.2mb</p>
+              </ion-label>
+            </ion-item>
+            <ion-label>{{ translate("System") }}</ion-label>
+            <ion-label>{{ translate("Pending") }}</ion-label>
+            <ion-label>2 hours ago</ion-label>
+          </div>
+        </ion-list>
+      </main>
+    </ion-content>
   </ion-page>
 </template>
 
