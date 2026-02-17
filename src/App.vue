@@ -9,15 +9,15 @@
 
 <script lang="ts">
 import { createAnimation, IonApp, IonRouterOutlet, IonSplitPane } from '@ionic/vue';
-import { defineComponent } from 'vue';
+import { defineComponent, computed } from 'vue';
 import Menu from '@/components/Menu.vue';
 import { loadingController } from '@ionic/vue';
-import { mapGetters, useStore } from 'vuex';
 import emitter from "@/event-bus"
 import { Settings } from 'luxon'
 import { initialise, resetConfig } from '@/adapter'
 import { useRouter } from 'vue-router';
 import { translate } from '@hotwax/dxp-components';
+import { useUserStore } from '@/store/authStore';
 
 export default defineComponent({
   name: 'App',
@@ -30,15 +30,19 @@ export default defineComponent({
   data() {
     return {
       loader: null as any,
-      maxAge: process.env.VUE_APP_CACHE_MAX_AGE ? parseInt(process.env.VUE_APP_CACHE_MAX_AGE) : 0
+      maxAge: import.meta.env.VUE_APP_CACHE_MAX_AGE ? parseInt(import.meta.env.VUE_APP_CACHE_MAX_AGE) : 0
     }
   },
   computed: {
-    ...mapGetters({
-      userProfile: 'user/getUserProfile',
-      userToken: 'user/getUserToken',
-      instanceUrl: 'user/getInstanceUrl'
-    })
+    userProfile(): any {
+      return this.userStore.getUserProfile
+    },
+    userToken(): any {
+      return this.userStore.getUserToken
+    },
+    instanceUrl(): any {
+      return this.userStore.getInstanceUrl
+    }
   },
   methods: {
     async presentLoader(options = { message: '', backdropDismiss: true }) {
@@ -86,9 +90,9 @@ export default defineComponent({
     },
     async unauthorized() {
       // Mark the user as unauthorised, this will help in not making the logout api call in actions
-      this.store.dispatch("user/logout", { isUserUnauthorised: true });
+      this.userStore.logout({ isUserUnauthorised: true });
       const redirectUrl = window.location.origin + '/login'
-      window.location.href = `${process.env.VUE_APP_LOGIN_URL}?redirectUrl=${redirectUrl}`
+      window.location.href = `${import.meta.env.VUE_APP_LOGIN_URL}?redirectUrl=${redirectUrl}`
     }
   },
   created() {
@@ -130,10 +134,10 @@ export default defineComponent({
     resetConfig()
   },
   setup(){
-    const store = useStore();
+    const userStore = useUserStore();
     const router = useRouter();
     return {
-      store,
+      userStore,
       router
     }
   },

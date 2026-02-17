@@ -1,7 +1,6 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router';
-import { DateTime } from 'luxon';
 import logger from './logger';
 
 import { IonicVue } from '@ionic/vue';
@@ -26,15 +25,13 @@ import '@ionic/vue/css/display.css';
 import './theme/variables.css';
 import '@hotwax/apps-theme';
 
-import store from './store'
-import permissionPlugin, { Actions, hasPermission } from '@/authorization';
+import permissionPlugin from '@/authorization';
 import permissionRules from '@/authorization/Rules';
 import permissionActions from '@/authorization/Actions';
-import { dxpComponents } from '@hotwax/dxp-components'
-import { login, logout, loader } from './user-utils';
-import { getConfig, initialise,   setUserTimeZone, getAvailableTimeZones } from './adapter';
-import localeMessages from './locales';
+import { createPinia } from 'pinia';
+import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 
+const pinia = createPinia().use(piniaPluginPersistedstate);
 
 const app = createApp(App)
   .use(IonicVue, {
@@ -42,26 +39,13 @@ const app = createApp(App)
     innerHTMLTemplatesEnabled: true
   })
   .use(logger, {
-    level: process.env.VUE_APP_DEFAULT_LOG_LEVEL
+    level: import.meta.env.VUE_APP_DEFAULT_LOG_LEVEL
   })
+  .use(pinia)
   .use(router)
-  .use(store)
   .use(permissionPlugin, {
     rules: permissionRules,
     actions: permissionActions
-  })
-  .use(dxpComponents, {
-    Actions,
-    login,
-    logout,
-    loader,
-    appLoginUrl: process.env.VUE_APP_LOGIN_URL as string,
-    getConfig,
-    initialise,
-    setUserTimeZone,
-    getAvailableTimeZones,
-    localeMessages,
-    hasPermission
   })
 
 router.isReady().then(() => {

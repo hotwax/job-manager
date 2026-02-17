@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { RouteRecordRaw } from 'vue-router';
-import Catalog from '@/views/Catalog.vue'
+import Catalog from '@/views/catalog.vue'
 import Pipeline from '@/views/Pipeline.vue'
 import ImportMonitor from '@/views/ImportMonitor.vue'
 import Settings from "@/views/Settings.vue"
@@ -11,7 +11,7 @@ import JobDetailConfig from "@/views/JobDetailConfig.vue"
 import ImportQueue from "@/views/ImportQueue.vue"
 import FileHistory from "@/views/FileHistory.vue"
 import FileDetail from "@/views/FileDetail.vue"
-import store from '@/store'
+import { useUserStore } from '@/store/authStore'
 import { hasPermission } from '@/authorization';
 import { showToast } from '@/utils'
 import { translate } from '@hotwax/dxp-components'
@@ -29,11 +29,12 @@ declare module 'vue-router' {
 
 const authGuard = async (to: any, from: any, next: any) => {
   const authStore = useAuthStore()
-  if (!authStore.isAuthenticated || !store.getters['user/isAuthenticated']) {
+  const userStore = useUserStore()
+  if (!authStore.isAuthenticated || !userStore.isAuthenticated) {
     await loader.present('Authenticating')
     // TODO use authenticate() when support is there
     const redirectUrl = window.location.origin + '/login'
-    window.location.href = `${process.env.VUE_APP_LOGIN_URL}?redirectUrl=${redirectUrl}`
+    window.location.href = `${import.meta.env.VITE_VUE_APP_LOGIN_URL}?redirectUrl=${redirectUrl}`
     loader.dismiss()
   }
   next()
@@ -68,7 +69,7 @@ const routes: Array<RouteRecordRaw> = [
     beforeEnter: authGuard,
     props: true
   },
-  {  
+  {
     path: '/catalog',
     name: 'Catalog',
     component: Catalog,
@@ -77,7 +78,7 @@ const routes: Array<RouteRecordRaw> = [
       permissionId: ""
     }
   },
-  {  
+  {
     path: '/import-monitor',
     name: 'ImportMonitor',
     component: ImportMonitor,
@@ -152,7 +153,7 @@ const routes: Array<RouteRecordRaw> = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(process.env.BASE_URL),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes
 })
 

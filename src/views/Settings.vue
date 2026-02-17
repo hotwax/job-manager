@@ -89,8 +89,8 @@
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonContent, IonHeader,IonIcon, IonItem, IonMenuButton, IonPage, IonSelect, IonSelectOption, IonTitle, IonToolbar } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { codeWorkingOutline, ellipsisVertical, personCircleOutline, openOutline, saveOutline, timeOutline } from 'ionicons/icons'
-import { mapGetters, useStore } from 'vuex';
 import { useRouter } from 'vue-router';
+import { useUserStore } from '@/store/authStore';
 import Image from '@/components/Image.vue'
 import { translate } from '@hotwax/dxp-components';
 
@@ -118,16 +118,22 @@ export default defineComponent({
   },
   data() {
     return {
-      baseURL: process.env.VUE_APP_BASE_URL
+      baseURL: import.meta.env.VUE_APP_BASE_URL
     };
   },
   computed: {
-    ...mapGetters({
-      userProfile: 'user/getUserProfile',
-      currentEComStore: 'user/getCurrentEComStore',
-      shopifyConfigs: 'user/getShopifyConfigs',
-      currentShopifyConfig: 'user/getCurrentShopifyConfig',
-    })
+    userProfile(): any {
+      return this.userStore.getUserProfile
+    },
+    currentEComStore(): any {
+      return this.userStore.getCurrentEComStore
+    },
+    shopifyConfigs(): any {
+      return this.userStore.getShopifyConfigs
+    },
+    currentShopifyConfig(): any {
+      return this.userStore.getCurrentShopifyConfig
+    },
   },
   methods: {
     setEComStore(event: any) {
@@ -137,37 +143,37 @@ export default defineComponent({
       // https://github.com/ionic-team/ionic-framework/issues/20106
       // https://github.com/ionic-team/ionic-framework/pull/25858
       if(this.userProfile && this.currentEComStore?.productStoreId !== event.detail.value) {
-        this.store.dispatch('user/setEcomStore', { 'productStoreId': event.detail.value })
+        this.userStore.setEcomStore({ 'productStoreId': event.detail.value })
       }
     },
     setShopifyConfig(event: any){
-      this.store.dispatch('user/setCurrentShopifyConfig', { 'shopifyConfigId': event.detail.value });
+      this.userStore.setCurrentShopifyConfig({ 'shopifyConfigId': event.detail.value });
     },
     async timeZoneUpdated(tzId: string) {
-      await this.store.dispatch("user/setUserTimeZone", tzId)
+      await this.userStore.setUserTimeZone(tzId)
     },
     logout () {
-      this.store.dispatch('user/logout', { isUserUnauthorised: false }).then((redirectionUrl) => {
+      this.userStore.logout({ isUserUnauthorised: false }).then((redirectionUrl) => {
         // if not having redirection url then redirect the user to launchpad
         if(!redirectionUrl) {
           const redirectUrl = window.location.origin + '/login'
-          window.location.href = `${process.env.VUE_APP_LOGIN_URL}?isLoggedOut=true&redirectUrl=${redirectUrl}`
+          window.location.href = `${import.meta.env.VUE_APP_LOGIN_URL}?isLoggedOut=true&redirectUrl=${redirectUrl}`
         }
       })
     },
     goToLaunchpad() {
-      window.location.href = `${process.env.VUE_APP_LOGIN_URL}`
+      window.location.href = `${import.meta.env.VUE_APP_LOGIN_URL}`
     }
   },
   setup(){
-    const store = useStore();
+    const userStore = useUserStore();
     const router = useRouter();
 
     return {
       codeWorkingOutline,
       ellipsisVertical,
       personCircleOutline,
-      store,
+      userStore,
       timeOutline,
       router,
       openOutline,

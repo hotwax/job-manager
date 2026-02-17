@@ -117,70 +117,43 @@
   </ion-page>
 </template>
 
-<script>
+<script setup lang="ts">
 import { codeWorkingOutline, cloudDownloadOutline, documentTextOutline, ellipsisVerticalOutline, fileTrayFullOutline, globeOutline, optionsOutline, pulseOutline, shareSocialOutline, warningOutline } from "ionicons/icons";
-import { IonBackButton, IonBadge, IonButton, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonPage, IonSpinner, IonTitle, IonToolbar, popoverController } from "@ionic/vue";
-import { defineComponent } from 'vue'
-import { mapGetters, useStore } from 'vuex'
+import { IonBackButton, IonBadge, IonButton, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonPage, IonSpinner, IonTitle, IonToolbar } from "@ionic/vue";
+import { ref, computed } from 'vue'
+import { useUserStore } from '@/store/authStore'
 import { translate } from '@hotwax/dxp-components'
 
-export default defineComponent ({
-  name: "DataManagerLogDetails",
-  components: {
-    IonBackButton,
-    IonBadge,
-    IonButton,
-    IonChip,
-    IonContent,
-    IonHeader,
-    IonIcon,
-    IonItem,
-    IonLabel,
-    IonList,
-    IonPage,
-    IonSpinner,
-    IonTitle,
-    IonToolbar,
-  },
-  data() {
-    return {
-      configDetails: {},
-      currentJob: {},
-      selectedFilter: 'All',
-      dataManagerLogFilters: [
-        { id: 'ALL', label: 'All' },
-        { id: 'FAILED_LOGS', label: 'Failed logs' },
-        { id: 'FAILED_RECORDS', label: 'Failed records' }
-      ],
-      dataManagerLogList: [],
-      isLoading: true,
-    }
-  },
-  computed: {
-    ...mapGetters({
-      getDataManagerLogs: 'job/getDataManagerLogs',
-      getStatusDesc: 'util/getStatusDesc',
-    }),
-  },
-  setup() {
-    const store = useStore();
+const userStore = useUserStore()
 
-    return {
-      codeWorkingOutline,
-      cloudDownloadOutline,
-      documentTextOutline,
-      ellipsisVerticalOutline,
-      fileTrayFullOutline,
-      globeOutline,
-      optionsOutline,
-      pulseOutline,
-      shareSocialOutline,
-      warningOutline,
-      translate,
-      store
-    }
-  }
-})
+const configDetails = ref({})
+const currentJob = ref({} as any)
+const selectedFilter = ref('All')
+const dataManagerLogFilters = ref([
+  { id: 'ALL', label: 'All' },
+  { id: 'FAILED_LOGS', label: 'Failed logs' },
+  { id: 'FAILED_RECORDS', label: 'Failed records' }
+])
+const dataManagerLogList = ref([] as any[])
+const isLoading = ref(true)
+
+// TODO: These should be in a separate job/util store in Pinia
+const getDataManagerLogs = computed(() => [])
+const getStatusDesc = (statusId: string) => statusId
+
+const getProcessedFileCount = () => 0
+const getErrorFileCount = () => 0
+const getDateTime = (dateTime: any) => dateTime
+const getLogStatusColor = (statusId: string) => 'medium'
+const filterDataManagerLogs = (filterId: string) => {
+  selectedFilter.value = filterId
+}
+const downloadErrorRecordFile = (log: any) => {
+  console.log('Downloading error record file', log)
+}
+const openDownloadLogsFilePopover = (log: any, event: Event) => {
+  console.log('Opening download logs file popover', log, event)
+}
 </script>
 
 <style scoped>

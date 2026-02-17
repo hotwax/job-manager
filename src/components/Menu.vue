@@ -44,9 +44,8 @@ import {
   IonToolbar
 } from "@ionic/vue";
 import { computed, defineComponent } from "vue";
-import { mapGetters } from "vuex";
 import { albumsOutline, barChartOutline, calendarNumberOutline, compassOutline, hourglassOutline, libraryOutline, pulseOutline, settingsOutline, sendOutline, terminalOutline, ticketOutline, timeOutline, cloudUploadOutline } from "ionicons/icons";
-import { useStore } from "@/store";
+import { useUserStore } from "@/store/authStore";
 import emitter from "@/event-bus"
 import { hasPermission } from "@/authorization";
 import { useRouter } from "vue-router";
@@ -68,31 +67,42 @@ export default defineComponent({
     IonToolbar
   },
   computed: {
-    ...mapGetters({
-      isUserAuthenticated: 'user/isUserAuthenticated',
-      currentFacility: 'user/getCurrentFacility',
-      eComStore: 'user/getCurrentEComStore',
-      instanceUrl: 'user/getInstanceUrl',
-      userProfile: 'user/getUserProfile',
-      currentShopifyConfig: 'user/getCurrentShopifyConfig',
-      currentEComStore: 'user/getCurrentEComStore',
-      shopifyConfigs: 'user/getShopifyConfigs',
-    })
+    isUserAuthenticated(): any {
+      return this.userStore.isUserAuthenticated
+    },
+    eComStore(): any {
+      return this.userStore.getCurrentEComStore
+    },
+    instanceUrl(): any {
+      return this.userStore.getInstanceUrl
+    },
+    userProfile(): any {
+      return this.userStore.getUserProfile
+    },
+    currentShopifyConfig(): any {
+      return this.userStore.getCurrentShopifyConfig
+    },
+    currentEComStore(): any {
+      return this.userStore.getCurrentEComStore
+    },
+    shopifyConfigs(): any {
+      return this.userStore.getShopifyConfigs
+    },
   },
   methods: {
     async setEComStore(event: CustomEvent) {
       if(this.userProfile && this.eComStore?.productStoreId !== event.detail.value) {
-        await this.store.dispatch('user/setEcomStore', { 'productStoreId': event.detail.value })
+        await this.userStore.setEcomStore({ 'productStoreId': event.detail.value })
         emitter.emit("productStoreOrConfigChanged", true)
       }
     },
     async setShopifyConfig(event: CustomEvent){
-      await this.store.dispatch('user/setCurrentShopifyConfig', { 'shopifyConfigId': event.detail.value });
+      await this.userStore.setCurrentShopifyConfig({ 'shopifyConfigId': event.detail.value });
       emitter.emit("productStoreOrConfigChanged", true)
     }
   },
   setup() {
-    const store = useStore();
+    const userStore = useUserStore();
     const router = useRouter();
     
     // Filtering array of app pages, retaining only those elements (pages) that have the necessary permissions for display.
@@ -153,7 +163,7 @@ export default defineComponent({
         dependsOnBaseURL: false,
       },
     ] as any;
-    if (process.env.VUE_APP_BASE_URL) {
+    if (import.meta.env.VUE_APP_BASE_URL) {
       appPages = appPages.filter((page : any) => page.dependsOnBaseURL);
     }
 
@@ -175,13 +185,8 @@ export default defineComponent({
       libraryOutline,
       pulseOutline,
       selectedIndex,
-      settingsOutline,
-      sendOutline,
-      store,
-      terminalOutline,
-      ticketOutline,
-      timeOutline,
-      translate
+      translate,
+      userStore
     };
   }
 });

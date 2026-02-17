@@ -14,7 +14,7 @@ module.exports = {
   },
   rules: {
     'no-console': 'off',
-    'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
+    'no-debugger': import.meta.env.PROD ? 'warn' : 'off',
     'vue/no-deprecated-slot-attribute': 'off',
     '@typescript-eslint/no-explicit-any': 'off',
     'vue/multi-word-component-names' : 'off'
