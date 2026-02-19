@@ -153,7 +153,7 @@ import {
     chevronForwardOutline,
     checkmarkCircleOutline
 } from 'ionicons/icons';
-import { translate } from '@hotwax/dxp-components';
+import { translate } from '@common';
 
 export default defineComponent({
     name: "JobDetailConfig",

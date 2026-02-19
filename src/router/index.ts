@@ -11,14 +11,13 @@ import JobDetailConfig from "@/views/JobDetailConfig.vue"
 import ImportQueue from "@/views/ImportQueue.vue"
 import FileHistory from "@/views/FileHistory.vue"
 import FileDetail from "@/views/FileDetail.vue"
-import { useUserStore } from '@/store/authStore'
+import { useAuthStore } from '@/store/auth'
 import { hasPermission } from '@/authorization';
 import { showToast } from '@/utils'
-import { translate } from '@hotwax/dxp-components'
+import { translate } from '@common'
 import 'vue-router'
-import { DxpLogin } from '@hotwax/dxp-components';
-import { useAuthStore } from '@hotwax/dxp-components'
 import { loader } from '@/user-utils';
+
 
 // Defining types for the meta values
 declare module 'vue-router' {
@@ -29,13 +28,8 @@ declare module 'vue-router' {
 
 const authGuard = async (to: any, from: any, next: any) => {
   const authStore = useAuthStore()
-  const userStore = useUserStore()
-  if (!authStore.isAuthenticated || !userStore.isAuthenticated) {
-    await loader.present('Authenticating')
-    // TODO use authenticate() when support is there
-    const redirectUrl = window.location.origin + '/login'
-    window.location.href = `${import.meta.env.VITE_VUE_APP_LOGIN_URL}?redirectUrl=${redirectUrl}`
-    loader.dismiss()
+  if (!authStore.isAuthenticated) {
+    next('/login')
   }
   next()
 };
@@ -90,7 +84,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/login',
     name: 'Login',
-    component: DxpLogin,
+    component: () => import('../views/Login.vue'),
     beforeEnter: loginGuard
   },
   {

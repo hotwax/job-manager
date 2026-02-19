@@ -30,8 +30,11 @@ import permissionRules from '@/authorization/Rules';
 import permissionActions from '@/authorization/Actions';
 import { createPinia } from 'pinia';
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
+import localeMessages from './locales';
+import { createDxpI18n } from '@common';
 
 const pinia = createPinia().use(piniaPluginPersistedstate);
+const i18n = createDxpI18n(localeMessages)
 
 const app = createApp(App)
   .use(IonicVue, {
@@ -41,6 +44,7 @@ const app = createApp(App)
   .use(logger, {
     level: import.meta.env.VUE_APP_DEFAULT_LOG_LEVEL
   })
+  .use(i18n)
   .use(pinia)
   .use(router)
   .use(permissionPlugin, {
@@ -49,5 +53,6 @@ const app = createApp(App)
   })
 
 router.isReady().then(() => {
+  console.log('router', router)
   app.mount('#app');
 });

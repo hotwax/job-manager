@@ -22,7 +22,8 @@
 
           <section v-else>
             <div class="ion-text-center ion-margin-bottom">
-                {{ userStore.instanceUrl }}
+              <ion-chip :outline="true" @click="toggleOmsInput()">
+                {{ authStore.instanceUrl }}
               </ion-chip>
             </div>
 
@@ -53,8 +54,7 @@
   </ion-page>
 </template>
 
-
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonButton,
   IonChip,
@@ -66,292 +66,243 @@ import {
   IonItem,
   IonPage,
   IonSpinner,
-  loadingController
+  loadingController,
+  onIonViewWillEnter
 } from "@ionic/vue";
-import { defineComponent } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { useUserStore } from "@/store/authStore";
+import { ref } from "vue";
+import router from "../router";
+import { useAuthStore } from "@/store/auth";
 import Logo from '@/components/Logo.vue';
 import { arrowForwardOutline, gridOutline } from 'ionicons/icons'
 import { UserService } from "@/services/UserService";
-import { translate } from "@common";
-import { appInfo, showToast } from "@/util";
-import { hasError } from "@common";
-import { Actions, hasPermission } from "@/authorization";
+import { translate, hasError, cookieHelper, api } from "@common";
+import { showToast } from "@/utils";
 
-export default defineComponent({
-  name: "Login",
-  components: {
-    IonButton,
-    IonChip,
-    IonContent,
-    IonFab,
-    IonFabButton,
-    IonIcon,
-    IonInput,
-    IonItem,
-    IonPage,
-    IonSpinner,
-    Logo
-  },
-  data () {
-    return {
-      username: "",
-      password: "",
-      instanceUrl: "",
-      baseURL: import.meta.env.VITE_VUE_APP_BASE_URL,
-      alias: import.meta.env.VITE_VUE_APP_ALIAS ? JSON.parse(import.meta.env.VITE_VUE_APP_ALIAS) : {},
-      defaultAlias: import.meta.env.VITE_VUE_APP_DEFAULT_ALIAS,
-      showOmsInput: false,
-      hideBackground: true,
-      isConfirmingForActiveSession: false,
-      loader: null as any,
-      loginOption: {} as any,
-      isCheckingOms: false,
-      isLoggingIn: false
-    };
-  },
-  ionViewWillEnter() {
-    this.initialise()
-  },
-  methods: {
-    async initialise() {
-      const route = useRoute()
-      this.hideBackground = true
-      await this.presentLoader("Processing");
+let route = null as any;
+const authStore = useAuthStore();
+const cookieHandler = cookieHelper();
 
-      // Run the basic login flow when oms and token both are found in query
-      if (route.query?.oms && route.query?.token) {
-        await this.basicLogin()
-        this.dismissLoader();
-        return;
-      } else if (route.query?.token) {
-        // SAML login handling as only token will be returned in the query when login through SAML
-        await this.samlLogin()
-        this.dismissLoader();
-        return
-      }
+const username = ref("");
+const password = ref("");
+const instanceUrl = ref("");
+const baseURL = import.meta.env.VITE_VUE_APP_BASE_URL;
+const alias = import.meta.env.VITE_VUE_APP_ALIAS ? JSON.parse(import.meta.env.VITE_VUE_APP_ALIAS) : {};
+const defaultAlias = import.meta.env.VITE_VUE_APP_DEFAULT_ALIAS;
+const showOmsInput = ref(false);
+const hideBackground = ref(true);
+const isConfirmingForActiveSession = ref(false);
+const loader = ref<any>(null);
+const loginOption = ref<any>({});
+const isCheckingOms = ref(false);
+const isLoggingIn = ref(false);
 
-      // logout from Launchpad if logged out from the app
-      if (route.query?.isLoggedOut === 'true') {
-        // We will already mark the user as unuauthorised when log-out from the app
-        // For the case of apps using maarg login, we will call the logout api from launchpad
-        
-        // TODO: the above comment becomes invalid after calling the logout always from the launchpad
-        // With this change app will never call the logout api and launchpad is responsible for calling the logout api
-        await this.userStore.logout()
-      }
-
-      // fetch login options only if OMS is there as API calls require OMS
-      if (this.userStore.instanceUrl) {
-        await this.fetchLoginOptions()
-      }
-
-      // show OMS input if SAML if configured or if query or state does not have OMS
-      if (this.loginOption.loginAuthType !== 'BASIC' || route.query?.oms || !this.userStore.instanceUrl) {
-        this.showOmsInput = true
-      }
-
-      // Update OMS input if found in query
-      if (route.query?.oms) {
-        this.instanceUrl = route.query.oms as string
-      }
-
-      // setting redirectUrl in the state
-      if (route.query?.redirectUrl) {
-        this.userStore.setRedirectUrl(route.query.redirectUrl as string)
-      }
-
-      // if a session is already active, login directly in the app
-      if (this.userStore.isAuthenticated) {
-        if(this.userStore.getRedirectUrl) {
-          await this.userStore.getPermissions();
-          this.generateRedirectionLink();
-        } else {
-          this.router.push('/')
-        }
-      }
-
-      this.instanceUrl = this.userStore.instanceUrl;
-      if (this.userStore.instanceUrl) {
-        // If the current URL is available in alias show it for consistency
-        const currentInstanceUrlAlias = Object.keys(this.alias).find((key) => this.alias[key] === this.userStore.instanceUrl);
-        currentInstanceUrlAlias && (this.instanceUrl = currentInstanceUrlAlias);
-      }
-      // If there is no current preference set the default one
-      if (!this.instanceUrl && this.defaultAlias) {
-        this.instanceUrl = this.defaultAlias;
-      }
-      this.dismissLoader();
-      this.hideBackground = false
-    },
-    async presentLoader(message: string) {
-      if (!this.loader) {
-        this.loader = await loadingController
-          .create({
-            message: translate(message),
-            translucent: true,
-            backdropDismiss: false
-          });
-      }
-      this.loader.present();
-    },
-    dismissLoader() {
-      if (this.loader) {
-        this.loader.dismiss();
-        this.loader = null as any;
-      }
-    },
-    toggleOmsInput() {
-      this.showOmsInput = !this.showOmsInput
-      // clearing username and password if moved to OMS input
-      if (this.showOmsInput) this.username = this.password = ''
-    },
-    // on pressing Enter after inputting OMS, the form is submitted through the login method
-    // handleSubmit will handle the flow based on the input values for OMS, username and password  
-    handleSubmit() {
-      if (this.instanceUrl.trim() && this.showOmsInput && (!this.username && !this.password)) this.setOms()
-      else if (this.instanceUrl) this.login()
-    },
-    async setOms() {
-      if (!this.instanceUrl) {
-        showToast(translate('Please fill in the OMS'));
-        return
-      }
-
-      this.isCheckingOms = true
-
-      const instanceURL = this.instanceUrl.trim().toLowerCase();
-      if (!this.baseURL) this.userStore.setUserInstanceUrl(this.alias[instanceURL] ? this.alias[instanceURL] : instanceURL);
-
-      // run SAML login flow if login options are configured for the OMS
-      await this.fetchLoginOptions()
-
-      // checking loginOption.length to know if fetchLoginOptions API returned data
-      // as toggleOmsInput is called twice without this check, from fetchLoginOptions and
-      // through setOms (here) again
-      if (Object.keys(this.loginOption).length && this.loginOption.loginAuthType !== 'BASIC') {
-        window.location.href = `${this.loginOption.loginAuthUrl}?relaystate=${window.location.origin}/login` // passing launchpad/login URL
-      } else {
-        this.toggleOmsInput()
-      }
-      this.isCheckingOms = false
-    },
-    async fetchLoginOptions() {
-      this.loginOption = {}
-      try {
-        const resp = await UserService.checkLoginOptions()
-        if (!hasError(resp)) {
-          this.loginOption = resp.data
-          await this.userStore.setOmsRedirectionInfo({ url: resp.data.maargInstanceUrl })
-        }
-      } catch (error) {
-        console.error(error)
-      }
-    },
-    async login() {
-      const { username, password } = this;
-      if (!username || !password) {
-        showToast(translate('Please fill in the user details'));
-        return
-      }
-
-      this.isLoggingIn = true;
-      try {
-        await this.userStore.login(username.trim(), password)
-        if (this.userStore.getRedirectUrl) {
-          this.generateRedirectionLink()
-        } else {
-          // All the failure cases are handled in action, if then block is executing, login is successful
-          this.username = ''
-          this.password = ''
-          this.router.push('/')
-        }
-      } catch (error) {
-        console.error(error)
-      }
-      this.isLoggingIn = false;
-    },
-    async samlLogin() {
-      const route = useRoute()
-      try {
-        const { token, expirationTime } = route.query as any
-        await this.userStore.samlLogin(token, expirationTime)
-        if (this.userStore.getRedirectUrl) {
-          this.generateRedirectionLink();
-        } else {
-          this.router.push('/')
-        }
-      } catch (error) {
-        this.router.push('/')
-        console.error(error)
-      }
-    },
-    async basicLogin() {
-      const route = useRoute()
-      try {
-        const { oms, token, expirationTime } = route.query as any
-        // Clear the previously stored oms and token when having oms and token in the URL
-        this.userStore.$patch({
-          token: '',
-          instanceUrl: ''
-        })
-        this.userStore.setUserInstanceUrl(oms);
-
-        // checking for login options as we need to get maarg instance URL for accessing specific apps
-        await this.fetchLoginOptions()
-
-        // Setting token previous to getting user-profile, if not then the client method honors the state token
-        this.userStore.$patch({
-          token: token
-        })
-
-        const current = await UserService.getUserProfile(token);
-        this.userStore.$patch({
-          current: current
-        })
-
-        await this.userStore.getPermissions();
-      } catch (error) {
-        showToast(translate('Failed to fetch user-profile, please try again'));
-        console.error("error: ", error);
-      }
-      this.router.replace('/')
-    },
-  generateRedirectionLink() {
-      let omsUrl = this.userStore.instanceUrl
-      let maarg = this.userStore.getOmsRedirectionInfo.url
-
-      let url = this.userStore.getRedirectUrl
-      const app = appInfo.find((app: any) => url.includes(app.handle))!
-
-      // Replacing legacy from the url, so to easily handle the redirection
-      url = url.replaceAll("-legacy", "")
-
-      if(app && app.appLegacyPermission && Actions[app.appLegacyPermission] && hasPermission(Actions[app.appLegacyPermission]) || (app && app.appPermission && Actions[app.appPermission] && !hasPermission(Actions[app.appPermission]))) {
-        if(url.includes("-uat.hotwax.io") || url.includes("-dev.hotwax.io")) {
-          url = url.replace("-uat.hotwax.io", "-legacy-uat.hotwax.io").replace("-dev.hotwax.io", "-legacy-dev.hotwax.io")
-        } else {
-          url = url.replace(".hotwax.io", "-legacy.hotwax.io")
-        }
-      }
-
-      window.location.replace(`${url}?oms=${omsUrl}&token=${this.userStore.token}&expirationTime=${maarg ? '&maarg=' + maarg : ''}`)
-    }
-  },
-  setup () {
-    const router = useRouter();
-    const userStore = useUserStore();
-    return {
-      arrowForwardOutline,
-      userStore,
-      gridOutline,
-      router,
-      translate
-    };
+const presentLoader = async (message: string) => {
+  if (!loader.value) {
+    loader.value = await loadingController
+      .create({
+        message: translate(message),
+        translucent: true,
+        backdropDismiss: false
+      });
   }
+  loader.value.present();
+};
+
+const dismissLoader = () => {
+  if (loader.value) {
+    loader.value.dismiss();
+    loader.value = null;
+  }
+};
+
+const fetchLoginOptions = async () => {
+  loginOption.value = {}
+  try {
+    const resp = await api({
+      url: "checkLoginOptions",
+      method: "GET",
+      baseURL: authStore.getOmsUrl
+    });
+    if (!hasError(resp)) {
+      loginOption.value = resp.data
+      await authStore.setMaargInstance(resp.data.maargInstanceUrl)
+    }
+  } catch (error) {
+    console.error(error)
+  }
+};
+
+const toggleOmsInput = () => {
+  showOmsInput.value = !showOmsInput.value;
+  // clearing username and password if moved to OMS input
+  if (showOmsInput.value) {
+    username.value = "";
+    password.value = "";
+  }
+};
+
+const login = async () => {
+  if (!username.value || !password.value) {
+    showToast(translate('Please fill in the user details'));
+    return;
+  }
+
+  isLoggingIn.value = true;
+  try {
+    await authStore.login(username.value.trim(), password.value);
+    // All the failure cases are handled in action, if then block is executing, login is successful
+    username.value = "";
+    password.value = "";
+    cookieHandler.set('hc_token', authStore.token);
+    router.push('/');
+  } catch (error) {
+    console.error(error);
+  }
+  isLoggingIn.value = false;
+};
+
+const setOms = async () => {
+  if (!instanceUrl.value) {
+    showToast(translate('Please fill in the OMS'));
+    return;
+  }
+
+  isCheckingOms.value = true;
+
+  const instanceURL = instanceUrl.value.trim().toLowerCase();
+  if (!baseURL) authStore.setOMS(alias[instanceURL] ? alias[instanceURL] : instanceURL);
+
+  // run SAML login flow if login options are configured for the OMS
+  await fetchLoginOptions();
+
+  // checking loginOption.length to know if fetchLoginOptions API returned data
+  // as toggleOmsInput is called twice without this check, from fetchLoginOptions and
+  // through setOms (here) again
+  if (Object.keys(loginOption.value).length && loginOption.value.loginAuthType !== 'BASIC') {
+    window.location.href = `${loginOption.value.loginAuthUrl}?relaystate=${window.location.origin}/login`;
+  } else {
+    toggleOmsInput();
+  }
+  isCheckingOms.value = false;
+};
+
+const samlLogin = async () => {
+  try {
+    const { token, expirationTime } = route.query as any;
+    await authStore.samlLogin(token, expirationTime);
+    cookieHandler.set('hc_token', token, expirationTime);
+    router.push('/');
+  } catch (error) {
+    router.push('/');
+    console.error(error);
+  }
+};
+
+const basicLogin = async () => {
+  try {
+    const { oms, token, expirationTime } = route.query as any;
+    // Clear the previously stored oms and token when having oms and token in the URL
+    authStore.$patch({
+      token: '',
+      instanceUrl: ''
+    });
+    authStore.setUserInstanceUrl(oms);
+
+    // checking for login options as we need to get maarg instance URL for accessing specific apps
+    await fetchLoginOptions();
+
+    // Setting token previous to getting user-profile, if not then the client method honors the state token
+    authStore.$patch({
+      token: token
+    });
+    cookieHandler.set('hc_token', token, expirationTime);
+
+    const current = await UserService.getUserProfile(token);
+    authStore.$patch({
+      current: current
+    });
+
+    await authStore.getPermissions();
+  } catch (error) {
+    showToast(translate('Failed to fetch user-profile, please try again'));
+    console.error("error: ", error);
+  }
+  router.replace('/');
+};
+
+const initialise = async () => {
+  hideBackground.value = true;
+  await presentLoader("Processing");
+
+  // Run the basic login flow when oms and token both are found in query
+  if (route.query?.oms && route.query?.token) {
+    await basicLogin();
+    dismissLoader();
+    return;
+  } else if (route.query?.token) {
+    // SAML login handling as only token will be returned in the query when login through SAML
+    await samlLogin();
+    dismissLoader();
+    return;
+  }
+
+  // logout from Launchpad if logged out from the app
+  if (route.query?.isLoggedOut === 'true') {
+    await authStore.logout();
+    cookieHandler.remove('hc_token');
+  }
+
+  // fetch login options only if OMS is there as API calls require OMS
+  if (authStore.instanceUrl) {
+    await fetchLoginOptions();
+  }
+
+  // show OMS input if SAML if configured or if query or state does not have OMS
+  if (loginOption.value.loginAuthType !== 'BASIC' || route.query?.oms || !authStore.instanceUrl) {
+    showOmsInput.value = true;
+  }
+
+  // Update OMS input if found in query
+  if (route.query?.oms) {
+    instanceUrl.value = route.query.oms as string;
+  }
+
+  // if a session is already active, login directly in the app
+  if (authStore.isAuthenticated) {
+    router.push('/');
+  }
+
+  const hcToken = cookieHandler.get('hc_token');
+  if (authStore.token && !hcToken) {
+    cookieHandler.set('hc_token', authStore.token);
+  }
+
+  instanceUrl.value = authStore.instanceUrl;
+  if (authStore.instanceUrl) {
+    // If the current URL is available in alias show it for consistency
+    const currentInstanceUrlAlias = Object.keys(alias).find((key) => alias[key] === authStore.instanceUrl);
+    currentInstanceUrlAlias && (instanceUrl.value = currentInstanceUrlAlias);
+  }
+  // If there is no current preference set the default one
+  if (!instanceUrl.value && defaultAlias) {
+    instanceUrl.value = defaultAlias;
+  }
+  dismissLoader();
+  hideBackground.value = false;
+};
+
+const handleSubmit = () => {
+  if (instanceUrl.value.trim() && showOmsInput.value && (!username.value && !password.value)) setOms();
+  else if (instanceUrl.value) login();
+};
+
+onIonViewWillEnter(() => {
+  // TODO: check why useRoute and useRouter are not working
+  route = router.currentRoute.value;
+  initialise();
 });
 </script>
+
 <style scoped>
 .login-container {
   width: 375px;
@@ -363,5 +314,4 @@ export default defineComponent({
   align-items: center;
   height: 100%;
 }
-
 </style>

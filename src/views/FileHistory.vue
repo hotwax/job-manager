@@ -74,7 +74,7 @@ import {
   IonSegmentButton,
   IonChip
 } from '@ionic/vue';
-import { translate } from '@hotwax/dxp-components';
+import { translate } from '@common';
 import { documentOutline } from 'ionicons/icons';
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';

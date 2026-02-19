@@ -89,7 +89,7 @@ import {
     timeOutline,
     closeCircleOutline
 } from 'ionicons/icons';
-import { translate } from '@hotwax/dxp-components';
+import { translate } from '@common';
 import { useRouter } from 'vue-router';
 
 export default defineComponent({

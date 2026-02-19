@@ -1,8 +1,8 @@
 import { defineStore } from "pinia";
 import { UserService } from "@/services/UserService";
 import { hasError, showToast } from "@/utils";
-import { translate } from "@hotwax/dxp-components";
-import { Settings } from "luxon";
+import { api, cookieHelper, translate } from "@common";
+import { DateTime, Settings } from "luxon";
 import {
   getServerPermissionsFromRules,
   prepareAppPermissions,
@@ -11,14 +11,19 @@ import {
 } from "@/authorization";
 import { logout, updateInstanceUrl, updateToken, resetConfig } from "@/adapter";
 import logger from "@/logger";
-import { useAuthStore } from "@hotwax/dxp-components";
 import emitter from "@/event-bus";
 
-export const useUserStore = defineStore("user", {
+export const useAuthStore = defineStore("auth", {
   state: () => ({
-    token: "",
-    permissions: [] as any[],
     current: {} as any,
+    oms: "",
+    token: {
+      value: "",
+      expiration: undefined
+    },
+    maargOms: '',
+    maargUrl: '',
+    permissions: [] as any[],
     instanceUrl: "",
     shopifyConfigs: [] as any[],
     currentShopifyConfig: {} as any,
@@ -37,31 +42,35 @@ export const useUserStore = defineStore("user", {
     },
   }),
   getters: {
-    isAuthenticated: (state: any) => !!state.token,
+    isAuthenticated: (state) => {
+      let isTokenExpired = false;
+      if (state.token.expiration) {
+        const currTime = DateTime.now().toMillis();
+        isTokenExpired = state.token.expiration < currTime;
+      }
+      return !!(state.token.value && !isTokenExpired);
+    },
+    getOMS: (state) => state.oms,
+    getOmsUrl: (state) => {
+      let baseURL = import.meta.env.VITE_VUE_APP_BASE_URL
+      if (!baseURL) baseURL = state.oms
+      return baseURL.startsWith('http') ? baseURL.includes('/api') ? baseURL : `${baseURL}/api/` : `https://${baseURL}.hotwax.io/api/`
+    },
+    getMaargOms: (state) => state.maargOms,
+    getMaargUrl: (state) => state.maargUrl,
     isUserAuthenticated: (state: any) => !!(state.token && state.current),
     getUserToken: (state: any) => state.token,
-    getUserPermissions: (state: any) => state.permissions,
+    getPermissions: (state: any) => state.permissions,
     getUserProfile: (state: any) => state.current,
     getInstanceUrl: (state: any) => {
       const baseUrl = import.meta.env.VITE_VUE_APP_BASE_URL;
       return baseUrl ? baseUrl : state.instanceUrl;
-    },
-    getBaseUrl: (state: any) => {
-      let baseURL = import.meta.env.VITE_VUE_APP_BASE_URL;
-      if (!baseURL) baseURL = state.instanceUrl;
-      if (!baseURL) return "";
-      return baseURL.startsWith("http")
-        ? baseURL.includes("/api")
-          ? baseURL
-          : `${baseURL}/api/`
-        : `https://${baseURL}.hotwax.io/api/`;
     },
     getCurrentShopifyConfig: (state: any) => state.currentShopifyConfig,
     getShopifyConfigs: (state: any) => state.shopifyConfigs,
     getProductStoreCategories: (state: any) => state.productStoreCategories,
     getPwaState: (state: any) => state.pwaState,
     getCurrentEComStore: (state: any) => state.currentEComStore,
-    getPinnedJobs: (state: any) => state.current ? (state.current as any)["pinnedJobs"]?.jobs : [],
     getMaargBaseUrl: (state: any) => {
       const url = state.omsRedirectionInfo.url;
       if (!url) return "";
@@ -74,10 +83,24 @@ export const useUserStore = defineStore("user", {
     getOmsRedirectionInfo: (state: any) => state.omsRedirectionInfo,
   },
   actions: {
-    async login(payload: any) {
+    async login(username: string, password: string) {
       try {
-        const { token, oms, omsRedirectionUrl } = payload;
-        this.setUserInstanceUrl(oms);
+        const resp = await api({
+          url: "login",
+          method: "post",
+          data: {
+            'USERNAME': username,
+            'PASSWORD': password
+          },
+          baseURL: this.getOmsUrl
+        });
+        if (hasError(resp)) {
+          showToast(translate('Sorry, your username or password is incorrect. Please try again.'));
+          console.error("error", resp.data._ERROR_MESSAGE_);
+          return Promise.reject(new Error(resp.data._ERROR_MESSAGE_));
+        }
+
+        await this.setToken(resp.data.token, resp.data.expirationTime)
 
         // Getting the permissions list from server
         const permissionId = import.meta.env.VITE_VUE_APP_PERMISSION_ID;
@@ -89,16 +112,14 @@ export const useUserStore = defineStore("user", {
           {
             permissionIds: [...new Set(serverPermissionsFromRules)],
           },
-          token
+          this.token.value
         );
         const appPermissions = prepareAppPermissions(serverPermissions);
 
         // Checking if the user has permission to access the app
         // If there is no configuration, the permission check is not enabled
         if (permissionId) {
-          const hasPermission = appPermissions.some(
-            (appPermission: any) => appPermission.action === permissionId
-          );
+          const hasPermission = appPermissions.some((appPermission: any) => appPermission.action === permissionId);
           if (!hasPermission) {
             const permissionError = "You do not have permission to access the app.";
             showToast(translate(permissionError));
@@ -107,8 +128,8 @@ export const useUserStore = defineStore("user", {
           }
         }
 
-        const userProfile = await UserService.getUserProfile(token);
-        userProfile.stores = await UserService.getEComStores(token);
+        const userProfile = await UserService.getUserProfile(this.token.value);
+        userProfile.stores = await UserService.getEComStores(this.token.value);
 
         // In Job Manager application, we have jobs which may not be associated with any product store
         userProfile.stores.push({
@@ -117,29 +138,22 @@ export const useUserStore = defineStore("user", {
         });
         let preferredStore = userProfile.stores[0];
 
-        const preferredStoreId = await UserService.getPreferredStore(token);
+        const preferredStoreId = await UserService.getPreferredStore(this.token.value);
         if (preferredStoreId) {
-          const store = userProfile.stores.find(
-            (store: any) => store.productStoreId === preferredStoreId
-          );
+          const store = userProfile.stores.find((store: any) => store.productStoreId === preferredStoreId);
           store && (preferredStore = store);
         }
 
         const shopifyConfigs = await UserService.getShopifyConfig(
           preferredStore.productStoreId,
-          token
+          this.token.value
         );
         let currentShopifyConfig = {};
         shopifyConfigs.length > 0 && (currentShopifyConfig = shopifyConfigs[0]);
 
-        const preferredShopifyShopId = await UserService.getPreferredShopifyShop(
-          token
-        );
+        const preferredShopifyShopId = await UserService.getPreferredShopifyShop(this.token.value);
         if (preferredShopifyShopId) {
-          currentShopifyConfig = shopifyConfigs.find(
-            (shopifyConfig: any) =>
-              shopifyConfig.shopId === preferredShopifyShopId
-          );
+          currentShopifyConfig = shopifyConfigs.find((shopifyConfig: any) => shopifyConfig.shopId === preferredShopifyShopId);
         }
 
         setPermissions(appPermissions);
@@ -147,48 +161,15 @@ export const useUserStore = defineStore("user", {
           Settings.defaultZone = userProfile.userTimeZone;
         }
 
-        if (omsRedirectionUrl) {
-          const api_key = await UserService.moquiLogin(omsRedirectionUrl, token);
-          if (api_key) {
-            this.setOmsRedirectionInfo({
-              url: omsRedirectionUrl,
-              token: api_key,
-            });
-          } else {
-            showToast(
-              translate(
-                "Some of the app functionality will not work due to missing configuration."
-              )
-            );
-            logger.error(
-              "Some of the app functionality will not work due to missing configuration."
-            );
-          }
-        } else {
-          showToast(
-            translate(
-              "Some of the app functionality will not work due to missing configuration."
-            )
-          );
-          logger.error(
-            "Some of the app functionality will not work due to missing configuration."
-          );
-        }
-
         this.currentEComStore = preferredStore;
         this.current = userProfile;
         this.shopifyConfigs = shopifyConfigs;
         this.currentShopifyConfig = currentShopifyConfig;
         this.permissions = appPermissions;
-        this.token = token;
 
-        updateToken(token);
+        updateToken(this.token.value);
       } catch (err: any) {
-        showToast(
-          translate(
-            "Something went wrong while login. Please contact administrator."
-          )
-        );
+        showToast(translate("Something went wrong while login. Please contact administrator."));
         logger.error("error: ", err.toString());
         return Promise.reject(err instanceof Object ? err : new Error(err));
       }
@@ -217,12 +198,9 @@ export const useUserStore = defineStore("user", {
         }
       }
 
-      const authStore = useAuthStore();
-
       this.$reset();
       resetConfig();
       resetPermissions();
-      authStore.$reset();
 
       if (redirectionUrl) {
         window.location.href = redirectionUrl;
@@ -290,46 +268,6 @@ export const useUserStore = defineStore("user", {
       }
     },
 
-    async getPreOrderBackorderCategory() {
-      const productStoreId = (this.currentEComStore as any).productStoreId;
-      if (!productStoreId) {
-        logger.warn(
-          "No productStoreId provided. Not fetching pre-order/backorder categories"
-        );
-        return;
-      }
-      if (this.productStoreCategories[productStoreId])
-        return this.productStoreCategories[productStoreId];
-
-      try {
-        const ecommerceCatalog = await UserService.getEcommerceCatalog(
-          productStoreId
-        );
-        const preOrderBackorderCategory =
-          await UserService.getPreOrderBackorderCategory(
-            ecommerceCatalog.prodCatalogId
-          );
-        const productStoreCategories = {} as any;
-        const preOrderCategory = preOrderBackorderCategory.find(
-          (category: any) =>
-            category.prodCatalogCategoryTypeId === "PCCT_PREORDR"
-        );
-        preOrderCategory &&
-          (productStoreCategories.preorder = preOrderCategory.productCategoryId);
-        const backorderCategory = preOrderBackorderCategory.find(
-          (category: any) =>
-            category.prodCatalogCategoryTypeId === "PCCT_BACKORDER"
-        );
-        backorderCategory &&
-          (productStoreCategories.backorder =
-            backorderCategory.productCategoryId);
-        this.productStoreCategories[productStoreId] = productStoreCategories;
-      } catch (err) {
-        logger.error(err);
-      }
-      return this.productStoreCategories[productStoreId];
-    },
-
     async setCurrentShopifyConfig(payload: any) {
       let shopifyConfig = {} as any;
 
@@ -340,90 +278,21 @@ export const useUserStore = defineStore("user", {
       }
       this.currentShopifyConfig = shopifyConfig ? shopifyConfig : {};
     },
-
-    async getPinnedJobs() {
-      let resp;
-      const user = this.current as any;
-
-      try {
-        const params = {
-          inputFields: {
-            userLoginId: user?.userLoginId,
-            userSearchPrefTypeId: "PINNED_JOB",
-          },
-          viewSize: 1,
-          filterByDate: "Y",
-          sortBy: "fromDate ASC",
-          fieldList: ["searchPrefId", "searchPrefValue"],
-          entityName: "UserAndSearchPreference",
-          distinct: "Y",
-          noConditionFind: "Y",
-        };
-        resp = await UserService.getPinnedJobs(params);
-        if (resp.status === 200 && resp.data.docs?.length && !hasError(resp)) {
-          let pinnedJobs = resp.data.docs[0];
-          pinnedJobs = {
-            id: pinnedJobs?.searchPrefId ? pinnedJobs?.searchPrefId : "",
-            jobs: pinnedJobs?.searchPrefValue
-              ? JSON.parse(pinnedJobs?.searchPrefValue)
-              : [],
-          };
-
-          const enumIds = pinnedJobs?.jobs;
-          // TODO move job actions to job store
-          // await store.dispatch("job/fetchJobDescription", enumIds);
-
-          user.pinnedJobs = pinnedJobs;
-          this.current = user;
-
-          return pinnedJobs;
-        } else {
-          user.pinnedJobs = [];
-          this.current = user;
-        }
-      } catch (error) {
-        logger.error(error);
-      }
-      return resp;
+    async setMaargInstance(oms: string) {
+      this.maargOms = oms
+      this.maargUrl = oms.startsWith('http') ? oms.includes('/rest/s1') ? oms : `${oms}/rest/s1/` : `https://${oms}.hotwax.io/rest/s1/`;
+      cookieHelper().set("maarg", this.maargOms)
     },
-
-    async updatePinnedJobs(payload: any) {
-      let resp;
-      const pinnedJobPrefId = (this.current as any)["pinnedJobs"]?.id;
-
-      try {
-        if (pinnedJobPrefId) {
-          resp = await UserService.updatePinnedJobPref({
-            searchPrefId: pinnedJobPrefId,
-            searchPrefValue: JSON.stringify(payload?.pinnedJobs),
-          });
-
-          if (resp.status === 200 && !hasError(resp)) {
-            await this.getPinnedJobs();
-          }
-        } else {
-          resp = await UserService.createPinnedJobPref({
-            searchPrefValue: JSON.stringify(payload?.pinnedJobs),
-          });
-          if (resp.status === 200 && !hasError(resp)) {
-            if (resp.data?.searchPrefId) {
-              const params = {
-                searchPrefId: resp.data?.searchPrefId,
-                userSearchPrefTypeId: "PINNED_JOB",
-              };
-              const pinnedJob = await UserService.associatePinnedJobPrefToUser(
-                params
-              );
-              if (pinnedJob.status === 200 && !hasError(pinnedJob)) {
-                await this.getPinnedJobs();
-              }
-            }
-          }
-        }
-      } catch (error) {
-        logger.error(error);
+    setOMS(oms: string) {
+      cookieHelper().set("oms", oms)
+      this.oms = oms;
+    },
+    async setToken(token: any, expirationTime: any) {
+      cookieHelper().set("token", token, expirationTime)
+      this.token = {
+        value: token,
+        expiration: expirationTime
       }
-      return resp;
     },
   },
   persist: true,

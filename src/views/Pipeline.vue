@@ -128,7 +128,7 @@ import {
   serverOutline 
 } from 'ionicons/icons';
 import { useRouter } from 'vue-router'
-import { translate } from '@hotwax/dxp-components';
+import { translate } from '@common';
 
 export default defineComponent({
   name: "Dashboard",

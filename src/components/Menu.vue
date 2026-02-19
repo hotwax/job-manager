@@ -1,5 +1,5 @@
 <template>
-  <ion-menu side="start" content-id="main-content" type="overlay" :disabled="!isUserAuthenticated || $route.path === '/login'">
+  <ion-menu side="start" content-id="main-content" type="overlay" :disabled="!isUserAuthenticated || router.currentRoute.value.path === '/login'">
     <ion-header>
       <ion-toolbar>
         <ion-title>{{ translate("Job Manager") }}</ion-title>
@@ -25,7 +25,6 @@
         </ion-menu-toggle>
       </ion-list>
     </ion-content>
-    <DxpMenuFooterNavigation @update-ecom-store="setEComStore($event)" @update-shopify-config="setShopifyConfig($event)" />
   </ion-menu>
 </template>
 
@@ -45,11 +44,10 @@ import {
 } from "@ionic/vue";
 import { computed, defineComponent } from "vue";
 import { albumsOutline, barChartOutline, calendarNumberOutline, compassOutline, hourglassOutline, libraryOutline, pulseOutline, settingsOutline, sendOutline, terminalOutline, ticketOutline, timeOutline, cloudUploadOutline } from "ionicons/icons";
-import { useUserStore } from "@/store/authStore";
-import emitter from "@/event-bus"
+import { useAuthStore } from "@/store/auth";
 import { hasPermission } from "@/authorization";
-import { useRouter } from "vue-router";
-import { translate } from "@hotwax/dxp-components";
+import router from "../router";
+import { translate } from "@common";
 
 export default defineComponent({
   name: "Menu",
@@ -68,42 +66,26 @@ export default defineComponent({
   },
   computed: {
     isUserAuthenticated(): any {
-      return this.userStore.isUserAuthenticated
+      return this.authStore.isUserAuthenticated
     },
     eComStore(): any {
-      return this.userStore.getCurrentEComStore
-    },
-    instanceUrl(): any {
-      return this.userStore.getInstanceUrl
+      return this.authStore.getCurrentEComStore
     },
     userProfile(): any {
-      return this.userStore.getUserProfile
+      return this.authStore.getUserProfile
     },
     currentShopifyConfig(): any {
-      return this.userStore.getCurrentShopifyConfig
+      return this.authStore.getCurrentShopifyConfig
     },
     currentEComStore(): any {
-      return this.userStore.getCurrentEComStore
+      return this.authStore.getCurrentEComStore
     },
     shopifyConfigs(): any {
-      return this.userStore.getShopifyConfigs
+      return this.authStore.getShopifyConfigs
     },
-  },
-  methods: {
-    async setEComStore(event: CustomEvent) {
-      if(this.userProfile && this.eComStore?.productStoreId !== event.detail.value) {
-        await this.userStore.setEcomStore({ 'productStoreId': event.detail.value })
-        emitter.emit("productStoreOrConfigChanged", true)
-      }
-    },
-    async setShopifyConfig(event: CustomEvent){
-      await this.userStore.setCurrentShopifyConfig({ 'shopifyConfigId': event.detail.value });
-      emitter.emit("productStoreOrConfigChanged", true)
-    }
   },
   setup() {
-    const userStore = useUserStore();
-    const router = useRouter();
+    const authStore = useAuthStore();
     
     // Filtering array of app pages, retaining only those elements (pages) that have the necessary permissions for display.
     const getValidMenuItems = (appPages: any) => {
@@ -167,8 +149,9 @@ export default defineComponent({
       appPages = appPages.filter((page : any) => page.dependsOnBaseURL);
     }
 
+    const route = router.currentRoute.value;
     const selectedIndex = computed(() => {
-      const path = router.currentRoute.value.path
+      const path = route.path
       return getValidMenuItems(appPages).findIndex((screen : any) => screen.url === path || screen.childRoutes?.includes(path))
     })
 
@@ -186,7 +169,8 @@ export default defineComponent({
       pulseOutline,
       selectedIndex,
       translate,
-      userStore
+      authStore,
+      router
     };
   }
 });

@@ -3,7 +3,7 @@ import { toastController } from '@ionic/vue';
 import Papa from 'papaparse'
 import { DateTime } from "luxon";
 import logger from "@/logger";
-import { translate } from "@hotwax/dxp-components";
+import { translate } from "@common";
 import { Plugins } from '@capacitor/core';
 import cronstrue from "cronstrue"
 

@@ -90,9 +90,9 @@ import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSu
 import { defineComponent } from 'vue';
 import { codeWorkingOutline, ellipsisVertical, personCircleOutline, openOutline, saveOutline, timeOutline } from 'ionicons/icons'
 import { useRouter } from 'vue-router';
-import { useUserStore } from '@/store/authStore';
+import { useAuthStore } from '@/store/auth';
 import Image from '@/components/Image.vue'
-import { translate } from '@hotwax/dxp-components';
+import { translate } from '@common';
 
 export default defineComponent({
   name: 'Settings',
@@ -123,16 +123,16 @@ export default defineComponent({
   },
   computed: {
     userProfile(): any {
-      return this.userStore.getUserProfile
+      return this.authStore.getUserProfile
     },
     currentEComStore(): any {
-      return this.userStore.getCurrentEComStore
+      return this.authStore.getCurrentEComStore
     },
     shopifyConfigs(): any {
-      return this.userStore.getShopifyConfigs
+      return this.authStore.getShopifyConfigs
     },
     currentShopifyConfig(): any {
-      return this.userStore.getCurrentShopifyConfig
+      return this.authStore.getCurrentShopifyConfig
     },
   },
   methods: {
@@ -143,17 +143,17 @@ export default defineComponent({
       // https://github.com/ionic-team/ionic-framework/issues/20106
       // https://github.com/ionic-team/ionic-framework/pull/25858
       if(this.userProfile && this.currentEComStore?.productStoreId !== event.detail.value) {
-        this.userStore.setEcomStore({ 'productStoreId': event.detail.value })
+        this.authStore.setEcomStore({ 'productStoreId': event.detail.value })
       }
     },
     setShopifyConfig(event: any){
-      this.userStore.setCurrentShopifyConfig({ 'shopifyConfigId': event.detail.value });
+      this.authStore.setCurrentShopifyConfig({ 'shopifyConfigId': event.detail.value });
     },
     async timeZoneUpdated(tzId: string) {
-      await this.userStore.setUserTimeZone(tzId)
+      await this.authStore.setUserTimeZone(tzId)
     },
     logout () {
-      this.userStore.logout({ isUserUnauthorised: false }).then((redirectionUrl) => {
+      this.authStore.logout({ isUserUnauthorised: false }).then((redirectionUrl) => {
         // if not having redirection url then redirect the user to launchpad
         if(!redirectionUrl) {
           const redirectUrl = window.location.origin + '/login'
@@ -166,14 +166,14 @@ export default defineComponent({
     }
   },
   setup(){
-    const userStore = useUserStore();
+    const authStore = useAuthStore();
     const router = useRouter();
 
     return {
       codeWorkingOutline,
       ellipsisVertical,
       personCircleOutline,
-      userStore,
+      authStore,
       timeOutline,
       router,
       openOutline,

@@ -16,6 +16,12 @@
     "paths": {
       "@/*": [
         "src/*"
+      ],
+      "@common": [
+        "../../common/index.ts"
+      ],
+      "@common/*": [
+        "../../common/*"
       ]
     },
     "lib": [

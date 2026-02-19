@@ -1,7 +1,7 @@
 import { api, client } from '@/adapter';
 import logger from '@/logger';
 import { hasError } from '@/utils'
-import { useUserStore } from '@/store/authStore';
+import { useAuthStore } from '@/store/auth';
 
 const login = async (username: string, password: string): Promise<any> => {
   return api({
@@ -44,7 +44,7 @@ const moquiLogin = async (omsRedirectionUrl: string, token: string): Promise<any
 }
 
 const getShopifyConfig = async (productStoreId: any, token?: any): Promise<any> => {
-  const userStore = useUserStore();
+  const userStore = useAuthStore();
   try {
     const params = {
       "inputFields": {
@@ -69,7 +69,7 @@ const getShopifyConfig = async (productStoreId: any, token?: any): Promise<any> 
         'Content-Type': 'application/json'
       }
     }
-    payload.baseURL = userStore.getBaseUrl;
+    payload.baseURL = userStore.getOmsUrl;
     const resp = await client(payload);
     if (!hasError(resp)) {
       return Promise.resolve(resp?.data.docs);
@@ -83,7 +83,7 @@ const getShopifyConfig = async (productStoreId: any, token?: any): Promise<any> 
 }
 
 const getEComStores = async (token: any): Promise<any> => {
-  const userStore = useUserStore();
+  const userStore = useAuthStore();
   try {
     const params = {
       "inputFields": {
@@ -94,7 +94,7 @@ const getEComStores = async (token: any): Promise<any> => {
       "distinct": "Y",
       "noConditionFind": "Y"
     }
-    const baseURL = userStore.getBaseUrl;
+    const baseURL = userStore.getOmsUrl;
     const resp = await client({
       url: "performFind",
       method: "get",
@@ -175,38 +175,6 @@ const getPreOrderBackorderCategory = async (prodCatalogId: any): Promise<any> =>
   }
 }
 
-const getPinnedJobs = async (payload: any): Promise<any> => {
-  return api({
-    url: "performFind",
-    method: "get",
-    params: payload
-  });
-}
-
-const updatePinnedJobPref = async (payload: any): Promise<any> => {
-  return api({
-    url: "service/updateSearchPreference",
-    method: "post",
-    data: payload
-  });
-}
-
-const createPinnedJobPref = async (payload: any): Promise<any> => {
-  return api({
-    url: "service/createSearchPreference",
-    method: "post",
-    data: payload
-  });
-}
-
-const associatePinnedJobPrefToUser = async (payload: any): Promise<any> => {
-  return api({
-    url: "service/createUserSearchPreference",
-    method: "post",
-    data: payload
-  });
-}
-
 const setUserPreference = async (payload: any): Promise<any> => {
   return api({
     url: "service/setUserPreference",
@@ -216,8 +184,8 @@ const setUserPreference = async (payload: any): Promise<any> => {
 }
 
 const getPreferredStore = async (token: any): Promise<any> => {
-  const userStore = useUserStore();
-  const baseURL = userStore.getBaseUrl;
+  const userStore = useAuthStore();
+  const baseURL = userStore.getOmsUrl;
   try {
     const resp = await client({
       url: "service/getUserPreference",
@@ -243,8 +211,8 @@ const getPreferredStore = async (token: any): Promise<any> => {
 }
 
 const getPreferredShopifyShop = async (token: any): Promise<any> => {
-  const userStore = useUserStore();
-  const baseURL = userStore.getBaseUrl;
+  const userStore = useAuthStore();
+  const baseURL = userStore.getOmsUrl;
   try {
     const resp = await client({
       url: "service/getUserPreference",
@@ -271,8 +239,8 @@ const getPreferredShopifyShop = async (token: any): Promise<any> => {
 }
 
 const getUserPermissions = async (payload: any, token: any): Promise<any> => {
-  const userStore = useUserStore();
-  const baseURL = userStore.getBaseUrl;
+  const userStore = useAuthStore();
+  const baseURL = userStore.getOmsUrl;
   let serverPermissions = [] as any;
 
   // If the server specific permission list doesn't exist, getting server permissions will be of no use
@@ -360,8 +328,8 @@ const getUserPermissions = async (payload: any, token: any): Promise<any> => {
   }
 }
 const getUserProfile = async (token: any): Promise<any> => {
-  const userStore = useUserStore();
-  const baseURL = userStore.getBaseUrl;
+  const userStore = useAuthStore();
+  const baseURL = userStore.getOmsUrl;
   try {
     const resp = await client({
       url: "user-profile",
@@ -381,18 +349,14 @@ const getUserProfile = async (token: any): Promise<any> => {
 
 
 export const UserService = {
-  createPinnedJobPref,
   login,
   getEComStores,
   getEcommerceCatalog,
   getPreOrderBackorderCategory,
   getShopifyConfig,
-  getPinnedJobs,
   getPreferredShopifyShop,
   getPreferredStore,
   getUserProfile,
-  associatePinnedJobPrefToUser,
-  updatePinnedJobPref,
   setUserPreference,
   getUserPermissions,
   moquiLogin

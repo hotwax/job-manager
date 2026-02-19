@@ -1,7 +1,7 @@
 <template>
   <ion-app>
     <IonSplitPane content-id="main-content" when="lg">
-      <Menu />
+      <Menu v-if="router && router.currentRoute.value.name !== 'Login'" />
       <ion-router-outlet id="main-content" />
     </IonSplitPane>
   </ion-app>
@@ -9,15 +9,15 @@
 
 <script lang="ts">
 import { createAnimation, IonApp, IonRouterOutlet, IonSplitPane } from '@ionic/vue';
-import { defineComponent, computed } from 'vue';
+import { defineComponent } from 'vue';
 import Menu from '@/components/Menu.vue';
 import { loadingController } from '@ionic/vue';
 import emitter from "@/event-bus"
 import { Settings } from 'luxon'
 import { initialise, resetConfig } from '@/adapter'
-import { useRouter } from 'vue-router';
-import { translate } from '@hotwax/dxp-components';
-import { useUserStore } from '@/store/authStore';
+import router from './router';
+import { translate } from '@common';
+import { useAuthStore } from '@/store/auth';
 
 export default defineComponent({
   name: 'App',
@@ -35,13 +35,13 @@ export default defineComponent({
   },
   computed: {
     userProfile(): any {
-      return this.userStore.getUserProfile
+      return this.authStore.getUserProfile
     },
     userToken(): any {
-      return this.userStore.getUserToken
+      return this.authStore.getUserToken
     },
     instanceUrl(): any {
-      return this.userStore.getInstanceUrl
+      return this.authStore.getInstanceUrl
     }
   },
   methods: {
@@ -90,7 +90,7 @@ export default defineComponent({
     },
     async unauthorized() {
       // Mark the user as unauthorised, this will help in not making the logout api call in actions
-      this.userStore.logout({ isUserUnauthorised: true });
+      this.authStore.logout({ isUserUnauthorised: true });
       const redirectUrl = window.location.origin + '/login'
       window.location.href = `${import.meta.env.VUE_APP_LOGIN_URL}?redirectUrl=${redirectUrl}`
     }
@@ -134,10 +134,9 @@ export default defineComponent({
     resetConfig()
   },
   setup(){
-    const userStore = useUserStore();
-    const router = useRouter();
+    const authStore = useAuthStore();
     return {
-      userStore,
+      authStore,
       router
     }
   },

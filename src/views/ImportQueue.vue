@@ -64,7 +64,7 @@ import {
   IonButton,
   IonIcon
 } from '@ionic/vue';
-import { translate } from '@hotwax/dxp-components'; 
+import { translate } from '@common'; 
 import { documentOutline, trashOutline } from 'ionicons/icons';
 </script>
 

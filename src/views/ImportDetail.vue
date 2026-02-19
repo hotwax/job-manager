@@ -99,7 +99,7 @@ import {
   peopleOutline,
   arrowUndoOutline
 } from 'ionicons/icons';
-import { translate } from '@hotwax/dxp-components';
+import { translate } from '@common';
 import { showToast } from '@/utils';
 
 const route = useRoute();

@@ -24,7 +24,7 @@ import {
   popoverController
 } from "@ionic/vue";
 import { defineComponent } from "vue";
-import { translate } from "@hotwax/dxp-components";
+import { translate } from "@common";
 
 export default defineComponent({
   name: "DownloadLogsFilePopover",

@@ -104,7 +104,7 @@ import {
   IonItem,
   IonLabel
 } from '@ionic/vue';
-import { translate } from '@hotwax/dxp-components';
+import { translate } from '@common';
 import { 
   documentOutline, 
   briefcaseOutline, 

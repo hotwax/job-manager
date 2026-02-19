@@ -1,14 +1,14 @@
-import { translate } from '@hotwax/dxp-components'
-import { useUserStore } from '@/store/authStore'
+import { translate } from '@common'
+import { useAuthStore } from '@/store/auth'
 import { loadingController } from '@ionic/vue'
 
 const login = async (payload: any) => {
-  const userStore = useUserStore()
+  const userStore = useAuthStore()
   return userStore.login(payload)
 }
 
 const logout = async (payload: any) => {
-  const userStore = useUserStore()
+  const userStore = useAuthStore()
   return userStore.logout(payload)
 }
 

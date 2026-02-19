@@ -71,7 +71,7 @@ import {
 } from '@ionic/vue';
 import { defineComponent, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { translate } from '@hotwax/dxp-components';
+import { translate } from '@common';
 import { refreshOutline } from 'ionicons/icons';
 
 export default defineComponent({

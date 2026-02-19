@@ -121,10 +121,7 @@
 import { codeWorkingOutline, cloudDownloadOutline, documentTextOutline, ellipsisVerticalOutline, fileTrayFullOutline, globeOutline, optionsOutline, pulseOutline, shareSocialOutline, warningOutline } from "ionicons/icons";
 import { IonBackButton, IonBadge, IonButton, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonPage, IonSpinner, IonTitle, IonToolbar } from "@ionic/vue";
 import { ref, computed } from 'vue'
-import { useUserStore } from '@/store/authStore'
-import { translate } from '@hotwax/dxp-components'
-
-const userStore = useUserStore()
+import { translate } from '@common'
 
 const configDetails = ref({})
 const currentJob = ref({} as any)
