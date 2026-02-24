@@ -1,7 +1,6 @@
 import { defineStore } from "pinia";
-import { UserService } from "@/services/UserService";
 import { hasError, showToast } from "@/utils";
-import { api, cookieHelper, translate } from "@common";
+import { api, client, cookieHelper, translate } from "@common";
 import { DateTime, Settings } from "luxon";
 import {
   getServerPermissionsFromRules,
@@ -9,7 +8,7 @@ import {
   resetPermissions,
   setPermissions,
 } from "@/authorization";
-import { logout, updateInstanceUrl, updateToken, resetConfig } from "@/adapter";
+import { logout, resetConfig } from "@/adapter";
 import logger from "@/logger";
 import emitter from "@/event-bus";
 
@@ -24,7 +23,6 @@ export const useAuthStore = defineStore("auth", {
     maargOms: '',
     maargUrl: '',
     permissions: [] as any[],
-    instanceUrl: "",
     shopifyConfigs: [] as any[],
     currentShopifyConfig: {} as any,
     currentEComStore: {
@@ -35,10 +33,6 @@ export const useAuthStore = defineStore("auth", {
     pwaState: {
       updateExists: false,
       registration: null as any,
-    },
-    omsRedirectionInfo: {
-      url: "",
-      token: "",
     },
   }),
   getters: {
@@ -62,30 +56,16 @@ export const useAuthStore = defineStore("auth", {
     getUserToken: (state: any) => state.token,
     getPermissions: (state: any) => state.permissions,
     getUserProfile: (state: any) => state.current,
-    getInstanceUrl: (state: any) => {
-      const baseUrl = import.meta.env.VITE_VUE_APP_BASE_URL;
-      return baseUrl ? baseUrl : state.instanceUrl;
-    },
     getCurrentShopifyConfig: (state: any) => state.currentShopifyConfig,
     getShopifyConfigs: (state: any) => state.shopifyConfigs,
     getProductStoreCategories: (state: any) => state.productStoreCategories,
     getPwaState: (state: any) => state.pwaState,
     getCurrentEComStore: (state: any) => state.currentEComStore,
-    getMaargBaseUrl: (state: any) => {
-      const url = state.omsRedirectionInfo.url;
-      if (!url) return "";
-      return url.startsWith("http")
-        ? url.includes("/rest/s1/admin")
-          ? url
-          : `${url}/rest/s1/admin/`
-        : `https://${url}.hotwax.io/rest/s1/admin/`;
-    },
-    getOmsRedirectionInfo: (state: any) => state.omsRedirectionInfo,
   },
   actions: {
     async login(username: string, password: string) {
       try {
-        const resp = await api({
+        const resp = await client({
           url: "login",
           method: "post",
           data: {
@@ -101,73 +81,86 @@ export const useAuthStore = defineStore("auth", {
         }
 
         await this.setToken(resp.data.token, resp.data.expirationTime)
+        await this.fetchPermissions()
 
-        // Getting the permissions list from server
-        const permissionId = import.meta.env.VITE_VUE_APP_PERMISSION_ID;
-        // Prepare permissions list
-        const serverPermissionsFromRules = getServerPermissionsFromRules();
-        if (permissionId) serverPermissionsFromRules.push(permissionId);
-
-        const serverPermissions = await UserService.getUserPermissions(
-          {
-            permissionIds: [...new Set(serverPermissionsFromRules)],
-          },
-          this.token.value
-        );
-        const appPermissions = prepareAppPermissions(serverPermissions);
-
-        // Checking if the user has permission to access the app
-        // If there is no configuration, the permission check is not enabled
-        if (permissionId) {
-          const hasPermission = appPermissions.some((appPermission: any) => appPermission.action === permissionId);
-          if (!hasPermission) {
-            const permissionError = "You do not have permission to access the app.";
-            showToast(translate(permissionError));
-            logger.error("error", permissionError);
-            return Promise.reject(new Error(permissionError));
-          }
+        try {
+          const userProfileResp = await api({
+            url: "admin/user/profile",
+            method: "get",
+            baseUrl: this.maargUrl
+          });
+          this.current = userProfileResp.data
+        } catch(error: any) {
+          showToast(translate("Failed to fetch user profile information"));
+          console.error("error", error);
+          this.setToken("", undefined)
+          return Promise.reject(new Error(error));
         }
 
-        const userProfile = await UserService.getUserProfile(this.token.value);
-        userProfile.stores = await UserService.getEComStores(this.token.value);
+        try {
+          // "storeName_op": "not-empty"
+          // "distinct": "Y"
+          const productStoresResp = await api({
+            url: "admin/productStores",
+            method: "get",
+            baseUrl: this.maargUrl
+          });
+          this.current.stores = productStoresResp.data
+        } catch(error: any) {
+          throw error;
+        }
 
         // In Job Manager application, we have jobs which may not be associated with any product store
-        userProfile.stores.push({
+        this.current.stores.push({
           productStoreId: "",
           storeName: "None",
         });
-        let preferredStore = userProfile.stores[0];
+        let preferredStore = this.current.stores[0];
 
-        const preferredStoreId = await UserService.getPreferredStore(this.token.value);
-        if (preferredStoreId) {
-          const store = userProfile.stores.find((store: any) => store.productStoreId === preferredStoreId);
-          store && (preferredStore = store);
+        try {
+          const preferredStoreResp = await api({
+            url: "admin/user/preferences",
+            method: "GET",
+            params: {
+              pageSize: 1,
+              userId: this.current.userId,
+              preferenceKey: "FAVORITE_PRODUCT_STORE"
+            },
+          });
+          const preferredStoreId = preferredStoreResp.data
+          if (preferredStoreId) {
+            const store = this.current.stores.find((store: any) => store.productStoreId === preferredStoreId);
+            store && (preferredStore = store);
+          }
+        } catch(err) {
+          logger.error('Favourite product store not found', err)
         }
 
-        const shopifyConfigs = await UserService.getShopifyConfig(
-          preferredStore.productStoreId,
-          this.token.value
-        );
-        let currentShopifyConfig = {};
-        shopifyConfigs.length > 0 && (currentShopifyConfig = shopifyConfigs[0]);
+        await this.fetchShopifyConfig(preferredStore.productStoreId);
 
-        const preferredShopifyShopId = await UserService.getPreferredShopifyShop(this.token.value);
-        if (preferredShopifyShopId) {
-          currentShopifyConfig = shopifyConfigs.find((shopifyConfig: any) => shopifyConfig.shopId === preferredShopifyShopId);
+        try {
+          const preferredShopifyShopResp = await api({
+            url: "admin/user/preferences",
+            method: "GET",
+            params: {
+              pageSize: 1,
+              userId: this.current.userId,
+              preferenceKey: "FAVORITE_SHOPIFY_SHOP"
+            },
+          });
+          const preferredShopifyShopId = preferredShopifyShopResp.data
+          if (preferredShopifyShopId) {
+            this.currentShopifyConfig = this.shopifyConfigs.find((shopifyConfig: any) => shopifyConfig.shopId === preferredShopifyShopId);
+          }
+        } catch(err) {
+          logger.error('Favourite shopify shop not found', err)
         }
 
-        setPermissions(appPermissions);
-        if (userProfile.userTimeZone) {
-          Settings.defaultZone = userProfile.userTimeZone;
+        if (this.current.userTimeZone) {
+          Settings.defaultZone = this.current.userTimeZone;
         }
 
         this.currentEComStore = preferredStore;
-        this.current = userProfile;
-        this.shopifyConfigs = shopifyConfigs;
-        this.currentShopifyConfig = currentShopifyConfig;
-        this.permissions = appPermissions;
-
-        updateToken(this.token.value);
       } catch (err: any) {
         showToast(translate("Something went wrong while login. Please contact administrator."));
         logger.error("error: ", err.toString());
@@ -210,6 +203,107 @@ export const useAuthStore = defineStore("auth", {
       return redirectionUrl;
     },
 
+    async fetchPermissions() {
+      const permissionId = import.meta.env.VITE_VUE_APP_PERMISSION_ID;
+      // Prepare permissions list
+      const serverPermissionsFromRules = [...new Set(getServerPermissionsFromRules())];
+      if (permissionId) serverPermissionsFromRules.push(permissionId);
+      let serverPermissions = [] as any;
+
+      // If the server specific permission list doesn't exist, getting server permissions will be of no use
+      // It means there are no rules yet depending upon the server permissions.
+      if (serverPermissionsFromRules && serverPermissionsFromRules.length == 0) return serverPermissions;
+      // TODO pass specific permissionIds
+      let resp;
+      // TODO Make it configurable from the environment variables.
+      // Though this might not be an server specific configuration, 
+      // we will be adding it to environment variable for easy configuration at app level
+      const viewSize = 200;
+
+      try {
+        const params = {
+          "viewIndex": 0,
+          viewSize,
+          permissionIds: serverPermissionsFromRules
+        }
+        resp = await api({
+          url: "getPermissions",
+          method: "post",
+          baseURL: this.getOmsUrl,
+          data: params,
+        })
+        if(resp.status === 200 && resp.data.docs?.length && !hasError(resp)) {
+          serverPermissions = resp.data.docs.map((permission: any) => permission.permissionId);
+          const total = resp.data.count;
+          const remainingPermissions = total - serverPermissions.length;
+          if (remainingPermissions > 0) {
+            // We need to get all the remaining permissions
+            const apiCallsNeeded = Math.floor(remainingPermissions / viewSize) + ( remainingPermissions % viewSize != 0 ? 1 : 0);
+            const responses = await Promise.all([...Array(apiCallsNeeded).keys()].map(async (index: any) => {
+              const response = await api({
+                url: "getPermissions",
+                method: "post",
+                baseURL: this.getOmsUrl,
+                data: {
+                  "viewIndex": index + 1,
+                  viewSize,
+                  permissionIds: serverPermissionsFromRules
+                }
+              })
+              if(!hasError(response)){
+                return Promise.resolve(response);
+                } else {
+                return Promise.reject(response);
+                }
+            }))
+            const permissionResponses = {
+              success: [],
+              failed: []
+            }
+            responses.reduce((permissionResponses: any, permissionResponse: any) => {
+              if (permissionResponse.status !== 200 || hasError(permissionResponse) || !permissionResponse.data?.docs) {
+                permissionResponses.failed.push(permissionResponse);
+              } else {
+                permissionResponses.success.push(permissionResponse);
+              }
+              return permissionResponses;
+            }, permissionResponses)
+
+            serverPermissions = permissionResponses.success.reduce((serverPermissions: any, response: any) => {
+              serverPermissions.push(...response.data.docs.map((permission: any) => permission.permissionId));
+              return serverPermissions;
+            }, serverPermissions)
+
+            // If partial permissions are received and we still allow user to login, some of the functionality might not work related to the permissions missed.
+            // Show toast to user intimiting about the failure
+            // Allow user to login
+            // TODO Implement Retry or improve experience with show in progress icon and allowing login only if all the data related to user profile is fetched.
+            if (permissionResponses.failed.length > 0) Promise.reject("Something went wrong while getting complete user permissions.");
+          }
+        }
+        const appPermissions = prepareAppPermissions(serverPermissions);
+
+        // Checking if the user has permission to access the app
+        // If there is no configuration, the permission check is not enabled
+        if (permissionId) {
+          const hasPermission = appPermissions.some((appPermission: any) => appPermission.action === permissionId);
+          if (!hasPermission) {
+            const permissionError = "You do not have permission to access the app.";
+            showToast(translate(permissionError));
+            logger.error("error", permissionError);
+            return Promise.reject(new Error(permissionError));
+          }
+        }
+
+        // Update the state with the fetched permissions
+        this.permissions = appPermissions;
+        // Set permissions in the authorization module
+        setPermissions(appPermissions);
+      } catch(error: any) {
+        return Promise.reject(error);
+      }
+    },
+
     async setEcomStore(payload: any) {
       let productStore = payload.productStore;
       if (!productStore) {
@@ -218,23 +312,14 @@ export const useAuthStore = defineStore("auth", {
         );
       }
       this.currentEComStore = productStore;
-      await this.getShopifyConfig(productStore.productStoreId);
+      await this.fetchShopifyConfig(productStore.productStoreId);
     },
 
-    async setUserTimeZone(timeZoneId: string) {
+    setUserTimeZone(timeZoneId: string) {
       const current: any = this.current;
       current.userTimeZone = timeZoneId;
       this.current = current;
       Settings.defaultZone = current.userTimeZone;
-    },
-
-    setUserInstanceUrl(payload: string) {
-      this.instanceUrl = payload;
-      updateInstanceUrl(payload);
-    },
-
-    setOmsRedirectionInfo(payload: any) {
-      this.omsRedirectionInfo = payload;
     },
 
     updatePwaState(payload: any) {
@@ -242,22 +327,25 @@ export const useAuthStore = defineStore("auth", {
       this.pwaState.updateExists = payload.updateExists;
     },
 
-    async getShopifyConfig(productStoreId: string) {
+    async fetchShopifyConfig(productStoreId: string) {
       if (!productStoreId) {
         this.shopifyConfigs = [];
         this.currentShopifyConfig = {};
-        logger.warn(
-          "No productStoreId provided for fetching shopify config. Setting initial values"
-        );
+        logger.warn("No productStoreId provided for fetching shopify config. Setting initial values");
         return;
       }
 
       try {
-        const shopifyConfigs = await UserService.getShopifyConfig(
-          productStoreId,
-          this.token
-        );
         let currentShopifyConfig = {};
+        const shopifyConfigResp = await api({
+          url: "admin/shopifyShops",
+          method: "GET",
+          params: {
+            pageSize: 50,
+            productStoreId
+          },
+        });
+        const shopifyConfigs = shopifyConfigResp.data
         shopifyConfigs.length > 0 && (currentShopifyConfig = shopifyConfigs[0]);
         this.shopifyConfigs = shopifyConfigs;
         this.currentShopifyConfig = currentShopifyConfig;
@@ -278,7 +366,34 @@ export const useAuthStore = defineStore("auth", {
       }
       this.currentShopifyConfig = shopifyConfig ? shopifyConfig : {};
     },
-    async setMaargInstance(oms: string) {
+    async samlLogin(token: string, expirationTime: string) {
+      try {
+        this.setToken(token, expirationTime)
+
+        try {
+          const userProfileResp = await api({
+            url: "admin/user/profile",
+            method: "get",
+            baseUrl: this.maargUrl
+          });
+          this.current = userProfileResp.data
+        } catch(error: any) {
+          this.setToken("", undefined)
+          showToast(translate("Failed to fetch user profile information"));
+          console.error("error", error);
+          return Promise.reject(new Error(error));
+        }
+
+        await this.fetchPermissions();
+      } catch (error: any) {
+        // If any of the API call in try block has status code other than 2xx it will be handled in common catch block.
+        // TODO Check if handling of specific status codes is required.
+        showToast(translate('Something went wrong while login. Please contact administrator.'));
+        console.error("error: ", error);
+        return Promise.reject(new Error(error))
+      }
+    },
+    setMaargInstance(oms: string) {
       this.maargOms = oms
       this.maargUrl = oms.startsWith('http') ? oms.includes('/rest/s1') ? oms : `${oms}/rest/s1/` : `https://${oms}.hotwax.io/rest/s1/`;
       cookieHelper().set("maarg", this.maargOms)
@@ -287,7 +402,7 @@ export const useAuthStore = defineStore("auth", {
       cookieHelper().set("oms", oms)
       this.oms = oms;
     },
-    async setToken(token: any, expirationTime: any) {
+    setToken(token: any, expirationTime: any) {
       cookieHelper().set("token", token, expirationTime)
       this.token = {
         value: token,

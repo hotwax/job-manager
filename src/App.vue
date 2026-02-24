@@ -39,9 +39,6 @@ export default defineComponent({
     },
     userToken(): any {
       return this.authStore.getUserToken
-    },
-    instanceUrl(): any {
-      return this.authStore.getInstanceUrl
     }
   },
   methods: {
@@ -97,8 +94,6 @@ export default defineComponent({
   },
   created() {
     initialise({
-      token: this.userToken,
-      instanceUrl: this.instanceUrl,
       cacheMaxAge: this.maxAge,
       events: {
         unauthorised: this.unauthorized,

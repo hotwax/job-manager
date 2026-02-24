@@ -23,7 +23,7 @@
           <section v-else>
             <div class="ion-text-center ion-margin-bottom">
               <ion-chip :outline="true" @click="toggleOmsInput()">
-                {{ authStore.instanceUrl }}
+                {{ authStore.getOMS }}
               </ion-chip>
             </div>
 
@@ -74,9 +74,9 @@ import router from "../router";
 import { useAuthStore } from "@/store/auth";
 import Logo from '@/components/Logo.vue';
 import { arrowForwardOutline, gridOutline } from 'ionicons/icons'
-import { UserService } from "@/services/UserService";
-import { translate, hasError, cookieHelper, api } from "@common";
+import { translate, hasError, cookieHelper, api, client } from "@common";
 import { showToast } from "@/utils";
+import { useAuth } from "@/composables/auth";
 
 let route = null as any;
 const authStore = useAuthStore();
@@ -92,7 +92,6 @@ const showOmsInput = ref(false);
 const hideBackground = ref(true);
 const isConfirmingForActiveSession = ref(false);
 const loader = ref<any>(null);
-const loginOption = ref<any>({});
 const isCheckingOms = ref(false);
 const isLoggingIn = ref(false);
 
@@ -112,23 +111,6 @@ const dismissLoader = () => {
   if (loader.value) {
     loader.value.dismiss();
     loader.value = null;
-  }
-};
-
-const fetchLoginOptions = async () => {
-  loginOption.value = {}
-  try {
-    const resp = await api({
-      url: "checkLoginOptions",
-      method: "GET",
-      baseURL: authStore.getOmsUrl
-    });
-    if (!hasError(resp)) {
-      loginOption.value = resp.data
-      await authStore.setMaargInstance(resp.data.maargInstanceUrl)
-    }
-  } catch (error) {
-    console.error(error)
   }
 };
 
@@ -153,7 +135,6 @@ const login = async () => {
     // All the failure cases are handled in action, if then block is executing, login is successful
     username.value = "";
     password.value = "";
-    cookieHandler.set('hc_token', authStore.token);
     router.push('/');
   } catch (error) {
     console.error(error);
@@ -173,13 +154,13 @@ const setOms = async () => {
   if (!baseURL) authStore.setOMS(alias[instanceURL] ? alias[instanceURL] : instanceURL);
 
   // run SAML login flow if login options are configured for the OMS
-  await fetchLoginOptions();
+  await useAuth().fetchLoginOptions();
 
   // checking loginOption.length to know if fetchLoginOptions API returned data
   // as toggleOmsInput is called twice without this check, from fetchLoginOptions and
   // through setOms (here) again
-  if (Object.keys(loginOption.value).length && loginOption.value.loginAuthType !== 'BASIC') {
-    window.location.href = `${loginOption.value.loginAuthUrl}?relaystate=${window.location.origin}/login`;
+  if (Object.keys(useAuth().loginOption.value).length && useAuth().loginOption.value.loginAuthType !== 'BASIC') {
+    window.location.href = `${useAuth().loginOption.value.loginAuthUrl}?relaystate=${window.location.origin}/login`;
   } else {
     toggleOmsInput();
   }
@@ -190,12 +171,10 @@ const samlLogin = async () => {
   try {
     const { token, expirationTime } = route.query as any;
     await authStore.samlLogin(token, expirationTime);
-    cookieHandler.set('hc_token', token, expirationTime);
-    router.push('/');
   } catch (error) {
-    router.push('/');
     console.error(error);
   }
+  router.push('/');
 };
 
 const basicLogin = async () => {
@@ -203,13 +182,16 @@ const basicLogin = async () => {
     const { oms, token, expirationTime } = route.query as any;
     // Clear the previously stored oms and token when having oms and token in the URL
     authStore.$patch({
-      token: '',
-      instanceUrl: ''
+      token: {
+        value: "",
+        expiration: undefined
+      },
+      oms: ""
     });
-    authStore.setUserInstanceUrl(oms);
+    authStore.setOMS(oms);
 
     // checking for login options as we need to get maarg instance URL for accessing specific apps
-    await fetchLoginOptions();
+    await useAuth().fetchLoginOptions();
 
     // Setting token previous to getting user-profile, if not then the client method honors the state token
     authStore.$patch({
@@ -217,12 +199,25 @@ const basicLogin = async () => {
     });
     cookieHandler.set('hc_token', token, expirationTime);
 
-    const current = await UserService.getUserProfile(token);
-    authStore.$patch({
-      current: current
-    });
+    try {
+      const userProfileResp = await api({
+        url: "admin/user/profile",
+        method: "get",
+        baseUrl: authStore.maargUrl
+      });
+      const current = userProfileResp.data
+      authStore.$patch({
+        current: current
+      });
+    } catch(error: any) {
+      showToast(translate("Failed to fetch user profile information"));
+      console.error("error", error);
+      authStore.setToken("", undefined)
+      return Promise.reject(new Error(error));
+    }
 
-    await authStore.getPermissions();
+
+    await authStore.fetchPermissions();
   } catch (error) {
     showToast(translate('Failed to fetch user-profile, please try again'));
     console.error("error: ", error);
@@ -253,12 +248,12 @@ const initialise = async () => {
   }
 
   // fetch login options only if OMS is there as API calls require OMS
-  if (authStore.instanceUrl) {
-    await fetchLoginOptions();
+  if (authStore.oms) {
+    await useAuth().fetchLoginOptions();
   }
 
   // show OMS input if SAML if configured or if query or state does not have OMS
-  if (loginOption.value.loginAuthType !== 'BASIC' || route.query?.oms || !authStore.instanceUrl) {
+  if (useAuth().loginOption.value.loginAuthType !== 'BASIC' || route.query?.oms || !authStore.oms) {
     showOmsInput.value = true;
   }
 
@@ -274,13 +269,13 @@ const initialise = async () => {
 
   const hcToken = cookieHandler.get('hc_token');
   if (authStore.token && !hcToken) {
-    cookieHandler.set('hc_token', authStore.token);
+    cookieHandler.set('hc_token', authStore.token.value, authStore.token.expiration);
   }
 
-  instanceUrl.value = authStore.instanceUrl;
-  if (authStore.instanceUrl) {
+  instanceUrl.value = authStore.oms;
+  if (authStore.oms) {
     // If the current URL is available in alias show it for consistency
-    const currentInstanceUrlAlias = Object.keys(alias).find((key) => alias[key] === authStore.instanceUrl);
+    const currentInstanceUrlAlias = Object.keys(alias).find((key) => alias[key] === authStore.oms);
     currentInstanceUrlAlias && (instanceUrl.value = currentInstanceUrlAlias);
   }
   // If there is no current preference set the default one
