@@ -35,10 +35,7 @@ export default defineComponent({
   },
   computed: {
     userProfile(): any {
-      return this.authStore.getUserProfile
-    },
-    userToken(): any {
-      return this.authStore.getUserToken
+      return this.userStore.getUserProfile
     }
   },
   methods: {
@@ -132,9 +129,9 @@ export default defineComponent({
     resetConfig();
   },
   setup(){
-    const authStore = useUserStore();
+    const userStore = useUserStore();
     return {
-      authStore,
+      userStore,
       router
     }
   },

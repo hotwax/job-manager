@@ -1,27 +1,18 @@
 import { defineStore } from "pinia";
 import { hasError, showToast } from "@/utils";
-import { api, client, cookieHelper, getMaargURL, getOmsURL, translate } from "@common";
-import { DateTime, Settings } from "luxon";
+import { api, cookieHelper, getMaargURL, getOmsURL, translate } from "@common";
+import { Settings } from "luxon";
 import {
   getServerPermissionsFromRules,
   prepareAppPermissions,
-  resetPermissions,
   setPermissions,
 } from "@/authorization";
 import logger from "@/logger";
-import emitter from "@/event-bus";
 import { useAuth } from "@/composables/auth";
 
 export const useUserStore = defineStore("user", {
   state: () => ({
     current: {} as any,
-    oms: "",
-    token: {
-      value: "",
-      expiration: undefined
-    },
-    maargOms: '',
-    maargUrl: '',
     permissions: [] as any[],
     shopifyConfigs: [] as any[],
     currentShopifyConfig: {} as any,
@@ -36,7 +27,6 @@ export const useUserStore = defineStore("user", {
     },
   }),
   getters: {
-    getUserToken: (state: any) => state.token,
     getPermissions: (state: any) => state.permissions,
     getUserProfile: (state: any) => state.current,
     getCurrentShopifyConfig: (state: any) => state.currentShopifyConfig,
@@ -298,7 +288,7 @@ export const useUserStore = defineStore("user", {
           const userProfileResp = await api({
             url: "admin/user/profile",
             method: "get",
-            baseUrl: this.maargUrl
+            baseUrl: getMaargURL()
           });
           this.current = userProfileResp.data
         } catch(error: any) {

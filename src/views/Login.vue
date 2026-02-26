@@ -74,7 +74,7 @@ import router from "../router";
 import { useUserStore } from "@/store/auth";
 import Logo from '@/components/Logo.vue';
 import { arrowForwardOutline, gridOutline } from 'ionicons/icons'
-import { translate, hasError, cookieHelper, api, client } from "@common";
+import { translate, hasError, cookieHelper, api, client, getMaargURL } from "@common";
 import { showToast } from "@/utils";
 import { useAuth } from "@/composables/auth";
 
@@ -209,7 +209,7 @@ const basicLogin = async () => {
       const userProfileResp = await api({
         url: "admin/user/profile",
         method: "get",
-        baseUrl: authStore.maargUrl
+        baseUrl: getMaargURL()
       });
       const current = userProfileResp.data
       authStore.$patch({
