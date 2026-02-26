@@ -53,6 +53,5 @@ const app = createApp(App)
   })
 
 router.isReady().then(() => {
-  console.log('router', router)
   app.mount('#app');
 });

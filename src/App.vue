@@ -14,10 +14,10 @@ import Menu from '@/components/Menu.vue';
 import { loadingController } from '@ionic/vue';
 import emitter from "@/event-bus"
 import { Settings } from 'luxon'
-import { initialise, resetConfig } from '@/adapter'
 import router from './router';
-import { translate } from '@common';
-import { useAuthStore } from '@/store/auth';
+import { initialise, resetConfig, translate } from '@common';
+import { useUserStore } from '@/store/auth';
+import { useAuth } from './composables/auth';
 
 export default defineComponent({
   name: 'App',
@@ -87,9 +87,12 @@ export default defineComponent({
     },
     async unauthorized() {
       // Mark the user as unauthorised, this will help in not making the logout api call in actions
-      this.authStore.logout({ isUserUnauthorised: true });
-      const redirectUrl = window.location.origin + '/login'
-      window.location.href = `${import.meta.env.VUE_APP_LOGIN_URL}?redirectUrl=${redirectUrl}`
+      const redirectionUrl = await useAuth().logout({ isUserUnauthorised: true });
+      if(redirectionUrl) {
+        window.location.href = redirectionUrl
+      } else {
+        this.router.replace("/login");
+      }
     }
   },
   created() {
@@ -126,10 +129,10 @@ export default defineComponent({
     emitter.off('presentLoader', this.presentLoader);
     emitter.off('dismissLoader', this.dismissLoader);
     emitter.off('playAnimation', this.playAnimation);
-    resetConfig()
+    resetConfig();
   },
   setup(){
-    const authStore = useAuthStore();
+    const authStore = useUserStore();
     return {
       authStore,
       router

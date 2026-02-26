@@ -23,7 +23,7 @@
           <section v-else>
             <div class="ion-text-center ion-margin-bottom">
               <ion-chip :outline="true" @click="toggleOmsInput()">
-                {{ authStore.getOMS }}
+                {{ cookieHelper().get("oms") }}
               </ion-chip>
             </div>
 
@@ -71,7 +71,7 @@ import {
 } from "@ionic/vue";
 import { ref } from "vue";
 import router from "../router";
-import { useAuthStore } from "@/store/auth";
+import { useUserStore } from "@/store/auth";
 import Logo from '@/components/Logo.vue';
 import { arrowForwardOutline, gridOutline } from 'ionicons/icons'
 import { translate, hasError, cookieHelper, api, client } from "@common";
@@ -79,8 +79,11 @@ import { showToast } from "@/utils";
 import { useAuth } from "@/composables/auth";
 
 let route = null as any;
-const authStore = useAuthStore();
+const authStore = useUserStore();
 const cookieHandler = cookieHelper();
+
+// This is the best practice for defining composable instance, as this ensures in managing the reactive state properly
+const { loginOption, fetchLoginOptions, login: authLogin } = useAuth();
 
 const username = ref("");
 const password = ref("");
@@ -131,7 +134,7 @@ const login = async () => {
 
   isLoggingIn.value = true;
   try {
-    await authStore.login(username.value.trim(), password.value);
+    await authLogin(username.value.trim(), password.value);
     // All the failure cases are handled in action, if then block is executing, login is successful
     username.value = "";
     password.value = "";
@@ -151,16 +154,18 @@ const setOms = async () => {
   isCheckingOms.value = true;
 
   const instanceURL = instanceUrl.value.trim().toLowerCase();
-  if (!baseURL) authStore.setOMS(alias[instanceURL] ? alias[instanceURL] : instanceURL);
+  if (!baseURL) {
+    cookieHelper().set('oms', alias[instanceURL] ? alias[instanceURL] : instanceURL)
+  }
 
   // run SAML login flow if login options are configured for the OMS
-  await useAuth().fetchLoginOptions();
+  await fetchLoginOptions();
 
   // checking loginOption.length to know if fetchLoginOptions API returned data
   // as toggleOmsInput is called twice without this check, from fetchLoginOptions and
   // through setOms (here) again
-  if (Object.keys(useAuth().loginOption.value).length && useAuth().loginOption.value.loginAuthType !== 'BASIC') {
-    window.location.href = `${useAuth().loginOption.value.loginAuthUrl}?relaystate=${window.location.origin}/login`;
+  if (Object.keys(loginOption.value).length && loginOption.value.loginAuthType !== 'BASIC') {
+    window.location.href = `${loginOption.value.loginAuthUrl}?relaystate=${window.location.origin}/login`;
   } else {
     toggleOmsInput();
   }
@@ -188,16 +193,17 @@ const basicLogin = async () => {
       },
       oms: ""
     });
-    authStore.setOMS(oms);
+    cookieHelper().set("oms", oms)
 
     // checking for login options as we need to get maarg instance URL for accessing specific apps
-    await useAuth().fetchLoginOptions();
+    await fetchLoginOptions();
 
     // Setting token previous to getting user-profile, if not then the client method honors the state token
     authStore.$patch({
       token: token
     });
-    cookieHandler.set('hc_token', token, expirationTime);
+    cookieHandler.set('token', token);
+    cookieHandler.set('expirationTime', expirationTime)
 
     try {
       const userProfileResp = await api({
@@ -212,7 +218,7 @@ const basicLogin = async () => {
     } catch(error: any) {
       showToast(translate("Failed to fetch user profile information"));
       console.error("error", error);
-      authStore.setToken("", undefined)
+      useAuth().clearAuth();
       return Promise.reject(new Error(error));
     }
 
@@ -241,19 +247,13 @@ const initialise = async () => {
     return;
   }
 
-  // logout from Launchpad if logged out from the app
-  if (route.query?.isLoggedOut === 'true') {
-    await authStore.logout();
-    cookieHandler.remove('hc_token');
-  }
-
   // fetch login options only if OMS is there as API calls require OMS
   if (authStore.oms) {
-    await useAuth().fetchLoginOptions();
+    await fetchLoginOptions();
   }
 
   // show OMS input if SAML if configured or if query or state does not have OMS
-  if (useAuth().loginOption.value.loginAuthType !== 'BASIC' || route.query?.oms || !authStore.oms) {
+  if (loginOption.value.loginAuthType !== 'BASIC' || route.query?.oms || !authStore.oms) {
     showOmsInput.value = true;
   }
 
@@ -263,14 +263,15 @@ const initialise = async () => {
   }
 
   // if a session is already active, login directly in the app
-  if (authStore.isAuthenticated) {
+  if (useAuth().isAuthenticated.value) {
     router.push('/');
   }
 
-  const hcToken = cookieHandler.get('hc_token');
-  if (authStore.token && !hcToken) {
-    cookieHandler.set('hc_token', authStore.token.value, authStore.token.expiration);
-  }
+  // const token = cookieHandler.get('token');
+  // if (authStore.token && !token) {
+  //   cookieHandler.set('token', authStore.token.value);
+  //   cookieHandler.set('expirationTime', authStore.token.expiration);
+  // }
 
   instanceUrl.value = authStore.oms;
   if (authStore.oms) {

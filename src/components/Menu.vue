@@ -44,10 +44,11 @@ import {
 } from "@ionic/vue";
 import { computed, defineComponent } from "vue";
 import { albumsOutline, barChartOutline, calendarNumberOutline, compassOutline, hourglassOutline, libraryOutline, pulseOutline, settingsOutline, sendOutline, terminalOutline, ticketOutline, timeOutline, cloudUploadOutline } from "ionicons/icons";
-import { useAuthStore } from "@/store/auth";
+import { useUserStore } from "@/store/auth";
 import { hasPermission } from "@/authorization";
 import router from "../router";
 import { translate } from "@common";
+import { useAuth } from "@/composables/auth";
 
 export default defineComponent({
   name: "Menu",
@@ -66,26 +67,20 @@ export default defineComponent({
   },
   computed: {
     isUserAuthenticated(): any {
-      return this.authStore.isUserAuthenticated
-    },
-    eComStore(): any {
-      return this.authStore.getCurrentEComStore
+      return useAuth().isAuthenticated.value
     },
     userProfile(): any {
-      return this.authStore.getUserProfile
+      return this.userStore.getUserProfile
     },
     currentShopifyConfig(): any {
-      return this.authStore.getCurrentShopifyConfig
-    },
-    currentEComStore(): any {
-      return this.authStore.getCurrentEComStore
+      return this.userStore.getCurrentShopifyConfig
     },
     shopifyConfigs(): any {
-      return this.authStore.getShopifyConfigs
+      return this.userStore.getShopifyConfigs
     },
   },
   setup() {
-    const authStore = useAuthStore();
+    const userStore = useUserStore();
     
     // Filtering array of app pages, retaining only those elements (pages) that have the necessary permissions for display.
     const getValidMenuItems = (appPages: any) => {
@@ -169,7 +164,7 @@ export default defineComponent({
       pulseOutline,
       selectedIndex,
       translate,
-      authStore,
+      userStore,
       router
     };
   }

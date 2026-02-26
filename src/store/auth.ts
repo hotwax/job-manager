@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { hasError, showToast } from "@/utils";
-import { api, client, cookieHelper, translate } from "@common";
+import { api, client, cookieHelper, getMaargURL, getOmsURL, translate } from "@common";
 import { DateTime, Settings } from "luxon";
 import {
   getServerPermissionsFromRules,
@@ -8,11 +8,11 @@ import {
   resetPermissions,
   setPermissions,
 } from "@/authorization";
-import { logout, resetConfig } from "@/adapter";
 import logger from "@/logger";
 import emitter from "@/event-bus";
+import { useAuth } from "@/composables/auth";
 
-export const useAuthStore = defineStore("auth", {
+export const useUserStore = defineStore("user", {
   state: () => ({
     current: {} as any,
     oms: "",
@@ -25,7 +25,7 @@ export const useAuthStore = defineStore("auth", {
     permissions: [] as any[],
     shopifyConfigs: [] as any[],
     currentShopifyConfig: {} as any,
-    currentEComStore: {
+    currentProductStore: {
       productStoreId: "",
       storeName: "None",
     } as any,
@@ -36,23 +36,6 @@ export const useAuthStore = defineStore("auth", {
     },
   }),
   getters: {
-    isAuthenticated: (state) => {
-      let isTokenExpired = false;
-      if (state.token.expiration) {
-        const currTime = DateTime.now().toMillis();
-        isTokenExpired = state.token.expiration < currTime;
-      }
-      return !!(state.token.value && !isTokenExpired);
-    },
-    getOMS: (state) => state.oms,
-    getOmsUrl: (state) => {
-      let baseURL = import.meta.env.VITE_VUE_APP_BASE_URL
-      if (!baseURL) baseURL = state.oms
-      return baseURL.startsWith('http') ? baseURL.includes('/api') ? baseURL : `${baseURL}/api/` : `https://${baseURL}.hotwax.io/api/`
-    },
-    getMaargOms: (state) => state.maargOms,
-    getMaargUrl: (state) => state.maargUrl,
-    isUserAuthenticated: (state: any) => !!(state.token && state.current),
     getUserToken: (state: any) => state.token,
     getPermissions: (state: any) => state.permissions,
     getUserProfile: (state: any) => state.current,
@@ -60,147 +43,89 @@ export const useAuthStore = defineStore("auth", {
     getShopifyConfigs: (state: any) => state.shopifyConfigs,
     getProductStoreCategories: (state: any) => state.productStoreCategories,
     getPwaState: (state: any) => state.pwaState,
-    getCurrentEComStore: (state: any) => state.currentEComStore,
+    getCurrentProductStore: (state: any) => state.currentProductStore,
   },
   actions: {
-    async login(username: string, password: string) {
+    async fetchUserProfile() {
       try {
-        const resp = await client({
-          url: "login",
-          method: "post",
-          data: {
-            'USERNAME': username,
-            'PASSWORD': password
-          },
-          baseURL: this.getOmsUrl
+        const userProfileResp = await api({
+          url: "admin/user/profile",
+          method: "get",
+          baseUrl: getMaargURL()
         });
-        if (hasError(resp)) {
-          showToast(translate('Sorry, your username or password is incorrect. Please try again.'));
-          console.error("error", resp.data._ERROR_MESSAGE_);
-          return Promise.reject(new Error(resp.data._ERROR_MESSAGE_));
-        }
+        this.current = userProfileResp.data
 
-        await this.setToken(resp.data.token, resp.data.expirationTime)
-        await this.fetchPermissions()
-
-        try {
-          const userProfileResp = await api({
-            url: "admin/user/profile",
-            method: "get",
-            baseUrl: this.maargUrl
-          });
-          this.current = userProfileResp.data
-        } catch(error: any) {
-          showToast(translate("Failed to fetch user profile information"));
-          console.error("error", error);
-          this.setToken("", undefined)
-          return Promise.reject(new Error(error));
+        if (this.current.timeZone) {
+          Settings.defaultZone = this.current.timeZone;
         }
-
-        try {
-          // "storeName_op": "not-empty"
-          // "distinct": "Y"
-          const productStoresResp = await api({
-            url: "admin/productStores",
-            method: "get",
-            baseUrl: this.maargUrl
-          });
-          this.current.stores = productStoresResp.data
-        } catch(error: any) {
-          throw error;
-        }
+      } catch(error: any) {
+        showToast(translate("Failed to fetch user profile information"));
+        console.error("error", error);
+        useAuth().clearAuth();
+        return Promise.reject(new Error(error));
+      }
+    },
+    async fetchProductStores() {
+      try {
+        // "storeName_op": "not-empty"
+        // "distinct": "Y"
+        const productStoresResp = await api({
+          url: "admin/productStores",
+          method: "get",
+          baseUrl: getMaargURL()
+        });
+        this.current.stores = productStoresResp.data
 
         // In Job Manager application, we have jobs which may not be associated with any product store
         this.current.stores.push({
           productStoreId: "",
           storeName: "None",
         });
-        let preferredStore = this.current.stores[0];
 
-        try {
-          const preferredStoreResp = await api({
-            url: "admin/user/preferences",
-            method: "GET",
-            params: {
-              pageSize: 1,
-              userId: this.current.userId,
-              preferenceKey: "FAVORITE_PRODUCT_STORE"
-            },
-          });
-          const preferredStoreId = preferredStoreResp.data
-          if (preferredStoreId) {
-            const store = this.current.stores.find((store: any) => store.productStoreId === preferredStoreId);
-            store && (preferredStore = store);
-          }
-        } catch(err) {
-          logger.error('Favourite product store not found', err)
-        }
-
-        await this.fetchShopifyConfig(preferredStore.productStoreId);
-
-        try {
-          const preferredShopifyShopResp = await api({
-            url: "admin/user/preferences",
-            method: "GET",
-            params: {
-              pageSize: 1,
-              userId: this.current.userId,
-              preferenceKey: "FAVORITE_SHOPIFY_SHOP"
-            },
-          });
-          const preferredShopifyShopId = preferredShopifyShopResp.data
-          if (preferredShopifyShopId) {
-            this.currentShopifyConfig = this.shopifyConfigs.find((shopifyConfig: any) => shopifyConfig.shopId === preferredShopifyShopId);
-          }
-        } catch(err) {
-          logger.error('Favourite shopify shop not found', err)
-        }
-
-        if (this.current.userTimeZone) {
-          Settings.defaultZone = this.current.userTimeZone;
-        }
-
-        this.currentEComStore = preferredStore;
-      } catch (err: any) {
-        showToast(translate("Something went wrong while login. Please contact administrator."));
-        logger.error("error: ", err.toString());
-        return Promise.reject(err instanceof Object ? err : new Error(err));
+        this.setCurrentProductStore(this.current.stores[0])
+      } catch(error: any) {
+        logger.error("error", error);
+        return Promise.reject(new Error(error));
       }
     },
-
-    async logout(payload?: any) {
-      let redirectionUrl = "";
-      emitter.emit("presentLoader", {
-        message: "Logging out",
-        backdropDismiss: false,
-      });
-
-      if (!payload?.isUserUnauthorised) {
-        let resp;
-        try {
-          resp = await logout();
-          resp = JSON.parse(
-            resp.startsWith("//") ? resp.replace("//", "") : resp
-          );
-        } catch (err) {
-          logger.error("Error parsing data", err);
+    async fetchProductStorePreference() {
+      try {
+        const preferredStoreResp = await api({
+          url: "admin/user/preferences",
+          method: "GET",
+          params: {
+            pageSize: 1,
+            userId: this.current.userId,
+            preferenceKey: "FAVORITE_PRODUCT_STORE"
+          },
+        });
+        const preferredStoreId = preferredStoreResp.data
+        if (preferredStoreId) {
+          const store = this.current.stores.find((store: any) => store.productStoreId === preferredStoreId);
+          store && this.setCurrentProductStore(store)
         }
-
-        if (resp?.logoutAuthType == "SAML2SSO") {
-          redirectionUrl = resp.logoutUrl;
+      } catch(err) {
+        logger.error('Favourite product store not found', err)
+      }
+    },
+    async fetchShopifyShopPreference() {
+      try {
+        const preferredShopifyShopResp = await api({
+          url: "admin/user/preferences",
+          method: "GET",
+          params: {
+            pageSize: 1,
+            userId: this.current.userId,
+            preferenceKey: "FAVORITE_SHOPIFY_SHOP"
+          },
+        });
+        const preferredShopifyShopId = preferredShopifyShopResp.data
+        if (preferredShopifyShopId) {
+          this.currentShopifyConfig = this.shopifyConfigs.find((shopifyConfig: any) => shopifyConfig.shopId === preferredShopifyShopId);
         }
+      } catch(err) {
+        logger.error('Favourite shopify shop not found', err)
       }
-
-      this.$reset();
-      resetConfig();
-      resetPermissions();
-
-      if (redirectionUrl) {
-        window.location.href = redirectionUrl;
-      }
-
-      emitter.emit("dismissLoader");
-      return redirectionUrl;
     },
 
     async fetchPermissions() {
@@ -229,7 +154,7 @@ export const useAuthStore = defineStore("auth", {
         resp = await api({
           url: "getPermissions",
           method: "post",
-          baseURL: this.getOmsUrl,
+          baseURL: getOmsURL(),
           data: params,
         })
         if(resp.status === 200 && resp.data.docs?.length && !hasError(resp)) {
@@ -243,7 +168,7 @@ export const useAuthStore = defineStore("auth", {
               const response = await api({
                 url: "getPermissions",
                 method: "post",
-                baseURL: this.getOmsUrl,
+                baseURL: getOmsURL(),
                 data: {
                   "viewIndex": index + 1,
                   viewSize,
@@ -304,14 +229,12 @@ export const useAuthStore = defineStore("auth", {
       }
     },
 
-    async setEcomStore(payload: any) {
-      let productStore = payload.productStore;
-      if (!productStore) {
-        productStore = this.current.stores.find(
-          (store: any) => store.productStoreId === payload.productStoreId
-        );
+    async setCurrentProductStore(productStoreInfo: any) {
+      let productStore = productStoreInfo
+      if (!productStoreInfo.storeName) {
+        productStore = this.current.stores.find((store: any) => store.productStoreId === productStoreInfo.productStoreId);
       }
-      this.currentEComStore = productStore;
+      this.currentProductStore = productStore;
       await this.fetchShopifyConfig(productStore.productStoreId);
     },
 
@@ -368,7 +291,8 @@ export const useAuthStore = defineStore("auth", {
     },
     async samlLogin(token: string, expirationTime: string) {
       try {
-        this.setToken(token, expirationTime)
+        cookieHelper().set("token", token)
+        cookieHelper().set("expirationTime", expirationTime)
 
         try {
           const userProfileResp = await api({
@@ -378,7 +302,7 @@ export const useAuthStore = defineStore("auth", {
           });
           this.current = userProfileResp.data
         } catch(error: any) {
-          this.setToken("", undefined)
+          useAuth().clearAuth();
           showToast(translate("Failed to fetch user profile information"));
           console.error("error", error);
           return Promise.reject(new Error(error));
@@ -391,22 +315,6 @@ export const useAuthStore = defineStore("auth", {
         showToast(translate('Something went wrong while login. Please contact administrator.'));
         console.error("error: ", error);
         return Promise.reject(new Error(error))
-      }
-    },
-    setMaargInstance(oms: string) {
-      this.maargOms = oms
-      this.maargUrl = oms.startsWith('http') ? oms.includes('/rest/s1') ? oms : `${oms}/rest/s1/` : `https://${oms}.hotwax.io/rest/s1/`;
-      cookieHelper().set("maarg", this.maargOms)
-    },
-    setOMS(oms: string) {
-      cookieHelper().set("oms", oms)
-      this.oms = oms;
-    },
-    setToken(token: any, expirationTime: any) {
-      cookieHelper().set("token", token, expirationTime)
-      this.token = {
-        value: token,
-        expiration: expirationTime
       }
     },
   },

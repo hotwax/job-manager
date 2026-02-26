@@ -11,13 +11,11 @@ import JobDetailConfig from "@/views/JobDetailConfig.vue"
 import ImportQueue from "@/views/ImportQueue.vue"
 import FileHistory from "@/views/FileHistory.vue"
 import FileDetail from "@/views/FileDetail.vue"
-import { useAuthStore } from '@/store/auth'
 import { hasPermission } from '@/authorization';
 import { showToast } from '@/utils'
 import { translate } from '@common'
 import 'vue-router'
-import { loader } from '@/user-utils';
-
+import { useAuth } from '@/composables/auth';
 
 // Defining types for the meta values
 declare module 'vue-router' {
@@ -27,16 +25,14 @@ declare module 'vue-router' {
 }
 
 const authGuard = async (to: any, from: any, next: any) => {
-  const authStore = useAuthStore()
-  if (!authStore.isAuthenticated) {
+  if (!useAuth().isAuthenticated.value) {
     next('/login')
   }
   next()
 };
 
 const loginGuard = (to: any, from: any, next: any) => {
-  const authStore = useAuthStore()
-  if (authStore.isAuthenticated && !to.query?.token && !to.query?.oms) {
+  if (useAuth().isAuthenticated.value && !to.query?.token && !to.query?.oms) {
     next('/')
   }
   next();

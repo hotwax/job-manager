@@ -18,8 +18,8 @@
             is added on sides from ion-item and ion-padding-vertical to compensate the removed
             vertical padding -->
             <ion-card-header class="ion-no-padding ion-padding-vertical">
-              <ion-card-subtitle>{{ userProfile?.userLoginId }}</ion-card-subtitle>
-              <ion-card-title>{{ userProfile?.partyName }}</ion-card-title>
+              <ion-card-subtitle>{{ userProfile.username }}</ion-card-subtitle>
+              <ion-card-title>{{ userProfile.userFullName || userProfile.partyId }}</ion-card-title>
             </ion-card-header>
           </ion-item>
           <ion-button color="danger" @click="logout()">{{ translate("Logout") }}</ion-button>
@@ -36,7 +36,23 @@
         <h1>{{ translate('OMS') }}</h1>
       </div>
       <section>
-        <DxpOmsInstanceNavigator />
+        <ion-card>
+          <ion-card-header>
+            <ion-card-subtitle>
+              {{ translate('OMS instance') }}
+            </ion-card-subtitle>
+            <ion-card-title>
+              {{ cookieHelper().get("oms") }}
+            </ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            {{ translate('This is the name of the OMS you are connected to right now. Make sure that you are connected to the right instance before proceeding.') }}
+          </ion-card-content>
+          <ion-button :standalone-hidden="!hasPermission(Actions.APP_PWA_STANDALONE_ACCESS)" @click="goToOms()" fill="clear" :disabled="!hasPermission(Actions.APP_COMMERCE_VIEW)">
+            {{ translate('Go to OMS') }}
+            <ion-icon slot="end" :icon="openOutline" />
+          </ion-button>
+        </ion-card>
 
         <ion-card>
           <ion-card-header>
@@ -51,7 +67,7 @@
             {{ translate("A store represents a company or a unique catalog of products. If your OMS is connected to multiple eCommerce stores sellling different collections of products, you may have multiple Product Stores set up in HotWax Commerce.") }}
           </ion-card-content>
           <ion-item lines="none">
-            <ion-select :label="translate('Select store')" interface="popover" :value="currentEComStore.productStoreId" @ionChange="setEComStore($event)">
+            <ion-select :label="translate('Select store')" interface="popover" :value="currentProductStore.productStoreId" @ionChange="setEComStore($event)">
               <ion-select-option v-for="store in (userProfile ? userProfile.stores : [])" :key="store.productStoreId" :value="store.productStoreId" >{{ store.storeName }}</ion-select-option>
             </ion-select>
           </ion-item>
@@ -76,7 +92,16 @@
         </ion-card>
       </section>
       <hr />
-      <DxpAppVersionInfo />
+      <div class="section-header">
+        <div>
+          <h1>{{ translate('App') }}</h1>
+          <p class="overline">{{ translate("Version: ", { appVersion }) }}</p>
+        </div>
+        <div class="ion-text-end">
+          <p class="overline">{{ translate("Built: ", { builtDateTime: getDateTime(appInfo.builtTime) }) }}</p>
+          <ion-button v-if="userStore.getPwaState.updateExists" @click="refreshApp()" fill="outline" color="dark" size="small">{{ translate("Update") }}</ion-button>
+        </div>
+      </div>
 
       <section>
         <DxpTimeZoneSwitcher @timeZoneUpdated="timeZoneUpdated" />
@@ -85,103 +110,64 @@
   </ion-page>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonContent, IonHeader,IonIcon, IonItem, IonMenuButton, IonPage, IonSelect, IonSelectOption, IonTitle, IonToolbar } from '@ionic/vue';
-import { defineComponent } from 'vue';
+import { computed, defineComponent } from 'vue';
 import { codeWorkingOutline, ellipsisVertical, personCircleOutline, openOutline, saveOutline, timeOutline } from 'ionicons/icons'
-import { useRouter } from 'vue-router';
-import { useAuthStore } from '@/store/auth';
+import router from '@/router';
+import { useUserStore } from '@/store/auth';
 import Image from '@/components/Image.vue'
-import { translate } from '@common';
+import { cookieHelper, translate, goToOms } from '@common';
+import { useAuth } from '@/composables/auth';
+import Actions from '@/authorization/Actions';
+import { hasPermission } from '@/authorization';
+import { DateTime } from 'luxon';
 
-export default defineComponent({
-  name: 'Settings',
-  components: {
-    IonAvatar,
-    IonButton, 
-    IonCard,
-    IonCardContent,
-    IonCardHeader,
-    IonCardSubtitle,
-    IonCardTitle,
-    IonContent, 
-    IonHeader, 
-    IonIcon,
-    IonItem, 
-    IonMenuButton,
-    IonPage, 
-    IonSelect,
-    IonSelectOption,
-    IonTitle, 
-    IonToolbar,
-    Image
-  },
-  data() {
-    return {
-      baseURL: import.meta.env.VUE_APP_BASE_URL
-    };
-  },
-  computed: {
-    userProfile(): any {
-      return this.authStore.getUserProfile
-    },
-    currentEComStore(): any {
-      return this.authStore.getCurrentEComStore
-    },
-    shopifyConfigs(): any {
-      return this.authStore.getShopifyConfigs
-    },
-    currentShopifyConfig(): any {
-      return this.authStore.getCurrentShopifyConfig
-    },
-  },
-  methods: {
-    setEComStore(event: any) {
-      // If the value is same, no need to update
-      // Handled case for programmatical changes
-      // https://github.com/ionic-team/ionic-framework/discussions/25532
-      // https://github.com/ionic-team/ionic-framework/issues/20106
-      // https://github.com/ionic-team/ionic-framework/pull/25858
-      if(this.userProfile && this.currentEComStore?.productStoreId !== event.detail.value) {
-        this.authStore.setEcomStore({ 'productStoreId': event.detail.value })
-      }
-    },
-    setShopifyConfig(event: any){
-      this.authStore.setCurrentShopifyConfig({ 'shopifyConfigId': event.detail.value });
-    },
-    async timeZoneUpdated(tzId: string) {
-      await this.authStore.setUserTimeZone(tzId)
-    },
-    logout () {
-      this.authStore.logout({ isUserUnauthorised: false }).then((redirectionUrl) => {
-        // if not having redirection url then redirect the user to launchpad
-        if(!redirectionUrl) {
-          const redirectUrl = window.location.origin + '/login'
-          window.location.href = `${import.meta.env.VUE_APP_LOGIN_URL}?isLoggedOut=true&redirectUrl=${redirectUrl}`
-        }
-      })
-    },
-    goToLaunchpad() {
-      window.location.href = `${import.meta.env.VUE_APP_LOGIN_URL}`
-    }
-  },
-  setup(){
-    const authStore = useAuthStore();
-    const router = useRouter();
+const userStore = useUserStore();
+const userProfile = computed(() => userStore.getUserProfile)
+const currentProductStore = computed(() => userStore.getCurrentProductStore)
+const shopifyConfigs = computed(() => userStore.getShopifyConfigs)
+const currentShopifyConfig = computed(() => userStore.getCurrentShopifyConfig)
 
-    return {
-      codeWorkingOutline,
-      ellipsisVertical,
-      personCircleOutline,
-      authStore,
-      timeOutline,
-      router,
-      openOutline,
-      saveOutline,
-      translate
-    }
+const appInfo = (import.meta.env.VUE_APP_VERSION_INFO ? JSON.parse(import.meta.env.VUE_APP_VERSION_INFO) : {}) as any;
+const appVersion = appInfo.branch ? (appInfo.branch + "-" + appInfo.revision) : appInfo.tag;
+const getDateTime = (time: any) => time ? DateTime.fromMillis(time).setZone(userStore.current.timezoneId).toLocaleString(DateTime.DATETIME_MED) : DateTime.now();
+
+const refreshApp = () => {
+  userStore.updatePwaState({ registration: userStore.getPwaState.registration, updateExists: false })
+  if (!userStore.getPwaState.registration || !userStore.getPwaState.registration.waiting) return
+  userStore.getPwaState.registration.waiting.postMessage({ type: 'SKIP_WAITING' })
+}
+
+const setEComStore = (event: any) => {
+  // If the value is same, no need to update
+  // Handled case for programmatical changes
+  // https://github.com/ionic-team/ionic-framework/discussions/25532
+  // https://github.com/ionic-team/ionic-framework/issues/20106
+  // https://github.com/ionic-team/ionic-framework/pull/25858
+  if(userProfile && currentProductStore?.value.productStoreId !== event.detail.value) {
+    userStore.setCurrentProductStore({ 'productStoreId': event.detail.value })
   }
-});
+}
+const setShopifyConfig = (event: any) => {
+  userStore.setCurrentShopifyConfig({ 'shopifyConfigId': event.detail.value });
+}
+const timeZoneUpdated = async(tzId: string) => {
+  await userStore.setUserTimeZone(tzId)
+}
+const logout = () => {
+  useAuth().logout({ isUserUnauthorised: false }).then((redirectionUrl) => {
+    // redirectionUrl is only present when SSO enables, thus when not present redirect user to login
+    if(!redirectionUrl) {
+      router.replace("/login");
+    } else {
+      window.location.href = redirectionUrl
+    }
+  })
+}
+const goToLaunchpad = () => {
+  window.location.href = `${import.meta.env.VUE_APP_LOGIN_URL}`
+}
 </script>
 
 <style scoped>

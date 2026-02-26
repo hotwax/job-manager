@@ -127,7 +127,7 @@ import {
   alertCircleOutline, 
   serverOutline 
 } from 'ionicons/icons';
-import { useRouter } from 'vue-router'
+import router from '@/router'
 import { translate } from '@common';
 
 export default defineComponent({
@@ -196,7 +196,6 @@ export default defineComponent({
         return colors[status] || '#ccc';
     }
 
-    const router = useRouter();
     const viewPartnerDetails = (name: string) => {
       router.push({ name: 'PartnerDetails', params: { name } });
     }

@@ -18,8 +18,6 @@
     "@casl/ability": "^6.0.0",
     "@hotwax/app-version-info": "^1.0.0",
     "@hotwax/apps-theme": "^1.2.6",
-    "@hotwax/dxp-components": "1.15.4",
-    "@hotwax/oms-api": "1.15.0",
     "@ionic/core": "^7.6.0",
     "@ionic/vue": "^7.6.0",
     "@ionic/vue-router": "^7.6.0",
@@ -37,9 +35,7 @@
     "qs": "^6.10.3",
     "register-service-worker": "^1.7.1",
     "vue": "^3.2.26",
-    "vue-logger-plugin": "^2.2.3",
-    "vuex": "^4.0.1",
-    "vuex-persistedstate": "^4.0.0-beta.3"
+    "vue-logger-plugin": "^2.2.3"
   },
   "devDependencies": {
     "@capacitor/cli": "^2.4.7",
