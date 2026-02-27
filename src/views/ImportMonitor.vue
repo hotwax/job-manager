@@ -70,7 +70,6 @@ import {
   IonIcon
 } from '@ionic/vue';
 import { defineComponent, ref } from 'vue';
-import { useRouter } from 'vue-router';
 import { translate } from '@common';
 import { refreshOutline } from 'ionicons/icons';
 

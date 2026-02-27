@@ -71,7 +71,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useRoute } from 'vue-router';
+import router from '@/router';
 import { 
   IonPage, 
   IonHeader, 
@@ -102,7 +102,7 @@ import {
 import { translate } from '@common';
 import { showToast } from '@/utils';
 
-const route = useRoute();
+const route = router.currentRoute.value;
 const typeId = route.params.type as string; // 'sales-orders', etc.
 const fileInput = ref<HTMLInputElement | null>(null);
 const selectedFile = ref<File | null>(null);

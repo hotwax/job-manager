@@ -78,7 +78,7 @@ import {
   arrowUndoOutline,
   arrowForwardOutline 
 } from 'ionicons/icons';
-import { useRouter } from 'vue-router';
+import router from '@/router';
 import { translate } from '@common';
 
 export default defineComponent({
@@ -101,7 +101,6 @@ export default defineComponent({
     IonLabel
   },
   setup() {
-    const router = useRouter();
     const categories = ['All', 'Shopify', 'NetSuite', 'Orders', 'Inventory'];
     const selectedCategory = ref('All');
 

@@ -73,7 +73,7 @@ import {
   IonToolbar,
 } from '@ionic/vue';
 import { defineComponent, ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import router from '@/router';
 import { addOutline } from 'ionicons/icons';
 import { translate } from '@common';
 
@@ -98,7 +98,6 @@ export default defineComponent({
     IonToolbar
   },
   setup() {
-    const router = useRouter();
     const categories = ['All', 'Shopify', 'NetSuite', 'Orders', 'Inventory'];
     const selectedCategory = ref('All');
 

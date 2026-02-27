@@ -90,7 +90,7 @@ import {
     closeCircleOutline
 } from 'ionicons/icons';
 import { translate } from '@common';
-import { useRouter } from 'vue-router';
+import router from '@/router';
 
 export default defineComponent({
     name: 'CategoryJobs',
@@ -113,7 +113,6 @@ export default defineComponent({
         IonLabel
     },
     setup(props) {
-        const router = useRouter();
 
         const jobs = [
             {

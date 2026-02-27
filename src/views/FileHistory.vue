@@ -77,9 +77,8 @@ import {
 import { translate } from '@common';
 import { documentOutline } from 'ionicons/icons';
 import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import router from '@/router';
 
-const router = useRouter();
 const filterStatus = ref('all');
 
 const files = ref([

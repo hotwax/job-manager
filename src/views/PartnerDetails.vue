@@ -102,7 +102,7 @@ import {
   IonChip,
   IonProgressBar
 } from '@ionic/vue';
-import { useRouter } from 'vue-router';
+import router from '@/router';
 import {
   alertCircleOutline,
   bookOutline,
@@ -188,8 +188,6 @@ export default defineComponent({
         jobsCount: 3
       }
     ];
-
-    const router = useRouter();
 
     const viewCategoryJobs = (categoryTitle: string) => {
       // Clean up the category title to make it URL friendly if needed, 
