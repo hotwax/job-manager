@@ -115,7 +115,7 @@ import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSu
 import { computed, defineComponent } from 'vue';
 import { codeWorkingOutline, ellipsisVertical, personCircleOutline, openOutline, saveOutline, timeOutline } from 'ionicons/icons'
 import router from '@/router';
-import { useUserStore } from '@/store/auth';
+import { useUserStore } from '@/store/user';
 import Image from '@/components/Image.vue'
 import { cookieHelper, translate, goToOms } from '@common';
 import { useAuth } from '@/composables/auth';

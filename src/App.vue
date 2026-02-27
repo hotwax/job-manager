@@ -16,7 +16,7 @@ import emitter from "@/event-bus"
 import { Settings } from 'luxon'
 import router from './router';
 import { initialise, resetConfig, translate } from '@common';
-import { useUserStore } from '@/store/auth';
+import { useUserStore } from '@/store/user';
 import { useAuth } from './composables/auth';
 
 export default defineComponent({

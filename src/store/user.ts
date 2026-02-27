@@ -60,13 +60,12 @@ export const useUserStore = defineStore("user", {
         // "storeName_op": "not-empty"
         // "distinct": "Y"
         const productStoresResp = await api({
-          url: "admin/productStores",
+          url: "admin/productSores",
           method: "get",
           baseUrl: getMaargURL()
         });
         this.current.stores = productStoresResp.data
 
-        // In Job Manager application, we have jobs which may not be associated with any product store
         this.current.stores.push({
           productStoreId: "",
           storeName: "None",

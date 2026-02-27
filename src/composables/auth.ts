@@ -1,7 +1,7 @@
 import { resetPermissions } from "@/authorization";
 import emitter from "@/event-bus";
 import logger from "@/logger";
-import { useUserStore } from "@/store/auth";
+import { useUserStore } from "@/store/user";
 import { showToast } from "@/utils";
 import { api, client, cookieHelper, getOmsURL, hasError, translate } from "@common";
 import { DateTime } from "luxon";

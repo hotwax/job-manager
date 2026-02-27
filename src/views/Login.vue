@@ -71,7 +71,7 @@ import {
 } from "@ionic/vue";
 import { ref } from "vue";
 import router from "../router";
-import { useUserStore } from "@/store/auth";
+import { useUserStore } from "@/store/user";
 import Logo from '@/components/Logo.vue';
 import { arrowForwardOutline, gridOutline } from 'ionicons/icons'
 import { translate, hasError, cookieHelper, api, client, getMaargURL } from "@common";

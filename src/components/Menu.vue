@@ -44,7 +44,7 @@ import {
 } from "@ionic/vue";
 import { computed, defineComponent } from "vue";
 import { albumsOutline, barChartOutline, calendarNumberOutline, compassOutline, hourglassOutline, libraryOutline, pulseOutline, settingsOutline, sendOutline, terminalOutline, ticketOutline, timeOutline, cloudUploadOutline } from "ionicons/icons";
-import { useUserStore } from "@/store/auth";
+import { useUserStore } from "@/store/user";
 import { hasPermission } from "@/authorization";
 import router from "../router";
 import { translate } from "@common";
