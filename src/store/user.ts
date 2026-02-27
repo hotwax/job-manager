@@ -60,7 +60,7 @@ export const useUserStore = defineStore("user", {
         // "storeName_op": "not-empty"
         // "distinct": "Y"
         const productStoresResp = await api({
-          url: "admin/productSores",
+          url: "admin/productStores",
           method: "get",
           baseUrl: getMaargURL()
         });
