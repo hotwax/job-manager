@@ -44,12 +44,6 @@
           </section>
         </form>
       </div>
-    
-      <ion-fab @click="router.push('/')" vertical="bottom" horizontal="end" slot="fixed">
-        <ion-fab-button color="medium">
-          <ion-icon :icon="gridOutline" /> 
-        </ion-fab-button>
-      </ion-fab>
     </ion-content>
   </ion-page>
 </template>
@@ -59,8 +53,6 @@ import {
   IonButton,
   IonChip,
   IonContent,
-  IonFab,
-  IonFabButton,
   IonIcon,
   IonInput,
   IonItem,
@@ -70,20 +62,20 @@ import {
   onIonViewWillEnter
 } from "@ionic/vue";
 import { ref } from "vue";
-import router from "../router";
 import { useUserStore } from "@/store/user";
 import Logo from '@/components/Logo.vue';
-import { arrowForwardOutline, gridOutline } from 'ionicons/icons'
-import { translate, hasError, cookieHelper, api, client, getMaargURL } from "@common";
+import { arrowForwardOutline } from 'ionicons/icons'
+import { translate, cookieHelper, api, getMaargURL } from "@common";
 import { showToast } from "@/utils";
 import { useAuth } from "@/composables/auth";
+import { useRoute, useRouter } from "vue-router";
 
-let route = null as any;
-const authStore = useUserStore();
-const cookieHandler = cookieHelper();
+const userStore = useUserStore();
+const router = useRouter();
+const route = useRoute();
 
 // This is the best practice for defining composable instance, as this ensures in managing the reactive state properly
-const { loginOption, fetchLoginOptions, login: authLogin } = useAuth();
+const { loginOption, fetchLoginOptions, login: authLogin, clearAuth } = useAuth();
 
 const username = ref("");
 const password = ref("");
@@ -175,7 +167,7 @@ const setOms = async () => {
 const samlLogin = async () => {
   try {
     const { token, expirationTime } = route.query as any;
-    await authStore.samlLogin(token, expirationTime);
+    await userStore.samlLogin(token, expirationTime);
   } catch (error) {
     console.error(error);
   }
@@ -186,24 +178,17 @@ const basicLogin = async () => {
   try {
     const { oms, token, expirationTime } = route.query as any;
     // Clear the previously stored oms and token when having oms and token in the URL
-    authStore.$patch({
-      token: {
-        value: "",
-        expiration: undefined
-      },
-      oms: ""
-    });
+    // This is the case when coming from launchpad
+    clearAuth()
+
     cookieHelper().set("oms", oms)
 
     // checking for login options as we need to get maarg instance URL for accessing specific apps
     await fetchLoginOptions();
 
     // Setting token previous to getting user-profile, if not then the client method honors the state token
-    authStore.$patch({
-      token: token
-    });
-    cookieHandler.set('token', token);
-    cookieHandler.set('expirationTime', expirationTime)
+    cookieHelper().set('token', token);
+    cookieHelper().set('expirationTime', expirationTime)
 
     try {
       const userProfileResp = await api({
@@ -212,18 +197,17 @@ const basicLogin = async () => {
         baseUrl: getMaargURL()
       });
       const current = userProfileResp.data
-      authStore.$patch({
+      userStore.$patch({
         current: current
       });
     } catch(error: any) {
       showToast(translate("Failed to fetch user profile information"));
       console.error("error", error);
-      useAuth().clearAuth();
+      clearAuth();
       return Promise.reject(new Error(error));
     }
 
-
-    await authStore.fetchPermissions();
+    await userStore.fetchPermissions();
   } catch (error) {
     showToast(translate('Failed to fetch user-profile, please try again'));
     console.error("error: ", error);
@@ -248,12 +232,12 @@ const initialise = async () => {
   }
 
   // fetch login options only if OMS is there as API calls require OMS
-  if (authStore.oms) {
+  if (cookieHelper().get("OMS")) {
     await fetchLoginOptions();
   }
 
   // show OMS input if SAML if configured or if query or state does not have OMS
-  if (loginOption.value.loginAuthType !== 'BASIC' || route.query?.oms || !authStore.oms) {
+  if (loginOption.value.loginAuthType !== 'BASIC' || route.query?.oms || !cookieHelper().get("OMS")) {
     showOmsInput.value = true;
   }
 
@@ -268,15 +252,15 @@ const initialise = async () => {
   }
 
   // const token = cookieHandler.get('token');
-  // if (authStore.token && !token) {
-  //   cookieHandler.set('token', authStore.token.value);
-  //   cookieHandler.set('expirationTime', authStore.token.expiration);
+  // if (userStore.token && !token) {
+  //   cookieHandler.set('token', userStore.token.value);
+  //   cookieHandler.set('expirationTime', userStore.token.expiration);
   // }
 
-  instanceUrl.value = authStore.oms;
-  if (authStore.oms) {
+  instanceUrl.value = cookieHelper().get("OMS") as string;
+  if (cookieHelper().get("OMS")) {
     // If the current URL is available in alias show it for consistency
-    const currentInstanceUrlAlias = Object.keys(alias).find((key) => alias[key] === authStore.oms);
+    const currentInstanceUrlAlias = Object.keys(alias).find((key) => alias[key] === userStore.oms);
     currentInstanceUrlAlias && (instanceUrl.value = currentInstanceUrlAlias);
   }
   // If there is no current preference set the default one
@@ -293,8 +277,6 @@ const handleSubmit = () => {
 };
 
 onIonViewWillEnter(() => {
-  // TODO: check why useRoute and useRouter are not working
-  route = router.currentRoute.value;
   initialise();
 });
 </script>

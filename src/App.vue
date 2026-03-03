@@ -1,7 +1,7 @@
 <template>
   <ion-app>
     <IonSplitPane content-id="main-content" when="lg">
-      <Menu v-if="router && router.currentRoute.value.name !== 'Login'" />
+      <Menu />
       <ion-router-outlet id="main-content" />
     </IonSplitPane>
   </ion-app>

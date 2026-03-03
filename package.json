@@ -6,10 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "serve": "vite preview",
-    "test:unit": "vue-cli-service test:unit",
-    "test:e2e": "vue-cli-service test:e2e",
-    "lint": "vue-cli-service lint"
+    "serve": "vite preview"
   },
   "dependencies": {
     "@capacitor/android": "^2.4.7",
@@ -46,6 +43,10 @@
     "eslint": "^7.32.0",
     "eslint-plugin-vue": "^8.0.3",
     "papaparse": "^5.3.1",
-    "typescript": "~4.7.4"
+    "typescript": "~4.7.4",
+    "@vitejs/plugin-legacy": "^5.0.0",
+    "@vitejs/plugin-vue": "^4.6.2",
+    "vite": "~5.2.0",
+    "vitest": "^1.3.1"
   }
 }
