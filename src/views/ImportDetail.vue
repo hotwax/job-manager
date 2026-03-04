@@ -5,135 +5,82 @@
         <ion-buttons slot="start">
           <ion-back-button default-href="/manual-uploads"></ion-back-button>
         </ion-buttons>
-        <ion-title>{{ translate(title) }}</ion-title>
+        <ion-title>{{ config.scriptTitle || config.configId || typeId }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
     <ion-content>
       <main>
-        <div class="header">
-          <div class="title">
-            <div>
-              <h1>{{ translate("Import " + title) }}</h1>
-              <p>{{ translate("Upload a " + fileType + " file to queue it for processing.") }}</p>
-            </div>
-          </div>
-          <ion-button fill="outline" @click="downloadTemplate">
-            <ion-icon slot="start" :icon="downloadOutline" />
-            {{ translate("Download Template") }}
-          </ion-button>
-        </div>
-
-        <section class="queue-selection">
-          <h3>{{ translate("Assign to Queue") }}</h3>
-          <ion-radio-group v-model="selectedQueue">
-              <ion-item v-for="queue in queues" :key="queue.id" lines="none" class="queue-item">
-                <ion-label>
-                  {{ translate(queue.name) }}
-                  <p>{{ queue.pending }} {{ translate("files pending") }}</p>
-                </ion-label>
-                <ion-radio :value="queue.id" slot="end" mode="md"></ion-radio>
-              </ion-item>
-          </ion-radio-group>
-        </section>
-
-        <section class="upload-selection">
-          <h3>{{ translate("Upload File") }}</h3>
-          <div class="upload-area" @dragover.prevent @drop.prevent="onDrop">
-            <ion-icon :icon="cloudUploadOutline" color="medium" />
-            <p>
-              <a href="#" @click.prevent="triggerFileInput">{{ translate("Upload a file") }}</a> 
-              {{ translate(" or drag and drop") }}
-            </p>
-            <ion-note>{{ fileType }} {{ translate("up to 10MB") }}</ion-note>
-            <input type="file" ref="fileInput" @change="onFileSelected" hidden :accept="acceptTypes" />
-          </div>
-          <ion-item v-if="selectedFile" lines="none" class="selected-file">
-            <ion-icon slot="start" :icon="documentTextOutline" />
-            <ion-label>{{ selectedFile.name }}</ion-label>
-            <ion-button slot="end" fill="clear" color="danger" @click="removeFile">
-              <ion-icon slot="icon-only" :icon="trashOutline" />
+        <template v-if="config.configId">
+          <div class="header">
+            <ion-label class="title">
+              <p class="outline">{{ getQueueType(config.priority) }}</p>
+              <h1>{{ config.scriptTitle || config.configId }}</h1>
+              <p>{{ translate("Upload a file to queue it for processing.") }}</p>
+            </ion-label>
+            <ion-button fill="outline" @click="downloadTemplate">
+              <ion-icon slot="start" :icon="downloadOutline" />
+              {{ translate("Download Template") }}
             </ion-button>
-          </ion-item>
-        </section>
+          </div>
 
-        <div class="footer-actions">
-          <ion-button fill="clear" color="medium" @click="$router.back()">{{ translate("Cancel") }}</ion-button>
-          <ion-button :disabled="!selectedFile" @click="startImport">
-            <ion-icon slot="start" :icon="sendOutline" />
-            {{ translate("Start Import") }}
-          </ion-button>
-        </div>
+          <section class="upload-selection">
+            <h3>{{ translate("Upload File") }}</h3>
+            <div class="upload-area" @dragover.prevent @drop.prevent="onDrop">
+              <ion-icon :icon="cloudUploadOutline" color="medium" />
+              <p>
+                <a href="#" @click.prevent="triggerFileInput">{{ translate("Upload a file") }}</a> 
+                {{ translate(" or drag and drop") }}
+              </p>
+              <ion-note>{{ translate("File up to 10MB") }}</ion-note>
+              <input type="file" ref="fileInput" @change="onFileSelected" hidden :accept="acceptTypes" />
+            </div>
+            <ion-item v-if="selectedFile" lines="none" class="selected-file">
+              <ion-icon slot="start" :icon="documentTextOutline" />
+              <ion-label>{{ selectedFile.name }}</ion-label>
+              <ion-button slot="end" fill="clear" color="danger" @click="removeFile">
+                <ion-icon slot="icon-only" :icon="trashOutline" />
+              </ion-button>
+            </ion-item>
+          </section>
+
+          <div class="footer-actions">
+            <!-- TODO: we should not use router.back, or check once the flow and then decide -->
+            <ion-button fill="clear" color="medium" @click="router.back()">{{ translate("Cancel") }}</ion-button>
+            <ion-button :disabled="!selectedFile" @click="startImport">
+              <ion-icon slot="start" :icon="sendOutline" />
+              {{ translate("Start Import") }}
+            </ion-button>
+          </div>
+        </template>
+        <template v-else>
+          <p class="empty-state">{{ translate("Failed to fetch config details, try again or check data") }}</p>
+        </template>
       </main>
     </ion-content>
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import router from '@/router';
-import { 
-  IonPage, 
-  IonHeader, 
-  IonToolbar, 
-  IonButtons, 
-  IonBackButton, 
-  IonTitle, 
-  IonContent,
-  IonButton,
-  IonIcon,
-  IonRadioGroup,
-  IonRadio,
-  IonItem,
-  IonLabel
-} from '@ionic/vue';
-import { 
-  downloadOutline, 
-  cloudUploadOutline, 
-  documentTextOutline, 
-  trashOutline, 
-  sendOutline,
-  cartOutline,
-  cubeOutline,
-  shapesOutline,
-  peopleOutline,
-  arrowUndoOutline
-} from 'ionicons/icons';
-import { translate } from '@common';
+import { IonPage, IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonButton, IonIcon, IonRadioGroup, IonRadio, IonItem, IonLabel} from '@ionic/vue';
+import { downloadOutline, cloudUploadOutline, documentTextOutline, trashOutline, sendOutline, cartOutline, cubeOutline, shapesOutline, peopleOutline, arrowUndoOutline } from 'ionicons/icons';
+import { api, translate } from '@common';
 import { showToast } from '@/utils';
+import { useConfigStore } from '@/store/exim';
+import logger from '@/logger';
+import { getQueueType } from '@/utils/config';
 
 const route = router.currentRoute.value;
 const typeId = route.params.type as string; // 'sales-orders', etc.
 const fileInput = ref<HTMLInputElement | null>(null);
 const selectedFile = ref<File | null>(null);
-const selectedQueue = ref('standard');
+const acceptTypes = ".csv, .json";
 
-const queues = [
-  { id: 'high', name: 'High Priority', pending: '4' },
-  { id: 'standard', name: 'Standard', pending: '12' },
-  { id: 'background', name: 'Background', pending: '128' }
-];
+const configStore = useConfigStore();
 
-const typeConfig = computed(() => {
-  switch (typeId) {
-    case 'sales-orders':
-      return { title: 'Sales Orders', icon: cartOutline, fileType: 'CSV', accept: '.csv' };
-    case 'inventory-counts':
-      return { title: 'Inventory Counts', icon: cubeOutline, fileType: 'CSV', accept: '.csv' };
-    case 'product-catalog':
-      return { title: 'Product Catalog', icon: shapesOutline, fileType: 'JSON', accept: '.json' };
-    case 'customer-data':
-      return { title: 'Customer Data', icon: peopleOutline, fileType: 'CSV', accept: '.csv' };
-    case 'returns':
-      return { title: 'Returns (RMA)', icon: arrowUndoOutline, fileType: 'CSV', accept: '.csv' };
-    default:
-      return { title: 'Unknown', icon: documentTextOutline, fileType: 'File', accept: '*/*' };
-  }
-});
-
-const title = typeConfig.value.title;
-const fileType = typeConfig.value.fileType;
-const acceptTypes = typeConfig.value.accept;
+const config = computed(() => configStore.getConfigById(typeId))
 
 const triggerFileInput = () => {
   fileInput.value?.click();
@@ -161,10 +108,34 @@ const downloadTemplate = () => {
   showToast(translate('Template downloaded successfully'));
 };
 
-const startImport = () => {
-  showToast(translate('Import started successfully'));
+const startImport = async () => {
+  const formData = new FormData();
+  if(selectedFile.value) {
+    formData.append("contentFile", selectedFile.value);
+    formData.append("configId", typeId)
+  }
+  try {
+    await api({
+      url: "admin/uploadDataManagerFile",
+      method: "POST",
+      data: formData,
+      headers: {
+        "Content-Type": "mutipart/form-data"
+      }
+    })
+    showToast(translate("File uploaded successfully"));
+  } catch(err) {
+    showToast(translate("File upload failed"));
+    logger.error("File upload failed", err)
+  }
+
   // Logic to actually upload the file would go here
 };
+
+onMounted(async () => {
+  console.log("mounted")
+  await configStore.fetchConfigById(typeId);
+})
 </script>
 
 <style scoped>

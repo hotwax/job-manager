@@ -1,6 +1,6 @@
 <template>
   <ion-page>
-    <ion-header :translucent="true">
+    <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-menu-button />
@@ -17,7 +17,7 @@
         </div>
 
         <ion-card>
-          <ion-searchbar :placeholder="translate('Search uploads')"></ion-searchbar>
+          <ion-searchbar v-model="queryString" @ionInput="searchConfig" :placeholder="translate('Search uploads')"></ion-searchbar>
           <div class="categories">
             <ion-chip v-for="category in categories" :key="category" @click="selectedCategory = category" :outline="selectedCategory !== category" :color="selectedCategory === category ? 'primary' : ''">
               <ion-label>{{ category }}</ion-label>
@@ -26,19 +26,21 @@
         </ion-card>
 
         <div class="imports">
-          <ion-card class="upload-card" v-for="uploadType in uploadTypes" :key="uploadType.id">
+          <ion-card class="upload-card" v-for="config in importConfigs" :key="config.configId">
             <ion-card-content>
               <ion-item lines="none">
-                <ion-icon slot="start" :icon="uploadType.icon" color="primary" />
+                <!-- TODO: check icon thing -->
+                <!-- <ion-icon slot="start" :icon="uploadType.icon" color="primary" /> -->
                 <ion-label>
-                  {{ translate(uploadType.title) }}
-                  <p>{{ translate(uploadType.description) }}</p>
+                  {{ config.scriptTitle }}
+                  <p>{{ config.description }}</p>
                 </ion-label>
               </ion-item>
               
               <ion-item lines="none">
-                <ion-badge color="light">{{ uploadType.fileType }}</ion-badge>
-                <ion-button slot="end" fill="clear" @click="startImport(uploadType.id)">
+                <!-- TODO: file type thing -->
+                <!-- <ion-badge color="light">{{ config.fileType }}</ion-badge> -->
+                <ion-button slot="end" fill="clear" @click="startImport(config.configId)">
                   {{ translate("Start Import") }}
                   <ion-icon slot="end" :icon="arrowForwardOutline" />
                 </ion-button>
@@ -46,116 +48,86 @@
             </ion-card-content>
           </ion-card>
         </div>
+        <p class="empty-state">
+          {{ translate("No configs found") }}
+        </p>
       </main>
     </ion-content>
   </ion-page>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref } from 'vue';
-import { 
-  IonPage, 
-  IonHeader, 
-  IonToolbar, 
-  IonButtons, 
-  IonMenuButton, 
-  IonTitle, 
-  IonContent,
-  IonCard,
-  IonCardContent,
-  IonIcon,
-  IonButton,
-  IonBadge,
-  IonSearchbar,
-  IonChip,
-  IonLabel
-} from '@ionic/vue';
-import { 
-  cartOutline, 
-  cubeOutline, 
-  shapesOutline, 
-  peopleOutline, 
-  arrowUndoOutline,
-  arrowForwardOutline 
-} from 'ionicons/icons';
+<script setup lang="ts">
+import { computed, defineComponent, onMounted, ref } from 'vue';
+import { IonPage, IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonCard, IonCardContent, IonIcon, IonButton, IonBadge, IonSearchbar, IonChip, IonLabel} from '@ionic/vue';
+import { cartOutline, cubeOutline, shapesOutline, peopleOutline, arrowUndoOutline, arrowForwardOutline, compass } from 'ionicons/icons';
 import router from '@/router';
 import { translate } from '@common';
+import { useConfigStore } from '@/store/exim';
 
-export default defineComponent({
-  name: 'ManualUploads',
-  components: {
-    IonPage,
-    IonHeader,
-    IonToolbar,
-    IonButtons,
-    IonMenuButton,
-    IonTitle,
-    IonContent,
-    IonCard,
-    IonCardContent,
-    IonIcon,
-    IonButton,
-    IonBadge,
-    IonSearchbar,
-    IonChip,
-    IonLabel
-  },
-  setup() {
-    const categories = ['All', 'Shopify', 'NetSuite', 'Orders', 'Inventory'];
-    const selectedCategory = ref('All');
+const selectedCategory = ref('All');
+const queryString = ref("");
+const configStore = useConfigStore();
 
-    const uploadTypes = [
-      {
-        id: 'sales-orders',
-        title: 'Sales Orders',
-        description: 'Import new sales orders (CSV/JSON)',
-        fileType: 'CSV',
-        icon: cartOutline
-      },
-      {
-        id: 'inventory-counts',
-        title: 'Inventory Counts',
-        description: 'Update inventory levels by SKU',
-        fileType: 'CSV',
-        icon: cubeOutline
-      },
-      {
-        id: 'product-catalog',
-        title: 'Product Catalog',
-        description: 'Create or update product details',
-        fileType: 'JSON',
-        icon: shapesOutline
-      },
-      {
-        id: 'customer-data',
-        title: 'Customer Data',
-        description: 'Import customer profiles and addresses',
-        fileType: 'CSV',
-        icon: peopleOutline
-      },
-      {
-        id: 'returns',
-        title: 'Returns (RMA)',
-        description: 'Import return authorizations',
-        fileType: 'CSV',
-        icon: arrowUndoOutline
-      }
-    ];
+const configs = computed(() => configStore.getConfigs)
+let importConfigs = ref([]) as any
 
-    const startImport = (typeId: string) => {
-      router.push({ name: 'ImportDetail', params: { type: typeId }});
-    };
+// const uploadTypes = [
+//   {
+//     id: 'sales-orders',
+//     title: 'Sales Orders',
+//     description: 'Import new sales orders (CSV/JSON)',
+//     fileType: 'CSV',
+//     icon: cartOutline
+//   },
+//   {
+//     id: 'inventory-counts',
+//     title: 'Inventory Counts',
+//     description: 'Update inventory levels by SKU',
+//     fileType: 'CSV',
+//     icon: cubeOutline
+//   },
+//   {
+//     id: 'product-catalog',
+//     title: 'Product Catalog',
+//     description: 'Create or update product details',
+//     fileType: 'JSON',
+//     icon: shapesOutline
+//   },
+//   {
+//     id: 'customer-data',
+//     title: 'Customer Data',
+//     description: 'Import customer profiles and addresses',
+//     fileType: 'CSV',
+//     icon: peopleOutline
+//   },
+//   {
+//     id: 'returns',
+//     title: 'Returns (RMA)',
+//     description: 'Import return authorizations',
+//     fileType: 'CSV',
+//     icon: arrowUndoOutline
+//   }
+// ];
 
-    return {
-      uploadTypes,
-      startImport,
-      translate,
-      arrowForwardOutline,
-      categories,
-      selectedCategory
-    };
+onMounted(async () => {
+  await configStore.fetchConfigs();
+  searchConfig()
+})
+
+const startImport = (typeId: string) => {
+  router.push({ name: "ImportDetail", params: { type: typeId }});
+}
+
+const searchConfig = () => {
+  if(!queryString.value.trim()) {
+    importConfigs.value = configs.value
   }
-});
+  importConfigs.value = configs.value.filter((config: any) =>
+    config.configId.toLowerCase().includes(queryString.value.toLowerCase()) ||
+    config.scriptTitle?.toLowerCase().includes(queryString.value.toLowerCase()) ||
+    config.description?.toLowerCase().includes(queryString.value.toLowerCase())
+  )
+}
 </script>
 
 <style scoped>

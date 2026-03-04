@@ -8,7 +8,7 @@
 
     <ion-content>
       <ion-list>
-        <ion-menu-toggle auto-hide="false" v-for="(page, index) in getValidMenuItems(appPages)" :key="index">
+        <ion-menu-toggle :auto-hide="false" v-for="(page, index) in getValidMenuItems(appPages)" :key="index">
           <ion-item
             v-if="page.url"
             button
@@ -118,13 +118,13 @@ export default defineComponent({
           permissionId: ""
         }
       },
-      {
-        title: "File history",
-        url: "/file-history",
-        iosIcon: timeOutline,
-        mdIcon: timeOutline,
-        dependsOnBaseURL: false,
-      },
+      // {
+      //   title: "File history",
+      //   url: "/file-history",
+      //   iosIcon: timeOutline,
+      //   mdIcon: timeOutline,
+      //   dependsOnBaseURL: false,
+      // },
       {
         title: "Manual uploads",
         url: "/manual-uploads",
