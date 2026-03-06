@@ -51,7 +51,6 @@ let appPages = [
     url: "/pipeline",
     iosIcon: pulseOutline,
     mdIcon: pulseOutline,
-    dependsOnBaseURL: true,
     meta: {
       permissionId: "HIDDEN"
     }
@@ -61,7 +60,6 @@ let appPages = [
     url: "/catalog",
     iosIcon: albumsOutline,
     mdIcon: albumsOutline,
-    dependsOnBaseURL: false,
     meta: {
       permissionId: "HIDDEN"
     }
@@ -71,7 +69,6 @@ let appPages = [
     url: "/file-history",
     iosIcon: timeOutline,
     mdIcon: timeOutline,
-    dependsOnBaseURL: false,
     childRoutes: ["/file-history/"]
   },
   {
@@ -79,7 +76,6 @@ let appPages = [
     url: "/manual-uploads",
     iosIcon: cloudUploadOutline,
     mdIcon: cloudUploadOutline,
-    dependsOnBaseURL: false,
     childRoutes: ["/manual-uploads/"]
   },
   {
@@ -87,12 +83,8 @@ let appPages = [
     url: "/settings",
     iosIcon: settingsOutline,
     mdIcon: settingsOutline,
-    dependsOnBaseURL: false,
   },
 ] as any;
-if (import.meta.env.VUE_APP_BASE_URL) {
-  appPages = appPages.filter((page : any) => page.dependsOnBaseURL);
-}
 
 const selectedIndex = computed(() => {
   const path = router.currentRoute.value.path
