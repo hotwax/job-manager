@@ -72,6 +72,7 @@ let appPages = [
     iosIcon: timeOutline,
     mdIcon: timeOutline,
     dependsOnBaseURL: false,
+    childRoutes: ["/file-history/"]
   },
   {
     title: "Manual uploads",
@@ -79,6 +80,7 @@ let appPages = [
     iosIcon: cloudUploadOutline,
     mdIcon: cloudUploadOutline,
     dependsOnBaseURL: false,
+    childRoutes: ["/manual-uploads/"]
   },
   {
     title: "Settings",
@@ -94,7 +96,7 @@ if (import.meta.env.VUE_APP_BASE_URL) {
 
 const selectedIndex = computed(() => {
   const path = router.currentRoute.value.path
-  return getValidMenuItems(appPages).findIndex((screen : any) => screen.url === path || screen.childRoutes?.includes(path))
+  return getValidMenuItems(appPages).findIndex((screen : any) => screen.url === path || screen.childRoutes?.includes(path) || screen.childRoutes?.some((route: string) => path.includes(route)))
 })
 </script>
 
