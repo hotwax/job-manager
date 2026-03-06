@@ -1,6 +1,6 @@
 <template>
   <ion-page>
-    <ion-header :translucent="true">
+    <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-back-button default-href="/file-history"></ion-back-button>
@@ -16,27 +16,28 @@
           <ion-card-header>
             <div class="file-header">
               <div class="file-info">
-                <h1><ion-icon :icon="documentOutline" /> {{ fileName }}</h1>
+                <h1><ion-icon :icon="documentOutline" />{{ importedLog.fileName }}</h1>
                 <p>
-                  <ion-icon :icon="briefcaseOutline" /> {{ importType }} 
+                  <!-- TODO -->
+                  <ion-icon :icon="briefcaseOutline" />{{ importType }} 
                   <span class="separator">|</span> 
-                  <ion-icon :icon="timeOutline" /> {{ uploadTime }}
+                  <ion-icon :icon="timeOutline" />{{ importedLog.createdDate }}
                 </p>
               </div>
               <div class="score-card">
                 <div class="badge success">
-                  <span class="count">{{ successCount }}</span>
+                  <span class="count">{{ getSuccessRecordCount }}</span>
                   <span class="label">{{ translate("SUCCESS") }}</span>
                 </div>
                 <div class="badge failed">
-                  <span class="count">{{ failedCount }}</span>
+                  <span class="count">{{ importedLog.failedRecordCount || 0 }}</span>
                   <span class="label">{{ translate("FAILED") }}</span>
                 </div>
               </div>
             </div>
           </ion-card-header>
 
-          <ion-card-content>
+          <ion-card-content v-if="importedLog.failedRecordCount">
             <div class="actions">
               <ion-item lines="none">
                 <ion-icon :icon="warningOutline" slot="start" color="warning" />
@@ -45,13 +46,9 @@
                 </ion-label>
               </ion-item>
               <div class="buttons">
-                <ion-button fill="outline" color="dark">
+                <ion-button :disabled="!errorLogs.length" fill="outline" color="dark" @click="downloadFailedRecords">
                   <ion-icon slot="start" :icon="downloadOutline" />
                   {{ translate("Download Failed Rows") }}
-                </ion-button>
-                <ion-button color="primary">
-                  <ion-icon slot="start" :icon="refreshOutline" />
-                  {{ translate("Retry File") }}
                 </ion-button>
               </div>
             </div>
@@ -59,7 +56,7 @@
         </ion-card>
 
         <!-- Bottom Section: Error Log -->
-        <ion-card>
+        <ion-card v-if="importedLog.failedRecordCount">
           <ion-card-header>
              <ion-card-title>
                <ion-icon :icon="bugOutline" color="danger" />
@@ -72,10 +69,10 @@
               <ion-label>{{ translate("Record ID") }}</ion-label>
               <ion-label>{{ translate("Description") }}</ion-label>
             </div>
-            <div class="list-item error-log" v-for="(error, index) in errorLogs" :key="index">
-              <ion-label>Row {{ error.row }}</ion-label>
-              <ion-label>{{ error.recordId }}</ion-label>
-              <ion-label>{{ error.description }}</ion-label>
+            <div class="list-item error-log" v-for="error in errorLogs" :key="error['_recordNumber']">
+              <ion-label>{{ error["_recordNumber"] }}</ion-label>
+              <ion-label>{{ error["_recordNumber"] }}</ion-label>
+              <ion-label>{{ error["_ERROR_MESSAGE_"] }}</ion-label>
             </div>
           </ion-list>
         </ion-card>
@@ -98,50 +95,88 @@ import {
   IonCardContent,
   IonIcon,
   IonButton,
-  IonBadge,
   IonCardTitle,
   IonList,
   IonItem,
-  IonLabel
+  IonLabel,
+  onIonViewWillEnter
 } from '@ionic/vue';
-import { translate } from '@common';
+import { api, translate } from '@common';
 import { 
   documentOutline, 
   briefcaseOutline, 
   timeOutline, 
   warningOutline, 
-  downloadOutline, 
-  refreshOutline,
+  downloadOutline,
   bugOutline
 } from 'ionicons/icons';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
+import { useMdmConfigStore } from '@/store/mdmConfig';
+import logger from '@/logger';
+import { showToast } from '@/utils';
+import { saveAs } from 'file-saver';
 
-// Mock Data
-const fileName = ref("IMP_ORD_NS_20231024_001.csv");
+const props = defineProps(["id"])
+
 const importType = ref("Import Sales Orders (NS)");
-const uploadTime = ref("Oct 27, 10:42 AM");
-const successCount = ref(142);
-const failedCount = ref(8);
 
-const errorLogs = ref([
-  {
-    row: 14,
-    recordId: "ORD-10294",
-    errorCode: "MISSING_SKU",
-    description: "Product SKU \"TSHIRT-BLK-L\" not found in HotWax."
+const mdmStore = useMdmConfigStore();
+const logs = computed(() => mdmStore.getLogById(props.id))
+const getSuccessRecordCount = computed(() => {
+  const total = Number(importedLog.value.totalRecordCount) || 0
+  const failed = Number(importedLog.value.failedRecordCount) || 0
+  return total - failed
+})
+
+const importedLog = computed(() => logs.value.find((log: any) => log.logContentTypeEnumId === "DmcntImported"))
+const errorContent = computed(() => logs.value.filter((log: any) => log.logContentTypeEnumId === "DmcntError"))
+
+let errorLogs = ref([])
+let errorCsvRecords = ref(null)
+
+async function fetchFailedRecords() {
+  try {
+    const resp = await api({
+      url: "admin/dataManager/downloadDataManagerFile",
+      method: "GET",
+      params: {
+        configId: importedLog.value.configId,
+        logContentId: errorContent.value[0].logContentId
+      }
+    })
+
+    errorCsvRecords.value = resp?.data?.csvData || resp.data;
+    errorLogs.value = JSON.parse(errorCsvRecords.value!)
+  } catch(err) {
+    logger.error("Failed to download the error records", err)
+    showToast(translate("Failed to download the error records"))
   }
-]);
+}
+
+function downloadFailedRecords() {
+  const blob = new Blob([errorCsvRecords.value!], { type: 'text/csv;charset=utf-8;' });
+  saveAs(blob, errorContent.value[0].fileName ? errorContent.value[0].fileName : "ErrorDataManagerContent.json");
+}
+
+onIonViewWillEnter(async () => {
+  await mdmStore.fetchDataManagerLogById(props.id)
+  if(errorContent.value[0]?.logContentId) {
+    await fetchFailedRecords();
+  }
+})
 </script>
 
 <style scoped>
-
-
 .file-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   flex-wrap: wrap;
   gap: 1rem;
+}
+
+.file-info {
+  flex: 1;
 }
 
 .file-info h1 {
@@ -223,5 +258,4 @@ const errorLogs = ref([
 .list-item.error-log:last-child {
   border-bottom: none;
 }
-
 </style>

@@ -67,7 +67,7 @@ import {
   IonItem,
   IonLabel,
   IonButton,
-  IonIcon
+  IonIcon,
 } from '@ionic/vue';
 import { defineComponent, ref } from 'vue';
 import { translate } from '@common';

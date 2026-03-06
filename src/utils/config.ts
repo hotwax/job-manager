@@ -1,6 +1,7 @@
 const getQueueType = (priority: any) => {
-  return priority > 7 ? "Priority" : priority > 5 ? "Normal" : "Low"
+  return priority > 6 ? "Priority" : "Normal"
 }
+
 export {
   getQueueType
 }

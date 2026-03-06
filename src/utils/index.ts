@@ -406,6 +406,10 @@ const generateMaargJobCustomOptions = (job: any) => {
   }
 }
 
+const getFileSize = (size: string) => {
+  return `${(Number(size) / (1024 * 1024)).toFixed(3)} MB`
+}
+
 export {
   copyToClipboard,
   isCustomRunTime,
@@ -427,5 +431,6 @@ export {
   isFutureDate,
   prepareRuntime,
   saveDataFile,
-  timeTillRun
+  timeTillRun,
+  getFileSize
 }

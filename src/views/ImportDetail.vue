@@ -1,6 +1,6 @@
 <template>
   <ion-page>
-    <ion-header :translucent="true">
+    <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-back-button default-href="/manual-uploads"></ion-back-button>
@@ -32,7 +32,7 @@
                 <a href="#" @click.prevent="triggerFileInput">{{ translate("Upload a file") }}</a> 
                 {{ translate(" or drag and drop") }}
               </p>
-              <ion-note>{{ translate("File up to 10MB") }}</ion-note>
+              <!-- <ion-note>{{ translate("File up to 10MB") }}</ion-note> -->
               <input type="file" ref="fileInput" @change="onFileSelected" hidden :accept="acceptTypes" />
             </div>
             <ion-item v-if="selectedFile" lines="none" class="selected-file">
@@ -45,8 +45,6 @@
           </section>
 
           <div class="footer-actions">
-            <!-- TODO: we should not use router.back, or check once the flow and then decide -->
-            <ion-button fill="clear" color="medium" @click="router.back()">{{ translate("Cancel") }}</ion-button>
             <ion-button :disabled="!selectedFile" @click="startImport">
               <ion-icon slot="start" :icon="sendOutline" />
               {{ translate("Start Import") }}
@@ -62,15 +60,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 import router from '@/router';
-import { IonPage, IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonButton, IonIcon, IonRadioGroup, IonRadio, IonItem, IonLabel} from '@ionic/vue';
+import { IonPage, IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonButton, IonIcon, IonRadioGroup, IonRadio, IonItem, IonLabel, onIonViewWillEnter} from '@ionic/vue';
 import { downloadOutline, cloudUploadOutline, documentTextOutline, trashOutline, sendOutline, cartOutline, cubeOutline, shapesOutline, peopleOutline, arrowUndoOutline } from 'ionicons/icons';
 import { api, translate } from '@common';
 import { showToast } from '@/utils';
-import { useConfigStore } from '@/store/exim';
+import { useMdmConfigStore } from '@/store/mdmConfig';
 import logger from '@/logger';
 import { getQueueType } from '@/utils/config';
+import { saveAs } from 'file-saver';
 
 const route = router.currentRoute.value;
 const typeId = route.params.type as string; // 'sales-orders', etc.
@@ -78,9 +77,9 @@ const fileInput = ref<HTMLInputElement | null>(null);
 const selectedFile = ref<File | null>(null);
 const acceptTypes = ".csv, .json";
 
-const configStore = useConfigStore();
+const mdmStore = useMdmConfigStore();
 
-const config = computed(() => configStore.getConfigById(typeId))
+const config = computed(() => mdmStore.getConfigById(typeId))
 
 const triggerFileInput = () => {
   fileInput.value?.click();
@@ -104,8 +103,23 @@ const removeFile = () => {
   if (fileInput.value) fileInput.value.value = '';
 };
 
-const downloadTemplate = () => {
-  showToast(translate('Template downloaded successfully'));
+const downloadTemplate = async () => {
+  try {
+    let resp = await api({
+      url: `admin/dataManager/${config.value.configId}/downloadTemplate`,
+      method: "GET",
+      headers: {
+        'Accept': 'text/csv',
+      },
+      responseType: "blob"
+    })
+    console.log('resp', resp)
+    saveAs(new Blob([resp.data]), "Sample.csv")
+    showToast(translate('Template downloaded successfully'));
+  } catch(err) {
+    logger.error("Failed to download template", err)
+    showToast(translate("Failed to download template"));
+  }
 };
 
 const startImport = async () => {
@@ -124,17 +138,17 @@ const startImport = async () => {
       }
     })
     showToast(translate("File uploaded successfully"));
+    // On success, we want to clear the selectedFile data from the page
+    removeFile();
   } catch(err) {
     showToast(translate("File upload failed"));
     logger.error("File upload failed", err)
   }
-
-  // Logic to actually upload the file would go here
 };
 
-onMounted(async () => {
+onIonViewWillEnter(async () => {
   console.log("mounted")
-  await configStore.fetchConfigById(typeId);
+  await mdmStore.fetchConfigById(typeId);
 })
 </script>
 

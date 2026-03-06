@@ -16,6 +16,8 @@ import { showToast } from '@/utils'
 import { translate } from '@common'
 import 'vue-router'
 import { useAuth } from '@/composables/auth';
+import ImportDetail from '@/views/ImportDetail.vue';
+import ManualUploads from '@/views/ManualUploads.vue';
 
 // Defining types for the meta values
 declare module 'vue-router' {
@@ -126,18 +128,19 @@ const routes: Array<RouteRecordRaw> = [
     path: "/file-history/:id",
     name: "FileDetail",
     component: FileDetail,
-    beforeEnter: authGuard
+    beforeEnter: authGuard,
+    props: true
   },
   {
     path: '/manual-uploads/:type',
     name: 'ImportDetail',
-    component: () => import('@/views/ImportDetail.vue'),
+    component: ImportDetail,
     beforeEnter: authGuard
   },
   {
     path: '/manual-uploads',
     name: 'ManualUploads',
-    component: () => import('@/views/ManualUploads.vue'),
+    component: ManualUploads,
     beforeEnter: authGuard
   }
 ]
