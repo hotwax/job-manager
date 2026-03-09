@@ -18,17 +18,26 @@
               Manage and configure integration tasks.
             </p>
           </div>
-          <ion-button>
+          <ion-button @click="openCreateJobModal()">
             <ion-icon slot="end" :ios="addOutline" :md="addOutline"></ion-icon>
-            Add job
+            {{ translate("Add job") }}
           </ion-button>
         </div>
 
         <ion-card>
           <ion-searchbar :placeholder="translate('Search jobs')"></ion-searchbar>
+          
+          <ion-breadcrumbs v-if="navigationStack.length > 0" class="ion-padding-start ion-padding-top">
+            <ion-breadcrumb @click="resetNavigation">All</ion-breadcrumb>
+            <ion-breadcrumb v-for="(cat, index) in navigationStack" :key="cat.id" @click="navigateToStackIndex(index)">
+              {{ cat.name }}
+            </ion-breadcrumb>
+          </ion-breadcrumbs>
+
           <div class="categories">
-            <ion-chip v-for="category in categories" :key="category" @click="selectedCategory = category" :outline="selectedCategory !== category" :color="selectedCategory === category ? 'primary' : ''">
-              <ion-label>{{ category }}</ion-label>
+            <ion-chip v-for="category in currentLevelCategories" :key="category.id" @click="selectCategory(category)" :outline="selectedCategory !== category.id" :color="selectedCategory === category.id ? 'primary' : ''">
+              <ion-label>{{ category.name }}</ion-label>
+              <ion-icon v-if="category.subCategories && category.subCategories.length > 0" :icon="chevronForwardOutline" />
             </ion-chip>
           </div>
         </ion-card>
@@ -55,6 +64,8 @@
 
 <script lang="ts">
 import {
+  IonBreadcrumb,
+  IonBreadcrumbs,
   IonButton,
   IonCard,
   IonCardHeader,
@@ -71,15 +82,19 @@ import {
   IonSearchbar,
   IonTitle,
   IonToolbar,
+  modalController
 } from '@ionic/vue';
 import { defineComponent, ref, computed } from 'vue';
 import router from '@/router';
-import { addOutline } from 'ionicons/icons';
+import { addOutline, chevronForwardOutline } from 'ionicons/icons';
 import { translate } from '@common';
+import CreateJobModal from '@/components/CreateJobModal.vue';
 
 export default defineComponent({
   name: 'Catalog',
   components: {
+    IonBreadcrumb,
+    IonBreadcrumbs,
     IonButton,
     IonCard,
     IonCardHeader,
@@ -98,8 +113,47 @@ export default defineComponent({
     IonToolbar
   },
   setup() {
-    const categories = ['All', 'Shopify', 'NetSuite', 'Orders', 'Inventory'];
+    const categories = ref([
+      { id: 'Shopify', name: 'Shopify', subCategories: [] },
+      { 
+        id: 'NetSuite', 
+        name: 'NetSuite', 
+        subCategories: [
+          { id: 'NS_ORDER', name: 'Order' },
+          { id: 'NS_INVENTORY', name: 'Inventory' },
+          { id: 'NS_TRANSFER_ORDER', name: 'Transfer Order' }
+        ] 
+      },
+      { id: 'Orders', name: 'Orders' },
+      { id: 'Inventory', name: 'Inventory' }
+    ]);
+
     const selectedCategory = ref('All');
+    const navigationStack = ref([] as any[]);
+
+    const currentLevelCategories = computed(() => {
+      if (navigationStack.value.length === 0) {
+        return categories.value;
+      }
+      return navigationStack.value[navigationStack.value.length - 1].subCategories || [];
+    });
+
+    const selectCategory = (category: any) => {
+      selectedCategory.value = category.id;
+      if (category.subCategories && category.subCategories.length > 0) {
+        navigationStack.value.push(category);
+      }
+    };
+
+    const resetNavigation = () => {
+      navigationStack.value = [];
+      selectedCategory.value = 'All';
+    };
+
+    const navigateToStackIndex = (index: number) => {
+      navigationStack.value = navigationStack.value.slice(0, index + 1);
+      selectedCategory.value = navigationStack.value[index].id;
+    };
 
     const jobs = [
       {
@@ -186,15 +240,41 @@ export default defineComponent({
 
     const filteredJobs = computed(() => {
       if (selectedCategory.value === 'All') return jobs;
-      return jobs.filter(job => job.categories.includes(selectedCategory.value));
+      // Simple initial check: if the job has the category ID directly
+      // In a real app, this would be more complex (checking parent categories etc)
+      return jobs.filter(job => job.categories.includes(selectedCategory.value) || 
+                                (selectedCategory.value === 'NetSuite' && job.categories.includes('NetSuite')));
     });
+
+    const openCreateJobModal = async () => {
+      const modal = await modalController.create({
+        component: CreateJobModal,
+        componentProps: {
+          categories: categories.value
+        }
+      });
+      modal.present();
+
+      const { data, role } = await modal.onDidDismiss();
+      if (role === 'confirm') {
+        console.log('Job created:', data);
+        // Here you would typically call an API to save the job
+      }
+    };
 
     return {
       addOutline,
+      chevronForwardOutline,
       categories,
+      currentLevelCategories,
       filteredJobs,
       jobs,
+      navigationStack,
+      navigateToStackIndex,
+      openCreateJobModal,
+      resetNavigation,
       router,
+      selectCategory,
       selectedCategory,
       translate
     }
