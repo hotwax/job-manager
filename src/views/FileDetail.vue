@@ -16,28 +16,28 @@
           <ion-card-header>
             <div class="file-header">
               <div class="file-info">
-                <h1><ion-icon :icon="documentOutline" />{{ importedLog.fileName }}</h1>
+                <ion-note :color="getStatusColor(currentLogInfo.statusId)">{{ getStatusDesc(currentLogInfo.statusId) }}</ion-note>
+                <h1><ion-icon :icon="documentOutline" />{{ currentLogInfo.fileName }}</h1>
                 <p>
-                  <!-- TODO -->
-                  <ion-icon :icon="briefcaseOutline" />{{ importType }} 
+                  {{ currentLogInfo.scriptTitle || currentLogInfo.description || currentLogInfo.configId }} 
                   <span class="separator">|</span> 
-                  <ion-icon :icon="timeOutline" />{{ importedLog.createdDate }}
+                  <ion-icon :icon="timeOutline" />{{ currentLogInfo.createdDate }}
                 </p>
               </div>
-              <div class="score-card">
+              <div class="score-card" v-if="currentLogInfo.failedRecordCount || currentLogInfo.totalRecordCount">
                 <div class="badge success">
-                  <span class="count">{{ getSuccessRecordCount }}</span>
+                  <span class="count">{{ currentLogInfo.successRecordCount }}</span>
                   <span class="label">{{ translate("SUCCESS") }}</span>
                 </div>
                 <div class="badge failed">
-                  <span class="count">{{ importedLog.failedRecordCount || 0 }}</span>
+                  <span class="count">{{ currentLogInfo.failedRecordCount || 0 }}</span>
                   <span class="label">{{ translate("FAILED") }}</span>
                 </div>
               </div>
             </div>
           </ion-card-header>
 
-          <ion-card-content v-if="importedLog.failedRecordCount">
+          <ion-card-content v-if="currentLogInfo.failedRecordCount">
             <div class="actions">
               <ion-item lines="none">
                 <ion-icon :icon="warningOutline" slot="start" color="warning" />
@@ -46,7 +46,7 @@
                 </ion-label>
               </ion-item>
               <div class="buttons">
-                <ion-button :disabled="!errorLogs.length" fill="outline" color="dark" @click="downloadFailedRecords">
+                <ion-button fill="outline" color="dark" @click="downloadFailedRecords">
                   <ion-icon slot="start" :icon="downloadOutline" />
                   {{ translate("Download Failed Rows") }}
                 </ion-button>
@@ -56,7 +56,7 @@
         </ion-card>
 
         <!-- Bottom Section: Error Log -->
-        <ion-card v-if="importedLog.failedRecordCount">
+        <ion-card v-if="currentLogInfo.failedRecordCount">
           <ion-card-header>
              <ion-card-title>
                <ion-icon :icon="bugOutline" color="danger" />
@@ -82,87 +82,24 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonBackButton,
-  IonButtons,
-  IonContent,
-  IonHeader,
-  IonPage,
-  IonTitle,
-  IonToolbar,
-  IonCard,
-  IonCardHeader,
-  IonCardContent,
-  IonIcon,
-  IonButton,
-  IonCardTitle,
-  IonList,
-  IonItem,
-  IonLabel,
-  onIonViewWillEnter
-} from '@ionic/vue';
-import { api, translate } from '@common';
-import { 
-  documentOutline, 
-  briefcaseOutline, 
-  timeOutline, 
-  warningOutline, 
-  downloadOutline,
-  bugOutline
-} from 'ionicons/icons';
-import { computed, ref } from 'vue';
-import { useMdmConfigStore } from '@/store/mdmConfig';
-import logger from '@/logger';
-import { showToast } from '@/utils';
+import { IonBackButton, IonButtons, IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonCard, IonCardHeader, IonCardContent, IonIcon, IonButton, IonCardTitle, IonList, IonItem, IonLabel, onIonViewWillEnter } from '@ionic/vue';
+import { translate } from '@common';
+import { documentOutline, timeOutline, warningOutline, downloadOutline, bugOutline } from 'ionicons/icons';
 import { saveAs } from 'file-saver';
+import { getStatusColor } from '@common/utils/commonUtil';
+import { getStatusDesc } from '@/utils/config';
+import { useMdmLog } from '@/composables/mdmLogs';
 
 const props = defineProps(["id"])
-
-const importType = ref("Import Sales Orders (NS)");
-
-const mdmStore = useMdmConfigStore();
-const logs = computed(() => mdmStore.getLogById(props.id))
-const getSuccessRecordCount = computed(() => {
-  const total = Number(importedLog.value.totalRecordCount) || 0
-  const failed = Number(importedLog.value.failedRecordCount) || 0
-  return total - failed
-})
-
-const importedLog = computed(() => logs.value.find((log: any) => log.logContentTypeEnumId === "DmcntImported"))
-const errorContent = computed(() => logs.value.filter((log: any) => log.logContentTypeEnumId === "DmcntError"))
-
-let errorLogs = ref([])
-let errorCsvRecords = ref(null)
-
-async function fetchFailedRecords() {
-  try {
-    const resp = await api({
-      url: "admin/dataManager/downloadDataManagerFile",
-      method: "GET",
-      params: {
-        configId: importedLog.value.configId,
-        logContentId: errorContent.value[0].logContentId
-      }
-    })
-
-    errorCsvRecords.value = resp?.data?.csvData || resp.data;
-    errorLogs.value = JSON.parse(errorCsvRecords.value!)
-  } catch(err) {
-    logger.error("Failed to download the error records", err)
-    showToast(translate("Failed to download the error records"))
-  }
-}
+const { currentLogInfo, fetchLogDetails, errorLogs, errorCsvRecords } = useMdmLog();
 
 function downloadFailedRecords() {
   const blob = new Blob([errorCsvRecords.value!], { type: 'text/csv;charset=utf-8;' });
-  saveAs(blob, errorContent.value[0].fileName ? errorContent.value[0].fileName : "ErrorDataManagerContent.json");
+  saveAs(blob, currentLogInfo.value.errorFileName ? currentLogInfo.value.errorFileName : "ErrorDataManagerContent.csv");
 }
 
 onIonViewWillEnter(async () => {
-  await mdmStore.fetchDataManagerLogById(props.id)
-  if(errorContent.value[0]?.logContentId) {
-    await fetchFailedRecords();
-  }
+  await fetchLogDetails(props.id)
 })
 </script>
 

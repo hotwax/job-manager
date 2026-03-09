@@ -118,7 +118,6 @@ export function useAuth() {
     }
   };
 
-
   return {
     // Variables
     loginOption,

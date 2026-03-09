@@ -1,6 +1,6 @@
 <template>
   <ion-page>
-    <ion-header :translucent="true">
+    <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-menu-button />
@@ -31,31 +31,35 @@
             <ion-label>{{ translate("Log Id") }}</ion-label>
             <ion-label class="file-name">{{ translate("File name") }}</ion-label>
             <ion-label>{{ translate("Status") }}</ion-label>
-            <ion-label>{{ translate("Origin") }}</ion-label>
+            <ion-label>{{ translate("Uploaded By") }}</ion-label>
             <ion-label>{{ translate("Uploaded") }}</ion-label>
           </div>
-          <div v-for="(log, logId) in logs" :key="logId" class="list-item log" @click="router.push({ name: 'FileDetail', params: { id: logId } })">
-            <ion-label>{{ logId }}</ion-label>
+          <div v-for="log in logs" :key="log.logId" class="list-item log" @click="router.push({ name: 'FileDetail', params: { id: log.logId } })">
+            <ion-label>{{ log.logId }}</ion-label>
             <ion-item lines="none" class="file-name">
               <ion-icon slot="start" :icon="documentOutline" />
               <ion-label class="ion-text-wrap">
-                {{ log[0].fileName }}
-                <p>{{ getFileSize(log[0].fileSize) }}</p>
+                {{ log.fileName }}
+                <p>{{ getFileSize(log.fileSize) }}</p>
               </ion-label>
             </ion-item>
             <ion-label>
-              <ion-chip :color="getStatusColor(log[0].statusId)">
-                {{ translate(statusDesc[log[0].statusId]) }}
+              <ion-chip :color="getStatusColor(log.statusId)">
+                {{ translate(getStatusDesc(log.statusId)) }}
               </ion-chip>
             </ion-label>
-            <ion-label>{{ log[0].origin || "-" }}</ion-label>
+            <ion-label>{{ log.createdByUserLogin || "-" }}</ion-label>
             <ion-label>
-              {{ log[0].createdDate }}
+              {{ log.createdDate }}
             </ion-label>
-            <ion-button v-if="log[0].statusId === 'DmlsPending'" color="danger" fill="clear" slot="icon-only" @click.stop="mdmStore.cancelDataManagerLog(log[0].configId, log[0].logId)">
-              <ion-icon :icon="closeOutline" />
+            <ion-button v-if="log.statusId === 'DmlsPending'" color="danger" fill="clear" @click.stop="mdmStore.cancelDataManagerLog(log.configId, log.logId)">
+              <ion-icon slot="icon-only" :icon="closeOutline" />
             </ion-button>
           </div>
+
+          <ion-infinite-scroll @ionInfinite="logMoreLogs($event)" threshold="300px" v-show="isScrollable" ref="infiniteScrollRef">
+            <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="translate('Loading')"/>
+          </ion-infinite-scroll>
         </ion-list>
       </main>
     </ion-content>
@@ -78,37 +82,48 @@ import {
   IonIcon,
   IonSegment,
   IonSegmentButton,
-  IonChip
+  IonChip,
+  onIonViewWillEnter
 } from '@ionic/vue';
 import { translate } from '@common';
 import { closeOutline, documentOutline } from 'ionicons/icons';
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 import router from '@/router';
 import { useMdmConfigStore } from '@/store/mdmConfig';
 import { getFileSize } from '@/utils';
 import { getStatusColor } from '@common/utils/commonUtil';
+import { getStatusDesc } from '@/utils/config';
 
 const mdmStore = useMdmConfigStore();
 
 const filterStatus = ref('all');
 const logs = computed(() => mdmStore.getLogs)
+const isScrollable = computed(() => mdmStore.islogsScrollable)
 
-const statusDesc: Record<string, string> = {
-  "DmlsCancelled": "Cancelled",
-  "DmlsCrashed": "Crashed",
-  "DmlsFailed": "Failed",
-  "DmlsFinished": "Finished",
-  "DmlsPending": "Pending",
-  "DmlsQueued": "Queued",
-  "DmlsRunning": "Running"
-}
+async function fetchLogs(pageSize = 10, pageIndex = 0) {
+  const params = {
+    pageSize,
+    pageIndex
+  } as Record<string, any>
 
-async function fetchLogs() {
-  const params = filterStatus.value === "error" ? { statusId: "DmlsFailed" } : {}
+  if(filterStatus.value === "error") {
+    params["errorLogContentTypeEnumId"] = "DmcntError"
+    params["statusId"] = "DmlsFailed"
+  }
+
   await mdmStore.fetchDataManagerLogs(params);
 }
 
-onMounted(async () => {
+function logMoreLogs(event: any) {
+  fetchLogs(
+    undefined,
+    Math.ceil(logs.value.length / 10)
+  ).then(async () => {
+    await event.target.complete();
+  });
+}
+
+onIonViewWillEnter(async () => {
   await fetchLogs();
 })
 </script>

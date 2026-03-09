@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { hasError, showToast } from "@/utils";
 import { api, cookieHelper, getMaargURL, getOmsURL, translate } from "@common";
-import { Settings } from "luxon";
+import { DateTime, Settings } from "luxon";
 import {
   getServerPermissionsFromRules,
   prepareAppPermissions,
@@ -25,6 +25,7 @@ export const useUserStore = defineStore("user", {
       updateExists: false,
       registration: null as any,
     },
+    timeZones: [] as any
   }),
   getters: {
     getPermissions: (state: any) => state.permissions,
@@ -34,6 +35,8 @@ export const useUserStore = defineStore("user", {
     getProductStoreCategories: (state: any) => state.productStoreCategories,
     getPwaState: (state: any) => state.pwaState,
     getCurrentProductStore: (state: any) => state.currentProductStore,
+    getUserTimeZone: (state: any) => state.current.timeZone,
+    getAvailableTimeZones: (state: any) => state.timeZones
   },
   actions: {
     async fetchUserProfile() {
@@ -227,13 +230,6 @@ export const useUserStore = defineStore("user", {
       await this.fetchShopifyConfig(productStore.productStoreId);
     },
 
-    setUserTimeZone(timeZoneId: string) {
-      const current: any = this.current;
-      current.userTimeZone = timeZoneId;
-      this.current = current;
-      Settings.defaultZone = current.userTimeZone;
-    },
-
     updatePwaState(payload: any) {
       this.pwaState.registration = payload.registration;
       this.pwaState.updateExists = payload.updateExists;
@@ -304,6 +300,53 @@ export const useUserStore = defineStore("user", {
         showToast(translate('Something went wrong while login. Please contact administrator.'));
         console.error("error: ", error);
         return Promise.reject(new Error(error))
+      }
+    },
+    async setUserTimeZone(tzId: string) {
+      // Do not make any api call if the user clicks the same timeZone again that is already selected
+      if(this.current.timeZone === tzId) {
+        return;
+      }
+      
+      try {
+        const resp = await api({
+          url: "admin/user/profile",
+          method: "POST",
+          data: {
+            userId: this.current.userId,
+            tzId
+          },
+        }) as any;
+
+        if (resp?.status === 200) {
+          this.current.timeZone = tzId;
+          Settings.defaultZone = tzId;
+        } else {
+          throw resp;
+        }
+        showToast(translate("Time zone updated successfully"));
+        return Promise.resolve(tzId)
+      } catch(err) {
+        console.error('Error', err)
+        showToast(translate("Failed to update time zone"));
+        return Promise.reject('')
+      }
+    },
+    async fetchAvailableTimeZones() {
+      // Do not fetch timeZones information, if already available
+      if(this.timeZones.length) {
+        return;
+      }
+
+      try {
+        const resp: any = await api({
+          url: "admin/user/getAvailableTimeZones",
+          method: "get"
+        });
+
+        this.timeZones = resp.data.timeZones.filter((timeZone: any) => DateTime.local().setZone(timeZone.id).isValid);
+      } catch(error) {
+        logger.error("Failed to fetch time zones")
       }
     },
   },

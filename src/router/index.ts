@@ -43,7 +43,7 @@ const loginGuard = (to: any, from: any, next: any) => {
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
-    redirect: '/pipeline'
+    redirect: '/file-history'
   },
   {
     path: '/pipeline',
