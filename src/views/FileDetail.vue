@@ -21,7 +21,7 @@
                 <p>
                   {{ currentLogInfo.scriptTitle || currentLogInfo.description || currentLogInfo.configId }} 
                   <span class="separator">|</span> 
-                  <ion-icon :icon="timeOutline" />{{ currentLogInfo.createdDate }}
+                  <ion-icon :icon="timeOutline" />{{ getDateTimeWithOrdinalSuffix(currentLogInfo.createdDate) }}
                 </p>
               </div>
               <div class="score-card" v-if="currentLogInfo.failedRecordCount || currentLogInfo.totalRecordCount">
@@ -89,6 +89,7 @@ import { saveAs } from 'file-saver';
 import { getStatusColor } from '@common/utils/commonUtil';
 import { getStatusDesc } from '@/utils/config';
 import { useMdmLog } from '@/composables/mdmLogs';
+import { getDateTimeWithOrdinalSuffix } from '@/utils';
 
 const props = defineProps(["id"])
 const { currentLogInfo, fetchLogDetails, errorLogs, errorCsvRecords } = useMdmLog();

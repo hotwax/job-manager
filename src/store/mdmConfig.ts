@@ -75,7 +75,7 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
     async cancelDataManagerLog(configId: string, logId: string) {
       try {
         await api({
-          url: `admin/dataManager/logs/${logId}`,
+          url: `admin/dataManager/log/${logId}`,
           method: "PUT",
           data: {
             configId,
