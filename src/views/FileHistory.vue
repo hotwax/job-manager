@@ -84,7 +84,7 @@
               </ion-label>
             </ion-item>
             <ion-label>
-              <ion-chip :color="getStatusColor(log.statusId)">
+              <ion-chip :color="commonUtil.getStatusColor(log.statusId)">
                 {{ translate(getStatusDesc(log.statusId)) }}
               </ion-chip>
             </ion-label>
@@ -123,15 +123,16 @@ import {
   IonSegment,
   IonSegmentButton,
   IonChip,
+  IonInfiniteScroll,
+  IonInfiniteScrollContent,
   onIonViewWillEnter
 } from '@ionic/vue';
-import { translate } from '@common';
+import { translate, commonUtil } from '@common';
 import { closeOutline, documentOutline } from 'ionicons/icons';
 import { ref, computed } from 'vue';
 import router from '@/router';
 import { useMdmConfigStore } from '@/store/mdmConfig';
 import { getDateTimeWithOrdinalSuffix, getFileSize } from '@/utils';
-import { getStatusColor } from '@common/utils/commonUtil';
 import { getStatusDesc } from '@/utils/config';
 
 const mdmStore = useMdmConfigStore();

@@ -3,7 +3,7 @@ import emitter from "@/event-bus";
 import logger from "@/logger";
 import { useUserStore } from "@/store/user";
 import { showToast } from "@/utils";
-import { api, client, cookieHelper, getOmsURL, hasError, translate } from "@common";
+import { api, client, cookieHelper, commonUtil, translate } from "@common";
 import { DateTime } from "luxon";
 import { computed, ref } from "vue";
 
@@ -43,9 +43,9 @@ export function useAuth() {
           "USERNAME": username,
           "PASSWORD": password
         },
-        baseURL: getOmsURL()
+        baseURL: commonUtil.getOmsURL()
       });
-      if (hasError(resp)) {
+      if (commonUtil.hasError(resp)) {
         showToast(translate('Sorry, your username or password is incorrect. Please try again.'));
         console.error("error", resp.data._ERROR_MESSAGE_);
         return Promise.reject(new Error(resp.data._ERROR_MESSAGE_));
@@ -78,7 +78,7 @@ export function useAuth() {
         resp = await api({
           url: "logout",
           method: "GET",
-          baseURL: getOmsURL()
+          baseURL: commonUtil.getOmsURL()
         });
         resp = JSON.parse(
           resp.data.startsWith("//") ? resp.data.replace("//", "") : resp
@@ -107,9 +107,9 @@ export function useAuth() {
       const resp = await client({
         url: "checkLoginOptions",
         method: "GET",
-        baseURL: getOmsURL()
+        baseURL: commonUtil.getOmsURL()
       });
-      if (!hasError(resp)) {
+      if (!commonUtil.hasError(resp)) {
         loginOption.value = resp.data
         cookieHelper().set("maarg", resp.data.maargInstanceUrl)
       }

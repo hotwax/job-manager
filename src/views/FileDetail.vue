@@ -16,7 +16,7 @@
           <ion-card-header>
             <div class="file-header">
               <div class="file-info">
-                <ion-note :color="getStatusColor(currentLogInfo.statusId)">{{ getStatusDesc(currentLogInfo.statusId) }}</ion-note>
+                <ion-note :color="commonUtil.getStatusColor(currentLogInfo.statusId)">{{ getStatusDesc(currentLogInfo.statusId) }}</ion-note>
                 <h1><ion-icon :icon="documentOutline" />{{ currentLogInfo.fileName }}</h1>
                 <p>
                   {{ currentLogInfo.scriptTitle || currentLogInfo.description || currentLogInfo.configId }} 
@@ -83,10 +83,9 @@
 
 <script setup lang="ts">
 import { IonBackButton, IonButtons, IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonCard, IonCardHeader, IonCardContent, IonIcon, IonButton, IonCardTitle, IonList, IonItem, IonLabel, onIonViewWillEnter } from '@ionic/vue';
-import { translate } from '@common';
+import { translate, commonUtil } from '@common';
 import { documentOutline, timeOutline, warningOutline, downloadOutline, bugOutline } from 'ionicons/icons';
 import { saveAs } from 'file-saver';
-import { getStatusColor } from '@common/utils/commonUtil';
 import { getStatusDesc } from '@/utils/config';
 import { useMdmLog } from '@/composables/mdmLogs';
 import { getDateTimeWithOrdinalSuffix } from '@/utils';

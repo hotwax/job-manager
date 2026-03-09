@@ -48,7 +48,7 @@
           <ion-card-content>
             {{ translate('This is the name of the OMS you are connected to right now. Make sure that you are connected to the right instance before proceeding.') }}
           </ion-card-content>
-          <ion-button :standalone-hidden="!hasPermission(Actions.APP_PWA_STANDALONE_ACCESS)" @click="goToOms()" fill="clear" :disabled="!hasPermission(Actions.APP_COMMERCE_VIEW)">
+          <ion-button :standalone-hidden="!hasPermission(Actions.APP_PWA_STANDALONE_ACCESS)" @click="commonUtil.goToOms()" fill="clear" :disabled="!hasPermission(Actions.APP_COMMERCE_VIEW)">
             {{ translate('Go to OMS') }}
             <ion-icon slot="end" :icon="openOutline" />
           </ion-button>
@@ -117,14 +117,14 @@
             <ion-label>
               <p class="overline">{{ translate("Browser TimeZone") }}</p>
               {{ browserTimeZone.id }}
-              <p v-if="showDateTime">{{ getCurrentTime(browserTimeZone.id, dateTimeFormat) }}</p>
+              <p v-if="showDateTime">{{ commonUtil.getCurrentTime(browserTimeZone.id, dateTimeFormat) }}</p>
             </ion-label>
           </ion-item>
           <ion-item lines="none">
             <ion-label>
               <p class="overline">{{ translate("Selected TimeZone") }}</p>
               {{ currentTimeZoneId }}
-              <p v-if="showDateTime">{{ getCurrentTime(currentTimeZoneId, dateTimeFormat) }}</p>
+              <p v-if="showDateTime">{{ commonUtil.getCurrentTime(currentTimeZoneId, dateTimeFormat) }}</p>
             </ion-label>
             <ion-button id="time-zone-modal" slot="end" fill="outline" color="dark">{{ translate("Change") }}</ion-button>
           </ion-item>
@@ -154,7 +154,7 @@
                     <ion-radio label-placement="end" justify="start" :value="browserTimeZone.id">
                       <ion-label>
                         {{ browserTimeZone.label }} ({{ browserTimeZone.id }})
-                        <p v-if="showDateTime">{{ getCurrentTime(browserTimeZone.id, dateTimeFormat) }}</p>
+                        <p v-if="showDateTime">{{ commonUtil.getCurrentTime(browserTimeZone.id, dateTimeFormat) }}</p>
                       </ion-label>
                     </ion-radio>
                   </ion-item>
@@ -177,7 +177,7 @@
                       <ion-radio label-placement="end" justify="start" :value="timeZone.id">
                         <ion-label>
                           {{ timeZone.label }} ({{ timeZone.id }})
-                          <p v-if="showDateTime">{{ getCurrentTime(timeZone.id, dateTimeFormat) }}</p>
+                          <p v-if="showDateTime">{{ commonUtil.getCurrentTime(timeZone.id, dateTimeFormat) }}</p>
                         </ion-label>
                       </ion-radio>
                     </ion-item>
@@ -205,12 +205,11 @@ import { closeOutline, openOutline, saveOutline } from 'ionicons/icons'
 import router from '@/router';
 import { useUserStore } from '@/store/user';
 import Image from '@/components/Image.vue'
-import { cookieHelper, translate, goToOms } from '@common';
+import { cookieHelper, commonUtil, translate } from '@common';
 import { useAuth } from '@/composables/auth';
 import Actions from '@/authorization/Actions';
 import { hasPermission } from '@/authorization';
 import { DateTime } from 'luxon';
-import { getCurrentTime } from '@common/utils/commonUtil';
 
 const userStore = useUserStore();
 const userProfile = computed(() => userStore.getUserProfile)

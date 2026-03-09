@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { hasError, showToast } from "@/utils";
-import { api, cookieHelper, getMaargURL, getOmsURL, translate } from "@common";
+import { api, cookieHelper, commonUtil, translate } from "@common";
 import { DateTime, Settings } from "luxon";
 import {
   getServerPermissionsFromRules,
@@ -44,7 +44,7 @@ export const useUserStore = defineStore("user", {
         const userProfileResp = await api({
           url: "admin/user/profile",
           method: "get",
-          baseUrl: getMaargURL()
+          baseUrl: commonUtil.getMaargURL()
         });
         this.current = userProfileResp.data
 
@@ -65,7 +65,7 @@ export const useUserStore = defineStore("user", {
         const productStoresResp = await api({
           url: "admin/productStores",
           method: "get",
-          baseUrl: getMaargURL()
+          baseUrl: commonUtil.getMaargURL()
         });
         this.current.stores = productStoresResp.data
 
@@ -146,7 +146,7 @@ export const useUserStore = defineStore("user", {
         resp = await api({
           url: "getPermissions",
           method: "post",
-          baseURL: getOmsURL(),
+          baseURL: commonUtil.getOmsURL(),
           data: params,
         })
         if(resp.status === 200 && resp.data.docs?.length && !hasError(resp)) {
@@ -160,7 +160,7 @@ export const useUserStore = defineStore("user", {
               const response = await api({
                 url: "getPermissions",
                 method: "post",
-                baseURL: getOmsURL(),
+                baseURL: commonUtil.getOmsURL(),
                 data: {
                   "viewIndex": index + 1,
                   viewSize,
@@ -283,7 +283,7 @@ export const useUserStore = defineStore("user", {
           const userProfileResp = await api({
             url: "admin/user/profile",
             method: "get",
-            baseUrl: getMaargURL()
+            baseUrl: commonUtil.getMaargURL()
           });
           this.current = userProfileResp.data
         } catch(error: any) {

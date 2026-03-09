@@ -74,7 +74,7 @@ import router from "../router";
 import { useUserStore } from "@/store/user";
 import Logo from '@/components/Logo.vue';
 import { arrowForwardOutline, gridOutline } from 'ionicons/icons'
-import { translate, hasError, cookieHelper, api, client, getMaargURL } from "@common";
+import { cookieHelper, translate, api } from "@common";
 import { showToast } from "@/utils";
 import { useAuth } from "@/composables/auth";
 

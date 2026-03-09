@@ -44,7 +44,7 @@ export function useMdmLog() {
       })
 
       errorCsvRecords.value = resp?.data?.csvData || resp.data;
-      parseCsv(errorCsvRecords.value).then((resp: any) => errorLogs.value = resp)
+      parseCsv(errorCsvRecords.value).then((resp: any) => errorLogs.value = resp).catch((err: any) => console.log(err))
     } catch(err) {
       logger.error("Failed to download the error records", err)
     }
