@@ -5,23 +5,15 @@ import { defineStore } from "pinia";
 export const useMdmConfigStore = defineStore("mdmConfig", {
   state: () => ({
     configs: [] as Array<any>,
-    logs: [] as Array<any>
+    logs: [] as Array<any>,
+    logsCount: 0
   }),
   getters: {
     getConfigs: (state: any) => state.configs,
     getConfigById: (state: any) => (configId: string) => state.configs.find((config: any) => config.configId === configId) || {},
-    getLogs: (state: any) => {
-      let logs: Record<string, any> = {}
-      return state.logs.reduce((configLogs: any, log: any) => {
-        if(configLogs[log.logId]) {
-          configLogs[log.logId].push(log)
-        } else {
-          configLogs[log.logId] = [log]
-        }
-        return configLogs
-      }, logs)
-    },
-    getLogById: (state: any) => (logId: string) => state.logs.filter((log: any) => log.logId === logId) || [],
+    getLogs: (state: any) => state.logs,
+    getLogsCount: (state: any) => state.logsCount,
+    islogsScrollable: (state: any) => state.logs?.length > 0 && state.logs?.length < state.logsCount
   },
   actions: {
     async fetchConfigs() {
@@ -60,46 +52,30 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
         logger.error(`Failed to fetch config with id ${configId}`, err)
       }
     },
-    async fetchDataManagerLogs(params = {}) {
+    async fetchDataManagerLogs(params: any) {
       try {
         let resp = await api({
-          url: "admin/dataManager/logs",
+          url: "admin/dataManager/details",
           method: "get",
           params
         })
 
-        if(resp.data?.length) {
-          this.logs = resp.data
+        if(resp.data?.dataManagerLogsCount) {
+          if(params?.pageIndex > 0) {
+            this.logs = this.logs.concat(resp.data.dataManagerLogs)
+          } else {
+            this.logs = resp.data.dataManagerLogs
+            this.logsCount = resp.data.dataManagerLogsCount
+          }
         }
       } catch(err) {
         logger.error("Failed to fetch logs", err)
       }
     },
-    async fetchDataManagerLogById(logId: string) {
-      const isLogDataAvailable = this.logs.some((log: any) => log.logId === logId)
-      if(isLogDataAvailable) {
-        return;
-      }
-      try {
-        let resp = await api({
-          url: "admin/dataManager/logs",
-          method: "get",
-          params: {
-            logId
-          }
-        })
-
-        if(resp.data?.length) {
-          this.logs.concat(resp.data)
-        }
-      } catch(err) {
-        logger.error(`Failed to fetch log with id ${logId}`, err)
-      }
-    },
     async cancelDataManagerLog(configId: string, logId: string) {
       try {
         await api({
-          url: `admin/dataManager/logs/${logId}`,
+          url: `admin/dataManager/log/${logId}`,
           method: "PUT",
           data: {
             configId,
@@ -107,6 +83,9 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
             statusId: "DmlsCancelled"
           }
         })
+
+        const log = this.logs.find((log: any) => log.logId === logId)
+        log["statusId"] = "DmlsCancelled"
       } catch(err) {
         logger.error(`Failed to cancel log with id ${logId}`, err)
       }

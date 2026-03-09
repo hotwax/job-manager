@@ -111,14 +111,12 @@ export function useAuth() {
       });
       if (!hasError(resp)) {
         loginOption.value = resp.data
-        // cookieHelper().set("maarg", "http://localhost:8080")
         cookieHelper().set("maarg", resp.data.maargInstanceUrl)
       }
     } catch (error) {
       console.error(error)
     }
   };
-
 
   return {
     // Variables

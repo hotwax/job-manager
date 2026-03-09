@@ -1,14 +1,7 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { RouteRecordRaw } from 'vue-router';
 import Catalog from '@/views/catalog.vue'
-import Pipeline from '@/views/Pipeline.vue'
-import ImportMonitor from '@/views/ImportMonitor.vue'
 import Settings from "@/views/Settings.vue"
-import DataManagerLogDetails from "@/views/DataManagerLogDetails.vue"
-import PartnerDetails from "@/views/PartnerDetails.vue"
-import CategoryJobs from "@/views/CategoryJobs.vue"
-import JobDetailConfig from "@/views/JobDetailConfig.vue"
-import ImportQueue from "@/views/ImportQueue.vue"
 import FileHistory from "@/views/FileHistory.vue"
 import FileDetail from "@/views/FileDetail.vue"
 import { hasPermission } from '@/authorization';
@@ -43,37 +36,12 @@ const loginGuard = (to: any, from: any, next: any) => {
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
-    redirect: '/pipeline'
-  },
-  {
-    path: '/pipeline',
-    name: 'Pipeline',
-    component: Pipeline,
-    beforeEnter: authGuard,
-    meta: {
-      permissionId: ""
-    }
-  },
-  {
-    path: '/import-logs-detail/:jobId',
-    name: 'DataManagerLogDetails',
-    component: DataManagerLogDetails,
-    beforeEnter: authGuard,
-    props: true
+    redirect: '/file-history'
   },
   {
     path: '/catalog',
     name: 'Catalog',
     component: Catalog,
-    beforeEnter: authGuard,
-    meta: {
-      permissionId: ""
-    }
-  },
-  {
-    path: '/import-monitor',
-    name: 'ImportMonitor',
-    component: ImportMonitor,
     beforeEnter: authGuard,
     meta: {
       permissionId: ""
@@ -89,33 +57,6 @@ const routes: Array<RouteRecordRaw> = [
     path: "/settings",
     name: "Settings",
     component: Settings,
-    beforeEnter: authGuard
-  },
-  {
-    path: "/partner/:name",
-    name: "PartnerDetails",
-    component: PartnerDetails,
-    beforeEnter: authGuard,
-    props: true
-  },
-  {
-    path: "/partner/:partner/category/:category",
-    name: "CategoryJobs",
-    component: CategoryJobs,
-    beforeEnter: authGuard,
-    props: true
-  },
-  {
-    path: "/partner/:partner/category/:category/job/:jobId",
-    name: "JobDetailConfig",
-    component: JobDetailConfig,
-    beforeEnter: authGuard,
-    props: true
-  },
-  {
-    path: "/import-queue",
-    name: "ImportQueue",
-    component: ImportQueue,
     beforeEnter: authGuard
   },
   {

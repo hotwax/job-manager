@@ -27,21 +27,20 @@
           <section class="upload-selection">
             <h3>{{ translate("Upload File") }}</h3>
             <div class="upload-area" @dragover.prevent @drop.prevent="onDrop">
-              <ion-icon :icon="cloudUploadOutline" color="medium" />
-              <p>
+              <ion-icon :icon="selectedFile ? documentTextOutline : cloudUploadOutline" color="medium" />
+              <p v-if="!selectedFile">
                 <a href="#" @click.prevent="triggerFileInput">{{ translate("Upload a file") }}</a> 
                 {{ translate(" or drag and drop") }}
+              </p>
+              <p v-else>
+                {{ selectedFile.name }}
+                <ion-button size="small" fill="clear" color="danger" @click="removeFile">
+                  <ion-icon slot="icon-only" :icon="trashOutline" />
+                </ion-button>
               </p>
               <!-- <ion-note>{{ translate("File up to 10MB") }}</ion-note> -->
               <input type="file" ref="fileInput" @change="onFileSelected" hidden :accept="acceptTypes" />
             </div>
-            <ion-item v-if="selectedFile" lines="none" class="selected-file">
-              <ion-icon slot="start" :icon="documentTextOutline" />
-              <ion-label>{{ selectedFile.name }}</ion-label>
-              <ion-button slot="end" fill="clear" color="danger" @click="removeFile">
-                <ion-icon slot="icon-only" :icon="trashOutline" />
-              </ion-button>
-            </ion-item>
           </section>
 
           <div class="footer-actions">
@@ -113,8 +112,7 @@ const downloadTemplate = async () => {
       },
       responseType: "blob"
     })
-    console.log('resp', resp)
-    saveAs(new Blob([resp.data]), "Sample.csv")
+    saveAs(new Blob([resp.data]), `${config.value.description || config.value.configId}.csv`)
     showToast(translate('Template downloaded successfully'));
   } catch(err) {
     logger.error("Failed to download template", err)
@@ -147,7 +145,6 @@ const startImport = async () => {
 };
 
 onIonViewWillEnter(async () => {
-  console.log("mounted")
   await mdmStore.fetchConfigById(typeId);
 })
 </script>
@@ -200,8 +197,6 @@ onIonViewWillEnter(async () => {
   display: flex;
   justify-content: flex-end;
   gap: var(--spacer-sm);
-  margin-top: var(--spacer-xl);
   padding-top: var(--spacer-sm);
-  border-top: 1px solid var(--ion-color-light);
 }
 </style>

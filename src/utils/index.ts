@@ -410,6 +410,26 @@ const getFileSize = (size: string) => {
   return `${(Number(size) / (1024 * 1024)).toFixed(3)} MB`
 }
 
+function getDateTimeWithOrdinalSuffix(time: any) {
+  if (!time) return "-";
+  const dateTime = DateTime.fromMillis(time);
+  const day = dateTime.day;
+
+  let suffix;
+  if (day >= 11 && day <= 13) {
+    suffix = 'th';
+  } else {
+    switch (day % 10) {
+      case 1:  suffix = 'st'; break;
+      case 2:  suffix = 'nd'; break;
+      case 3:  suffix = 'rd'; break;
+      default: suffix = 'th'; break;
+    }
+  }
+
+  return `${dateTime.toFormat("h:mm a d")}${suffix} ${dateTime.toFormat("MMM yyyy")}`;
+}
+
 export {
   copyToClipboard,
   isCustomRunTime,
@@ -432,5 +452,6 @@ export {
   prepareRuntime,
   saveDataFile,
   timeTillRun,
-  getFileSize
+  getFileSize,
+  getDateTimeWithOrdinalSuffix
 }

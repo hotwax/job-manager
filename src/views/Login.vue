@@ -88,7 +88,6 @@ const { loginOption, fetchLoginOptions, login: authLogin } = useAuth();
 const username = ref("");
 const password = ref("");
 const instanceUrl = ref("");
-const baseURL = import.meta.env.VITE_VUE_APP_BASE_URL;
 const alias = import.meta.env.VITE_VUE_APP_ALIAS ? JSON.parse(import.meta.env.VITE_VUE_APP_ALIAS) : {};
 const defaultAlias = import.meta.env.VITE_VUE_APP_DEFAULT_ALIAS;
 const showOmsInput = ref(false);
@@ -154,9 +153,7 @@ const setOms = async () => {
   isCheckingOms.value = true;
 
   const instanceURL = instanceUrl.value.trim().toLowerCase();
-  if (!baseURL) {
-    cookieHelper().set('oms', alias[instanceURL] ? alias[instanceURL] : instanceURL)
-  }
+  cookieHelper().set('oms', alias[instanceURL] ? alias[instanceURL] : instanceURL)
 
   // run SAML login flow if login options are configured for the OMS
   await fetchLoginOptions();
