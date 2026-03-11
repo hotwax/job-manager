@@ -133,7 +133,7 @@ export default defineComponent({
     const queryString = ref('');
 
     const primaryCategories = computed(() => {
-      return categories.value.filter(cat => cat.primaryParentCategoryId === 'SYSTEM_JOB');
+      return categories.value.filter(cat => cat.primaryParentCategoryId === 'SYSTEM_JOB' && cat.productCategoryId !== 'ALL');
     });
 
     const subCategories = computed(() => {

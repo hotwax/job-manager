@@ -73,46 +73,52 @@
 
       <!-- Step 2: Custom Parameters -->
       <div v-if="currentStep === 2">
-        <ion-list>
-          <ion-list-header>
-            <ion-label>{{ translate("Custom Parameters") }}</ion-label>
-            <ion-button fill="clear" @click="addParameter()">
-              <ion-icon slot="icon-only" :icon="addOutline"></ion-icon>
-            </ion-button>
-          </ion-list-header>
-          <ion-item-sliding v-for="(param, index) in jobData.parameters" :key="index">
-            <ion-item>
-              <div class="parameter-inputs">
-                <ion-input
-                  v-model="param.key"
-                  :label="translate('Key')"
-                  label-placement="floating"
-                  fill="outline"
-                  :placeholder="translate('Key')"
-                  :required="true"
-                  :error-text="translate('Field is required')"
-                ></ion-input>
-                <ion-input
-                  v-model="param.value"
-                  :label="translate('Value')"
-                  label-placement="floating"
-                  fill="outline"
-                  :placeholder="translate('Value')"
-                  :required="true"
-                  :error-text="translate('Field is required')"
-                ></ion-input>
-              </div>
-            </ion-item>
-            <ion-item-options side="end">
-              <ion-item-option color="danger" @click="removeParameter(index)">
-                <ion-icon slot="icon-only" :icon="trashOutline"></ion-icon>
-              </ion-item-option>
-            </ion-item-options>
-          </ion-item-sliding>
-        </ion-list>
-        <p v-if="jobData.parameters.length === 0" class="ion-text-center ion-padding">
-          {{ translate("No custom parameters added.") }}
-        </p>
+        <div v-if="jobData.parameters.length > 0">
+          <ion-list>
+            <ion-list-header>
+              <ion-label>{{ translate("Custom Parameters") }}</ion-label>
+              <ion-button fill="clear" @click="addParameter()">
+                <ion-icon slot="icon-only" :icon="addOutline"></ion-icon>
+              </ion-button>
+            </ion-list-header>
+            <ion-item-sliding v-for="(param, index) in jobData.parameters" :key="index">
+              <ion-item>
+                <div class="parameter-inputs">
+                  <ion-input
+                    v-model="param.key"
+                    :label="translate('Key')"
+                    label-placement="floating"
+                    fill="outline"
+                    :placeholder="translate('Key')"
+                    :required="true"
+                    :error-text="translate('Field is required')"
+                  ></ion-input>
+                  <ion-input
+                    v-model="param.value"
+                    :label="translate('Value')"
+                    label-placement="floating"
+                    fill="outline"
+                    :placeholder="translate('Value')"
+                    :required="true"
+                    :error-text="translate('Field is required')"
+                  ></ion-input>
+                </div>
+              </ion-item>
+              <ion-item-options side="end">
+                <ion-item-option color="danger" @click="removeParameter(index)">
+                  <ion-icon slot="icon-only" :icon="trashOutline"></ion-icon>
+                </ion-item-option>
+              </ion-item-options>
+            </ion-item-sliding>
+          </ion-list>
+        </div>
+
+        <div v-else class="ion-text-center ion-padding">
+          <p>{{ translate("No custom parameters, setup complete.") }}</p>
+          <ion-button @click="saveJob()">
+            {{ translate("Confirm & Create") }}
+          </ion-button>
+        </div>
       </div>
     </form>
   </ion-content>
@@ -167,6 +173,7 @@ import { defineComponent, ref, computed } from 'vue';
 import { addOutline, closeOutline, trashOutline } from 'ionicons/icons';
 import { translate } from '@common';
 import { getCronString } from '@/utils';
+import { serviceInParameters } from '@/mock/serviceInParameters';
 
 export default defineComponent({
   name: 'CreateJobModal',
@@ -243,7 +250,16 @@ export default defineComponent({
 
     const nextStep = () => {
       if (validateForm()) {
-        if (currentStep.value < totalSteps) {
+        if (currentStep.value === 1) {
+          // Fetch parameters for the service
+          const params = serviceInParameters[jobData.value.service] || [];
+          if (params.length > 0) {
+            jobData.value.parameters = params.map(p => ({ key: p, value: '' }));
+          } else {
+            jobData.value.parameters = [];
+          }
+          currentStep.value++;
+        } else if (currentStep.value < totalSteps) {
           currentStep.value++;
         }
       }
