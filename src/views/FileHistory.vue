@@ -6,6 +6,16 @@
           <ion-menu-button />
         </ion-buttons>
         <ion-title>{{ translate("File history") }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button @click="openFiltersModal">
+            <template v-if="totalAppliedFilters">
+              {{ totalAppliedFilters }} {{ translate("filters applied") }}
+            </template>
+            <template v-else>
+              {{ translate("Filters") }}
+            </template>
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
 
@@ -49,8 +59,6 @@
             </ion-card-content>
           </ion-card>
         </div> -->
-
-
         <div class="header">
           <div class="title">
             <h1>{{ translate("Processed Files") }}</h1>
@@ -125,7 +133,8 @@ import {
   IonChip,
   IonInfiniteScroll,
   IonInfiniteScrollContent,
-  onIonViewWillEnter
+  onIonViewWillEnter,
+  modalController
 } from '@ionic/vue';
 import { translate, commonUtil } from '@common';
 import { closeOutline, documentOutline } from 'ionicons/icons';
@@ -134,12 +143,17 @@ import router from '@/router';
 import { useMdmConfigStore } from '@/store/mdmConfig';
 import { getDateTimeWithOrdinalSuffix, getFileSize } from '@/utils';
 import { getStatusDesc } from '@/utils/config';
+import LogFilters from '@/components/LogFilters.vue';
+import { useUtilStore } from '@/store/util';
 
 const mdmStore = useMdmConfigStore();
+const utilStore = useUtilStore();
 
 const filterStatus = ref('all');
 const logs = computed(() => mdmStore.getLogs)
 const isScrollable = computed(() => mdmStore.islogsScrollable)
+const appliedFilters = computed(() => mdmStore.getAppliedFilters)
+const totalAppliedFilters = computed(() => Object.keys(appliedFilters.value).length)
 
 async function fetchLogs(pageSize = 10, pageIndex = 0) {
   const params = {
@@ -164,8 +178,17 @@ function logMoreLogs(event: any) {
   });
 }
 
+async function openFiltersModal() {
+  const filtersModal = await modalController.create({
+    component: LogFilters
+  })
+
+  await filtersModal.present()
+}
+
 onIonViewWillEnter(async () => {
   await fetchLogs();
+  await utilStore.fetchStatusItems("DataManagerLog");
 })
 </script>
 

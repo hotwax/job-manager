@@ -2,6 +2,7 @@ import { resetPermissions } from "@/authorization";
 import emitter from "@/event-bus";
 import logger from "@/logger";
 import { useUserStore } from "@/store/user";
+import { useUtilStore } from "@/store/util";
 import { showToast } from "@/utils";
 import { api, client, cookieHelper, commonUtil, translate } from "@common";
 import { DateTime } from "luxon";
@@ -93,6 +94,7 @@ export function useAuth() {
     }
 
     useUserStore().$reset();
+    useUtilStore().$reset();
     resetPermissions();
     cookieHelper().remove('token');
     cookieHelper().remove('expirationTime');
