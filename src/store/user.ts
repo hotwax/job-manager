@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { hasError, showToast } from "@/utils";
+import { showToast } from "@/utils";
 import { api, cookieHelper, commonUtil, translate } from "@common";
 import { DateTime, Settings } from "luxon";
 import {
@@ -149,7 +149,7 @@ export const useUserStore = defineStore("user", {
           baseURL: commonUtil.getOmsURL(),
           data: params,
         })
-        if(resp.status === 200 && resp.data.docs?.length && !hasError(resp)) {
+        if(resp.status === 200 && resp.data.docs?.length && !commonUtil.hasError(resp)) {
           serverPermissions = resp.data.docs.map((permission: any) => permission.permissionId);
           const total = resp.data.count;
           const remainingPermissions = total - serverPermissions.length;
@@ -167,7 +167,7 @@ export const useUserStore = defineStore("user", {
                   permissionIds: serverPermissionsFromRules
                 }
               })
-              if(!hasError(response)){
+              if(!commonUtil.hasError(response)){
                 return Promise.resolve(response);
                 } else {
                 return Promise.reject(response);
@@ -178,7 +178,7 @@ export const useUserStore = defineStore("user", {
               failed: []
             }
             responses.reduce((permissionResponses: any, permissionResponse: any) => {
-              if (permissionResponse.status !== 200 || hasError(permissionResponse) || !permissionResponse.data?.docs) {
+              if (permissionResponse.status !== 200 || commonUtil.hasError(permissionResponse) || !permissionResponse.data?.docs) {
                 permissionResponses.failed.push(permissionResponse);
               } else {
                 permissionResponses.success.push(permissionResponse);

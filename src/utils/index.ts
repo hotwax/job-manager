@@ -7,13 +7,6 @@ import { translate } from "@common";
 import { Plugins } from '@capacitor/core';
 import cronstrue from "cronstrue"
 
-// TODO Use separate files for specific utilities
-
-// TODO Remove it when HC APIs are fully REST compliant
-const hasError = (response: any) => {
-  return typeof response.data != "object" || !!response.data._ERROR_MESSAGE_ || !!response.data._ERROR_MESSAGE_LIST_ || !!response.data.error;
-}
-
 const showToast = async (message: string) => {
   const toast = await toastController
     .create({
@@ -133,15 +126,6 @@ const handleDateTimeInput = (dateTimeValue: any) => {
   // Current date time picker picks browser timezone and there is no supprt to change it
   const dateTime = DateTime.fromISO(dateTimeValue, { setZone: true}).toFormat("yyyy-MM-dd'T'HH:mm:ss")
   return DateTime.fromISO(dateTime).toMillis()
-}
-
-const prepareRuntime = (job: any) => {
-  // For job frequency everyday, set to start of next day
-  // It is not recommended to schedule all jobs at the start of the day as it will cause performance issues if too many jobs scheduled at the same time,
-  // understanding the risk and assuming that only limited jobs will be scheduled, we are moving ahead as per the recommendation of Aditya P.
-  if (job.jobStatus === 'EVERYDAY') {
-    return DateTime.now().startOf('day').plus({days: 1}).toMillis();
-  }
 }
 
 const generateAllowedFrequencies = (type?: string) => {
@@ -444,12 +428,10 @@ export {
   handleDateTimeInput,
   hasJobDataError,
   showToast,
-  hasError,
   parseCsv,
   jsonToCsv,
   JsonToCsvOption,
   isFutureDate,
-  prepareRuntime,
   saveDataFile,
   timeTillRun,
   getFileSize,

@@ -27,14 +27,14 @@
           <section class="upload-selection">
             <h3>{{ translate("Upload File") }}</h3>
             <div class="upload-area" @dragover.prevent @drop.prevent="onDrop">
-              <ion-icon :icon="selectedFile ? documentTextOutline : cloudUploadOutline" color="medium" />
-              <p v-if="!selectedFile">
+              <ion-icon class="upload-icon" :icon="selectedFile ? documentTextOutline : cloudUploadOutline" color="medium" />
+              <p class="ion-display-flex ion-justify-content-center ion-align-items-center" v-if="!selectedFile">
                 <a href="#" @click.prevent="triggerFileInput">{{ translate("Upload a file") }}</a> 
                 {{ translate(" or drag and drop") }}
               </p>
-              <p v-else>
+              <p class="ion-display-flex ion-justify-content-center ion-align-items-center" v-else>
                 {{ selectedFile.name }}
-                <ion-button size="small" fill="clear" color="danger" @click="removeFile">
+                <ion-button size="default" fill="clear" color="danger" @click="removeFile">
                   <ion-icon slot="icon-only" :icon="trashOutline" />
                 </ion-button>
               </p>
@@ -64,7 +64,7 @@ import router from '@/router';
 import { IonPage, IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonButton, IonIcon, IonRadioGroup, IonRadio, IonItem, IonLabel, onIonViewWillEnter} from '@ionic/vue';
 import { downloadOutline, cloudUploadOutline, documentTextOutline, trashOutline, sendOutline, cartOutline, cubeOutline, shapesOutline, peopleOutline, arrowUndoOutline } from 'ionicons/icons';
 import { api, translate } from '@common';
-import { showToast } from '@/utils';
+import { saveDataFile, showToast } from '@/utils';
 import { useMdmConfigStore } from '@/store/mdmConfig';
 import logger from '@/logger';
 import { getQueueType } from '@/utils/config';
@@ -112,7 +112,8 @@ const downloadTemplate = async () => {
       },
       responseType: "blob"
     })
-    saveAs(new Blob([resp.data]), `${config.value.description || config.value.configId}.csv`)
+    saveDataFile(resp.data, `${config.value.description || config.value.configId}.csv`)
+    // saveAs(new Blob([resp.data]), `${config.value.description || config.value.configId}.csv`)
     showToast(translate('Template downloaded successfully'));
   } catch(err) {
     logger.error("Failed to download template", err)
@@ -177,7 +178,7 @@ onIonViewWillEnter(async () => {
   background-color: var(--ion-color-light);
 }
 
-.upload-area ion-icon {
+.upload-icon {
   font-size: 48px;
 }
 

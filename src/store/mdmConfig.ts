@@ -6,14 +6,16 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
   state: () => ({
     configs: [] as Array<any>,
     logs: [] as Array<any>,
-    logsCount: 0
+    logsCount: 0,
+    filters: {} as Record<string, any>
   }),
   getters: {
     getConfigs: (state: any) => state.configs,
     getConfigById: (state: any) => (configId: string) => state.configs.find((config: any) => config.configId === configId) || {},
     getLogs: (state: any) => state.logs,
     getLogsCount: (state: any) => state.logsCount,
-    islogsScrollable: (state: any) => state.logs?.length > 0 && state.logs?.length < state.logsCount
+    islogsScrollable: (state: any) => state.logs?.length > 0 && state.logs?.length < state.logsCount,
+    getAppliedFilters: (state: any) => state.filters
   },
   actions: {
     async fetchConfigs() {
@@ -52,12 +54,21 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
         logger.error(`Failed to fetch config with id ${configId}`, err)
       }
     },
-    async fetchDataManagerLogs(params: any) {
+    async fetchDataManagerLogs(params = { pageSize: 10, pageIndex: 0 }) {
       try {
+        const payload = {
+          ...params
+        } as any
+
+        Object.entries(this.filters).map(([ type, value ]) => {
+          payload[type] = value
+          payload[`${type}_op`] = "in"
+        })
+
         let resp = await api({
           url: "admin/dataManager/details",
           method: "get",
-          params
+          params: payload
         })
 
         if(resp.data?.dataManagerLogsCount) {
@@ -89,6 +100,9 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
       } catch(err) {
         logger.error(`Failed to cancel log with id ${logId}`, err)
       }
+    },
+    async updateAppliedFilters(filterType: string, value: any) {
+      this.filters[filterType] = value
     }
   },
   persist: true,
