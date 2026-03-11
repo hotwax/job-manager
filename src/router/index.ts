@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { RouteRecordRaw } from 'vue-router';
-import Catalog from '@/views/catalog.vue'
+import Catalog from '@/views/Catalog.vue'
 import Settings from "@/views/Settings.vue"
 import FileHistory from "@/views/FileHistory.vue"
 import FileDetail from "@/views/FileDetail.vue"
@@ -11,6 +11,7 @@ import 'vue-router'
 import { useAuth } from '@/composables/auth';
 import ImportDetail from '@/views/ImportDetail.vue';
 import ManualUploads from '@/views/ManualUploads.vue';
+import JobDetail from '@/views/JobDetail.vue';
 
 // Defining types for the meta values
 declare module 'vue-router' {
@@ -83,6 +84,13 @@ const routes: Array<RouteRecordRaw> = [
     name: 'ManualUploads',
     component: ManualUploads,
     beforeEnter: authGuard
+  },
+  {
+    path: '/job/:jobName',
+    name: 'JobDetail',
+    component: JobDetail,
+    beforeEnter: authGuard,
+    props: true
   }
 ]
 

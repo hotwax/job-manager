@@ -19,39 +19,43 @@
             </p>
           </div>
           <ion-button @click="openCreateJobModal()">
-            <ion-icon slot="end" :ios="addOutline" :md="addOutline"></ion-icon>
+            <ion-icon slot="end" :icon="addOutline"></ion-icon>
             {{ translate("Add job") }}
           </ion-button>
         </div>
 
         <ion-card>
-          <ion-searchbar :placeholder="translate('Search jobs')"></ion-searchbar>
+          <ion-searchbar v-model="queryString" :placeholder="translate('Search jobs')"></ion-searchbar>
           
-          <ion-breadcrumbs v-if="navigationStack.length > 0" class="ion-padding-start ion-padding-top">
-            <ion-breadcrumb @click="resetNavigation">All</ion-breadcrumb>
-            <ion-breadcrumb v-for="(cat, index) in navigationStack" :key="cat.id" @click="navigateToStackIndex(index)">
-              {{ cat.name }}
-            </ion-breadcrumb>
-          </ion-breadcrumbs>
-
+          <!-- Primary Categories (Row 1) -->
           <div class="categories">
-            <ion-chip v-for="category in currentLevelCategories" :key="category.id" @click="selectCategory(category)" :outline="selectedCategory !== category.id" :color="selectedCategory === category.id ? 'primary' : ''">
-              <ion-label>{{ category.name }}</ion-label>
-              <ion-icon v-if="category.subCategories && category.subCategories.length > 0" :icon="chevronForwardOutline" />
+            <ion-chip @click="selectedParentCategoryId = 'ALL'; selectedSubCategoryId = ''" :outline="selectedParentCategoryId !== 'ALL'" :color="selectedParentCategoryId === 'ALL' ? 'primary' : ''">
+              <ion-label>{{ translate("All") }}</ion-label>
+            </ion-chip>
+            <ion-chip v-for="category in primaryCategories" :key="category.productCategoryId" @click="selectParentCategory(category)" :outline="selectedParentCategoryId !== category.productCategoryId" :color="selectedParentCategoryId === category.productCategoryId ? 'primary' : ''">
+              <ion-label>{{ category.categoryName }}</ion-label>
+            </ion-chip>
+          </div>
+
+          <!-- Sub Categories (Row 2) - Visible only if children exist -->
+          <div v-if="subCategories.length > 0" class="sub-categories">
+            <ion-chip v-for="sub in subCategories" :key="sub.productCategoryId" @click="selectedSubCategoryId = sub.productCategoryId" :outline="selectedSubCategoryId !== sub.productCategoryId" :color="selectedSubCategoryId === sub.productCategoryId ? 'primary' : ''">
+              <ion-label>{{ sub.categoryName }}</ion-label>
             </ion-chip>
           </div>
         </ion-card>
 
         <div class="jobs">
-          <ion-card v-for="job in filteredJobs" :key="job.id">
+          <ion-card v-for="job in filteredJobs" :key="job.jobName">
             <ion-card-header>
-              <ion-card-subtitle>{{ job.direction }}</ion-card-subtitle>
-              <ion-card-title>{{ job.name }}</ion-card-title>
-              <code>{{ job.code }}</code>
+              <ion-card-title>{{ job.jobName }}</ion-card-title>
+              <code>ID: {{ job.instanceOfProductId }}</code><br>
+              <code>{{ job.serviceName }}</code>
             </ion-card-header>
-            <ion-item lines="none" detail button @click="router.push(job.path)">
+            <ion-item lines="none" detail button @click="router.push(`/job/${job.jobName}`)">
               <ion-label>
-                {{ job.status }}: {{ job.frequency }}
+                {{ job.paused === 'N' ? translate('Enabled') : translate('Paused') }}
+                <p v-if="job.cronExpression">{{ getCronString(job.cronExpression) }}</p>
               </ion-label>
             </ion-item>
           </ion-card>
@@ -64,8 +68,6 @@
 
 <script lang="ts">
 import {
-  IonBreadcrumb,
-  IonBreadcrumbs,
   IonButton,
   IonCard,
   IonCardHeader,
@@ -89,12 +91,13 @@ import router from '@/router';
 import { addOutline, chevronForwardOutline } from 'ionicons/icons';
 import { translate } from '@common';
 import CreateJobModal from '@/components/CreateJobModal.vue';
+import { getCronString } from '@/utils';
+import { mockJobs } from '@/mock/jobs';
+import { mockCategories, mockCategoryRollups, mockCategoryMembers } from '@/mock/categories';
 
 export default defineComponent({
   name: 'Catalog',
   components: {
-    IonBreadcrumb,
-    IonBreadcrumbs,
     IonButton,
     IonCard,
     IonCardHeader,
@@ -113,144 +116,72 @@ export default defineComponent({
     IonToolbar
   },
   setup() {
-    const categories = ref([
-      { id: 'Shopify', name: 'Shopify', subCategories: [] },
-      { 
-        id: 'NetSuite', 
-        name: 'NetSuite', 
-        subCategories: [
-          { id: 'NS_ORDER', name: 'Order' },
-          { id: 'NS_INVENTORY', name: 'Inventory' },
-          { id: 'NS_TRANSFER_ORDER', name: 'Transfer Order' }
-        ] 
-      },
-      { id: 'Orders', name: 'Orders' },
-      { id: 'Inventory', name: 'Inventory' }
-    ]);
+    // ProductCategory table
+    const categories = ref(mockCategories);
 
-    const selectedCategory = ref('All');
-    const navigationStack = ref([] as any[]);
+    // ProductCategoryRollup table
+    const categoryRollups = ref(mockCategoryRollups);
 
-    const currentLevelCategories = computed(() => {
-      if (navigationStack.value.length === 0) {
-        return categories.value;
-      }
-      return navigationStack.value[navigationStack.value.length - 1].subCategories || [];
+    // ProductCategoryMember table
+    const categoryMembers = ref(mockCategoryMembers);
+
+    // ServiceJob table output
+    const jobs = mockJobs;
+
+    const selectedParentCategoryId = ref('ALL');
+    const selectedSubCategoryId = ref('');
+    const queryString = ref('');
+
+    const primaryCategories = computed(() => {
+      return categories.value.filter(cat => cat.primaryParentCategoryId === 'SYSTEM_JOB');
     });
 
-    const selectCategory = (category: any) => {
-      selectedCategory.value = category.id;
-      if (category.subCategories && category.subCategories.length > 0) {
-        navigationStack.value.push(category);
-      }
-    };
+    const subCategories = computed(() => {
+      if (selectedParentCategoryId.value === 'ALL') return [];
+      
+      const subCategoryIds = categoryRollups.value
+        .filter(rollup => rollup.parentProductCategoryId === selectedParentCategoryId.value)
+        .map(rollup => rollup.productCategoryId);
+      
+      return categories.value.filter(cat => subCategoryIds.includes(cat.productCategoryId));
+    });
 
-    const resetNavigation = () => {
-      navigationStack.value = [];
-      selectedCategory.value = 'All';
+    const selectParentCategory = (category: any) => {
+      selectedParentCategoryId.value = category.productCategoryId;
+      selectedSubCategoryId.value = ''; // Reset sub-category on parent change
     };
-
-    const navigateToStackIndex = (index: number) => {
-      navigationStack.value = navigationStack.value.slice(0, index + 1);
-      selectedCategory.value = navigationStack.value[index].id;
-    };
-
-    const jobs = [
-      {
-        id: 'import-sales-orders-shopify',
-        name: 'Import Sales Orders (Shopify)',
-        code: 'importShopifySalesOrders',
-        direction: 'SHOPIFY → HOTWAX',
-        frequency: 'Every 15m',
-        status: 'Enabled',
-        path: '/partner/HotWax/category/Shopify/job/import-sales-order',
-        categories: ['Shopify', 'Orders']
-      },
-      {
-        id: 'import-sales-orders',
-        name: 'Import Sales Orders (NS)',
-        code: 'importNetSuiteSalesOrders',
-        direction: 'NETSUITE → HOTWAX',
-        frequency: 'Every 15m',
-        status: 'Enabled',
-        path: '/partner/HotWax/category/NetSuite/job/import-sales-order',
-        categories: ['NetSuite', 'Orders']
-      },
-      {
-        id: 'order-status',
-        name: 'Sync Order Status to NS',
-        code: 'syncOrderStatusNetSuite',
-        direction: 'HOTWAX → NETSUITE',
-        frequency: 'Every 15m',
-        status: 'Enabled',
-        path: '/partner/HotWax/category/NetSuite/job/sync-order-status',
-        categories: ['NetSuite', 'Orders']
-      },
-      {
-        id: 'transfer-orders',
-        name: 'Import Transfer Orders',
-        code: 'importNetSuiteTransferOrders',
-        direction: 'NETSUITE → HOTWAX',
-        frequency: 'Hourly',
-        status: 'Enabled',
-        path: '/partner/HotWax/category/NetSuite/job/import-transfer-orders',
-        categories: ['NetSuite', 'Orders', 'Inventory']
-      },
-      {
-        id: 'fulfillments',
-        name: 'Export Fulfillments to NS',
-        code: 'exportFulfillmentsNetSuite',
-        direction: 'HOTWAX → NETSUITE',
-        frequency: 'Every 30m',
-        status: 'Enabled',
-        path: '/partner/HotWax/category/NetSuite/job/export-fulfillments',
-        categories: ['NetSuite', 'Orders']
-      },
-      {
-        id: 'customer-deposits',
-        name: 'Sync Customer Deposits',
-        code: 'syncNetSuiteDeposits',
-        direction: 'NETSUITE → HOTWAX',
-        frequency: 'Every 2h',
-        status: 'Paused',
-        path: '/partner/HotWax/category/NetSuite/job/sync-customer-deposits',
-        categories: ['NetSuite']
-      },
-      {
-        id: 'sync-inventory-shopify',
-        name: 'Sync Inventory to Shopify',
-        code: 'syncShopifyInventory',
-        direction: 'HOTWAX → SHOPIFY',
-        frequency: 'Every 15m',
-        status: 'Enabled',
-        path: '/partner/HotWax/category/Shopify/job/sync-inventory',
-        categories: ['Shopify', 'Inventory']
-      },
-      {
-        id: 'import-bulk-orders',
-        name: 'Import Bulk Orders',
-        code: 'importBulkOrders',
-        direction: 'FILE → HOTWAX',
-        frequency: 'Daily',
-        status: 'Enabled',
-        path: '/partner/HotWax/category/Orders/job/import-bulk-orders',
-        categories: ['Orders']
-      }
-    ];
 
     const filteredJobs = computed(() => {
-      if (selectedCategory.value === 'All') return jobs;
-      // Simple initial check: if the job has the category ID directly
-      // In a real app, this would be more complex (checking parent categories etc)
-      return jobs.filter(job => job.categories.includes(selectedCategory.value) || 
-                                (selectedCategory.value === 'NetSuite' && job.categories.includes('NetSuite')));
+      let activeCategoryId = selectedSubCategoryId.value || selectedParentCategoryId.value;
+      
+      let filtered = jobs;
+
+      if (activeCategoryId !== 'ALL') {
+        const jobIds = categoryMembers.value
+          .filter(member => member.productCategoryId === activeCategoryId)
+          .map(member => member.productId);
+        
+        filtered = filtered.filter(job => jobIds.includes(job.jobName));
+      }
+
+      if (queryString.value.trim()) {
+        const query = queryString.value.toLowerCase().trim();
+        filtered = filtered.filter(job => 
+          job.jobName.toLowerCase().includes(query) ||
+          job.serviceName.toLowerCase().includes(query) ||
+          (job.instanceOfProductId && job.instanceOfProductId.toLowerCase().includes(query))
+        );
+      }
+
+      return filtered;
     });
 
     const openCreateJobModal = async () => {
       const modal = await modalController.create({
         component: CreateJobModal,
         componentProps: {
-          categories: categories.value
+          categories: categories.value, // Passing all flat categories
+          existingJobNames: jobs.map(job => job.jobName)
         }
       });
       modal.present();
@@ -258,7 +189,6 @@ export default defineComponent({
       const { data, role } = await modal.onDidDismiss();
       if (role === 'confirm') {
         console.log('Job created:', data);
-        // Here you would typically call an API to save the job
       }
     };
 
@@ -266,17 +196,17 @@ export default defineComponent({
       addOutline,
       chevronForwardOutline,
       categories,
-      currentLevelCategories,
+      primaryCategories,
+      subCategories,
       filteredJobs,
-      jobs,
-      navigationStack,
-      navigateToStackIndex,
       openCreateJobModal,
-      resetNavigation,
       router,
-      selectCategory,
-      selectedCategory,
-      translate
+      selectParentCategory,
+      selectedParentCategoryId,
+      selectedSubCategoryId,
+      queryString,
+      translate,
+      getCronString
     }
   }
 });
@@ -290,13 +220,18 @@ export default defineComponent({
   justify-content: space-between;
 }
 
-.categories {
+.categories, .sub-categories {
   padding: 0 8px 8px;
   display: flex;
   flex-wrap: wrap;
 }
 
-.categories ion-chip {
+.sub-categories {
+  border-top: 1px solid var(--ion-color-light);
+  padding-top: 8px;
+}
+
+.categories ion-chip, .sub-categories ion-chip {
   cursor: pointer;
 }
 

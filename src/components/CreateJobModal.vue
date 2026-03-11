@@ -1,9 +1,9 @@
 <template>
   <ion-header>
     <ion-toolbar>
-      <ion-buttons slot="end">
+      <ion-buttons slot="start">
         <ion-button @click="closeModal()">
-          <ion-icon :icon="closeOutline" />
+          <ion-icon slot="icon-only" :icon="closeOutline" />
         </ion-button>
       </ion-buttons>
       <ion-title>{{ translate("Create Job") }}</ion-title>
@@ -12,100 +12,109 @@
   </ion-header>
 
   <ion-content class="ion-padding">
-    <!-- Step 1: Core Details -->
-    <div v-show="currentStep === 1">
-      <ion-list>
-        <ion-item>
-          <ion-input
-            v-model="jobData.name"
-            :label="translate('Name')"
-            label-placement="stacked"
-            fill="outline"
-            :placeholder="translate('Job name')"
-          ></ion-input>
-        </ion-item>
-        <ion-item>
-          <ion-textarea
-            v-model="jobData.description"
-            :label="translate('Description')"
-            label-placement="stacked"
-            fill="outline"
-            :placeholder="translate('Job description')"
-          ></ion-textarea>
-        </ion-item>
-        <ion-item>
-          <ion-select
-            v-model="jobData.primaryCategory"
-            :label="translate('Primary Category')"
-            label-placement="stacked"
-            fill="outline"
-            :placeholder="translate('Select Category')"
-          >
-            <ion-select-option v-for="category in categories" :key="category.id" :value="category.id">
-              {{ category.name }}
-            </ion-select-option>
-          </ion-select>
-        </ion-item>
-        <ion-item>
-          <ion-input
-            v-model="jobData.service"
-            :label="translate('Service')"
-            label-placement="stacked"
-            fill="outline"
-            placeholder="com.hotwax.example.Service"
-          ></ion-input>
-        </ion-item>
-        <ion-item>
-          <ion-input
-            v-model="jobData.cronExpression"
-            :label="translate('Cron Expression')"
-            label-placement="stacked"
-            fill="outline"
-            placeholder="0 0/15 * * * ?"
-          ></ion-input>
-        </ion-item>
-      </ion-list>
-    </div>
+    <form ref="jobForm" @submit.prevent="saveJob">
+      <!-- Step 1: Core Details -->
+      <div v-if="currentStep === 1">
+        <ion-list>
+            <ion-input
+              id="job-name-input"
+              v-model="jobData.name"
+              :label="translate('Name')"
+              label-placement="floating"
+              fill="outline"
+              :required="true"
+              :error-text="isNameUnique ? translate('Field is required') : translate('Job name must be unique')"
+              :class="{ 'ion-invalid': !isNameUnique && jobData.name }"
+            ></ion-input>
+            <br>
+            <ion-textarea
+              v-model="jobData.description"
+              :label="translate('Description')"
+              label-placement="floating"
+              fill="outline"
+              :auto-grow="true"
+            ></ion-textarea>
+            <br>
+            <ion-select
+              v-model="jobData.primaryCategory"
+              :label="translate('Primary Category')"
+              label-placement="floating"
+              fill="outline"
+              :required="true"
+              :error-text="translate('Field is required')"
+            >
+              <ion-select-option v-for="category in categories" :key="category.productCategoryId" :value="category.productCategoryId">
+                {{ category.categoryName }}
+              </ion-select-option>
+            </ion-select>
+            <br>
+            <ion-input
+              v-model="jobData.service"
+              :label="translate('Service')"
+              label-placement="floating"
+              fill="outline"
+              placeholder="com.hotwax.example.Service"
+              :required="true"
+              :error-text="translate('Field is required')"
+            ></ion-input>
+            <br>
+            <ion-input
+              v-model="jobData.cronExpression"
+              :label="translate('Cron Expression')"
+              label-placement="floating"
+              fill="outline"
+              placeholder="0 0/15 * * * ?"
+            ></ion-input>
+            <p v-if="jobData.cronExpression" class="ion-margin-horizontal">
+              <ion-label color="medium">{{ getCronString(jobData.cronExpression) }}</ion-label>
+            </p>
+        </ion-list>
+      </div>
 
-    <!-- Step 2: Custom Parameters -->
-    <div v-show="currentStep === 2">
-      <ion-list>
-        <ion-list-header>
-          <ion-label>{{ translate("Custom Parameters") }}</ion-label>
-          <ion-button fill="clear" @click="addParameter()">
-            <ion-icon slot="icon-only" :icon="addOutline"></ion-icon>
-          </ion-button>
-        </ion-list-header>
-        <ion-item-sliding v-for="(param, index) in jobData.parameters" :key="index">
-          <ion-item>
-            <div class="parameter-inputs">
-              <ion-input
-                v-model="param.key"
-                :label="translate('Key')"
-                label-placement="stacked"
-                fill="outline"
-                :placeholder="translate('Key')"
-              ></ion-input>
-              <ion-input
-                v-model="param.value"
-                :label="translate('Value')"
-                label-placement="stacked"
-                fill="outline"
-                :placeholder="translate('Value')"
-              ></ion-input>
-            </div>
-          </ion-item>
-          <ion-item-options side="end">
-            <ion-item-option color="danger" @click="removeParameter(index)">
-              <ion-icon slot="icon-only" :icon="trashOutline"></ion-icon>
-            </ion-item-option>
-          </ion-item-options>
-        </ion-item-sliding>
-      </ion-list>
-      <p v-if="jobData.parameters.length === 0" class="ion-text-center ion-padding">
-        {{ translate("No custom parameters added.") }}
-      </p>
-    </div>
+      <!-- Step 2: Custom Parameters -->
+      <div v-if="currentStep === 2">
+        <ion-list>
+          <ion-list-header>
+            <ion-label>{{ translate("Custom Parameters") }}</ion-label>
+            <ion-button fill="clear" @click="addParameter()">
+              <ion-icon slot="icon-only" :icon="addOutline"></ion-icon>
+            </ion-button>
+          </ion-list-header>
+          <ion-item-sliding v-for="(param, index) in jobData.parameters" :key="index">
+            <ion-item>
+              <div class="parameter-inputs">
+                <ion-input
+                  v-model="param.key"
+                  :label="translate('Key')"
+                  label-placement="floating"
+                  fill="outline"
+                  :placeholder="translate('Key')"
+                  :required="true"
+                  :error-text="translate('Field is required')"
+                ></ion-input>
+                <ion-input
+                  v-model="param.value"
+                  :label="translate('Value')"
+                  label-placement="floating"
+                  fill="outline"
+                  :placeholder="translate('Value')"
+                  :required="true"
+                  :error-text="translate('Field is required')"
+                ></ion-input>
+              </div>
+            </ion-item>
+            <ion-item-options side="end">
+              <ion-item-option color="danger" @click="removeParameter(index)">
+                <ion-icon slot="icon-only" :icon="trashOutline"></ion-icon>
+              </ion-item-option>
+            </ion-item-options>
+          </ion-item-sliding>
+        </ion-list>
+        <p v-if="jobData.parameters.length === 0" class="ion-text-center ion-padding">
+          {{ translate("No custom parameters added.") }}
+        </p>
+      </div>
+    </form>
   </ion-content>
 
   <ion-footer>
@@ -154,9 +163,10 @@ import {
   IonToolbar,
   modalController
 } from '@ionic/vue';
-import { defineComponent, ref } from 'vue';
+import { defineComponent, ref, computed } from 'vue';
 import { addOutline, closeOutline, trashOutline } from 'ionicons/icons';
 import { translate } from '@common';
+import { getCronString } from '@/utils';
 
 export default defineComponent({
   name: 'CreateJobModal',
@@ -186,11 +196,39 @@ export default defineComponent({
     categories: {
       type: Array as any,
       required: true
+    },
+    existingJobNames: {
+      type: Array as () => string[],
+      default: () => []
     }
   },
-  setup() {
+  setup(props) {
     const currentStep = ref(1);
     const totalSteps = 2;
+    const jobForm = ref<any>(null);
+
+    const isNameUnique = computed(() => {
+      if (!jobData.value.name) return true;
+      return !props.existingJobNames.includes(jobData.value.name);
+    });
+
+    const validateForm = () => {
+      if (jobForm.value) {
+        const inputs = jobForm.value.querySelectorAll('ion-input, ion-select, ion-textarea');
+        inputs.forEach((input: any) => {
+          input.classList.add('ion-touched');
+          // Manually trigger the invalid state if the component is required and has no value
+          if (input.required && !input.value) {
+            input.classList.add('ion-invalid');
+          } else if (input.id === 'job-name-input' && !isNameUnique.value) {
+             input.classList.add('ion-invalid');
+          } else {
+            input.classList.remove('ion-invalid');
+          }
+        });
+      }
+      return jobForm.value?.reportValidity() && isNameUnique.value;
+    };
 
     const jobData = ref({
       name: '',
@@ -198,14 +236,16 @@ export default defineComponent({
       primaryCategory: '',
       service: '',
       cronExpression: '',
-      parameters: [] as any[]
+      parameters: [{ key: '', value: '' }] as any[]
     });
 
     const closeModal = () => modalController.dismiss();
 
     const nextStep = () => {
-      if (currentStep.value < totalSteps) {
-        currentStep.value++;
+      if (validateForm()) {
+        if (currentStep.value < totalSteps) {
+          currentStep.value++;
+        }
       }
     };
 
@@ -224,7 +264,9 @@ export default defineComponent({
     };
 
     const saveJob = () => {
-      modalController.dismiss(jobData.value, 'confirm');
+      if (validateForm()) {
+        modalController.dismiss(jobData.value, 'confirm');
+      }
     };
 
     return {
@@ -232,6 +274,7 @@ export default defineComponent({
       closeOutline,
       currentStep,
       jobData,
+      jobForm,
       totalSteps,
       trashOutline,
       addParameter,
@@ -240,7 +283,9 @@ export default defineComponent({
       prevStep,
       removeParameter,
       saveJob,
-      translate
+      translate,
+      getCronString,
+      isNameUnique
     };
   }
 });
