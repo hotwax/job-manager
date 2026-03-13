@@ -15,7 +15,7 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
     getLogs: (state: any) => state.logs,
     getLogsCount: (state: any) => state.logsCount,
     islogsScrollable: (state: any) => state.logs?.length > 0 && state.logs?.length < state.logsCount,
-    getAppliedFilters: (state: any) => state.filters
+    getAppliedFilters: (state: any) => JSON.parse(JSON.stringify(state.filters))
   },
   actions: {
     async fetchConfigs() {
@@ -78,6 +78,9 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
             this.logs = resp.data.dataManagerLogs
             this.logsCount = resp.data.dataManagerLogsCount
           }
+        } else if(params?.pageIndex == 0) {
+          this.logs = []
+          this.logsCount = 0
         }
       } catch(err) {
         logger.error("Failed to fetch logs", err)

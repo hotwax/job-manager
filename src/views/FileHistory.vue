@@ -7,12 +7,10 @@
         </ion-buttons>
         <ion-title>{{ translate("File history") }}</ion-title>
         <ion-buttons slot="end">
-          <ion-button @click="openFiltersModal">
+          <ion-button @click="openFiltersModal" :color="totalAppliedFilters ? 'primary' : ''">
+            {{ translate("Filters") }}
             <template v-if="totalAppliedFilters">
-              {{ totalAppliedFilters }} {{ translate("filters applied") }}
-            </template>
-            <template v-else>
-              {{ translate("Filters") }}
+              ({{ totalAppliedFilters }})
             </template>
           </ion-button>
         </ion-buttons>
@@ -59,19 +57,9 @@
             </ion-card-content>
           </ion-card>
         </div> -->
-        <div class="header">
-          <div class="title">
-            <h1>{{ translate("Processed Files") }}</h1>
-            <p>{{ translate("View history of processed files") }}</p>
-          </div>
-          <ion-segment v-model="filterStatus" class="filter-segment" @ionChange="fetchLogs()">
-            <ion-segment-button value="all">
-              <ion-label>{{ translate("All") }}</ion-label>
-            </ion-segment-button>
-            <ion-segment-button value="error">
-              <ion-label>{{ translate("Problems") }}</ion-label>
-            </ion-segment-button>
-          </ion-segment>
+        <div class="title">
+          <h1>{{ translate("Processed Files") }}</h1>
+          <p>{{ translate("View history of processed files") }}</p>
         </div>
 
         <ion-list>
@@ -104,6 +92,7 @@
               <ion-icon slot="icon-only" :icon="closeOutline" />
             </ion-button>
           </div>
+          <p class="empty-state" v-if="logs.length">{{ translate("No logs found") }}</p>
 
           <ion-infinite-scroll @ionInfinite="logMoreLogs($event)" threshold="300px" v-show="isScrollable" ref="infiniteScrollRef">
             <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="translate('Loading')"/>
@@ -128,8 +117,6 @@ import {
   IonToolbar,
   IonMenuButton,
   IonIcon,
-  IonSegment,
-  IonSegmentButton,
   IonChip,
   IonInfiniteScroll,
   IonInfiniteScrollContent,
@@ -137,7 +124,7 @@ import {
   modalController
 } from '@ionic/vue';
 import { translate, commonUtil } from '@common';
-import { closeOutline, documentOutline } from 'ionicons/icons';
+import { closeOutline, documentOutline, filter } from 'ionicons/icons';
 import { ref, computed } from 'vue';
 import router from '@/router';
 import { useMdmConfigStore } from '@/store/mdmConfig';
@@ -149,7 +136,6 @@ import { useUtilStore } from '@/store/util';
 const mdmStore = useMdmConfigStore();
 const utilStore = useUtilStore();
 
-const filterStatus = ref('all');
 const logs = computed(() => mdmStore.getLogs)
 const isScrollable = computed(() => mdmStore.islogsScrollable)
 const appliedFilters = computed(() => mdmStore.getAppliedFilters)
@@ -159,12 +145,7 @@ async function fetchLogs(pageSize = 10, pageIndex = 0) {
   const params = {
     pageSize,
     pageIndex
-  } as Record<string, any>
-
-  if(filterStatus.value === "error") {
-    params["errorLogContentTypeEnumId"] = "DmcntError"
-    params["statusId"] = "DmlsFailed"
-  }
+  } as Record<any, any>
 
   await mdmStore.fetchDataManagerLogs(params);
 }
@@ -180,7 +161,8 @@ function logMoreLogs(event: any) {
 
 async function openFiltersModal() {
   const filtersModal = await modalController.create({
-    component: LogFilters
+    component: LogFilters,
+    componentProps: { appliedFilters: JSON.parse(JSON.stringify(mdmStore.filters)) }
   })
 
   await filtersModal.present()

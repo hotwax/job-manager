@@ -11,20 +11,13 @@
   </ion-header>
 
   <ion-content>
-    {{ appliedFilters['statusId'] }}
     <ion-item>
-      <ion-select :multiple="true" :value="appliedFilters['statusId']" :label="translate('Status')" interface="popover" @ionChange="updateLogFilter('statusId', $event)">
+      <ion-select :multiple="true" :value="filters['statusId']" :label="translate('Status')" interface="popover" @ionChange="updateLogFilter('statusId', $event)">
         <ion-select-option v-for="statusItem in statusItems" :key="statusItem.statusId" :value="statusItem.statusId">{{ translate(statusItem.description) }}</ion-select-option>
       </ion-select>
     </ion-item>
-    <!-- <ion-item>
-      <ion-select :label="translate('Created Date')" interface="popover" @ionChange="updateLogFilter('statusId', $event)">
-        <ion-select-option value="asc">{{ translate("Asc") }}</ion-select-option>
-        <ion-select-option value="desc">{{ translate("Desc") }}</ion-select-option>
-      </ion-select>
-    </ion-item> -->
     <ion-item>
-      <ion-select :multiple="true" :value="appliedFilters['priority']" :label="translate('Priority')" interface="popover" @ionChange="updateLogFilter('priority', $event)">
+      <ion-select :multiple="true" :value="filters['priority']" :label="translate('Priority')" interface="popover" @ionChange="updateLogFilter('priority', $event)">
         <ion-select-option value="PRIORITY">{{ translate("High") }}</ion-select-option>
         <ion-select-option value="NORMAL">{{ translate("Normal") }}</ion-select-option>
       </ion-select>
@@ -39,30 +32,37 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonButtons, IonContent, IonFooter, IonHeader, IonIcon, IonInput, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonListHeader, IonSelect, IonSelectOption, IonTextarea, IonTitle, IonToolbar, modalController } from '@ionic/vue';
+import { IonButton, IonButtons, IonContent, IonFooter, IonHeader, IonIcon, IonInput, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonListHeader, IonSelect, IonSelectOption, IonTextarea, IonTitle, IonToolbar, modalController, onIonViewWillEnter } from '@ionic/vue';
 import { closeOutline, saveOutline } from 'ionicons/icons';
 import { translate } from '@common';
 import { useMdmConfigStore } from '@/store/mdmConfig';
-import { computed } from 'vue';
+import { computed, toRef, toRefs } from 'vue';
 import { useUtilStore } from '@/store/util';
 
 const mdmConfigStore = useMdmConfigStore();
 const utilStore = useUtilStore();
 
-const appliedFilters = computed(() => mdmConfigStore.getAppliedFilters)
 const statusItems = computed(() => utilStore.getStatusItems("DataManagerLog"))
+
+const props = defineProps(["appliedFilters"])
+
+const filters: any = toRef(props, 'appliedFilters')
 
 function closeModal() {
   modalController.dismiss()
 }
 
 async function saveFilters() {
+  Object.entries(filters.value).map(([type, value]) => {
+    mdmConfigStore.updateAppliedFilters(type, value)
+  })
   await mdmConfigStore.fetchDataManagerLogs()
   closeModal();
 }
 
 function updateLogFilter(filterType: string, event: any) {
-  mdmConfigStore.updateAppliedFilters(filterType, event.detail.value)
+  console.log('filters.value, ', filters.value)
+  filters.value[filterType] = event.detail.value
 }
 </script>
 
