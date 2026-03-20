@@ -8,6 +8,16 @@ export function useMdmLog() {
   const errorLogs = ref([])
   const errorCsvRecords = ref(null) as any
 
+  function isValidJSON(data: any) {
+    try {
+      JSON.parse(data)
+      return true;
+    } catch(err) {
+      logger.error(err)
+      return false;
+    }
+  }
+
   async function fetchLogDetails(logId: string) {
     try {
       let resp = await api({
@@ -44,7 +54,13 @@ export function useMdmLog() {
       })
 
       errorCsvRecords.value = resp?.data?.csvData || resp.data;
-      parseCsv(errorCsvRecords.value).then((resp: any) => errorLogs.value = resp).catch((err: any) => console.log(err))
+      if(isValidJSON(errorCsvRecords.value)) {
+        errorLogs.value = JSON.parse(errorCsvRecords.value)
+      } else {
+        parseCsv(errorCsvRecords.value).then((resp: any) => {
+          errorLogs.value = resp
+        }).catch((err: any) => console.error(err))
+      }
     } catch(err) {
       logger.error("Failed to download the error records", err)
     }
