@@ -39,8 +39,6 @@
             </ion-chip>
           </div>
 
-          {{ subCategories }}
-
           <!-- Sub Categories (Row 2) - Visible only if children exist -->
           <div v-if="subCategories.length > 0" class="sub-categories">
             <ion-chip v-for="sub in subCategories" :key="sub.productCategoryId" @click="selectedSubCategoryId = sub.productCategoryId" :outline="selectedSubCategoryId !== sub.productCategoryId" :color="selectedSubCategoryId === sub.productCategoryId ? 'primary' : ''">
