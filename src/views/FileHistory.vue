@@ -92,7 +92,7 @@
               <ion-icon slot="icon-only" :icon="closeOutline" />
             </ion-button>
           </div>
-          <p class="empty-state" v-if="logs.length">{{ translate("No logs found") }}</p>
+          <p class="empty-state" v-if="!logs.length">{{ translate("No logs found") }}</p>
 
           <ion-infinite-scroll @ionInfinite="logMoreLogs($event)" threshold="300px" v-show="isScrollable" ref="infiniteScrollRef">
             <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="translate('Loading')"/>

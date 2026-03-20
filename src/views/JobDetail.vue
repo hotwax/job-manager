@@ -6,8 +6,8 @@
           <ion-back-button default-href="/catalog"></ion-back-button>
         </ion-buttons>
         <ion-title>{{ job?.jobName || translate('Job Details') }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button v-if="job" @click="togglePause" :color="job.paused === 'Y' ? 'warning' : 'success'">
+        <ion-buttons v-if="job" slot="end">
+          <ion-button @click="togglePause" :color="job.paused === 'Y' ? 'warning' : 'success'">
             <ion-icon :icon="job.paused === 'Y' ? playOutline : pauseOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
@@ -18,13 +18,13 @@
       <!-- Product Context Header -->
       <div v-if="job" class="job-context-header ion-padding">
         <h1 class="ion-no-margin">{{ job.jobName }}</h1>
-        <p class="ion-text-wrap text-medium ion-margin-bottom">{{ job.description || translate('No description available') }}</p>
+        <p class="ion-text-wrap text-medium ion-margin-bottom">{{ job.description || translate("No description available") }}</p>
         <div class="category-chips">
-          <ion-chip v-for="cat in jobCategories" :key="cat.productCategoryId" color="medium" outline>
-            {{ cat.categoryName }}
+          <ion-chip v-for="category in jobCategories" :key="category.productCategoryId" color="medium" outline>
+            {{ category.categoryName }}
           </ion-chip>
-          <ion-chip v-if="jobCategories.length === 0" color="medium" outline>
-            {{ translate('Uncategorized') }}
+          <ion-chip v-if="!jobCategories.length" color="medium" outline>
+            {{ translate("Uncategorized") }}
           </ion-chip>
         </div>
       </div>
@@ -46,57 +46,59 @@
       <div v-if="job">
         <div v-if="activeTab === 'overview'" class="dashboard-grid ion-padding">
           <!-- Technical Details Card -->
-        <ion-card class="dashboard-card">
-          <ion-card-header>
-            <ion-card-title>{{ translate('Technical Details') }}</ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            <ion-list lines="none">
-              <ion-item>
-                <ion-label position="stacked">{{ translate('Service Name') }}</ion-label>
-                <ion-text>{{ job.serviceName }}</ion-text>
-              </ion-item>
-              <ion-item v-if="job.topic">
-                <ion-label>
-                  <p>{{ translate('Topic') }}</p>
-                  <div>{{ job.topic }}</div>
-                </ion-label>
-              </ion-item>
-              <ion-item v-if="job.jobTypeEnumId">
-                <ion-label>
-                  <p>{{ translate('Job Type') }}</p>
-                  <div>{{ job.jobTypeEnumId }}</div>
-                </ion-label>
-              </ion-item>
-            </ion-list>
-          </ion-card-content>
-        </ion-card>
+          <ion-card class="dashboard-card">
+            <ion-card-header>
+              <ion-card-title>{{ translate("Technical Details") }}</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <ion-list lines="none">
+                <ion-item>
+                  <ion-label position="stacked">{{ translate('Service Name') }}</ion-label>
+                  <ion-text class="break-word">{{ job.serviceName }}</ion-text>
+                </ion-item>
+                <ion-item v-if="job.topic">
+                  <ion-label>
+                    <p>{{ translate('Topic') }}</p>
+                    <div>{{ job.topic }}</div>
+                  </ion-label>
+                </ion-item>
+                <ion-item v-if="job.jobTypeEnumId">
+                  <ion-label>
+                    <p>{{ translate('Job Type') }}</p>
+                    <div>{{ job.jobTypeEnumId }}</div>
+                  </ion-label>
+                </ion-item>
+              </ion-list>
+            </ion-card-content>
+          </ion-card>
 
           <!-- Schedule Card -->
           <ion-card class="dashboard-card">
-            <ion-card-header class="header-with-action">
-              <ion-card-title>{{ translate('Schedule') }}</ion-card-title>
-              <ion-button fill="clear" @click="editSchedule()">{{ translate('EDIT') }}</ion-button>
+            <ion-card-header>
+              <ion-card-title class="header-with-action">
+                {{ translate("Schedule") }}
+                <ion-button fill="clear" @click="editSchedule()">{{ translate('EDIT') }}</ion-button>
+              </ion-card-title>
             </ion-card-header>
             <ion-card-content>
               <ion-list lines="none">
                 <ion-item>
                   <ion-label position="stacked">{{ translate('Cron Expression') }}</ion-label>
                   <ion-text>
-                    <div>{{ job.cronExpression }}</div>
-                    <div><strong>{{ getCronString(job.cronExpression) }}</strong></div>
+                    <div>{{ job.cronExpression || "-" }}</div>
+                    <div>{{ getCronString(job.cronExpression) }}</div>
                   </ion-text>
                 </ion-item>
                 <ion-item>
-                  <ion-label position="stacked">{{ translate('Run Times') }}</ion-label>
-                  <ion-text>{{ translate('Repeat Count') }}: {{ job.repeatCount === -1 ? 'Infinite' : job.repeatCount }}</ion-text>
+                  <ion-label position="stacked">{{ translate("Repeat Count") }}</ion-label>
+                  <ion-text>{{ job.repeatCount === -1 ? "Infinite" : job.repeatCount || "-" }}</ion-text>
                 </ion-item>
                 <ion-item v-if="job.fromDate">
-                  <ion-label position="stacked">{{ translate('Valid From') }}</ion-label>
+                  <ion-label position="stacked">{{ translate("Valid From") }}</ion-label>
                   <ion-text>{{ formatJobDate(job.fromDate) }}</ion-text>
                 </ion-item>
                 <ion-item v-if="job.thruDate">
-                  <ion-label position="stacked">{{ translate('Valid To') }}</ion-label>
+                  <ion-label position="stacked">{{ translate("Valid To") }}</ion-label>
                   <ion-text>{{ formatJobDate(job.thruDate) }}</ion-text>
                 </ion-item>
               </ion-list>
@@ -106,28 +108,28 @@
           <!-- Execution Settings Card -->
           <ion-card class="dashboard-card">
             <ion-card-header>
-              <ion-card-title>{{ translate('Execution Settings') }}</ion-card-title>
+              <ion-card-title>{{ translate("Execution Settings") }}</ion-card-title>
             </ion-card-header>
             <ion-card-content>
               <ion-list lines="none">
                 <ion-item>
-                  <ion-label position="stacked">{{ translate('Priority') }}</ion-label>
-                  <ion-text>{{ job.priority || '-' }}</ion-text>
+                  <ion-label position="stacked">{{ translate("Priority") }}</ion-label>
+                  <ion-text>{{ job.priority || "-" }}</ion-text>
                 </ion-item>
                 <ion-item>
-                  <ion-label position="stacked">{{ translate('Transaction Timeout') }}</ion-label>
-                  <ion-text>{{ job.transactionTimeout ? `${job.transactionTimeout} seconds` : '-' }}</ion-text>
+                  <ion-label position="stacked">{{ translate("Transaction Timeout") }}</ion-label>
+                  <ion-text>{{ job.transactionTimeout ? `${job.transactionTimeout} seconds` : "-" }}</ion-text>
                 </ion-item>
                 <ion-item>
-                  <ion-label position="stacked">{{ translate('Retry & Locking') }}</ion-label>
+                  <ion-label position="stacked">{{ translate("Retry & Locking") }}</ion-label>
                   <ion-text>
-                    <div>Min Retry: {{ job.minRetryTime ? `${job.minRetryTime} min` : '-' }}</div>
-                    <div>Lock Limit: {{ job.expireLockTime ? `${job.expireLockTime} min` : '-' }}</div>
+                    <div>Min Retry: {{ job.minRetryTime ? `${job.minRetryTime} min` : "-" }}</div>
+                    <div>Lock Limit: {{ job.expireLockTime ? `${job.expireLockTime} min` : "-" }}</div>
                   </ion-text>
                 </ion-item>
                 <ion-item>
-                  <ion-label position="stacked">{{ translate('Local Only') }}</ion-label>
-                  <ion-text>{{ job.localOnly === 'Y' ? translate('Yes') : translate('No') }}</ion-text>
+                  <ion-label position="stacked">{{ translate("Local Only") }}</ion-label>
+                  <ion-text>{{ job.localOnly === "Y" ? translate("Yes") : translate("No") }}</ion-text>
                 </ion-item>
               </ion-list>
             </ion-card-content>
@@ -136,28 +138,28 @@
           <!-- System Metadata Card -->
           <ion-card class="dashboard-card">
             <ion-card-header>
-              <ion-card-title>{{ translate('System Metadata') }}</ion-card-title>
+              <ion-card-title>{{ translate("System Metadata") }}</ion-card-title>
             </ion-card-header>
             <ion-card-content>
               <ion-list lines="none">
                 <ion-item v-if="job.instanceOfProductId">
-                  <ion-label position="stacked">{{ translate('Instance Of Product ID') }}</ion-label>
+                  <ion-label position="stacked">{{ translate("Instance Of Product ID") }}</ion-label>
                   <ion-text>{{ job.instanceOfProductId }}</ion-text>
                 </ion-item>
                 <ion-item v-if="job.parentJobName">
-                  <ion-label position="stacked">{{ translate('Parent Job') }}</ion-label>
+                  <ion-label position="stacked">{{ translate("Parent Job") }}</ion-label>
                   <ion-text>{{ job.parentJobName }}</ion-text>
                 </ion-item>
                 <ion-item v-if="job.permissionGroupId">
-                  <ion-label position="stacked">{{ translate('Permission Group') }}</ion-label>
+                  <ion-label position="stacked">{{ translate("Permission Group") }}</ion-label>
                   <ion-text>{{ job.permissionGroupId }}</ion-text>
                 </ion-item>
                 <ion-item>
-                  <ion-label position="stacked">{{ translate('Created') }}</ion-label>
+                  <ion-label position="stacked">{{ translate("Created") }}</ion-label>
                   <ion-text>{{ formatJobDate(job.createdStamp) }}</ion-text>
                 </ion-item>
                 <ion-item>
-                  <ion-label position="stacked">{{ translate('Updated') }}</ion-label>
+                  <ion-label position="stacked">{{ translate("Updated") }}</ion-label>
                   <ion-text>{{ formatJobDate(job.lastUpdatedStamp) }}</ion-text>
                 </ion-item>
               </ion-list>
@@ -168,27 +170,33 @@
         <!-- PARAMETERS TAB -->
         <div v-if="activeTab === 'parameters'">
           <ion-card>
-            <ion-card-header class="header-with-action">
-              <ion-card-title>{{ translate('Custom Parameters') }}</ion-card-title>
-              <ion-button v-if="!isEditingParameters" fill="clear" @click="toggleEditParameters()">
-                {{ translate(jobParameters.length > 0 ? 'Edit' : 'Add') }}
-              </ion-button>
-              <div v-if="isEditingParameters" class="action-buttons">
-                <ion-button color="primary" @click="saveParameters()">
-                  {{ translate('Save') }}
+            <ion-card-header>
+              <ion-card-title class="header-with-action">
+                {{ translate("Custom Parameters") }}
+                <ion-button v-if="!isEditingParameters" fill="clear" @click="toggleEditParameters()">
+                  {{ translate(jobParameters.length ? "Edit" : "Add") }}
                 </ion-button>
-                <ion-button color="medium" @click="cancelEditParameters()">
-                  {{ translate('Cancel') }}
-                </ion-button>
-              </div>
+                <div v-else class="action-buttons">
+                  <ion-button color="primary" @click="saveParameters()">
+                    {{ translate("Save") }}
+                  </ion-button>
+                  <ion-button color="medium" @click="cancelEditParameters()">
+                    {{ translate("Cancel") }}
+                  </ion-button>
+                </div>
+              </ion-card-title>
             </ion-card-header>
             <ion-card-content>
-              <ion-list lines="full" v-if="isEditingParameters || jobParameters.length > 0">
+              <ion-list :lines="isEditingParameters ? 'none' : 'full'" v-if="isEditingParameters || jobParameters.length">
                 <ion-item v-for="(param, index) in (isEditingParameters ? editableParametersList : jobParameters)" :key="index">
-                  <ion-label v-if="!isEditingParameters">
+                  <template v-if="!isEditingParameters">
+                    <ion-label>{{ param.parameterName }}</ion-label>
+                    <ion-label slot="end">{{ param.parameterValue || "-" }}</ion-label>
+                  </template>
+                  <!-- <ion-label v-if="!isEditingParameters">
                     <h3>{{ param.parameterName }}</h3>
-                    <p>{{ param.parameterValue }}</p>
-                  </ion-label>
+                    <p>{{ param.parameterValue || "-" }}</p>
+                  </ion-label> -->
                   <div v-else class="parameter-edit-item">
                     <ion-input
                       v-model="param.parameterValue"
@@ -200,7 +208,7 @@
                 </ion-item>
               </ion-list>
               <div v-else class="ion-text-center ion-padding">
-                <p>{{ translate('No custom parameters set for this job.') }}</p>
+                <p>{{ translate("No custom parameters set for this job.") }}</p>
               </div>
             </ion-card-content>
           </ion-card>
@@ -208,33 +216,31 @@
 
         <!-- HISTORY TAB -->
         <div v-if="activeTab === 'history'">
-          <div v-if="runs.length > 0">
+          <template v-if="runs.length">
             <ion-card v-for="run in runs" :key="run.jobRunId" class="run-card">
               <ion-card-header>
-                <div class="run-header">
-                  <ion-card-title>
-                    <ion-badge :color="run.hasError === 'Y' ? 'danger' : 'success'" class="ion-margin-end">
-                      {{ run.hasError === 'Y' ? translate('Failed') : translate('Success') }}
-                    </ion-badge>
-                    <span>#{{ run.jobRunId }}</span>
-                  </ion-card-title>
-                  <ion-card-subtitle>{{ run.startTime }}</ion-card-subtitle>
-                </div>
+                <ion-card-title>
+                  <ion-badge :color="run.hasError === 'Y' ? 'danger' : 'success'" class="ion-margin-end">
+                    {{ run.hasError === 'Y' ? translate('Failed') : translate('Success') }}
+                  </ion-badge>
+                  <ion-label>#{{ run.jobRunId }}</ion-label>
+                </ion-card-title>
+                <ion-card-subtitle>{{ run.startTime }}</ion-card-subtitle>
               </ion-card-header>
               <ion-card-content>
                 <div class="run-stats">
-                  <div><strong>{{ translate('Duration') }}:</strong> {{ calculateDuration(run.startTime, run.endTime) }}</div>
-                  <div><strong>{{ translate('User') }}:</strong> {{ run.userId }}</div>
-                  <div class="host-info"><strong>{{ translate('Host') }}:</strong> {{ run.hostName }} ({{ run.hostAddress }})</div>
+                  <div><strong>{{ translate("Duration") }}:</strong> {{ calculateDuration(run.startTime, run.endTime) }}</div>
+                  <div><strong>{{ translate("User") }}:</strong> {{ run.userId || "N/A" }}</div>
+                  <div class="host-info"><strong>{{ translate("Host") }}:</strong> {{ run.hostName }} ({{ run.hostAddress }})</div>
                 </div>
                 <div v-if="run.messages" class="run-messages ion-margin-top">
                   <p>{{ run.messages }}</p>
                 </div>
                 
                 <ion-accordion-group class="ion-margin-top">
-                  <ion-accordion v-if="run.logs && run.logs.length > 0" value="logs">
+                  <ion-accordion v-if="run.logs?.length" value="logs">
                     <ion-item slot="header">
-                      <ion-label>{{ translate('Data Logs') }}</ion-label>
+                      <ion-label>{{ translate("Data Logs") }}</ion-label>
                     </ion-item>
                     <div slot="content">
                       <ion-list class="log-list">
@@ -270,7 +276,7 @@
 
                   <ion-accordion value="details">
                     <ion-item slot="header">
-                      <ion-label>{{ translate('Technical Details') }}</ion-label>
+                      <ion-label>{{ translate("Technical Details") }}</ion-label>
                     </ion-item>
                     <div class="ion-padding technical-details" slot="content">
                       <div v-if="run.parameters">
@@ -290,10 +296,10 @@
                 </ion-accordion-group>
               </ion-card-content>
             </ion-card>
-          </div>
-          <div v-else class="ion-padding ion-text-center">
-            <p>{{ translate('No run history available') }}</p>
-          </div>
+          </template>
+          <p v-else class="ion-padding ion-text-center">
+            {{ translate("No run history available") }}
+          </p>
         </div>
       </div>
 
@@ -313,16 +319,16 @@
           </ion-toolbar>
         </ion-header>
         <ion-content class="ion-padding">
-          <p class="ion-margin-bottom text-medium">
+          <p class="ion-margin-bottom">
             {{ translate('Schedule operations are relative to your timezone:') }} <strong>{{ userTimeZone }}</strong>
           </p>
           <ion-list>
-            <ion-item>
-              <ion-input v-model="editScheduleData.cronExpression" :label="translate('Cron Expression')" label-placement="stacked" fill="outline"></ion-input>
-            </ion-item>
-            <ion-item class="ion-margin-top">
-              <ion-input type="number" v-model="editScheduleData.repeatCount" :label="translate('Repeat Count (-1 for infinite)')" label-placement="stacked" fill="outline"></ion-input>
-            </ion-item>
+            <!-- <ion-item> -->
+            <ion-input v-model="editScheduleData.cronExpression" :label="translate('Cron Expression')" label-placement="stacked" fill="outline"></ion-input>
+            <!-- </ion-item> -->
+            <!-- <ion-item class="ion-margin-top"> -->
+            <ion-input class="ion-margin-top" type="number" v-model="editScheduleData.repeatCount" :label="translate('Repeat Count (-1 for infinite)')" label-placement="stacked" fill="outline" min="-1"></ion-input>
+            <!-- </ion-item> -->
           </ion-list>
           <ion-button expand="block" class="ion-margin-top" @click="saveSchedule()">{{ translate('Save') }}</ion-button>
         </ion-content>
@@ -331,7 +337,7 @@
   </ion-page>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonPage,
   IonHeader,
@@ -358,9 +364,10 @@ import {
   IonBadge,
   IonAccordionGroup,
   IonAccordion,
-  IonCardSubtitle
+  IonCardSubtitle,
+  onIonViewWillEnter
 } from '@ionic/vue';
-import { defineComponent, computed, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { DateTime } from 'luxon';
 import { useUserStore } from '@/store/user';
@@ -368,214 +375,150 @@ import { documentOutline, pauseOutline, playOutline } from 'ionicons/icons';
 import { translate, commonUtil } from '@common';
 import { getCronString, getFileSize, getDateTimeWithOrdinalSuffix } from '@/utils';
 import { getStatusDesc } from '@/utils/config';
-import { mockJobs } from '@/mock/jobs';
 import { mockJobRuns } from '@/mock/jobRuns';
 import { mockJobParameters } from '@/mock/jobParameters';
 import { serviceInParameters } from '@/mock/serviceInParameters';
 import { mockDataManagerLogs } from '@/mock/dataManagerLogs';
-import { mockCategoryMembers, mockCategories } from '@/mock/categories';
+import { useJobStore } from '@/store/jobs';
 
-export default defineComponent({
-  name: 'JobDetail',
-  components: {
-    IonAccordion,
-    IonAccordionGroup,
-    IonBackButton,
-    IonBadge,
-    IonButton,
-    IonButtons,
-    IonCard,
-    IonCardContent,
-    IonCardHeader,
-    IonCardSubtitle,
-    IonCardTitle,
-    IonContent,
-    IonHeader,
-    IonIcon,
-    IonInput,
-    IonItem,
-    IonLabel,
-    IonList,
-    IonPage,
-    IonTitle,
-    IonToolbar,
-    IonSegment,
-    IonSegmentButton,
-    IonChip,
-    IonModal,
-    IonText
-  },
-  setup() {
-    const route = useRoute();
-    const router = useRouter();
-    const userStore = useUserStore();
-    
-    const userTimeZone = computed(() => userStore.getUserTimeZone || Intl.DateTimeFormat().resolvedOptions().timeZone);
-    const jobName = computed(() => route.params.jobName as string);
-    const activeTab = ref('overview');
+const route = useRoute();
+const router = useRouter();
+const userStore = useUserStore();
+const jobStore = useJobStore();
 
-    const job = computed(() => {
-      return mockJobs.find(j => j.jobName === jobName.value);
-    });
+const jobs = computed(() => jobStore.getJobs)
+const categories = computed(() => jobStore.getCategories)
+const categoryMembers = computed(() => jobStore.getCategoryMembers)
 
-    // Product & Category Context
-    const jobCategories = computed(() => {
-      if (!job.value) return [];
-      // Assuming jobName is used as productId for category mapping
-      const memberRecords = mockCategoryMembers.filter(member => member.productId === job.value?.jobName);
-      const categoryIds = memberRecords.map(m => m.productCategoryId);
-      return mockCategories.filter(cat => categoryIds.includes(cat.productCategoryId));
-    });
+const userTimeZone = computed(() => userStore.getUserTimeZone);
+const jobName = computed(() => route.params.jobName as string);
+// const job = computed(() => jobs.value.find((job: any) => job.jobName === jobName.value));
+let job: any = ref({})
+let runs: any = ref([])
 
-    const runs = computed(() => {
-      return mockJobRuns.filter(r => r.jobName === jobName.value).map(run => ({
-        ...run,
-        logs: mockDataManagerLogs.filter(log => log.createdByJobId === run.jobRunId)
-      }));
-    });
- 
-    const jobParameters = computed(() => {
-      const decodedJobName = decodeURIComponent(jobName.value);
-      return mockJobParameters.filter(p => p.jobName === jobName.value || p.jobName === decodedJobName);
-    });
+const activeTab = ref('overview');
 
-    const calculateDuration = (start: string | null, end: string | null) => {
-      if (!start || !end) return 'N/A';
-      const startDate = new Date(start);
-      const endDate = new Date(end);
-      const diff = endDate.getTime() - startDate.getTime();
-      
-      const seconds = Math.floor(diff / 1000);
-      const minutes = Math.floor(seconds / 60);
-      const remainingSeconds = seconds % 60;
-      
-      if (minutes > 0) {
-        return `${minutes}m ${remainingSeconds}s`;
-      }
-      return `${seconds}s`;
-    };
-
-    const formatJobDate = (dateString: string) => {
-      if (!dateString) return '-';
-      return DateTime.fromFormat(dateString, 'yyyy-MM-dd HH:mm:ss.SSS').toLocaleString(DateTime.DATETIME_MED);
-    };
-
-    const isEditingParameters = ref(false);
-    const editableParametersList = ref<any[]>([]);
-
-    const toggleEditParameters = () => {
-      if (!job.value) return;
-
-      const availableParamNames = serviceInParameters[job.value.serviceName] || [];
-      
-      // Map all available parameters, pre-filling with saved values where they exist
-      editableParametersList.value = availableParamNames.map(name => {
-        const savedParam = jobParameters.value.find(p => p.parameterName === name);
-        return {
-          parameterName: name,
-          parameterValue: savedParam ? savedParam.parameterValue : ''
-        };
-      });
-
-      // If no parameters defined in service, at least show what's currently saved
-      if (editableParametersList.value.length === 0) {
-        editableParametersList.value = JSON.parse(JSON.stringify(jobParameters.value));
-      }
-
-      isEditingParameters.value = true;
-    };
-
-    const saveParameters = () => {
-      const otherJobsParams = mockJobParameters.filter(p => p.jobName !== jobName.value);
-      const newParams = editableParametersList.value
-        .filter(p => p.parameterValue.trim() !== '')
-        .map(p => ({
-          ...p,
-          jobName: jobName.value,
-          lastUpdatedStamp: new Date().toISOString(),
-          _entity: 'moqui.service.job.ServiceJobParameter'
-        }));
-      
-      mockJobParameters.length = 0;
-      mockJobParameters.push(...otherJobsParams, ...newParams);
-      
-      isEditingParameters.value = false;
-    };
-
-    const cancelEditParameters = () => {
-      isEditingParameters.value = false;
-    };
-
-    const togglePause = () => {
-      if (job.value) {
-        job.value.paused = job.value.paused === 'N' ? 'Y' : 'N';
-      }
-    };
-
-    const editScheduleData = ref({ cronExpression: '', repeatCount: -1 });
-    const isScheduleModalOpen = ref(false);
-
-    const editSchedule = () => {
-      if (job.value) {
-        editScheduleData.value = {
-          cronExpression: job.value.cronExpression || '',
-          repeatCount: job.value.repeatCount || -1
-        };
-        isScheduleModalOpen.value = true;
-      }
-    };
-
-    const closeScheduleModal = () => {
-      isScheduleModalOpen.value = false;
-    };
-
-    const saveSchedule = () => {
-      if (job.value) {
-        job.value.cronExpression = editScheduleData.value.cronExpression;
-        job.value.repeatCount = Number(editScheduleData.value.repeatCount);
-      }
-      isScheduleModalOpen.value = false;
-    };
-
-    const goToLogDetail = (logId: string | number) => {
-      router.push({ name: 'FileDetail', params: { id: logId } });
-    };
-
-
-    return {
-      activeTab,
-      calculateDuration,
-      job,
-      jobName,
-      runs,
-      translate,
-      getCronString,
-      jobParameters,
-      isEditingParameters,
-      editableParametersList,
-      toggleEditParameters,
-      saveParameters,
-      cancelEditParameters,
-      togglePause,
-      isScheduleModalOpen,
-      editScheduleData,
-      editSchedule,
-      closeScheduleModal,
-      saveSchedule,
-      goToLogDetail,
-      documentOutline,
-      pauseOutline,
-      playOutline,
-      commonUtil,
-      getStatusDesc,
-      getFileSize,
-      getDateTimeWithOrdinalSuffix,
-      jobCategories,
-      formatJobDate,
-      userTimeZone
-    };
-  }
+// Product & Category Context
+const jobCategories = computed(() => {
+  if (!job.value) return [];
+  const memberRecords = categoryMembers.value.filter((member: any) => member.productId === job.value?.instanceOfProductId);
+  const categoryIds = memberRecords.map((record: any) => record.productCategoryId);
+  return categories.value.filter((category: any) => categoryIds.includes(category.productCategoryId));
 });
+
+// const runs = computed(() => {
+//   return mockJobRuns.filter(r => r.jobName === jobName.value).map(run => ({
+//     ...run,
+//     logs: mockDataManagerLogs.filter(log => log.createdByJobId === run.jobRunId)
+//   }));
+// });
+
+const jobParameters = computed(() => job.value.serviceJobParameters);
+
+const calculateDuration = (start: string | null, end: string | null) => {
+  if (!start || !end) return 'N/A';
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  const diff = endDate.getTime() - startDate.getTime();
+  
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  
+  if (minutes > 0) {
+    return `${minutes}m ${remainingSeconds}s`;
+  }
+  return `${seconds}s`;
+};
+
+const formatJobDate = (dateString: string) => {
+  if (!dateString) return '-';
+  return DateTime.fromFormat(dateString, 'yyyy-MM-dd HH:mm:ss.SSS').toLocaleString(DateTime.DATETIME_MED);
+};
+
+const isEditingParameters = ref(false);
+const editableParametersList = ref<any[]>([]);
+
+const toggleEditParameters = () => {
+  if (!job.value) return;
+
+  const availableParamNames = job.value.serviceInParameters.map((param: any) => param.name) || [];
+  
+  // Map all available parameters, pre-filling with saved values where they exist
+  editableParametersList.value = availableParamNames.map((name: string) => {
+    const savedParam = jobParameters.value.find((parameter: any) => parameter.parameterName === name);
+    return {
+      parameterName: name,
+      parameterValue: savedParam?.parameterValue || ""
+    };
+  });
+
+  // If no parameters defined in service, at least show what's currently saved
+  if (!editableParametersList.value.length) {
+    editableParametersList.value = JSON.parse(JSON.stringify(jobParameters.value));
+  }
+
+  isEditingParameters.value = true;
+};
+
+const saveParameters = () => {
+  const otherJobsParams = job.value.serviceJobParameters
+  const newParams = editableParametersList.value
+    .filter(p => p.parameterValue.trim() !== '')
+    .map(p => ({
+      ...p,
+      jobName: jobName.value,
+      lastUpdatedStamp: new Date().toISOString(),
+      _entity: 'moqui.service.job.ServiceJobParameter'
+    }));
+  
+  mockJobParameters.length = 0;
+  mockJobParameters.push(...otherJobsParams, ...newParams);
+  
+  isEditingParameters.value = false;
+};
+
+const cancelEditParameters = () => {
+  isEditingParameters.value = false;
+};
+
+const togglePause = () => {
+  job.value.paused = job.value.paused === 'N' ? 'Y' : 'N';
+};
+
+const editScheduleData = ref({ cronExpression: '', repeatCount: -1 });
+const isScheduleModalOpen = ref(false);
+
+const editSchedule = () => {
+  if (job.value) {
+    editScheduleData.value = {
+      cronExpression: job.value.cronExpression || "",
+      repeatCount: job.value.repeatCount
+    };
+    isScheduleModalOpen.value = true;
+  }
+};
+
+const closeScheduleModal = () => {
+  isScheduleModalOpen.value = false;
+};
+
+const saveSchedule = () => {
+  if (job.value) {
+    job.value.cronExpression = editScheduleData.value.cronExpression;
+    job.value.repeatCount = Number(editScheduleData.value.repeatCount);
+  }
+  isScheduleModalOpen.value = false;
+};
+
+const goToLogDetail = (logId: string | number) => {
+  router.push({ name: 'FileDetail', params: { id: logId } });
+};
+
+onIonViewWillEnter(async () => {
+  job.value = await jobStore.fetchJobDetail(route.params.jobName as string)
+  runs.value = await jobStore.fetchJobRuns(route.params.jobName as string)
+})
 </script>
 
 <style scoped>
@@ -607,21 +550,10 @@ export default defineComponent({
   margin-bottom: var(--spacer-base, 16px);
 }
 
-.run-header {
-  display: flex;
-  flex-direction: column;
-}
-
 .run-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: var(--spacer-sm, 8px);
-}
-
-.run-messages {
-  background: var(--ion-color-light);
-  padding: var(--spacer-sm, 8px);
-  border-radius: 4px;
 }
 
 .log-list {
@@ -639,12 +571,6 @@ export default defineComponent({
   cursor: pointer;
 }
 
-@media (min-width: 992px) {
-  .list-item.log {
-    grid-template-columns: repeat(var(--columns-desktop), 1fr);
-  }
-}
-
 .list-item.table-header {
   font-weight: bold;
   background: var(--ion-color-light);
@@ -658,10 +584,20 @@ export default defineComponent({
   --inner-padding-end: 0;
 }
 
-.technical-details pre {
+.technical-details pre, .run-messages {
   background: var(--ion-color-light);
   padding: var(--spacer-sm, 8px);
   overflow-x: auto;
   border-radius: 4px;
+}
+
+.break-word {
+  word-break: break-all;
+}
+
+@media (min-width: 992px) {
+  .list-item.log {
+    grid-template-columns: repeat(var(--columns-desktop), 1fr);
+  }
 }
 </style>

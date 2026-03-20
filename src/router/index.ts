@@ -37,7 +37,7 @@ const loginGuard = (to: any, from: any, next: any) => {
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
-    redirect: '/file-history'
+    redirect: '/catalog'
   },
   {
     path: '/catalog',

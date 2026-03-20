@@ -4,6 +4,12 @@
       <ion-toolbar>
         <ion-menu-button slot="start" />
         <ion-title>{{ translate("Catalog") }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button color="primary" @click="openCreateJobModal()">
+            <ion-icon slot="end" :icon="addOutline"></ion-icon>
+            {{ translate("Add job") }}
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
 
@@ -18,10 +24,6 @@
               Manage and configure integration tasks.
             </p>
           </div>
-          <ion-button @click="openCreateJobModal()">
-            <ion-icon slot="end" :icon="addOutline"></ion-icon>
-            {{ translate("Add job") }}
-          </ion-button>
         </div>
 
         <ion-card>
@@ -29,13 +31,15 @@
           
           <!-- Primary Categories (Row 1) -->
           <div class="categories">
-            <ion-chip @click="selectedParentCategoryId = 'ALL'; selectedSubCategoryId = ''" :outline="selectedParentCategoryId !== 'ALL'" :color="selectedParentCategoryId === 'ALL' ? 'primary' : ''">
+            <ion-chip @click="selectParentCategory('ALL')" :outline="selectedParentCategoryId !== 'ALL'" :color="selectedParentCategoryId === 'ALL' ? 'primary' : ''">
               <ion-label>{{ translate("All") }}</ion-label>
             </ion-chip>
-            <ion-chip v-for="category in primaryCategories" :key="category.productCategoryId" @click="selectParentCategory(category)" :outline="selectedParentCategoryId !== category.productCategoryId" :color="selectedParentCategoryId === category.productCategoryId ? 'primary' : ''">
+            <ion-chip v-for="category in primaryCategories" :key="category.productCategoryId" @click="selectParentCategory(category.productCategoryId)" :outline="selectedParentCategoryId !== category.productCategoryId" :color="selectedParentCategoryId === category.productCategoryId ? 'primary' : ''">
               <ion-label>{{ category.categoryName }}</ion-label>
             </ion-chip>
           </div>
+
+          {{ subCategories }}
 
           <!-- Sub Categories (Row 2) - Visible only if children exist -->
           <div v-if="subCategories.length > 0" class="sub-categories">
@@ -61,17 +65,19 @@
           </ion-card>
         </div>
 
+        <p class="empty-state" v-if="!filteredJobs.length">{{ translate("No jobs found") }}</p>
+
       </main>
     </ion-content>
   </ion-page>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonButton,
+  IonButtons,
   IonCard,
   IonCardHeader,
-  IonCardSubtitle,
   IonCardTitle,
   IonChip,
   IonContent,
@@ -84,132 +90,90 @@ import {
   IonSearchbar,
   IonTitle,
   IonToolbar,
-  modalController
+  modalController,
+  onIonViewWillEnter
 } from '@ionic/vue';
-import { defineComponent, ref, computed } from 'vue';
+import { ref, computed } from 'vue';
 import router from '@/router';
-import { addOutline, chevronForwardOutline } from 'ionicons/icons';
+import { addOutline } from 'ionicons/icons';
 import { translate } from '@common';
 import CreateJobModal from '@/components/CreateJobModal.vue';
 import { getCronString } from '@/utils';
-import { mockJobs } from '@/mock/jobs';
-import { mockCategories, mockCategoryRollups, mockCategoryMembers } from '@/mock/categories';
+import { useJobStore } from '@/store/jobs';
 
-export default defineComponent({
-  name: 'Catalog',
-  components: {
-    IonButton,
-    IonCard,
-    IonCardHeader,
-    IonCardSubtitle,
-    IonCardTitle,
-    IonChip,
-    IonContent,
-    IonHeader,
-    IonIcon,
-    IonItem,
-    IonLabel,
-    IonMenuButton,
-    IonPage,
-    IonSearchbar,
-    IonTitle,
-    IonToolbar
-  },
-  setup() {
-    // ProductCategory table
-    const categories = ref(mockCategories);
+const jobStore = useJobStore();
 
-    // ProductCategoryRollup table
-    const categoryRollups = ref(mockCategoryRollups);
+const jobs = computed(() => jobStore.getJobs)
+const categories = computed(() => jobStore.getCategories)
+const categoryMembers = computed(() => jobStore.getCategoryMembers)
+const categoryRollups = computed(() => jobStore.getCategoryRollups)
 
-    // ProductCategoryMember table
-    const categoryMembers = ref(mockCategoryMembers);
+onIonViewWillEnter(() => {
+  Promise.allSettled([jobStore.fetchJobs(), jobStore.fetchCategories(), jobStore.fetchCategoryMembers(), jobStore.fetchCategoryRollup()])
+  jobStore.fetchServiceParams()
+})
 
-    // ServiceJob table output
-    const jobs = mockJobs;
+const selectedParentCategoryId = ref('ALL');
+const selectedSubCategoryId = ref('');
+const queryString = ref('');
 
-    const selectedParentCategoryId = ref('ALL');
-    const selectedSubCategoryId = ref('');
-    const queryString = ref('');
+const primaryCategories = computed(() => categories.value.filter((category: any) => category.primaryParentCategoryId === 'SYSTEM_JOB'));
 
-    const primaryCategories = computed(() => {
-      return categories.value.filter(cat => cat.primaryParentCategoryId === 'SYSTEM_JOB' && cat.productCategoryId !== 'ALL');
-    });
-
-    const subCategories = computed(() => {
-      if (selectedParentCategoryId.value === 'ALL') return [];
-      
-      const subCategoryIds = categoryRollups.value
-        .filter(rollup => rollup.parentProductCategoryId === selectedParentCategoryId.value)
-        .map(rollup => rollup.productCategoryId);
-      
-      return categories.value.filter(cat => subCategoryIds.includes(cat.productCategoryId));
-    });
-
-    const selectParentCategory = (category: any) => {
-      selectedParentCategoryId.value = category.productCategoryId;
-      selectedSubCategoryId.value = ''; // Reset sub-category on parent change
-    };
-
-    const filteredJobs = computed(() => {
-      let activeCategoryId = selectedSubCategoryId.value || selectedParentCategoryId.value;
-      
-      let filtered = jobs;
-
-      if (activeCategoryId !== 'ALL') {
-        const jobIds = categoryMembers.value
-          .filter(member => member.productCategoryId === activeCategoryId)
-          .map(member => member.productId);
-        
-        filtered = filtered.filter(job => jobIds.includes(job.jobName));
-      }
-
-      if (queryString.value.trim()) {
-        const query = queryString.value.toLowerCase().trim();
-        filtered = filtered.filter(job => 
-          job.jobName.toLowerCase().includes(query) ||
-          job.serviceName.toLowerCase().includes(query) ||
-          (job.instanceOfProductId && job.instanceOfProductId.toLowerCase().includes(query))
-        );
-      }
-
-      return filtered;
-    });
-
-    const openCreateJobModal = async () => {
-      const modal = await modalController.create({
-        component: CreateJobModal,
-        componentProps: {
-          categories: categories.value, // Passing all flat categories
-          existingJobNames: jobs.map(job => job.jobName)
-        }
-      });
-      modal.present();
-
-      const { data, role } = await modal.onDidDismiss();
-      if (role === 'confirm') {
-        console.log('Job created:', data);
-      }
-    };
-
-    return {
-      addOutline,
-      chevronForwardOutline,
-      categories,
-      primaryCategories,
-      subCategories,
-      filteredJobs,
-      openCreateJobModal,
-      router,
-      selectParentCategory,
-      selectedParentCategoryId,
-      selectedSubCategoryId,
-      queryString,
-      translate,
-      getCronString
-    }
-  }
+const subCategories = computed(() => {
+  if (selectedParentCategoryId.value === 'ALL') return [];
+  
+  const subCategoryIds = categoryRollups.value
+    .filter((rollup: any) => rollup.parentProductCategoryId === selectedParentCategoryId.value)
+    .map((rollup: any) => rollup.productCategoryId);
+  
+  return categories.value.filter((category: any) => subCategoryIds.includes(category.productCategoryId));
 });
+
+const selectParentCategory = (productCategoryId: string) => {
+  selectedParentCategoryId.value = productCategoryId;
+  selectedSubCategoryId.value = ''; // Reset sub-category on parent change
+};
+
+const filteredJobs = computed(() => {
+  let activeCategoryId = selectedSubCategoryId.value || selectedParentCategoryId.value;
+  
+  let filtered = jobs.value;
+
+  if (activeCategoryId !== 'ALL') {
+    const jobIds = categoryMembers.value
+      .filter((member: any) => member.productCategoryId === activeCategoryId)
+      .map((member: any) => member.productId);
+    
+    filtered = filtered.filter((job: any) => jobIds.includes(job.instanceOfProductId));
+  }
+
+  if (queryString.value.trim()) {
+    const query = queryString.value.toLowerCase().trim();
+    filtered = filtered.filter((job: any) => 
+      job.jobName.toLowerCase().includes(query) ||
+      job.serviceName.toLowerCase().includes(query) ||
+      (job.instanceOfProductId && job.instanceOfProductId.toLowerCase().includes(query))
+    );
+  }
+
+  return filtered;
+});
+
+const openCreateJobModal = async () => {
+  const modal = await modalController.create({
+    component: CreateJobModal,
+    componentProps: {
+      categories: categories.value, // Passing all flat categories
+      existingJobNames: jobs.value.map((job: any) => job.jobName)
+    }
+  });
+  modal.present();
+
+  const { data, role } = await modal.onDidDismiss();
+  if (role === 'confirm') {
+    console.log('Job created:', data);
+  }
+};
 </script>
 
 <style scoped>
