@@ -65,12 +65,10 @@
           </ion-card-header>
           <ion-list>
             <div class="list-item table-header error-log">
-              <ion-label>{{ translate("Row") }}</ion-label>
               <ion-label>{{ translate("Record ID") }}</ion-label>
               <ion-label>{{ translate("Description") }}</ion-label>
             </div>
             <div class="list-item error-log" v-for="error in errorLogs" :key="error['_recordNumber']">
-              <ion-label>{{ error["_recordNumber"] }}</ion-label>
               <ion-label>{{ error["_recordNumber"] }}</ion-label>
               <ion-label>{{ error["_ERROR_MESSAGE_"] }}</ion-label>
             </div>
@@ -187,7 +185,7 @@ onIonViewWillEnter(async () => {
 }
 
 .list-item.error-log {
-  --columns-desktop: 4;
+  --columns-desktop: 3;
   padding: var(--spacer-sm);
   border-bottom: 1px solid var(--ion-color-light);
 }
