@@ -60,9 +60,7 @@ let appPages = [
     url: "/catalog",
     iosIcon: albumsOutline,
     mdIcon: albumsOutline,
-    meta: {
-      permissionId: "HIDDEN"
-    }
+    childRoutes: ["/job/"]
   },
   {
     title: "File history",
