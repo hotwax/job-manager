@@ -27,7 +27,7 @@
         </div>
 
         <ion-card>
-          <ion-searchbar v-model="queryString" :placeholder="translate('Search jobs')"></ion-searchbar>
+          <ion-searchbar :value="queryString" @ionInput="queryString = $event.detail.value || ''" :debounce="300" :placeholder="translate('Search jobs')"></ion-searchbar>
           
           <!-- Primary Categories (Row 1) -->
           <div class="categories">
@@ -45,25 +45,68 @@
               <ion-label>{{ sub.categoryName }}</ion-label>
             </ion-chip>
           </div>
+
+          <!-- Status Filters (Row 3) -->
+          <div class="status-filters">
+            <ion-chip @click="selectedStatus = 'ALL'" :outline="selectedStatus !== 'ALL'" :color="selectedStatus === 'ALL' ? 'primary' : ''">
+              <ion-label>{{ translate("All") }}</ion-label>
+            </ion-chip>
+            <ion-chip @click="selectedStatus = 'SCHEDULED'" :outline="selectedStatus !== 'SCHEDULED'" :color="selectedStatus === 'SCHEDULED' ? 'primary' : ''">
+              <ion-label>{{ translate("Scheduled") }}</ion-label>
+            </ion-chip>
+            <ion-chip @click="selectedStatus = 'PAUSED'" :outline="selectedStatus !== 'PAUSED'" :color="selectedStatus === 'PAUSED' ? 'primary' : ''">
+              <ion-label>{{ translate("Paused") }}</ion-label>
+            </ion-chip>
+            <ion-chip @click="selectedStatus = 'NO_SCHEDULE'" :outline="selectedStatus !== 'NO_SCHEDULE'" :color="selectedStatus === 'NO_SCHEDULE' ? 'primary' : ''">
+              <ion-label>{{ translate("No schedule") }}</ion-label>
+            </ion-chip>
+          </div>
         </ion-card>
 
         <div class="jobs">
-          <ion-card v-for="job in filteredJobs" :key="job.jobName">
-            <ion-card-header>
-              <ion-card-title>{{ job.jobName }}</ion-card-title>
-              <code>ID: {{ job.instanceOfProductId }}</code><br>
-              <code>{{ job.serviceName }}</code>
-            </ion-card-header>
-            <ion-item lines="none" detail button @click="router.push(`/job/${job.jobName}`)">
-              <ion-label>
-                {{ job.paused === 'N' ? translate('Enabled') : translate('Paused') }}
-                <p v-if="job.cronExpression">{{ getCronString(job.cronExpression) }}</p>
-              </ion-label>
-            </ion-item>
-          </ion-card>
+          <template v-if="jobStore.isLoading">
+            <ion-card v-for="i in 6" :key="i">
+              <ion-card-header>
+                <ion-card-title><ion-skeleton-text animated style="width: 60%" /></ion-card-title>
+                <ion-skeleton-text animated style="width: 40%" /><br>
+                <ion-skeleton-text animated style="width: 80%" />
+              </ion-card-header>
+              <ion-item lines="none">
+                <ion-label>
+                  <ion-skeleton-text animated style="width: 30%" />
+                  <p><ion-skeleton-text animated style="width: 50%" /></p>
+                </ion-label>
+              </ion-item>
+            </ion-card>
+          </template>
+          <template v-else>
+            <ion-card v-for="(job, index) in filteredJobs" :key="job.jobId ? job.jobId : `${job.jobName}-${index}`" :class="{ 'paused-job': job.paused === 'Y' }">
+              <ion-card-header>
+                <div class="job-card-header">
+                  <ion-card-title v-html="highlightText(job.jobName, queryString)"></ion-card-title>
+                </div>
+                <code>ID: <span v-html="highlightText(job.instanceOfProductId, queryString)"></span></code><br>
+                <code v-html="highlightText(job.serviceName, queryString)"></code>
+              </ion-card-header>
+              <ion-item lines="none" detail button @click="router.push(`/job/${job.jobName}`)">
+                <ion-icon v-if="job.paused === 'Y'" slot="start" :icon="pauseCircleOutline" color="warning" />
+                <ion-icon v-else-if="job.cronExpression" slot="start" :icon="playCircleOutline" color="success" />
+                <ion-icon v-else slot="start" :icon="ellipseOutline" color="medium" />
+                <ion-label>
+                  {{ job.paused === 'Y' ? translate('Paused') : translate('Enabled') }}
+                  <p v-if="job.cronString">{{ job.cronString }}</p>
+                </ion-label>
+              </ion-item>
+            </ion-card>
+          </template>
         </div>
 
-        <p class="empty-state" v-if="!filteredJobs.length">{{ translate("No jobs found") }}</p>
+        <div class="empty-state" v-if="!jobStore.isLoading && !filteredJobs.length">
+          <p>{{ translate("No jobs found") }}</p>
+          <p v-if="selectedParentCategoryId !== 'ALL' || selectedStatus !== 'ALL' || queryString" class="helper-text">
+            {{ translate("Try clearing filters or search to see more results.") }}
+          </p>
+        </div>
 
       </main>
     </ion-content>
@@ -72,6 +115,7 @@
 
 <script setup lang="ts">
 import {
+  IonBadge,
   IonButton,
   IonButtons,
   IonCard,
@@ -86,6 +130,7 @@ import {
   IonMenuButton,
   IonPage,
   IonSearchbar,
+  IonSkeletonText,
   IonTitle,
   IonToolbar,
   modalController,
@@ -93,10 +138,9 @@ import {
 } from '@ionic/vue';
 import { ref, computed } from 'vue';
 import router from '@/router';
-import { addOutline } from 'ionicons/icons';
+import { addOutline, ellipseOutline, pauseCircleOutline, playCircleOutline } from 'ionicons/icons';
 import { translate } from '@common';
 import CreateJobModal from '@/components/CreateJobModal.vue';
-import { getCronString } from '@/utils';
 import { useJobStore } from '@/store/jobs';
 
 const jobStore = useJobStore();
@@ -106,14 +150,34 @@ const categories = computed(() => jobStore.getCategories)
 const categoryMembers = computed(() => jobStore.getCategoryMembers)
 const categoryRollups = computed(() => jobStore.getCategoryRollups)
 
-onIonViewWillEnter(() => {
-  Promise.allSettled([jobStore.fetchJobs(), jobStore.fetchCategories(), jobStore.fetchCategoryMembers(), jobStore.fetchCategoryRollup()])
-  jobStore.fetchServiceParams()
+onIonViewWillEnter(async () => {
+  const requests = [] as Promise<unknown>[];
+
+  if (!jobs.value.length) {
+    requests.push(jobStore.fetchJobs());
+  }
+
+  if (!categories.value.length) {
+    requests.push(jobStore.fetchCategories());
+  }
+
+  if (!categoryMembers.value.length) {
+    requests.push(jobStore.fetchCategoryMembers());
+  }
+
+  if (!categoryRollups.value.length) {
+    requests.push(jobStore.fetchCategoryRollup());
+  }
+
+  if (requests.length) {
+    await Promise.allSettled(requests);
+  }
 })
 
 const selectedParentCategoryId = ref('ALL');
 const selectedSubCategoryId = ref('');
 const queryString = ref('');
+const selectedStatus = ref('ALL');
 
 const primaryCategories = computed(() => categories.value.filter((category: any) => category.primaryParentCategoryId === 'SYSTEM_JOB'));
 
@@ -134,7 +198,6 @@ const selectParentCategory = (productCategoryId: string) => {
 
 const filteredJobs = computed(() => {
   let activeCategoryId = selectedSubCategoryId.value || selectedParentCategoryId.value;
-  
   let filtered = jobs.value;
 
   if (activeCategoryId !== 'ALL') {
@@ -145,17 +208,50 @@ const filteredJobs = computed(() => {
     filtered = filtered.filter((job: any) => jobIds.includes(job.instanceOfProductId));
   }
 
+  if (selectedStatus.value !== 'ALL') {
+    if (selectedStatus.value === 'PAUSED') {
+      filtered = filtered.filter((job: any) => job.paused === 'Y');
+    } else if (selectedStatus.value === 'SCHEDULED') {
+      filtered = filtered.filter((job: any) => job.paused === 'N' && !!job.cronExpression);
+    } else if (selectedStatus.value === 'NO_SCHEDULE') {
+      filtered = filtered.filter((job: any) => !job.cronExpression);
+    }
+  }
+
   if (queryString.value.trim()) {
-    const query = queryString.value.toLowerCase().trim();
-    filtered = filtered.filter((job: any) => 
-      job.jobName.toLowerCase().includes(query) ||
-      job.serviceName.toLowerCase().includes(query) ||
-      (job.instanceOfProductId && job.instanceOfProductId.toLowerCase().includes(query))
-    );
+    const queryTokens = queryString.value.toLowerCase().trim().split(/\s+/);
+    filtered = filtered.filter((job: any) => {
+      // For each token, it must match at least one of the fields
+      return queryTokens.every(token => 
+        (job.jobName && job.jobName.toLowerCase().includes(token)) ||
+        (job.serviceName && job.serviceName.toLowerCase().includes(token)) ||
+        (job.jobId && job.jobId.toString().toLowerCase().includes(token)) ||
+        (job.instanceOfProductId && job.instanceOfProductId.toLowerCase().includes(token))
+      );
+    });
   }
 
   return filtered;
 });
+
+const highlightText = (text: string | number, query: string) => {
+  if (!text) return '';
+  const textStr = String(text);
+  if (!query || !query.trim()) return textStr;
+  
+  const tokens = query.toLowerCase().trim().split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) return textStr;
+
+  // Escape special regex characters to prevent regex injection errors
+  const escapeRegExp = (string: string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const escapedTokens = tokens.map(escapeRegExp);
+  
+  // Create a regex matching any of the tokens, case-insensitive
+  const regex = new RegExp(`(${escapedTokens.join('|')})`, 'gi');
+  
+  // Replace matched tokens with mark tag
+  return textStr.replace(regex, '<mark class="search-highlight">$1</mark>');
+};
 
 const openCreateJobModal = async () => {
   const modal = await modalController.create({
@@ -182,18 +278,18 @@ const openCreateJobModal = async () => {
   justify-content: space-between;
 }
 
-.categories, .sub-categories {
+.categories, .sub-categories, .status-filters {
   padding: 0 8px 8px;
   display: flex;
   flex-wrap: wrap;
 }
 
-.sub-categories {
+.status-filters {
   border-top: 1px solid var(--ion-color-light);
   padding-top: 8px;
 }
 
-.categories ion-chip, .sub-categories ion-chip {
+.categories ion-chip, .sub-categories ion-chip, .status-filters ion-chip {
   cursor: pointer;
 }
 
@@ -207,4 +303,32 @@ ion-card ion-item {
   --background: var(--ion-color-light);
 }
 
+.job-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.paused-job {
+  opacity: 0.8;
+}
+
+.empty-state {
+  text-align: center;
+  margin-top: 40px;
+  color: var(--ion-color-medium);
+}
+
+.empty-state .helper-text {
+  font-size: 0.9em;
+  margin-top: 8px;
+}
+
+.search-highlight {
+  background-color: var(--ion-color-warning);
+  color: var(--ion-color-warning-contrast);
+  border-radius: 2px;
+  padding: 0 2px;
+  font-weight: bold;
+}
 </style>

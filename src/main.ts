@@ -25,7 +25,7 @@ import '@ionic/vue/css/display.css';
 import './theme/variables.css';
 import '@hotwax/apps-theme';
 
-import permissionPlugin from '@/authorization';
+import permissionPlugin from '@/authorization/index';
 import permissionRules from '@/authorization/Rules';
 import permissionActions from '@/authorization/Actions';
 import { createPinia } from 'pinia';

@@ -75,7 +75,7 @@ const parseCsv = async (file: File, options: any) => {
 
 // Here we have created a JsonToCsvOption which contains the properties which we can pass to jsonToCsv function
 
-interface JsonToCsvOption {
+export interface JsonToCsvOption {
   parse?: object | null;
   encode?: object | null;
   name?: string;
@@ -430,7 +430,6 @@ export {
   showToast,
   parseCsv,
   jsonToCsv,
-  JsonToCsvOption,
   isFutureDate,
   saveDataFile,
   timeTillRun,

@@ -15,35 +15,71 @@
     </ion-header>
 
     <ion-content>
-      <!-- Product Context Header -->
-      <div v-if="job" class="job-context-header ion-padding">
-        <h1 class="ion-no-margin">{{ job.jobName }}</h1>
-        <p class="ion-text-wrap text-medium ion-margin-bottom">{{ job.description || translate("No description available") }}</p>
-        <div class="category-chips">
-          <ion-chip v-for="category in jobCategories" :key="category.productCategoryId" color="medium" outline>
-            {{ category.categoryName }}
-          </ion-chip>
-          <ion-chip v-if="!jobCategories.length" color="medium" outline>
-            {{ translate("Uncategorized") }}
-          </ion-chip>
+      <!-- Loading State -->
+      <div v-if="isLoading">
+        <div class="job-context-header ion-padding">
+          <ion-skeleton-text animated style="width: 50%; height: 32px;" class="ion-no-margin" />
+          <p><ion-skeleton-text animated style="width: 80%;" /></p>
+          <div class="category-chips">
+            <ion-skeleton-text animated style="width: 60px; height: 26px; border-radius: 13px;" v-for="i in 2" :key="i" />
+          </div>
+        </div>
+
+        <div class="sticky-segments">
+          <ion-segment mode="md">
+            <ion-segment-button value="1"><ion-label><ion-skeleton-text animated style="width: 60px" /></ion-label></ion-segment-button>
+            <ion-segment-button value="2"><ion-label><ion-skeleton-text animated style="width: 60px" /></ion-label></ion-segment-button>
+            <ion-segment-button value="3"><ion-label><ion-skeleton-text animated style="width: 60px" /></ion-label></ion-segment-button>
+          </ion-segment>
+        </div>
+
+        <div class="dashboard-grid ion-padding">
+          <ion-card class="dashboard-card" v-for="i in 4" :key="i">
+            <ion-card-header>
+              <ion-card-title><ion-skeleton-text animated style="width: 40%" /></ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <ion-list lines="none">
+                <ion-item v-for="j in 3" :key="j">
+                  <ion-label>
+                    <p><ion-skeleton-text animated style="width: 30%" /></p>
+                    <ion-skeleton-text animated style="width: 70%" />
+                  </ion-label>
+                </ion-item>
+              </ion-list>
+            </ion-card-content>
+          </ion-card>
         </div>
       </div>
 
-      <div class="sticky-segments">
-        <ion-segment v-model="activeTab" mode="md">
+      <div v-else-if="job && job.jobName">
+        <!-- Original Header content -->
+        <div class="job-context-header ion-padding">
+          <h1 class="ion-no-margin">{{ job.jobName }}</h1>
+          <p class="ion-text-wrap text-medium ion-margin-bottom">{{ job.description || translate("No description available") }}</p>
+          <div class="category-chips">
+            <ion-chip v-for="category in jobCategories" :key="category.productCategoryId" color="medium" outline>
+              {{ category.categoryName }}
+            </ion-chip>
+            <ion-chip v-if="!jobCategories.length" color="medium" outline>
+              {{ translate("Uncategorized") }}
+            </ion-chip>
+          </div>
+        </div>
+
+        <ion-segment v-model="activeTab">
           <ion-segment-button value="overview">
-            <ion-label>{{ translate('OVERVIEW') }}</ion-label>
+            <ion-label>{{ translate('Overview') }}</ion-label>
           </ion-segment-button>
           <ion-segment-button value="parameters">
-            <ion-label>{{ translate('PARAMETERS') }}</ion-label>
+            <ion-label>{{ translate('Parameters') }}</ion-label>
           </ion-segment-button>
           <ion-segment-button value="history">
-            <ion-label>{{ translate('HISTORY') }}</ion-label>
+            <ion-label>{{ translate('History') }}</ion-label>
           </ion-segment-button>
         </ion-segment>
-      </div>
 
-      <div v-if="job">
+        <div class="tabs-content">
         <div v-if="activeTab === 'overview'" class="dashboard-grid ion-padding">
           <!-- Technical Details Card -->
           <ion-card class="dashboard-card">
@@ -143,9 +179,12 @@
             <ion-card-content>
               <ion-list lines="none">
                 <ion-item v-if="job.instanceOfProductId">
-                  <ion-label position="stacked">{{ translate("Instance Of Product ID") }}</ion-label>
-                  <ion-text>{{ job.instanceOfProductId }}</ion-text>
-                </ion-item>
+                   <ion-label position="stacked">{{ translate("Product") }}</ion-label>
+                   <ion-text>
+                     <p v-if="product.productName">{{ product.productName }}</p>
+                     <code>{{ job.instanceOfProductId }}</code>
+                   </ion-text>
+                 </ion-item>
                 <ion-item v-if="job.parentJobName">
                   <ion-label position="stacked">{{ translate("Parent Job") }}</ion-label>
                   <ion-text>{{ job.parentJobName }}</ion-text>
@@ -216,22 +255,54 @@
 
         <!-- HISTORY TAB -->
         <div v-if="activeTab === 'history'">
-          <template v-if="runs.length">
+          <div class="filter-toolbar ion-padding-horizontal">
+            <ion-chip :outline="runsFilter !== 'all'" :color="runsFilter === 'all' ? 'primary' : 'medium'" @click="runsFilter = 'all'; updateRunsFilter()">
+              <ion-label>{{ translate("All") }}</ion-label>
+            </ion-chip>
+            <ion-chip :outline="runsFilter !== 'error'" :color="runsFilter === 'error' ? 'primary' : 'medium'" @click="runsFilter = 'error'; updateRunsFilter()">
+              <ion-icon :icon="alertCircleOutline" v-if="runsFilter === 'error'"></ion-icon>
+              <ion-label>{{ translate("Errors") }}</ion-label>
+            </ion-chip>
+          </div>
+          <div v-if="isRunsLoading" class="runs-state ion-padding ion-text-center">
+            <ion-spinner name="crescent" />
+            <p>{{ translate("Loading") }}</p>
+          </div>
+          <template v-else-if="runs.length">
             <ion-card v-for="run in runs" :key="run.jobRunId" class="run-card">
-              <ion-card-header>
-                <ion-card-title>
-                  <ion-badge :color="run.hasError === 'Y' ? 'danger' : 'success'" class="ion-margin-end">
-                    {{ run.hasError === 'Y' ? translate('Failed') : translate('Success') }}
-                  </ion-badge>
-                  <ion-label>#{{ run.jobRunId }}</ion-label>
-                </ion-card-title>
-                <ion-card-subtitle>{{ run.startTime }}</ion-card-subtitle>
-              </ion-card-header>
+              <ion-item lines="none">
+                <ion-icon slot="start" :icon="run.hasError === 'Y' ? closeCircleOutline : checkmarkCircleOutline" :color="run.hasError === 'Y' ? 'danger' : (run.startTime ? 'success' : 'warning')"></ion-icon>
+                <ion-label>
+                  <h2>#{{ run.jobRunId }}</h2>
+                  <p>{{ formatJobDate(run.startTime || run.lastUpdatedStamp) }}</p>
+                </ion-label>
+                <ion-badge slot="end" :color="run.hasError === 'Y' ? 'danger' : (run.startTime ? 'success' : 'warning')">
+                  {{ run.hasError === 'Y' ? translate('Failed') : (run.startTime ? translate('Success') : translate('Terminated')) }}
+                </ion-badge>
+              </ion-item>
               <ion-card-content>
-                <div class="run-stats">
-                  <div><strong>{{ translate("Duration") }}:</strong> {{ calculateDuration(run.startTime, run.endTime) }}</div>
-                  <div><strong>{{ translate("User") }}:</strong> {{ run.userId || "N/A" }}</div>
-                  <div class="host-info"><strong>{{ translate("Host") }}:</strong> {{ run.hostName }} ({{ run.hostAddress }})</div>
+                <div class="run-stats-grid">
+                  <div class="stat-item">
+                    <ion-icon :icon="timeOutline" color="medium"></ion-icon>
+                    <ion-label>
+                      <p>{{ translate("Duration") }}</p>
+                      <strong>{{ calculateDuration(run.startTime, run.endTime) }}</strong>
+                    </ion-label>
+                  </div>
+                  <div class="stat-item">
+                    <ion-icon :icon="personOutline" color="medium"></ion-icon>
+                    <ion-label>
+                      <p>{{ translate("User") }}</p>
+                      <strong>{{ run.userId || "N/A" }}</strong>
+                    </ion-label>
+                  </div>
+                  <div class="stat-item">
+                    <ion-icon :icon="calendarOutline" color="medium"></ion-icon>
+                    <ion-label>
+                      <p>{{ translate("Completed") }}</p>
+                      <strong>{{ run.endTime ? formatJobDate(run.endTime) : 'N/A' }}</strong>
+                    </ion-label>
+                  </div>
                 </div>
                 <div v-if="run.messages" class="run-messages ion-margin-top">
                   <p>{{ run.messages }}</p>
@@ -296,14 +367,17 @@
                 </ion-accordion-group>
               </ion-card-content>
             </ion-card>
+            <ion-infinite-scroll @ionInfinite="loadMoreRuns($event)" :disabled="!hasMoreRuns">
+              <ion-infinite-scroll-content loading-spinner="crescent"></ion-infinite-scroll-content>
+            </ion-infinite-scroll>
           </template>
-          <p v-else class="ion-padding ion-text-center">
+          <p v-else-if="hasLoadedRuns" class="ion-padding ion-text-center">
             {{ translate("No run history available") }}
           </p>
         </div>
       </div>
-
-      <div v-else class="ion-padding ion-text-center">
+    </div>
+    <div v-else class="ion-padding ion-text-center">
         <p>{{ translate('Job not found') }}</p>
         <ion-button fill="clear" router-link="/catalog">{{ translate('Back to Catalog') }}</ion-button>
       </div>
@@ -364,14 +438,28 @@ import {
   IonBadge,
   IonAccordionGroup,
   IonAccordion,
+  IonInfiniteScroll,
+  IonInfiniteScrollContent,
+  IonSkeletonText,
+  IonSpinner,
   IonCardSubtitle,
   onIonViewWillEnter
 } from '@ionic/vue';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { DateTime } from 'luxon';
 import { useUserStore } from '@/store/user';
-import { documentOutline, pauseOutline, playOutline } from 'ionicons/icons';
+import { 
+  alertCircleOutline,
+  calendarOutline,
+  checkmarkCircleOutline,
+  closeCircleOutline,
+  documentOutline, 
+  pauseOutline, 
+  personOutline,
+  playOutline,
+  timeOutline
+} from 'ionicons/icons';
 import { translate, commonUtil } from '@common';
 import { getCronString, getFileSize, getDateTimeWithOrdinalSuffix } from '@/utils';
 import { getStatusDesc } from '@/utils/config';
@@ -389,14 +477,23 @@ const jobStore = useJobStore();
 const jobs = computed(() => jobStore.getJobs)
 const categories = computed(() => jobStore.getCategories)
 const categoryMembers = computed(() => jobStore.getCategoryMembers)
+const products = computed(() => jobStore.getProducts)
+const product = computed(() => products.value[job.value?.instanceOfProductId] || {})
 
 const userTimeZone = computed(() => userStore.getUserTimeZone);
 const jobName = computed(() => route.params.jobName as string);
 // const job = computed(() => jobs.value.find((job: any) => job.jobName === jobName.value));
 let job: any = ref({})
 let runs: any = ref([])
+const isLoading = ref(true)
+const isRunsLoading = ref(false)
+const hasLoadedRuns = ref(false)
+const pageIndex = ref(0)
+const pageSize = ref(10)
+const hasMoreRuns = ref(true)
 
 const activeTab = ref('overview');
+const runsFilter = ref('all');
 
 // Product & Category Context
 const jobCategories = computed(() => {
@@ -413,27 +510,38 @@ const jobCategories = computed(() => {
 //   }));
 // });
 
-const jobParameters = computed(() => job.value.serviceJobParameters);
+const jobParameters = computed(() => job.value.serviceJobParameters || []);
 
-const calculateDuration = (start: string | null, end: string | null) => {
+const calculateDuration = (start: string | number | null, end: string | number | null) => {
   if (!start || !end) return 'N/A';
-  const startDate = new Date(start);
-  const endDate = new Date(end);
-  const diff = endDate.getTime() - startDate.getTime();
   
-  const seconds = Math.floor(diff / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
+  let startDt = typeof start === 'number' ? DateTime.fromMillis(start) : DateTime.fromFormat(start as string, 'yyyy-MM-dd HH:mm:ss.SSS');
+  if (!startDt.isValid) startDt = DateTime.fromSQL(start as string);
+  if (!startDt.isValid) startDt = DateTime.fromISO(start as string);
+  
+  let endDt = typeof end === 'number' ? DateTime.fromMillis(end) : DateTime.fromFormat(end as string, 'yyyy-MM-dd HH:mm:ss.SSS');
+  if (!endDt.isValid) endDt = DateTime.fromSQL(end as string);
+  if (!endDt.isValid) endDt = DateTime.fromISO(end as string);
+
+  if (!startDt.isValid || !endDt.isValid) return 'N/A';
+
+  const diff = endDt.diff(startDt, ['minutes', 'seconds']).toObject();
+  const minutes = Math.floor(diff.minutes || 0);
+  const seconds = Math.floor(diff.seconds || 0);
   
   if (minutes > 0) {
-    return `${minutes}m ${remainingSeconds}s`;
+    return `${minutes}m ${seconds}s`;
   }
   return `${seconds}s`;
 };
 
-const formatJobDate = (dateString: string) => {
-  if (!dateString) return '-';
-  return DateTime.fromFormat(dateString, 'yyyy-MM-dd HH:mm:ss.SSS').toLocaleString(DateTime.DATETIME_MED);
+const formatJobDate = (date: string | number | null) => {
+  if (!date) return '-';
+  let dt = typeof date === 'number' ? DateTime.fromMillis(date) : DateTime.fromFormat(date as string, 'yyyy-MM-dd HH:mm:ss.SSS');
+  if (!dt.isValid) dt = DateTime.fromSQL(date as string);
+  if (!dt.isValid) dt = DateTime.fromISO(date as string);
+  
+  return dt.isValid ? dt.toLocaleString(DateTime.DATETIME_MED) : date.toString();
 };
 
 const isEditingParameters = ref(false);
@@ -442,7 +550,7 @@ const editableParametersList = ref<any[]>([]);
 const toggleEditParameters = () => {
   if (!job.value) return;
 
-  const availableParamNames = job.value.serviceInParameters.map((param: any) => param.name) || [];
+  const availableParamNames = (job.value.serviceInParameters || []).map((param: any) => param.name);
   
   // Map all available parameters, pre-filling with saved values where they exist
   editableParametersList.value = availableParamNames.map((name: string) => {
@@ -462,7 +570,7 @@ const toggleEditParameters = () => {
 };
 
 const saveParameters = () => {
-  const otherJobsParams = job.value.serviceJobParameters
+  const otherJobsParams = job.value.serviceJobParameters || []
   const newParams = editableParametersList.value
     .filter(p => p.parameterValue.trim() !== '')
     .map(p => ({
@@ -515,10 +623,82 @@ const goToLogDetail = (logId: string | number) => {
   router.push({ name: 'FileDetail', params: { id: logId } });
 };
 
+const loadJob = async () => {
+  isLoading.value = true
+  runs.value = []
+  hasLoadedRuns.value = false
+  pageIndex.value = 0
+  hasMoreRuns.value = true
+  pageSize.value = 10
+  try {
+    job.value = await jobStore.fetchJobDetail(route.params.jobName as string)
+  } catch (err) {
+    console.error(err)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const loadRuns = async () => {
+  if (!job.value?.jobName) {
+    return
+  }
+
+  isRunsLoading.value = true
+  pageIndex.value = 0
+  hasMoreRuns.value = true
+  pageSize.value = 10
+  try {
+    const payload = { pageSize: pageSize.value, pageIndex: pageIndex.value } as any
+    if (runsFilter.value === 'error') payload.hasError = 'Y'
+
+    const resp = await jobStore.fetchJobRuns(route.params.jobName as string, payload)
+    runs.value = Array.isArray(resp) ? resp : []
+    hasMoreRuns.value = Array.isArray(resp) && resp.length === pageSize.value
+    hasLoadedRuns.value = true
+  } catch (err) {
+    console.error(err)
+  } finally {
+    isRunsLoading.value = false
+    pageSize.value = 20
+  }
+}
+
 onIonViewWillEnter(async () => {
-  job.value = await jobStore.fetchJobDetail(route.params.jobName as string)
-  runs.value = await jobStore.fetchJobRuns(route.params.jobName as string)
+  await loadJob()
+  void loadRuns()
 })
+
+const updateRunsFilter = async () => {
+  if (!hasLoadedRuns.value && activeTab.value !== 'history') {
+    return
+  }
+  await loadRuns()
+}
+
+watch(activeTab, async (tab) => {
+  if (tab === 'history' && !hasLoadedRuns.value && !isRunsLoading.value) {
+    await loadRuns()
+  }
+})
+
+const loadMoreRuns = async (event: any) => {
+  pageIndex.value++
+  try {
+    const payload = { pageSize: pageSize.value, pageIndex: pageIndex.value } as any
+    if (runsFilter.value === 'error') payload.hasError = 'Y'
+
+    const resp = await jobStore.fetchJobRuns(route.params.jobName as string, payload)
+    if (Array.isArray(resp) && resp.length > 0) {
+      runs.value.push(...resp)
+    }
+    hasMoreRuns.value = Array.isArray(resp) && resp.length === pageSize.value
+  } catch (err) {
+    console.error(err)
+  } finally {
+    event.target.complete()
+  }
+}
 </script>
 
 <style scoped>
@@ -548,12 +728,49 @@ onIonViewWillEnter(async () => {
 
 .run-card {
   margin-bottom: var(--spacer-base, 16px);
+  border: 1px solid var(--ion-color-step-150, #d7d8da);
+  box-shadow: none;
+  transition: box-shadow 0.3s ease;
 }
 
-.run-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+.run-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.filter-toolbar {
+  display: flex;
   gap: var(--spacer-sm, 8px);
+  overflow-x: auto;
+  padding-bottom: var(--spacer-base, 16px);
+}
+
+.run-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--spacer-base, 16px);
+  padding: var(--spacer-sm, 8px) 0;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacer-sm, 8px);
+}
+
+.stat-item ion-icon {
+  font-size: 24px;
+}
+
+.stat-item ion-label p {
+  margin: 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-item ion-label strong {
+  display: block;
+  font-size: 14px;
 }
 
 .log-list {
@@ -600,4 +817,5 @@ onIonViewWillEnter(async () => {
     grid-template-columns: repeat(var(--columns-desktop), 1fr);
   }
 }
+
 </style>

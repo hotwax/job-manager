@@ -28,6 +28,7 @@ import { translate } from "@common";
 
 export default defineComponent({
   name: "DownloadLogsFilePopover",
+  props: ["dataManagerLog"],
   components: { 
     IonContent,
     IonItem,
@@ -35,9 +36,16 @@ export default defineComponent({
     IonListHeader
   },
   setup() {
+    function downloadFile(type: string) {
+      popoverController.dismiss();
+      // Implementation placeholder for download logic
+      console.log(`Downloading ${type}`);
+    }
+
     return {
+      downloadFile,
       translate
     }
   }
 });
-</script> 
+</script>

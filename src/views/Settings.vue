@@ -261,7 +261,7 @@ const currentTimeZoneId = computed(() => userStore.getUserTimeZone)
 const isLoading = ref(true);
 const timeZoneModal = ref();
 const queryString = ref('');
-const filteredTimeZones = ref([])
+const filteredTimeZones = ref<any[]>([])
 const timeZoneId = ref("")
 // Fetching timeZone of the browser
 const browserTimeZone = ref({
