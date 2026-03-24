@@ -1,6 +1,8 @@
 import { resetPermissions } from "@/authorization";
 import emitter from "@/event-bus";
 import logger from "@/logger";
+import { useJobStore } from "@/store/jobs";
+import { useMdmConfigStore } from "@/store/mdmConfig";
 import { useUserStore } from "@/store/user";
 import { useUtilStore } from "@/store/util";
 import { showToast } from "@/utils";
@@ -95,6 +97,8 @@ export function useAuth() {
 
     useUserStore().$reset();
     useUtilStore().$reset();
+    useMdmConfigStore().$reset();
+    useJobStore().$reset();
     resetPermissions();
     cookieHelper().remove('token');
     cookieHelper().remove('expirationTime');

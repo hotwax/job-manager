@@ -62,7 +62,7 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
 
         Object.entries(this.filters).map(([ type, value ]) => {
           payload[type] = value
-          payload[`${type}_op`] = "in"
+          // payload[`${type}_op`] = "in"
         })
 
         let resp = await api({
@@ -107,6 +107,5 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
     async updateAppliedFilters(filterType: string, value: any) {
       this.filters[filterType] = value
     }
-  },
-  persist: true,
+  }
 });

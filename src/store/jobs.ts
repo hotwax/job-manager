@@ -2,6 +2,7 @@ import logger from "@/logger";
 import { showToast } from "@/utils";
 import { api, translate } from "@common";
 import { defineStore } from "pinia";
+import { useUserStore } from "./user";
 
 export const useJobStore = defineStore("job", {
   state: () => ({
@@ -19,50 +20,80 @@ export const useJobStore = defineStore("job", {
   actions: {
     async fetchJobs() {
       try {
-        const resp = await api({
-          url: "admin/serviceJobs",
-          method: "GET",
-          params: {
-            pageSize: 250
-          }
-        })
-        console.log('serviceJobs', resp)
-        this.jobs = resp.data
+        let total = 0
+        let pageIndex = 0
+        do {
+          const resp = await api({
+            url: "admin/serviceJobs",
+            method: "GET",
+            params: {
+              pageSize: 250,
+              pageIndex,
+              instanceOfProductId_op: "empty",
+              instanceOfProductId_not: "Y"
+            }
+          })
+
+          total = resp.data.length
+          this.jobs = pageIndex > 0 ? this.jobs.concat(resp.data) : resp.data
+          pageIndex++
+        } while(total == 250)
       } catch(err) {
         logger.error("Failed to fetch jobs", err)
       }
     },
     async fetchCategories() {
+      // if(this.categories.length) return;
       try {
-        const resp = await api({
-          url: "admin/productCategories",
-          method: "GET",
-          params: {
-            pageSize: 250
-          }
-        })
-        console.log('categories', resp)
-        this.categories = resp.data
+        let total = 0
+        let pageIndex = 0
+        do {
+          const resp = await api({
+            url: "admin/productCategories",
+            method: "GET",
+            params: {
+              pageSize: 250,
+              pageIndex
+            }
+          })
+          total = resp.data.length
+          this.categories = pageIndex > 0 ? this.categories.concat(resp.data) : resp.data
+          pageIndex++
+        } while(total == 250);
+        this.fetchCategoryMembers();
       } catch(err) {
         logger.error("Failed to fetch jobs", err)
       }
     },
     async fetchCategoryMembers() {
+      // if(this.categoryMembers.length) return;
       try {
-        const resp = await api({
-          url: "admin/productCategories/member",
-          method: "GET",
-          params: {
-            pageSize: 250
-          }
-        })
-        console.log('members', resp)
-        this.categoryMembers = resp.data
+        const productCategoryIds = this.categories.map((category: any) => {
+          if(category.primaryParentCategoryId === 'SYSTEM_JOB') return category.productCategoryId
+        }).filter((id: string) => id);
+        let total = 0
+        let pageIndex = 0
+        do {
+          const resp = await api({
+            url: "admin/productCategories/member",
+            method: "GET",
+            params: {
+              pageSize: 250,
+              pageIndex,
+              productCategoryId: productCategoryIds,
+              productCategoryId_op: "in"
+            }
+          })
+          total = resp.data.length
+          this.categoryMembers = pageIndex > 0 ? this.categoryMembers.concat(resp.data) : resp.data
+          pageIndex++
+        } while(total == 250)
       } catch(err) {
         logger.error("Failed to fetch jobs", err)
       }
     },
     async fetchCategoryRollup() {
+      // if(this.categoryRollups.length) return;
       try {
         const resp = await api({
           url: "admin/productCategories/rollup",
@@ -71,13 +102,12 @@ export const useJobStore = defineStore("job", {
             pageSize: 250
           }
         })
-        console.log('members', resp)
         this.categoryRollups = resp.data
       } catch(err) {
         logger.error("Failed to fetch jobs", err)
       }
     },
-    async fetchServiceParams(serviceName = "AdocValidationServices.validate#ApprovalAttributesNotPresent") {
+    async fetchServiceParams(serviceName: string) {
       const encodedServiceName = encodeURIComponent(serviceName)
       let parameters = []
       try {
@@ -95,7 +125,7 @@ export const useJobStore = defineStore("job", {
       return parameters
     },
     async fetchJobDetail(jobName: string) {
-      let jobDetails = {}
+      let jobDetails: Record<string, any> = {}
       try {
         const resp = await api({
           url: `admin/serviceJobs/${jobName}`,
@@ -104,7 +134,26 @@ export const useJobStore = defineStore("job", {
             pageSize: 250
           }
         })
-        jobDetails = resp.data.jobDetail
+        const job = resp.data.jobDetail
+
+        const isJobProductStoreDependent = () => job.serviceJobParameters.some((param: any) => param.parameterName === "productStoreIds")
+
+        // Check for whether job is productStore dependent or not.
+        if(isJobProductStoreDependent()) {
+          const jobProductStore = job.serviceJobParameters.find((param: any) => param.parameterName === "productStoreIds")
+          // Checks if a product store-dependent job has the current product store set in its parameters.
+          if(jobProductStore?.parameterName && jobProductStore.parameterValue === useUserStore().getCurrentProductStore.productStoreId) {
+            jobDetails = job
+          } else if(!jobProductStore?.parameterName) {
+            jobDetails = { ...job, isDraftJob: true }
+          }
+        } else {
+          // For handling case where we have child jobs for the productstore independent job
+          // We'll give preference to job with parentJobName and then the job without parentJobName
+          // if(job.parentJobName) {
+          jobDetails = job
+          // }
+        }
       } catch(err) {
         logger.error("Failed to fetch jobs", err)
       }
@@ -125,6 +174,26 @@ export const useJobStore = defineStore("job", {
         logger.error("Failed to fetch jobs", err)
       }
       return jobRuns
+    },
+    async cloneMaargJob(payload: any) {
+      return await api({
+        url: `admin/serviceJobs/${payload.jobName}/clone`,
+        method: "POST",
+        data: payload,
+      });
+    },
+    async updateJob(payload: any) {
+      return await api({
+        url: `admin/serviceJobs/${payload.jobName}`,
+        method: "PUT",
+        data: payload,
+      });
+    },
+    async runNow(jobName: string) {
+      return await api({
+        url: `admin/serviceJobs/${jobName}/runNow`,
+        method: "POST"
+      });
     },
     // async updateJob(job: any) {
     //   if(!job.cronExpression) {

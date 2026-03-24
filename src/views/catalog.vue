@@ -4,12 +4,12 @@
       <ion-toolbar>
         <ion-menu-button slot="start" />
         <ion-title>{{ translate("Catalog") }}</ion-title>
-        <ion-buttons slot="end">
+        <!-- <ion-buttons slot="end">
           <ion-button color="primary" @click="openCreateJobModal()">
             <ion-icon slot="end" :icon="addOutline"></ion-icon>
             {{ translate("Add job") }}
           </ion-button>
-        </ion-buttons>
+        </ion-buttons> -->
       </ion-toolbar>
     </ion-header>
 
@@ -48,7 +48,8 @@
         </ion-card>
 
         <div class="jobs">
-          <ion-card v-for="job in filteredJobs" :key="job.jobName">
+          <!-- TODO: remove filterjobs length from key and check why the UI is not updating -->
+          <ion-card v-for="job in filteredJobs" :key="job.jobName + filteredJobs.length">
             <ion-card-header>
               <ion-card-title>{{ job.jobName }}</ion-card-title>
               <code>ID: {{ job.instanceOfProductId }}</code><br>
@@ -107,13 +108,12 @@ const categoryMembers = computed(() => jobStore.getCategoryMembers)
 const categoryRollups = computed(() => jobStore.getCategoryRollups)
 
 onIonViewWillEnter(() => {
-  Promise.allSettled([jobStore.fetchJobs(), jobStore.fetchCategories(), jobStore.fetchCategoryMembers(), jobStore.fetchCategoryRollup()])
-  jobStore.fetchServiceParams()
+  Promise.allSettled([jobStore.fetchJobs(), jobStore.fetchCategories(), jobStore.fetchCategoryRollup()])
 })
 
 const selectedParentCategoryId = ref('ALL');
 const selectedSubCategoryId = ref('');
-const queryString = ref('');
+const queryString = ref('') as any;
 
 const primaryCategories = computed(() => categories.value.filter((category: any) => category.primaryParentCategoryId === 'SYSTEM_JOB'));
 
@@ -148,8 +148,8 @@ const filteredJobs = computed(() => {
   if (queryString.value.trim()) {
     const query = queryString.value.toLowerCase().trim();
     filtered = filtered.filter((job: any) => 
-      job.jobName.toLowerCase().includes(query) ||
-      job.serviceName.toLowerCase().includes(query) ||
+      (job.jobName && job.jobName.toLowerCase().includes(query)) ||
+      (job.serviceName && job.serviceName.toLowerCase().includes(query)) ||
       (job.instanceOfProductId && job.instanceOfProductId.toLowerCase().includes(query))
     );
   }

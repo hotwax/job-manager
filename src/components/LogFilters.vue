@@ -16,12 +16,12 @@
         <ion-select-option v-for="statusItem in statusItems" :key="statusItem.statusId" :value="statusItem.statusId">{{ translate(statusItem.description) }}</ion-select-option>
       </ion-select>
     </ion-item>
-    <ion-item>
+    <!-- <ion-item>
       <ion-select :multiple="true" :value="filters['priority']" :label="translate('Priority')" interface="popover" @ionChange="updateLogFilter('priority', $event)">
         <ion-select-option value="PRIORITY">{{ translate("High") }}</ion-select-option>
         <ion-select-option value="NORMAL">{{ translate("Normal") }}</ion-select-option>
       </ion-select>
-    </ion-item>
+    </ion-item> -->
   </ion-content>
 
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
@@ -61,7 +61,6 @@ async function saveFilters() {
 }
 
 function updateLogFilter(filterType: string, event: any) {
-  console.log('filters.value, ', filters.value)
   filters.value[filterType] = event.detail.value
 }
 </script>

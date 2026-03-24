@@ -391,7 +391,7 @@ const generateMaargJobCustomOptions = (job: any) => {
 }
 
 const getFileSize = (size: string) => {
-  return `${(Number(size) / (1024 * 1024)).toFixed(3)} MB`
+  return size ? `${(Number(size) / (1024 * 1024)).toFixed(3)} MB` : "-"
 }
 
 function getDateTimeWithOrdinalSuffix(time: any) {
