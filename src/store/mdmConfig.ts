@@ -62,7 +62,6 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
 
         Object.entries(this.filters).map(([ type, value ]) => {
           payload[type] = value
-          // payload[`${type}_op`] = "in"
         })
 
         let resp = await api({

@@ -12,7 +12,7 @@
 
   <ion-content>
     <ion-item>
-      <ion-select :multiple="true" :value="filters['statusId']" :label="translate('Status')" interface="popover" @ionChange="updateLogFilter('statusId', $event)">
+      <ion-select :value="filters['statusId']" :label="translate('Status')" interface="popover" @ionChange="updateLogFilter('statusId', $event)">
         <ion-select-option v-for="statusItem in statusItems" :key="statusItem.statusId" :value="statusItem.statusId">{{ translate(statusItem.description) }}</ion-select-option>
       </ion-select>
     </ion-item>

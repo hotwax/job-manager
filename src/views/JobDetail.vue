@@ -54,17 +54,25 @@
 
       <div v-else-if="job && job.jobName">
         <!-- Original Header content -->
-        <div class="job-context-header ion-padding">
-          <h1 class="ion-no-margin">{{ job.jobName }}</h1>
-          <p class="ion-text-wrap text-medium ion-margin-bottom">{{ job.description || translate("No description available") }}</p>
-          <div class="category-chips">
-            <ion-chip v-for="category in jobCategories" :key="category.productCategoryId" color="medium" outline>
-              {{ category.categoryName }}
-            </ion-chip>
-            <ion-chip v-if="!jobCategories.length" color="medium" outline>
-              {{ translate("Uncategorized") }}
-            </ion-chip>
+        <div class="header-with-action">
+          <div class="job-context-header ion-padding">
+            <p class="overline">{{ job.paused === "Y" ? "Paused" : "Enabled" }}</p>
+            <h1 class="ion-no-margin">{{ job.jobName }}</h1>
+            <p class="ion-text-wrap text-medium ion-margin-bottom">{{ job.description || translate("No description available") }}</p>
+            <div class="category-chips">
+              <ion-chip v-for="category in jobCategories" :key="category.productCategoryId" color="medium" outline>
+                {{ category.categoryName }}
+              </ion-chip>
+              <ion-chip v-if="!jobCategories.length" color="medium" outline>
+                {{ translate("Uncategorized") }}
+              </ion-chip>
+            </div>
           </div>
+
+          <ion-button size="small" fill="clear" @click="runNow">
+            <ion-icon slot="start" :icon="flashOutline" />
+            {{ translate("Run Now") }}
+          </ion-button>
         </div>
 
         <ion-segment v-model="activeTab">
@@ -207,18 +215,51 @@
             </ion-card>
           </div>
 
-          <div class="sticky-segments">
-            <ion-segment v-model="activeTab" mode="md">
-              <ion-segment-button value="overview">
-                <ion-label>{{ translate('OVERVIEW') }}</ion-label>
-              </ion-segment-button>
-              <ion-segment-button value="parameters">
-                <ion-label>{{ translate('PARAMETERS') }}</ion-label>
-              </ion-segment-button>
-              <ion-segment-button value="history">
-                <ion-label>{{ translate('HISTORY') }}</ion-label>
-              </ion-segment-button>
-            </ion-segment>
+          <!-- PARAMETERS TAB -->
+          <div v-if="activeTab === 'parameters'">
+            <ion-card>
+              <ion-card-header>
+                <ion-card-title class="header-with-action">
+                  {{ translate("Custom Parameters") }}
+                  <ion-button v-if="!isEditingParameters" fill="clear" @click="toggleEditParameters()">
+                    {{ translate(jobParameters.length ? "Edit" : "Add") }}
+                  </ion-button>
+                  <div v-else class="action-buttons">
+                    <ion-button color="primary" @click="saveParameters()">
+                      {{ translate("Save") }}
+                    </ion-button>
+                    <ion-button color="medium" @click="cancelEditParameters()">
+                      {{ translate("Cancel") }}
+                    </ion-button>
+                  </div>
+                </ion-card-title>
+              </ion-card-header>
+              <ion-card-content>
+                <ion-list :lines="isEditingParameters ? 'none' : 'full'" v-if="isEditingParameters || jobParameters.length">
+                  <ion-item v-for="(param, index) in (isEditingParameters ? editableParametersList : jobParameters)" :key="index">
+                    <template v-if="!isEditingParameters">
+                      <ion-label>{{ param.parameterName }}</ion-label>
+                      <ion-label slot="end">{{ param.parameterValue || "-" }}</ion-label>
+                    </template>
+                    <!-- <ion-label v-if="!isEditingParameters">
+                      <h3>{{ param.parameterName }}</h3>
+                      <p>{{ param.parameterValue || "-" }}</p>
+                    </ion-label> -->
+                    <div v-else class="parameter-edit-item">
+                      <ion-input
+                        v-model="param.parameterValue"
+                        :label="param.parameterName"
+                        label-placement="stacked"
+                        fill="outline"
+                      ></ion-input>
+                    </div>
+                  </ion-item>
+                </ion-list>
+                <div v-else class="ion-text-center ion-padding">
+                  <p>{{ translate("No custom parameters set for this job.") }}</p>
+                </div>
+              </ion-card-content>
+            </ion-card>
           </div>
 
           <!-- HISTORY TAB -->
