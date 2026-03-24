@@ -182,6 +182,7 @@
                    <ion-label position="stacked">{{ translate("Product") }}</ion-label>
                    <ion-text>
                      <p v-if="product.productName">{{ product.productName }}</p>
+                     <p v-if="product.description" class="ion-text-wrap">{{ product.description }}</p>
                      <code>{{ job.instanceOfProductId }}</code>
                    </ion-text>
                  </ion-item>

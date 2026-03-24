@@ -155,7 +155,7 @@ export const useJobStore = defineStore("job", {
     async fetchProductDetail(productId: string) {
       try {
         const resp = await api({
-          url: `admin/products/${productId}`,
+          url: `oms/products/${productId}`,
           method: "GET"
         })
         this.products[productId] = resp.data;
