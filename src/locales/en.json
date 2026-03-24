@@ -99,5 +99,12 @@
   "Warning": "Warning",
   "Webhook subscribed successfully": "Webhook subscribed successfully",
   "Webhook unsubscribed successfully": "Webhook unsubscribed successfully",
-  "You do not have permission to access this page": "You do not have permission to access this page"
+  "You do not have permission to access this page": "You do not have permission to access this page",
+  "All": "All",
+  "Scheduled": "Scheduled",
+  "Paused": "Paused",
+  "No schedule": "No schedule",
+  "Manual uploads": "Manual uploads",
+  "Add job": "Add job",
+  "Enabled": "Enabled"
 }

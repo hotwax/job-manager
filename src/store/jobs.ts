@@ -1,24 +1,40 @@
 import logger from "@/logger";
-import { showToast } from "@/utils";
+import { showToast, getCronString } from "@/utils";
 import { api, translate } from "@common";
 import { defineStore } from "pinia";
 import { useUserStore } from "./user";
+
+const getNormalizedJob = (job: any = {}) => ({
+  serviceInParameters: Array.isArray(job?.serviceInParameters) ? job.serviceInParameters : [],
+  serviceJobParameters: Array.isArray(job?.serviceJobParameters) ? job.serviceJobParameters : [],
+  ...job
+});
+
+export const getJobDetailWithFallback = (jobDetail: any = {}, fallbackJob: any = {}) => {
+  const resolvedJob = Object.keys(jobDetail || {}).length ? jobDetail : fallbackJob;
+  return getNormalizedJob(resolvedJob);
+};
 
 export const useJobStore = defineStore("job", {
   state: () => ({
     jobs: [] as Array<any>,
     categories: [] as Array<any>,
     categoryMembers: [] as Array<any>,
-    categoryRollups: [] as Array<any>
+    categoryRollups: [] as Array<any>,
+    products: {} as any,
+    loading: false
   }),
   getters: {
     getJobs: (state: any) => state.jobs,
     getCategories: (state: any) => state.categories,
     getCategoryMembers: (state: any) => state.categoryMembers,
-    getCategoryRollups: (state: any) => state.categoryRollups
+    getCategoryRollups: (state: any) => state.categoryRollups,
+    getProducts: (state: any) => state.products,
+    isLoading: (state: any) => state.loading
   },
   actions: {
     async fetchJobs() {
+      this.loading = true
       try {
         let total = 0
         let pageIndex = 0
@@ -34,16 +50,24 @@ export const useJobStore = defineStore("job", {
             }
           })
 
-          total = resp.data.length
-          this.jobs = pageIndex > 0 ? this.jobs.concat(resp.data) : resp.data
+          const respJobs = resp.data.map((job: any) => ({
+            ...job,
+            cronString: job.cronExpression ? getCronString(job.cronExpression) : ''
+          }))
+
+          total = respJobs.length
+          this.jobs = pageIndex > 0 ? this.jobs.concat(respJobs) : respJobs
           pageIndex++
         } while(total == 250)
       } catch(err) {
         logger.error("Failed to fetch jobs", err)
+      } finally {
+        this.loading = false
       }
     },
     async fetchCategories() {
       // if(this.categories.length) return;
+      this.loading = true
       try {
         let total = 0
         let pageIndex = 0
@@ -63,10 +87,13 @@ export const useJobStore = defineStore("job", {
         this.fetchCategoryMembers();
       } catch(err) {
         logger.error("Failed to fetch jobs", err)
+      } finally {
+        this.loading = false
       }
     },
     async fetchCategoryMembers() {
       // if(this.categoryMembers.length) return;
+      this.loading = true
       try {
         const productCategoryIds = this.categories.map((category: any) => {
           if(category.primaryParentCategoryId === 'SYSTEM_JOB') return category.productCategoryId
@@ -90,10 +117,13 @@ export const useJobStore = defineStore("job", {
         } while(total == 250)
       } catch(err) {
         logger.error("Failed to fetch jobs", err)
+      } finally {
+        this.loading = false
       }
     },
     async fetchCategoryRollup() {
       // if(this.categoryRollups.length) return;
+      this.loading = true
       try {
         const resp = await api({
           url: "admin/productCategories/rollup",
@@ -105,6 +135,8 @@ export const useJobStore = defineStore("job", {
         this.categoryRollups = resp.data
       } catch(err) {
         logger.error("Failed to fetch jobs", err)
+      } finally {
+        this.loading = false
       }
     },
     async fetchServiceParams(serviceName: string) {
@@ -115,7 +147,7 @@ export const useJobStore = defineStore("job", {
           url: `admin/services/${encodedServiceName}/parameters`,
           method: "GET",
           params: {
-            pageSize: 250
+            pageSize: 1000
           }
         })
         parameters = resp.data.serviceInParameters
@@ -131,10 +163,10 @@ export const useJobStore = defineStore("job", {
           url: `admin/serviceJobs/${jobName}`,
           method: "GET",
           params: {
-            pageSize: 250
+            pageSize: 1000
           }
         })
-        const job = resp.data.jobDetail
+        const job = resp.data.jobDetail || {}
 
         const isJobProductStoreDependent = () => job.serviceJobParameters.some((param: any) => param.parameterName === "productStoreIds")
 
@@ -157,23 +189,46 @@ export const useJobStore = defineStore("job", {
       } catch(err) {
         logger.error("Failed to fetch jobs", err)
       }
-      return jobDetails
+ 
+      let fallbackJob = this.jobs.find((job: any) => job.jobName === jobName) || {}
+ 
+      if (!Object.keys(fallbackJob).length && !Object.keys(jobDetails || {}).length) {
+        await this.fetchJobs()
+        fallbackJob = this.jobs.find((job: any) => job.jobName === jobName) || {}
+      }
+ 
+      const job = getJobDetailWithFallback(jobDetails, fallbackJob);
+      if (job.instanceOfProductId && !this.products[job.instanceOfProductId]) {
+        this.fetchProductDetail(job.instanceOfProductId);
+      }
+      return job;
     },
-    async fetchJobRuns(jobName: string) {
-      let jobRuns = {}
+    async fetchProductDetail(productId: string) {
+      try {
+        const resp = await api({
+          url: `oms/products/${productId}`,
+          method: "GET"
+        })
+        this.products[productId] = resp.data;
+      } catch(err) {
+        logger.error("Failed to fetch product detail", err)
+      }
+    },
+    async fetchJobRuns(jobName: string, payload = { pageSize: 250, pageIndex: 0 }) {
+      let jobRuns = [] as any
       try {
         const resp = await api({
           url: `admin/serviceJobs/${jobName}/runs`,
           method: "GET",
           params: {
-            pageSize: 250
+            ...payload
           }
         })
-        jobRuns = resp.data
+        jobRuns = resp.data || []
       } catch(err) {
         logger.error("Failed to fetch jobs", err)
       }
-      return jobRuns
+      return Array.isArray(jobRuns) ? jobRuns : []
     },
     async cloneMaargJob(payload: any) {
       return await api({

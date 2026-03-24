@@ -142,12 +142,7 @@ const appliedFilters = computed(() => mdmStore.getAppliedFilters)
 const totalAppliedFilters = computed(() => Object.keys(appliedFilters.value).length)
 
 async function fetchLogs(pageSize = 10, pageIndex = 0) {
-  const params = {
-    pageSize,
-    pageIndex
-  } as Record<any, any>
-
-  await mdmStore.fetchDataManagerLogs(params);
+  await mdmStore.fetchDataManagerLogs({ pageSize, pageIndex });
 }
 
 function logMoreLogs(event: any) {
