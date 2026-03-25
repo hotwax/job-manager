@@ -173,19 +173,27 @@ const subCategories = computed(() => {
 
 const selectParentCategory = (productCategoryId: string) => {
   selectedParentCategoryId.value = productCategoryId;
-  selectedSubCategoryId.value = ''; // Reset sub-category on parent change
+  selectedSubCategoryId.value = ""; // Reset sub-category on parent change
 };
 
 const filteredJobs = computed(() => {
-  let activeCategoryId = selectedSubCategoryId.value || selectedParentCategoryId.value;
   let filtered = jobs.value;
+  if (selectedParentCategoryId.value !== "ALL") {
 
-  if (activeCategoryId !== 'ALL') {
-    const jobIds = categoryMembers.value
-      .filter((member: any) => member.productCategoryId === activeCategoryId)
-      .map((member: any) => member.productId);
-    
-    filtered = filtered.filter((job: any) => jobIds.includes(job.instanceOfProductId));
+    const parentCategoryJobIds: Array<string> = []
+    const subCategoryJobIds: Array<string> = []
+
+    categoryMembers.value.map((member: any) => {
+      if(member.productCategoryId === selectedParentCategoryId.value) {
+        parentCategoryJobIds.push(member.productId)
+      }
+
+      if(member.productCategoryId === selectedSubCategoryId.value) {
+        subCategoryJobIds.push(member.productId)
+      }
+    })
+
+    filtered = filtered.filter((job: any) => parentCategoryJobIds.includes(job.instanceOfProductId) && (!subCategoryJobIds.length || subCategoryJobIds.includes(job.instanceOfProductId)));
   }
 
   if (selectedStatus.value !== 'ALL') {
@@ -287,6 +295,7 @@ ion-card ion-item {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  word-break: break-all;
 }
 
 .paused-job {
