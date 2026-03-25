@@ -236,21 +236,18 @@
               </ion-card-header>
               <ion-card-content>
                 <ion-list :lines="isEditingParameters ? 'none' : 'full'" v-if="isEditingParameters || jobParameters.length">
-                  <ion-item v-for="(param, index) in (isEditingParameters ? editableParametersList : jobParameters)" :key="index">
+                  <ion-item v-for="(param, index) in (isEditingParameters ? editableParametersList : generateJobCustomParameters(requiredParams, optionalParams))" :key="index">
                     <template v-if="!isEditingParameters">
-                      <ion-label>{{ param.parameterName }}</ion-label>
-                      <ion-label slot="end">{{ param.parameterValue || "-" }}</ion-label>
+                      <ion-label>{{ param.name }}</ion-label>
+                      <ion-label slot="end">{{ param.value || "-" }}</ion-label>
                     </template>
-                    <!-- <ion-label v-if="!isEditingParameters">
-                      <h3>{{ param.parameterName }}</h3>
-                      <p>{{ param.parameterValue || "-" }}</p>
-                    </ion-label> -->
                     <div v-else class="parameter-edit-item">
                       <ion-input
-                        v-model="param.parameterValue"
-                        :label="param.parameterName"
+                        v-model="param.value"
+                        :label="param.name"
                         label-placement="stacked"
                         fill="outline"
+                        :helper-text="param.type"
                       ></ion-input>
                     </div>
                   </ion-item>
@@ -499,6 +496,9 @@ const pageIndex = ref(0)
 const pageSize = ref(10)
 const hasMoreRuns = ref(true)
 
+let optionalParams = ref([]) as any
+let requiredParams = ref([]) as any
+
 const activeTab = ref('overview');
 const runsFilter = ref('all');
 
@@ -555,41 +555,18 @@ const isEditingParameters = ref(false);
 const editableParametersList = ref<any[]>([]);
 
 const toggleEditParameters = () => {
-  if (!job.value) return;
-
-  const availableParamNames = (job.value.serviceInParameters || []).map((param: any) => param.name);
-  
-  // Map all available parameters, pre-filling with saved values where they exist
-  editableParametersList.value = availableParamNames.map((name: string) => {
-    const savedParam = jobParameters.value.find((parameter: any) => parameter.parameterName === name);
-    return {
-      parameterName: name,
-      parameterValue: savedParam?.parameterValue || ""
-    };
-  });
-
-  // If no parameters defined in service, at least show what's currently saved
-  if (!editableParametersList.value.length) {
-    editableParametersList.value = JSON.parse(JSON.stringify(jobParameters.value));
-  }
+  editableParametersList.value = requiredParams.value.concat(optionalParams.value)
 
   isEditingParameters.value = true;
 };
 
 const saveParameters = async () => {
-  // const jobParams = job.value.serviceJobParameters
-
-  // const updatedParams = editableParametersList.value.reduce((params: any, param: any) => {
-  //   params[param.parameterName] = param.parameterValue.trim() !== ""
-  //   return params
-  // })
-
-  // jobParams.map((param: any) => {
-  //   if(updatedParams[param.parameterName]) {
-  //     param[param.parameterName] = param
-  //   }
-  // })
-  job.value.serviceJobParameters = editableParametersList;
+  const params = editableParametersList.value.map((param: any) => ({
+    parameterName: param.name,
+    parameterValue: param.value,
+    jobName: job.jobName
+  }))
+  job.value.serviceJobParameters = params;
 
   const payload = {
     jobName: job.value.jobName,
@@ -696,6 +673,9 @@ onIonViewWillEnter(async () => {
   // } 
   await loadJob()
   void loadRuns()
+
+  optionalParams.value = generateMaargJobCustomOptions(job.value).optionalParameters
+  requiredParams.value = generateMaargJobCustomOptions(job.value).requiredParameters
 })
 
 const updateRunsFilter = async () => {
@@ -889,6 +869,88 @@ async function updateJobInfo(payload: any) {
   } catch(err) {
     showToast(translate("Failed to update service"))
     logger.error(err)
+  }
+}
+
+
+// defined this method as we need to convert values to string for trimming and correctly parse the data
+const convertToString = (parameter: any) => {
+  const value = parameter.value;
+
+  if(!value) {
+    return ''
+  }
+
+  try {
+    if(parameter.type === 'Map' || parameter.type === 'List' || parameter.type === 'Object') {
+      return JSON.stringify(value)
+    } else if(parameter.type === 'String') {
+      return value
+    } else {
+      return '' + value;
+    }
+  } catch {
+    logger.error('Unable to parse the defined value', value)
+    return value;
+  }
+}
+
+// preparing the parameters for the job, by checking whether the job has supported making
+// changes in the custom parameters or not
+const generateJobCustomParameters = (requiredParameters: any, optionalParameters: any) => {
+  // preparing the custom parameters those needs to passed with the job
+  const jobCustomParameters = [] as any;
+
+  requiredParameters.map((parameter: any) => {
+    jobCustomParameters.push(parameter)
+  })
+
+  optionalParameters.map((parameter: any) => {
+    // added this check to not show those optional params in the configuration card whose value is left empty in the parameter modal
+    if(parameter.value && parameter.value.toString().trim()) {
+      jobCustomParameters.push(parameter)
+    }
+  })
+  return jobCustomParameters;
+}
+
+const generateMaargJobCustomOptions = (job: any) => {
+  let inputParameters = job?.serviceInParameters ? JSON.parse(JSON.stringify(job?.serviceInParameters)) : []
+  const optionalParameters: Array<any> = [];
+  const requiredParameters: Array<any> = [];
+
+  // removing some fields that we don't want user to edit, and for which the values will be added programatically
+  const excludeParameters = ['productStoreIds']
+  inputParameters = inputParameters.filter((parameter: any) =>!excludeParameters.includes(parameter.name))
+
+  const paramValues = {} as any;
+
+  job.serviceJobParameters.map((parameter: any) => {
+    paramValues[parameter.parameterName] = parameter.parameterValue
+  })
+
+  inputParameters.map((parameter: any) => {
+    if(parameter.required === "true") {
+      requiredParameters.push({
+        name: parameter.name,
+        value: paramValues && paramValues[parameter.name] && paramValues[parameter.name] !== 'null' ? convertToString({ value: paramValues[parameter.name], type: parameter.type }) : '',   // added check for null as we don't want to pass null as a value in the params
+        type: parameter.type,
+        default: parameter.default,
+        required: true
+      })
+    } else {
+      optionalParameters.push({
+        name: parameter.name,
+        value: paramValues && paramValues[parameter.name] && paramValues[parameter.name] !== 'null' ? convertToString({ value: paramValues[parameter.name], type: parameter.type }) : '',   // added check for null as we don't want to pass null as a value in the params
+        type: parameter.type,
+        default: parameter.default
+      })
+    }
+  })
+
+  return {
+    optionalParameters,
+    requiredParameters
   }
 }
 </script>
