@@ -72,24 +72,6 @@
             </ion-select>
           </ion-item>
         </ion-card>
-        <ion-card>
-          <ion-card-header>
-            <ion-card-subtitle>
-              {{ translate("Shopify Config") }}
-            </ion-card-subtitle>
-            <ion-card-title>
-              {{ translate("eCommerce") }}
-            </ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            {{ translate('eCommerce stores are directly connected to one Shop Config. If your OMS is connected to multiple eCommerce stores selling the same catalog operating as one Company, you may have multiple Shop Configs for the selected Product Store.') }}
-          </ion-card-content>
-          <ion-item lines="none">
-            <ion-select :label="translate('Select eCommerce')" interface="popover" :value="currentShopifyConfig?.shopifyConfigId" @ionChange="setShopifyConfig($event)">
-              <ion-select-option v-for="shopifyConfig in shopifyConfigs" :key="shopifyConfig.shopifyConfigId" :value="shopifyConfig.shopifyConfigId" >{{ shopifyConfig.name ? shopifyConfig.name : shopifyConfig.shopifyConfigName }}</ion-select-option>
-            </ion-select>
-          </ion-item>
-        </ion-card>
       </section>
       <hr />
       <div class="section-header">
@@ -214,8 +196,6 @@ import { DateTime } from 'luxon';
 const userStore = useUserStore();
 const userProfile = computed(() => userStore.getUserProfile)
 const currentProductStore = computed(() => userStore.getCurrentProductStore)
-const shopifyConfigs = computed(() => userStore.getShopifyConfigs)
-const currentShopifyConfig = computed(() => userStore.getCurrentShopifyConfig)
 
 const appInfo = (import.meta.env.VUE_APP_VERSION_INFO ? JSON.parse(import.meta.env.VUE_APP_VERSION_INFO) : {}) as any;
 const appVersion = appInfo.branch ? (appInfo.branch + "-" + appInfo.revision) : appInfo.tag;
