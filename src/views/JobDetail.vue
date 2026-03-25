@@ -235,7 +235,7 @@
                 </ion-card-title>
               </ion-card-header>
               <ion-card-content>
-                <ion-list :lines="isEditingParameters ? 'none' : 'full'" v-if="isEditingParameters || jobParameters.length">
+                <ion-list :lines="isEditingParameters ? 'none' : 'full'" v-if="generateJobCustomParameters(requiredParams, optionalParams).length || editableParametersList.length">
                   <ion-item v-for="(param, index) in (isEditingParameters ? editableParametersList : generateJobCustomParameters(requiredParams, optionalParams))" :key="index">
                     <template v-if="!isEditingParameters">
                       <ion-label>{{ param.name }}</ion-label>
@@ -615,7 +615,11 @@ const saveSchedule = async () => {
       repeatCount: job.value.repeatCount
     } as any;
     // TODO: Do not update the template job
-    await updateJobInfo(payload)
+    await updateJobInfo(payload).then(() => {
+      if(job.value.isDraftJob) {
+        router.replace(`/job/${job.value.jobName}`)
+      }
+    })
   }
   isScheduleModalOpen.value = false;
 };
@@ -773,8 +777,6 @@ async function runNow() {
                 })
                 if(!commonUtil.hasError(resp)) {
                   jobName = clonedJob.jobName
-                  // TODO: check if this change is required
-                  // await this.store.dispatch("maargJob/updateMaargJob", { jobEnumId: clonedJob.jobTypeEnumId, job: clonedJob })
                 } else {
                   throw resp.data;
                 }
@@ -782,7 +784,14 @@ async function runNow() {
 
               resp = await jobStore.runNow(jobName)
               if(!commonUtil.hasError(resp) && resp.data.jobRunId) {
-                showToast(translate("Service has been scheduled"))
+                // If the job on which the operation is performed is a draft job, then we have created a clone
+                // in previous step and redirect the user to the cloned job
+                if(job.value.isDraftJob) {
+                  showToast("Service has been scheduled, redirecting to cloned service")
+                  router.replace(`/job/${jobName}`)
+                } else {
+                  showToast(translate("Service has been scheduled"))
+                }
               } else {
                 throw resp.data
               }
@@ -821,54 +830,34 @@ async function scheduleJob() {
     job.value = clonedJob
   }
 
-  // const paramValues = generateJobCustomParameters(this.customRequiredParameters, this.customOptionalParameters, {});
-
-  // Object.keys(paramValues).map((paramName: any) => {
-  //   const existingParameter = job.serviceJobParameters.find((parameter: any) => parameter.parameterName === paramName);
-
-  //   if(existingParameter) {
-  //     existingParameter.parameterValue = paramValues[paramName]
-  //   } else {
-  //     job.serviceJobParameters.push({
-  //       parameterName: paramName,
-  //       parameterValue: paramValues[paramName],
-  //       jobName: job.jobName
-  //     })
-  //   }
-  // })
-
-  const updatedJob = {
-    ...job.value,
-    // paused: "N",
-    // cronExpression: this.selectedCronExpression
-  }
-
   const payload = { 
-    jobName: updatedJob.jobName,
-    paused: updatedJob.paused,
-    cronExpression: updatedJob.cronExpression
+    jobName: job.value.jobName,
+    paused: job.value.paused,
+    cronExpression: job.value.cronExpression
   } as any;
 
-  // if(this.currentMaargJob.paused === "Y") payload["paused"] = "N"
-  // if(this.isCronExpressionUpdated()) payload["cronExpression"] = this.selectedCronExpression
-  // const isParametersUpdated = updatedJob.serviceJobParameters.some((parameter: any) => parameter.parameterValue !== this.currentMaargJob.parameterValues[parameter.parameterName])
-  // if(isParametersUpdated) payload["serviceJobParameters"] = updatedJob.serviceJobParameters
-
-  await updateJobInfo(payload)
+  await updateJobInfo(payload).then(() => {
+    if(job.value.isDraftJob) {
+      router.replace(`/job/${job.value.jobName}`)
+    }
+  })
 }
 
-async function updateJobInfo(payload: any) {
+async function updateJobInfo(payload: any): Promise<any> {
   try {
     const resp = await jobStore.updateJob(payload)
     if(!commonUtil.hasError(resp)) {
       showToast(translate("Service updated successfully"))
-      // this.store.dispatch("maargJob/updateMaargJob", this.currentMaargJob.isDraftJob ? { jobEnumId: job.jobTypeEnumId, job: updatedJob } : { jobEnumId: job.jobTypeEnumId })
+      return Promise.resolve(resp)
     } else {
       throw resp.data
     }
   } catch(err) {
     showToast(translate("Failed to update service"))
     logger.error(err)
+    return Promise.reject({
+      error: err
+    })
   }
 }
 
