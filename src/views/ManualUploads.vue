@@ -9,7 +9,7 @@
       </ion-toolbar>
     </ion-header>
 
-    <ion-content :fullscreen="true">
+    <ion-content>
       <main>
         <div class="header-section">
           <h1>{{ translate("Manual Uploads") }}</h1>

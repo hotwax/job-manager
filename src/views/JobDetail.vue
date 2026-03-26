@@ -40,7 +40,7 @@
             </ion-card-header>
             <ion-card-content>
               <ion-list lines="none">
-                <ion-item v-for="j in 3" :key="j">
+                <ion-item v-for="j in 2" :key="j">
                   <ion-label>
                     <p><ion-skeleton-text animated style="width: 30%" /></p>
                     <ion-skeleton-text animated style="width: 70%" />
@@ -77,13 +77,13 @@
 
         <ion-segment v-model="activeTab">
           <ion-segment-button value="overview">
-            <ion-label>{{ translate('Overview') }}</ion-label>
+            <ion-label>{{ translate("Overview") }}</ion-label>
           </ion-segment-button>
           <ion-segment-button value="parameters">
-            <ion-label>{{ translate('Parameters') }}</ion-label>
+            <ion-label>{{ translate("Parameters") }}</ion-label>
           </ion-segment-button>
           <ion-segment-button value="history">
-            <ion-label>{{ translate('History') }}</ion-label>
+            <ion-label>{{ translate("History") }}</ion-label>
           </ion-segment-button>
         </ion-segment>
 
@@ -92,25 +92,79 @@
             <!-- Technical Details Card -->
             <ion-card class="dashboard-card">
               <ion-card-header>
-                <ion-card-title>{{ translate("Technical Details") }}</ion-card-title>
+                <ion-card-title>{{ translate("Job Info") }}</ion-card-title>
               </ion-card-header>
-              <ion-card-content>
+              <ion-card-content class="ion-no-padding">
                 <ion-list lines="none">
+                  <ion-list-header color="light">
+                    <ion-label>{{ translate("Technical Details") }}</ion-label>
+                  </ion-list-header>
                   <ion-item>
-                    <ion-label position="stacked">{{ translate('Service Name') }}</ion-label>
-                    <ion-text class="break-word">{{ job.serviceName }}</ion-text>
+                    <ion-label slot="start">{{ translate('Service Name') }}</ion-label>
+                    <ion-label slot="end" class="break-word">{{ job.serviceName }}</ion-label>
                   </ion-item>
                   <ion-item v-if="job.topic">
-                    <ion-label>
-                      <p>{{ translate('Topic') }}</p>
-                      <div>{{ job.topic }}</div>
-                    </ion-label>
+                    <ion-label>{{ translate('Topic') }}</ion-label>
+                    <ion-label slot="end">{{ job.topic }}</ion-label>
                   </ion-item>
                   <ion-item v-if="job.jobTypeEnumId">
-                    <ion-label>
-                      <p>{{ translate('Job Type') }}</p>
-                      <div>{{ job.jobTypeEnumId }}</div>
-                    </ion-label>
+                    <ion-label>{{ translate('Job Type') }}</ion-label>
+                    <ion-label slot="end">{{ job.jobTypeEnumId }}</ion-label>
+                  </ion-item>
+
+                  <ion-list-header color="light">
+                    <ion-label>{{ translate("Execution Settings") }}</ion-label>
+                  </ion-list-header>
+                  <ion-item>
+                    <ion-label>{{ translate("Priority") }}</ion-label>
+                    <ion-label slot="end">{{ job.priority || "-" }}</ion-label>
+                  </ion-item>
+                  <ion-item>
+                    <ion-label>{{ translate("Transaction Timeout") }}</ion-label>
+                    <ion-label slot="end">{{ job.transactionTimeout ? `${job.transactionTimeout} seconds` : "-" }}</ion-label>
+                  </ion-item>
+                  <ion-item>
+                    <ion-label>{{ translate("Min Retry") }}</ion-label>
+                    <ion-label slot="end">{{ job.minRetryTime ? `${job.minRetryTime} min` : "-" }}</ion-label>
+                  </ion-item>
+                  <ion-item>
+                    <ion-label>{{ translate("Lock Limit") }}</ion-label>
+                    <ion-label slot="end">{{ job.expireLockTime ? `${job.expireLockTime} min` : "-" }}</ion-label>
+                  </ion-item>
+                  <ion-item>
+                    <ion-label>{{ translate("Local Only") }}</ion-label>
+                    <ion-label slot="end">{{ job.localOnly === "Y" ? translate("Yes") : translate("No") }}</ion-label>
+                  </ion-item>
+
+                  <ion-list-header color="light">
+                    <ion-label>{{ translate("System Metadata") }}</ion-label>
+                  </ion-list-header>
+                  <ion-item>
+                    <ion-label>{{ translate("Product Id") }}</ion-label>
+                    <ion-label slot="end">{{ job.instanceOfProductId }}</ion-label>
+                  </ion-item>
+                  <ion-item v-if="job.instanceOfProductId">
+                    <ion-label>{{ translate("Product") }}</ion-label>
+                    <ion-text slor="end">
+                      <p v-if="product.productName">{{ product.productName }}</p>
+                      <p v-if="product.description" class="ion-text-wrap">{{ product.description }}</p>
+                    </ion-text>
+                  </ion-item>
+                  <ion-item v-if="job.parentJobName">
+                    <ion-label>{{ translate("Parent Job") }}</ion-label>
+                    <ion-label slot="end">{{ job.parentJobName }}</ion-label>
+                  </ion-item>
+                  <ion-item v-if="job.permissionGroupId">
+                    <ion-label>{{ translate("Permission Group") }}</ion-label>
+                    <ion-label slot="end">{{ job.permissionGroupId }}</ion-label>
+                  </ion-item>
+                  <ion-item>
+                    <ion-label>{{ translate("Created") }}</ion-label>
+                    <ion-label slot="end">{{ formatJobDate(job.createdStamp) }}</ion-label>
+                  </ion-item>
+                  <ion-item>
+                    <ion-label>{{ translate("Updated") }}</ion-label>
+                    <ion-label slot="end">{{ formatJobDate(job.lastUpdatedStamp) }}</ion-label>
                   </ion-item>
                 </ion-list>
               </ion-card-content>
@@ -121,94 +175,29 @@
               <ion-card-header>
                 <ion-card-title class="header-with-action">
                   {{ translate("Schedule") }}
-                  <ion-button fill="clear" @click="editSchedule()">{{ translate('EDIT') }}</ion-button>
+                  <ion-button fill="clear" @click="editSchedule()">{{ translate("EDIT") }}</ion-button>
                 </ion-card-title>
               </ion-card-header>
               <ion-card-content>
                 <ion-list lines="none">
                   <ion-item>
-                    <ion-label position="stacked">{{ translate('Cron Expression') }}</ion-label>
-                    <ion-text>
+                    <ion-label>{{ translate("Cron Expression") }}</ion-label>
+                    <ion-label slot="end">
                       <div>{{ job.cronExpression || "-" }}</div>
                       <div>{{ getCronString(job.cronExpression) }}</div>
-                    </ion-text>
+                    </ion-label>
                   </ion-item>
                   <ion-item>
-                    <ion-label position="stacked">{{ translate("Repeat Count") }}</ion-label>
-                    <ion-text>{{ job.repeatCount === -1 ? "Infinite" : job.repeatCount || "-" }}</ion-text>
+                    <ion-label>{{ translate("Repeat Count") }}</ion-label>
+                    <ion-label slot="end">{{ job.repeatCount === -1 ? "Infinite" : job.repeatCount || "-" }}</ion-label>
                   </ion-item>
                   <ion-item v-if="job.fromDate">
-                    <ion-label position="stacked">{{ translate("Valid From") }}</ion-label>
-                    <ion-text>{{ formatJobDate(job.fromDate) }}</ion-text>
+                    <ion-label>{{ translate("Valid From") }}</ion-label>
+                    <ion-label slot="end">{{ formatJobDate(job.fromDate) }}</ion-label>
                   </ion-item>
                   <ion-item v-if="job.thruDate">
-                    <ion-label position="stacked">{{ translate("Valid To") }}</ion-label>
-                    <ion-text>{{ formatJobDate(job.thruDate) }}</ion-text>
-                  </ion-item>
-                </ion-list>
-              </ion-card-content>
-            </ion-card>
-
-            <!-- Execution Settings Card -->
-            <ion-card class="dashboard-card">
-              <ion-card-header>
-                <ion-card-title>{{ translate("Execution Settings") }}</ion-card-title>
-              </ion-card-header>
-              <ion-card-content>
-                <ion-list lines="none">
-                  <ion-item>
-                    <ion-label position="stacked">{{ translate("Priority") }}</ion-label>
-                    <ion-text>{{ job.priority || "-" }}</ion-text>
-                  </ion-item>
-                  <ion-item>
-                    <ion-label position="stacked">{{ translate("Transaction Timeout") }}</ion-label>
-                    <ion-text>{{ job.transactionTimeout ? `${job.transactionTimeout} seconds` : "-" }}</ion-text>
-                  </ion-item>
-                  <ion-item>
-                    <ion-label position="stacked">{{ translate("Retry & Locking") }}</ion-label>
-                    <ion-text>
-                      <div>Min Retry: {{ job.minRetryTime ? `${job.minRetryTime} min` : "-" }}</div>
-                      <div>Lock Limit: {{ job.expireLockTime ? `${job.expireLockTime} min` : "-" }}</div>
-                    </ion-text>
-                  </ion-item>
-                  <ion-item>
-                    <ion-label position="stacked">{{ translate("Local Only") }}</ion-label>
-                    <ion-text>{{ job.localOnly === "Y" ? translate("Yes") : translate("No") }}</ion-text>
-                  </ion-item>
-                </ion-list>
-              </ion-card-content>
-            </ion-card>
-
-            <!-- System Metadata Card -->
-            <ion-card class="dashboard-card">
-              <ion-card-header>
-                <ion-card-title>{{ translate("System Metadata") }}</ion-card-title>
-              </ion-card-header>
-              <ion-card-content>
-                <ion-list lines="none">
-                  <ion-item v-if="job.instanceOfProductId">
-                    <ion-label position="stacked">{{ translate("Product") }}</ion-label>
-                    <ion-text>
-                      <p v-if="product.productName">{{ product.productName }}</p>
-                      <p v-if="product.description" class="ion-text-wrap">{{ product.description }}</p>
-                      <code>{{ job.instanceOfProductId }}</code>
-                    </ion-text>
-                  </ion-item>
-                  <ion-item v-if="job.parentJobName">
-                    <ion-label position="stacked">{{ translate("Parent Job") }}</ion-label>
-                    <ion-text>{{ job.parentJobName }}</ion-text>
-                  </ion-item>
-                  <ion-item v-if="job.permissionGroupId">
-                    <ion-label position="stacked">{{ translate("Permission Group") }}</ion-label>
-                    <ion-text>{{ job.permissionGroupId }}</ion-text>
-                  </ion-item>
-                  <ion-item>
-                    <ion-label position="stacked">{{ translate("Created") }}</ion-label>
-                    <ion-text>{{ formatJobDate(job.createdStamp) }}</ion-text>
-                  </ion-item>
-                  <ion-item>
-                    <ion-label position="stacked">{{ translate("Updated") }}</ion-label>
-                    <ion-text>{{ formatJobDate(job.lastUpdatedStamp) }}</ion-text>
+                    <ion-label>{{ translate("Valid To") }}</ion-label>
+                    <ion-label slot="end">{{ formatJobDate(job.thruDate) }}</ion-label>
                   </ion-item>
                 </ion-list>
               </ion-card-content>
@@ -435,6 +424,7 @@ import {
   IonText,
   IonIcon,
   IonButton,
+  IonListHeader,
   IonInput,
   IonToolbar,
   IonSegment,
@@ -947,7 +937,7 @@ const generateMaargJobCustomOptions = (job: any) => {
 <style scoped>
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
   gap: var(--spacer-base, 16px);
   align-items: start;
 }
