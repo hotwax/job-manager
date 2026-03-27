@@ -25,12 +25,7 @@ export const useUserStore = defineStore("user", {
       updateExists: false,
       registration: null as any,
     },
-    timeZones: [] as any,
-    oms: "",
-    token: {
-      value: "",
-      expiration: undefined
-    }
+    timeZones: [] as any
   }),
   getters: {
     getPermissions: (state: any) => state.permissions,
