@@ -1,0 +1,133 @@
+<template>
+  <ion-page>
+    <ion-header :translucent="true">
+      <ion-toolbar>
+        <ion-menu-button slot="start" />
+        <ion-title>{{ translate("Remote Systems") }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button @click="router.push('/system-message-remotes/new')">
+            {{ translate("Create") }}
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content>
+      <main>
+        <div class="header">
+          <div class="title">
+            <h1>{{ translate("Remote Systems") }}</h1>
+            <p>{{ translate("Manage remote endpoints, credentials, and related message traffic.") }}</p>
+          </div>
+        </div>
+
+        <ion-card>
+          <ion-card-content>
+            <ion-searchbar
+              :value="queryString"
+              @ionInput="queryString = $event.detail.value || ''"
+              :debounce="300"
+              :placeholder="translate('Search by remote ID or description')"
+            />
+          </ion-card-content>
+        </ion-card>
+
+        <div class="catalog-grid">
+          <ion-card
+            v-for="remote in filteredRemotes"
+            :key="remote.systemMessageRemoteId"
+            button
+            @click="router.push(`/system-message-remotes/${remote.systemMessageRemoteId}`)"
+          >
+            <ion-card-header>
+              <ion-card-title>{{ remote.description || remote.systemMessageRemoteId }}</ion-card-title>
+              <ion-note color="medium">{{ remote.systemMessageRemoteId }}</ion-note>
+            </ion-card-header>
+            <ion-card-content>
+              <p v-if="remote.sendUrl"><strong>{{ translate("Send URL") }}:</strong> {{ remote.sendUrl }}</p>
+              <div class="counts">
+                <ion-chip color="primary">{{ translate("Sent") }}: {{ getCounts(remote).sent }}</ion-chip>
+                <ion-chip color="danger">{{ translate("Error") }}: {{ getCounts(remote).error }}</ion-chip>
+                <ion-chip color="success">{{ translate("Consumed") }}: {{ getCounts(remote).consumed }}</ion-chip>
+              </div>
+            </ion-card-content>
+          </ion-card>
+        </div>
+
+        <div v-if="!filteredRemotes.length" class="empty-state">
+          <p>{{ translate("No remote systems found.") }}</p>
+        </div>
+      </main>
+    </ion-content>
+  </ion-page>
+</template>
+
+<script setup lang="ts">
+import {
+  IonButton,
+  IonButtons,
+  IonCard,
+  IonCardContent,
+  IonCardHeader,
+  IonCardTitle,
+  IonChip,
+  IonContent,
+  IonHeader,
+  IonMenuButton,
+  IonNote,
+  IonPage,
+  IonSearchbar,
+  IonTitle,
+  IonToolbar,
+  onIonViewWillEnter
+} from "@ionic/vue";
+import { computed, ref } from "vue";
+import { useRouter } from "vue-router";
+
+import { translate } from "@common";
+
+import { useSystemMessageStore } from "@/store/systemMessage";
+
+const router = useRouter();
+const store = useSystemMessageStore();
+const queryString = ref("");
+
+const remotes = computed(() => store.getSystemMessageRemotes);
+const filteredRemotes = computed(() => {
+  const query = queryString.value.trim().toLowerCase();
+  if (!query) return remotes.value;
+
+  return remotes.value.filter((remote: any) =>
+    remote.systemMessageRemoteId?.toLowerCase().includes(query) ||
+    remote.description?.toLowerCase().includes(query)
+  );
+});
+
+const getCounts = (remote: any) => store.getRemoteCounts(remote.systemMessageRemoteId);
+
+onIonViewWillEnter(async () => {
+  await store.fetchSystemMessageRemotes();
+  await store.fetchSystemMessages({ pageSize: 1 });
+});
+</script>
+
+<style scoped>
+.catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: 16px;
+}
+
+.counts {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.empty-state {
+  margin-top: 32px;
+  text-align: center;
+  color: var(--ion-color-medium);
+}
+</style>
