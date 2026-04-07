@@ -35,10 +35,9 @@ import { albumsOutline, pulseOutline, settingsOutline, timeOutline, cloudUploadO
 import { hasPermission } from "@/authorization";
 import { translate } from "@common";
 import { useAuth } from "@/composables/auth";
-import { useRouter } from "vue-router";
+import router from "../router";
 
 const { isAuthenticated } = useAuth();
-const router = useRouter();
     
 // Filtering array of app pages, retaining only those elements (pages) that have the necessary permissions for display.
 const getValidMenuItems = (appPages: any) => {

@@ -70,12 +70,12 @@ export function useAuth() {
 
   const logout = async (payload?: any) => {
     let redirectionUrl = "";
-    emitter.emit("presentLoader", {
-      message: "Logging out",
-      backdropDismiss: false,
-    });
-
+    
     if (!payload?.isUserUnauthorised) {
+      emitter.emit("presentLoader", {
+        message: "Logging out",
+        backdropDismiss: false,
+      });
       let resp;
       try {
         resp = await api({

@@ -18,7 +18,6 @@
     "@capacitor/ios": "^2.4.7",
     "@casl/ability": "^6.0.0",
     "@hotwax/app-version-info": "^1.0.0",
-    "@hotwax/apps-theme": "^1.2.6",
     "@ionic/core": "^8.8.0",
     "@ionic/vue": "^8.8.0",
     "@ionic/vue-router": "^8.8.0",

@@ -321,9 +321,6 @@ function clearSearch() {
 </script>
 
 <style scoped>
-  ion-card > ion-button {
-    margin: var(--spacer-xs);
-  }
   section {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
