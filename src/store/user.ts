@@ -1,7 +1,7 @@
+import { DateTime, Settings } from "luxon";
 import { defineStore } from "pinia";
 import { showToast } from "@/utils";
 import { api, cookieHelper, commonUtil, translate } from "@common";
-import { DateTime, Settings } from "luxon";
 import {
   getServerPermissionsFromRules,
   prepareAppPermissions,
@@ -202,12 +202,13 @@ export const useUserStore = defineStore("user", {
 
         // Checking if the user has permission to access the app
         // If there is no configuration, the permission check is not enabled
-        if (permissionId) {
+        if(permissionId) {
           const hasPermission = appPermissions.some((appPermission: any) => appPermission.action === permissionId);
-          if (!hasPermission) {
+          if(!hasPermission) {
             const permissionError = "You do not have permission to access the app.";
             showToast(translate(permissionError));
             logger.error("error", permissionError);
+
             return Promise.reject(new Error(permissionError));
           }
         }

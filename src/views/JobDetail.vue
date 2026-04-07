@@ -532,7 +532,6 @@ const calculateDuration = (start: string | number | null, end: string | number |
   return `${seconds}s`;
 };
 
-
 const isEditingParameters = ref(false);
 const editableParametersList = ref<any[]>([]);
 

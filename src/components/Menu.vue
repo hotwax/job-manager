@@ -31,23 +31,14 @@
 <script setup lang="ts">
 import { IonContent, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenu, IonMenuToggle, IonTitle, IonToolbar } from "@ionic/vue";
 import { computed } from "vue";
-import {
-  albumsOutline,
-  cloudUploadOutline,
-  fileTrayStackedOutline,
-  globeOutline,
-  pulseOutline,
-  settingsOutline,
-  timeOutline
-} from "ionicons/icons";
+import { albumsOutline, cloudUploadOutline, fileTrayStackedOutline, globeOutline, pulseOutline, settingsOutline, timeOutline } from "ionicons/icons";
 import { hasPermission } from "@/authorization";
 import { translate } from "@common";
 import { useAuth } from "@/composables/auth";
-import { useRouter } from "vue-router";
+import router from "../router";
 
 const { isAuthenticated } = useAuth();
-const router = useRouter();
-    
+
 // Filtering array of app pages, retaining only those elements (pages) that have the necessary permissions for display.
 const getValidMenuItems = (appPages: any) => {
   return appPages.filter((appPage: any) => (!appPage.meta || !appPage.meta.permissionId) || hasPermission(appPage.meta.permissionId));
