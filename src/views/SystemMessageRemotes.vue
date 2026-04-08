@@ -89,10 +89,10 @@ import { translate } from "@common";
 import { useSystemMessageStore } from "@/store/systemMessage";
 
 const router = useRouter();
-const store = useSystemMessageStore();
+const systemMessageStore = useSystemMessageStore();
 const queryString = ref("");
 
-const remotes = computed(() => store.getSystemMessageRemotes);
+const remotes = computed(() => systemMessageStore.getSystemMessageRemotes);
 const filteredRemotes = computed(() => {
   const query = queryString.value.trim().toLowerCase();
   if (!query) return remotes.value;
@@ -103,11 +103,11 @@ const filteredRemotes = computed(() => {
   );
 });
 
-const getCounts = (remote: any) => store.getRemoteCounts(remote.systemMessageRemoteId);
+const getCounts = (remote: any) => systemMessageStore.getRemoteCounts(remote.systemMessageRemoteId);
 
 onIonViewWillEnter(async () => {
-  await store.fetchSystemMessageRemotes();
-  await store.fetchSystemMessages({ pageSize: 1 });
+  await systemMessageStore.fetchSystemMessageRemotes();
+  await systemMessageStore.fetchSystemMessages({ pageSize: 1 });
 });
 </script>
 
