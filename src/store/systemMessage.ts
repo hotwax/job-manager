@@ -456,15 +456,16 @@ export const useSystemMessageStore = defineStore("systemMessage", {
 
       try {
         const response = await api({
-          url: `${API_ENDPOINTS.systemMessageRemotes}/${encodeURIComponent(systemMessageRemoteId)}`,
-          method: "GET"
+          url: "oms/systemMessageRemotes",
+          method: "GET",
+          params: {
+            systemMessageRemoteId: encodeURIComponent(systemMessageRemoteId)
+          }
         });
 
-        const entity = getResponseEntity(response);
-        if (entity?.systemMessageRemoteId) {
-          this.currentSystemMessageRemote = entity;
-          this.systemMessageRemotes = upsertByKey(this.systemMessageRemotes, entity, getRemoteKey);
-          return this.currentSystemMessageRemote;
+        if(response?.data && response.data[0].systemMessageRemoteId) {
+          this.currentSystemMessageRemote = response.data[0];
+          return this.currentSystemMessageRemote
         }
 
         throw new Error("System message remote API did not return an entity payload.");
