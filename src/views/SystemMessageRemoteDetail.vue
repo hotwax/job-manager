@@ -144,6 +144,7 @@ import SystemMessageList from "@/components/SystemMessageList.vue";
 import { useSystemMessageStore } from "@/store/systemMessage";
 import { showToast } from "@/utils";
 
+// Type based declaration
 const props = defineProps<{ id?: string }>();
 
 const router = useRouter();
@@ -247,9 +248,7 @@ const saveRemote = async () => {
 };
 
 const deleteRemote = async () => {
-  if (!props.id) return;
-
-  const result = await store.deleteSystemMessageRemote(props.id);
+  const result = await store.deleteSystemMessageRemote(props.id as string);
   if (result.error) {
     await showToast(translate("This remote system cannot be deleted while messages still reference it."));
     return;

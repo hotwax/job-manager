@@ -418,7 +418,6 @@ export const useSystemMessageStore = defineStore("systemMessage", {
 
         if (hasCollectionPayload(response)) {
           this.systemMessageRemotes = getResponseCollection(response);
-          console.log('this.systemMessageRemotes', this.systemMessageRemotes)
         }
       } catch (err) {
         logger.error("Failed to fetch system message remotes", err);
@@ -724,39 +723,31 @@ export const useSystemMessageStore = defineStore("systemMessage", {
     },
     async deleteSystemMessageRemote(systemMessageRemoteId: string) {
       this.loading = true;
+      if (!this.canDeleteMessageRemote(systemMessageRemoteId)) {
+        return { error: new Error("System message remote is still referenced by messages.") };
+      }
+
+      const result = {
+        data: {},
+        error: undefined as any
+      }
 
       try {
-        if (!this.canDeleteMessageRemote(systemMessageRemoteId)) {
-          return { error: new Error("System message remote is still referenced by messages.") };
-        }
-
         await api({
-          url: `${API_ENDPOINTS.systemMessageRemotes}/${encodeURIComponent(systemMessageRemoteId)}`,
+          url: `oms/systemMessageRemotes/${encodeURIComponent(systemMessageRemoteId)}`,
           method: "DELETE"
         });
 
-        this.systemMessageRemotes = removeByKey(this.systemMessageRemotes, systemMessageRemoteId, getRemoteKey);
-        if (this.currentSystemMessageRemote?.systemMessageRemoteId === systemMessageRemoteId) {
-          this.currentSystemMessageRemote = undefined;
-        }
+        this.currentSystemMessageRemote = undefined;
 
-        return { data: { success: true } };
+        result.data = { success: true }
       } catch (err) {
         logger.error("Failed to delete system message remote", err);
-
-        if (!canUseMockFallback(err)) {
-          return { error: err };
-        }
-
-        this.systemMessageRemotes = removeByKey(this.systemMessageRemotes, systemMessageRemoteId, getRemoteKey);
-        if (this.currentSystemMessageRemote?.systemMessageRemoteId === systemMessageRemoteId) {
-          this.currentSystemMessageRemote = undefined;
-        }
-
-        return { data: { success: true } };
+        result.error = err
       } finally {
         this.loading = false;
       }
+      return result
     },
     async fetchSystemMessageStatusMetadata() {
       this.loading = true;
