@@ -225,7 +225,15 @@ const saveRemote = async () => {
     return;
   }
 
-  const result = await store.saveSystemMessageRemote({ ...form });
+  // TODO: check do we need this, as the form fields will always be a string
+  const payload = Object.entries(form).reduce((params: Record<string, any>, [key, field]) => {
+    if(field.value !== null || field.value !== undefined) {
+      params[key] = field.value
+    }
+    return params
+  }, {} as Record<string, any>)
+
+  const result = await store.saveSystemMessageRemote(payload);
   if (result.error) {
     await showToast(translate("Failed to save remote system."));
     return;

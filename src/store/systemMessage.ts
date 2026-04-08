@@ -662,42 +662,29 @@ export const useSystemMessageStore = defineStore("systemMessage", {
     async saveSystemMessageRemote(payload: Record<string, any>) {
       this.loading = true;
 
-      const entity = sanitizeEntity(payload, SYSTEM_MESSAGE_REMOTE_FIELDS);
-      const isUpdate = this.systemMessageRemotes.some((remote: any) => remote.systemMessageRemoteId === entity.systemMessageRemoteId);
+      const result = {
+        data: {},
+        error: undefined as any
+      }
 
       try {
-        const response = await api({
-          url: isUpdate
-            ? `${API_ENDPOINTS.systemMessageRemotes}/${encodeURIComponent(entity.systemMessageRemoteId)}`
-            : API_ENDPOINTS.systemMessageRemotes,
-          method: isUpdate ? "PATCH" : "POST",
-          data: entity
+        await api({
+          url: `oms/systemMessageRemotes/${encodeURIComponent(payload.systemMessageRemoteId)}`,
+          method: "PUT",
+          data: payload
         });
 
-        const savedEntity = {
-          ...(this.systemMessageRemotes.find((remote: any) => remote.systemMessageRemoteId === entity.systemMessageRemoteId) || {}),
-          ...entity,
-          ...(getResponseEntity(response) || {})
-        };
+        this.currentSystemMessageRemote = payload;
 
-        this.systemMessageRemotes = upsertByKey(this.systemMessageRemotes, savedEntity, getRemoteKey);
-        this.currentSystemMessageRemote = savedEntity;
-
-        return { data: { success: true, entity: savedEntity } };
+        result.data = { success: true, entity: payload }
       } catch (err) {
         logger.error("Failed to save system message remote", err);
-
-        if (!canUseMockFallback(err)) {
-          return { error: err };
-        }
-
-        this.systemMessageRemotes = upsertByKey(this.systemMessageRemotes, entity, getRemoteKey);
-        this.currentSystemMessageRemote = entity;
-
-        return { data: { success: true, entity } };
+        result.error = err
       } finally {
         this.loading = false;
       }
+
+      return result
     },
     async deleteSystemMessageType(systemMessageTypeId: string) {
       this.loading = true;
