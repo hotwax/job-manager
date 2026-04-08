@@ -4,7 +4,6 @@ import { getDateAndTime } from "@/utils";
 
 import logger from "@/logger";
 import { mockSystemMessageErrors } from "@/mock/systemMessageErrors";
-import { mockSystemMessageRemotes } from "@/mock/systemMessageRemotes";
 import {
   mockStatusFlowTransitions,
   mockStatusFlows,
@@ -101,7 +100,7 @@ const filterMessages = (messages: any[], payload: Record<string, any> = {}, syst
     const childTypeIds = systemMessageTypes
       .filter((type: any) => type.parentTypeId === payload.parentTypeId)
       .map((type: any) => type.systemMessageTypeId);
-    
+
     filteredMessages = filteredMessages.filter((message: any) => childTypeIds.includes(message.systemMessageTypeId));
   }
 
@@ -139,22 +138,6 @@ const paginateMessages = (messages: any[], payload: Record<string, any> = {}) =>
   const startIndex = pageIndex * pageSize;
 
   return messages.slice(startIndex, startIndex + pageSize);
-};
-
-const buildListParams = (payload: Record<string, any> = {}, defaultPageSize = 250) => {
-  const params: Record<string, any> = {
-    pageSize: Number(payload.pageSize ?? defaultPageSize),
-    pageIndex: Number(payload.pageIndex ?? 0),
-    orderBy: "-initDate"
-  };
-
-  if (payload.systemMessageTypeId) params.systemMessageTypeId = payload.systemMessageTypeId;
-  if (payload.parentTypeId) params.parentTypeId = payload.parentTypeId;
-  if (payload.systemMessageRemoteId) params.systemMessageRemoteId = payload.systemMessageRemoteId;
-  if (payload.statusId) params.statusId = payload.statusId;
-  if (payload.queryString?.trim()) params.queryString = payload.queryString.trim();
-
-  return params;
 };
 
 const hasCollectionPayload = (response: any) => {
@@ -236,7 +219,7 @@ const loadMockState = () => ({
   systemMessageTypes: clone(mockSystemMessageTypes) as any[],
   allSystemMessages: clone(mockSystemMessages) as any[],
   systemMessages: clone(mockSystemMessages.slice(0, 25)) as any[],
-  systemMessageRemotes: clone(mockSystemMessageRemotes) as any[],
+  systemMessageRemotes: [],
   allSystemMessageErrors: clone(mockSystemMessageErrors) as any[],
   systemMessageErrors: [] as any[],
   systemMessageStatuses: clone(mockStatuses) as any[],
@@ -307,7 +290,7 @@ export const useSystemMessageStore = defineStore("systemMessage", {
       !state.allSystemMessages.some((message: any) => message.systemMessageRemoteId === systemMessageRemoteId),
     getTechnicalFields: (state: any) => (message: any) => {
       if (!message) return [];
-      
+
       const fields = [
         { label: "systemMessageId", value: message.systemMessageId },
         { label: "statusId", value: message.statusId },
@@ -321,7 +304,7 @@ export const useSystemMessageStore = defineStore("systemMessage", {
       if (message.parentMessageId) {
         const parent = state.relatedMessages.find((rel: any) => rel.systemMessageId === message.parentMessageId);
         const field: any = { label: "parentMessageId", value: message.parentMessageId };
-        
+
         if (parent) {
           field.link = `/system-messages/${message.parentMessageId}`;
         } else {
@@ -361,9 +344,14 @@ export const useSystemMessageStore = defineStore("systemMessage", {
 
       try {
         const response = await api({
-          url: API_ENDPOINTS.systemMessages,
+          url: "admin/systemMessages",
           method: "GET",
-          params: buildListParams(payload, payload.pageSize ?? 25)
+          params: {
+            pageSize: Number(payload.pageSize ?? 25),
+            pageIndex: Number(payload.pageIndex ?? 0),
+            orderBy: "-initDate",
+            ...payload
+          }
         });
 
         if (hasCollectionPayload(response)) {
@@ -421,16 +409,16 @@ export const useSystemMessageStore = defineStore("systemMessage", {
 
       try {
         const response = await api({
-          url: API_ENDPOINTS.systemMessageRemotes,
+          url: "oms/systemMessageRemotes",
           method: "GET",
           params: {
-            pageSize: 250,
-            pageIndex: 0
+            pageSize: 250
           }
         });
 
         if (hasCollectionPayload(response)) {
           this.systemMessageRemotes = getResponseCollection(response);
+          console.log('this.systemMessageRemotes', this.systemMessageRemotes)
         }
       } catch (err) {
         logger.error("Failed to fetch system message remotes", err);
@@ -565,7 +553,7 @@ export const useSystemMessageStore = defineStore("systemMessage", {
             }
           });
         }
-        
+
         this.relatedMessages = related;
       } catch (err) {
         logger.error("Failed to resolve base message for related messages", err);
@@ -902,12 +890,12 @@ export const useSystemMessageStore = defineStore("systemMessage", {
         const sequence = [];
         let currentEnumId: string | undefined = rootEnumId;
         const visitedForward = new Set();
-        
+
         while (currentEnumId && !visitedForward.has(currentEnumId)) {
           visitedForward.add(currentEnumId);
-          
+
           let enumeration = this.enums.find((e: any) => e.enumId === currentEnumId);
-          
+
           // If not in local state, try one-off fetch (safeguard)
           if (!enumeration) {
             try {
@@ -942,8 +930,8 @@ export const useSystemMessageStore = defineStore("systemMessage", {
       try {
         // Query for messages linked by remoteMessageId or parentMessageId
         // In a real app, this would be a complex query. For mock, we'll scan.
-        const linked = this.allSystemMessages.filter((m: any) => 
-          m.remoteMessageId === systemMessageId || 
+        const linked = this.allSystemMessages.filter((m: any) =>
+          m.remoteMessageId === systemMessageId ||
           m.parentMessageId === systemMessageId ||
           (remoteMessageId && m.remoteMessageId === remoteMessageId)
         );

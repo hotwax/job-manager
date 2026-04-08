@@ -165,15 +165,32 @@ const filteredTypes = computed(() => {
 });
 
 const loadMessages = async () => {
-  await store.fetchSystemMessages({
+  const payload = {
     pageIndex: pageIndex.value,
     pageSize: PAGE_SIZE,
-    queryString: queryString.value,
-    statusId: selectedStatusId.value,
-    systemMessageTypeId: selectedTypeId.value,
-    parentTypeId: selectedParentTypeId.value,
-    systemMessageRemoteId: selectedRemoteId.value
-  });
+  } as Record<string, any>
+
+  if(queryString.value) {
+    payload["queryString"] = queryString.value.trim()
+  }
+
+  if(selectedStatusId.value) {
+    payload["statusId"] = selectedStatusId.value
+  }
+
+  if(selectedTypeId.value) {
+    payload["systemMessageTypeId"] = selectedTypeId.value
+  }
+
+  if(selectedParentTypeId.value) {
+    payload["parentTypeId"] = selectedParentTypeId.value
+  }
+
+  if(selectedRemoteId.value) {
+    payload["systemMessageRemoteId"] = selectedRemoteId.value
+  }
+
+  await store.fetchSystemMessages(payload);
 };
 
 const resetToFirstPage = () => {
