@@ -13,8 +13,8 @@
       <main>
         <div class="header">
           <div class="title">
-            <h1>{{ form.systemMessageRemoteId || translate("New Remote System") }}</h1>
-            <p>{{ form.description || translate("Configure remote system connectivity and inspect related messages.") }}</p>
+            <h1>{{ form.systemMessageRemoteId.value || translate("New Remote System") }}</h1>
+            <p>{{ form.description.value || translate("Configure remote system connectivity and inspect related messages.") }}</p>
           </div>
           <div class="header-actions">
             <ion-button fill="outline" @click="saveRemote">{{ translate("Save") }}</ion-button>
@@ -36,15 +36,15 @@
           </ion-card-header>
           <ion-card-content>
             <div class="form-grid">
-              <template v-for="field in systemMessageRemoteFields" :key="field.key">
+              <template v-for="[key, field] of Object.entries(form)" :key="key">
                 <ion-textarea
                   v-if="field.type === 'textarea'"
                   :label="translate(field.label)"
                   label-placement="stacked"
                   fill="outline"
                   auto-grow
-                  :value="form[field.key] || ''"
-                  @ionInput="updateField(field.key, $event.detail.value || '')"
+                  :value="field.value || ''"
+                  @ionInput="updateField(key, $event.detail.value || '')"
                 />
                 <ion-input
                   v-else
@@ -52,9 +52,9 @@
                   :label="translate(field.label)"
                   label-placement="stacked"
                   fill="outline"
-                  :readonly="!isCreateMode && field.key === 'systemMessageRemoteId'"
-                  :value="form[field.key] || ''"
-                  @ionInput="updateField(field.key, $event.detail.value || '')"
+                  :readonly="!isCreateMode && key === 'systemMessageRemoteId'"
+                  :value="field.value || ''"
+                  @ionInput="updateField(key, $event.detail.value || '')"
                 />
               </template>
             </div>
@@ -142,7 +142,6 @@ import { translate } from "@common";
 
 import SystemMessageList from "@/components/SystemMessageList.vue";
 import { useSystemMessageStore } from "@/store/systemMessage";
-import { systemMessageRemoteFields } from "@/utils/systemMessageEntityFields";
 import { showToast } from "@/utils";
 
 const props = defineProps<{ id?: string }>();
@@ -151,7 +150,26 @@ const router = useRouter();
 const store = useSystemMessageStore();
 const queryString = ref("");
 const selectedStatusId = ref("");
-const form = reactive<Record<string, any>>({});
+const form = reactive<Record<string, any>>({
+  "systemMessageRemoteId": { label: "Remote ID", type: "text" },
+  "description": { label: "Description", type: "textarea" },
+  "sendUrl": { label: "Send URL", type: "textarea" },
+  "receiveUrl": { label: "Receive URL", type: "textarea" },
+  "username": { label: "Username", type: "text" },
+  "password": { label: "Password", type: "password" },
+  "authHeaderName": { label: "Auth Header", type: "text" },
+  "privateKey": { label: "Private Key", type: "password" },
+  "sharedSecret": { label: "Shared Secret", type: "password" },
+  "sendSharedSecret": { label: "Send Shared Secret", type: "password" },
+  "oldSharedSecret": { label: "Old Shared Secret", type: "password" },
+  "remoteId": { label: "Remote ID Value", type: "text" },
+  "remoteIdType": { label: "Remote ID Type", type: "text" },
+  "internalId": { label: "Internal ID", type: "text" },
+  "internalIdType": { label: "Internal ID Type", type: "text" },
+  "remoteAppCode": { label: "Remote App Code", type: "text" },
+  "accessScopeEnumId": { label: "Access Scope", type: "text" },
+  "sendServiceName": { label: "Send Service", type: "textarea" }
+});
 
 const isCreateMode = computed(() => !props.id);
 const pageTitle = computed(() => isCreateMode.value ? translate("Create Remote System") : translate("Remote System Detail"));
@@ -178,13 +196,13 @@ const filteredMessages = computed(() => {
 });
 
 const setForm = (payload?: Record<string, any>) => {
-  for (const field of systemMessageRemoteFields) {
-    form[field.key] = payload?.[field.key] || "";
+  for (const key of Object.keys(form)) {
+    form[key].value = payload?.[key] || "";
   }
 };
 
-const updateField = (field: string, value: string) => {
-  form[field] = value;
+const updateField = (key: string, value: string) => {
+  form[key].value = value;
 };
 
 const loadRemote = async () => {
@@ -202,7 +220,7 @@ const loadRemote = async () => {
 };
 
 const saveRemote = async () => {
-  if (!form.systemMessageRemoteId?.trim()) {
+  if (!form.systemMessageRemoteId?.value.trim()) {
     await showToast(translate("Remote ID is required."));
     return;
   }
@@ -216,7 +234,7 @@ const saveRemote = async () => {
   await showToast(translate("Remote system saved."));
 
   if (isCreateMode.value) {
-    router.replace(`/system-message-remotes/${form.systemMessageRemoteId}`);
+    router.replace(`/system-message-remotes/${form.systemMessageRemoteId.value}`);
   }
 };
 

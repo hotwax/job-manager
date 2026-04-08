@@ -26,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonBadge, IonIcon, IonItem, IonLabel, IonList } from "@ionic/vue";
+import { IonBadge, IonCard, IonIcon, IonItem, IonLabel, IonList } from "@ionic/vue";
 import { downloadOutline, sendOutline } from "ionicons/icons";
 import { translate } from "@common";
 import { useRouter } from "vue-router";
