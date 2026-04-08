@@ -135,7 +135,7 @@ import {
   IonToolbar,
   onIonViewWillEnter
 } from "@ionic/vue";
-import { computed, reactive, ref, watch } from "vue";
+import { computed, reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 
 import { translate } from "@common";
@@ -234,7 +234,6 @@ const deleteRemote = async () => {
 };
 
 onIonViewWillEnter(loadRemote);
-watch(() => props.id, loadRemote);
 </script>
 
 <style scoped>
