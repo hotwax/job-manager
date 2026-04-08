@@ -33,25 +33,25 @@
         </ion-card>
 
         <div class="catalog-grid">
-          <ion-card
-            v-for="remote in filteredRemotes"
-            :key="remote.systemMessageRemoteId"
-            button
-            @click="router.push(`/system-message-remotes/${remote.systemMessageRemoteId}`)"
-          >
-            <ion-card-header>
-              <ion-card-title>{{ remote.description || remote.systemMessageRemoteId }}</ion-card-title>
-              <ion-note color="medium">{{ remote.systemMessageRemoteId }}</ion-note>
-            </ion-card-header>
-            <ion-card-content>
-              <p v-if="remote.sendUrl"><strong>{{ translate("Send URL") }}:</strong> {{ remote.sendUrl }}</p>
-              <div class="counts">
-                <ion-chip color="primary">{{ translate("Sent") }}: {{ getCounts(remote).sent }}</ion-chip>
-                <ion-chip color="danger">{{ translate("Error") }}: {{ getCounts(remote).error }}</ion-chip>
-                <ion-chip color="success">{{ translate("Consumed") }}: {{ getCounts(remote).consumed }}</ion-chip>
-              </div>
-            </ion-card-content>
-          </ion-card>
+          <div v-for="remote in filteredRemotes" :key="remote.systemMessageRemoteId">
+            <ion-card
+              button
+              @click="router.push(`/system-message-remotes/${remote.systemMessageRemoteId}`)"
+            >
+              <ion-card-header>
+                <ion-card-title>{{ remote.description || remote.systemMessageRemoteId }}</ion-card-title>
+                <ion-note color="medium">{{ remote.systemMessageRemoteId }}</ion-note>
+              </ion-card-header>
+              <ion-card-content>
+                <p v-if="remote.sendUrl"><strong>{{ translate("Send URL") }}:</strong> {{ remote.sendUrl }}</p>
+                <div class="counts">
+                  <ion-chip color="primary">{{ translate("Sent") }}: {{ getCounts(remote).sent }}</ion-chip>
+                  <ion-chip color="danger">{{ translate("Error") }}: {{ getCounts(remote).error }}</ion-chip>
+                  <ion-chip color="success">{{ translate("Consumed") }}: {{ getCounts(remote).consumed }}</ion-chip>
+                </div>
+              </ion-card-content>
+            </ion-card>
+          </div>
         </div>
 
         <div v-if="!filteredRemotes.length" class="empty-state">
