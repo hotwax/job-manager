@@ -43,12 +43,10 @@
                 <ion-note color="medium">{{ remote.systemMessageRemoteId }}</ion-note>
               </ion-card-header>
               <ion-card-content>
-                <p v-if="remote.sendUrl"><strong>{{ translate("Send URL") }}:</strong> {{ remote.sendUrl }}</p>
-                <div class="counts">
-                  <ion-chip color="primary">{{ translate("Sent") }}: {{ getCounts(remote).sent }}</ion-chip>
-                  <ion-chip color="danger">{{ translate("Error") }}: {{ getCounts(remote).error }}</ion-chip>
-                  <ion-chip color="success">{{ translate("Consumed") }}: {{ getCounts(remote).consumed }}</ion-chip>
-                </div>
+                <p v-if="remote.sendUrl">
+                  <strong>{{ translate("Send URL") }}: </strong>
+                  {{ remote.sendUrl }}
+                </p>
               </ion-card-content>
             </ion-card>
           </div>
@@ -70,7 +68,6 @@ import {
   IonCardContent,
   IonCardHeader,
   IonCardTitle,
-  IonChip,
   IonContent,
   IonHeader,
   IonMenuButton,
@@ -103,8 +100,6 @@ const filteredRemotes = computed(() => {
   );
 });
 
-const getCounts = (remote: any) => systemMessageStore.getRemoteCounts(remote.systemMessageRemoteId);
-
 onIonViewWillEnter(async () => {
   await systemMessageStore.fetchSystemMessageRemotes();
   await systemMessageStore.fetchSystemMessages({ pageSize: 1 });
@@ -116,13 +111,6 @@ onIonViewWillEnter(async () => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
   gap: 16px;
-}
-
-.counts {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 12px;
 }
 
 .empty-state {
