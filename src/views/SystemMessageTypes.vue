@@ -99,7 +99,6 @@ const filteredTypes = computed(() => {
 
 onIonViewWillEnter(async () => {
   await store.fetchSystemMessageTypes();
-  await store.fetchSystemMessages({ pageSize: 1 });
 });
 </script>
 

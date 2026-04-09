@@ -213,7 +213,7 @@ const updateMessages = (messages: any[], payload: Record<string, any>) => {
 const canUseMockFallback = (error: any) => !error?.response;
 
 const loadMockState = () => ({
-  systemMessageTypes: clone(mockSystemMessageTypes) as any[],
+  systemMessageTypes: [],
   allSystemMessages: clone(mockSystemMessages) as any[],
   systemMessages: clone(mockSystemMessages.slice(0, 25)) as any[],
   systemMessageRemotes: [],
@@ -314,16 +314,15 @@ export const useSystemMessageStore = defineStore("systemMessage", {
       this.loading = true;
       try {
         const response = await api({
-          url: API_ENDPOINTS.systemMessageTypes,
+          url: "admin/systemMessages/types",
           method: "GET",
           params: {
-            pageSize: 250,
-            pageIndex: 0
+            pageSize: 250
           }
         });
 
-        if (hasCollectionPayload(response)) {
-          this.systemMessageTypes = getResponseCollection(response);
+        if(response.data?.length) {
+          this.systemMessageTypes = response.data;
         }
       } catch (err) {
         logger.error("Failed to fetch system message types", err);
@@ -422,22 +421,22 @@ export const useSystemMessageStore = defineStore("systemMessage", {
 
       try {
         const response = await api({
-          url: `${API_ENDPOINTS.systemMessageTypes}/${encodeURIComponent(systemMessageTypeId)}`,
-          method: "GET"
+          url: "admin/systemMessages/types",
+          method: "GET",
+          params: {
+            systemMessageTypeId: encodeURIComponent(systemMessageTypeId),
+            pageSize: 1
+          }
         });
 
-        const entity = getResponseEntity(response);
-        if (entity?.systemMessageTypeId) {
-          this.currentSystemMessageType = entity;
-          this.systemMessageTypes = upsertByKey(this.systemMessageTypes, entity, getTypeKey);
+        if(response?.data && response.data[0]?.systemMessageTypeId) {
+          this.currentSystemMessageType = response.data[0];
           return this.currentSystemMessageType;
         }
 
         throw new Error("System message type API did not return an entity payload.");
-      } catch (err) {
+      } catch(err) {
         logger.error("Failed to fetch system message type", err);
-        this.currentSystemMessageType = this.systemMessageTypes.find((type: any) => type.systemMessageTypeId === systemMessageTypeId);
-        return this.currentSystemMessageType;
       } finally {
         this.loading = false;
       }
