@@ -14,7 +14,8 @@
         <p>{{ translate("Started") }}: {{ getDateAndTime(message.initDate) }}</p>
         <p v-if="message.processedDate">{{ translate("Processed") }}: {{ getDateAndTime(message.processedDate) }}</p>
       </div>
-      <div class="status"> <ion-badge :color="getStatusColor(message.statusId)">
+      <div class="status">
+        <ion-badge :color="commonUtil.getStatusColor(message.statusId)">
           {{ getStatusDescription(message.statusId) }}
         </ion-badge>
       </div>
@@ -29,13 +30,11 @@
 import { IonBadge, IonCard, IonIcon, IonItem, IonLabel, IonList } from "@ionic/vue";
 import { downloadOutline, sendOutline } from "ionicons/icons";
 import { translate } from "@common";
+import { commonUtil } from "@common/utils/commonUtil"
 import { useRouter } from "vue-router";
-import {
-  getSystemMessageStatusColor,
-  getSystemMessageStatusDescription
-} from "@/utils/systemMessageReplay";
 import { getDateAndTime } from "@/utils"
 import { useSystemMessageStore } from "@/store/systemMessage";
+import { useUtilStore } from "@/store/util";
 
 withDefaults(defineProps<{
   messages: Record<string, any>[];
@@ -50,10 +49,9 @@ withDefaults(defineProps<{
 
 const router = useRouter();
 const store = useSystemMessageStore();
+const utilStore = useUtilStore();
 
-const getStatusColor = (statusId?: string) => getSystemMessageStatusColor(statusId);
-
-const getStatusDescription = (statusId?: string) => getSystemMessageStatusDescription(statusId);
+const getStatusDescription = (statusId: string) => utilStore.getStatusItemDesc(statusId);
 
 const getTypeName = (typeId: string) => {
   const type = store.getSystemMessageTypes.find((t: any) => t.systemMessageTypeId === typeId);

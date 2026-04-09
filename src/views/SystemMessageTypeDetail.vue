@@ -143,11 +143,13 @@ import SystemMessageList from "@/components/SystemMessageList.vue";
 import { useSystemMessageStore } from "@/store/systemMessage";
 import { systemMessageTypeFields } from "@/utils/systemMessageEntityFields";
 import { showToast } from "@/utils";
+import { useUtilStore } from "@/store/util";
 
 const props = defineProps<{ id?: string }>();
 
 const router = useRouter();
 const store = useSystemMessageStore();
+const utilStore = useUtilStore();
 const queryString = ref("");
 const selectedStatusId = ref("");
 const form = reactive<Record<string, any>>({});
@@ -155,7 +157,7 @@ const form = reactive<Record<string, any>>({});
 const isCreateMode = computed(() => !props.id);
 const pageTitle = computed(() => isCreateMode.value ? translate("Create Message Type") : translate("Message Type Detail"));
 const type = computed(() => store.getCurrentSystemMessageType);
-const statuses = computed(() => store.getAvailableSystemMessageStatuses);
+const statuses = computed(() => utilStore.getStatusItemsByType("SystemMessage"));
 const relatedMessages = computed(() => props.id ? store.getMessagesForType(props.id) : []);
 const counts = computed(() => props.id ? store.getMessageTypeCounts(props.id) : { sent: 0, error: 0, consumed: 0 });
 const canDelete = computed(() => !props.id || store.canDeleteMessageType(props.id));

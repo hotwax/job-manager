@@ -2,8 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   getAllowedTransitions,
-  getReplayTransitions,
-  getSystemMessageStatusDescription
+  getReplayTransitions
 } from "@/utils/systemMessageReplay";
 
 describe("system message replay helpers", () => {
@@ -50,9 +49,5 @@ describe("system message replay helpers", () => {
   it("returns safe fallbacks for unknown statuses or missing direction", () => {
     expect(getAllowedTransitions({ statusId: "UNKNOWN_STATUS" })).toEqual([]);
     expect(getReplayTransitions({ statusId: "SmsgError" })).toEqual([]);
-  });
-
-  it("uses exported status descriptions for labels", () => {
-    expect(getSystemMessageStatusDescription("SmsgConsumed")).toBe("Consumed");
   });
 });

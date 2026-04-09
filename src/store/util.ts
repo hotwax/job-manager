@@ -1,17 +1,22 @@
 import { defineStore } from "pinia";
 import { api } from "@common";
 import logger from "@/logger";
+import { StatusItem, StatusItemAndType } from "@/types";
 
 export const useUtilStore = defineStore("util", {
   state: () => ({
-    statusItems: [] as any,
+    statusItems: {} as Record<string, StatusItemAndType>,
   }),
   getters: {
-    getStatusItems: (state: any) => (typeId: string) => state.statusItems.filter((statusItem: any) => statusItem.statusTypeId === typeId)
+    getStatusItemsByType: (state: any) => (typeId: string) => state.statusItems[typeId] || [],
+    getStatusItemDesc: (state: any) => (statusId: string) => {
+      const statusItem = Object.values(state.statusItems).find((statusItem: any) => statusItem.statusId === statusId) as StatusItem
+      return statusItem.description || statusId
+    }
   },
   actions: {
-    async fetchStatusItems(typeId: string) {
-      if(this.getStatusItems(typeId).length) {
+    async fetchStatusItemsByType(typeId: string) {
+      if(this.getStatusItemsByType(typeId).length) {
         return;
       }
 
@@ -20,11 +25,11 @@ export const useUtilStore = defineStore("util", {
           url: "admin/status",
           method: "GET",
           params: {
-            statusTypeId: typeId
-          },
-          pageSize: 200
+            statusTypeId: typeId,
+            pageSize: 200
+          }
         });
-        this.statusItems = resp.data
+        this.statusItems[typeId] = resp.data
       } catch(error: any) {
         logger.error(`Failed to fetch status item data for type ${typeId}`, error);
       }

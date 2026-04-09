@@ -42,7 +42,7 @@ import { useUtilStore } from '@/store/util';
 const mdmConfigStore = useMdmConfigStore();
 const utilStore = useUtilStore();
 
-const statusItems = computed(() => utilStore.getStatusItems("DataManagerLog"))
+const statusItems = computed(() => utilStore.getStatusItemsByType("DataManagerLog"))
 
 const props = defineProps(["appliedFilters"])
 

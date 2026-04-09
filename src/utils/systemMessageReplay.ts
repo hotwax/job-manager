@@ -1,9 +1,10 @@
 import {
   mockStatusFlowTransitions,
   mockStatusFlows,
-  mockStatuses,
   mockStatusTypes
 } from "@/mock/systemMessageStatus";
+import { useUtilStore } from "@/store/util";
+import { commonUtil } from "@common";
 
 const SYSTEM_MESSAGE_STATUS_TYPE_ID = "SystemMessage";
 const DEFAULT_STATUS_FLOW_ID = "Default";
@@ -37,10 +38,6 @@ export type SystemMessageStatusTransition = StatusFlowTransitionLike & {
   toStatusColor: string;
 };
 
-export const systemMessageStatuses = mockStatuses.filter(
-  (status: StatusLike) => status.statusTypeId === SYSTEM_MESSAGE_STATUS_TYPE_ID
-);
-
 export const systemMessageStatusTypes = mockStatusTypes.filter(
   (statusType: StatusFlowLike) => statusType.statusTypeId === SYSTEM_MESSAGE_STATUS_TYPE_ID
 );
@@ -51,10 +48,6 @@ export const systemMessageStatusFlows = mockStatusFlows.filter(
 
 export const systemMessageStatusFlowTransitions = mockStatusFlowTransitions.filter(
   (transition: StatusFlowTransitionLike) => transition.statusFlowId === DEFAULT_STATUS_FLOW_ID
-);
-
-const statusById = new Map(
-  systemMessageStatuses.map((status: StatusLike) => [status.statusId, status] as const)
 );
 
 const transitionsByStatusId = systemMessageStatusFlowTransitions.reduce(
@@ -81,37 +74,6 @@ for (const transitionList of transitionsByStatusId.values()) {
   });
 }
 
-export const getSystemMessageStatus = (statusId?: string) => {
-  if (!statusId) return undefined;
-  return statusById.get(statusId);
-};
-
-export const getSystemMessageStatusDescription = (statusId?: string) => {
-  return getSystemMessageStatus(statusId)?.description || statusId || "";
-};
-
-export const getSystemMessageStatusColor = (statusId?: string) => {
-  switch (statusId) {
-    case "SmsgConsumed":
-    case "SmsgConfirmed":
-      return "success";
-    case "SmsgProduced":
-    case "SmsgReceived":
-    case "SmsgSending":
-    case "SmsgSent":
-    case "SmsgConsuming":
-      return "primary";
-    case "SmsgRejected":
-      return "warning";
-    case "SmsgError":
-      return "danger";
-    case "SmsgCancelled":
-      return "medium";
-    default:
-      return "medium";
-  }
-};
-
 const OUTGOING_HAPPY_PATH = ["SmsgCreated", "SmsgProduced", "SmsgSending", "SmsgSent", "SmsgConfirmed"];
 const INCOMING_HAPPY_PATH = ["SmsgCreated", "SmsgReceived", "SmsgConsuming", "SmsgConsumed", "SmsgConfirmed"];
 
@@ -137,8 +99,8 @@ export const getAllowedTransitions = (message?: SystemMessageLike | null): Syste
 
   return (transitionsByStatusId.get(message.statusId) || []).map((transition: StatusFlowTransitionLike) => ({
     ...transition,
-    toStatusDescription: getSystemMessageStatusDescription(transition.toStatusId),
-    toStatusColor: getSystemMessageStatusColor(transition.toStatusId)
+    toStatusDescription: useUtilStore().getStatusItemDesc(transition.toStatusId || ""),
+    toStatusColor: commonUtil.getStatusColor(useUtilStore().getStatusItemDesc(transition.toStatusId || ""))
   }));
 };
 

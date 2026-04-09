@@ -165,7 +165,7 @@ async function openFiltersModal() {
 
 onIonViewWillEnter(async () => {
   await fetchLogs();
-  await utilStore.fetchStatusItems("DataManagerLog");
+  await utilStore.fetchStatusItemsByType("DataManagerLog");
 })
 </script>
 

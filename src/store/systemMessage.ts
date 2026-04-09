@@ -7,7 +7,6 @@ import { mockSystemMessageErrors } from "@/mock/systemMessageErrors";
 import {
   mockStatusFlowTransitions,
   mockStatusFlows,
-  mockStatuses,
   mockStatusTypes
 } from "@/mock/systemMessageStatus";
 import { mockEnums } from "@/mock/enums";
@@ -16,11 +15,9 @@ import { mockSystemMessageTypes } from "@/mock/systemMessageTypes";
 import { mockSystemMessages } from "@/mock/systemMessages";
 import {
   getAllowedTransitions,
-  getFutureStatuses,
-  getSystemMessageStatusColor,
-  getSystemMessageStatusDescription,
-  systemMessageStatuses
+  getFutureStatuses
 } from "@/utils/systemMessageReplay";
+import { useUtilStore } from "./util";
 
 const SYSTEM_MESSAGE_TYPE_FIELDS = [
   "systemMessageTypeId",
@@ -222,7 +219,6 @@ const loadMockState = () => ({
   systemMessageRemotes: [],
   allSystemMessageErrors: clone(mockSystemMessageErrors) as any[],
   systemMessageErrors: [] as any[],
-  systemMessageStatuses: clone(mockStatuses) as any[],
   systemMessageStatusTypes: clone(mockStatusTypes) as any[],
   systemMessageStatusFlows: clone(mockStatusFlows) as any[],
   systemMessageStatusTransitions: clone(mockStatusFlowTransitions) as any[],
@@ -248,8 +244,6 @@ export const useSystemMessageStore = defineStore("systemMessage", {
     getAllSystemMessages: (state: any) => state.allSystemMessages,
     getSystemMessageRemotes: (state: any) => state.systemMessageRemotes,
     getSystemMessageErrors: (state: any) => state.systemMessageErrors,
-    getSystemMessageStatuses: (state: any) => state.systemMessageStatuses,
-    getAvailableSystemMessageStatuses: () => systemMessageStatuses,
     getSystemMessageStatusTypes: (state: any) => state.systemMessageStatusTypes,
     getSystemMessageStatusFlows: (state: any) => state.systemMessageStatusFlows,
     getSystemMessageStatusTransitions: (state: any) => state.systemMessageStatusTransitions,
@@ -274,8 +268,6 @@ export const useSystemMessageStore = defineStore("systemMessage", {
     getRelatedMessages: (state: any) => state.relatedMessages,
     getAllowedTransitions: () => (message: any) => getAllowedTransitions(message),
     getFutureStatuses: () => (message: any) => getFutureStatuses(message),
-    getStatusDescription: () => (statusId: string) => getSystemMessageStatusDescription(statusId),
-    getStatusColor: () => (statusId: string) => getSystemMessageStatusColor(statusId),
     getMessagesForType: (state: any) => (systemMessageTypeId: string) =>
       state.allSystemMessages.filter((message: any) => message.systemMessageTypeId === systemMessageTypeId),
     getMessagesForRemote: (state: any) => (systemMessageRemoteId: string) =>
@@ -752,7 +744,9 @@ export const useSystemMessageStore = defineStore("systemMessage", {
     async fetchSystemMessageStatusMetadata() {
       this.loading = true;
       try {
-        this.systemMessageStatuses = clone(mockStatuses);
+
+        await useUtilStore().fetchStatusItemsByType("SystemMessage");
+
         this.systemMessageStatusTypes = clone(mockStatusTypes);
         this.systemMessageStatusFlows = clone(mockStatusFlows);
         this.systemMessageStatusTransitions = clone(mockStatusFlowTransitions);

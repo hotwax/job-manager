@@ -398,10 +398,12 @@ import { saveAs } from "file-saver";
 import { translate } from "@common";
 import { getDateAndTime, showToast } from "@/utils";
 import { useSystemMessageStore } from "@/store/systemMessage";
+import { useUtilStore } from "@/store/util";
 
 const props = defineProps<{ id: string }>();
 
 const store = useSystemMessageStore();
+const utilStore = useUtilStore();
 const router = useRouter();
 const { t } = useI18n();
 const isEditing = ref(false);
@@ -642,7 +644,7 @@ const handleAction = async (statusId: string) => {
 };
 
 const getStatusColor = (statusId?: string) => store.getStatusColor(statusId || "");
-const getStatusDescription = (statusId?: string) => store.getStatusDescription(statusId || "");
+const getStatusDescription = (statusId: string) => utilStore.getStatusItemDesc(statusId);
 const getStatusIcon = (statusId?: string) => {
   switch (statusId) {
     case "SmsgCreated": return addCircleOutline;

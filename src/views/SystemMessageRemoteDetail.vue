@@ -141,12 +141,14 @@ import { translate } from "@common";
 import SystemMessageList from "@/components/SystemMessageList.vue";
 import { useSystemMessageStore } from "@/store/systemMessage";
 import { showToast } from "@/utils";
+import { useUtilStore } from "@/store/util";
 
 // Type based declaration
 const props = defineProps<{ id?: string }>();
 
 const router = useRouter();
 const store = useSystemMessageStore();
+const utilStore = useUtilStore();
 const queryString = ref("");
 const selectedStatusId = ref("");
 const form = reactive<Record<string, any>>({
@@ -172,7 +174,7 @@ const form = reactive<Record<string, any>>({
 
 const isCreateMode = computed(() => !props.id);
 const pageTitle = computed(() => isCreateMode.value ? translate("Create Remote System") : translate("Remote System Detail"));
-const statuses = computed(() => store.getAvailableSystemMessageStatuses);
+const statuses = computed(() => utilStore.getStatusItemsByType("SystemMessage"));
 const relatedMessages = computed(() => store.getMessagesForRemote(props.id as string));
 const counts = computed(() => store.getRemoteCounts(props.id as string));
 const canDelete = computed(() => !props.id || store.canDeleteMessageRemote(props.id));

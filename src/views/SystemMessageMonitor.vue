@@ -140,10 +140,12 @@ import { translate } from "@common";
 
 import SystemMessageList from "@/components/SystemMessageList.vue";
 import { useSystemMessageStore } from "@/store/systemMessage";
+import { useUtilStore } from "@/store/util";
 
 const PAGE_SIZE = 25;
 
 const store = useSystemMessageStore();
+const utilStore = useUtilStore();
 const queryString = ref("");
 const selectedStatusId = ref("");
 const selectedTypeId = ref("");
@@ -156,7 +158,7 @@ const total = computed(() => store.getSystemMessageTotal);
 const types = computed(() => store.getSystemMessageTypes);
 const parentTypes = computed(() => store.getSystemMessageParentTypes);
 const remotes = computed(() => store.getSystemMessageRemotes);
-const statuses = computed(() => store.getAvailableSystemMessageStatuses);
+const statuses = computed(() => utilStore.getStatusItemsByType("SystemMessage"));
 const pageCount = computed(() => Math.max(Math.ceil(total.value / PAGE_SIZE), 1));
 
 const filteredTypes = computed(() => {
