@@ -61,53 +61,51 @@
           </ion-card-content>
         </ion-card>
 
-        <template v-if="!isCreateMode">
-          <section class="related-section">
-            <ion-card>
-              <ion-card-header>
-                <ion-card-title>{{ translate("Related Messages") }}</ion-card-title>
-              </ion-card-header>
-              <ion-card-content>
-                <div class="filter-grid">
-                  <ion-searchbar
-                    :value="queryString"
-                    @ionInput="queryString = $event.detail.value || ''"
-                    :debounce="300"
-                    :placeholder="translate('Search related messages')"
-                  />
-                  <ion-select
-                    :label="translate('Status')"
-                    label-placement="stacked"
-                    interface="popover"
-                    :value="selectedStatusId"
-                    @ionChange="selectedStatusId = $event.detail.value"
-                  >
-                    <ion-select-option value="">{{ translate("All statuses") }}</ion-select-option>
-                    <ion-select-option
-                      v-for="status in statuses"
-                      :key="status.statusId"
-                      :value="status.statusId"
-                    >
-                      {{ status.description }}
-                    </ion-select-option>
-                  </ion-select>
-                </div>
-
-                <div class="counts">
-                  <ion-chip color="primary">{{ translate("Sent") }}: {{ counts.sent }}</ion-chip>
-                  <ion-chip color="danger">{{ translate("Error") }}: {{ counts.error }}</ion-chip>
-                  <ion-chip color="success">{{ translate("Consumed") }}: {{ counts.consumed }}</ion-chip>
-                </div>
-
-                <SystemMessageList
-                  :messages="filteredMessages"
-                  :show-remote="false"
-                  :empty-message="translate('No related messages found.')"
+        <section class="related-section" v-if="!isCreateMode">
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>{{ translate("Related Messages") }}</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <div class="filter-grid">
+                <ion-searchbar
+                  :value="queryString"
+                  @ionInput="queryString = $event.detail.value || ''"
+                  :debounce="300"
+                  :placeholder="translate('Search related messages')"
                 />
-              </ion-card-content>
-            </ion-card>
-          </section>
-        </template>
+                <ion-select
+                  :label="translate('Status')"
+                  label-placement="stacked"
+                  interface="popover"
+                  :value="selectedStatusId"
+                  @ionChange="selectedStatusId = $event.detail.value"
+                >
+                  <ion-select-option value="">{{ translate("All statuses") }}</ion-select-option>
+                  <ion-select-option
+                    v-for="status in statuses"
+                    :key="status.statusId"
+                    :value="status.statusId"
+                  >
+                    {{ status.description }}
+                  </ion-select-option>
+                </ion-select>
+              </div>
+
+              <div class="counts">
+                <ion-chip color="primary">{{ translate("Sent") }}: {{ counts.sent }}</ion-chip>
+                <ion-chip color="danger">{{ translate("Error") }}: {{ counts.error }}</ion-chip>
+                <ion-chip color="success">{{ translate("Consumed") }}: {{ counts.consumed }}</ion-chip>
+              </div>
+
+              <SystemMessageList
+                :messages="filteredMessages"
+                :show-remote="false"
+                :empty-message="translate('No related messages found.')"
+              />
+            </ion-card-content>
+          </ion-card>
+        </section>
       </main>
     </ion-content>
   </ion-page>
@@ -175,8 +173,8 @@ const form = reactive<Record<string, any>>({
 const isCreateMode = computed(() => !props.id);
 const pageTitle = computed(() => isCreateMode.value ? translate("Create Remote System") : translate("Remote System Detail"));
 const statuses = computed(() => store.getAvailableSystemMessageStatuses);
-const relatedMessages = computed(() => props.id ? store.getMessagesForRemote(props.id) : []);
-const counts = computed(() => props.id ? store.getRemoteCounts(props.id) : { sent: 0, error: 0, consumed: 0 });
+const relatedMessages = computed(() => store.getMessagesForRemote(props.id as string));
+const counts = computed(() => store.getRemoteCounts(props.id as string));
 const canDelete = computed(() => !props.id || store.canDeleteMessageRemote(props.id));
 const filteredMessages = computed(() => {
   let messages = [...relatedMessages.value];
