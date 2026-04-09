@@ -612,42 +612,30 @@ export const useSystemMessageStore = defineStore("systemMessage", {
     async saveSystemMessageType(payload: Record<string, any>) {
       this.loading = true;
 
-      const entity = sanitizeEntity(payload, SYSTEM_MESSAGE_TYPE_FIELDS);
-      const isUpdate = this.systemMessageTypes.some((type: any) => type.systemMessageTypeId === entity.systemMessageTypeId);
+      const result = {
+        data: {},
+        error: undefined as any
+      }
 
       try {
-        const response = await api({
-          url: isUpdate
-            ? `${API_ENDPOINTS.systemMessageTypes}/${encodeURIComponent(entity.systemMessageTypeId)}`
-            : API_ENDPOINTS.systemMessageTypes,
-          method: isUpdate ? "PATCH" : "POST",
-          data: entity
+        await api({
+          url: `admin/systemMessages/types/${encodeURIComponent(payload.systemMessageTypeId)}`,
+          method: "PUT",
+          data: payload
         });
 
-        const savedEntity = {
-          ...(this.systemMessageTypes.find((type: any) => type.systemMessageTypeId === entity.systemMessageTypeId) || {}),
-          ...entity,
-          ...(getResponseEntity(response) || {})
-        };
+        this.currentSystemMessageType = payload;
 
-        this.systemMessageTypes = upsertByKey(this.systemMessageTypes, savedEntity, getTypeKey);
-        this.currentSystemMessageType = savedEntity;
-
-        return { data: { success: true, entity: savedEntity } };
+        result.data = { success: true, entity: payload }
       } catch (err) {
         logger.error("Failed to save system message type", err);
 
-        if (!canUseMockFallback(err)) {
-          return { error: err };
-        }
-
-        this.systemMessageTypes = upsertByKey(this.systemMessageTypes, entity, getTypeKey);
-        this.currentSystemMessageType = entity;
-
-        return { data: { success: true, entity } };
+        result.error = err
       } finally {
         this.loading = false;
       }
+
+      return result
     },
     async saveSystemMessageRemote(payload: Record<string, any>) {
       this.loading = true;
@@ -679,38 +667,33 @@ export const useSystemMessageStore = defineStore("systemMessage", {
     async deleteSystemMessageType(systemMessageTypeId: string) {
       this.loading = true;
 
-      try {
-        if (!this.canDeleteMessageType(systemMessageTypeId)) {
-          return { error: new Error("System message type is still referenced by messages.") };
-        }
+      if (!this.canDeleteMessageType(systemMessageTypeId)) {
+        return { error: new Error("System message type is still referenced by messages.") };
+      }
 
+      const result = {
+        data: {},
+        error: undefined as any
+      }
+
+      try {
         await api({
-          url: `${API_ENDPOINTS.systemMessageTypes}/${encodeURIComponent(systemMessageTypeId)}`,
+          url: `admin/systemMessages/types/${encodeURIComponent(systemMessageTypeId)}`,
           method: "DELETE"
         });
+        
+        this.currentSystemMessageType = undefined;
 
-        this.systemMessageTypes = removeByKey(this.systemMessageTypes, systemMessageTypeId, getTypeKey);
-        if (this.currentSystemMessageType?.systemMessageTypeId === systemMessageTypeId) {
-          this.currentSystemMessageType = undefined;
-        }
-
-        return { data: { success: true } };
+        result.data = { success: true }
       } catch (err) {
         logger.error("Failed to delete system message type", err);
 
-        if (!canUseMockFallback(err)) {
-          return { error: err };
-        }
-
-        this.systemMessageTypes = removeByKey(this.systemMessageTypes, systemMessageTypeId, getTypeKey);
-        if (this.currentSystemMessageType?.systemMessageTypeId === systemMessageTypeId) {
-          this.currentSystemMessageType = undefined;
-        }
-
-        return { data: { success: true } };
+        result.error = err
       } finally {
         this.loading = false;
       }
+
+      return result
     },
     async deleteSystemMessageRemote(systemMessageRemoteId: string) {
       this.loading = true;
