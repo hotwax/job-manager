@@ -10,7 +10,7 @@ export const useUtilStore = defineStore("util", {
   getters: {
     getStatusItemsByType: (state: any) => (typeId: string) => state.statusItems[typeId] || [],
     getStatusItemDesc: (state: any) => (statusId: string) => {
-      const statusItem = Object.values(state.statusItems).find((statusItem: any) => statusItem.statusId === statusId) as StatusItem
+      const statusItem = Object.values(state.statusItems).flatMap(item => item).find((statusItem: any) => statusItem.statusId === statusId) as StatusItem
       return statusItem.description || statusId
     }
   },
