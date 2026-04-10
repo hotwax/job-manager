@@ -11,47 +11,12 @@ import {
 } from "@/mock/systemMessageStatus";
 import { mockEnums } from "@/mock/enums";
 import { mockEnumerationTypes } from "@/mock/enumerationTypes";
-import { mockSystemMessageTypes } from "@/mock/systemMessageTypes";
 import { mockSystemMessages } from "@/mock/systemMessages";
 import {
   getAllowedTransitions,
   getFutureStatuses
 } from "@/utils/systemMessageReplay";
 import { useUtilStore } from "./util";
-
-const SYSTEM_MESSAGE_TYPE_FIELDS = [
-  "systemMessageTypeId",
-  "description",
-  "parentTypeId",
-  "sendServiceName",
-  "consumeServiceName",
-  "sendPath",
-  "receivePath",
-  "receiveMovePath",
-  "receiveFilePattern",
-  "receiveResponseEnumId"
-];
-
-const SYSTEM_MESSAGE_REMOTE_FIELDS = [
-  "systemMessageRemoteId",
-  "description",
-  "sendUrl",
-  "receiveUrl",
-  "username",
-  "password",
-  "authHeaderName",
-  "privateKey",
-  "sharedSecret",
-  "sendSharedSecret",
-  "oldSharedSecret",
-  "remoteId",
-  "remoteIdType",
-  "internalId",
-  "internalIdType",
-  "remoteAppCode",
-  "accessScopeEnumId",
-  "sendServiceName"
-];
 
 const API_ENDPOINTS = {
   systemMessageTypes: "system/message/types",
@@ -65,77 +30,15 @@ const API_ENDPOINTS = {
 
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value));
 
-const getTypeKey = (type: any) => type?.systemMessageTypeId;
-const getRemoteKey = (remote: any) => remote?.systemMessageRemoteId;
 const getMessageKey = (message: any) => message?.systemMessageId;
 const getErrorKey = (error: any) =>
   [error?.systemMessageId, error?.errorDate, error?.attemptedStatusId].filter(Boolean).join("::");
-
-const sanitizeEntity = (payload: Record<string, any>, fields: string[]) => {
-  return fields.reduce((entity, field) => {
-    if (payload[field] !== undefined) {
-      entity[field] = payload[field];
-    }
-    return entity;
-  }, {} as Record<string, any>);
-};
 
 const getMessageCounts = (messages: any[]) => ({
   sent: messages.filter((message: any) => message.statusId === "SmsgSent").length,
   error: messages.filter((message: any) => message.statusId === "SmsgError").length,
   consumed: messages.filter((message: any) => message.statusId === "SmsgConsumed").length
 });
-
-const filterMessages = (messages: any[], payload: Record<string, any> = {}, systemMessageTypes: any[] = []) => {
-  let filteredMessages = [...messages];
-
-  if (payload.systemMessageTypeId) {
-    filteredMessages = filteredMessages.filter((message: any) => message.systemMessageTypeId === payload.systemMessageTypeId);
-  }
-
-  if (payload.parentTypeId) {
-    const childTypeIds = systemMessageTypes
-      .filter((type: any) => type.parentTypeId === payload.parentTypeId)
-      .map((type: any) => type.systemMessageTypeId);
-
-    filteredMessages = filteredMessages.filter((message: any) => childTypeIds.includes(message.systemMessageTypeId));
-  }
-
-  if (payload.systemMessageRemoteId) {
-    filteredMessages = filteredMessages.filter((message: any) => message.systemMessageRemoteId === payload.systemMessageRemoteId);
-  }
-
-  if (payload.statusId) {
-    filteredMessages = filteredMessages.filter((message: any) => message.statusId === payload.statusId);
-  }
-
-  if (payload.queryString?.trim()) {
-    const query = payload.queryString.trim().toLowerCase();
-    filteredMessages = filteredMessages.filter((message: any) =>
-      message.systemMessageId?.toLowerCase().includes(query) ||
-      message.systemMessageTypeId?.toLowerCase().includes(query) ||
-      message.systemMessageRemoteId?.toLowerCase().includes(query) ||
-      message.messageText?.toLowerCase().includes(query)
-    );
-  }
-
-  // Sort by initDate descending (newest first)
-  filteredMessages.sort((a, b) => {
-    const timeA = a.initDate ? new Date(a.initDate).getTime() : 0;
-    const timeB = b.initDate ? new Date(b.initDate).getTime() : 0;
-    return timeB - timeA;
-  });
-
-  return filteredMessages;
-};
-
-const paginateMessages = (messages: any[], payload: Record<string, any> = {}) => {
-  const pageSize = Math.max(Number(payload.pageSize || messages.length || 1), 1);
-  const pageIndex = Math.max(Number(payload.pageIndex || 0), 0);
-  const startIndex = pageIndex * pageSize;
-
-  return messages.slice(startIndex, startIndex + pageSize);
-};
 
 const hasCollectionPayload = (response: any) => {
   const data = response?.data;
@@ -166,12 +69,6 @@ const getResponseEntity = (response: any) => {
   return undefined;
 };
 
-const getResponseTotal = (response: any, fallback: number) => {
-  const data = response?.data;
-  const total = Number(data?.count ?? data?.dataCount ?? data?.total ?? data?.totalCount ?? fallback);
-  return Number.isNaN(total) ? fallback : total;
-};
-
 const mergeCollectionByKey = (existing: any[], incoming: any[], getKey: (item: any) => string | undefined) => {
   const merged = new Map<string, any>();
 
@@ -200,10 +97,6 @@ const upsertByKey = (existing: any[], entity: any, getKey: (item: any) => string
   return existing.map((item) => (getKey(item) === key ? { ...item, ...entity } : item));
 };
 
-const removeByKey = (existing: any[], id: string, getKey: (item: any) => string | undefined) => {
-  return existing.filter((item) => getKey(item) !== id);
-};
-
 const updateMessages = (messages: any[], payload: Record<string, any>) => {
   return messages.map((message: any) =>
     message.systemMessageId === payload.systemMessageId ? { ...message, ...payload } : message
@@ -215,7 +108,7 @@ const canUseMockFallback = (error: any) => !error?.response;
 const loadMockState = () => ({
   systemMessageTypes: [],
   allSystemMessages: clone(mockSystemMessages) as any[],
-  systemMessages: clone(mockSystemMessages.slice(0, 25)) as any[],
+  systemMessages: [],
   systemMessageRemotes: [],
   allSystemMessageErrors: clone(mockSystemMessageErrors) as any[],
   systemMessageErrors: [] as any[],
@@ -241,7 +134,6 @@ export const useSystemMessageStore = defineStore("systemMessage", {
   getters: {
     getSystemMessageTypes: (state: any) => state.systemMessageTypes,
     getSystemMessages: (state: any) => state.systemMessages,
-    getAllSystemMessages: (state: any) => state.allSystemMessages,
     getSystemMessageRemotes: (state: any) => state.systemMessageRemotes,
     getSystemMessageErrors: (state: any) => state.systemMessageErrors,
     getSystemMessageStatusTypes: (state: any) => state.systemMessageStatusTypes,
@@ -345,21 +237,17 @@ export const useSystemMessageStore = defineStore("systemMessage", {
           }
         });
 
-        if (hasCollectionPayload(response)) {
-          const messages = getResponseCollection(response);
-          this.systemMessages = messages;
-          this.systemMessageTotal = getResponseTotal(response, messages.length);
-          this.allSystemMessages = mergeCollectionByKey(this.allSystemMessages, messages, getMessageKey);
+        if(response.data?.systemMessagesCount) {
+          this.systemMessages = response.data.systemMessages;
+          this.systemMessageTotal = response.data.systemMessagesCount;
           return;
         }
 
         throw new Error("System messages API did not return a collection payload.");
       } catch (err) {
         logger.error("Failed to fetch system messages", err);
-
-        const filteredMessages = filterMessages(this.allSystemMessages, payload, this.systemMessageTypes);
-        this.systemMessageTotal = filteredMessages.length;
-        this.systemMessages = paginateMessages(filteredMessages, payload);
+        this.systemMessages = []
+        this.systemMessageTotal = 0;
       } finally {
         this.loading = false;
       }
@@ -407,8 +295,8 @@ export const useSystemMessageStore = defineStore("systemMessage", {
           }
         });
 
-        if (hasCollectionPayload(response)) {
-          this.systemMessageRemotes = getResponseCollection(response);
+        if(response.data?.systemMessageRemoteList?.length) {
+          this.systemMessageRemotes = response.data.systemMessageRemoteList;
         }
       } catch (err) {
         logger.error("Failed to fetch system message remotes", err);
@@ -453,8 +341,8 @@ export const useSystemMessageStore = defineStore("systemMessage", {
           }
         });
 
-        if(response?.data && response.data[0].systemMessageRemoteId) {
-          this.currentSystemMessageRemote = response.data[0];
+        if(response?.data?.systemMessageRemoteList && response.data.systemMessageRemoteList[0]?.systemMessageRemoteId) {
+          this.currentSystemMessageRemote = response.data.systemMessageRemoteList[0];
           return this.currentSystemMessageRemote
         }
 
