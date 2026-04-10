@@ -172,7 +172,7 @@ const loadMessages = async () => {
     pageSize: PAGE_SIZE,
   } as Record<string, any>
 
-  if(queryString.value) {
+  if(queryString.value.trim()) {
     payload["queryString"] = queryString.value.trim()
   }
 
@@ -209,12 +209,10 @@ const handleParentTypeChange = (event: CustomEvent) => {
 };
 
 const goToPreviousPage = () => {
-  if (pageIndex.value === 0) return;
   pageIndex.value -= 1;
 };
 
 const goToNextPage = () => {
-  if (pageIndex.value >= pageCount.value - 1) return;
   pageIndex.value += 1;
 };
 
