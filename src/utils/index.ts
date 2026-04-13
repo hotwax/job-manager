@@ -4,7 +4,7 @@ import Papa from 'papaparse'
 import { DateTime } from "luxon";
 import logger from "@/logger";
 import { translate } from "@common";
-import { Plugins } from '@capacitor/core';
+import {Clipboard} from "@capacitor/clipboard";
 import cronstrue from "cronstrue"
 
 const showToast = async (message: string) => {
@@ -317,8 +317,6 @@ const hasJobDataError = (job: any) => {
 }
 
 const copyToClipboard = async (value: string, text?: string) => {
-  const { Clipboard } = Plugins;
-
   await Clipboard.write({
     string: value,
   }).then(() => {

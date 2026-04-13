@@ -10,7 +10,7 @@
     </ion-header>
 
     <ion-content>
-      <section v-if="store.isLoading || !message" class="details">
+      <section v-if="systemMessageStore.isLoading || !message" class="details">
         <ion-card class="summary">
           <ion-card-header>
             <ion-skeleton-text animated style="width: 30%; height: 16px;" />
@@ -75,7 +75,7 @@
 
             <ion-icon :icon="message.isOutgoing === 'Y' ? arrowForwardOutline : arrowBackOutline" />
 
-            <ion-chip :color="getStatusColor(message.statusId)">
+            <ion-chip :color="commonUtil.getStatusColor(message.statusId)">
               <ion-icon :icon="getStatusIcon(message.statusId)" />
               <ion-label> #{{ message.systemMessageId }} </ion-label>
             </ion-chip>
@@ -153,7 +153,7 @@
                 <p>
                   {{ translate("Failed to transition to") }} <strong>{{ getStatusDescription(error.attemptedStatusId) }}</strong>
                 </p>
-                <p v-if="error.errorText" @click="copyToClipboard(error.errorText)">
+                <p v-if="error.errorText" @click="commonUtil.copyToClipboard(error.errorText)">
                   <ion-text color="danger">
                     {{ (error.errorText as string).split('\n')[0] }}
                   </ion-text>
@@ -188,7 +188,7 @@
                 :key="transition.toStatusId"
                 :fill="transition.toStatusId === 'SmsgError' ? 'outline' : 'solid'"
                 size="small"
-                :color="getStatusColor(transition.toStatusId)"
+                :color="commonUtil.getStatusColor(transition.toStatusId as string)"
                 @click="transition.toStatusId && handleAction(transition.toStatusId)"
               >
                 {{ transition.transitionName || transition.toStatusDescription }}
@@ -203,15 +203,15 @@
             <ion-card-title>{{ translate("Linked Messages") }}</ion-card-title>
           </ion-card-header>
           <ion-list lines="full">
-            <ion-item v-for="rel in relatedMessages" :key="rel.systemMessageId" button @click="router.push(`/system-messages/${rel.systemMessageId}`)">
-              <ion-icon slot="start" :icon="rel.relationship === 'parent' ? chevronUpOutline : chevronDownOutline" color="medium" />
+            <ion-item v-for="message in relatedMessages" :key="message.systemMessageId" button @click="router.push(`/system-messages/${message.systemMessageId}`)">
+              <ion-icon slot="start" :icon="message.relationship === 'parent' ? chevronUpOutline : chevronDownOutline" color="medium" />
               <ion-label>
-                <p class="overline">{{ rel.relationship === 'parent' ? translate("Parent Message") : translate("Child Message") }}</p>
-                <strong>{{ rel.systemMessageTypeId }}</strong> (#{{ rel.systemMessageId }})
-                <p>{{ getStatusDescription(rel.statusId) }} — {{ getDateAndTime(rel.initDate) }}</p>
+                <p class="overline">{{ message.relationship === 'parent' ? translate("Parent Message") : translate("Child Message") }}</p>
+                <strong>{{ message.systemMessageTypeId }}</strong> (#{{ message.systemMessageId }})
+                <p>{{ getDateAndTime(message.initDate) }}</p>
               </ion-label>
-              <ion-badge slot="end" :color="getStatusColor(rel.statusId)">
-                 {{ rel.statusId }}
+              <ion-badge slot="end" :color="commonUtil.getStatusColor(message.statusId)">
+                {{ getStatusDescription(message.statusId) }}
               </ion-badge>
             </ion-item>
           </ion-list>
@@ -392,37 +392,32 @@ import {
 } from "ionicons/icons";
 import { computed, ref, watch } from "vue";
 import { useRouter } from "vue-router";
-import { useI18n } from 'vue-i18n';
 import { saveAs } from "file-saver";
 
-import { translate } from "@common";
+import { commonUtil, translate } from "@common";
 import { getDateAndTime, showToast } from "@/utils";
 import { useSystemMessageStore } from "@/store/systemMessage";
 import { useUtilStore } from "@/store/util";
 
 const props = defineProps<{ id: string }>();
 
-const store = useSystemMessageStore();
+const systemMessageStore = useSystemMessageStore();
 const utilStore = useUtilStore();
 const router = useRouter();
-const { t } = useI18n();
 const isEditing = ref(false);
 const editedText = ref("");
 
-const message = computed(() => store.getCurrentSystemMessage);
-const messageType = computed(() => store.getCurrentSystemMessageType);
-const remoteSystem = computed(() => store.getCurrentSystemMessageRemote);
-const errors = computed(() => store.getSystemMessageErrors);
-const relatedMessages = computed(() => store.getRelatedMessages);
-const parentMessage = computed(() => relatedMessages.value.find((rel: any) => rel.relationship === 'parent'));
-const technicalFields = computed(() => store.getTechnicalFields(message.value));
+const message = computed(() => systemMessageStore.getCurrentSystemMessage);
+const messageType = computed(() => systemMessageStore.getCurrentSystemMessageType);
+const remoteSystem = computed(() => systemMessageStore.getCurrentSystemMessageRemote);
+const errors = computed(() => systemMessageStore.getSystemMessageErrors);
+const relatedMessages = computed(() => systemMessageStore.getRelatedMessages);
+const technicalFields = computed(() => systemMessageStore.getTechnicalFields(message.value));
 
-const currentEnumSequence = computed(() => store.getCurrentEnumSequence);
-const linkedMessages = computed(() => store.getLinkedMessages);
-const enumType = computed(() => store.getCurrentEnumType);
+const currentEnumSequence = computed(() => systemMessageStore.getCurrentEnumSequence);
+const linkedMessages = computed(() => systemMessageStore.getLinkedMessages);
 
-const allowedTransitions = computed(() => store.getAllowedTransitions(message.value));
-const futureStatuses = computed(() => store.getFutureStatuses(message.value));
+const allowedTransitions = computed(() => utilStore.getAllowedTransitions(message.value));
 const isEditable = computed(() => message.value?.statusId !== "SmsgConsumed");
 const formattedContent = computed(() => formatContent(message.value?.messageText));
 const downloadableFilePath = computed(() => extractDownloadableFilePath(message.value?.messageText));
@@ -437,23 +432,44 @@ const isSequenceOperation = computed(() =>
 const typeFields = ["systemMessageTypeId", "description", "parentTypeId", "sendServiceName", "consumeServiceName", "sendPath", "receivePath", "receiveMovePath", "receiveFilePattern", "receiveResponseEnumId"];
 const remoteFields = ["systemMessageRemoteId", "description", "sendUrl", "receiveUrl", "remoteAppCode", "username", "authHeaderName", "remoteId", "internalId", "accessScopeEnumId", "sendServiceName"];
 
+const OUTGOING_HAPPY_PATH = ["SmsgCreated", "SmsgProduced", "SmsgSending", "SmsgSent", "SmsgConfirmed"];
+const INCOMING_HAPPY_PATH = ["SmsgCreated", "SmsgReceived", "SmsgConsuming", "SmsgConsumed", "SmsgConfirmed"];
+
+const futureStatuses = (): string[] => {
+  if (!message?.value.statusId) return [];
+
+  const happyPath = message.value.isOutgoing === "Y" ? OUTGOING_HAPPY_PATH : INCOMING_HAPPY_PATH;
+  const currentIndex = happyPath.indexOf(message.value.statusId);
+
+  // If status is not in happy path (e.g. SmsgError), find where it was last
+  if (currentIndex === -1) {
+    // Basic heuristic: if it's SmsgError, it's probably stuck after Created
+    return message.value.isOutgoing === "Y" 
+      ? OUTGOING_HAPPY_PATH.filter(s => s !== "SmsgCreated")
+      : INCOMING_HAPPY_PATH.filter(s => s !== "SmsgCreated");
+  }
+
+  return happyPath.slice(currentIndex + 1);
+};
+
 const narrativeSummary = computed(() => {
-  if (!message.value || !messageType.value) return "";
+  if(!messageType.value) return "";
 
   const remoteName = remoteSystem.value ? (remoteSystem.value.description || remoteSystem.value.systemMessageRemoteId) : translate("Internal System");
   const typeName = messageType.value.description || messageType.value.systemMessageTypeId;
   const serviceName = message.value.isOutgoing === 'Y' ? messageType.value.sendServiceName : messageType.value.consumeServiceName;
+  const enumeration = systemMessageStore.getEnumInfo(message.value.systemMessageTypeId);
 
-  if (message.value.isOutgoing === 'Y') {
+  if(message.value.isOutgoing === 'Y') {
     let summary = `${translate("This outgoing message is being sent to")} ${remoteName}. ${translate("It is generated according to the")} ${typeName} ${translate("configuration using the")} ${serviceName} ${translate("service")}.`;
-    if (isSequenceOperation.value && enumType.value) {
-      summary += ` ${translate("This operation is categorized as")} ${enumType.value.description}.`;
+    if(isSequenceOperation.value && enumeration) {
+      summary += ` ${translate("This operation is categorized as")} ${enumeration.typeDescription}.`;
     }
     return summary;
   } else {
     let summary = `${translate("This incoming message was received from")} ${remoteName}. ${translate("It is processed according to the")} ${typeName} ${translate("configuration using the")} ${serviceName} ${translate("service")}.`;
-    if (isSequenceOperation.value && enumType.value) {
-      summary += ` ${translate("This operation is categorized as")} ${enumType.value.description}.`;
+    if(isSequenceOperation.value && enumeration) {
+      summary += ` ${translate("This operation is categorized as")} ${enumeration.typeDescription}.`;
     }
     return summary;
   }
@@ -490,39 +506,26 @@ const goToStep = (step: any) => {
 };
 
 const loadMessage = async () => {
-  const id = props.id;
   await Promise.all([
-    store.fetchSystemMessageById(id),
-    store.fetchSystemMessageErrors(id),
-    store.fetchRelatedMessages(id)
+    systemMessageStore.fetchSystemMessageById(props.id),
+    systemMessageStore.fetchSystemMessageErrors(props.id),
+    systemMessageStore.fetchSystemMessageStatusMetadata(),
   ]);
-  
-  if (message.value) {
-    const tasks = [store.fetchSystemMessageTypeById(message.value.systemMessageTypeId)];
-    if (message.value.systemMessageRemoteId) {
-      tasks.push(store.fetchSystemMessageRemoteById(message.value.systemMessageRemoteId));
+ 
+  if(message.value) {
+    await systemMessageStore.fetchRelatedMessages()
+    const tasks = [systemMessageStore.fetchSystemMessageTypeById(message.value.systemMessageTypeId)];
+    if(message.value.systemMessageRemoteId) {
+      tasks.push(systemMessageStore.fetchSystemMessageRemoteById(message.value.systemMessageRemoteId));
     }
     await Promise.all(tasks);
 
     // Fetch Sequence Data
-    await store.fetchEnumSequence(message.value.systemMessageTypeId);
-    await store.fetchAllRelatedMessages(message.value.systemMessageId, message.value.remoteMessageId);
-    
-    // Fetch Enum for Narrative
-    store.fetchEnumerationById(message.value.systemMessageTypeId).then((enumeration: any) => {
-      if (enumeration?.enumTypeId) {
-        return store.fetchEnumerationTypeById(enumeration.enumTypeId);
-      }
-    });
+    await systemMessageStore.fetchEnumSequence(message.value.systemMessageTypeId);
+    await systemMessageStore.fetchAllRelatedMessages(message.value.systemMessageId, message.value.remoteMessageId);
 
     editedText.value = message.value.messageText || "";
   }
-};
-
-const copyToClipboard = (text: string) => {
-  navigator.clipboard.writeText(text).then(() => {
-    showToast(translate("Copied to clipboard"));
-  });
 };
 
 const formatContent = (content?: string) => {
@@ -542,7 +545,7 @@ const cancelEdit = () => {
 const saveContent = async () => {
   if (!message.value) return;
 
-  const result = await store.updateSystemMessage({
+  const result = await systemMessageStore.updateSystemMessage({
     systemMessageId: message.value.systemMessageId,
     messageText: editedText.value
   });
@@ -600,7 +603,7 @@ const getFileNameFromPath = (filePath?: string) => {
 const downloadLinkedFile = async () => {
   if (!message.value?.systemMessageId || !downloadableFilePath.value) return;
 
-  const response = await store.downloadSystemMessageFile(message.value.systemMessageId);
+  const response = await systemMessageStore.downloadSystemMessageFile(message.value.systemMessageId);
   if (response.error || !response.data) {
     await showToast(translate("Failed to download linked file."));
     return;
@@ -629,7 +632,7 @@ const downloadLinkedFile = async () => {
 const handleAction = async (statusId: string) => {
   if (!message.value || !statusId) return;
 
-  const result = await store.updateSystemMessage({
+  const result = await systemMessageStore.updateSystemMessage({
     systemMessageId: message.value.systemMessageId,
     statusId
   });
@@ -643,7 +646,6 @@ const handleAction = async (statusId: string) => {
   await showToast(`${translate("Message moved to")} ${getStatusDescription(statusId)}.`);
 };
 
-const getStatusColor = (statusId?: string) => store.getStatusColor(statusId || "");
 const getStatusDescription = (statusId: string) => utilStore.getStatusItemDesc(statusId);
 const getStatusIcon = (statusId?: string) => {
   switch (statusId) {

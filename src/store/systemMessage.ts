@@ -3,19 +3,6 @@ import { defineStore } from "pinia";
 import { getDateAndTime } from "@/utils";
 
 import logger from "@/logger";
-import { mockSystemMessageErrors } from "@/mock/systemMessageErrors";
-import {
-  mockStatusFlowTransitions,
-  mockStatusFlows,
-  mockStatusTypes
-} from "@/mock/systemMessageStatus";
-import { mockEnums } from "@/mock/enums";
-import { mockEnumerationTypes } from "@/mock/enumerationTypes";
-import { mockSystemMessages } from "@/mock/systemMessages";
-import {
-  getAllowedTransitions,
-  getFutureStatuses
-} from "@/utils/systemMessageReplay";
 import { useUtilStore } from "./util";
 
 const API_ENDPOINTS = {
@@ -23,38 +10,14 @@ const API_ENDPOINTS = {
   systemMessageRemotes: "system/message/remotes",
   systemMessages: "system/messages",
   systemMessageEntity: "moqui/entities/moqui.service.message.SystemMessage",
-  systemMessageErrors: "moqui/entities/moqui.service.message.SystemMessageError",
   enumerations: "moqui/entities/moqui.basic.Enumeration",
-  enumerationTypes: "moqui/entities/moqui.basic.EnumerationType"
 };
-
-const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value));
-
-const getMessageKey = (message: any) => message?.systemMessageId;
-const getErrorKey = (error: any) =>
-  [error?.systemMessageId, error?.errorDate, error?.attemptedStatusId].filter(Boolean).join("::");
 
 const getMessageCounts = (messages: any[]) => ({
   sent: messages.filter((message: any) => message.statusId === "SmsgSent").length,
   error: messages.filter((message: any) => message.statusId === "SmsgError").length,
   consumed: messages.filter((message: any) => message.statusId === "SmsgConsumed").length
 });
-
-const hasCollectionPayload = (response: any) => {
-  const data = response?.data;
-  return Array.isArray(data) || Array.isArray(data?.data) || Array.isArray(data?.items) || Array.isArray(data?.results);
-};
-
-const getResponseCollection = (response: any) => {
-  const data = response?.data;
-
-  if (Array.isArray(data)) return data;
-  if (Array.isArray(data?.data)) return data.data;
-  if (Array.isArray(data?.items)) return data.items;
-  if (Array.isArray(data?.results)) return data.results;
-
-  return [];
-};
 
 const getResponseEntity = (response: any) => {
   const data = response?.data;
@@ -69,34 +32,6 @@ const getResponseEntity = (response: any) => {
   return undefined;
 };
 
-const mergeCollectionByKey = (existing: any[], incoming: any[], getKey: (item: any) => string | undefined) => {
-  const merged = new Map<string, any>();
-
-  [...existing, ...incoming].forEach((item) => {
-    const key = getKey(item);
-    if (!key) return;
-
-    merged.set(key, {
-      ...(merged.get(key) || {}),
-      ...item
-    });
-  });
-
-  return Array.from(merged.values());
-};
-
-const upsertByKey = (existing: any[], entity: any, getKey: (item: any) => string | undefined) => {
-  const key = getKey(entity);
-  if (!key) return existing;
-
-  const index = existing.findIndex((item) => getKey(item) === key);
-  if (index === -1) {
-    return [entity, ...existing];
-  }
-
-  return existing.map((item) => (getKey(item) === key ? { ...item, ...entity } : item));
-};
-
 const updateMessages = (messages: any[], payload: Record<string, any>) => {
   return messages.map((message: any) =>
     message.systemMessageId === payload.systemMessageId ? { ...message, ...payload } : message
@@ -107,26 +42,19 @@ const canUseMockFallback = (error: any) => !error?.response;
 
 const loadMockState = () => ({
   systemMessageTypes: [],
-  allSystemMessages: clone(mockSystemMessages) as any[],
+  allSystemMessages: [],
   systemMessages: [],
   systemMessageRemotes: [],
-  allSystemMessageErrors: clone(mockSystemMessageErrors) as any[],
   systemMessageErrors: [] as any[],
-  systemMessageStatusTypes: clone(mockStatusTypes) as any[],
-  systemMessageStatusFlows: clone(mockStatusFlows) as any[],
-  systemMessageStatusTransitions: clone(mockStatusFlowTransitions) as any[],
   currentSystemMessage: undefined as Record<string, any> | undefined,
   currentSystemMessageType: undefined as Record<string, any> | undefined,
   currentSystemMessageRemote: undefined as Record<string, any> | undefined,
-  currentEnum: undefined as Record<string, any> | undefined,
-  currentEnumType: undefined as Record<string, any> | undefined,
   currentEnumSequence: [] as any[],
   relatedMessages: [] as any[],
   linkedMessages: [] as any[],
-  systemMessageTotal: mockSystemMessages.length,
+  systemMessageTotal: 0,
   loading: false,
-  enums: clone(mockEnums) as any[],
-  enumerationTypes: clone(mockEnumerationTypes) as any[]
+  enums: [] as any[]
 });
 
 export const useSystemMessageStore = defineStore("systemMessage", {
@@ -136,9 +64,6 @@ export const useSystemMessageStore = defineStore("systemMessage", {
     getSystemMessages: (state: any) => state.systemMessages,
     getSystemMessageRemotes: (state: any) => state.systemMessageRemotes,
     getSystemMessageErrors: (state: any) => state.systemMessageErrors,
-    getSystemMessageStatusTypes: (state: any) => state.systemMessageStatusTypes,
-    getSystemMessageStatusFlows: (state: any) => state.systemMessageStatusFlows,
-    getSystemMessageStatusTransitions: (state: any) => state.systemMessageStatusTransitions,
     getSystemMessageParentTypes: (state: any) => {
       const parentTypeIds = [...new Set(state.systemMessageTypes.map((type: any) => type.parentTypeId).filter(Boolean))] as string[];
       return parentTypeIds.map(id => {
@@ -152,14 +77,11 @@ export const useSystemMessageStore = defineStore("systemMessage", {
     getCurrentSystemMessage: (state: any) => state.currentSystemMessage,
     getCurrentSystemMessageType: (state: any) => state.currentSystemMessageType,
     getCurrentSystemMessageRemote: (state: any) => state.currentSystemMessageRemote,
-    getCurrentEnum: (state: any) => state.currentEnum,
-    getCurrentEnumType: (state: any) => state.currentEnumType,
+    getEnumInfo: (state: any) => (enumId: string) => state.enums.find((e: any) => e.enumId === enumId),
     getCurrentEnumSequence: (state: any) => state.currentEnumSequence,
     getLinkedMessages: (state: any) => state.linkedMessages,
     getSystemMessageTotal: (state: any) => state.systemMessageTotal,
     getRelatedMessages: (state: any) => state.relatedMessages,
-    getAllowedTransitions: () => (message: any) => getAllowedTransitions(message),
-    getFutureStatuses: () => (message: any) => getFutureStatuses(message),
     getMessagesForType: (state: any) => (systemMessageTypeId: string) =>
       state.allSystemMessages.filter((message: any) => message.systemMessageTypeId === systemMessageTypeId),
     getMessagesForRemote: (state: any) => (systemMessageRemoteId: string) =>
@@ -176,18 +98,18 @@ export const useSystemMessageStore = defineStore("systemMessage", {
       if (!message) return [];
 
       const fields = [
-        { label: "systemMessageId", value: message.systemMessageId },
-        { label: "statusId", value: message.statusId },
-        { label: "initDate", value: getDateAndTime(message.initDate) },
-        { label: "processedDate", value: getDateAndTime(message.processedDate) },
-        { label: "lastAttemptDate", value: getDateAndTime(message.lastAttemptDate) },
-        { label: "isOutgoing", value: message.isOutgoing },
-        { label: "remoteMessageId", value: message.remoteMessageId }
+        { label: "System Message Id", value: message.systemMessageId },
+        { label: "Status Id", value: message.statusId },
+        { label: "Init Date", value: getDateAndTime(message.initDate) },
+        { label: "Processed Date", value: getDateAndTime(message.processedDate) },
+        { label: "Last Attempt Date", value: getDateAndTime(message.lastAttemptDate) },
+        { label: "Is Outgoing", value: message.isOutgoing },
+        { label: "Remote Message Id", value: message.remoteMessageId }
       ];
 
       if (message.parentMessageId) {
         const parent = state.relatedMessages.find((rel: any) => rel.systemMessageId === message.parentMessageId);
-        const field: any = { label: "parentMessageId", value: message.parentMessageId };
+        const field: any = { label: "Parent Message Id", value: message.parentMessageId };
 
         if (parent) {
           field.link = `/system-messages/${message.parentMessageId}`;
@@ -197,7 +119,7 @@ export const useSystemMessageStore = defineStore("systemMessage", {
         fields.push(field);
       }
 
-      return fields.filter(f => f.value !== undefined && f.value !== null);
+      return fields.filter(field => field.value !== undefined && field.value !== null);
     },
     isLoading: (state: any) => state.loading
   },
@@ -257,28 +179,24 @@ export const useSystemMessageStore = defineStore("systemMessage", {
 
       try {
         const response = await api({
-          url: `${API_ENDPOINTS.systemMessageEntity}/${encodeURIComponent(systemMessageId)}`,
-          method: "GET"
+          url: "admin/systemMessages",
+          method: "GET",
+          params: {
+            systemMessageId: encodeURIComponent(systemMessageId),
+            pageSize: 1
+          }
         });
 
-        const message = getResponseEntity(response);
-        if (message?.systemMessageId) {
-          if (!skipSetCurrent) {
-            this.currentSystemMessage = message;
+        if(response.data?.systemMessages) {
+          if(!skipSetCurrent) {
+            this.currentSystemMessage = response.data?.systemMessages[0];
           }
-          this.allSystemMessages = upsertByKey(this.allSystemMessages, message, getMessageKey);
-          this.systemMessages = upsertByKey(this.systemMessages, message, getMessageKey);
-          return message;
+          return response.data?.systemMessages[0];
         }
 
-        throw new Error("System message API did not return an entity payload.");
+        throw new Error(`Failed to fetch system message information for ${systemMessageId}`);
       } catch (err) {
         logger.error(`Failed to fetch system message ${systemMessageId}`, err);
-        const mockMsg = this.allSystemMessages.find((message: any) => message.systemMessageId === systemMessageId);
-        if (!skipSetCurrent) {
-          this.currentSystemMessage = mockMsg;
-        }
-        return mockMsg;
       } finally {
         this.loading = false;
       }
@@ -360,45 +278,42 @@ export const useSystemMessageStore = defineStore("systemMessage", {
 
       try {
         const response = await api({
-          url: API_ENDPOINTS.systemMessageErrors,
+          url: `admin/systemMessages/${encodeURIComponent(systemMessageId)}/errors`,
           method: "GET",
           params: {
             pageSize: 250,
-            pageIndex: 0,
-            systemMessageId
+            pageIndex: 0
           }
         });
 
-        if (hasCollectionPayload(response)) {
-          const errors = getResponseCollection(response);
-          this.systemMessageErrors = errors;
-          this.allSystemMessageErrors = mergeCollectionByKey(this.allSystemMessageErrors, errors, getErrorKey);
+        if(response.data.length) {
+          this.systemMessageErrors = response.data;
           return;
         }
 
         throw new Error("System message errors API did not return a collection payload.");
       } catch (err) {
         logger.error("Failed to fetch system message errors", err);
-        this.systemMessageErrors = this.allSystemMessageErrors.filter((error: any) => error.systemMessageId === systemMessageId);
       } finally {
         this.loading = false;
       }
     },
-    async fetchRelatedMessages(systemMessageId: string) {
+    async fetchRelatedMessages() {
       this.loading = true;
       const related = [] as any[];
 
-      try {
-        let msg = this.allSystemMessages.find(m => m.systemMessageId === systemMessageId);
-        if (!msg) {
-          msg = await this.fetchSystemMessageById(systemMessageId);
-        }
+      if(!this.currentSystemMessage?.systemMessageId) {
+        this.relatedMessages = [];
+        return;
+      }
 
+      try {
+        const msg = this.currentSystemMessage
         // 1. Safe Parent Fetch
-        if (msg?.parentMessageId) {
+        if(msg.parentMessageId) {
           try {
             const parent = await this.fetchSystemMessageById(msg.parentMessageId, true);
-            if (parent) {
+            if(parent) {
               related.push({ ...parent, relationship: 'parent' });
             }
           } catch (e) {
@@ -409,36 +324,28 @@ export const useSystemMessageStore = defineStore("systemMessage", {
         // 2. Children Fetch
         try {
           const response = await api({
-            url: API_ENDPOINTS.systemMessages,
+            url: "admin/systemMessages",
             method: "GET",
             params: {
-              parentMessageId: systemMessageId,
+              parentMessageId: this.currentSystemMessage.systemMessageId,
               pageSize: 50
             }
           });
 
-          if (hasCollectionPayload(response)) {
-            const children = getResponseCollection(response);
-            children.forEach((child: any) => {
-              related.push({ ...child, relationship: 'child' });
+          if(response.data.systemMessagesCount) {
+            response.data.systemMessages.forEach((message: any) => {
+              related.push({ ...message, relationship: "child" });
             });
           }
         } catch (e) {
           logger.warn("Failed to fetch children messages from API, falling back to mock", e);
-          const children = this.allSystemMessages.filter(m => m.parentMessageId === systemMessageId);
-          children.forEach(child => {
-            if (!related.find(r => r.systemMessageId === child.systemMessageId)) {
-              related.push({ ...child, relationship: 'child' });
-            }
-          });
         }
-
-        this.relatedMessages = related;
       } catch (err) {
         logger.error("Failed to resolve base message for related messages", err);
       } finally {
         this.loading = false;
       }
+      this.relatedMessages = related;
     },
     async updateSystemMessage(payload: Record<string, any>) {
       this.loading = true;
@@ -614,17 +521,10 @@ export const useSystemMessageStore = defineStore("systemMessage", {
     async fetchSystemMessageStatusMetadata() {
       this.loading = true;
       try {
-
         await useUtilStore().fetchStatusItemsByType("SystemMessage");
-
-        this.systemMessageStatusTypes = clone(mockStatusTypes);
-        this.systemMessageStatusFlows = clone(mockStatusFlows);
-        this.systemMessageStatusTransitions = clone(mockStatusFlowTransitions);
+        await useUtilStore().fetchStatusFlowTransitions();
         // User requested fetching enumerations on app load
-        await Promise.all([
-          this.fetchEnumerations(),
-          this.fetchEnumerationTypes()
-        ]);
+        await this.fetchEnumerations()
       } catch (err) {
         logger.error("Failed to fetch system message status metadata", err);
       } finally {
@@ -635,79 +535,18 @@ export const useSystemMessageStore = defineStore("systemMessage", {
       this.loading = true;
       try {
         const response = await api({
-          url: API_ENDPOINTS.enumerations,
+          url: "admin/enums",
           method: "GET",
-          params: { pageSize: 500 } // Fetch a large batch for the app load
+          params: {
+            pageSize: 500,
+            enumTypeId: "ShopifyMessageTypeEnum"
+          }
         });
-        const entities = getResponseEntity(response);
-        if (entities) {
-          this.enums = entities;
-          return entities;
+        if(response.data) {
+          this.enums = response.data;
         }
       } catch (err) {
-        logger.error("Failed to fetch all enumerations, falling back to mock", err);
-        this.enums = clone(mockEnums);
-        return this.enums;
-      } finally {
-        this.loading = false;
-      }
-    },
-    async fetchEnumerationTypes() {
-      this.loading = true;
-      try {
-        const response = await api({
-          url: API_ENDPOINTS.enumerationTypes,
-          method: "GET"
-        });
-        const entities = getResponseEntity(response);
-        if (entities) {
-          this.enumerationTypes = entities;
-          return entities;
-        }
-      } catch (err) {
-        logger.error("Failed to fetch all enumeration types, falling back to mock", err);
-        this.enumerationTypes = clone(mockEnumerationTypes);
-        return this.enumerationTypes;
-      } finally {
-        this.loading = false;
-      }
-    },
-    async fetchEnumerationById(enumId: string) {
-      this.loading = true;
-      try {
-        const response = await api({
-          url: `${API_ENDPOINTS.enumerations}/${encodeURIComponent(enumId)}`,
-          method: "GET"
-        });
-        const entity = getResponseEntity(response);
-        if (entity) {
-          this.currentEnum = entity;
-          return entity;
-        }
-      } catch (err) {
-        logger.error("Failed to fetch enumeration", err);
-        this.currentEnum = this.enums.find((e: any) => e.enumId === enumId);
-        return this.currentEnum;
-      } finally {
-        this.loading = false;
-      }
-    },
-    async fetchEnumerationTypeById(enumTypeId: string) {
-      this.loading = true;
-      try {
-        const response = await api({
-          url: `${API_ENDPOINTS.enumerationTypes}/${encodeURIComponent(enumTypeId)}`,
-          method: "GET"
-        });
-        const entity = getResponseEntity(response);
-        if (entity) {
-          this.currentEnumType = entity;
-          return entity;
-        }
-      } catch (err) {
-        logger.error("Failed to fetch enumeration type", err);
-        this.currentEnumType = this.enumerationTypes.find((t: any) => t.enumTypeId === enumTypeId);
-        return this.currentEnumType;
+        logger.error("Failed to fetch enumerations", err);
       } finally {
         this.loading = false;
       }
@@ -731,7 +570,7 @@ export const useSystemMessageStore = defineStore("systemMessage", {
 
         // 2. Build the forward sequence from the root
         const sequence = [];
-        let currentEnumId: string | undefined = rootEnumId;
+        let currentEnumId: string = rootEnumId;
         const visitedForward = new Set();
 
         while (currentEnumId && !visitedForward.has(currentEnumId)) {
@@ -743,8 +582,11 @@ export const useSystemMessageStore = defineStore("systemMessage", {
           if (!enumeration) {
             try {
               const response = await api({
-                url: `${API_ENDPOINTS.enumerations}/${encodeURIComponent(currentEnumId)}`,
-                method: "GET"
+                url: "admin/enums",
+                method: "GET",
+                params: {
+                  pageSize: 500
+                }
               });
               enumeration = getResponseEntity(response);
               if (enumeration) {
@@ -755,7 +597,7 @@ export const useSystemMessageStore = defineStore("systemMessage", {
             }
           }
 
-          if (enumeration) {
+          if(enumeration) {
             sequence.push(enumeration);
             currentEnumId = enumeration.relatedEnumId;
           } else {
@@ -763,7 +605,6 @@ export const useSystemMessageStore = defineStore("systemMessage", {
           }
         }
         this.currentEnumSequence = sequence;
-        return sequence;
       } finally {
         this.loading = false;
       }

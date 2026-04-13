@@ -137,7 +137,6 @@ import { translate } from "@common";
 
 import SystemMessageList from "@/components/SystemMessageList.vue";
 import { useSystemMessageStore } from "@/store/systemMessage";
-import { systemMessageTypeFields } from "@/utils/systemMessageEntityFields";
 import { showToast } from "@/utils";
 import { useUtilStore } from "@/store/util";
 
