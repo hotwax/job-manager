@@ -614,7 +614,7 @@ export const useSystemMessageStore = defineStore("systemMessage", {
       try {
         // Query for messages linked by remoteMessageId or parentMessageId
         // In a real app, this would be a complex query. For mock, we'll scan.
-        const linked = this.allSystemMessages.filter((m: any) =>
+        const linked = this.relatedMessages.filter((m: any) =>
           m.remoteMessageId === systemMessageId ||
           m.parentMessageId === systemMessageId ||
           (remoteMessageId && m.remoteMessageId === remoteMessageId)

@@ -169,10 +169,10 @@
               </ion-label>
             </ion-item>
 
-            <ion-item-divider color="light" v-if="futureStatuses.length">
+            <ion-item-divider color="light" v-if="futureStatuses().length">
               <ion-label>{{ translate("Upcoming") }}</ion-label>
             </ion-item-divider>
-            <ion-item v-for="statusId in futureStatuses" :key="statusId" lines="none">
+            <ion-item v-for="statusId in futureStatuses()" :key="statusId" lines="none">
               <ion-icon slot="start" :icon="getStatusIcon(statusId)" color="medium" />
               <ion-label>
                 {{ getStatusDescription(statusId) }}
@@ -500,9 +500,7 @@ const getStepStatus = (step: any) => {
 
 const goToStep = (step: any) => {
   const status = getStepStatus(step);
-  if (status.linkedId && status.linkedId !== message.value?.systemMessageId) {
-    router.push(`/system-messages/${status.linkedId}`);
-  }
+  router.push(`/system-messages/${status.linkedId}`);
 };
 
 const loadMessage = async () => {
