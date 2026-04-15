@@ -6,7 +6,7 @@
           <Logo />
 
           <section v-if="errorMessage">
-            <div class="center-div">
+            <div>
               <ion-item lines="none">
                 <ion-icon slot="start" color="warning" :icon="warningOutline" />
                 <h4>{{ translate('Login failed') }}</h4>
@@ -14,6 +14,10 @@
               <p>
                 {{ errorMessage }}
               </p>
+              <ion-button class="ion-margin-top" @click="goToLogin()">
+                <ion-icon slot="start" :icon="arrowBackOutline" />
+                {{ translate("Back to Login") }}
+              </ion-button>
             </div>
           </section>
 
@@ -86,7 +90,7 @@ import { ref } from "vue";
 import router from "../router";
 import { useUserStore } from "@/store/user";
 import Logo from '@/components/Logo.vue';
-import { arrowForwardOutline, gridOutline, warningOutline } from 'ionicons/icons'
+import { arrowBackOutline, arrowForwardOutline, gridOutline, warningOutline } from 'ionicons/icons'
 import { cookieHelper, translate, api, commonUtil } from "@common";
 import { showToast } from "@/utils";
 import { useAuth } from "@/composables/auth";
@@ -110,6 +114,10 @@ const isConfirmingForActiveSession = ref(false);
 const loader = ref<any>(null);
 const isCheckingOms = ref(false);
 const isLoggingIn = ref(false);
+
+const goToLogin = () => {
+  router.go(0);
+}
 
 const presentLoader = async (message: string) => {
   if (!loader.value) {
