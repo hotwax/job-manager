@@ -4,7 +4,20 @@
       <div class="flex" v-if="!hideBackground && !isConfirmingForActiveSession">
         <form class="login-container" @keyup.enter="handleSubmit()" @submit.prevent>
           <Logo />
-          <section v-if="showOmsInput">
+
+          <section v-if="errorMessage">
+            <div class="center-div">
+              <ion-item lines="none">
+                <ion-icon slot="start" color="warning" :icon="warningOutline" />
+                <h4>{{ translate('Login failed') }}</h4>
+              </ion-item>
+              <p>
+                {{ errorMessage }}
+              </p>
+            </div>
+          </section>
+
+          <section v-else-if="showOmsInput">
             <ion-item lines="full">
               <ion-input :label="translate('OMS')" label-placement="fixed" name="instanceUrl" v-model="instanceUrl" id="instanceUrl" type="text" required />
             </ion-item>
@@ -73,7 +86,7 @@ import { ref } from "vue";
 import router from "../router";
 import { useUserStore } from "@/store/user";
 import Logo from '@/components/Logo.vue';
-import { arrowForwardOutline, gridOutline } from 'ionicons/icons'
+import { arrowForwardOutline, gridOutline, warningOutline } from 'ionicons/icons'
 import { cookieHelper, translate, api, commonUtil } from "@common";
 import { showToast } from "@/utils";
 import { useAuth } from "@/composables/auth";
@@ -88,6 +101,7 @@ const { loginOption, fetchLoginOptions, login: authLogin } = useAuth();
 const username = ref("");
 const password = ref("");
 const instanceUrl = ref("");
+const errorMessage = ref("");
 const alias = import.meta.env.VITE_VUE_APP_ALIAS ? JSON.parse(import.meta.env.VITE_VUE_APP_ALIAS) : {};
 const defaultAlias = import.meta.env.VITE_VUE_APP_DEFAULT_ALIAS;
 const showOmsInput = ref(false);
@@ -138,7 +152,8 @@ const login = async () => {
     username.value = "";
     password.value = "";
     router.push('/');
-  } catch (error) {
+  } catch (error: any) {
+    errorMessage.value = error
     console.error(error);
   }
   isLoggingIn.value = false;

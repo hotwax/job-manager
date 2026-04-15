@@ -62,6 +62,7 @@ export function useAuth() {
       await useUserStore().fetchProductStorePreference();
       await useUserStore().fetchShopifyShopPreference();
     } catch (err: any) {
+      clearAuth()
       showToast(translate("Something went wrong while login. Please contact administrator."));
       logger.error("error: ", err.toString());
       return Promise.reject(err instanceof Object ? err : new Error(err));
