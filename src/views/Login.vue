@@ -1,7 +1,7 @@
 <template>
   <ion-page>
     <ion-content>
-      <div class="flex" v-if="!hideBackground && !isConfirmingForActiveSession">
+      <div class="flex" v-if="!isInitializing && !isConfirmingForActiveSession">
         <form class="login-container" @keyup.enter="handleSubmit()" @submit.prevent>
           <Logo />
 
@@ -96,11 +96,10 @@ import { showToast } from "@/utils";
 import { useAuth } from "@/composables/auth";
 
 let route = null as any;
-const authStore = useUserStore();
-const cookieHandler = cookieHelper();
+const userStore = useUserStore();
 
 // This is the best practice for defining composable instance, as this ensures in managing the reactive state properly
-const { loginOption, fetchLoginOptions, login: authLogin } = useAuth();
+const { loginOption, fetchLoginOptions, isAuthenticated, login: authLogin, updateToken, updateOMS } = useAuth();
 
 const username = ref("");
 const password = ref("");
@@ -109,7 +108,7 @@ const errorMessage = ref("");
 const alias = import.meta.env.VITE_VUE_APP_ALIAS ? JSON.parse(import.meta.env.VITE_VUE_APP_ALIAS) : {};
 const defaultAlias = import.meta.env.VITE_VUE_APP_DEFAULT_ALIAS;
 const showOmsInput = ref(false);
-const hideBackground = ref(true);
+const isInitializing = ref(true);
 const isConfirmingForActiveSession = ref(false);
 const loader = ref<any>(null);
 const isCheckingOms = ref(false);
@@ -147,15 +146,15 @@ const toggleOmsInput = () => {
   }
 };
 
-const login = async () => {
-  if (!username.value || !password.value) {
+const login = async (params?: any) => {
+  if((!username.value || !password.value) && !params.token) {
     showToast(translate('Please fill in the user details'));
     return;
   }
 
   isLoggingIn.value = true;
   try {
-    await authLogin(username.value.trim(), password.value);
+    await authLogin(username.value?.trim(), password.value, params?.token, params?.expirationTime)
     // All the failure cases are handled in action, if then block is executing, login is successful
     username.value = "";
     password.value = "";
@@ -176,7 +175,8 @@ const setOms = async () => {
   isCheckingOms.value = true;
 
   const instanceURL = instanceUrl.value.trim().toLowerCase();
-  cookieHelper().set('oms', alias[instanceURL] ? alias[instanceURL] : instanceURL)
+  updateOMS(alias[instanceURL] ? alias[instanceURL] : instanceURL)
+  userStore.oms = alias[instanceURL] ? alias[instanceURL] : instanceURL
 
   // run SAML login flow if login options are configured for the OMS
   await fetchLoginOptions();
@@ -192,88 +192,24 @@ const setOms = async () => {
   isCheckingOms.value = false;
 };
 
-const samlLogin = async () => {
-  try {
-    const { token, expirationTime } = route.query as any;
-    await authStore.samlLogin(token, expirationTime);
-  } catch (error) {
-    console.error(error);
-  }
-  router.push('/');
-};
-
-const basicLogin = async () => {
-  try {
-    const { oms, token, expirationTime } = route.query as any;
-    // Clear the previously stored oms and token when having oms and token in the URL
-    authStore.$patch({
-      token: {
-        value: "",
-        expiration: undefined
-      },
-      oms: ""
-    });
-    cookieHelper().set("oms", oms)
-
-    // checking for login options as we need to get maarg instance URL for accessing specific apps
-    await fetchLoginOptions();
-
-    // Setting token previous to getting user-profile, if not then the client method honors the state token
-    authStore.$patch({
-      token: token
-    });
-    cookieHandler.set('token', token);
-    cookieHandler.set('expirationTime', expirationTime)
-
-    try {
-      const userProfileResp = await api({
-        url: "admin/user/profile",
-        method: "get",
-        baseUrl: commonUtil.getMaargURL()
-      });
-      const current = userProfileResp.data
-      authStore.$patch({
-        current: current
-      });
-    } catch(error: any) {
-      showToast(translate("Failed to fetch user profile information"));
-      console.error("error", error);
-      useAuth().clearAuth();
-      return Promise.reject(new Error(error));
-    }
-
-
-    await authStore.fetchPermissions();
-  } catch (error) {
-    showToast(translate('Failed to fetch user-profile, please try again'));
-    console.error("error: ", error);
-  }
-  router.replace('/');
-};
-
 const initialise = async () => {
-  hideBackground.value = true;
+  isInitializing.value = true;
   await presentLoader("Processing");
 
-  // Run the basic login flow when oms and token both are found in query
-  if (route.query?.oms && route.query?.token) {
-    await basicLogin();
-    dismissLoader();
-    return;
-  } else if (route.query?.token) {
+  if (route.query?.token) {
     // SAML login handling as only token will be returned in the query when login through SAML
-    await samlLogin();
+    await login(route.query)
     dismissLoader();
     return;
   }
 
   // fetch login options only if OMS is there as API calls require OMS
-  if (authStore.oms) {
+  if (cookieHelper().get("oms")) {
     await fetchLoginOptions();
   }
 
   // show OMS input if SAML if configured or if query or state does not have OMS
-  if (loginOption.value.loginAuthType !== 'BASIC' || route.query?.oms || !authStore.oms) {
+  if (loginOption.value.loginAuthType !== 'BASIC' || route.query?.oms || !cookieHelper().get("OMS")) {
     showOmsInput.value = true;
   }
 
@@ -283,8 +219,12 @@ const initialise = async () => {
   }
 
   // if a session is already active, login directly in the app
-  if (useAuth().isAuthenticated.value) {
+  if (isAuthenticated.value) {
     router.push('/');
+  }
+
+  if(cookieHelper().get("oms") && cookieHelper().get("token") && cookieHelper().get("userId") && cookieHelper().get("expirationTime")) {
+    login({ token: cookieHelper().get("token"), expirationTime: cookieHelper().get("expirationTime") })
   }
 
   // const token = cookieHandler.get('token');
@@ -293,10 +233,10 @@ const initialise = async () => {
   //   cookieHandler.set('expirationTime', authStore.token.expiration);
   // }
 
-  instanceUrl.value = authStore.oms;
-  if (authStore.oms) {
+  instanceUrl.value = commonUtil.getOMSInstanceName();
+  if (instanceUrl.value) {
     // If the current URL is available in alias show it for consistency
-    const currentInstanceUrlAlias = Object.keys(alias).find((key) => alias[key] === authStore.oms);
+    const currentInstanceUrlAlias = Object.keys(alias).find((key) => alias[key] === instanceUrl.value);
     currentInstanceUrlAlias && (instanceUrl.value = currentInstanceUrlAlias);
   }
   // If there is no current preference set the default one
@@ -304,7 +244,7 @@ const initialise = async () => {
     instanceUrl.value = defaultAlias;
   }
   dismissLoader();
-  hideBackground.value = false;
+  isInitializing.value = false;
 };
 
 const handleSubmit = () => {

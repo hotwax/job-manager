@@ -25,7 +25,8 @@ export const useUserStore = defineStore("user", {
       updateExists: false,
       registration: null as any,
     },
-    timeZones: [] as any
+    timeZones: [] as any,
+    oms: ""
   }),
   getters: {
     getPermissions: (state: any) => state.permissions,
@@ -47,6 +48,7 @@ export const useUserStore = defineStore("user", {
           baseUrl: commonUtil.getMaargURL()
         });
         this.current = userProfileResp.data
+        useAuth().updateUserId(this.current.userId)
 
         if (this.current.timeZone) {
           Settings.defaultZone = this.current.timeZone;
