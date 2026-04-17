@@ -99,7 +99,7 @@ let route = null as any;
 const userStore = useUserStore();
 
 // This is the best practice for defining composable instance, as this ensures in managing the reactive state properly
-const { loginOption, fetchLoginOptions, isAuthenticated, login: authLogin, updateToken, updateOMS } = useAuth();
+const { loginOption, fetchLoginOptions, isAuthenticated, login: authLogin, updateOMS } = useAuth();
 
 const username = ref("");
 const password = ref("");
@@ -209,13 +209,8 @@ const initialise = async () => {
   }
 
   // show OMS input if SAML if configured or if query or state does not have OMS
-  if (loginOption.value.loginAuthType !== 'BASIC' || route.query?.oms || !cookieHelper().get("OMS")) {
+  if (loginOption.value.loginAuthType !== 'BASIC' || !cookieHelper().get("OMS")) {
     showOmsInput.value = true;
-  }
-
-  // Update OMS input if found in query
-  if (route.query?.oms) {
-    instanceUrl.value = route.query.oms as string;
   }
 
   // if a session is already active, login directly in the app
@@ -226,12 +221,6 @@ const initialise = async () => {
   if(cookieHelper().get("oms") && cookieHelper().get("token") && cookieHelper().get("userId") && cookieHelper().get("expirationTime")) {
     login({ token: cookieHelper().get("token"), expirationTime: cookieHelper().get("expirationTime") })
   }
-
-  // const token = cookieHandler.get('token');
-  // if (authStore.token && !token) {
-  //   cookieHandler.set('token', authStore.token.value);
-  //   cookieHandler.set('expirationTime', authStore.token.expiration);
-  // }
 
   instanceUrl.value = commonUtil.getOMSInstanceName();
   if (instanceUrl.value) {

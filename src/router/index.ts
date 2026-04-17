@@ -18,6 +18,7 @@ import SystemMessageTypes from '@/views/SystemMessageTypes.vue';
 import SystemMessageTypeDetail from '@/views/SystemMessageTypeDetail.vue';
 import SystemMessageRemotes from '@/views/SystemMessageRemotes.vue';
 import SystemMessageRemoteDetail from '@/views/SystemMessageRemoteDetail.vue';
+import Login from '@/views/Login.vue';
 
 // Defining types for the meta values
 declare module 'vue-router' {
@@ -31,13 +32,6 @@ const authGuard = async (to: any, from: any, next: any) => {
     next('/login')
   }
   next()
-};
-
-const loginGuard = (to: any, from: any, next: any) => {
-  if (useAuth().isAuthenticated.value && !to.query?.token && !to.query?.oms) {
-    next('/')
-  }
-  next();
 };
 
 const routes: Array<RouteRecordRaw> = [
@@ -57,8 +51,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/login',
     name: 'Login',
-    component: () => import('../views/Login.vue'),
-    beforeEnter: loginGuard
+    component: Login
   },
   {
     path: "/settings",
