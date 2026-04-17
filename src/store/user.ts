@@ -277,34 +277,6 @@ export const useUserStore = defineStore("user", {
       }
       this.currentShopifyConfig = shopifyConfig ? shopifyConfig : {};
     },
-    async samlLogin(token: string, expirationTime: string) {
-      try {
-        cookieHelper().set("token", token)
-        cookieHelper().set("expirationTime", expirationTime)
-
-        try {
-          const userProfileResp = await api({
-            url: "admin/user/profile",
-            method: "get",
-            baseUrl: commonUtil.getMaargURL()
-          });
-          this.current = userProfileResp.data
-        } catch(error: any) {
-          useAuth().clearAuth();
-          showToast(translate("Failed to fetch user profile information"));
-          console.error("error", error);
-          return Promise.reject(new Error(error));
-        }
-
-        await this.fetchPermissions();
-      } catch (error: any) {
-        // If any of the API call in try block has status code other than 2xx it will be handled in common catch block.
-        // TODO Check if handling of specific status codes is required.
-        showToast(translate('Something went wrong while login. Please contact administrator.'));
-        console.error("error: ", error);
-        return Promise.reject(new Error(error))
-      }
-    },
     async setUserTimeZone(tzId: string) {
       // Do not make any api call if the user clicks the same timeZone again that is already selected
       if(this.current.timeZone === tzId) {
