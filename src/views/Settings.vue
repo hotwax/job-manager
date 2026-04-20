@@ -197,7 +197,7 @@ const userStore = useUserStore();
 const userProfile = computed(() => userStore.getUserProfile)
 const currentProductStore = computed(() => userStore.getCurrentProductStore)
 
-const appInfo = (import.meta.env.VUE_APP_VERSION_INFO ? JSON.parse(import.meta.env.VUE_APP_VERSION_INFO) : {}) as any;
+const appInfo = (import.meta.env.VITE_VERSION_INFO ? JSON.parse(import.meta.env.VITE_VERSION_INFO) : {}) as any;
 const appVersion = appInfo.branch ? (appInfo.branch + "-" + appInfo.revision) : appInfo.tag;
 const getDateTime = (time: any) => time ? DateTime.fromMillis(time).setZone(userStore.current.timezoneId).toLocaleString(DateTime.DATETIME_MED) : DateTime.now();
 
@@ -232,7 +232,7 @@ const logout = () => {
   })
 }
 const goToLaunchpad = () => {
-  window.location.href = `${import.meta.env.VUE_APP_LOGIN_URL}`
+  window.location.href = `${import.meta.env.VITE_LAUNCHPAD_URL}`
 }
 
 const timeZones = computed(() => userStore.getAvailableTimeZones)
