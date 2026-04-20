@@ -34,7 +34,7 @@ import { computed } from "vue";
 import { albumsOutline, cloudUploadOutline, fileTrayStackedOutline, globeOutline, pulseOutline, settingsOutline, timeOutline } from "ionicons/icons";
 import { hasPermission } from "@/authorization";
 import { translate } from "@common";
-import { useAuth } from "@/composables/auth";
+import { useAuth } from "@common/composables/auth";
 import router from "../router";
 
 const { isAuthenticated } = useAuth();

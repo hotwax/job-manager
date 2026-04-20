@@ -17,7 +17,7 @@ import { Settings } from 'luxon'
 import router from './router';
 import { initialise, resetConfig, translate } from '@common';
 import { useUserStore } from '@/store/user';
-import { useAuth } from './composables/auth';
+import { useAuth } from '@common/composables/auth';
 
 const loader = ref(null) as any
 const maxAge = import.meta.env.VUE_APP_CACHE_MAX_AGE ? parseInt(import.meta.env.VUE_APP_CACHE_MAX_AGE) : 0

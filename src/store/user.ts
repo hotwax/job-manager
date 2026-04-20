@@ -1,14 +1,14 @@
 import { DateTime, Settings } from "luxon";
 import { defineStore } from "pinia";
 import { showToast } from "@/utils";
-import { api, cookieHelper, commonUtil, translate } from "@common";
+import { api, commonUtil, translate } from "@common";
 import {
   getServerPermissionsFromRules,
   prepareAppPermissions,
   setPermissions,
 } from "@/authorization";
 import logger from "@/logger";
-import { useAuth } from "@/composables/auth";
+import { useAuth } from "@common/composables/auth";
 
 export const useUserStore = defineStore("user", {
   state: () => ({
@@ -171,9 +171,9 @@ export const useUserStore = defineStore("user", {
               })
               if(!commonUtil.hasError(response)){
                 return Promise.resolve(response);
-                } else {
+              } else {
                 return Promise.reject(response);
-                }
+              }
             }))
             const permissionResponses = {
               success: [],
@@ -324,6 +324,17 @@ export const useUserStore = defineStore("user", {
         logger.error("Failed to fetch time zones")
       }
     },
+    async postLogin() {
+      try {
+        await this.fetchUserProfile()
+        await this.fetchPermissions()
+      } catch(error: any) {
+        return Promise.reject(new Error(error));
+      }
+    },
+    async postLogout() {
+      this.$reset();
+    }
   },
   persist: true,
 });

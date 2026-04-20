@@ -188,7 +188,7 @@ import router from '@/router';
 import { useUserStore } from '@/store/user';
 import Image from '@/components/Image.vue'
 import { cookieHelper, commonUtil, translate } from '@common';
-import { useAuth } from '@/composables/auth';
+import { useAuth } from '@common/composables/auth';
 import Actions from '@/authorization/Actions';
 import { hasPermission } from '@/authorization';
 import { DateTime } from 'luxon';

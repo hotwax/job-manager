@@ -8,7 +8,7 @@ import { hasPermission } from '@/authorization';
 import { showToast } from '@/utils'
 import { translate } from '@common'
 import 'vue-router'
-import { useAuth } from '@/composables/auth';
+import { useAuth } from '@common/composables/auth';
 import ImportDetail from '@/views/ImportDetail.vue';
 import ManualUploads from '@/views/ManualUploads.vue';
 import JobDetail from '@/views/JobDetail.vue';
@@ -18,7 +18,7 @@ import SystemMessageTypes from '@/views/SystemMessageTypes.vue';
 import SystemMessageTypeDetail from '@/views/SystemMessageTypeDetail.vue';
 import SystemMessageRemotes from '@/views/SystemMessageRemotes.vue';
 import SystemMessageRemoteDetail from '@/views/SystemMessageRemoteDetail.vue';
-import Login from '@/views/Login.vue';
+import Login from '@common/components/Login.vue';
 
 // Defining types for the meta values
 declare module 'vue-router' {
@@ -27,11 +27,10 @@ declare module 'vue-router' {
   }
 }
 
-const authGuard = async (to: any, from: any, next: any) => {
+const authGuard = async () => {
   if (!useAuth().isAuthenticated.value) {
-    next('/login')
+    return { path: '/login' };
   }
-  next()
 };
 
 const routes: Array<RouteRecordRaw> = [
