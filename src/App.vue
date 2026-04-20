@@ -15,28 +15,13 @@ import { loadingController } from '@ionic/vue';
 import emitter from "@/event-bus"
 import { Settings } from 'luxon'
 import router from './router';
-import { initialise, resetConfig, translate } from '@common';
+import { translate } from '@common';
 import { useUserStore } from '@/store/user';
-import { useAuth } from '@common/composables/auth';
 
 const loader = ref(null) as any
-const maxAge = import.meta.env.VUE_APP_CACHE_MAX_AGE ? parseInt(import.meta.env.VUE_APP_CACHE_MAX_AGE) : 0
 
 const userStore = useUserStore();
 const userProfile = computed(() => userStore.getUserProfile)
-
-initialise({
-  cacheMaxAge: maxAge,
-  events: {
-    unauthorised: unauthorized,
-    responseError: () => {
-      setTimeout(() => dismissLoader(), 100);
-    },
-    queueTask: (payload: any) => {
-      emitter.emit("queueTask", payload);
-    }
-  }
-})
 
 async function presentLoader(options = { message: '', backdropDismiss: true }) {
   // When having a custom message remove already existing loader
@@ -60,16 +45,6 @@ function dismissLoader() {
   }
 }
 
-async function unauthorized() {
-  // Mark the user as unauthorised, this will help in not making the logout api call in actions
-  const redirectionUrl = await useAuth().logout({ isUserUnauthorised: true });
-  if(redirectionUrl) {
-    window.location.href = redirectionUrl
-  } else {
-    router.replace("/login");
-  }
-}
-
 onMounted(async () => {
   loader.value = await loadingController
     .create({
@@ -89,6 +64,5 @@ onMounted(async () => {
 onUnmounted(() => {
   emitter.off('presentLoader', presentLoader);
   emitter.off('dismissLoader', dismissLoader);
-  resetConfig();
 })
 </script>
