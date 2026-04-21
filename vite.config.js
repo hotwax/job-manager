@@ -12,6 +12,7 @@ export default defineConfig({
     legacy()
   ],
   resolve: {
+    dedupe: ['vue', 'pinia'],
     alias: {
       '@': path.resolve(__dirname, 'src'),
       '@common': path.resolve(__dirname, '../../common')

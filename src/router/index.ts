@@ -4,11 +4,10 @@ import Catalog from '@/views/Catalog.vue'
 import Settings from "@/views/Settings.vue"
 import FileHistory from "@/views/FileHistory.vue"
 import FileDetail from "@/views/FileDetail.vue"
-import { hasPermission } from '@/authorization';
 import { showToast } from '@/utils'
 import { translate } from '@common'
 import 'vue-router'
-import { useAuth } from '@common/composables/auth';
+import { useAuth } from '@common/composables/useAuth';
 import ImportDetail from '@/views/ImportDetail.vue';
 import ManualUploads from '@/views/ManualUploads.vue';
 import JobDetail from '@/views/JobDetail.vue';
@@ -19,6 +18,7 @@ import SystemMessageTypeDetail from '@/views/SystemMessageTypeDetail.vue';
 import SystemMessageRemotes from '@/views/SystemMessageRemotes.vue';
 import SystemMessageRemoteDetail from '@/views/SystemMessageRemoteDetail.vue';
 import Login from '@common/components/Login.vue';
+import { useUserStore } from '@/store/user';
 
 // Defining types for the meta values
 declare module 'vue-router' {
@@ -150,7 +150,7 @@ const router = createRouter({
 
 
 router.beforeEach((to, from) => {
-  if (to.meta.permissionId && !hasPermission(to.meta.permissionId)) {
+  if (to.meta.permissionId && !useUserStore().hasPermission(to.meta.permissionId)) {
     let redirectToPath = from.path;
     // If the user has navigated from Login page or if it is page load, redirect user to settings page without showing any toast
     if (redirectToPath == "/login" || redirectToPath == "/") redirectToPath = "/settings";

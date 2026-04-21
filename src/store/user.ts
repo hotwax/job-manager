@@ -2,13 +2,8 @@ import { DateTime, Settings } from "luxon";
 import { defineStore } from "pinia";
 import { showToast } from "@/utils";
 import { api, commonUtil, translate } from "@common";
-import {
-  getServerPermissionsFromRules,
-  prepareAppPermissions,
-  setPermissions,
-} from "@/authorization";
 import logger from "@/logger";
-import { useAuth } from "@common/composables/auth";
+import { useAuth } from "@common/composables/useAuth";
 
 export const useUserStore = defineStore("user", {
   state: () => ({
@@ -37,7 +32,26 @@ export const useUserStore = defineStore("user", {
     getPwaState: (state: any) => state.pwaState,
     getCurrentProductStore: (state: any) => state.currentProductStore,
     getUserTimeZone: (state: any) => state.current.timeZone,
-    getAvailableTimeZones: (state: any) => state.timeZones
+    getAvailableTimeZones: (state: any) => state.timeZones,
+    hasPermission: (state: any) => (permissionId: string): boolean => {
+      const permissions = state.permissions;
+
+      if(!permissionId) {
+        return true;
+      }
+
+      // Handle OR/AND logic in permission string
+      if (permissionId.includes(' OR ')) {
+        const parts = permissionId.split(' OR ');
+        return parts.some((part: string) => useUserStore().hasPermission(part.trim()));
+      }
+
+      if (permissionId.includes(' AND ')) {
+        const parts = permissionId.split(' AND ');
+        return parts.every((part: string) => useUserStore().hasPermission(part.trim()));
+      }
+      return permissions.includes(permissionId);
+    }
   },
   actions: {
     async fetchUserProfile() {
@@ -121,109 +135,48 @@ export const useUserStore = defineStore("user", {
         logger.error('Favourite shopify shop not found', err)
       }
     },
-
     async fetchPermissions() {
       const permissionId = import.meta.env.VITE_APP_PERMISSION_ID;
-      // Prepare permissions list
-      const serverPermissionsFromRules = [...new Set(getServerPermissionsFromRules())];
-      if (permissionId) serverPermissionsFromRules.push(permissionId);
-      let serverPermissions = [] as any;
-
-      // If the server specific permission list doesn't exist, getting server permissions will be of no use
-      // It means there are no rules yet depending upon the server permissions.
-      if (serverPermissionsFromRules && serverPermissionsFromRules.length == 0) return serverPermissions;
-      // TODO pass specific permissionIds
-      let resp;
-      // TODO Make it configurable from the environment variables.
-      // Though this might not be an server specific configuration, 
-      // we will be adding it to environment variable for easy configuration at app level
+      const serverPermissions = [] as any;
       const viewSize = 200;
+      let viewIndex = 0;
 
       try {
-        const params = {
-          "viewIndex": 0,
-          viewSize,
-          permissionIds: serverPermissionsFromRules
-        }
-        resp = await api({
-          url: "getPermissions",
-          method: "post",
-          baseURL: commonUtil.getOmsURL(),
-          data: params,
-        })
-        if(resp.status === 200 && resp.data.docs?.length && !commonUtil.hasError(resp)) {
-          serverPermissions = resp.data.docs.map((permission: any) => permission.permissionId);
-          const total = resp.data.count;
-          const remainingPermissions = total - serverPermissions.length;
-          if (remainingPermissions > 0) {
-            // We need to get all the remaining permissions
-            const apiCallsNeeded = Math.floor(remainingPermissions / viewSize) + ( remainingPermissions % viewSize != 0 ? 1 : 0);
-            const responses = await Promise.all([...Array(apiCallsNeeded).keys()].map(async (index: any) => {
-              const response = await api({
-                url: "getPermissions",
-                method: "post",
-                baseURL: commonUtil.getOmsURL(),
-                data: {
-                  "viewIndex": index + 1,
-                  viewSize,
-                  permissionIds: serverPermissionsFromRules
-                }
-              })
-              if(!commonUtil.hasError(response)){
-                return Promise.resolve(response);
-              } else {
-                return Promise.reject(response);
-              }
-            }))
-            const permissionResponses = {
-              success: [],
-              failed: []
-            }
-            responses.reduce((permissionResponses: any, permissionResponse: any) => {
-              if (permissionResponse.status !== 200 || commonUtil.hasError(permissionResponse) || !permissionResponse.data?.docs) {
-                permissionResponses.failed.push(permissionResponse);
-              } else {
-                permissionResponses.success.push(permissionResponse);
-              }
-              return permissionResponses;
-            }, permissionResponses)
+        let resp;
+        do {
+          resp = await api({
+            url: "getPermissions",
+            method: "post",
+            baseURL: commonUtil.getOmsURL(),
+            data: { viewIndex, viewSize }
+          }) as any
 
-            serverPermissions = permissionResponses.success.reduce((serverPermissions: any, response: any) => {
-              serverPermissions.push(...response.data.docs.map((permission: any) => permission.permissionId));
-              return serverPermissions;
-            }, serverPermissions)
-
-            // If partial permissions are received and we still allow user to login, some of the functionality might not work related to the permissions missed.
-            // Show toast to user intimiting about the failure
-            // Allow user to login
-            // TODO Implement Retry or improve experience with show in progress icon and allowing login only if all the data related to user profile is fetched.
-            if (permissionResponses.failed.length > 0) Promise.reject("Something went wrong while getting complete user permissions.");
+          if (resp.status === 200 && resp.data.docs?.length && !commonUtil.hasError(resp)) {
+            serverPermissions.push(...resp.data.docs.map((permission: any) => permission.permissionId));
+            viewIndex++;
+          } else {
+            resp = null;
           }
-        }
-        const appPermissions = prepareAppPermissions(serverPermissions);
+        } while (resp);
 
         // Checking if the user has permission to access the app
         // If there is no configuration, the permission check is not enabled
-        if(permissionId) {
-          const hasPermission = appPermissions.some((appPermission: any) => appPermission.action === permissionId);
-          if(!hasPermission) {
+        if (permissionId) {
+          const hasAppPermission = serverPermissions.includes(permissionId);
+          if (!hasAppPermission) {
             const permissionError = "You do not have permission to access the app.";
-            showToast(translate(permissionError));
+            commonUtil.showToast(translate(permissionError));
             logger.error("error", permissionError);
-
             return Promise.reject(new Error(permissionError));
           }
         }
 
         // Update the state with the fetched permissions
-        this.permissions = appPermissions;
-        // Set permissions in the authorization module
-        setPermissions(appPermissions);
-      } catch(error: any) {
+        this.permissions = serverPermissions;
+      } catch (error: any) {
         return Promise.reject(error);
       }
     },
-
     async setCurrentProductStore(productStoreInfo: any) {
       let productStore = productStoreInfo
       if (!productStoreInfo.storeName) {

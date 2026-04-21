@@ -26,9 +26,6 @@ import './theme/variables.css';
 import "@common/css/settings.css"
 import "@common/css/theme.css"
 
-import permissionPlugin from '@/authorization/index';
-import permissionRules from '@/authorization/Rules';
-import permissionActions from '@/authorization/Actions';
 import { createPinia } from 'pinia';
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import localeMessages from './locales';
@@ -49,10 +46,6 @@ const app = createApp(App)
   .use(i18n)
   .use(pinia)
   .use(router)
-  .use(permissionPlugin, {
-    rules: permissionRules,
-    actions: permissionActions
-  })
 
 initialiseConfig({
   postLogin: useUserStore().postLogin,
