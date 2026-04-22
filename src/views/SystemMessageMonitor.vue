@@ -22,7 +22,7 @@
               :value="queryString"
               @ionInput="handleQueryInput"
               :debounce="300"
-              :placeholder="translate('Search by message, type, remote, or content')"
+              :placeholder="translate('Search by message or parent type')"
             />
 
             <div class="filter-grid">

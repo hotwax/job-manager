@@ -6,7 +6,7 @@
           <ion-back-button default-href="/catalog"></ion-back-button>
         </ion-buttons>
         <ion-title>{{ job?.jobName || translate('Job Details') }}</ion-title>
-        <ion-buttons v-if="job" slot="end">
+        <ion-buttons v-if="job.paused" slot="end">
           <ion-button @click="togglePause" :color="job.paused === 'Y' ? 'warning' : 'success'">
             <ion-icon :icon="job.paused === 'Y' ? playOutline : pauseOutline"></ion-icon>
           </ion-button>
@@ -438,12 +438,11 @@ import {
   IonInfiniteScrollContent,
   IonSkeletonText,
   IonSpinner,
-  IonCardSubtitle,
   onIonViewWillEnter,
   alertController
 } from '@ionic/vue';
 import { computed, ref, watch } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
+import router from "../router"
 import { useUserStore } from '@/store/user';
 import { translate, commonUtil, logger } from '@common';
 import { getCronString, getFileSize, getDateAndTime, getDateTimeWithOrdinalSuffix, showToast } from '@/utils';
@@ -463,8 +462,7 @@ import { getStatusDesc } from '@/utils/config';
 import { useJobStore } from '@/store/jobs';
 import { DateTime } from 'luxon';
 
-const route = useRoute();
-const router = useRouter();
+const route = router.currentRoute.value;
 const userStore = useUserStore();
 const jobStore = useJobStore();
 

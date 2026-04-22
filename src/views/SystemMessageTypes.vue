@@ -76,13 +76,12 @@ import {
   onIonViewWillEnter
 } from "@ionic/vue";
 import { computed, ref } from "vue";
-import { useRouter } from "vue-router";
+import router from "../router";
 
 import { translate } from "@common";
 
 import { useSystemMessageStore } from "@/store/systemMessage";
 
-const router = useRouter();
 const store = useSystemMessageStore();
 const queryString = ref("");
 

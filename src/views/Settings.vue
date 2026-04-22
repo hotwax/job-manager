@@ -48,7 +48,7 @@
           <ion-card-content>
             {{ translate('This is the name of the OMS you are connected to right now. Make sure that you are connected to the right instance before proceeding.') }}
           </ion-card-content>
-          <ion-button :standalone-hidden="!hasPermission(Actions.APP_PWA_STANDALONE_ACCESS)" @click="commonUtil.goToOms()" fill="clear" :disabled="!hasPermission(Actions.APP_COMMERCE_VIEW)">
+          <ion-button :standalone-hidden="!hasPermission('')" @click="commonUtil.goToOms()" fill="clear" :disabled="!hasPermission('COMMERCEUSER_VIEW')">
             {{ translate('Go to OMS') }}
             <ion-icon slot="end" :icon="openOutline" />
           </ion-button>
@@ -188,14 +188,13 @@ import router from '@/router';
 import { useUserStore } from '@/store/user';
 import Image from '@/components/Image.vue'
 import { cookieHelper, commonUtil, translate } from '@common';
-import { useAuth } from '@common/composables/auth';
-import Actions from '@/authorization/Actions';
-import { hasPermission } from '@/authorization';
+import { useAuth } from '@common/composables/useAuth';
 import { DateTime } from 'luxon';
 
 const userStore = useUserStore();
 const userProfile = computed(() => userStore.getUserProfile)
 const currentProductStore = computed(() => userStore.getCurrentProductStore)
+const hasPermission = computed(() => (permissionId: string) =>  userStore.hasPermission(permissionId));
 
 const appInfo = (import.meta.env.VITE_VERSION_INFO ? JSON.parse(import.meta.env.VITE_VERSION_INFO) : {}) as any;
 const appVersion = appInfo.branch ? (appInfo.branch + "-" + appInfo.revision) : appInfo.tag;

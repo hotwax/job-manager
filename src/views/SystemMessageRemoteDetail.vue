@@ -134,7 +134,7 @@ import {
   onIonViewWillEnter
 } from "@ionic/vue";
 import { computed, reactive, ref } from "vue";
-import { useRouter } from "vue-router";
+import router from "../router";
 
 import { translate } from "@common";
 
@@ -146,7 +146,6 @@ import { useUtilStore } from "@/store/util";
 // Type based declaration
 const props = defineProps<{ id?: string }>();
 
-const router = useRouter();
 const store = useSystemMessageStore();
 const utilStore = useUtilStore();
 const queryString = ref("");

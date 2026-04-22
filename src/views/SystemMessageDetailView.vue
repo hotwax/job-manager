@@ -395,7 +395,7 @@ import {
   warningOutline
 } from "ionicons/icons";
 import { computed, ref, watch } from "vue";
-import { useRouter } from "vue-router";
+import router from "../router";
 import { saveAs } from "file-saver";
 
 import { commonUtil, translate } from "@common";
@@ -407,7 +407,6 @@ const props = defineProps<{ id: string }>();
 
 const systemMessageStore = useSystemMessageStore();
 const utilStore = useUtilStore();
-const router = useRouter();
 const isEditing = ref(false);
 const editedText = ref("");
 
@@ -632,20 +631,22 @@ const downloadLinkedFile = async () => {
 };
 
 const handleAction = async (statusId: string) => {
-  if (!message.value || !statusId) return;
+  if(!statusId) return;
 
-  const result = await systemMessageStore.updateSystemMessage({
-    systemMessageId: message.value.systemMessageId,
-    statusId
-  });
+  console.log(statusId)
 
-  if (result.error) {
-    await showToast(translate("Failed to update status."));
-    return;
-  }
+  // const result = await systemMessageStore.updateSystemMessage({
+  //   systemMessageId: message.value.systemMessageId,
+  //   statusId
+  // });
 
-  await loadMessage();
-  await showToast(`${translate("Message moved to")} ${getStatusDescription(statusId)}.`);
+  // if (result.error) {
+  //   await showToast(translate("Failed to update status."));
+  //   return;
+  // }
+
+  // await loadMessage();
+  // await showToast(`${translate("Message moved to")} ${getStatusDescription(statusId)}.`);
 };
 
 const getStatusDescription = (statusId: string) => utilStore.getStatusItemDesc(statusId);
