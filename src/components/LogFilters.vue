@@ -12,7 +12,8 @@
 
   <ion-content>
     <ion-item>
-      <ion-select :value="filters['statusId']" :label="translate('Status')" interface="popover" @ionChange="updateLogFilter('statusId', $event)">
+      <ion-select multiple :value="filters['statusId']" :label="translate('Status')" interface="popover" @ionChange="updateLogFilter('statusId', $event)">
+        <ion-select-option value="">{{ translate("All") }}</ion-select-option>
         <ion-select-option v-for="statusItem in statusItems" :key="statusItem.statusId" :value="statusItem.statusId">{{ translate(statusItem.description) }}</ion-select-option>
       </ion-select>
     </ion-item>
@@ -32,11 +33,11 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonButtons, IonContent, IonFooter, IonHeader, IonIcon, IonInput, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonListHeader, IonSelect, IonSelectOption, IonTextarea, IonTitle, IonToolbar, modalController, onIonViewWillEnter } from '@ionic/vue';
+import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonSelect, IonSelectOption, IonTitle, IonToolbar, modalController } from '@ionic/vue';
 import { closeOutline, saveOutline } from 'ionicons/icons';
 import { translate } from '@common';
 import { useMdmConfigStore } from '@/store/mdmConfig';
-import { computed, toRef, toRefs } from 'vue';
+import { computed, toRef } from 'vue';
 import { useUtilStore } from '@/store/util';
 
 const mdmConfigStore = useMdmConfigStore();
@@ -61,6 +62,7 @@ async function saveFilters() {
 }
 
 function updateLogFilter(filterType: string, event: any) {
+  console.log('event.detail.value', event.detail.value)
   filters.value[filterType] = event.detail.value
 }
 </script>
