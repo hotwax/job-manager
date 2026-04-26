@@ -31,7 +31,7 @@
 <script setup lang="ts">
 import { IonContent, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenu, IonMenuToggle, IonTitle, IonToolbar } from "@ionic/vue";
 import { computed } from "vue";
-import { albumsOutline, cloudUploadOutline, fileTrayStackedOutline, globeOutline, pulseOutline, settingsOutline, timeOutline } from "ionicons/icons";
+import { albumsOutline, cloudDownloadOutline, cloudUploadOutline, documentTextOutline, fileTrayStackedOutline, globeOutline, pulseOutline, settingsOutline, timeOutline } from "ionicons/icons";
 import { translate } from "@common";
 import { useAuth } from "@common/composables/useAuth";
 import router from "../router";
@@ -104,6 +104,23 @@ let appPages = [
     iosIcon: globeOutline,
     mdIcon: globeOutline,
     childRoutes: ["/system-message-remotes/"]
+  },
+  {
+    title: "Data Documents"
+  },
+  {
+    title: "Documents",
+    url: "/data-documents",
+    iosIcon: documentTextOutline,
+    mdIcon: documentTextOutline,
+    childRoutes: ["/data-documents/"]
+  },
+  {
+    title: "Export History",
+    url: "/data-document-export-history",
+    iosIcon: cloudDownloadOutline,
+    mdIcon: cloudDownloadOutline,
+    childRoutes: ["/data-document-export-history/"]
   },
   {
     title: "Settings"
