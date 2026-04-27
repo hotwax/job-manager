@@ -308,7 +308,7 @@
               <template v-for="field in typeFields" :key="field">
                 <ion-item v-if="messageType && messageType[field]">
                   <ion-label>
-                    <p class="overline">{{ field }}</p>
+                    <p class="overline">{{ getLabel(field) }}</p>
                     <p v-if="field === 'receiveResponseEnumId'">
                       {{ messageType.receiveResponseEnumId }}
                       <ion-badge v-if="messageType.receiveResponseEnumId === 'MsgRrMove'" color="warning" style="margin-left: 8px;">
@@ -331,7 +331,7 @@
               <template v-for="field in remoteFields" :key="field">
                 <ion-item v-if="remoteSystem && remoteSystem[field]">
                   <ion-label>
-                    <p class="overline">{{ field }}</p>
+                    <p class="overline">{{ getLabel(field) }}</p>
                     <p>{{ remoteSystem[field] }}</p>
                   </ion-label>
                 </ion-item>
@@ -431,6 +431,10 @@ const isSequenceOperation = computed(() =>
   messageType.value?.parentTypeId === 'ShopifyBulkQuery' ||
   currentEnumSequence.value.length > 1
 );
+
+const getLabel = (label: string) => {
+  return label.replace(/([a-z])([A-Z])/g, '$1 $2')
+}
 
 const typeFields = ["systemMessageTypeId", "description", "parentTypeId", "sendServiceName", "consumeServiceName", "sendPath", "receivePath", "receiveMovePath", "receiveFilePattern", "receiveResponseEnumId"];
 const remoteFields = ["systemMessageRemoteId", "description", "sendUrl", "receiveUrl", "remoteAppCode", "username", "authHeaderName", "remoteId", "internalId", "accessScopeEnumId", "sendServiceName"];
