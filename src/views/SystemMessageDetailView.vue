@@ -310,9 +310,12 @@
 
           <!-- Message Type Details -->
           <ion-card class="message-type">
-            <ion-card-header>
-              <ion-card-title>{{ translate("System Message Type") }}</ion-card-title>
-            </ion-card-header>
+            <ion-item lines="none">
+              <h4 slot="start">{{ translate("System Message Type") }}</h4>
+              <ion-button fill="clear" @click="openSystemMessageType(message.systemMessageTypeId)">
+                <ion-icon :icon="openOutline"></ion-icon>
+              </ion-button>
+            </ion-item>
             <ion-list lines="none">
               <template v-for="field in typeFields" :key="field">
                 <ion-item v-if="messageType && messageType[field]">
@@ -333,9 +336,12 @@
 
           <!-- Remote System Details -->
           <ion-card class="message-remote">
-            <ion-card-header>
-              <ion-card-title>{{ translate("System Message Remote") }}</ion-card-title>
-            </ion-card-header>
+            <ion-item lines="none">
+              <h4 slot="start">{{ translate("System Message Remote") }}</h4>
+              <ion-button fill="clear" @click="openSystemMessageRemote(message.systemMessageRemoteId)">
+                <ion-icon :icon="openOutline"></ion-icon>
+              </ion-button>
+            </ion-item>
             <ion-list lines="none">
               <template v-for="field in remoteFields" :key="field">
                 <ion-item v-if="remoteSystem && remoteSystem[field]">
@@ -715,6 +721,14 @@ const getStatusIcon = (statusId?: string) => {
 
 onIonViewWillEnter(loadMessage);
 watch(() => props.id, () => loadMessage());
+
+const openSystemMessageType = (typeId: string) => {
+  router.push(`/system-message-types/${typeId}`)
+}
+
+const openSystemMessageRemote = (remoteId: string) => {
+  router.push(`/system-message-remotes/${remoteId}`)
+}
 </script>
 
 <style scoped>
