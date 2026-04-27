@@ -292,12 +292,12 @@ export const useUserStore = defineStore("user", {
     },
     async postLogin() {
       try {
+        await this.fetchUserProfile();
+        await this.fetchPermissions();
         await Promise.allSettled([
-          this.fetchUserProfile(),
-          this.fetchPermissions(),
           useUtilStore().fetchEntities(),
           useUtilStore().fetchStatusFlowTransitions()
-        ])
+        ]);
       } catch(error: any) {
         return Promise.reject(new Error(error));
       }

@@ -232,11 +232,6 @@ onIonViewWillEnter(async () => {
 </script>
 
 <style scoped>
-.filter-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-}
 
 .results-header {
   display: flex;

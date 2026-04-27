@@ -106,11 +106,6 @@ onIonViewWillEnter(async () => {
 </script>
 
 <style scoped>
-.catalog-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
-  gap: 16px;
-}
 
 .empty-state {
   margin-top: 32px;

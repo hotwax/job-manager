@@ -22,6 +22,7 @@ import { useUserStore } from '@/store/user';
 import DataDocumentCatalog from '@/views/DataDocumentCatalog.vue';
 import DataDocumentDetail from '@/views/DataDocumentDetail.vue';
 import DataDocumentBuilder from '@/views/DataDocumentBuilder.vue';
+import DataDocumentGraphBuilder from '@/views/DataDocumentGraphBuilder.vue';
 import DataDocumentQueryPreview from '@/views/DataDocumentQueryPreview.vue';
 import DataDocumentExportHistory from '@/views/DataDocumentExportHistory.vue';
 
@@ -159,6 +160,12 @@ const routes: Array<RouteRecordRaw> = [
     beforeEnter: authGuard
   },
   {
+    path: '/data-documents/new/graph',
+    name: 'CreateDataDocumentGraph',
+    component: DataDocumentGraphBuilder,
+    beforeEnter: authGuard
+  },
+  {
     path: '/data-documents/:id',
     name: 'DataDocumentDetail',
     component: DataDocumentDetail,
@@ -169,6 +176,13 @@ const routes: Array<RouteRecordRaw> = [
     path: '/data-documents/:id/edit',
     name: 'EditDataDocument',
     component: DataDocumentBuilder,
+    beforeEnter: authGuard,
+    props: true
+  },
+  {
+    path: '/data-documents/:id/graph',
+    name: 'DataDocumentGraphBuilder',
+    component: DataDocumentGraphBuilder,
     beforeEnter: authGuard,
     props: true
   },

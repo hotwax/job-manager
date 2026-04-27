@@ -267,12 +267,6 @@ onIonViewWillEnter(loadRemote);
   flex-wrap: wrap;
 }
 
-.form-grid,
-.filter-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-}
 
 .counts {
   display: flex;
