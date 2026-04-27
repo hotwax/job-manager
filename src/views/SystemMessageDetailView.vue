@@ -184,16 +184,17 @@
             <ion-card-content v-if="allowedTransitions.length" class="journey-actions">
               <p class="actions-label">{{ translate("Take Control") }}</p>
               <div class="action-grid">
-                <ion-button
-                  v-for="transition in allowedTransitions"
-                  :key="transition.toStatusId"
-                  :fill="transition.toStatusId === 'SmsgError' ? 'outline' : 'solid'"
-                  size="small"
-                  :color="commonUtil.getStatusColor(transition.toStatusId as string)"
-                  @click="transition.toStatusId && handleAction(transition.toStatusId)"
-                >
-                  {{ transition.transitionName || transition.toStatusDescription }}
-                </ion-button>
+                <template v-for="transition in allowedTransitions" :key="transition.toStatusId">
+                  <ion-button
+                    v-if="actionObj[transition.toStatusId] && isStatusTransitionValid(transition.toStatusId)"
+                    :fill="transition.toStatusId === 'SmsgError' ? 'outline' : 'solid'"
+                    size="small"
+                    :color="commonUtil.getStatusColor(transition.toStatusId as string)"
+                    @click="transition.toStatusId && handleAction(transition.toStatusId)"
+                  >
+                    {{ transition.transitionName || transition.toStatusDescription }}
+                  </ion-button>
+                </template>
               </div>
             </ion-card-content>
           </ion-card>
@@ -436,11 +437,26 @@ const getLabel = (label: string) => {
   return label.replace(/([a-z])([A-Z])/g, '$1 $2')
 }
 
+// Checks if the toStatusId is a valid transition, if not the button is not displayed on the UI
+const isStatusTransitionValid = (statusId: string) => {
+  let status = COMMON_STATUS
+  const isOutgoing = message.value.isOutgoing === "Y"
+
+  if(isOutgoing) {
+    status = status.concat(OUTGOING_HAPPY_PATH)
+  } else {
+    status = status.concat(INCOMING_HAPPY_PATH)
+  }
+
+  return status.includes(statusId)
+}
+
 const typeFields = ["systemMessageTypeId", "description", "parentTypeId", "sendServiceName", "consumeServiceName", "sendPath", "receivePath", "receiveMovePath", "receiveFilePattern", "receiveResponseEnumId"];
 const remoteFields = ["systemMessageRemoteId", "description", "sendUrl", "receiveUrl", "remoteAppCode", "username", "authHeaderName", "remoteId", "internalId", "accessScopeEnumId", "sendServiceName"];
 
 const OUTGOING_HAPPY_PATH = ["SmsgCreated", "SmsgProduced", "SmsgSending", "SmsgSent", "SmsgConfirmed"];
 const INCOMING_HAPPY_PATH = ["SmsgCreated", "SmsgReceived", "SmsgConsuming", "SmsgConsumed", "SmsgConfirmed"];
+const COMMON_STATUS = ["SmsgCancelled", "SmsgError", "SmsgRejected"]
 
 const futureStatuses = (): string[] => {
   if (!message?.value.statusId) return [];
@@ -551,8 +567,11 @@ const saveContent = async () => {
   if (!message.value) return;
 
   const result = await systemMessageStore.updateSystemMessage({
-    systemMessageId: message.value.systemMessageId,
-    messageText: editedText.value
+    data: {
+      systemMessageId: message.value.systemMessageId,
+      messageText: editedText.value
+    },
+    endpoint: "update"
   });
 
   if (result.error) {
@@ -635,15 +654,15 @@ const downloadLinkedFile = async () => {
 };
 
 const actionObj = {
-  "SmsgCancelled": "",
-  "SmsgConfirmed": "",
-  "SmsgConsumed": "",
-  "SmsgConsuming": "",
+  "SmsgCancelled": "cancel",
+  "SmsgConfirmed": "",  // last status
+  "SmsgConsumed": "consume",
+  "SmsgConsuming": "", // Mid status
   "SmsgError": "",
-  "SmsgProduced": "",
+  "SmsgProduced": "update",
   "SmsgReceived": "",
-  "SmsgRejected": "",
-  "SmsgSending": "",
+  "SmsgRejected": "", // last status
+  "SmsgSending": "", // Mid status
   "SmsgSent": "send"
 } as Record<string, string>
 
@@ -651,8 +670,11 @@ const handleAction = async (statusId: string) => {
   if(!statusId && !actionObj[statusId]) return;
 
   const result = await systemMessageStore.updateSystemMessage({
-    systemMessageId: message.value.systemMessageId,
-    statusId
+    data: {
+      systemMessageId: message.value.systemMessageId,
+      statusId
+    },
+    endpoint: actionObj[statusId]
   });
 
   // if (result.error) {
@@ -660,7 +682,7 @@ const handleAction = async (statusId: string) => {
   //   return;
   // }
 
-  // await loadMessage();
+  await loadMessage();
   // await showToast(`${translate("Message moved to")} ${getStatusDescription(statusId)}.`);
 };
 

@@ -1,6 +1,6 @@
-import { api } from "@common";
+import { api, translate } from "@common";
 import { defineStore } from "pinia";
-import { getDateAndTime } from "@/utils";
+import { getDateAndTime, showToast } from "@/utils";
 
 import logger from "@/logger";
 import { useUtilStore } from "./util";
@@ -343,39 +343,17 @@ export const useSystemMessageStore = defineStore("systemMessage", {
       this.loading = true;
 
       try {
-        // const response = await api({
-        //   url: `admin/systemMessages/${encodeURIComponent(payload.systemMessageId)}/${payload.endpoint}`,
-        //   method: "POST",
-        //   data: payload.data
-        // });
+        await api({
+          url: `admin/systemMessages/${encodeURIComponent(payload.data.systemMessageId)}/${payload.endpoint}`,
+          method: "POST",
+          data: payload.data
+        });
 
-        const message = {
-          ...(this.allSystemMessages.find((item: any) => item.systemMessageId === payload.systemMessageId) || {}),
-          ...payload,
-          ...(getResponseEntity(response) || {})
-        };
-
-        // this.allSystemMessages = updateMessages(this.allSystemMessages, message);
-        // this.systemMessages = updateMessages(this.systemMessages, message);
-        if (this.currentSystemMessage?.systemMessageId === payload.systemMessageId) {
-          this.currentSystemMessage = { ...this.currentSystemMessage, ...message };
-        }
-
-        return { data: { success: true, entity: message } };
+        showToast(translate("System message updated successfully"))
+        return { data: { success: true } };
       } catch (err) {
+        showToast(translate("Failed to update system message"))
         logger.error("Failed to update system message", err);
-
-        if (!canUseMockFallback(err)) {
-          return { error: err };
-        }
-
-        this.allSystemMessages = updateMessages(this.allSystemMessages, payload);
-        this.systemMessages = updateMessages(this.systemMessages, payload);
-        if (this.currentSystemMessage?.systemMessageId === payload.systemMessageId) {
-          this.currentSystemMessage = { ...this.currentSystemMessage, ...payload };
-        }
-
-        return { data: { success: true, entity: payload } };
       } finally {
         this.loading = false;
       }
