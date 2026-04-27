@@ -193,7 +193,7 @@ import { DateTime } from 'luxon';
 
 const userStore = useUserStore();
 const userProfile = computed(() => userStore.getUserProfile)
-const currentProductStore = computed(() => userStore.getCurrentProductStore)
+const currentProductStore = userStore.getCurrentProductStore
 const hasPermission = computed(() => (permissionId: string) =>  userStore.hasPermission(permissionId));
 
 const appInfo = (import.meta.env.VITE_VERSION_INFO ? JSON.parse(import.meta.env.VITE_VERSION_INFO) : {}) as any;
@@ -212,7 +212,7 @@ const setEComStore = (event: any) => {
   // https://github.com/ionic-team/ionic-framework/discussions/25532
   // https://github.com/ionic-team/ionic-framework/issues/20106
   // https://github.com/ionic-team/ionic-framework/pull/25858
-  if(userProfile && currentProductStore?.value.productStoreId !== event.detail.value) {
+  if(userProfile && currentProductStore.productStoreId !== event.detail.value) {
     userStore.setCurrentProductStore({ 'productStoreId': event.detail.value })
   }
 }

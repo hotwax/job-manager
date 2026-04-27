@@ -183,7 +183,7 @@ export const useUserStore = defineStore("user", {
         productStore = this.current.stores.find((store: any) => store.productStoreId === productStoreInfo.productStoreId);
       }
       this.currentProductStore = productStore;
-      await this.fetchShopifyConfig(productStore.productStoreId);
+      // await this.fetchShopifyConfig(productStore.productStoreId);
     },
 
     updatePwaState(payload: any) {
@@ -281,6 +281,8 @@ export const useUserStore = defineStore("user", {
       try {
         await this.fetchUserProfile()
         await this.fetchPermissions()
+        await this.fetchProductStores()
+        await this.fetchProductStorePreference()
       } catch(error: any) {
         return Promise.reject(new Error(error));
       }

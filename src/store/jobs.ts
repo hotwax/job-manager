@@ -176,32 +176,21 @@ export const useJobStore = defineStore("job", {
           // Checks if a product store-dependent job has the current product store set in its parameters.
           if(jobProductStore?.parameterName && jobProductStore.parameterValue === useUserStore().getCurrentProductStore.productStoreId) {
             jobDetails = job
-          } else if(!jobProductStore?.parameterName) {
+          } else if(jobProductStore?.parameterName && !jobProductStore.parameterValue) {
             jobDetails = { ...job, isDraftJob: true }
           }
         } else {
-          // For handling case where we have child jobs for the productstore independent job
-          // We'll give preference to job with parentJobName and then the job without parentJobName
-          // if(job.parentJobName) {
           jobDetails = job
-          // }
         }
       } catch(err) {
         logger.error("Failed to fetch jobs", err)
       }
- 
-      let fallbackJob = this.jobs.find((job: any) => job.jobName === jobName) || {}
- 
-      if (!Object.keys(fallbackJob).length && !Object.keys(jobDetails || {}).length) {
-        await this.fetchJobs()
-        fallbackJob = this.jobs.find((job: any) => job.jobName === jobName) || {}
+
+      if(jobDetails.instanceOfProductId && !this.products[jobDetails.instanceOfProductId]) {
+        this.fetchProductDetail(jobDetails.instanceOfProductId);
       }
- 
-      const job = getJobDetailWithFallback(jobDetails, fallbackJob);
-      if (job.instanceOfProductId && !this.products[job.instanceOfProductId]) {
-        this.fetchProductDetail(job.instanceOfProductId);
-      }
-      return job;
+
+      return jobDetails;
     },
     async fetchProductDetail(productId: string) {
       try {

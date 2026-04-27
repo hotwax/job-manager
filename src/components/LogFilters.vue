@@ -62,7 +62,6 @@ async function saveFilters() {
 }
 
 function updateLogFilter(filterType: string, event: any) {
-  console.log('event.detail.value', event.detail.value)
   filters.value[filterType] = event.detail.value
 }
 </script>

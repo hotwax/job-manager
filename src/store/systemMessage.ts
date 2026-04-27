@@ -5,14 +5,6 @@ import { getDateAndTime } from "@/utils";
 import logger from "@/logger";
 import { useUtilStore } from "./util";
 
-const API_ENDPOINTS = {
-  systemMessageTypes: "system/message/types",
-  systemMessageRemotes: "system/message/remotes",
-  systemMessages: "system/messages",
-  systemMessageEntity: "moqui/entities/moqui.service.message.SystemMessage",
-  enumerations: "moqui/entities/moqui.basic.Enumeration",
-};
-
 const getMessageCounts = (messages: any[]) => ({
   sent: messages.filter((message: any) => message.statusId === "SmsgSent").length,
   error: messages.filter((message: any) => message.statusId === "SmsgError").length,
@@ -351,11 +343,11 @@ export const useSystemMessageStore = defineStore("systemMessage", {
       this.loading = true;
 
       try {
-        const response = await api({
-          url: `${API_ENDPOINTS.systemMessages}/${encodeURIComponent(payload.systemMessageId)}`,
-          method: "PATCH",
-          data: payload
-        });
+        // const response = await api({
+        //   url: `admin/systemMessages/${encodeURIComponent(payload.systemMessageId)}/${payload.endpoint}`,
+        //   method: "POST",
+        //   data: payload.data
+        // });
 
         const message = {
           ...(this.allSystemMessages.find((item: any) => item.systemMessageId === payload.systemMessageId) || {}),
@@ -363,8 +355,8 @@ export const useSystemMessageStore = defineStore("systemMessage", {
           ...(getResponseEntity(response) || {})
         };
 
-        this.allSystemMessages = updateMessages(this.allSystemMessages, message);
-        this.systemMessages = updateMessages(this.systemMessages, message);
+        // this.allSystemMessages = updateMessages(this.allSystemMessages, message);
+        // this.systemMessages = updateMessages(this.systemMessages, message);
         if (this.currentSystemMessage?.systemMessageId === payload.systemMessageId) {
           this.currentSystemMessage = { ...this.currentSystemMessage, ...message };
         }

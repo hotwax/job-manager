@@ -630,15 +630,26 @@ const downloadLinkedFile = async () => {
   saveAs(responseBlob, downloadableFileName.value);
 };
 
+const actionObj = {
+  "SmsgCancelled": "",
+  "SmsgConfirmed": "",
+  "SmsgConsumed": "",
+  "SmsgConsuming": "",
+  "SmsgError": "",
+  "SmsgProduced": "",
+  "SmsgReceived": "",
+  "SmsgRejected": "",
+  "SmsgSending": "",
+  "SmsgSent": "send"
+} as Record<string, string>
+
 const handleAction = async (statusId: string) => {
-  if(!statusId) return;
+  if(!statusId && !actionObj[statusId]) return;
 
-  console.log(statusId)
-
-  // const result = await systemMessageStore.updateSystemMessage({
-  //   systemMessageId: message.value.systemMessageId,
-  //   statusId
-  // });
+  const result = await systemMessageStore.updateSystemMessage({
+    systemMessageId: message.value.systemMessageId,
+    statusId
+  });
 
   // if (result.error) {
   //   await showToast(translate("Failed to update status."));

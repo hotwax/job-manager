@@ -146,7 +146,7 @@ import { useUtilStore } from "@/store/util";
 // Type based declaration
 const props = defineProps<{ id?: string }>();
 
-const store = useSystemMessageStore();
+const systemMessageStore = useSystemMessageStore();
 const utilStore = useUtilStore();
 const queryString = ref("");
 const selectedStatusId = ref("");
@@ -174,9 +174,9 @@ const form = reactive<Record<string, any>>({
 const isCreateMode = computed(() => !props.id);
 const pageTitle = computed(() => isCreateMode.value ? translate("Create Remote System") : translate("Remote System Detail"));
 const statuses = computed(() => utilStore.getStatusItemsByType("SystemMessage"));
-const relatedMessages = computed(() => store.getMessagesForRemote(props.id as string));
-const counts = computed(() => store.getRemoteCounts(props.id as string));
-const canDelete = computed(() => !props.id || store.canDeleteMessageRemote(props.id));
+const relatedMessages = computed(() => systemMessageStore.getMessagesForRemote(props.id as string));
+const counts = computed(() => systemMessageStore.getRemoteCounts(props.id as string));
+const canDelete = computed(() => !props.id || systemMessageStore.canDeleteMessageRemote(props.id));
 const filteredMessages = computed(() => {
   let messages = [...relatedMessages.value];
 
@@ -207,12 +207,12 @@ const updateField = (key: string, value: string) => {
 
 const loadRemote = async () => {
   await Promise.all([
-    store.fetchSystemMessageRemotes(),
-    store.fetchSystemMessageStatusMetadata()
+    systemMessageStore.fetchSystemMessageRemotes(),
+    systemMessageStore.fetchSystemMessageStatusMetadata()
   ]);
 
   if (props.id) {
-    const entity = await store.fetchSystemMessageRemoteById(props.id);
+    const entity = await systemMessageStore.fetchSystemMessageRemoteById(props.id);
     setForm(entity);
   } else {
     setForm();
@@ -233,7 +233,7 @@ const saveRemote = async () => {
     return params
   }, {} as Record<string, any>)
 
-  const result = await store.saveSystemMessageRemote(payload);
+  const result = await systemMessageStore.saveSystemMessageRemote(payload);
   if (result.error) {
     await showToast(translate("Failed to save remote system."));
     return;
@@ -247,7 +247,7 @@ const saveRemote = async () => {
 };
 
 const deleteRemote = async () => {
-  const result = await store.deleteSystemMessageRemote(props.id as string);
+  const result = await systemMessageStore.deleteSystemMessageRemote(props.id as string);
   if (result.error) {
     await showToast(translate("This remote system cannot be deleted while messages still reference it."));
     return;

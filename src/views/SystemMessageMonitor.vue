@@ -33,7 +33,7 @@
                 :value="selectedStatusId"
                 @ionChange="selectedStatusId = $event.detail.value"
               >
-                <ion-select-option value="">{{ translate("All statuses") }}</ion-select-option>
+                <ion-select-option value="">{{ translate("All") }}</ion-select-option>
                 <ion-select-option
                   v-for="status in statuses"
                   :key="status.statusId"
@@ -50,7 +50,7 @@
                 :value="selectedParentTypeId"
                 @ionChange="handleParentTypeChange($event)"
               >
-                <ion-select-option value="">{{ translate("All parent types") }}</ion-select-option>
+                <ion-select-option value="">{{ translate("All") }}</ion-select-option>
                 <ion-select-option
                   v-for="parent in parentTypes"
                   :key="parent.id"
@@ -67,7 +67,7 @@
                 :value="selectedTypeId"
                 @ionChange="selectedTypeId = $event.detail.value"
               >
-                <ion-select-option value="">{{ translate("All types") }}</ion-select-option>
+                <ion-select-option value="">{{ translate("All") }}</ion-select-option>
                 <ion-select-option
                   v-for="type in filteredTypes"
                   :key="type.systemMessageTypeId"
@@ -84,7 +84,7 @@
                 :value="selectedRemoteId"
                 @ionChange="selectedRemoteId = $event.detail.value"
               >
-                <ion-select-option value="">{{ translate("All remotes") }}</ion-select-option>
+                <ion-select-option value="">{{ translate("All") }}</ion-select-option>
                 <ion-select-option
                   v-for="remote in remotes"
                   :key="remote.systemMessageRemoteId"
