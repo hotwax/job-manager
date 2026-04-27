@@ -146,7 +146,7 @@
                 </ion-label>
               </ion-item>
 
-              <ion-item v-for="(error, index) in errors" :key="index" lines="none">
+              <!-- <ion-item v-for="(error, index) in errors" :key="index" lines="none">
                 <ion-icon slot="start" :icon="warningOutline" color="danger" />
                 <ion-label>
                   <p>{{ getDateAndTime(error.errorDate) }}</p>
@@ -160,15 +160,23 @@
                     </ion-text>
                   </p>
                 </ion-label>
-              </ion-item>
+              </ion-item> -->
 
-              <ion-item lines="none">
+              <ion-item v-for="status in statusHistory" :key="status.auditHistorySeqId">
+                <ion-icon slot="start" :icon="getStatusIcon(status.newValueText)" color="primary" />
+                <ion-label>
+                  <p>{{ getDateAndTime(status.changedDate) }}</p>
+                  {{ getStatusDescription(status.newValueText) }}
+                </ion-label>
+              </ion-item>
+              
+              <!-- <ion-item lines="none">
                 <ion-icon slot="start" :icon="getStatusIcon(message.statusId)" color="primary" />
                 <ion-label>
                   <p>{{ getDateAndTime(message.lastAttemptDate || message.processedDate) }}</p>
                   {{ translate("Current Station") }}: {{ getStatusDescription(message.statusId) }}
                 </ion-label>
-              </ion-item>
+              </ion-item> -->
 
               <ion-item-divider color="light" v-if="futureStatuses().length">
                 <ion-label>{{ translate("Upcoming") }}</ion-label>
@@ -417,6 +425,7 @@ const remoteSystem = computed(() => systemMessageStore.getCurrentSystemMessageRe
 const errors = computed(() => systemMessageStore.getSystemMessageErrors);
 const relatedMessages = computed(() => systemMessageStore.getRelatedMessages);
 const technicalFields = computed(() => systemMessageStore.getTechnicalFields(message.value));
+const statusHistory = computed(() => systemMessageStore.getCurrentSystemMessageStatusHistory)
 
 const currentEnumSequence = computed(() => systemMessageStore.getCurrentEnumSequence);
 const linkedMessages = computed(() => systemMessageStore.getLinkedMessages);
@@ -531,6 +540,7 @@ const loadMessage = async () => {
     systemMessageStore.fetchSystemMessageById(props.id),
     systemMessageStore.fetchSystemMessageErrors(props.id),
     systemMessageStore.fetchSystemMessageStatusMetadata(),
+    systemMessageStore.fetchSystemMessageStatusHistory(props.id)
   ]);
  
   if(message.value) {

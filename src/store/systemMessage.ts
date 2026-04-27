@@ -46,7 +46,8 @@ const loadMockState = () => ({
   linkedMessages: [] as any[],
   systemMessageTotal: 0,
   loading: false,
-  enums: [] as any[]
+  enums: [] as any[],
+  currentSystemMessageStatusHistory: []
 });
 
 export const useSystemMessageStore = defineStore("systemMessage", {
@@ -113,7 +114,8 @@ export const useSystemMessageStore = defineStore("systemMessage", {
 
       return fields.filter(field => field.value !== undefined && field.value !== null);
     },
-    isLoading: (state: any) => state.loading
+    isLoading: (state: any) => state.loading,
+    getCurrentSystemMessageStatusHistory: (state: any) => state.currentSystemMessageStatusHistory
   },
   actions: {
     async fetchSystemMessageTypes() {
@@ -593,6 +595,20 @@ export const useSystemMessageStore = defineStore("systemMessage", {
         return linked;
       } finally {
         this.loading = false;
+      }
+    },
+    async fetchSystemMessageStatusHistory(systemMessageId: string) {
+      try {
+        const response = await api({
+          url: `admin/systemMessages/${systemMessageId}/statusHistory`,
+          method: "GET",
+          params: {
+            pageSize: 500
+          }
+        });
+        this.currentSystemMessageStatusHistory = response.data?.systemMessageStatusHistory?.reverse()
+      } catch (err) {
+        logger.error("Failed to fetch system message status history", err);
       }
     }
   }
