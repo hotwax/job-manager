@@ -582,7 +582,7 @@ const cancelEdit = () => {
 const saveContent = async () => {
   if (!message.value) return;
 
-  const result = await systemMessageStore.updateSystemMessage({
+  await systemMessageStore.updateSystemMessage({
     data: {
       systemMessageId: message.value.systemMessageId,
       messageText: editedText.value
@@ -590,13 +590,7 @@ const saveContent = async () => {
     endpoint: "update"
   });
 
-  if (result.error) {
-    await showToast(translate("Failed to update message content."));
-    return;
-  }
-
   isEditing.value = false;
-  await showToast(translate("Message content updated successfully."));
 };
 
 const looksLikeDownloadablePath = (value?: string | null) => {
@@ -685,21 +679,15 @@ const actionObj = {
 const handleAction = async (statusId: string) => {
   if(!statusId && !actionObj[statusId]) return;
 
-  const result = await systemMessageStore.updateSystemMessage({
+  await systemMessageStore.updateSystemMessage({
     data: {
       systemMessageId: message.value.systemMessageId,
       statusId
     },
     endpoint: actionObj[statusId]
   });
-
-  // if (result.error) {
-  //   await showToast(translate("Failed to update status."));
-  //   return;
-  // }
-
+  
   await loadMessage();
-  // await showToast(`${translate("Message moved to")} ${getStatusDescription(statusId)}.`);
 };
 
 const getStatusDescription = (statusId: string) => utilStore.getStatusItemDesc(statusId);
@@ -720,7 +708,6 @@ const getStatusIcon = (statusId?: string) => {
 };
 
 onIonViewWillEnter(loadMessage);
-watch(() => props.id, () => loadMessage());
 
 const openSystemMessageType = (typeId: string) => {
   router.push(`/system-message-types/${typeId}`)
