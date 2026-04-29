@@ -50,10 +50,25 @@ export const useJobStore = defineStore("job", {
             }
           })
 
-          const respJobs = resp.data.map((job: any) => ({
-            ...job,
-            cronString: job.cronExpression ? getCronString(job.cronExpression) : ''
-          }))
+          const respJobs = resp.data?.serviceJobList?.map((job: any) => {
+            const isJobProductStoreDependent = () => job.serviceJobParameters.some((param: any) => param.parameterName === "productStoreIds")
+
+            let isDraftJob = false
+            // Check for whether job is productStore dependent or not.
+            if(isJobProductStoreDependent()) {
+              const jobProductStore = job.serviceJobParameters.find((param: any) => param.parameterName === "productStoreIds")
+              // Checks if a product store-dependent job has the current product store set in its parameters.
+              if(jobProductStore?.parameterName && !jobProductStore.parameterValue) {
+                isDraftJob = true
+              }
+            }
+
+            return {
+              ...job,
+              isDraftJob,
+              cronString: job.cronExpression ? getCronString(job.cronExpression) : ''
+            }
+          })
 
           total = respJobs.length
           this.jobs = pageIndex > 0 ? this.jobs.concat(respJobs) : respJobs
