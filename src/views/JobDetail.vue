@@ -864,6 +864,8 @@ async function runNow() {
                   showToast(translate("Failed to schedule service"));
                   return;
                 }
+                showToast(translate("Redirecting to cloned service"));
+                router.replace(`/job/${clonedJob.jobName}`)
                 clonedJob.serviceJobParameters.find((parameter: any) => {
                   if(parameter.parameterName === "productStoreIds") {
                     parameter.parameterValue = currentProductStore.value.productStoreId
@@ -888,7 +890,7 @@ async function runNow() {
                 // If the job on which the operation is performed is a draft job, then we have created a clone
                 // in previous step and redirect the user to the cloned job
                 if(job.value.isDraftJob) {
-                  showToast("Service has been scheduled, redirecting to cloned service")
+                  showToast("Service has been scheduled")
                   router.replace(`/job/${jobName}`)
                 } else {
                   showToast(translate("Service has been scheduled"))
