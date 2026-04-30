@@ -4,7 +4,7 @@ import Papa from 'papaparse'
 import { DateTime } from "luxon";
 import logger from "@/logger";
 import { translate } from "@common";
-import { Plugins } from '@capacitor/core';
+import {Clipboard} from "@capacitor/clipboard";
 import cronstrue from "cronstrue"
 
 const showToast = async (message: string) => {
@@ -317,8 +317,6 @@ const hasJobDataError = (job: any) => {
 }
 
 const copyToClipboard = async (value: string, text?: string) => {
-  const { Clipboard } = Plugins;
-
   await Clipboard.write({
     string: value,
   }).then(() => {
@@ -340,11 +338,25 @@ const saveDataFile = async (response: any, fileName: string) => {
 }
 
 function getDateAndTime(time: any) {
-  return time ? DateTime.fromMillis(time).toLocaleString({ ...DateTime.DATETIME_MED, hourCycle: "h12" }) : "-";
+  if (!time) return "-";
+  
+  let dt = typeof time === "number" ? DateTime.fromMillis(time) : DateTime.fromFormat(time, 'yyyy-MM-dd HH:mm:ss.SSS');
+  if (!dt.isValid) dt = DateTime.fromSQL(time);
+  if (!dt.isValid) dt = DateTime.fromISO(time);
+
+  return dt.isValid ? dt.toLocaleString({ ...DateTime.DATETIME_MED, hourCycle: "h12" }) : time.toString();
 }
 
 function timeTillRun(endTime: any) {
-  const timeDiff = DateTime.fromMillis(endTime).diff(DateTime.local());
+  if (!endTime) return "-";
+
+  let dt = typeof endTime === "number" ? DateTime.fromMillis(endTime) : DateTime.fromFormat(endTime, 'yyyy-MM-dd HH:mm:ss.SSS');
+  if (!dt.isValid) dt = DateTime.fromSQL(endTime);
+  if (!dt.isValid) dt = DateTime.fromISO(endTime);
+
+  if (!dt.isValid) return "-";
+
+  const timeDiff = dt.diff(DateTime.local());
   return DateTime.local().plus(timeDiff).toRelative();
 }
 

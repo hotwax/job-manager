@@ -4,14 +4,21 @@ import Catalog from '@/views/Catalog.vue'
 import Settings from "@/views/Settings.vue"
 import FileHistory from "@/views/FileHistory.vue"
 import FileDetail from "@/views/FileDetail.vue"
-import { hasPermission } from '@/authorization';
 import { showToast } from '@/utils'
 import { translate } from '@common'
 import 'vue-router'
-import { useAuth } from '@/composables/auth';
+import { useAuth } from '@common/composables/useAuth';
 import ImportDetail from '@/views/ImportDetail.vue';
 import ManualUploads from '@/views/ManualUploads.vue';
 import JobDetail from '@/views/JobDetail.vue';
+import SystemMessageMonitor from '@/views/SystemMessageMonitor.vue';
+import SystemMessageDetailView from '@/views/SystemMessageDetailView.vue';
+import SystemMessageTypes from '@/views/SystemMessageTypes.vue';
+import SystemMessageTypeDetail from '@/views/SystemMessageTypeDetail.vue';
+import SystemMessageRemotes from '@/views/SystemMessageRemotes.vue';
+import SystemMessageRemoteDetail from '@/views/SystemMessageRemoteDetail.vue';
+import Login from '@common/components/Login.vue';
+import { useUserStore } from '@/store/user';
 
 // Defining types for the meta values
 declare module 'vue-router' {
@@ -20,18 +27,10 @@ declare module 'vue-router' {
   }
 }
 
-const authGuard = async (to: any, from: any, next: any) => {
+const authGuard = async () => {
   if (!useAuth().isAuthenticated.value) {
-    next('/login')
+    return { path: '/login' };
   }
-  next()
-};
-
-const loginGuard = (to: any, from: any, next: any) => {
-  if (useAuth().isAuthenticated.value && !to.query?.token && !to.query?.oms) {
-    next('/')
-  }
-  next();
 };
 
 const routes: Array<RouteRecordRaw> = [
@@ -51,8 +50,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/login',
     name: 'Login',
-    component: () => import('../views/Login.vue'),
-    beforeEnter: loginGuard
+    component: Login
   },
   {
     path: "/settings",
@@ -91,6 +89,57 @@ const routes: Array<RouteRecordRaw> = [
     component: JobDetail,
     beforeEnter: authGuard,
     props: true
+  },
+  {
+    path: '/system-messages',
+    name: 'SystemMessageMonitor',
+    component: SystemMessageMonitor,
+    beforeEnter: authGuard
+  },
+  {
+    path: '/system-messages/:id',
+    name: 'SystemMessageDetailView',
+    component: SystemMessageDetailView,
+    beforeEnter: authGuard,
+    props: true
+  },
+  {
+    path: '/system-message-types',
+    name: 'SystemMessageTypes',
+    component: SystemMessageTypes,
+    beforeEnter: authGuard
+  },
+  {
+    path: '/system-message-types/new',
+    name: 'CreateSystemMessageType',
+    component: SystemMessageTypeDetail,
+    beforeEnter: authGuard
+  },
+  {
+    path: '/system-message-types/:id',
+    name: 'SystemMessageTypeDetail',
+    component: SystemMessageTypeDetail,
+    beforeEnter: authGuard,
+    props: true
+  },
+  {
+    path: '/system-message-remotes',
+    name: 'SystemMessageRemotes',
+    component: SystemMessageRemotes,
+    beforeEnter: authGuard
+  },
+  {
+    path: '/system-message-remotes/new',
+    name: 'CreateSystemMessageRemote',
+    component: SystemMessageRemoteDetail,
+    beforeEnter: authGuard
+  },
+  {
+    path: '/system-message-remotes/:id',
+    name: 'SystemMessageRemoteDetail',
+    component: SystemMessageRemoteDetail,
+    beforeEnter: authGuard,
+    props: true
   }
 ]
 
@@ -101,7 +150,7 @@ const router = createRouter({
 
 
 router.beforeEach((to, from) => {
-  if (to.meta.permissionId && !hasPermission(to.meta.permissionId)) {
+  if (to.meta.permissionId && !useUserStore().hasPermission(to.meta.permissionId)) {
     let redirectToPath = from.path;
     // If the user has navigated from Login page or if it is page load, redirect user to settings page without showing any toast
     if (redirectToPath == "/login" || redirectToPath == "/") redirectToPath = "/settings";

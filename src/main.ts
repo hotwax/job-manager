@@ -26,13 +26,11 @@ import './theme/variables.css';
 import "@common/css/settings.css"
 import "@common/css/theme.css"
 
-import permissionPlugin from '@/authorization/index';
-import permissionRules from '@/authorization/Rules';
-import permissionActions from '@/authorization/Actions';
 import { createPinia } from 'pinia';
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import localeMessages from './locales';
-import { createDxpI18n } from '@common';
+import { createDxpI18n, initialiseConfig } from '@common';
+import { useUserStore } from './store/user';
 
 const pinia = createPinia().use(piniaPluginPersistedstate);
 const i18n = createDxpI18n(localeMessages)
@@ -43,15 +41,21 @@ const app = createApp(App)
     innerHTMLTemplatesEnabled: true
   })
   .use(logger, {
-    level: import.meta.env.VUE_APP_DEFAULT_LOG_LEVEL
+    level: import.meta.env.VITE_DEFAULT_LOG_LEVEL
   })
   .use(i18n)
   .use(pinia)
   .use(router)
-  .use(permissionPlugin, {
-    rules: permissionRules,
-    actions: permissionActions
-  })
+
+initialiseConfig({
+  postLogin: useUserStore().postLogin,
+  postLogout: useUserStore().postLogout,
+  get oms() { return useUserStore().oms },
+  set oms(val) { useUserStore().oms = val },
+  get current() { return useUserStore().current },
+  set current(val) { useUserStore().current = val },
+  router: router
+})
 
 router.isReady().then(() => {
   app.mount('#app');

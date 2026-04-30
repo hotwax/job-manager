@@ -1,6 +1,6 @@
 <template>
   <ion-page>
-    <ion-header :translucent="true">
+    <ion-header>
       <ion-toolbar>
         <ion-menu-button slot="start" />
         <ion-title>{{ translate("Catalog") }}</ion-title>

@@ -125,7 +125,7 @@ import {
 } from '@ionic/vue';
 import { translate, commonUtil } from '@common';
 import { closeOutline, documentOutline, filter } from 'ionicons/icons';
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
 import router from '@/router';
 import { useMdmConfigStore } from '@/store/mdmConfig';
 import { getDateTimeWithOrdinalSuffix, getFileSize } from '@/utils';
@@ -165,7 +165,7 @@ async function openFiltersModal() {
 
 onIonViewWillEnter(async () => {
   await fetchLogs();
-  await utilStore.fetchStatusItems("DataManagerLog");
+  await utilStore.fetchStatusItemsByType("DataManagerLog");
 })
 </script>
 
