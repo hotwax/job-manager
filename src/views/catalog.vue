@@ -80,7 +80,7 @@
             </ion-card>
           </template>
           <template v-else>
-            <ion-card v-for="(job, index) in filteredJobs" :key="job.jobId ? job.jobId : `${job.jobName}-${index}`" :class="{ 'paused-job': job.paused === 'Y' }">
+            <ion-card v-for="(job, index) in filteredJobs" :key="job.jobId ? job.jobId : `${job.jobName}-${index}`" :class="{ 'paused-job': job.paused === 'Y' }" :color="job.isDraftJob ? 'light' : ''">
               <ion-card-header>
                 <div class="job-card-header">
                   <ion-card-title v-html="highlightText(job.jobName, queryString)"></ion-card-title>
@@ -89,13 +89,21 @@
                 <code v-html="highlightText(job.serviceName, queryString)"></code>
               </ion-card-header>
               <ion-item lines="none" detail button @click="router.push(`/job/${job.jobName}`)">
-                <ion-icon v-if="job.paused === 'Y'" slot="start" :icon="pauseCircleOutline" color="warning" />
-                <ion-icon v-else-if="job.cronExpression" slot="start" :icon="playCircleOutline" color="success" />
-                <ion-icon v-else slot="start" :icon="ellipseOutline" color="medium" />
-                <ion-label>
-                  {{ job.paused === 'Y' ? translate('Paused') : translate('Enabled') }}
-                  <p v-if="job.cronString">{{ job.cronString }}</p>
-                </ion-label>
+                <template v-if="job.isDraftJob">
+                  <ion-icon slot="start" :icon="lockClosedOutline" />
+                  <ion-label>
+                    {{ translate("Draft") }}
+                  </ion-label>
+                </template>
+                <template v-else>
+                  <ion-icon v-if="job.paused === 'Y'" slot="start" :icon="pauseCircleOutline" color="warning" />
+                  <ion-icon v-else-if="job.cronExpression" slot="start" :icon="playCircleOutline" color="success" />
+                  <ion-icon v-else slot="start" :icon="ellipseOutline" color="medium" />
+                  <ion-label>
+                    {{ job.paused === 'Y' ? translate('Paused') : translate('Enabled') }}
+                    <p v-if="job.cronString">{{ job.cronString }}</p>
+                  </ion-label>
+                </template>
               </ion-item>
             </ion-card>
           </template>
@@ -138,7 +146,7 @@ import {
 } from '@ionic/vue';
 import { ref, computed } from 'vue';
 import router from '@/router';
-import { addOutline, ellipseOutline, pauseCircleOutline, playCircleOutline } from 'ionicons/icons';
+import { addOutline, ellipseOutline, lockClosedOutline, pauseCircleOutline, playCircleOutline } from 'ionicons/icons';
 import { translate } from '@common';
 import CreateJobModal from '@/components/CreateJobModal.vue';
 import { useJobStore } from '@/store/jobs';
