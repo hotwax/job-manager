@@ -3,16 +3,9 @@ import { toastController } from '@ionic/vue';
 import Papa from 'papaparse'
 import { DateTime } from "luxon";
 import logger from "@/logger";
-import { translate } from "@hotwax/dxp-components";
-import { Plugins } from '@capacitor/core';
+import { translate } from "@common";
+import {Clipboard} from "@capacitor/clipboard";
 import cronstrue from "cronstrue"
-
-// TODO Use separate files for specific utilities
-
-// TODO Remove it when HC APIs are fully REST compliant
-const hasError = (response: any) => {
-  return typeof response.data != "object" || !!response.data._ERROR_MESSAGE_ || !!response.data._ERROR_MESSAGE_LIST_ || !!response.data.error;
-}
 
 const showToast = async (message: string) => {
   const toast = await toastController
@@ -82,7 +75,7 @@ const parseCsv = async (file: File, options: any) => {
 
 // Here we have created a JsonToCsvOption which contains the properties which we can pass to jsonToCsv function
 
-interface JsonToCsvOption {
+export interface JsonToCsvOption {
   parse?: object | null;
   encode?: object | null;
   name?: string;
@@ -133,15 +126,6 @@ const handleDateTimeInput = (dateTimeValue: any) => {
   // Current date time picker picks browser timezone and there is no supprt to change it
   const dateTime = DateTime.fromISO(dateTimeValue, { setZone: true}).toFormat("yyyy-MM-dd'T'HH:mm:ss")
   return DateTime.fromISO(dateTime).toMillis()
-}
-
-const prepareRuntime = (job: any) => {
-  // For job frequency everyday, set to start of next day
-  // It is not recommended to schedule all jobs at the start of the day as it will cause performance issues if too many jobs scheduled at the same time,
-  // understanding the risk and assuming that only limited jobs will be scheduled, we are moving ahead as per the recommendation of Aditya P.
-  if (job.jobStatus === 'EVERYDAY') {
-    return DateTime.now().startOf('day').plus({days: 1}).toMillis();
-  }
 }
 
 const generateAllowedFrequencies = (type?: string) => {
@@ -333,8 +317,6 @@ const hasJobDataError = (job: any) => {
 }
 
 const copyToClipboard = async (value: string, text?: string) => {
-  const { Clipboard } = Plugins;
-
   await Clipboard.write({
     string: value,
   }).then(() => {
@@ -356,11 +338,25 @@ const saveDataFile = async (response: any, fileName: string) => {
 }
 
 function getDateAndTime(time: any) {
-  return time ? DateTime.fromMillis(time).toLocaleString({ ...DateTime.DATETIME_MED, hourCycle: "h12" }) : "-";
+  if (!time) return "-";
+  
+  let dt = typeof time === "number" ? DateTime.fromMillis(time) : DateTime.fromFormat(time, 'yyyy-MM-dd HH:mm:ss.SSS');
+  if (!dt.isValid) dt = DateTime.fromSQL(time);
+  if (!dt.isValid) dt = DateTime.fromISO(time);
+
+  return dt.isValid ? dt.toLocaleString({ ...DateTime.DATETIME_MED, hourCycle: "h12" }) : time.toString();
 }
 
 function timeTillRun(endTime: any) {
-  const timeDiff = DateTime.fromMillis(endTime).diff(DateTime.local());
+  if (!endTime) return "-";
+
+  let dt = typeof endTime === "number" ? DateTime.fromMillis(endTime) : DateTime.fromFormat(endTime, 'yyyy-MM-dd HH:mm:ss.SSS');
+  if (!dt.isValid) dt = DateTime.fromSQL(endTime);
+  if (!dt.isValid) dt = DateTime.fromISO(endTime);
+
+  if (!dt.isValid) return "-";
+
+  const timeDiff = dt.diff(DateTime.local());
   return DateTime.local().plus(timeDiff).toRelative();
 }
 
@@ -406,6 +402,30 @@ const generateMaargJobCustomOptions = (job: any) => {
   }
 }
 
+const getFileSize = (size: string) => {
+  return size ? `${(Number(size) / (1024 * 1024)).toFixed(3)} MB` : "-"
+}
+
+function getDateTimeWithOrdinalSuffix(time: any) {
+  if (!time) return "-";
+  const dateTime = DateTime.fromMillis(time);
+  const day = dateTime.day;
+
+  let suffix;
+  if (day >= 11 && day <= 13) {
+    suffix = 'th';
+  } else {
+    switch (day % 10) {
+      case 1:  suffix = 'st'; break;
+      case 2:  suffix = 'nd'; break;
+      case 3:  suffix = 'rd'; break;
+      default: suffix = 'th'; break;
+    }
+  }
+
+  return `${dateTime.toFormat("h:mm a d")}${suffix} ${dateTime.toFormat("MMM yyyy")}`;
+}
+
 export {
   copyToClipboard,
   isCustomRunTime,
@@ -420,12 +440,11 @@ export {
   handleDateTimeInput,
   hasJobDataError,
   showToast,
-  hasError,
   parseCsv,
   jsonToCsv,
-  JsonToCsvOption,
   isFutureDate,
-  prepareRuntime,
   saveDataFile,
-  timeTillRun
+  timeTillRun,
+  getFileSize,
+  getDateTimeWithOrdinalSuffix
 }

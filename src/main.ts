@@ -1,7 +1,6 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router';
-import { DateTime } from 'luxon';
 import logger from './logger';
 
 import { IonicVue } from '@ionic/vue';
@@ -24,17 +23,17 @@ import '@ionic/vue/css/display.css';
 
 /* Theme variables */
 import './theme/variables.css';
-import '@hotwax/apps-theme';
+import "@common/css/settings.css"
+import "@common/css/theme.css"
 
-import store from './store'
-import permissionPlugin, { Actions, hasPermission } from '@/authorization';
-import permissionRules from '@/authorization/Rules';
-import permissionActions from '@/authorization/Actions';
-import { dxpComponents } from '@hotwax/dxp-components'
-import { login, logout, loader } from './user-utils';
-import { getConfig, initialise,   setUserTimeZone, getAvailableTimeZones } from './adapter';
+import { createPinia } from 'pinia';
+import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import localeMessages from './locales';
+import { createDxpI18n, initialiseConfig } from '@common';
+import { useUserStore } from './store/user';
 
+const pinia = createPinia().use(piniaPluginPersistedstate);
+const i18n = createDxpI18n(localeMessages)
 
 const app = createApp(App)
   .use(IonicVue, {
@@ -42,27 +41,21 @@ const app = createApp(App)
     innerHTMLTemplatesEnabled: true
   })
   .use(logger, {
-    level: process.env.VUE_APP_DEFAULT_LOG_LEVEL
+    level: import.meta.env.VITE_DEFAULT_LOG_LEVEL
   })
+  .use(i18n)
+  .use(pinia)
   .use(router)
-  .use(store)
-  .use(permissionPlugin, {
-    rules: permissionRules,
-    actions: permissionActions
-  })
-  .use(dxpComponents, {
-    Actions,
-    login,
-    logout,
-    loader,
-    appLoginUrl: process.env.VUE_APP_LOGIN_URL as string,
-    getConfig,
-    initialise,
-    setUserTimeZone,
-    getAvailableTimeZones,
-    localeMessages,
-    hasPermission
-  })
+
+initialiseConfig({
+  postLogin: useUserStore().postLogin,
+  postLogout: useUserStore().postLogout,
+  get oms() { return useUserStore().oms },
+  set oms(val) { useUserStore().oms = val },
+  get current() { return useUserStore().current },
+  set current(val) { useUserStore().current = val },
+  router: router
+})
 
 router.isReady().then(() => {
   app.mount('#app');

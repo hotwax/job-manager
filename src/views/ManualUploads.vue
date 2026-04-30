@@ -1,6 +1,6 @@
 <template>
   <ion-page>
-    <ion-header :translucent="true">
+    <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-menu-button />
@@ -9,36 +9,34 @@
       </ion-toolbar>
     </ion-header>
 
-    <ion-content :fullscreen="true">
+    <ion-content>
       <main>
         <div class="header-section">
           <h1>{{ translate("Manual Uploads") }}</h1>
           <p>{{ translate("Ingest CSV or JSON files manually for processing.") }}</p>
         </div>
 
-        <ion-card>
-          <ion-searchbar :placeholder="translate('Search uploads')"></ion-searchbar>
-          <div class="categories">
-            <ion-chip v-for="category in categories" :key="category" @click="selectedCategory = category" :outline="selectedCategory !== category" :color="selectedCategory === category ? 'primary' : ''">
-              <ion-label>{{ category }}</ion-label>
-            </ion-chip>
-          </div>
-        </ion-card>
+        <ion-searchbar v-model="queryString" @ionInput="searchConfig" :placeholder="translate('Search uploads')"></ion-searchbar>
 
-        <div class="imports">
-          <ion-card class="upload-card" v-for="uploadType in uploadTypes" :key="uploadType.id">
+        <div class="empty-state" v-if="isLoading">
+          <ion-item lines="none">
+            <ion-spinner color="secondary" name="crescent" slot="start" />
+            {{ translate("Fetching configs") }}
+          </ion-item>
+        </div>
+        <div class="imports" v-else-if="importConfigs.length">
+          <ion-card v-for="config in importConfigs" :key="config.configId">
             <ion-card-content>
               <ion-item lines="none">
-                <ion-icon slot="start" :icon="uploadType.icon" color="primary" />
                 <ion-label>
-                  {{ translate(uploadType.title) }}
-                  <p>{{ translate(uploadType.description) }}</p>
+                  <p class="overline">{{ config.configId }}</p>
+                  {{ config.scriptTitle }}
+                  <p>{{ config.description }}</p>
                 </ion-label>
               </ion-item>
               
               <ion-item lines="none">
-                <ion-badge color="light">{{ uploadType.fileType }}</ion-badge>
-                <ion-button slot="end" fill="clear" @click="startImport(uploadType.id)">
+                <ion-button slot="end" fill="clear" @click="startImport(config.configId)">
                   {{ translate("Start Import") }}
                   <ion-icon slot="end" :icon="arrowForwardOutline" />
                 </ion-button>
@@ -46,134 +44,55 @@
             </ion-card-content>
           </ion-card>
         </div>
+        <p class="empty-state" v-else>
+          {{ translate("No configs found") }}
+        </p>
       </main>
     </ion-content>
   </ion-page>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref } from 'vue';
-import { 
-  IonPage, 
-  IonHeader, 
-  IonToolbar, 
-  IonButtons, 
-  IonMenuButton, 
-  IonTitle, 
-  IonContent,
-  IonCard,
-  IonCardContent,
-  IonIcon,
-  IonButton,
-  IonBadge,
-  IonSearchbar,
-  IonChip,
-  IonLabel
-} from '@ionic/vue';
-import { 
-  cartOutline, 
-  cubeOutline, 
-  shapesOutline, 
-  peopleOutline, 
-  arrowUndoOutline,
-  arrowForwardOutline 
-} from 'ionicons/icons';
-import { useRouter } from 'vue-router';
-import { translate } from '@hotwax/dxp-components';
+<script setup lang="ts">
+import { computed, ref } from 'vue';
+import { IonSpinner, IonPage, IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonCard, IonCardContent, IonIcon, IonButton, IonSearchbar, IonLabel, IonItem, onIonViewWillEnter } from '@ionic/vue';
+import { arrowForwardOutline } from 'ionicons/icons';
+import router from '@/router';
+import { translate } from '@common';
+import { useMdmConfigStore } from '@/store/mdmConfig';
 
-export default defineComponent({
-  name: 'ManualUploads',
-  components: {
-    IonPage,
-    IonHeader,
-    IonToolbar,
-    IonButtons,
-    IonMenuButton,
-    IonTitle,
-    IonContent,
-    IonCard,
-    IonCardContent,
-    IonIcon,
-    IonButton,
-    IonBadge,
-    IonSearchbar,
-    IonChip,
-    IonLabel
-  },
-  setup() {
-    const router = useRouter();
-    const categories = ['All', 'Shopify', 'NetSuite', 'Orders', 'Inventory'];
-    const selectedCategory = ref('All');
+const queryString = ref("");
+const mdmStore = useMdmConfigStore();
 
-    const uploadTypes = [
-      {
-        id: 'sales-orders',
-        title: 'Sales Orders',
-        description: 'Import new sales orders (CSV/JSON)',
-        fileType: 'CSV',
-        icon: cartOutline
-      },
-      {
-        id: 'inventory-counts',
-        title: 'Inventory Counts',
-        description: 'Update inventory levels by SKU',
-        fileType: 'CSV',
-        icon: cubeOutline
-      },
-      {
-        id: 'product-catalog',
-        title: 'Product Catalog',
-        description: 'Create or update product details',
-        fileType: 'JSON',
-        icon: shapesOutline
-      },
-      {
-        id: 'customer-data',
-        title: 'Customer Data',
-        description: 'Import customer profiles and addresses',
-        fileType: 'CSV',
-        icon: peopleOutline
-      },
-      {
-        id: 'returns',
-        title: 'Returns (RMA)',
-        description: 'Import return authorizations',
-        fileType: 'CSV',
-        icon: arrowUndoOutline
-      }
-    ];
+const configs = computed(() => mdmStore.getConfigs)
+let importConfigs = ref([]) as any
+let isLoading = ref(true)
 
-    const startImport = (typeId: string) => {
-      router.push({ name: 'ImportDetail', params: { type: typeId }});
-    };
+onIonViewWillEnter(async () => {
+  await mdmStore.fetchConfigs();
+  searchConfig()
+  isLoading.value = false
+})
 
-    return {
-      uploadTypes,
-      startImport,
-      translate,
-      arrowForwardOutline,
-      categories,
-      selectedCategory
-    };
+const startImport = (typeId: string) => {
+  router.push({ name: "ImportDetail", params: { type: typeId }});
+}
+
+const searchConfig = () => {
+  if(!queryString.value.trim()) {
+    importConfigs.value = configs.value
   }
-});
+  importConfigs.value = configs.value.filter((config: any) =>
+    config.configId.toLowerCase().includes(queryString.value.toLowerCase()) ||
+    config.scriptTitle?.toLowerCase().includes(queryString.value.toLowerCase()) ||
+    config.description?.toLowerCase().includes(queryString.value.toLowerCase())
+  )
+}
 </script>
 
 <style scoped>
-
 .header-section {
   padding: var(--spacer-sm) var(--spacer-xs);
   margin-bottom: var(--spacer-sm);
-}
-
-.categories {
-  padding: 0 var(--spacer-xs) var(--spacer-xs);
-  display: flex;
-  flex-wrap: wrap;
-}
-
-.categories ion-chip {
-  cursor: pointer;
 }
 
 .imports {
@@ -182,5 +101,4 @@ export default defineComponent({
   gap: var(--spacer-xs);
   align-items: start;
 }
-
 </style>

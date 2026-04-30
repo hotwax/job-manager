@@ -1,5 +1,5 @@
 <template>
-  <ion-menu side="start" content-id="main-content" type="overlay" :disabled="!isUserAuthenticated || $route.path === '/login'">
+  <ion-menu side="start" content-id="main-content" type="overlay" :disabled="!isAuthenticated || router.currentRoute.value.path === '/login'">
     <ion-header>
       <ion-toolbar>
         <ion-title>{{ translate("Job Manager") }}</ion-title>
@@ -8,7 +8,7 @@
 
     <ion-content>
       <ion-list>
-        <ion-menu-toggle auto-hide="false" v-for="(page, index) in getValidMenuItems(appPages)" :key="index">
+        <ion-menu-toggle :auto-hide="false" v-for="(page, index) in getValidMenuItems(appPages)" :key="index">
           <ion-item
             v-if="page.url"
             button
@@ -25,166 +25,141 @@
         </ion-menu-toggle>
       </ion-list>
     </ion-content>
-    <DxpMenuFooterNavigation @update-ecom-store="setEComStore($event)" @update-shopify-config="setShopifyConfig($event)" />
+
+    <ion-footer>
+      <ion-toolbar>
+        <ion-item lines="none">
+          <ion-label class="ion-text-wrap">
+            <p class="overline">{{ commonUtil.getOmsURL() }}</p>
+          </ion-label>
+          <ion-note :color="browserTimeZone === userStore.current?.userTimeZone ? '' : 'danger'" slot="end">{{ userStore.current?.userTimeZone }}</ion-note>
+        </ion-item>
+        <!-- showing product stores only when there are multiple options to choose from. -->
+        <ion-item v-if="userProfile.stores?.length > 2" lines="none">
+          <!-- WHY EVENTS ($emit) IS USED WITH ION CHANGE: https://michaelnthiessen.com/pass-function-as-prop/ -->
+          <ion-select interface="popover" :value="currentProductStore.productStoreId" @ionChange="setProductStore($event.target.value)">
+            <ion-select-option v-for="store in (userProfile ? userProfile.stores : [])" :key="store.productStoreId" :value="store.productStoreId" >{{ store.storeName }}</ion-select-option>
+          </ion-select>
+        </ion-item>
+        <ion-item v-else lines="none">
+          <ion-label class="ion-text-wrap">
+            {{ currentProductStore.storeName }}
+          </ion-label>
+        </ion-item>
+      </ion-toolbar>
+    </ion-footer>
   </ion-menu>
 </template>
 
-<script lang="ts">
-import {
-  IonContent,
-  IonHeader,
-  IonIcon,
-  IonItem,
-  IonItemDivider,
-  IonLabel,
-  IonList,
-  IonMenu,
-  IonMenuToggle,
-  IonTitle,
-  IonToolbar
-} from "@ionic/vue";
-import { computed, defineComponent } from "vue";
-import { mapGetters } from "vuex";
-import { albumsOutline, barChartOutline, calendarNumberOutline, compassOutline, hourglassOutline, libraryOutline, pulseOutline, settingsOutline, sendOutline, terminalOutline, ticketOutline, timeOutline, cloudUploadOutline } from "ionicons/icons";
-import { useStore } from "@/store";
-import emitter from "@/event-bus"
-import { hasPermission } from "@/authorization";
-import { useRouter } from "vue-router";
-import { translate } from "@hotwax/dxp-components";
+<script setup lang="ts">
+import { IonContent, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenu, IonMenuToggle, IonTitle, IonToolbar } from "@ionic/vue";
+import { computed } from "vue";
+import { albumsOutline, cloudUploadOutline, fileTrayStackedOutline, globeOutline, pulseOutline, settingsOutline, timeOutline } from "ionicons/icons";
+import { translate, commonUtil } from "@common";
+import { useAuth } from "@common/composables/useAuth";
+import router from "../router";
+import { useUserStore } from "@/store/user";
 
-export default defineComponent({
-  name: "Menu",
-  components: {
-    IonContent,
-    IonHeader,
-    IonIcon,
-    IonItem,
-    IonItemDivider,
-    IonLabel,
-    IonList,
-    IonMenu,
-    IonMenuToggle,
-    IonTitle,
-    IonToolbar
-  },
-  computed: {
-    ...mapGetters({
-      isUserAuthenticated: 'user/isUserAuthenticated',
-      currentFacility: 'user/getCurrentFacility',
-      eComStore: 'user/getCurrentEComStore',
-      instanceUrl: 'user/getInstanceUrl',
-      userProfile: 'user/getUserProfile',
-      currentShopifyConfig: 'user/getCurrentShopifyConfig',
-      currentEComStore: 'user/getCurrentEComStore',
-      shopifyConfigs: 'user/getShopifyConfigs',
-    })
-  },
-  methods: {
-    async setEComStore(event: CustomEvent) {
-      if(this.userProfile && this.eComStore?.productStoreId !== event.detail.value) {
-        await this.store.dispatch('user/setEcomStore', { 'productStoreId': event.detail.value })
-        emitter.emit("productStoreOrConfigChanged", true)
-      }
-    },
-    async setShopifyConfig(event: CustomEvent){
-      await this.store.dispatch('user/setCurrentShopifyConfig', { 'shopifyConfigId': event.detail.value });
-      emitter.emit("productStoreOrConfigChanged", true)
+const { isAuthenticated } = useAuth();
+const userStore = useUserStore();
+
+const currentProductStore = userStore.getCurrentProductStore
+const userProfile = computed(() => userStore.getUserProfile)
+
+const browserTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+
+// Filtering array of app pages, retaining only those elements (pages) that have the necessary permissions for display.
+const getValidMenuItems = (appPages: any) => {
+  return appPages.filter((appPage: any) => (!appPage.meta || !appPage.meta.permissionId) || userStore.hasPermission(appPage.meta.permissionId));
+}
+
+let appPages = [
+  {
+    title: "Dashboard",
+    url: "/pipeline",
+    iosIcon: pulseOutline,
+    mdIcon: pulseOutline,
+    meta: {
+      permissionId: "HIDDEN"
     }
   },
-  setup() {
-    const store = useStore();
-    const router = useRouter();
-    
-    // Filtering array of app pages, retaining only those elements (pages) that have the necessary permissions for display.
-    const getValidMenuItems = (appPages: any) => {
-      return appPages.filter((appPage: any) => (!appPage.meta || !appPage.meta.permissionId) || hasPermission(appPage.meta.permissionId));
-    }
+  {
+    title: "Jobs"
+  },
+  {
+    title: "Catalog",
+    url: "/catalog",
+    iosIcon: albumsOutline,
+    mdIcon: albumsOutline,
+    childRoutes: ["/job/"]
+  },
+  {
+    title: "MDM"
+  },
+  {
+    title: "File history",
+    url: "/file-history",
+    iosIcon: timeOutline,
+    mdIcon: timeOutline,
+    childRoutes: ["/file-history/"]
+  },
+  {
+    title: "Manual uploads",
+    url: "/manual-uploads",
+    iosIcon: cloudUploadOutline,
+    mdIcon: cloudUploadOutline,
+    childRoutes: ["/manual-uploads/"]
+  },
+  {
+    title: "System Messages"
+  },
+  {
+    title: "Monitor",
+    url: "/system-messages",
+    iosIcon: pulseOutline,
+    mdIcon: pulseOutline,
+    childRoutes: ["/system-messages/"]
+  },
+  {
+    title: "Message Types",
+    url: "/system-message-types",
+    iosIcon: fileTrayStackedOutline,
+    mdIcon: fileTrayStackedOutline,
+    childRoutes: ["/system-message-types/"]
+  },
+  {
+    title: "Remote Systems",
+    url: "/system-message-remotes",
+    iosIcon: globeOutline,
+    mdIcon: globeOutline,
+    childRoutes: ["/system-message-remotes/"]
+  },
+  {
+    title: "Settings"
+  },
+  {
+    title: "Settings",
+    url: "/settings",
+    iosIcon: settingsOutline,
+    mdIcon: settingsOutline,
+  },
+] as any;
 
-    let appPages = [
-      {
-        title: "Dashboard",
-        url: "/pipeline",
-        iosIcon: pulseOutline,
-        mdIcon: pulseOutline,
-        dependsOnBaseURL: true,
-        meta: {
-          permissionId: ""
-        }
-      },
-      {
-        title: "Catalog",
-        url: "/catalog",
-        iosIcon: albumsOutline,
-        mdIcon: albumsOutline,
-        dependsOnBaseURL: false,
-        meta: {
-          permissionId: ""
-        }
-      },
-      {
-        title: "Import monitor",
-        url: "/import-monitor",
-        iosIcon: hourglassOutline,
-        mdIcon: hourglassOutline,
-        dependsOnBaseURL: false,
-        meta: {
-          permissionId: ""
-        }
-      },
-      {
-        title: "File history",
-        url: "/file-history",
-        iosIcon: timeOutline,
-        mdIcon: timeOutline,
-        dependsOnBaseURL: false,
-      },
-      {
-        title: "Manual uploads",
-        url: "/manual-uploads",
-        iosIcon: cloudUploadOutline,
-        mdIcon: cloudUploadOutline,
-        dependsOnBaseURL: false,
-      },
-      {
-        title: "Settings",
-        url: "/settings",
-        iosIcon: settingsOutline,
-        mdIcon: settingsOutline,
-        dependsOnBaseURL: false,
-      },
-    ] as any;
-    if (process.env.VUE_APP_BASE_URL) {
-      appPages = appPages.filter((page : any) => page.dependsOnBaseURL);
-    }
+const selectedIndex = computed(() => {
+  const path = router.currentRoute.value.path
+  return getValidMenuItems(appPages).findIndex((screen : any) => screen.url === path || screen.childRoutes?.includes(path) || screen.childRoutes?.some((route: string) => path.includes(route)))
+})
 
-    const selectedIndex = computed(() => {
-      const path = router.currentRoute.value.path
-      return getValidMenuItems(appPages).findIndex((screen : any) => screen.url === path || screen.childRoutes?.includes(path))
-    })
-
-    return {
-      albumsOutline,
-      appPages,
-      cloudUploadOutline,
-      compassOutline,
-      barChartOutline,
-      calendarNumberOutline,
-      getValidMenuItems,
-      hasPermission,
-      hourglassOutline,
-      libraryOutline,
-      pulseOutline,
-      selectedIndex,
-      settingsOutline,
-      sendOutline,
-      store,
-      terminalOutline,
-      ticketOutline,
-      timeOutline,
-      translate
-    };
+const setProductStore = (event: any) => {
+  // If the value is same, no need to update
+  // Handled case for programmatical changes
+  // https://github.com/ionic-team/ionic-framework/discussions/25532
+  // https://github.com/ionic-team/ionic-framework/issues/20106
+  // https://github.com/ionic-team/ionic-framework/pull/25858
+  if(userStore.current && currentProductStore?.productStoreId !== event.detail.value) {
+    userStore.setCurrentProductStore({ "productStoreId": event.detail.value })
   }
-});
+}
 </script>
 
 <style scoped>

@@ -24,3 +24,43 @@ Each job is displayed as a card with the following details:
 3. From system to System
 4. Cron expression
 5. Status
+
+## Filters
+
+On the catalog page, users can filter jobs by category. Each category can have subcategories, which are found using category rollup.
+
+For example, NetSuite integration jobs are part of the NetSuite category. The NetSuite category will also have Import and Export subcategories found through the rollup.
+
+### Sample API Response
+
+The following is a sample response for the category rollup data, showing the subcategories for NetSuite in a flat structure (based on a view entity join).
+
+```json
+{
+  "categories": [
+    {
+      "productCategoryId": "NETSUITE",
+      "categoryName": "NetSuite",
+      "parentProductCategoryId": null
+    },
+    {
+      "productCategoryId": "NS_ORDER",
+      "categoryName": "Order",
+      "parentProductCategoryId": "NETSUITE"
+    },
+    {
+      "productCategoryId": "NS_INVENTORY",
+      "categoryName": "Inventory",
+      "parentProductCategoryId": "NETSUITE"
+    },
+    {
+      "productCategoryId": "NS_TRANSFER_ORDER",
+      "categoryName": "Transfer Order",
+      "parentProductCategoryId": "NETSUITE"
+    }
+  ]
+}
+```
+
+
+
