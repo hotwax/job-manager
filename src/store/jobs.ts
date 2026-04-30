@@ -1,19 +1,8 @@
 import logger from "@/logger";
-import { showToast, getCronString } from "@/utils";
-import { api, translate } from "@common";
+import { getCronString } from "@/utils";
+import { api } from "@common";
 import { defineStore } from "pinia";
 import { useUserStore } from "./user";
-
-const getNormalizedJob = (job: any = {}) => ({
-  serviceInParameters: Array.isArray(job?.serviceInParameters) ? job.serviceInParameters : [],
-  serviceJobParameters: Array.isArray(job?.serviceJobParameters) ? job.serviceJobParameters : [],
-  ...job
-});
-
-export const getJobDetailWithFallback = (jobDetail: any = {}, fallbackJob: any = {}) => {
-  const resolvedJob = Object.keys(jobDetail || {}).length ? jobDetail : fallbackJob;
-  return getNormalizedJob(resolvedJob);
-};
 
 export const useJobStore = defineStore("job", {
   state: () => ({
@@ -50,7 +39,7 @@ export const useJobStore = defineStore("job", {
             }
           })
 
-          const respJobs = resp.data.map((job: any) => ({
+          const respJobs = resp.data?.serviceJobList?.map((job: any) => ({
             ...job,
             cronString: job.cronExpression ? getCronString(job.cronExpression) : ''
           }))
