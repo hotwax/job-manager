@@ -66,6 +66,7 @@
                 <span>{{ node.label }}</span>
                 <small>{{ node.entityName }}</small>
                 <strong>{{ node.fieldCount }} {{ translate("fields") }}</strong>
+                <strong v-if="node.conditionCount">{{ node.conditionCount }} {{ translate("conditions") }}</strong>
               </button>
             </div>
           </section>
@@ -104,6 +105,10 @@
                   <h2>{{ field.outputName }}</h2>
                   <p>{{ field.fieldPath }}</p>
                 </ion-label>
+                <ion-badge v-if="getFieldConditionCount(field)" slot="end" color="warning">
+                  <ion-icon :icon="filterOutline" />
+                  {{ getFieldConditionCount(field) }}
+                </ion-badge>
               </ion-item>
               <ion-item button lines="none" color="danger" @click="removeNodeFields(selectedNode.nodeId)" v-if="!selectedNode.isPrimary">
                 <ion-icon slot="start" :icon="trashOutline" />
@@ -190,6 +195,26 @@
                 <ion-icon slot="start" :icon="filterOutline" />
                 <ion-label>{{ translate("Add condition") }}</ion-label>
               </ion-item>
+              <ion-item-divider>
+                <ion-label>{{ translate("Conditions") }}</ion-label>
+              </ion-item-divider>
+              <ion-item
+                v-for="condition in selectedFieldConditions"
+                :key="condition.conditionSeqId || condition.fieldNameAlias"
+                button
+                @click="openCondition(condition.conditionSeqId)"
+              >
+                <ion-icon slot="start" :icon="filterOutline" color="warning" />
+                <ion-label>
+                  <h2>{{ getConditionExpression(condition) }}</h2>
+                  <p v-if="getConditionValue(condition) !== ''">{{ translate("Field Value") }}: {{ getConditionValue(condition) }}</p>
+                  <p v-if="condition.toFieldNameAlias">{{ translate("To Field") }}: {{ condition.toFieldNameAlias }}</p>
+                  <p v-if="condition.postQuery">{{ translate("Post Query") }}: {{ condition.postQuery }}</p>
+                </ion-label>
+              </ion-item>
+              <ion-item v-if="!selectedFieldConditions.length">
+                <ion-label>{{ translate("No conditions.") }}</ion-label>
+              </ion-item>
               <ion-item button lines="none" color="danger" @click="removeSelectedField">
                 <ion-icon slot="start" :icon="trashOutline" />
                 <ion-label>{{ translate("Delete field") }}</ion-label>
@@ -216,6 +241,10 @@
             <ion-segment-button value="fields" layout="icon-start">
               <ion-icon :icon="listOutline" />
               <ion-label>{{ translate("Fields") }} ({{ graph.fields.length }})</ion-label>
+            </ion-segment-button>
+            <ion-segment-button value="conditions" layout="icon-start">
+              <ion-icon :icon="filterOutline" />
+              <ion-label>{{ translate("Conditions") }} ({{ graph.conditions.length }})</ion-label>
             </ion-segment-button>
             <ion-segment-button value="preview" layout="icon-start">
               <ion-icon :icon="playOutline" />
@@ -254,6 +283,31 @@
                 <h2>{{ field.outputName }}</h2>
                 <p>{{ field.fieldPath }}</p>
               </ion-label>
+              <ion-badge v-if="getFieldConditionCount(field)" slot="end" color="warning">
+                <ion-icon :icon="filterOutline" />
+                {{ getFieldConditionCount(field) }}
+              </ion-badge>
+            </ion-item>
+          </ion-list>
+
+          <ion-list v-else-if="bottomPanel === 'conditions'">
+            <ion-item
+              v-for="condition in graph.conditions"
+              :key="condition.conditionSeqId || condition.fieldNameAlias"
+              button
+              @click="openCondition(condition.conditionSeqId)"
+            >
+              <ion-icon slot="start" :icon="filterOutline" />
+              <ion-label>
+                <h2>{{ getConditionExpression(condition) }}</h2>
+                <p>{{ translate("Target") }}: {{ getConditionTargetLabel(condition) }}</p>
+                <p v-if="getConditionValue(condition) !== ''">{{ translate("Field Value") }}: {{ getConditionValue(condition) }}</p>
+                <p v-if="condition.toFieldNameAlias">{{ translate("To Field") }}: {{ condition.toFieldNameAlias }}</p>
+                <p v-if="condition.postQuery">{{ translate("Post Query") }}: {{ condition.postQuery }}</p>
+              </ion-label>
+            </ion-item>
+            <ion-item v-if="!graph.conditions.length">
+              <ion-label>{{ translate("No conditions.") }}</ion-label>
             </ion-item>
           </ion-list>
 
@@ -275,7 +329,12 @@
             <ion-item-divider>
               <ion-label>{{ translate("Related feeds") }}</ion-label>
             </ion-item-divider>
-            <ion-item v-for="feed in relatedFeeds" :key="feed.dataFeedId || feed.dataDocumentId">
+            <ion-item
+              v-for="feed in relatedFeeds"
+              :key="feed.dataFeedId || feed.dataDocumentId"
+              button
+              @click="openFeed(feed)"
+            >
               <ion-label>{{ feed.dataFeedId || feed.feedName || feed.dataDocumentId }}</ion-label>
             </ion-item>
             <ion-item v-if="!relatedFeeds.length">
@@ -607,6 +666,7 @@
 import {
   alertController,
   IonBackButton,
+  IonBadge,
   IonButton,
   IonButtons,
   IonCard,
@@ -647,7 +707,7 @@ import { useDataDocumentStore } from "@/store/dataDocuments";
 import DataDocumentExportList from "@/components/DataDocumentExportList.vue";
 import { showToast } from "@/utils";
 import { useUtilStore } from "@/store/util";
-import type { GraphEdge } from "@/utils/dataDocumentGraph";
+import type { GraphCondition, GraphEdge, GraphField } from "@/utils/dataDocumentGraph";
 
 const route = useRoute();
 const router = useRouter();
@@ -655,7 +715,7 @@ const graphStore = useDataDocumentGraphStore();
 const dataDocumentStore = useDataDocumentStore();
 const utilStore = useUtilStore();
 
-const selectedTarget = ref<{ kind: "node" | "edge" | "field"; id: string }>({ kind: "node", id: "node:root" });
+const selectedTarget = ref<{ kind: "node" | "edge" | "field" | "none"; id: string }>({ kind: "node", id: "node:root" });
 const selectedFields = ref<string[]>([]);
 const bottomPanel = ref("issues");
 const pageSize = ref(25);
@@ -678,13 +738,13 @@ const operators = [
   { value: "not-equals", label: "Not equals" },
   { value: "contains", label: "Contains" },
   { value: "starts-with", label: "Starts with" },
-  { value: "in-list", label: "In list" },
-  { value: "is-empty", label: "Is empty" },
-  { value: "is-not-empty", label: "Is not empty" },
-  { value: "greater-than", label: "Greater than" },
-  { value: "greater-than-equal-to", label: "Greater than or equal" },
-  { value: "less-than", label: "Less than" },
-  { value: "less-than-equal-to", label: "Less than or equal" },
+  { value: "in", label: "In list" },
+  { value: "empty", label: "Is empty" },
+  { value: "not-empty", label: "Is not empty" },
+  { value: "greater", label: "Greater than" },
+  { value: "greater-equals", label: "Greater than or equal" },
+  { value: "less", label: "Less than" },
+  { value: "less-equals", label: "Less than or equal" },
   { value: "between", label: "Between" }
 ];
 
@@ -750,6 +810,7 @@ const selectedField = computed(() => selectedTarget.value.kind === "field"
   : undefined);
 const activeCondition = computed(() => graph.value?.conditions.find((condition) => condition.conditionSeqId === activeConditionId.value));
 const selectedNodeFields = computed(() => graph.value?.fields.filter((field) => field.nodeId === selectedNode.value?.nodeId) || []);
+const selectedFieldConditions = computed(() => selectedField.value ? getConditionsForField(selectedField.value) : []);
 const entities = computed(() => utilStore.getEntities);
 const filteredEntities = computed(() => {
   const query = entityQueryString.value.trim().toLowerCase();
@@ -803,8 +864,53 @@ const selectNode = (nodeId: string) => {
   selectedTarget.value = { kind: "node", id: nodeId };
 };
 
-const selectCondition = (conditionId: string) => {
-  selectedTarget.value = { kind: "condition", id: conditionId };
+const getConditionValue = (condition: GraphCondition) => {
+  const value = condition.fieldValue ?? condition.sourceRecord?.value ?? condition.toFieldNameAlias ?? "";
+  return value === null || value === undefined ? "" : String(value);
+};
+
+const getConditionExpression = (condition: GraphCondition) => {
+  return [condition.fieldNameAlias, condition.operator, getConditionValue(condition)]
+    .filter((value) => value !== undefined && value !== null && value !== "")
+    .join(" ");
+};
+
+const getConditionTargetLabel = (condition: GraphCondition) => {
+  if (condition.targetKind === "field") {
+    const field = graph.value?.fields.find((item) => (
+      item.fieldSeqId === condition.targetId ||
+      item.fieldPath === condition.targetId ||
+      item.outputName === condition.fieldNameAlias ||
+      item.fieldNameAlias === condition.fieldNameAlias
+    ));
+    return field?.outputName || condition.fieldNameAlias || translate("Field");
+  }
+  return translate(condition.targetKind || "Document");
+};
+
+const getFieldConditionCount = (field: GraphField) => {
+  return getConditionsForField(field).length;
+};
+
+const getConditionsForField = (field: GraphField) => {
+  return graph.value?.conditions.filter((condition) => (
+    condition.targetId === field.fieldSeqId ||
+    condition.targetId === field.fieldPath ||
+    condition.fieldNameAlias === field.outputName ||
+    condition.fieldNameAlias === field.fieldNameAlias ||
+    condition.fieldNameAlias === field.fieldPath
+  )) || [];
+};
+
+const openCondition = (conditionId?: string) => {
+  if (!conditionId) return;
+  activeConditionId.value = conditionId;
+  conditionModal.value.$el.present();
+};
+
+const openFeed = (feed: any) => {
+  const dataFeedId = feed.dataFeedId || feed.feedName || feed;
+  if (dataFeedId) router.push(`/data-document-feeds/${encodeURIComponent(dataFeedId)}`);
 };
 
 const removeSelectedField = () => {

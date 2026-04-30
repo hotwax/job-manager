@@ -179,6 +179,58 @@ describe("data document graph projection", () => {
     }));
   });
 
+  it("keeps zero condition field values visible for graph projection", () => {
+    const graph = projectDataDocumentGraph({
+      document,
+      fields: [
+        { dataDocumentId: "PicklistRole", fieldSeqId: "10", fieldPath: "varianceQuantity", fieldNameAlias: "varianceQuantity" }
+      ],
+      conditions: [
+        {
+          dataDocumentId: "PicklistRole",
+          conditionSeqId: "01",
+          fieldNameAlias: "varianceQuantity",
+          operator: "less",
+          fieldValue: "0"
+        }
+      ]
+    });
+
+    expect(graph.conditions[0]).toEqual(expect.objectContaining({
+      targetKind: "field",
+      targetId: "10",
+      fieldNameAlias: "varianceQuantity",
+      operator: "less",
+      fieldValue: "0"
+    }));
+    expect(graph.nodes[0].conditionCount).toBe(1);
+    expect(serializeGraphConditions(graph)[0]).toEqual(expect.objectContaining({
+      operator: "less",
+      fieldValue: "0"
+    }));
+  });
+
+  it("normalizes legacy app operator keys to Moqui operator keys", () => {
+    const graph = projectDataDocumentGraph({
+      document,
+      fields: [
+        { dataDocumentId: "PicklistRole", fieldSeqId: "10", fieldPath: "varianceQuantity", fieldNameAlias: "varianceQuantity" }
+      ],
+      conditions: [
+        {
+          dataDocumentId: "PicklistRole",
+          conditionSeqId: "01",
+          fieldNameAlias: "varianceQuantity",
+          operator: "less-than",
+          fieldValue: "0"
+        }
+      ]
+    });
+
+    expect(graph.conditions[0].operator).toBe("less");
+    expect(serializeGraphConditions(graph)[0].operator).toBe("less");
+  });
+
   it("detects missing condition field aliases", () => {
     const graph = projectDataDocumentGraph({
       document,

@@ -25,6 +25,8 @@ import DataDocumentBuilder from '@/views/DataDocumentBuilder.vue';
 import DataDocumentGraphBuilder from '@/views/DataDocumentGraphBuilder.vue';
 import DataDocumentQueryPreview from '@/views/DataDocumentQueryPreview.vue';
 import DataDocumentExportHistory from '@/views/DataDocumentExportHistory.vue';
+import DataDocumentFeeds from '@/views/DataDocumentFeeds.vue';
+import DataDocumentFeedDetail from '@/views/DataDocumentFeedDetail.vue';
 
 // Defining types for the meta values
 declare module 'vue-router' {
@@ -152,6 +154,19 @@ const routes: Array<RouteRecordRaw> = [
     name: 'DataDocuments',
     component: DataDocumentCatalog,
     beforeEnter: authGuard
+  },
+  {
+    path: '/data-document-feeds',
+    name: 'DataDocumentFeeds',
+    component: DataDocumentFeeds,
+    beforeEnter: authGuard
+  },
+  {
+    path: '/data-document-feeds/:id',
+    name: 'DataDocumentFeedDetail',
+    component: DataDocumentFeedDetail,
+    beforeEnter: authGuard,
+    props: true
   },
   {
     path: '/data-documents/new',

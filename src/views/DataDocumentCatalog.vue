@@ -158,7 +158,7 @@ import {
   onIonViewWillEnter
 } from "@ionic/vue";
 import { addOutline, documentTextOutline, gitBranchOutline, playOutline } from "ionicons/icons";
-import { computed, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 
 import { translate } from "@common";
@@ -184,5 +184,6 @@ const loadDocuments = async () => {
 
 watch([queryString, selectedEntity, selectedFeed], loadDocuments);
 
+onMounted(loadDocuments);
 onIonViewWillEnter(loadDocuments);
 </script>

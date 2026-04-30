@@ -31,7 +31,7 @@
 <script setup lang="ts">
 import { IonContent, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenu, IonMenuToggle, IonTitle, IonToolbar } from "@ionic/vue";
 import { computed } from "vue";
-import { albumsOutline, cloudDownloadOutline, cloudUploadOutline, documentTextOutline, fileTrayStackedOutline, globeOutline, pulseOutline, settingsOutline, timeOutline } from "ionicons/icons";
+import { albumsOutline, cloudDownloadOutline, cloudUploadOutline, documentTextOutline, fileTrayStackedOutline, gitNetworkOutline, globeOutline, pulseOutline, settingsOutline, timeOutline } from "ionicons/icons";
 import { translate } from "@common";
 import { useAuth } from "@common/composables/useAuth";
 import router from "../router";
@@ -114,6 +114,13 @@ let appPages = [
     iosIcon: documentTextOutline,
     mdIcon: documentTextOutline,
     childRoutes: ["/data-documents/"]
+  },
+  {
+    title: "Feeds",
+    url: "/data-document-feeds",
+    iosIcon: gitNetworkOutline,
+    mdIcon: gitNetworkOutline,
+    childRoutes: ["/data-document-feeds/"]
   },
   {
     title: "Export History",

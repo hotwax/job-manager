@@ -97,9 +97,15 @@
         <ion-list v-else-if="activeSection === 'conditions'">
           <ion-item v-for="condition in conditions" :key="condition.conditionSeqId">
             <ion-label>
-              <h2>{{ condition.fieldNameAlias }}</h2>
-              <p>{{ condition.operator }} {{ condition.value }}</p>
+              <h2>{{ getConditionExpression(condition) }}</h2>
+              <p v-if="condition.conditionSeqId">{{ translate("Sequence") }}: {{ condition.conditionSeqId }}</p>
+              <p v-if="getConditionValue(condition) !== ''">{{ translate("Field Value") }}: {{ getConditionValue(condition) }}</p>
+              <p v-if="condition.toFieldNameAlias">{{ translate("To Field") }}: {{ condition.toFieldNameAlias }}</p>
+              <p v-if="condition.postQuery">{{ translate("Post Query") }}: {{ condition.postQuery }}</p>
             </ion-label>
+          </ion-item>
+          <ion-item v-if="!conditions.length">
+            <ion-label>{{ translate("No conditions.") }}</ion-label>
           </ion-item>
         </ion-list>
 
@@ -120,7 +126,12 @@
           <ion-item-divider>
             <ion-label>{{ translate("Related feeds") }}</ion-label>
           </ion-item-divider>
-          <ion-item v-for="feed in relatedFeeds" :key="feed.dataFeedId || feed.dataDocumentId">
+          <ion-item
+            v-for="feed in relatedFeeds"
+            :key="feed.dataFeedId || feed.dataDocumentId"
+            button
+            @click="openFeed(feed)"
+          >
             <ion-label>{{ feed.dataFeedId || feed.feedName || feed.dataDocumentId }}</ion-label>
           </ion-item>
           <ion-item-divider>
@@ -208,6 +219,22 @@ const getFieldEntityPath = (field: any) => {
   const pathSegments = String(field.fieldPath || "").split(":");
   pathSegments.pop();
   return pathSegments.join(":") || document.value?.primaryEntityName || translate("Primary Entity");
+};
+
+const getConditionValue = (condition: any) => {
+  const value = condition.fieldValue ?? condition.value ?? condition.toFieldNameAlias ?? "";
+  return value === null || value === undefined ? "" : String(value);
+};
+
+const getConditionExpression = (condition: any) => {
+  return [condition.fieldNameAlias, condition.operator, getConditionValue(condition)]
+    .filter((value) => value !== undefined && value !== null && value !== "")
+    .join(" ");
+};
+
+const openFeed = (feed: any) => {
+  const dataFeedId = feed.dataFeedId || feed.feedName || feed;
+  if (dataFeedId) router.push(`/data-document-feeds/${encodeURIComponent(dataFeedId)}`);
 };
 
 const fieldGroups = computed(() => {

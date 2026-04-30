@@ -19,6 +19,7 @@ export type DataDocumentConditionRecord = Record<string, any> & {
   conditionSeqId?: string;
   fieldNameAlias?: string;
   operator?: string;
+  value?: string;
   fieldValue?: string;
   toFieldNameAlias?: string;
   postQuery?: "Y" | "N" | string;
@@ -168,6 +169,21 @@ const compact = <T extends Record<string, any>>(record: T) => {
     if (value !== undefined) cleanRecord[key] = value;
     return cleanRecord;
   }, {}) as T;
+};
+
+const operatorAliases: Record<string, string> = {
+  "greater-than": "greater",
+  "greater-than-equal-to": "greater-equals",
+  "less-than": "less",
+  "less-than-equal-to": "less-equals",
+  "in-list": "in",
+  "is-empty": "empty",
+  "is-not-empty": "not-empty"
+};
+
+export const normalizeDataDocumentOperator = (operator?: string) => {
+  const normalizedOperator = String(operator || "");
+  return operatorAliases[normalizedOperator] || normalizedOperator;
 };
 
 const getDataDocumentId = (document: DataDocumentRecord, fields: DataDocumentFieldRecord[]) => {
@@ -395,8 +411,8 @@ export const projectDataDocumentGraph = ({
       targetKind: targetField ? "field" : "document",
       targetId: targetField?.fieldSeqId,
       fieldNameAlias,
-      operator: String(condition.operator || ""),
-      fieldValue: condition.fieldValue,
+      operator: normalizeDataDocumentOperator(condition.operator),
+      fieldValue: condition.fieldValue ?? condition.value,
       toFieldNameAlias: condition.toFieldNameAlias,
       postQuery: condition.postQuery,
       sourceRecord: condition
@@ -463,7 +479,7 @@ export const serializeGraphConditions = (graph: Pick<DataDocumentGraph, "dataDoc
     dataDocumentId: condition.dataDocumentId || graph.dataDocumentId,
     conditionSeqId: condition.conditionSeqId,
     fieldNameAlias: condition.fieldNameAlias,
-    operator: condition.operator,
+    operator: normalizeDataDocumentOperator(condition.operator),
     fieldValue: condition.fieldValue,
     toFieldNameAlias: condition.toFieldNameAlias,
     postQuery: condition.postQuery

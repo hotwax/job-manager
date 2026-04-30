@@ -312,13 +312,13 @@ const operators = [
   { value: "not-equals", label: "Not equals" },
   { value: "contains", label: "Contains" },
   { value: "starts-with", label: "Starts with" },
-  { value: "in-list", label: "In list" },
-  { value: "is-empty", label: "Is empty" },
-  { value: "is-not-empty", label: "Is not empty" },
-  { value: "greater-than", label: "Greater than" },
-  { value: "greater-than-equal-to", label: "Greater than or equal" },
-  { value: "less-than", label: "Less than" },
-  { value: "less-than-equal-to", label: "Less than or equal" },
+  { value: "in", label: "In list" },
+  { value: "empty", label: "Is empty" },
+  { value: "not-empty", label: "Is not empty" },
+  { value: "greater", label: "Greater than" },
+  { value: "greater-equals", label: "Greater than or equal" },
+  { value: "less", label: "Less than" },
+  { value: "less-equals", label: "Less than or equal" },
   { value: "between", label: "Between" }
 ];
 

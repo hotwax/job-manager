@@ -2,37 +2,19 @@ import { api } from "@common";
 import { defineStore } from "pinia";
 
 import logger from "@/logger";
-import {
-  mockDataDocumentConditions,
-  mockDataDocumentExports,
-  mockDataDocumentFields,
-  mockDataDocumentPresets,
-  mockDataDocumentPreviewRows,
-  mockDataDocuments
-} from "@/mock/dataDocuments";
 
 const API_ENDPOINTS = {
-  dataDocuments: "admin/dataDocuments",
+  dataDocuments: "moqui/dataDocuments",
+  exports: "admin/dataDocuments",
   preview: "oms/dataDocumentView"
 };
-
-const shouldUseMockData = () => {
-  const locationSearch = typeof window !== "undefined" ? window.location.search : "";
-  const storage = typeof window !== "undefined" ? window.localStorage : undefined;
-  if (locationSearch.includes("mockDataDocuments=true")) {
-    if (typeof storage?.setItem === "function") storage.setItem("JOB_MANAGER_DATA_DOCUMENTS_MOCK", "true");
-    return true;
-  }
-  return typeof storage?.getItem === "function" && storage.getItem("JOB_MANAGER_DATA_DOCUMENTS_MOCK") === "true";
-};
-
-const canUseMockFallback = (error: any) => !error?.response || [404, 501].includes(Number(error?.response?.status));
 
 const getCollection = (response: any, fallbackKey?: string) => {
   const data = response?.data;
   if (Array.isArray(data)) return data;
   if (Array.isArray(data?.data)) return data.data;
   if (fallbackKey && Array.isArray(data?.[fallbackKey])) return data[fallbackKey];
+  if (Array.isArray(data?.documentList)) return data.documentList;
   if (Array.isArray(data?.items)) return data.items;
   if (Array.isArray(data?.list)) return data.list;
   if (Array.isArray(data?.entityValueList)) return data.entityValueList;
@@ -41,7 +23,7 @@ const getCollection = (response: any, fallbackKey?: string) => {
 
 const getCount = (response: any, collection: any[]) => {
   const data = response?.data;
-  return Number(data?.count ?? data?.total ?? data?.dataCount ?? collection.length);
+  return Number(data?.count ?? data?.total ?? data?.dataCount ?? data?.dataDocumentsCount ?? collection.length);
 };
 
 const getEntity = (response: any) => {
@@ -56,40 +38,110 @@ const getEntity = (response: any) => {
 
 const matchesQuery = (value: any, query: string) => String(value || "").toLowerCase().includes(query);
 
-const getMockDocuments = (payload: Record<string, any> = {}) => {
+const filterDocumentsForCatalog = (documents: any[], payload: Record<string, any> = {}) => {
   const query = String(payload.queryString || "").trim().toLowerCase();
-  return mockDataDocuments.filter((document) => {
+  if (!query && !payload.dataFeedId) return documents;
+  return documents.filter((document) => {
+    const feeds = document.feeds || document.relatedFeeds || [];
     const matchesText = !query ||
       matchesQuery(document.dataDocumentId, query) ||
       matchesQuery(document.documentName, query) ||
-      matchesQuery(document.primaryEntityName, query) ||
       matchesQuery(document.documentTitle, query) ||
-      (document.relatedFeeds || []).some((feed) => matchesQuery(feed, query)) ||
-      (document.relatedJobs || []).some((job) => matchesQuery(job, query)) ||
-      mockDataDocumentFields.some((field) =>
-        field.dataDocumentId === document.dataDocumentId &&
-        (matchesQuery(field.fieldNameAlias, query) || matchesQuery(field.fieldPath, query))
-      );
-    const matchesEntity = !payload.primaryEntityName || document.primaryEntityName === payload.primaryEntityName;
-    const matchesFeed = !payload.dataFeedId || (document.relatedFeeds || []).includes(payload.dataFeedId);
-    return matchesText && matchesEntity && matchesFeed;
+      matchesQuery(document.indexName, query) ||
+      matchesQuery(document.primaryEntityName, query) ||
+      feeds.some((feed: any) => matchesQuery(feed.dataFeedId || feed, query));
+    const matchesFeed = !payload.dataFeedId || feeds.some((feed: any) => (feed.dataFeedId || feed) === payload.dataFeedId);
+    return matchesText && matchesFeed;
   });
 };
 
-const getDocumentRelations = (dataDocumentId: string) => ({
-  fields: mockDataDocumentFields.filter((field) => field.dataDocumentId === dataDocumentId),
-  conditions: mockDataDocumentConditions.filter((condition) => condition.dataDocumentId === dataDocumentId),
-  presets: mockDataDocumentPresets.filter((preset) => preset.dataDocumentId === dataDocumentId),
-  exports: mockDataDocumentExports.filter((message) => message.dataDocumentId === dataDocumentId),
-  feeds: (mockDataDocuments.find((document) => document.dataDocumentId === dataDocumentId)?.relatedFeeds || []).map((dataFeedId) => ({
-    dataDocumentId,
-    dataFeedId
-  })),
-  jobs: (mockDataDocuments.find((document) => document.dataDocumentId === dataDocumentId)?.relatedJobs || []).map((jobName) => ({
-    dataDocumentId,
-    jobName
-  }))
-});
+const normalizeDataDocument = (document: any = {}) => {
+  const relatedFeeds = document.relatedFeeds || (document.feeds || []).map((feed: any) => feed.dataFeedId || feed).filter(Boolean);
+  return {
+    ...document,
+    relatedFeeds,
+    fieldCount: document.fieldCount ?? document.fields?.length ?? 0,
+    conditionCount: document.conditionCount ?? document.conditions?.length ?? 0
+  };
+};
+
+const normalizeDataDocuments = (documents: any[]) => documents.map(normalizeDataDocument);
+
+const getFeedId = (feed: any) => feed?.dataFeedId || feed?.feed?.dataFeedId || feed;
+
+const normalizeDataFeeds = (documents: any[]) => {
+  const feeds = new Map<string, any>();
+  documents.forEach((document) => {
+    (document.feeds || document.relatedFeeds || []).forEach((feed: any) => {
+      const dataFeedId = getFeedId(feed);
+      if (!dataFeedId) return;
+      const feedInfo = feed?.feed || {};
+      const currentFeed = feeds.get(dataFeedId) || {
+        dataFeedId,
+        feedName: feedInfo.feedName || dataFeedId,
+        dataFeedTypeEnumId: feedInfo.dataFeedTypeEnumId || "",
+        feedReceiveServiceName: feedInfo.feedReceiveServiceName || "",
+        feedDeleteServiceName: feedInfo.feedDeleteServiceName || "",
+        indexOnStartEmpty: feedInfo.indexOnStartEmpty || "",
+        lastFeedStamp: feedInfo.lastFeedStamp || "",
+        documents: []
+      };
+      currentFeed.feedName = feedInfo.feedName || currentFeed.feedName;
+      currentFeed.dataFeedTypeEnumId = feedInfo.dataFeedTypeEnumId || currentFeed.dataFeedTypeEnumId;
+      currentFeed.feedReceiveServiceName = feedInfo.feedReceiveServiceName || currentFeed.feedReceiveServiceName;
+      currentFeed.feedDeleteServiceName = feedInfo.feedDeleteServiceName || currentFeed.feedDeleteServiceName;
+      currentFeed.indexOnStartEmpty = feedInfo.indexOnStartEmpty || currentFeed.indexOnStartEmpty;
+      currentFeed.lastFeedStamp = feedInfo.lastFeedStamp || currentFeed.lastFeedStamp;
+      currentFeed.documents.push({
+        dataDocumentId: document.dataDocumentId,
+        documentName: document.documentName,
+        documentTitle: document.documentTitle,
+        primaryEntityName: document.primaryEntityName,
+        indexName: document.indexName
+      });
+      feeds.set(dataFeedId, currentFeed);
+    });
+  });
+  return Array.from(feeds.values()).sort((firstFeed, secondFeed) => firstFeed.dataFeedId.localeCompare(secondFeed.dataFeedId));
+};
+
+const buildFeedFromDocument = (document: any, dataFeedId: string) => {
+  const feedRecord = (document?.feeds || document?.relatedFeeds || []).find((feed: any) => getFeedId(feed) === dataFeedId);
+  if (!feedRecord) return undefined;
+  const feedInfo = feedRecord?.feed || feedRecord || {};
+  return {
+    dataFeedId,
+    feedName: feedInfo.feedName || dataFeedId,
+    dataFeedTypeEnumId: feedInfo.dataFeedTypeEnumId || "",
+    feedReceiveServiceName: feedInfo.feedReceiveServiceName || "",
+    feedDeleteServiceName: feedInfo.feedDeleteServiceName || "",
+    indexOnStartEmpty: feedInfo.indexOnStartEmpty || "",
+    lastFeedStamp: feedInfo.lastFeedStamp || "",
+    documents: [{
+      dataDocumentId: document.dataDocumentId,
+      documentName: document.documentName,
+      documentTitle: document.documentTitle,
+      primaryEntityName: document.primaryEntityName,
+      indexName: document.indexName
+    }]
+  };
+};
+
+const buildDataDocumentListParams = (payload: Record<string, any> = {}) => {
+  const { queryString, dataFeedId, ...apiPayload } = payload;
+  return Object.entries({
+    pageSize: Number(payload.pageSize ?? 250),
+    pageIndex: Number(payload.pageIndex ?? 0),
+    orderByField: payload.orderByField || "dataDocumentId",
+    dependentLevels: Number(payload.dependentLevels ?? 1),
+    ...apiPayload
+  }).reduce((params: Record<string, any>, [key, value]) => {
+    if (value !== "" && value !== undefined && value !== null) params[key] = value;
+    return params;
+  }, {});
+};
+
+const hasDocumentRelations = (document: any, dataDocumentId: string) => document?.dataDocumentId === dataDocumentId;
 
 const stripUiFields = (payload: Record<string, any>) => {
   const { localId, isNew, ...apiPayload } = payload;
@@ -126,6 +178,8 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
     fields: [] as any[],
     conditions: [] as any[],
     relatedFeeds: [] as any[],
+    currentFeed: undefined as any,
+    feedDocuments: [] as any[],
     relatedJobs: [] as any[],
     presets: [] as any[],
     exportHistory: [] as any[],
@@ -140,6 +194,8 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
     getFields: (state) => state.fields,
     getConditions: (state) => state.conditions,
     getRelatedFeeds: (state) => state.relatedFeeds,
+    getCurrentFeed: (state) => state.currentFeed,
+    getFeedDocuments: (state) => state.feedDocuments,
     getRelatedJobs: (state) => state.relatedJobs,
     getPresets: (state) => state.presets,
     getExportHistory: (state) => state.exportHistory,
@@ -147,71 +203,96 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
     getPreviewTotal: (state) => state.previewTotal,
     getTotal: (state) => state.total,
     isLoading: (state) => state.loading,
+    getDataFeeds: (state) => normalizeDataFeeds(state.dataDocuments),
     getAvailablePrimaryEntities: (state) => [...new Set(state.dataDocuments.map((document: any) => document.primaryEntityName).filter(Boolean))].sort(),
     getAvailableFeeds: (state) => [...new Set(state.dataDocuments.flatMap((document: any) => document.relatedFeeds || []))].sort()
   },
   actions: {
     async fetchDataDocuments(payload: Record<string, any> = {}) {
       this.loading = true;
-      if (shouldUseMockData()) {
-        this.dataDocuments = getMockDocuments(payload);
-        this.total = this.dataDocuments.length;
-        this.loading = false;
-        return;
-      }
       try {
         const response = await api({
           url: API_ENDPOINTS.dataDocuments,
           method: "GET",
-          params: {
-            pageSize: Number(payload.pageSize ?? 250),
-            pageIndex: Number(payload.pageIndex ?? 0),
-            ...payload
-          }
+          params: buildDataDocumentListParams(payload)
         });
-        const documents = getCollection(response, "dataDocuments");
+        const documents = filterDocumentsForCatalog(normalizeDataDocuments(getCollection(response, "dataDocuments")), payload);
         this.dataDocuments = documents;
-        this.total = getCount(response, documents);
+        this.total = payload.queryString || payload.dataFeedId ? documents.length : getCount(response, documents);
       } catch (error) {
         logger.error("Failed to fetch data documents", error);
-        if (canUseMockFallback(error)) {
-          this.dataDocuments = getMockDocuments(payload);
-          this.total = this.dataDocuments.length;
-        } else {
-          this.dataDocuments = [];
-          this.total = 0;
-        }
+        this.dataDocuments = [];
+        this.total = 0;
       } finally {
         this.loading = false;
       }
     },
+    async fetchDataFeeds(payload: Record<string, any> = {}) {
+      await this.fetchDataDocuments({
+        pageSize: Number(payload.pageSize ?? 500),
+        pageIndex: Number(payload.pageIndex ?? 0),
+        pageNoLimit: payload.pageNoLimit ?? "true",
+        ...payload
+      });
+    },
+    async fetchDataFeed(dataFeedId: string, payload: Record<string, any> = {}) {
+      this.loading = true;
+      if (!this.dataDocuments.length) {
+        await this.fetchDataFeeds();
+      }
+      const matchingFeed = normalizeDataFeeds(this.dataDocuments).find((feed: any) => feed.dataFeedId === dataFeedId) ||
+        buildFeedFromDocument(this.currentDocument, dataFeedId);
+      this.currentFeed = matchingFeed || {
+        dataFeedId,
+        feedName: dataFeedId,
+        dataFeedTypeEnumId: "",
+        lastFeedStamp: "",
+        documents: []
+      };
+      this.feedDocuments = matchingFeed?.documents || [];
+
+      try {
+        const response = await api({
+          url: `${API_ENDPOINTS.dataDocuments}/feeds/${encodeURIComponent(dataFeedId)}/documents`,
+          method: "GET",
+          params: {
+            ...payload
+          }
+        });
+        const documentList = getCollection(response, "documentList");
+        if (documentList.length) {
+          this.feedDocuments = documentList;
+          this.currentFeed = {
+            ...this.currentFeed,
+            documents: documentList
+          };
+        }
+      } catch (error) {
+        logger.error(`Failed to fetch data feed ${dataFeedId}`, error);
+      } finally {
+        this.loading = false;
+      }
+
+      return this.currentFeed;
+    },
     async fetchDataDocument(dataDocumentId: string) {
       this.loading = true;
-      if (shouldUseMockData()) {
-        this.currentDocument = this.dataDocuments.find((document: any) => document.dataDocumentId === dataDocumentId) ||
-          mockDataDocuments.find((document) => document.dataDocumentId === dataDocumentId);
-        this.loading = false;
-        await Promise.all([
-          this.fetchFields(dataDocumentId),
-          this.fetchConditions(dataDocumentId),
-          this.fetchRelatedFeeds(dataDocumentId),
-          this.fetchRelatedJobs(dataDocumentId),
-          this.fetchPresets(dataDocumentId),
-          this.fetchExportHistory({ dataDocumentId, pageSize: 5 })
-        ]);
-        return this.currentDocument;
-      }
       try {
         const response = await api({
           url: `${API_ENDPOINTS.dataDocuments}/${encodeURIComponent(dataDocumentId)}`,
-          method: "GET"
+          method: "GET",
+          params: {
+            dependentLevels: 1
+          }
         });
-        this.currentDocument = getEntity(response);
+        this.currentDocument = normalizeDataDocument(getEntity(response));
+        this.fields = this.currentDocument?.fields || [];
+        this.conditions = this.currentDocument?.conditions || [];
+        this.relatedFeeds = this.currentDocument?.feeds || [];
+        this.relatedJobs = this.currentDocument?.jobs || [];
       } catch (error) {
         logger.error(`Failed to fetch data document ${dataDocumentId}`, error);
-        if (canUseMockFallback(error)) {
-          this.currentDocument = mockDataDocuments.find((document) => document.dataDocumentId === dataDocumentId);
-        }
+        this.currentDocument = undefined;
       } finally {
         this.loading = false;
       }
@@ -228,8 +309,8 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
       return this.currentDocument;
     },
     async fetchFields(dataDocumentId: string) {
-      if (shouldUseMockData()) {
-        this.fields = getDocumentRelations(dataDocumentId).fields;
+      if (hasDocumentRelations(this.currentDocument, dataDocumentId)) {
+        this.fields = Array.isArray(this.currentDocument?.fields) ? this.currentDocument.fields : [];
         return;
       }
       try {
@@ -241,12 +322,12 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
         this.fields = getCollection(response, "fields");
       } catch (error) {
         logger.error(`Failed to fetch fields for ${dataDocumentId}`, error);
-        if (canUseMockFallback(error)) this.fields = getDocumentRelations(dataDocumentId).fields;
+        this.fields = [];
       }
     },
     async fetchConditions(dataDocumentId: string) {
-      if (shouldUseMockData()) {
-        this.conditions = getDocumentRelations(dataDocumentId).conditions;
+      if (hasDocumentRelations(this.currentDocument, dataDocumentId)) {
+        this.conditions = Array.isArray(this.currentDocument?.conditions) ? this.currentDocument.conditions : [];
         return;
       }
       try {
@@ -258,12 +339,12 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
         this.conditions = getCollection(response, "conditions");
       } catch (error) {
         logger.error(`Failed to fetch conditions for ${dataDocumentId}`, error);
-        if (canUseMockFallback(error)) this.conditions = getDocumentRelations(dataDocumentId).conditions;
+        this.conditions = [];
       }
     },
     async fetchRelatedFeeds(dataDocumentId: string) {
-      if (shouldUseMockData()) {
-        this.relatedFeeds = getDocumentRelations(dataDocumentId).feeds;
+      if (hasDocumentRelations(this.currentDocument, dataDocumentId)) {
+        this.relatedFeeds = Array.isArray(this.currentDocument?.feeds) ? this.currentDocument.feeds : [];
         return;
       }
       try {
@@ -275,12 +356,12 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
         this.relatedFeeds = getCollection(response, "feeds");
       } catch (error) {
         logger.error(`Failed to fetch related feeds for ${dataDocumentId}`, error);
-        if (canUseMockFallback(error)) this.relatedFeeds = getDocumentRelations(dataDocumentId).feeds;
+        this.relatedFeeds = [];
       }
     },
     async fetchRelatedJobs(dataDocumentId: string) {
-      if (shouldUseMockData()) {
-        this.relatedJobs = getDocumentRelations(dataDocumentId).jobs;
+      if (hasDocumentRelations(this.currentDocument, dataDocumentId)) {
+        this.relatedJobs = Array.isArray(this.currentDocument?.jobs) ? this.currentDocument.jobs : [];
         return;
       }
       try {
@@ -292,12 +373,12 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
         this.relatedJobs = getCollection(response, "jobs");
       } catch (error) {
         logger.error(`Failed to fetch related jobs for ${dataDocumentId}`, error);
-        if (canUseMockFallback(error)) this.relatedJobs = getDocumentRelations(dataDocumentId).jobs;
+        this.relatedJobs = [];
       }
     },
     async fetchPresets(dataDocumentId: string) {
-      if (shouldUseMockData()) {
-        this.presets = getDocumentRelations(dataDocumentId).presets;
+      if (hasDocumentRelations(this.currentDocument, dataDocumentId)) {
+        this.presets = Array.isArray(this.currentDocument?.presets) ? this.currentDocument.presets : [];
         return;
       }
       try {
@@ -309,16 +390,11 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
         this.presets = getCollection(response, "presets");
       } catch (error) {
         logger.error(`Failed to fetch query presets for ${dataDocumentId}`, error);
-        if (canUseMockFallback(error)) this.presets = getDocumentRelations(dataDocumentId).presets;
+        this.presets = [];
       }
     },
     async saveDataDocument(payload: Record<string, any>) {
       const isNew = !this.currentDocument?.dataDocumentId || this.currentDocument.dataDocumentId !== payload.dataDocumentId;
-      if (shouldUseMockData()) {
-        this.currentDocument = { ...this.currentDocument, ...payload };
-        this.dataDocuments = this.dataDocuments.filter((document: any) => document.dataDocumentId !== payload.dataDocumentId).concat(this.currentDocument);
-        return this.currentDocument;
-      }
       try {
         const response = await api({
           url: isNew ? API_ENDPOINTS.dataDocuments : `${API_ENDPOINTS.dataDocuments}/${encodeURIComponent(payload.dataDocumentId)}`,
@@ -328,23 +404,13 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
         this.currentDocument = getEntity(response) || payload;
       } catch (error) {
         logger.error("Failed to save data document", error);
-        if (!canUseMockFallback(error)) throw error;
-        this.currentDocument = { ...this.currentDocument, ...payload };
-        this.dataDocuments = this.dataDocuments.filter((document: any) => document.dataDocumentId !== payload.dataDocumentId).concat(this.currentDocument);
+        throw error;
       }
       return this.currentDocument;
     },
     async saveField(dataDocumentId: string, field: Record<string, any>) {
       const isNew = !field.fieldSeqId || field.isNew;
       const payload = stripUiFields({ ...field, dataDocumentId });
-      if (shouldUseMockData()) {
-        const savedField = {
-          ...payload,
-          fieldSeqId: payload.fieldSeqId || String((this.fields.length + 1) * 10)
-        };
-        this.fields = this.fields.filter((item: any) => item.fieldSeqId !== savedField.fieldSeqId).concat(savedField);
-        return savedField;
-      }
       try {
         const response = await api({
           url: isNew
@@ -356,26 +422,12 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
         return getEntity(response) || payload;
       } catch (error) {
         logger.error(`Failed to save field for ${dataDocumentId}`, error);
-        if (!canUseMockFallback(error)) throw error;
-        const savedField = {
-          ...payload,
-          fieldSeqId: payload.fieldSeqId || String((this.fields.length + 1) * 10)
-        };
-        this.fields = this.fields.filter((item: any) => item.fieldSeqId !== savedField.fieldSeqId).concat(savedField);
-        return savedField;
+        throw error;
       }
     },
     async saveCondition(dataDocumentId: string, condition: Record<string, any>) {
       const isNew = !condition.conditionSeqId || condition.isNew;
       const payload = stripUiFields({ ...condition, dataDocumentId });
-      if (shouldUseMockData()) {
-        const savedCondition = {
-          ...payload,
-          conditionSeqId: payload.conditionSeqId || String((this.conditions.length + 1) * 10)
-        };
-        this.conditions = this.conditions.filter((item: any) => item.conditionSeqId !== savedCondition.conditionSeqId).concat(savedCondition);
-        return savedCondition;
-      }
       try {
         const response = await api({
           url: isNew
@@ -387,29 +439,11 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
         return getEntity(response) || payload;
       } catch (error) {
         logger.error(`Failed to save condition for ${dataDocumentId}`, error);
-        if (!canUseMockFallback(error)) throw error;
-        const savedCondition = {
-          ...payload,
-          conditionSeqId: payload.conditionSeqId || String((this.conditions.length + 1) * 10)
-        };
-        this.conditions = this.conditions.filter((item: any) => item.conditionSeqId !== savedCondition.conditionSeqId).concat(savedCondition);
-        return savedCondition;
+        throw error;
       }
     },
     async runPreview(dataDocumentId: string, query: Record<string, any>) {
       this.loading = true;
-      if (shouldUseMockData()) {
-        const selectedFields = query.selectedFields?.length ? query.selectedFields : this.fields.map((field: any) => field.fieldNameAlias);
-        this.previewRows = mockDataDocumentPreviewRows
-          .filter((row) => selectedFields.some((field: string) => Object.prototype.hasOwnProperty.call(row, field)))
-          .map((row) => selectedFields.reduce((previewRow: any, field: string) => {
-            previewRow[field] = (row as any)[field];
-            return previewRow;
-          }, {}));
-        this.previewTotal = this.previewRows.length;
-        this.loading = false;
-        return;
-      }
       try {
         const response = await api({
           url: API_ENDPOINTS.preview,
@@ -421,19 +455,8 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
         this.previewTotal = getCount(response, rows);
       } catch (error) {
         logger.error(`Failed to preview data document ${dataDocumentId}`, error);
-        if (canUseMockFallback(error)) {
-          const selectedFields = query.selectedFields?.length ? query.selectedFields : this.fields.map((field: any) => field.fieldNameAlias);
-          this.previewRows = mockDataDocumentPreviewRows
-            .filter((row) => selectedFields.some((field: string) => Object.prototype.hasOwnProperty.call(row, field)))
-            .map((row) => selectedFields.reduce((previewRow: any, field: string) => {
-              previewRow[field] = (row as any)[field];
-              return previewRow;
-            }, {}));
-          this.previewTotal = this.previewRows.length;
-        } else {
-          this.previewRows = [];
-          this.previewTotal = 0;
-        }
+        this.previewRows = [];
+        this.previewTotal = 0;
       } finally {
         this.loading = false;
       }
@@ -441,15 +464,6 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
     async savePreset(dataDocumentId: string, payload: Record<string, any>) {
       const isNew = !payload.presetId;
       let preset;
-      if (shouldUseMockData()) {
-        preset = {
-          ...payload,
-          dataDocumentId,
-          presetId: payload.presetId || `preset-${Date.now()}`
-        };
-        this.presets = this.presets.filter((item: any) => item.presetId !== preset.presetId).concat(preset);
-        return preset;
-      }
       try {
         const response = await api({
           url: isNew
@@ -461,75 +475,29 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
         preset = getEntity(response) || payload;
       } catch (error) {
         logger.error(`Failed to save query preset for ${dataDocumentId}`, error);
-        if (!canUseMockFallback(error)) throw error;
-        preset = {
-          ...payload,
-          dataDocumentId,
-          presetId: payload.presetId || `preset-${Date.now()}`
-        };
+        throw error;
       }
       this.presets = this.presets.filter((item: any) => item.presetId !== preset.presetId).concat(preset);
       return preset;
     },
     async queueExport(dataDocumentId: string, payload: Record<string, any>) {
-      if (shouldUseMockData()) {
-        const message = {
-          systemMessageId: `DDX${Date.now()}`,
-          dataDocumentId,
-          fileName: `${dataDocumentId}.${payload.format || "csv"}`,
-          startedBy: "current-user",
-          initDate: new Date().toISOString(),
-          statusId: "SmsgProduced",
-          systemMessageTypeId: "ExportDataDocument",
-          recordCount: 0,
-          filePath: ""
-        };
-        this.exportHistory = [message].concat(this.exportHistory);
-        return message;
-      }
       try {
         const response = await api({
-          url: `${API_ENDPOINTS.dataDocuments}/${encodeURIComponent(dataDocumentId)}/exports`,
+          url: `${API_ENDPOINTS.exports}/${encodeURIComponent(dataDocumentId)}/exports`,
           method: "POST",
           data: toDataDocumentRunPayload(dataDocumentId, payload)
         });
         return getEntity(response) || response?.data;
       } catch (error) {
         logger.error(`Failed to queue data document export for ${dataDocumentId}`, error);
-        if (!canUseMockFallback(error)) throw error;
-        const message = {
-          systemMessageId: `DDX${Date.now()}`,
-          dataDocumentId,
-          fileName: `${dataDocumentId}.${payload.format || "csv"}`,
-          startedBy: "current-user",
-          initDate: new Date().toISOString(),
-          statusId: "SmsgProduced",
-          systemMessageTypeId: "ExportDataDocument",
-          recordCount: 0,
-          filePath: ""
-        };
-        this.exportHistory = [message].concat(this.exportHistory);
-        return message;
+        throw error;
       }
     },
     async fetchExportHistory(payload: Record<string, any> = {}) {
       this.loading = true;
-      if (shouldUseMockData()) {
-        this.exportHistory = mockDataDocumentExports.filter((message) => {
-          const matchesDocument = !payload.dataDocumentId || message.dataDocumentId === payload.dataDocumentId;
-          const matchesStatus = !payload.statusId || message.statusId === payload.statusId;
-          const matchesUser = !payload.startedBy || matchesQuery(message.startedBy, String(payload.startedBy).toLowerCase());
-          const initDate = message.initDate ? new Date(message.initDate).getTime() : 0;
-          const matchesFromDate = !payload.fromDate || initDate >= new Date(payload.fromDate).getTime();
-          const matchesThruDate = !payload.thruDate || initDate <= new Date(`${payload.thruDate}T23:59:59`).getTime();
-          return matchesDocument && matchesStatus && matchesUser && matchesFromDate && matchesThruDate;
-        });
-        this.loading = false;
-        return;
-      }
       try {
         const response = await api({
-          url: `${API_ENDPOINTS.dataDocuments}/exports`,
+          url: `${API_ENDPOINTS.exports}/exports`,
           method: "GET",
           params: {
             pageSize: Number(payload.pageSize ?? 25),
@@ -542,31 +510,14 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
         this.exportHistory = getCollection(response, "systemMessages");
       } catch (error) {
         logger.error("Failed to fetch data document export history", error);
-        if (canUseMockFallback(error)) {
-          this.exportHistory = mockDataDocumentExports.filter((message) => {
-            const matchesDocument = !payload.dataDocumentId || message.dataDocumentId === payload.dataDocumentId;
-            const matchesStatus = !payload.statusId || message.statusId === payload.statusId;
-            const matchesUser = !payload.startedBy || matchesQuery(message.startedBy, String(payload.startedBy).toLowerCase());
-            const initDate = message.initDate ? new Date(message.initDate).getTime() : 0;
-            const matchesFromDate = !payload.fromDate || initDate >= new Date(payload.fromDate).getTime();
-            const matchesThruDate = !payload.thruDate || initDate <= new Date(`${payload.thruDate}T23:59:59`).getTime();
-            return matchesDocument && matchesStatus && matchesUser && matchesFromDate && matchesThruDate;
-          });
-        } else {
-          this.exportHistory = [];
-        }
+        this.exportHistory = [];
       } finally {
         this.loading = false;
       }
     },
     async downloadExport(systemMessageId: string) {
-      if (shouldUseMockData()) {
-        return {
-          data: new Blob([`systemMessageId,dataDocumentId,statusId\n${systemMessageId},mock,SmsgSent\n`], { type: "text/csv" })
-        };
-      }
       return api({
-        url: `${API_ENDPOINTS.dataDocuments}/exports/${encodeURIComponent(systemMessageId)}`,
+        url: `${API_ENDPOINTS.exports}/exports/${encodeURIComponent(systemMessageId)}`,
         method: "GET",
         responseType: "blob"
       });
