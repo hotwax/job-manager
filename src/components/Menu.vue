@@ -23,6 +23,13 @@
             <ion-label color="medium">{{ translate(page.title) }}</ion-label>
           </ion-item-divider> 
         </ion-menu-toggle>
+        <ion-item
+            button
+            @click="redirectToExternalLink()"
+          >
+            <ion-icon slot="start" :icon="openOutline" />
+            <ion-label>{{ translate("Legacy App") }}</ion-label>
+          </ion-item>
       </ion-list>
     </ion-content>
 
@@ -38,7 +45,7 @@
         <ion-item v-if="userProfile.stores?.length > 2" lines="none">
           <!-- WHY EVENTS ($emit) IS USED WITH ION CHANGE: https://michaelnthiessen.com/pass-function-as-prop/ -->
           <ion-select interface="popover" :value="currentProductStore.productStoreId" @ionChange="setProductStore($event.target.value)">
-            <ion-select-option v-for="store in (userProfile ? userProfile.stores : [])" :key="store.productStoreId" :value="store.productStoreId" >{{ store.storeName }}</ion-select-option>
+            <ion-select-option v-for="store in (userProfile ? userProfile.stores : [])" :key="store.productStoreId" :value="store.productStoreId" >{{ store.storeName || store.productStoreId }}</ion-select-option>
           </ion-select>
         </ion-item>
         <ion-item v-else lines="none">
@@ -54,8 +61,8 @@
 <script setup lang="ts">
 import { IonContent, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenu, IonMenuToggle, IonTitle, IonToolbar } from "@ionic/vue";
 import { computed } from "vue";
-import { albumsOutline, cloudUploadOutline, fileTrayStackedOutline, globeOutline, pulseOutline, settingsOutline, timeOutline } from "ionicons/icons";
-import { translate, commonUtil } from "@common";
+import { albumsOutline, cloudUploadOutline, fileTrayStackedOutline, globeOutline, openOutline, pulseOutline, settingsOutline, timeOutline } from "ionicons/icons";
+import { translate, commonUtil, cookieHelper } from "@common";
 import { useAuth } from "@common/composables/useAuth";
 import router from "../router";
 import { useUserStore } from "@/store/user";
@@ -159,6 +166,15 @@ const setProductStore = (event: any) => {
   if(userStore.current && currentProductStore?.productStoreId !== event.detail.value) {
     userStore.setCurrentProductStore({ "productStoreId": event.detail.value })
   }
+}
+
+const redirectToExternalLink = () => {
+  const oms = userStore.oms
+  const token = cookieHelper().get("token")!
+  const expirationTime = cookieHelper().get("expirationTime")!
+  const maarg = decodeURIComponent(cookieHelper().get("maarg")!)
+  const link = import.meta.env.VITE_LEGACY_APP_URL
+  window.location.href = link.replace("{oms}", oms).replace("{token}", token).replace("{expirationTime}", expirationTime).replace("{omsRedirectionUrl}", maarg)
 }
 </script>
 
