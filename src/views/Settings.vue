@@ -216,9 +216,6 @@ const setEComStore = (event: any) => {
     userStore.setCurrentProductStore({ 'productStoreId': event.detail.value })
   }
 }
-const setShopifyConfig = (event: any) => {
-  userStore.setCurrentShopifyConfig({ 'shopifyConfigId': event.detail.value });
-}
 
 const logout = () => {
   useAuth().logout({ isUserUnauthorised: false }).then((redirectionUrl) => {
