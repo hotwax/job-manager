@@ -8,6 +8,13 @@
 
     <ion-content>
       <ion-list>
+        <ion-item
+          button
+          @click="goToExternalLink"
+        >
+          <ion-icon slot="start" :icon="openOutline" />
+          <ion-label>{{ translate("New App") }}</ion-label>
+        </ion-item>
         <ion-menu-toggle auto-hide="false" v-for="(page, index) in getValidMenuItems(appPages)" :key="index">
           <ion-item
             v-if="page.url"
@@ -45,12 +52,12 @@ import {
 } from "@ionic/vue";
 import { computed, defineComponent } from "vue";
 import { mapGetters } from "vuex";
-import { albumsOutline, calendarNumberOutline, compassOutline, iceCreamOutline, libraryOutline, pulseOutline, settingsOutline, sendOutline, shirtOutline, terminalOutline, ticketOutline } from "ionicons/icons";
+import { albumsOutline, calendarNumberOutline, compassOutline, iceCreamOutline, libraryOutline, pulseOutline, settingsOutline, sendOutline, shirtOutline, terminalOutline, ticketOutline, openOutline } from "ionicons/icons";
 import { useStore } from "@/store";
 import emitter from "@/event-bus"
 import { hasPermission } from "@/authorization";
 import { useRouter } from "vue-router";
-import { translate } from "@hotwax/dxp-components";
+import { translate, useAuthStore } from "@hotwax/dxp-components";
 
 export default defineComponent({
   name: "Menu",
@@ -77,6 +84,7 @@ export default defineComponent({
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
       currentEComStore: 'user/getCurrentEComStore',
       shopifyConfigs: 'user/getShopifyConfigs',
+      omsRedirectionInfo: 'user/getOmsRedirectionInfo',
     })
   },
   methods: {
@@ -89,11 +97,15 @@ export default defineComponent({
     async setShopifyConfig(event: CustomEvent){
       await this.store.dispatch('user/setCurrentShopifyConfig', { 'shopifyConfigId': event.detail.value });
       emitter.emit("productStoreOrConfigChanged", true)
+    },
+    goToExternalLink() {
+      window.location.href = `https://job-manager.hotwax.io/login?oms=${this.authStore.oms}&token=${this.authStore.token.value}&expirationTime=${this.authStore.token.expiration}&maarg=${this.omsRedirectionInfo.url}&omsRedirectionUrl=${this.omsRedirectionInfo.url}`
     }
   },
   setup() {
     const store = useStore();
     const router = useRouter();
+    const authStore = useAuthStore();
     
     // Filtering array of app pages, retaining only those elements (pages) that have the necessary permissions for display.
     const getValidMenuItems = (appPages: any) => {
@@ -215,7 +227,9 @@ export default defineComponent({
       store,
       terminalOutline,
       ticketOutline,
-      translate
+      translate,
+      openOutline,
+      authStore
     };
   }
 });
