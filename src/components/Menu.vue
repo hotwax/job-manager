@@ -58,6 +58,8 @@ import emitter from "@/event-bus"
 import { hasPermission } from "@/authorization";
 import { useRouter } from "vue-router";
 import { translate, useAuthStore } from "@hotwax/dxp-components";
+import { UserService } from "@/services/UserService";
+import { showToast } from "@/utils";
 
 export default defineComponent({
   name: "Menu",
@@ -98,8 +100,32 @@ export default defineComponent({
       await this.store.dispatch('user/setCurrentShopifyConfig', { 'shopifyConfigId': event.detail.value });
       emitter.emit("productStoreOrConfigChanged", true)
     },
-    goToExternalLink() {
-      window.location.href = `https://job-manager.hotwax.io/login?oms=${this.authStore.oms}&token=${this.authStore.token.value}&expirationTime=${this.authStore.token.expiration}&maarg=${this.omsRedirectionInfo.url}&omsRedirectionUrl=${this.omsRedirectionInfo.url}`
+    set(name: string, value: string, maxAge?: number) {
+      let cookieString = `${encodeURIComponent(name)}=${encodeURIComponent(value)}; path=/; SameSite=Lax;`;
+      if (maxAge) {
+          cookieString += `; max-age=${maxAge}`;
+      } else {
+          cookieString += `; max-age=86400`; // Default to 1 day
+      }
+      document.cookie = cookieString;
+    },
+    async goToExternalLink() {
+      try {
+        const resp = await UserService.getUserAccountInfo()
+
+        if(resp.data?.userId) {
+          this.set("oms", this.authStore.oms)
+          this.set("token", this.authStore.token.value)
+          this.set("maarg", this.omsRedirectionInfo.url)
+          this.set("expirationTime", this.authStore.token.expiration)
+          this.set("userId", resp.data.userId)
+          window.location.href = "https://job-manager.hotwax.io/login"
+        } else {
+          throw resp.data;
+        }
+      } catch(err) {
+        showToast(translate("Redirection failed, please try again or contact administrator"))
+      }
     }
   },
   setup() {
