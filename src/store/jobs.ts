@@ -39,23 +39,27 @@ export const useJobStore = defineStore("job", {
             }
           })
 
-          const respJobs = resp.data?.serviceJobList?.map((job: any) => {
-            const isJobProductStoreDependent = () => job.serviceJobParameters.some((param: any) => param.parameterName === "productStoreIds")
+          let respJobs: Array<any> = []
+          resp.data?.serviceJobList?.map((job: any) => {
+            const jobProductStoreDep = job.serviceJobParameters.find((param: any) => import.meta.env.VITE_PRT_STR_DEP_SER_JOB_IDENTIFIER.includes(param.parameterName))
 
-            let isDraftJob = false
+            let skipJob = false
             // Check for whether job is productStore dependent or not.
-            if(isJobProductStoreDependent()) {
-              const jobProductStore = job.serviceJobParameters.find((param: any) => param.parameterName === "productStoreIds")
+            if(jobProductStoreDep?.parameterName) {
+              const dependentValue = jobProductStoreDep.parameterName === "systemMessageRemoteId" ? useUserStore().getSelectedSystemMessageRemoteId : useUserStore().getCurrentProductStore.productStoreId
               // Checks if a product store-dependent job has the current product store set in its parameters.
-              if(jobProductStore?.parameterName && !jobProductStore.parameterValue) {
-                isDraftJob = true
+              if(!jobProductStoreDep.parameterValue) {
+                job["isDraftJob"] = true
+              } else if(jobProductStoreDep.parameterValue !== dependentValue) {
+                skipJob = true
               }
             }
 
-            return {
-              ...job,
-              isDraftJob,
-              cronString: job.cronExpression ? getCronString(job.cronExpression) : ''
+            if(!skipJob) {
+              respJobs.push({
+                ...job,
+                cronString: job.cronExpression ? getCronString(job.cronExpression) : ""
+              })
             }
           })
 
@@ -172,16 +176,21 @@ export const useJobStore = defineStore("job", {
         })
         const job = resp.data.jobDetail || {}
 
-        const isJobProductStoreDependent = () => job.serviceJobParameters.some((param: any) => param.parameterName === "productStoreIds")
+        const jobProductStoreDep = job.serviceJobParameters.find((param: any) => import.meta.env.VITE_PRT_STR_DEP_SER_JOB_IDENTIFIER.includes(param.parameterName))
 
         // Check for whether job is productStore dependent or not.
-        if(isJobProductStoreDependent()) {
-          const jobProductStore = job.serviceJobParameters.find((param: any) => param.parameterName === "productStoreIds")
-          // Checks if a product store-dependent job has the current product store set in its parameters.
-          if(jobProductStore?.parameterName && jobProductStore.parameterValue === useUserStore().getCurrentProductStore.productStoreId) {
+        if(jobProductStoreDep?.parameterName) {
+          const dependentValue = jobProductStoreDep.parameterName === "systemMessageRemoteId" ? useUserStore().getSelectedSystemMessageRemoteId : useUserStore().getCurrentProductStore.productStoreId
+          // Checks if a product store dependent job has the current product store set in its parameters.
+          if(jobProductStoreDep.parameterValue === dependentValue) {
             jobDetails = job
-          } else if(jobProductStore?.parameterName && !jobProductStore.parameterValue) {
+          } else if(!jobProductStoreDep.parameterValue) {
             jobDetails = { ...job, isDraftJob: true }
+          } else {
+            // If we have a parameter to check for dependent jobs, and if the parameterValue is not the one
+            // set in the app, then we will assume that the job is scheduled for some other store and will
+            // not display its details
+            jobDetails = {}
           }
         } else {
           jobDetails = job

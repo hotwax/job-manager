@@ -454,7 +454,7 @@
                             </ion-label>
                             <ion-label>{{ log.createdByUserLogin || "-" }}</ion-label>
                             <ion-label>
-                              {{ log.createdDate ? getDateTimeWithOrdinalSuffix(log.createdDate as any) : '-' }}
+                              {{ log.createdDate ? commonUtil.getDateTimeWithOrdinalSuffix(log.createdDate as any) : '-' }}
                             </ion-label>
                           </div>
                         </ion-list>
@@ -566,7 +566,7 @@ import { computed, ref, watch } from 'vue';
 import router from "../router"
 import { useUserStore } from '@/store/user';
 import { translate, commonUtil, logger } from '@common';
-import { getCronString, getFileSize, getDateAndTime, getDateTimeWithOrdinalSuffix, showToast } from '@/utils';
+import { getCronString, getFileSize, getDateAndTime, showToast } from '@/utils';
 import { 
   alertCircleOutline,
   calendarOutline,
@@ -778,7 +778,7 @@ onIonViewWillEnter(async () => {
   await loadJob()
   void loadRuns()
 
-  const params = generateMaargJobCustomOptions(job.value)
+  const params = generateJobCustomOptions(job.value)
   optionalParams.value = params.optionalParameters
   requiredParams.value = params.requiredParameters
 })
@@ -865,10 +865,15 @@ async function runNow() {
                   return;
                 }
                 showToast(translate("Redirecting to cloned service"));
+                // As soon as we have the cloned job, redirecting the user to the detail page of the cloned job
                 router.replace(`/job/${clonedJob.jobName}`)
                 clonedJob.serviceJobParameters.find((parameter: any) => {
-                  if(parameter.parameterName === "productStoreIds") {
+                  if(parameter.parameterName === "productStoreIds" || parameter.parameterName === "productStoreId") {
                     parameter.parameterValue = currentProductStore.value.productStoreId
+                    return true;
+                  }
+                  if(parameter.parameterName === "systemMessageRemoteId") {
+                    parameter.parameterValue = useUserStore().getSelectedSystemMessageRemoteId
                     return true;
                   }
                   return false;
@@ -887,14 +892,7 @@ async function runNow() {
 
               resp = await jobStore.runNow(jobName)
               if(!commonUtil.hasError(resp) && resp.data.jobRunId) {
-                // If the job on which the operation is performed is a draft job, then we have created a clone
-                // in previous step and redirect the user to the cloned job
-                if(job.value.isDraftJob) {
-                  showToast("Service has been scheduled")
-                  router.replace(`/job/${jobName}`)
-                } else {
-                  showToast(translate("Service has been scheduled"))
-                }
+                showToast(translate("Service has been scheduled"))
               } else {
                 throw resp.data
               }
@@ -924,8 +922,12 @@ async function scheduleJob() {
       return;
     }
     clonedJob.serviceJobParameters.find((parameter: any) => {
-      if(parameter.parameterName === "productStoreIds") {
-        parameter.parameterValue = userStore.getCurrentProductStore.productStoreId
+      if(parameter.parameterName === "productStoreIds" || parameter.parameterName === "productStoreId") {
+        parameter.parameterValue = currentProductStore.value.productStoreId
+        return true;
+      }
+      if(parameter.parameterName === "systemMessageRemoteId") {
+        parameter.parameterValue = useUserStore().getSelectedSystemMessageRemoteId
         return true;
       }
       return false;
@@ -1006,22 +1008,22 @@ const generateJobCustomParameters = (requiredParameters: any, optionalParameters
   return jobCustomParameters;
 }
 
-const generateMaargJobCustomOptions = (job: any) => {
+const generateJobCustomOptions = (job: any) => {
   let inputParameters = job?.serviceInParameters ? JSON.parse(JSON.stringify(job?.serviceInParameters)) : []
   const optionalParameters: Array<any> = [];
   const requiredParameters: Array<any> = [];
 
   // removing some fields that we don't want user to edit, and for which the values will be added programatically
-  const excludeParameters = ['productStoreIds']
+  const excludeParameters = import.meta.env.VITE_PRT_STR_DEP_SER_JOB_IDENTIFIER
   inputParameters = inputParameters.filter((parameter: any) =>!excludeParameters.includes(parameter.name))
 
   const paramValues = {} as any;
 
-  job.serviceJobParameters.map((parameter: any) => {
+  job.serviceJobParameters.forEach((parameter: any) => {
     paramValues[parameter.parameterName] = parameter.parameterValue
   })
 
-  inputParameters.map((parameter: any) => {
+  inputParameters.forEach((parameter: any) => {
     if(parameter.required === "true") {
       requiredParameters.push({
         name: parameter.name,

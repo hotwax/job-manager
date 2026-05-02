@@ -1,6 +1,5 @@
 import logger from "@/logger";
-import { parseCsv } from '@/utils/config';
-import { api } from "@common";
+import { api, commonUtil } from "@common";
 import { ref } from "vue";
 
 export function useMdmLog() {
@@ -57,7 +56,7 @@ export function useMdmLog() {
       if(isValidJSON(errorCsvRecords.value)) {
         errorLogs.value = JSON.parse(errorCsvRecords.value)
       } else {
-        parseCsv(errorCsvRecords.value).then((resp: any) => {
+        commonUtil.parseCsv(errorCsvRecords.value).then((resp: any) => {
           errorLogs.value = resp
         }).catch((err: any) => console.error(err))
       }
