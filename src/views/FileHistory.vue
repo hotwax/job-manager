@@ -86,7 +86,7 @@
             </ion-label>
             <ion-label>{{ log.createdByUserLogin || "-" }}</ion-label>
             <ion-label>
-              {{ getDateTimeWithOrdinalSuffix(log.createdDate) }}
+              {{ commonUtil.getDateTimeWithOrdinalSuffix(log.createdDate) }}
             </ion-label>
             <ion-button v-if="log.statusId === 'DmlsPending'" color="danger" fill="clear" @click.stop="mdmStore.cancelDataManagerLog(log.configId, log.logId)">
               <ion-icon slot="icon-only" :icon="closeOutline" />
@@ -128,7 +128,7 @@ import { closeOutline, documentOutline, filter } from 'ionicons/icons';
 import { computed } from 'vue';
 import router from '@/router';
 import { useMdmConfigStore } from '@/store/mdmConfig';
-import { getDateTimeWithOrdinalSuffix, getFileSize } from '@/utils';
+import { getFileSize } from '@/utils';
 import { getStatusDesc } from '@/utils/config';
 import LogFilters from '@/components/LogFilters.vue';
 import { useUtilStore } from '@/store/util';
