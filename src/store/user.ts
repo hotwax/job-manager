@@ -81,7 +81,10 @@ export const useUserStore = defineStore("user", {
         const productStoresResp = await api({
           url: "admin/productStores",
           method: "get",
-          baseUrl: commonUtil.getMaargURL()
+          baseUrl: commonUtil.getMaargURL(),
+          params: {
+            pageSize: 50
+          }
         });
         this.current.stores = productStoresResp.data
 
@@ -91,6 +94,7 @@ export const useUserStore = defineStore("user", {
         });
 
         this.setCurrentProductStore(this.current.stores[0])
+        await this.fetchProductStorePreference()
       } catch(error: any) {
         logger.error("error", error);
         return Promise.reject(new Error(error));
@@ -273,7 +277,6 @@ export const useUserStore = defineStore("user", {
         await this.fetchUserProfile()
         await this.fetchPermissions()
         await this.fetchProductStores()
-        await this.fetchProductStorePreference()
       } catch(error: any) {
         return Promise.reject(new Error(error));
       }
