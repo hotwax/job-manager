@@ -69,10 +69,13 @@
             </div>
           </div>
 
-          <ion-button size="small" fill="clear" @click="runNow">
-            <ion-icon slot="start" :icon="flashOutline" />
-            {{ translate("Run Now") }}
-          </ion-button>
+          <div>
+            <ion-badge color="dark" v-if="job.paused === 'N' && job?.nextExecutionDateTime">{{ translate("running") }} {{ timeTillJob(job.nextExecutionDateTime) }}</ion-badge>
+            <ion-button size="small" fill="clear" @click="runNow">
+              <ion-icon slot="start" :icon="flashOutline" />
+              {{ translate("Run Now") }}
+            </ion-button>
+          </div>
         </div>
 
         <ion-segment v-model="activeTab">
@@ -542,7 +545,6 @@ import {
   IonCardHeader,
   IonCardTitle,
   IonCardContent,
-  IonText,
   IonIcon,
   IonButton,
   IonListHeader,
@@ -1046,6 +1048,11 @@ const generateJobCustomOptions = (job: any) => {
     optionalParameters,
     requiredParameters
   }
+}
+
+const timeTillJob = (time: any) => {
+  const timeDiff = DateTime.fromMillis(time).diff(DateTime.local());
+  return DateTime.local().plus(timeDiff).toRelative();
 }
 </script>
 

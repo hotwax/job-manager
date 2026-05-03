@@ -71,6 +71,14 @@ export const useJobStore = defineStore("job", {
         logger.error("Failed to fetch jobs", err)
       } finally {
         this.loading = false
+
+        this.jobs = Object.values(this.jobs.reduce((jobs: any, job: any) => {
+          const current = jobs[job.instanceOfProductId];
+          if(!current?.jobName || current?.isDraftJob) {
+            jobs[job.instanceOfProductId] = job
+          }
+          return jobs
+        }, {}))
       }
     },
     async fetchCategories() {
