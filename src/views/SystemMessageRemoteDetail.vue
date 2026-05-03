@@ -22,7 +22,6 @@
               v-if="!isCreateMode"
               color="danger"
               fill="outline"
-              :disabled="!canDelete"
               @click="deleteRemote"
             >
               {{ translate("Delete") }}
@@ -92,14 +91,18 @@
                 </ion-select>
               </div>
 
-              <div class="counts">
-                <ion-chip color="primary">{{ translate("Sent") }}: {{ counts.sent }}</ion-chip>
-                <ion-chip color="danger">{{ translate("Error") }}: {{ counts.error }}</ion-chip>
-                <ion-chip color="success">{{ translate("Consumed") }}: {{ counts.consumed }}</ion-chip>
+              <div class="pagination">
+                <ion-button fill="clear" slot="icon-only" :disabled="pageIndex === 0" @click="goToPreviousPage">
+                  <ion-icon :icon="caretBackOutline" />
+                </ion-button>
+                <ion-note color="medium">{{ pageIndex + 1 }} / {{ pageCount }}</ion-note>
+                <ion-button fill="clear" slot="icon-only" :disabled="pageIndex >= pageCount - 1" @click="goToNextPage">
+                  <ion-icon :icon="caretForwardOutline" />
+                </ion-button>
               </div>
 
               <SystemMessageList
-                :messages="filteredMessages"
+                :messages="relatedMessages"
                 :show-remote="false"
                 :empty-message="translate('No related messages found.')"
               />
@@ -120,10 +123,11 @@ import {
   IonCardContent,
   IonCardHeader,
   IonCardTitle,
-  IonChip,
   IonContent,
   IonHeader,
+  IonIcon,
   IonInput,
+  IonNote,
   IonPage,
   IonSearchbar,
   IonSelect,
@@ -133,7 +137,7 @@ import {
   IonToolbar,
   onIonViewWillEnter
 } from "@ionic/vue";
-import { computed, reactive, ref } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import router from "../router";
 
 import { translate } from "@common";
@@ -142,9 +146,13 @@ import SystemMessageList from "@/components/SystemMessageList.vue";
 import { useSystemMessageStore } from "@/store/systemMessage";
 import { showToast } from "@/utils";
 import { useUtilStore } from "@/store/util";
+import { caretBackOutline, caretForwardOutline } from "ionicons/icons";
 
 // Type based declaration
 const props = defineProps<{ id?: string }>();
+
+const PAGE_SIZE = 25;
+const pageIndex = ref(0);
 
 const systemMessageStore = useSystemMessageStore();
 const utilStore = useUtilStore();
@@ -174,26 +182,9 @@ const form = reactive<Record<string, any>>({
 const isCreateMode = computed(() => !props.id);
 const pageTitle = computed(() => isCreateMode.value ? translate("Create Remote System") : translate("Remote System Detail"));
 const statuses = computed(() => utilStore.getStatusItemsByType("SystemMessage"));
-const relatedMessages = computed(() => systemMessageStore.getMessagesForRemote(props.id as string));
-const counts = computed(() => systemMessageStore.getRemoteCounts(props.id as string));
-const canDelete = computed(() => !props.id || systemMessageStore.canDeleteMessageRemote(props.id));
-const filteredMessages = computed(() => {
-  let messages = [...relatedMessages.value];
-
-  if (selectedStatusId.value) {
-    messages = messages.filter((message: any) => message.statusId === selectedStatusId.value);
-  }
-
-  if (queryString.value.trim()) {
-    const query = queryString.value.trim().toLowerCase();
-    messages = messages.filter((message: any) =>
-      message.systemMessageId?.toLowerCase().includes(query) ||
-      message.systemMessageTypeId?.toLowerCase().includes(query)
-    );
-  }
-
-  return messages;
-});
+const relatedMessages = computed(() => systemMessageStore.getSystemMessages);
+const total = computed(() => systemMessageStore.getSystemMessageTotal);
+const pageCount = computed(() => Math.max(Math.ceil(total.value / PAGE_SIZE), 1));
 
 const setForm = (payload?: Record<string, any>) => {
   for (const key of Object.keys(form)) {
@@ -213,6 +204,11 @@ const loadRemote = async () => {
 
   if (props.id) {
     const entity = await systemMessageStore.fetchSystemMessageRemoteById(props.id);
+    await systemMessageStore.fetchSystemMessages({
+      systemMessageRemoteId: props.id,
+      pageIndex: pageIndex.value,
+      pageSize: PAGE_SIZE,
+    })
     setForm(entity);
   } else {
     setForm();
@@ -257,7 +253,42 @@ const deleteRemote = async () => {
   router.replace("/system-message-remotes");
 };
 
-onIonViewWillEnter(loadRemote);
+const goToPreviousPage = () => {
+  pageIndex.value -= 1;
+};
+
+const goToNextPage = () => {
+  pageIndex.value += 1;
+};
+
+watch([queryString, selectedStatusId], () => {
+  pageIndex.value = 0
+})
+
+watch([pageIndex], async () => {
+  const payload = {
+    systemMessageRemoteId: props.id,
+    pageIndex: pageIndex.value,
+    pageSize: PAGE_SIZE
+  } as Record<string, any>
+
+  if(queryString.value.trim()) {
+    payload["queryString"] = queryString.value.trim().toLowerCase()
+  }
+
+  if(selectedStatusId.value) {
+    payload["statusId"] = selectedStatusId.value;
+  }
+
+  await systemMessageStore.fetchSystemMessages(payload)
+});
+
+onIonViewWillEnter(() => {
+  pageIndex.value = 0
+  queryString.value = ""
+  selectedStatusId.value = ""
+  loadRemote()
+});
 </script>
 
 <style scoped>
@@ -274,10 +305,10 @@ onIonViewWillEnter(loadRemote);
   gap: 16px;
 }
 
-.counts {
+.pagination {
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin: 16px 0;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
 }
 </style>
