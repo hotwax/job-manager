@@ -83,8 +83,6 @@ export const useSystemMessageStore = defineStore("systemMessage", {
       getMessageCounts(state.allSystemMessages.filter((message: any) => message.systemMessageTypeId === systemMessageTypeId)),
     getRemoteCounts: (state: any) => (systemMessageRemoteId: string) =>
       getMessageCounts(state.allSystemMessages.filter((message: any) => message.systemMessageRemoteId === systemMessageRemoteId)),
-    canDeleteMessageType: (state: any) => (systemMessageTypeId: string) =>
-      !state.allSystemMessages.some((message: any) => message.systemMessageTypeId === systemMessageTypeId),
     canDeleteMessageRemote: (state: any) => (systemMessageRemoteId: string) =>
       !state.allSystemMessages.some((message: any) => message.systemMessageRemoteId === systemMessageRemoteId),
     getTechnicalFields: (state: any) => (message: any) => {
@@ -433,10 +431,6 @@ export const useSystemMessageStore = defineStore("systemMessage", {
     },
     async deleteSystemMessageType(systemMessageTypeId: string) {
       this.loading = true;
-
-      if (!this.canDeleteMessageType(systemMessageTypeId)) {
-        return { error: new Error("System message type is still referenced by messages.") };
-      }
 
       const result = {
         data: {},

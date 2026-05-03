@@ -22,7 +22,6 @@
               v-if="!isCreateMode"
               color="danger"
               fill="outline"
-              :disabled="!canDelete"
               @click="deleteType"
             >
               {{ translate("Delete") }}
@@ -157,7 +156,6 @@ const isCreateMode = computed(() => !props.id);
 const pageTitle = computed(() => isCreateMode.value ? translate("Create Message Type") : translate("Message Type Detail"));
 const statuses = computed(() => utilStore.getStatusItemsByType("SystemMessage"));
 const relatedMessages = computed(() => store.getSystemMessages);
-const canDelete = computed(() => !props.id || store.canDeleteMessageType(props.id));
 const filteredMessages = computed(() => {
   let messages = [...relatedMessages.value];
 
@@ -233,8 +231,6 @@ const saveType = async () => {
 };
 
 const deleteType = async () => {
-  if (!props.id) return;
-
   const result = await store.deleteSystemMessageType(props.id);
   if (result.error) {
     await showToast(translate("This message type cannot be deleted while messages still reference it."));
