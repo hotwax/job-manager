@@ -8,6 +8,13 @@
 
     <ion-content>
       <ion-list>
+        <ion-item
+          button
+          @click="redirectToExternalLink()"
+        >
+          <ion-icon slot="start" :icon="openOutline" />
+          <ion-label>{{ translate("Legacy App") }}</ion-label>
+        </ion-item>
         <ion-menu-toggle :auto-hide="false" v-for="(page, index) in getValidMenuItems(appPages)" :key="index">
           <ion-item
             v-if="page.url"
@@ -23,13 +30,6 @@
             <ion-label color="medium">{{ translate(page.title) }}</ion-label>
           </ion-item-divider> 
         </ion-menu-toggle>
-        <ion-item
-            button
-            @click="redirectToExternalLink()"
-          >
-            <ion-icon slot="start" :icon="openOutline" />
-            <ion-label>{{ translate("Legacy App") }}</ion-label>
-          </ion-item>
       </ion-list>
     </ion-content>
 
