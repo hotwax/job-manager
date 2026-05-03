@@ -560,12 +560,13 @@ import {
   IonSkeletonText,
   IonSpinner,
   onIonViewWillEnter,
-  alertController
+  alertController,
+  onIonViewWillLeave
 } from '@ionic/vue';
 import { computed, ref, watch } from 'vue';
 import router from "../router"
 import { useUserStore } from '@/store/user';
-import { translate, commonUtil, logger } from '@common';
+import { translate, commonUtil, logger, emitter } from '@common';
 import { getCronString, getFileSize, getDateAndTime, showToast } from '@/utils';
 import { 
   alertCircleOutline,
@@ -592,7 +593,6 @@ const categoryMembers = computed(() => jobStore.getCategoryMembers)
 const currentProductStore = computed(() => userStore.getCurrentProductStore)
 const products = computed(() => jobStore.getProducts)
 const product = computed(() => products.value[job.value?.instanceOfProductId] || {})
-
 const userTimeZone = computed(() => userStore.getUserTimeZone);
 const jobName = computed(() => route.params.jobName as string);
 // const job = computed(() => jobs.value.find((job: any) => job.jobName === jobName.value));
@@ -618,13 +618,6 @@ const jobCategories = computed(() => {
   const categoryIds = memberRecords.map((record: any) => record.productCategoryId);
   return categories.value.filter((category: any) => categoryIds.includes(category.productCategoryId));
 });
-
-// const runs = computed(() => {
-//   return mockJobRuns.filter(r => r.jobName === jobName.value).map(run => ({
-//     ...run,
-//     logs: mockDataManagerLogs.filter(log => log.createdByJobId === run.jobRunId)
-//   }));
-// });
 
 const jobParameters = computed(() => job.value.serviceJobParameters || []);
 
@@ -770,18 +763,25 @@ const loadRuns = async () => {
 }
 
 onIonViewWillEnter(async () => {
+  emitter.on("productStoreUpdated", init)
   Promise.allSettled([jobStore.fetchCategories(), jobStore.fetchCategoryRollup()])
-  // job.value = await jobStore.fetchJobDetail(route.params.jobName as string)
-  // if(job.value.instanceOfProductId) {
-  //   runs.value = await jobStore.fetchJobRuns(route.params.jobName as string)
-  // } 
+  await init()
+})
+
+onIonViewWillLeave(() => {
+  emitter.off("productStoreUpdated", init)
+})
+
+const init = async () => {
   await loadJob()
   void loadRuns()
-
-  const params = generateJobCustomOptions(job.value)
-  optionalParams.value = params.optionalParameters
-  requiredParams.value = params.requiredParameters
-})
+  
+  if(job.value.jobName) {
+    const params = generateJobCustomOptions(job.value)
+    optionalParams.value = params.optionalParameters
+    requiredParams.value = params.requiredParameters
+  }
+}
 
 const updateRunsFilter = async () => {
   if (!hasLoadedRuns.value && activeTab.value !== 'history') {
@@ -864,9 +864,6 @@ async function runNow() {
                   showToast(translate("Failed to schedule service"));
                   return;
                 }
-                showToast(translate("Redirecting to cloned service"));
-                // As soon as we have the cloned job, redirecting the user to the detail page of the cloned job
-                router.replace(`/job/${clonedJob.jobName}`)
                 clonedJob.serviceJobParameters.find((parameter: any) => {
                   if(parameter.parameterName === "productStoreIds" || parameter.parameterName === "productStoreId") {
                     parameter.parameterValue = currentProductStore.value.productStoreId
@@ -883,6 +880,8 @@ async function runNow() {
                   jobName: clonedJob.jobName,
                   serviceJobParameters: clonedJob.serviceJobParameters
                 })
+                showToast(translate("Redirecting to cloned service"));
+                router.replace(`/job/${clonedJob.jobName}`)
                 if(!commonUtil.hasError(resp)) {
                   jobName = clonedJob.jobName
                 } else {
@@ -921,6 +920,7 @@ async function scheduleJob() {
       showToast(translate("Failed to update service"));
       return;
     }
+    clonedJob.paused = job.value.paused
     clonedJob.serviceJobParameters.find((parameter: any) => {
       if(parameter.parameterName === "productStoreIds" || parameter.parameterName === "productStoreId") {
         parameter.parameterValue = currentProductStore.value.productStoreId
@@ -938,14 +938,14 @@ async function scheduleJob() {
   const payload = { 
     jobName: job.value.jobName,
     paused: job.value.paused,
-    cronExpression: job.value.cronExpression
+    cronExpression: job.value.cronExpression,
+    serviceJobParameters: job.value.serviceJobParameters
   } as any;
 
-  await updateJobInfo(payload).then(() => {
-    if(job.value.isDraftJob) {
-      router.replace(`/job/${job.value.jobName}`)
-    }
-  })
+  await updateJobInfo(payload)
+
+  router.replace(`/job/${job.value.jobName}`)
+  showToast(translate("Redirecting to the cloned job"))
 }
 
 async function updateJobInfo(payload: any): Promise<any> {

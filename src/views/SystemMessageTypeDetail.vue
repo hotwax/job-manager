@@ -90,12 +90,6 @@
               </ion-select>
             </div>
 
-            <div class="counts">
-              <ion-chip color="primary">{{ translate("Sent") }}: {{ counts.sent }}</ion-chip>
-              <ion-chip color="danger">{{ translate("Error") }}: {{ counts.error }}</ion-chip>
-              <ion-chip color="success">{{ translate("Consumed") }}: {{ counts.consumed }}</ion-chip>
-            </div>
-
             <SystemMessageList
               :messages="filteredMessages"
               :show-type="false"
@@ -161,13 +155,13 @@ const form = reactive<Record<string, any>>({
 
 const isCreateMode = computed(() => !props.id);
 const pageTitle = computed(() => isCreateMode.value ? translate("Create Message Type") : translate("Message Type Detail"));
-const type = computed(() => store.getCurrentSystemMessageType);
 const statuses = computed(() => utilStore.getStatusItemsByType("SystemMessage"));
-const relatedMessages = computed(() => props.id ? store.getMessagesForType(props.id) : []);
-const counts = computed(() => props.id ? store.getMessageTypeCounts(props.id) : { sent: 0, error: 0, consumed: 0 });
+const relatedMessages = computed(() => store.getSystemMessages);
 const canDelete = computed(() => !props.id || store.canDeleteMessageType(props.id));
 const filteredMessages = computed(() => {
   let messages = [...relatedMessages.value];
+
+  console.log('messages', messages)
 
   if (selectedStatusId.value) {
     messages = messages.filter((message: any) => message.statusId === selectedStatusId.value);
@@ -195,13 +189,16 @@ const updateField = (key: string, value: string) => {
 };
 
 const loadType = async() => {
-  await Promise.all([
-    store.fetchSystemMessageTypes(),
-    store.fetchSystemMessageStatusMetadata()
-  ]);
+  // await Promise.all([
+  //   store.fetchSystemMessageTypes(),
+  // ]);
+  await store.fetchSystemMessageStatusMetadata()
 
   if (props.id) {
     const entity = await store.fetchSystemMessageTypeById(props.id);
+    await store.fetchSystemMessages({
+      systemMessageTypeId: props.id
+    })
     setForm(entity);
   } else {
     setForm();
@@ -263,12 +260,5 @@ onIonViewWillEnter(loadType);
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 16px;
-}
-
-.counts {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin: 16px 0;
 }
 </style>

@@ -59,13 +59,14 @@
 </template>
 
 <script setup lang="ts">
-import { IonContent, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenu, IonMenuToggle, IonTitle, IonToolbar } from "@ionic/vue";
+import { IonContent, IonFooter, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenu, IonMenuToggle, IonNote, IonSelect, IonSelectOption, IonTitle, IonToolbar } from "@ionic/vue";
 import { computed } from "vue";
 import { albumsOutline, cloudUploadOutline, fileTrayStackedOutline, globeOutline, openOutline, pulseOutline, settingsOutline, timeOutline } from "ionicons/icons";
-import { translate, commonUtil, cookieHelper } from "@common";
+import { translate, commonUtil, cookieHelper, emitter } from "@common";
 import { useAuth } from "@common/composables/useAuth";
 import router from "../router";
 import { useUserStore } from "@/store/user";
+import { useJobStore } from "@/store/jobs";
 
 const { isAuthenticated } = useAuth();
 const userStore = useUserStore();
@@ -157,14 +158,15 @@ const selectedIndex = computed(() => {
   return getValidMenuItems(appPages).findIndex((screen : any) => screen.url === path || screen.childRoutes?.includes(path) || screen.childRoutes?.some((route: string) => path.includes(route)))
 })
 
-const setProductStore = (event: any) => {
+const setProductStore = async (value: string) => {
   // If the value is same, no need to update
   // Handled case for programmatical changes
   // https://github.com/ionic-team/ionic-framework/discussions/25532
   // https://github.com/ionic-team/ionic-framework/issues/20106
   // https://github.com/ionic-team/ionic-framework/pull/25858
-  if(userStore.current && currentProductStore?.productStoreId !== event.detail.value) {
-    userStore.setCurrentProductStore({ "productStoreId": event.detail.value })
+  if(userStore.current && currentProductStore?.productStoreId !== value) {
+    await userStore.setCurrentProductStore({ "productStoreId": value })
+    emitter.emit("productStoreUpdated")
   }
 }
 

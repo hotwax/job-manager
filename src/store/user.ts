@@ -177,14 +177,14 @@ export const useUserStore = defineStore("user", {
     },
 
     async fetchShopifyConfig(productStoreId: string) {
+      this.currentShopifyConfig = {};
+      this.selectedSystemMessageRemoteId = ""
       if (!productStoreId) {
-        this.currentShopifyConfig = {};
         logger.warn("No productStoreId provided for fetching shopify config. Setting initial values");
         return;
       }
 
       try {
-        let currentShopifyConfig = {};
         const shopifyConfigResp = await api({
           url: "oms/shopifyShops/shops",
           method: "GET",
@@ -194,16 +194,13 @@ export const useUserStore = defineStore("user", {
           },
         });
         const shopifyConfigs = shopifyConfigResp.data
-        shopifyConfigs.length > 0 && (currentShopifyConfig = shopifyConfigs[0]);
-        this.currentShopifyConfig = currentShopifyConfig;
+        shopifyConfigs.length > 0 && (this.currentShopifyConfig = shopifyConfigs[0]);
         await this.fetchSystemMessageRemoteByShop();
       } catch (err) {
         logger.error(err);
-        this.currentShopifyConfig = {};
       }
     },
     async fetchSystemMessageRemoteByShop() {
-      this.selectedSystemMessageRemoteId = ""
       if(!this.currentShopifyConfig.shopId) {
         return;
       }
@@ -218,6 +215,7 @@ export const useUserStore = defineStore("user", {
 
         if(response?.data?.systemMessageRemoteList && response.data.systemMessageRemoteList[0]?.internalId) {
           this.selectedSystemMessageRemoteId = response.data.systemMessageRemoteList[0].internalId;
+          return;
         }
 
         throw new Error("System message remote API did not return an entity payload.");
