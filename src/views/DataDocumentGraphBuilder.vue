@@ -706,7 +706,7 @@ import {
 } from "@ionic/vue";
 import { addOutline, arrowBackOutline, closeOutline, cloudDownloadOutline, cloudUploadOutline, filterOutline, gitBranchOutline, listOutline, optionsOutline, playOutline, refreshOutline, saveOutline } from "ionicons/icons";
 import { computed, ref, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import router from "../router"
 
 import { translate } from "@common";
 import { useDataDocumentGraphStore } from "@/store/dataDocumentGraph";
@@ -716,8 +716,7 @@ import { showToast } from "@/utils";
 import { useUtilStore } from "@/store/util";
 import type { GraphCondition, GraphEdge, GraphField } from "@/utils/dataDocumentGraph";
 
-const route = useRoute();
-const router = useRouter();
+const route = router.currentRoute.value;
 const graphStore = useDataDocumentGraphStore();
 const dataDocumentStore = useDataDocumentStore();
 const utilStore = useUtilStore();
