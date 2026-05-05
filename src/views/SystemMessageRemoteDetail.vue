@@ -71,7 +71,7 @@
                   :value="queryString"
                   @ionInput="queryString = $event.detail.value || ''"
                   :debounce="300"
-                  :placeholder="translate('Search related messages')"
+                  :placeholder="translate('Search messages by id')"
                 />
                 <ion-select
                   :label="translate('Status')"
