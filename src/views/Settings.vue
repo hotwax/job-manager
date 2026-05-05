@@ -218,14 +218,7 @@ const setEComStore = (event: any) => {
 }
 
 const logout = () => {
-  useAuth().logout({ isUserUnauthorised: false }).then((redirectionUrl) => {
-    // redirectionUrl is only present when SSO enables, thus when not present redirect user to login
-    if(!redirectionUrl) {
-      router.replace("/login");
-    } else {
-      window.location.href = redirectionUrl
-    }
-  })
+  useAuth().logout({ isUserUnauthorised: false })
 }
 const goToLaunchpad = () => {
   window.location.href = `${import.meta.env.VITE_LAUNCHPAD_URL}`
