@@ -146,7 +146,7 @@
                 </ion-label>
               </ion-item>
 
-              <ion-item v-for="(error, index) in errors" :key="index" lines="none">
+              <!-- <ion-item v-for="(error, index) in errors" :key="index" lines="none">
                 <ion-icon slot="start" :icon="warningOutline" color="danger" />
                 <ion-label>
                   <p>{{ getDateAndTime(error.errorDate) }}</p>
@@ -160,15 +160,23 @@
                     </ion-text>
                   </p>
                 </ion-label>
-              </ion-item>
+              </ion-item> -->
 
-              <ion-item lines="none">
+              <ion-item v-for="status in statusHistory" :key="status.auditHistorySeqId">
+                <ion-icon slot="start" :icon="getStatusIcon(status.newValueText)" color="primary" />
+                <ion-label>
+                  <p>{{ getDateAndTime(status.changedDate) }}</p>
+                  {{ getStatusDescription(status.newValueText) }}
+                </ion-label>
+              </ion-item>
+              
+              <!-- <ion-item lines="none">
                 <ion-icon slot="start" :icon="getStatusIcon(message.statusId)" color="primary" />
                 <ion-label>
                   <p>{{ getDateAndTime(message.lastAttemptDate || message.processedDate) }}</p>
                   {{ translate("Current Station") }}: {{ getStatusDescription(message.statusId) }}
                 </ion-label>
-              </ion-item>
+              </ion-item> -->
 
               <ion-item-divider color="light" v-if="futureStatuses().length">
                 <ion-label>{{ translate("Upcoming") }}</ion-label>
@@ -184,16 +192,17 @@
             <ion-card-content v-if="allowedTransitions.length" class="journey-actions">
               <p class="actions-label">{{ translate("Take Control") }}</p>
               <div class="action-grid">
-                <ion-button
-                  v-for="transition in allowedTransitions"
-                  :key="transition.toStatusId"
-                  :fill="transition.toStatusId === 'SmsgError' ? 'outline' : 'solid'"
-                  size="small"
-                  :color="commonUtil.getStatusColor(transition.toStatusId as string)"
-                  @click="transition.toStatusId && handleAction(transition.toStatusId)"
-                >
-                  {{ transition.transitionName || transition.toStatusDescription }}
-                </ion-button>
+                <template v-for="transition in allowedTransitions" :key="transition.toStatusId">
+                  <ion-button
+                    v-if="actionObj[transition.toStatusId] && isStatusTransitionValid(transition.toStatusId)"
+                    :fill="transition.toStatusId === 'SmsgError' ? 'outline' : 'solid'"
+                    size="small"
+                    :color="commonUtil.getStatusColor(transition.toStatusId as string)"
+                    @click="transition.toStatusId && handleAction(transition.toStatusId)"
+                  >
+                    {{ transition.transitionName || transition.toStatusDescription }}
+                  </ion-button>
+                </template>
               </div>
             </ion-card-content>
           </ion-card>
@@ -301,14 +310,17 @@
 
           <!-- Message Type Details -->
           <ion-card class="message-type">
-            <ion-card-header>
-              <ion-card-title>{{ translate("System Message Type") }}</ion-card-title>
-            </ion-card-header>
+            <ion-item lines="none">
+              <h4 slot="start">{{ translate("System Message Type") }}</h4>
+              <ion-button fill="clear" @click="openSystemMessageType(message.systemMessageTypeId)">
+                <ion-icon :icon="openOutline"></ion-icon>
+              </ion-button>
+            </ion-item>
             <ion-list lines="none">
               <template v-for="field in typeFields" :key="field">
                 <ion-item v-if="messageType && messageType[field]">
                   <ion-label>
-                    <p class="overline">{{ field }}</p>
+                    <p class="overline">{{ getLabel(field) }}</p>
                     <p v-if="field === 'receiveResponseEnumId'">
                       {{ messageType.receiveResponseEnumId }}
                       <ion-badge v-if="messageType.receiveResponseEnumId === 'MsgRrMove'" color="warning" style="margin-left: 8px;">
@@ -324,14 +336,17 @@
 
           <!-- Remote System Details -->
           <ion-card class="message-remote">
-            <ion-card-header>
-              <ion-card-title>{{ translate("System Message Remote") }}</ion-card-title>
-            </ion-card-header>
+            <ion-item lines="none">
+              <h4 slot="start">{{ translate("System Message Remote") }}</h4>
+              <ion-button fill="clear" @click="openSystemMessageRemote(message.systemMessageRemoteId)">
+                <ion-icon :icon="openOutline"></ion-icon>
+              </ion-button>
+            </ion-item>
             <ion-list lines="none">
               <template v-for="field in remoteFields" :key="field">
                 <ion-item v-if="remoteSystem && remoteSystem[field]">
                   <ion-label>
-                    <p class="overline">{{ field }}</p>
+                    <p class="overline">{{ getLabel(field) }}</p>
                     <p>{{ remoteSystem[field] }}</p>
                   </ion-label>
                 </ion-item>
@@ -416,6 +431,7 @@ const remoteSystem = computed(() => systemMessageStore.getCurrentSystemMessageRe
 const errors = computed(() => systemMessageStore.getSystemMessageErrors);
 const relatedMessages = computed(() => systemMessageStore.getRelatedMessages);
 const technicalFields = computed(() => systemMessageStore.getTechnicalFields(message.value));
+const statusHistory = computed(() => systemMessageStore.getCurrentSystemMessageStatusHistory)
 
 const currentEnumSequence = computed(() => systemMessageStore.getCurrentEnumSequence);
 const linkedMessages = computed(() => systemMessageStore.getLinkedMessages);
@@ -432,11 +448,30 @@ const isSequenceOperation = computed(() =>
   currentEnumSequence.value.length > 1
 );
 
+const getLabel = (label: string) => {
+  return label.replace(/([a-z])([A-Z])/g, '$1 $2')
+}
+
+// Checks if the toStatusId is a valid transition, if not the button is not displayed on the UI
+const isStatusTransitionValid = (statusId: string) => {
+  let status = COMMON_STATUS
+  const isOutgoing = message.value.isOutgoing === "Y"
+
+  if(isOutgoing) {
+    status = status.concat(OUTGOING_HAPPY_PATH)
+  } else {
+    status = status.concat(INCOMING_HAPPY_PATH)
+  }
+
+  return status.includes(statusId)
+}
+
 const typeFields = ["systemMessageTypeId", "description", "parentTypeId", "sendServiceName", "consumeServiceName", "sendPath", "receivePath", "receiveMovePath", "receiveFilePattern", "receiveResponseEnumId"];
 const remoteFields = ["systemMessageRemoteId", "description", "sendUrl", "receiveUrl", "remoteAppCode", "username", "authHeaderName", "remoteId", "internalId", "accessScopeEnumId", "sendServiceName"];
 
 const OUTGOING_HAPPY_PATH = ["SmsgCreated", "SmsgProduced", "SmsgSending", "SmsgSent", "SmsgConfirmed"];
 const INCOMING_HAPPY_PATH = ["SmsgCreated", "SmsgReceived", "SmsgConsuming", "SmsgConsumed", "SmsgConfirmed"];
+const COMMON_STATUS = ["SmsgCancelled", "SmsgError", "SmsgRejected"]
 
 const futureStatuses = (): string[] => {
   if (!message?.value.statusId) return [];
@@ -511,6 +546,7 @@ const loadMessage = async () => {
     systemMessageStore.fetchSystemMessageById(props.id),
     systemMessageStore.fetchSystemMessageErrors(props.id),
     systemMessageStore.fetchSystemMessageStatusMetadata(),
+    systemMessageStore.fetchSystemMessageStatusHistory(props.id)
   ]);
  
   if(message.value) {
@@ -546,18 +582,15 @@ const cancelEdit = () => {
 const saveContent = async () => {
   if (!message.value) return;
 
-  const result = await systemMessageStore.updateSystemMessage({
-    systemMessageId: message.value.systemMessageId,
-    messageText: editedText.value
+  await systemMessageStore.updateSystemMessage({
+    data: {
+      systemMessageId: message.value.systemMessageId,
+      messageText: editedText.value
+    },
+    endpoint: "update"
   });
 
-  if (result.error) {
-    await showToast(translate("Failed to update message content."));
-    return;
-  }
-
   isEditing.value = false;
-  await showToast(translate("Message content updated successfully."));
 };
 
 const looksLikeDownloadablePath = (value?: string | null) => {
@@ -630,23 +663,31 @@ const downloadLinkedFile = async () => {
   saveAs(responseBlob, downloadableFileName.value);
 };
 
+const actionObj = {
+  "SmsgCancelled": "cancel",
+  "SmsgConfirmed": "",  // last status
+  "SmsgConsumed": "consume",
+  "SmsgConsuming": "", // Mid status
+  "SmsgError": "",
+  "SmsgProduced": "update",
+  "SmsgReceived": "",
+  "SmsgRejected": "", // last status
+  "SmsgSending": "", // Mid status
+  "SmsgSent": "send"
+} as Record<string, string>
+
 const handleAction = async (statusId: string) => {
-  if(!statusId) return;
+  if(!statusId && !actionObj[statusId]) return;
 
-  console.log(statusId)
-
-  // const result = await systemMessageStore.updateSystemMessage({
-  //   systemMessageId: message.value.systemMessageId,
-  //   statusId
-  // });
-
-  // if (result.error) {
-  //   await showToast(translate("Failed to update status."));
-  //   return;
-  // }
-
-  // await loadMessage();
-  // await showToast(`${translate("Message moved to")} ${getStatusDescription(statusId)}.`);
+  await systemMessageStore.updateSystemMessage({
+    data: {
+      systemMessageId: message.value.systemMessageId,
+      statusId
+    },
+    endpoint: actionObj[statusId]
+  });
+  
+  await loadMessage();
 };
 
 const getStatusDescription = (statusId: string) => utilStore.getStatusItemDesc(statusId);
@@ -667,7 +708,14 @@ const getStatusIcon = (statusId?: string) => {
 };
 
 onIonViewWillEnter(loadMessage);
-watch(() => props.id, () => loadMessage());
+
+const openSystemMessageType = (typeId: string) => {
+  router.push(`/system-message-types/${typeId}`)
+}
+
+const openSystemMessageRemote = (remoteId: string) => {
+  router.push(`/system-message-remotes/${remoteId}`)
+}
 </script>
 
 <style scoped>

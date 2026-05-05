@@ -8,6 +8,13 @@
 
     <ion-content>
       <ion-list>
+        <ion-item
+          button
+          @click="redirectToExternalLink()"
+        >
+          <ion-icon slot="start" :icon="openOutline" />
+          <ion-label>{{ translate("Legacy App") }}</ion-label>
+        </ion-item>
         <ion-menu-toggle :auto-hide="false" v-for="(page, index) in getValidMenuItems(appPages)" :key="index">
           <ion-item
             v-if="page.url"
@@ -25,23 +32,52 @@
         </ion-menu-toggle>
       </ion-list>
     </ion-content>
+
+    <ion-footer>
+      <ion-toolbar>
+        <ion-item lines="none">
+          <ion-label class="ion-text-wrap">
+            <p class="overline">{{ commonUtil.getOmsURL() }}</p>
+          </ion-label>
+          <ion-note :color="browserTimeZone === userStore.current?.timeZone ? '' : 'danger'" slot="end">{{ userStore.current?.timeZone }}</ion-note>
+        </ion-item>
+        <!-- showing product stores only when there are multiple options to choose from. -->
+        <ion-item v-if="userProfile.stores?.length > 2" lines="none">
+          <!-- WHY EVENTS ($emit) IS USED WITH ION CHANGE: https://michaelnthiessen.com/pass-function-as-prop/ -->
+          <ion-select interface="popover" :value="currentProductStore.productStoreId" @ionChange="setProductStore($event.target.value)">
+            <ion-select-option v-for="store in (userProfile ? userProfile.stores : [])" :key="store.productStoreId" :value="store.productStoreId" >{{ store.storeName || store.productStoreId }}</ion-select-option>
+          </ion-select>
+        </ion-item>
+        <ion-item v-else lines="none">
+          <ion-label class="ion-text-wrap">
+            {{ currentProductStore.storeName }}
+          </ion-label>
+        </ion-item>
+      </ion-toolbar>
+    </ion-footer>
   </ion-menu>
 </template>
 
 <script setup lang="ts">
-import { IonContent, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenu, IonMenuToggle, IonTitle, IonToolbar } from "@ionic/vue";
+import { IonContent, IonFooter, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenu, IonMenuToggle, IonNote, IonSelect, IonSelectOption, IonTitle, IonToolbar } from "@ionic/vue";
 import { computed } from "vue";
-import { albumsOutline, cloudDownloadOutline, cloudUploadOutline, documentTextOutline, fileTrayStackedOutline, gitNetworkOutline, globeOutline, pulseOutline, settingsOutline, timeOutline } from "ionicons/icons";
-import { translate } from "@common";
+import { albumsOutline, cloudDownloadOutline, cloudUploadOutline, documentTextOutline, fileTrayStackedOutline, gitNetworkOutline, globeOutline, openOutline, pulseOutline, settingsOutline, timeOutline } from "ionicons/icons";
+import { translate, commonUtil, cookieHelper, emitter } from "@common";
 import { useAuth } from "@common/composables/useAuth";
 import router from "../router";
 import { useUserStore } from "@/store/user";
 
 const { isAuthenticated } = useAuth();
+const userStore = useUserStore();
+
+const currentProductStore = computed(() => userStore.getCurrentProductStore)
+const userProfile = computed(() => userStore.getUserProfile)
+
+const browserTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
 
 // Filtering array of app pages, retaining only those elements (pages) that have the necessary permissions for display.
 const getValidMenuItems = (appPages: any) => {
-  return appPages.filter((appPage: any) => (!appPage.meta || !appPage.meta.permissionId) || useUserStore().hasPermission(appPage.meta.permissionId));
+  return appPages.filter((appPage: any) => (!appPage.meta || !appPage.meta.permissionId) || userStore.hasPermission(appPage.meta.permissionId));
 }
 
 let appPages = [
@@ -144,6 +180,27 @@ const selectedIndex = computed(() => {
   const path = router.currentRoute.value.path
   return getValidMenuItems(appPages).findIndex((screen : any) => screen.url === path || screen.childRoutes?.includes(path) || screen.childRoutes?.some((route: string) => path.includes(route)))
 })
+
+const setProductStore = async (value: string) => {
+  // If the value is same, no need to update
+  // Handled case for programmatical changes
+  // https://github.com/ionic-team/ionic-framework/discussions/25532
+  // https://github.com/ionic-team/ionic-framework/issues/20106
+  // https://github.com/ionic-team/ionic-framework/pull/25858
+  if(userStore.current && currentProductStore?.productStoreId !== value) {
+    await userStore.setCurrentProductStore({ "productStoreId": value })
+    emitter.emit("productStoreUpdated")
+  }
+}
+
+const redirectToExternalLink = () => {
+  const oms = userStore.oms
+  const token = cookieHelper().get("token")!
+  const expirationTime = cookieHelper().get("expirationTime")!
+  const maarg = decodeURIComponent(cookieHelper().get("maarg")!)
+  const link = import.meta.env.VITE_LEGACY_APP_URL
+  window.location.href = link.replace("{oms}", oms).replace("{token}", token).replace("{expirationTime}", expirationTime).replace("{omsRedirectionUrl}", maarg)
+}
 </script>
 
 <style scoped>

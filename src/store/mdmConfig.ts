@@ -60,9 +60,32 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
           ...params
         } as any
 
-        Object.entries(this.filters).map(([ type, value ]) => {
-          payload[type] = value
+        Object.entries(this.filters).forEach(([ type, value ]) => {
+          if(type === "priority") {
+            // We only have two priorities for the configs, HIGH(PRIORITY) and NORMAL
+            // Thus when both are selected, we do not need to send the filter in payload
+            // But in case any one of them is selected, deciding the operator on the basis of value selected
+            // We can think of updating the UI for the priority filter to radio, so that only one option selection
+            // is allowed
+            if(value.length === 1) {
+              payload["priority"] = "6"
+              payload["priority_op"] = value[0] === "HIGH" ? "greater" : "less-equals"
+            }
+          } else if(Array.isArray(value)) {
+            payload[type] = value.join(",")
+            payload[`${type}_op`] = "in"
+          } else {
+            payload[type] = value
+          }
         })
+
+        // As we have DataManagerLogs created from ofbiz as well, but we do not want to show them in the app
+        // thus when statusId filter is not applied passing valid moqui status in filters to fetch only
+        // moqui specific DataManagerLogs
+        if(!payload.statusId) {
+          payload["statusId"] = "DmlsCancelled,DmlsCrashed,DmlsFailed,DmlsFinished,DmlsPending,DmlsQueued,DmlsRunning"
+          payload["statusId_op"] = "in"
+        }
 
         let resp = await api({
           url: "admin/dataManager/details",

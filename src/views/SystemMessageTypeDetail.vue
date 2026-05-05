@@ -22,7 +22,6 @@
               v-if="!isCreateMode"
               color="danger"
               fill="outline"
-              :disabled="!canDelete"
               @click="deleteType"
             >
               {{ translate("Delete") }}
@@ -70,7 +69,7 @@
                 :value="queryString"
                 @ionInput="queryString = $event.detail.value || ''"
                 :debounce="300"
-                :placeholder="translate('Search related messages')"
+                :placeholder="translate('Search messages by id')"
               />
               <ion-select
                 :label="translate('Status')"
@@ -90,14 +89,18 @@
               </ion-select>
             </div>
 
-            <div class="counts">
-              <ion-chip color="primary">{{ translate("Sent") }}: {{ counts.sent }}</ion-chip>
-              <ion-chip color="danger">{{ translate("Error") }}: {{ counts.error }}</ion-chip>
-              <ion-chip color="success">{{ translate("Consumed") }}: {{ counts.consumed }}</ion-chip>
+            <div class="pagination">
+              <ion-button fill="clear" slot="icon-only" :disabled="pageIndex === 0" @click="goToPreviousPage">
+                <ion-icon :icon="caretBackOutline" />
+              </ion-button>
+              <ion-note color="medium">{{ pageIndex + 1 }} / {{ pageCount }}</ion-note>
+              <ion-button fill="clear" slot="icon-only" :disabled="pageIndex >= pageCount - 1" @click="goToNextPage">
+                <ion-icon :icon="caretForwardOutline" />
+              </ion-button>
             </div>
 
             <SystemMessageList
-              :messages="filteredMessages"
+              :messages="relatedMessages"
               :show-type="false"
               :empty-message="translate('No related messages found.')"
             />
@@ -117,10 +120,11 @@ import {
   IonCardContent,
   IonCardHeader,
   IonCardTitle,
-  IonChip,
   IonContent,
   IonHeader,
+  IonIcon,
   IonInput,
+  IonNote,
   IonPage,
   IonSearchbar,
   IonSelect,
@@ -130,7 +134,7 @@ import {
   IonToolbar,
   onIonViewWillEnter
 } from "@ionic/vue";
-import { computed, reactive, ref } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import router from "../router";
 
 import { translate } from "@common";
@@ -139,8 +143,12 @@ import SystemMessageList from "@/components/SystemMessageList.vue";
 import { useSystemMessageStore } from "@/store/systemMessage";
 import { showToast } from "@/utils";
 import { useUtilStore } from "@/store/util";
+import { caretBackOutline, caretForwardOutline } from "ionicons/icons";
 
 const props = defineProps<{ id?: string }>();
+
+const PAGE_SIZE = 25;
+const pageIndex = ref(0);
 
 const store = useSystemMessageStore();
 const utilStore = useUtilStore();
@@ -161,28 +169,10 @@ const form = reactive<Record<string, any>>({
 
 const isCreateMode = computed(() => !props.id);
 const pageTitle = computed(() => isCreateMode.value ? translate("Create Message Type") : translate("Message Type Detail"));
-const type = computed(() => store.getCurrentSystemMessageType);
 const statuses = computed(() => utilStore.getStatusItemsByType("SystemMessage"));
-const relatedMessages = computed(() => props.id ? store.getMessagesForType(props.id) : []);
-const counts = computed(() => props.id ? store.getMessageTypeCounts(props.id) : { sent: 0, error: 0, consumed: 0 });
-const canDelete = computed(() => !props.id || store.canDeleteMessageType(props.id));
-const filteredMessages = computed(() => {
-  let messages = [...relatedMessages.value];
-
-  if (selectedStatusId.value) {
-    messages = messages.filter((message: any) => message.statusId === selectedStatusId.value);
-  }
-
-  if (queryString.value.trim()) {
-    const query = queryString.value.trim().toLowerCase();
-    messages = messages.filter((message: any) =>
-      message.systemMessageId?.toLowerCase().includes(query) ||
-      message.systemMessageRemoteId?.toLowerCase().includes(query)
-    );
-  }
-
-  return messages;
-});
+const relatedMessages = computed(() => store.getSystemMessages);
+const total = computed(() => store.getSystemMessageTotal);
+const pageCount = computed(() => Math.max(Math.ceil(total.value / PAGE_SIZE), 1));
 
 const setForm = (payload?: Record<string, any>) => {
   for (const key of Object.keys(form)) {
@@ -195,13 +185,18 @@ const updateField = (key: string, value: string) => {
 };
 
 const loadType = async() => {
-  await Promise.all([
-    store.fetchSystemMessageTypes(),
-    store.fetchSystemMessageStatusMetadata()
-  ]);
+  // await Promise.all([
+  //   store.fetchSystemMessageTypes(),
+  // ]);
+  await store.fetchSystemMessageStatusMetadata()
 
   if (props.id) {
     const entity = await store.fetchSystemMessageTypeById(props.id);
+    await store.fetchSystemMessages({
+      systemMessageTypeId: props.id,
+      pageIndex: pageIndex.value,
+      pageSize: PAGE_SIZE,
+    })
     setForm(entity);
   } else {
     setForm();
@@ -236,8 +231,6 @@ const saveType = async () => {
 };
 
 const deleteType = async () => {
-  if (!props.id) return;
-
   const result = await store.deleteSystemMessageType(props.id);
   if (result.error) {
     await showToast(translate("This message type cannot be deleted while messages still reference it."));
@@ -248,7 +241,43 @@ const deleteType = async () => {
   router.replace("/system-message-types");
 };
 
-onIonViewWillEnter(loadType);
+const goToPreviousPage = () => {
+  pageIndex.value -= 1;
+};
+
+const goToNextPage = () => {
+  pageIndex.value += 1;
+};
+
+watch([queryString, selectedStatusId, pageIndex], async (newValue, oldValue) => {
+  const payload = {
+    systemMessageTypeId: props.id,
+    pageIndex: pageIndex.value,
+    pageSize: PAGE_SIZE
+  } as Record<string, any>
+
+  if(queryString.value.trim()) {
+    payload["queryString"] = queryString.value.trim().toLowerCase()
+  }
+
+  if(selectedStatusId.value) {
+    payload["statusId"] = selectedStatusId.value;
+  }
+
+  // Reset pageIndex when queryString or selectedStatusId is changed
+  if(newValue[0] !== oldValue[0] || newValue[1] !== oldValue[1]) {
+    payload["pageIndex"] = 0
+  }
+
+  await store.fetchSystemMessages(payload)
+});
+
+onIonViewWillEnter(() => {
+  pageIndex.value = 0
+  queryString.value = ""
+  selectedStatusId.value = ""
+  loadType()
+});
 </script>
 
 <style scoped>
@@ -259,10 +288,10 @@ onIonViewWillEnter(loadType);
 }
 
 
-.counts {
+.pagination {
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin: 16px 0;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
 }
 </style>

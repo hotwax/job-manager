@@ -18,25 +18,7 @@ const getStatusDesc = (statusId: string) => {
   return statusDesc[statusId] || statusId
 }
 
-const parseCsv = async (file: File, options?: any) => {
-  return new Promise ((resolve, reject) => {
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: function (results: any) {
-        if (results.errors.length) {
-          reject(results.error)
-        } else {
-          resolve(results.data)
-        }
-      },
-      ...options
-    });
-  })
-}
-
 export {
   getQueueType,
-  getStatusDesc,
-  parseCsv
+  getStatusDesc
 }

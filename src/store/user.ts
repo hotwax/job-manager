@@ -10,7 +10,6 @@ export const useUserStore = defineStore("user", {
   state: () => ({
     current: {} as any,
     permissions: [] as any[],
-    shopifyConfigs: [] as any[],
     currentShopifyConfig: {} as any,
     currentProductStore: {
       productStoreId: "",
@@ -26,19 +25,20 @@ export const useUserStore = defineStore("user", {
     fetchStatus: {
       profile: 'none',
       permissions: 'none'
-    } as any
+    } as any,
+    selectedSystemMessageRemoteId: ""
   }),
   getters: {
     getPermissions: (state: any) => state.permissions,
     getUserProfile: (state: any) => state.current,
     getCurrentShopifyConfig: (state: any) => state.currentShopifyConfig,
-    getShopifyConfigs: (state: any) => state.shopifyConfigs,
     getProductStoreCategories: (state: any) => state.productStoreCategories,
     getPwaState: (state: any) => state.pwaState,
     getCurrentProductStore: (state: any) => state.currentProductStore,
     getUserTimeZone: (state: any) => state.current.timeZone,
     getAvailableTimeZones: (state: any) => state.timeZones,
     getFetchStatus: (state: any) => state.fetchStatus,
+    getSelectedSystemMessageRemoteId: (state: any) => state.selectedSystemMessageRemoteId,
     hasPermission: (state: any) => (permissionId: string): boolean => {
       const permissions = state.permissions;
 
@@ -90,7 +90,10 @@ export const useUserStore = defineStore("user", {
         const productStoresResp = await api({
           url: "admin/productStores",
           method: "get",
-          baseUrl: commonUtil.getMaargURL()
+          baseUrl: commonUtil.getMaargURL(),
+          params: {
+            pageSize: 50
+          }
         });
         this.current.stores = productStoresResp.data
 
@@ -100,6 +103,7 @@ export const useUserStore = defineStore("user", {
         });
 
         this.setCurrentProductStore(this.current.stores[0])
+        await this.fetchProductStorePreference()
       } catch(error: any) {
         logger.error("error", error);
         return Promise.reject(new Error(error));
@@ -123,25 +127,6 @@ export const useUserStore = defineStore("user", {
         }
       } catch(err) {
         logger.error('Favourite product store not found', err)
-      }
-    },
-    async fetchShopifyShopPreference() {
-      try {
-        const preferredShopifyShopResp = await api({
-          url: "admin/user/preferences",
-          method: "GET",
-          params: {
-            pageSize: 1,
-            userId: this.current.userId,
-            preferenceKey: "FAVORITE_SHOPIFY_SHOP"
-          },
-        });
-        const preferredShopifyShopId = preferredShopifyShopResp.data
-        if (preferredShopifyShopId) {
-          this.currentShopifyConfig = this.shopifyConfigs.find((shopifyConfig: any) => shopifyConfig.shopId === preferredShopifyShopId);
-        }
-      } catch(err) {
-        logger.error('Favourite shopify shop not found', err)
       }
     },
     async fetchPermissions() {
@@ -205,43 +190,51 @@ export const useUserStore = defineStore("user", {
     },
 
     async fetchShopifyConfig(productStoreId: string) {
+      this.currentShopifyConfig = {};
+      this.selectedSystemMessageRemoteId = ""
       if (!productStoreId) {
-        this.shopifyConfigs = [];
-        this.currentShopifyConfig = {};
         logger.warn("No productStoreId provided for fetching shopify config. Setting initial values");
         return;
       }
 
       try {
-        let currentShopifyConfig = {};
         const shopifyConfigResp = await api({
-          url: "admin/shopifyShops",
+          url: "oms/shopifyShops/shops",
           method: "GET",
           params: {
-            pageSize: 50,
+            pageSize: 1,
             productStoreId
           },
         });
         const shopifyConfigs = shopifyConfigResp.data
-        shopifyConfigs.length > 0 && (currentShopifyConfig = shopifyConfigs[0]);
-        this.shopifyConfigs = shopifyConfigs;
-        this.currentShopifyConfig = currentShopifyConfig;
+        shopifyConfigs.length > 0 && (this.currentShopifyConfig = shopifyConfigs[0]);
+        await this.fetchSystemMessageRemoteByShop();
       } catch (err) {
         logger.error(err);
-        this.shopifyConfigs = [];
-        this.currentShopifyConfig = {};
       }
     },
-
-    async setCurrentShopifyConfig(payload: any) {
-      let shopifyConfig = {} as any;
-
-      if (payload.shopifyConfigId) {
-        shopifyConfig = this.shopifyConfigs.find(
-          (configs: any) => configs.shopifyConfigId === payload.shopifyConfigId
-        );
+    async fetchSystemMessageRemoteByShop() {
+      if(!this.currentShopifyConfig.shopId) {
+        return;
       }
-      this.currentShopifyConfig = shopifyConfig ? shopifyConfig : {};
+      try {
+        const response = await api({
+          url: "oms/systemMessageRemotes",
+          method: "GET",
+          params: {
+            internalId: this.currentShopifyConfig.shopId
+          }
+        });
+
+        if(response?.data?.systemMessageRemoteList && response.data.systemMessageRemoteList[0]?.internalId) {
+          this.selectedSystemMessageRemoteId = response.data.systemMessageRemoteList[0].internalId;
+          return;
+        }
+
+        throw new Error("System message remote API did not return an entity payload.");
+      } catch (err) {
+        logger.error("Failed to fetch system message remote by shop", err);
+      }
     },
     async setUserTimeZone(tzId: string) {
       // Do not make any api call if the user clicks the same timeZone again that is already selected
@@ -294,6 +287,7 @@ export const useUserStore = defineStore("user", {
       try {
         await this.fetchUserProfile();
         await this.fetchPermissions();
+        await this.fetchProductStores()
         await Promise.allSettled([
           useUtilStore().fetchEntities(),
           useUtilStore().fetchStatusFlowTransitions()
