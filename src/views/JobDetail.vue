@@ -334,17 +334,19 @@
               <ion-card-header>
                 <ion-card-title class="header-with-action">
                   {{ translate("Custom Parameters") }}
-                  <ion-button v-if="!isEditingParameters" fill="clear" @click="toggleEditParameters()">
-                    {{ translate(generateJobCustomParameters(requiredParams, optionalParams).length ? "Edit" : "Add") }}
-                  </ion-button>
-                  <div v-else class="action-buttons">
-                    <ion-button color="primary" @click="saveParameters()">
-                      {{ translate("Save") }}
+                  <template v-if="requiredParams.length || optionalParams.length">
+                    <ion-button v-if="!isEditingParameters" fill="clear" @click="toggleEditParameters()">
+                      {{ translate(generateJobCustomParameters(requiredParams, optionalParams).length ? "Edit" : "Add") }}
                     </ion-button>
-                    <ion-button color="medium" @click="cancelEditParameters()">
-                      {{ translate("Cancel") }}
-                    </ion-button>
-                  </div>
+                    <div v-else class="action-buttons">
+                      <ion-button color="primary" :disabled="isRequiredParametersMissing" @click="saveParameters()">
+                        {{ translate("Save") }}
+                      </ion-button>
+                      <ion-button color="medium" @click="cancelEditParameters()">
+                        {{ translate("Cancel") }}
+                      </ion-button>
+                    </div>
+                  </template>
                 </ion-card-title>
               </ion-card-header>
               <ion-card-content>
@@ -356,6 +358,7 @@
                     </template>
                     <div v-else class="parameter-edit-item">
                       <ion-input
+                        :class="{'requiredParam': param.required && !param.value}"
                         v-model="param.value"
                         :label="param.name"
                         label-placement="stacked"
@@ -365,6 +368,9 @@
                     </div>
                   </ion-item>
                 </ion-list>
+                <div v-else-if="!editableParametersList.length" class="ion-text-center ion-padding">
+                  <p>{{ translate("No parameters available for this job.") }}</p>
+                </div>
                 <div v-else class="ion-text-center ion-padding">
                   <p>{{ translate("No custom parameters set for this job.") }}</p>
                 </div>
@@ -596,8 +602,8 @@ const currentProductStore = computed(() => userStore.getCurrentProductStore)
 const products = computed(() => jobStore.getProducts)
 const product = computed(() => products.value[job.value?.instanceOfProductId] || {})
 const userTimeZone = computed(() => userStore.getUserTimeZone);
-const jobName = computed(() => route.params.jobName as string);
-// const job = computed(() => jobs.value.find((job: any) => job.jobName === jobName.value));
+const isRequiredParametersMissing = computed(() => requiredParams.value.some((param: any) => !param.value))
+
 let job: any = ref({})
 let runs: any = ref([])
 const isLoading = ref(true)
@@ -620,8 +626,6 @@ const jobCategories = computed(() => {
   const categoryIds = memberRecords.map((record: any) => record.productCategoryId);
   return categories.value.filter((category: any) => categoryIds.includes(category.productCategoryId));
 });
-
-const jobParameters = computed(() => job.value.serviceJobParameters || []);
 
 const calculateDuration = (start: string | number | null, end: string | number | null) => {
   if (!start || !end) return 'N/A';
@@ -1170,6 +1174,10 @@ const timeTillJob = (time: any) => {
 ion-input.job-info {
   margin-top: var(--margin-top, 10px);
   margin-bottom: var(--margin-bottom, 10px);
+}
+
+.requiredParam {
+  --border-color: var(--ion-color-danger)
 }
 
 @media (min-width: 992px) {
