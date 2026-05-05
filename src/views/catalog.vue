@@ -142,12 +142,13 @@ import {
   IonTitle,
   IonToolbar,
   modalController,
-  onIonViewWillEnter
+  onIonViewWillEnter,
+  onIonViewWillLeave
 } from '@ionic/vue';
 import { ref, computed } from 'vue';
 import router from '@/router';
-import { addOutline, ellipseOutline, lockClosedOutline, pauseCircleOutline, playCircleOutline } from 'ionicons/icons';
-import { translate } from '@common';
+import { ellipseOutline, lockClosedOutline, pauseCircleOutline, playCircleOutline } from 'ionicons/icons';
+import { emitter, translate } from '@common';
 import CreateJobModal from '@/components/CreateJobModal.vue';
 import { useJobStore } from '@/store/jobs';
 
@@ -159,7 +160,12 @@ const categoryMembers = computed(() => jobStore.getCategoryMembers)
 const categoryRollups = computed(() => jobStore.getCategoryRollups)
 
 onIonViewWillEnter(async () => {
+  emitter.on("productStoreUpdated", jobStore.fetchJobs)
   await Promise.allSettled([jobStore.fetchJobs(), jobStore.fetchCategories(), jobStore.fetchCategoryRollup()])
+})
+
+onIonViewWillLeave(() => {
+  emitter.off("productStoreUpdated", jobStore.fetchJobs)
 })
 
 const selectedParentCategoryId = ref('ALL');

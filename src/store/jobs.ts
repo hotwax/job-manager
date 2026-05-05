@@ -1,19 +1,8 @@
 import logger from "@/logger";
-import { showToast, getCronString } from "@/utils";
-import { api, translate } from "@common";
+import { getCronString } from "@/utils";
+import { api } from "@common";
 import { defineStore } from "pinia";
 import { useUserStore } from "./user";
-
-const getNormalizedJob = (job: any = {}) => ({
-  serviceInParameters: Array.isArray(job?.serviceInParameters) ? job.serviceInParameters : [],
-  serviceJobParameters: Array.isArray(job?.serviceJobParameters) ? job.serviceJobParameters : [],
-  ...job
-});
-
-export const getJobDetailWithFallback = (jobDetail: any = {}, fallbackJob: any = {}) => {
-  const resolvedJob = Object.keys(jobDetail || {}).length ? jobDetail : fallbackJob;
-  return getNormalizedJob(resolvedJob);
-};
 
 export const useJobStore = defineStore("job", {
   state: () => ({
@@ -50,27 +39,32 @@ export const useJobStore = defineStore("job", {
             }
           })
 
-          const respJobs = resp.data?.serviceJobList?.map((job: any) => {
-            const isJobProductStoreDependent = () => job.serviceJobParameters.some((param: any) => param.parameterName === "productStoreIds")
-
-            let isDraftJob = false
+          let respJobs: Array<any> = []
+          resp.data?.serviceJobList?.forEach((job: any) => {
+            // Get all the parameters that shows dependency and then get the first one that has actual value
+            // as we have cases where a job can have multiple dependency params and only one of them have value
+            const jobProductStoreDepList = job.serviceJobParameters.filter((param: any) => JSON.parse(import.meta.env.VITE_PRT_STR_DEP_SER_JOB_IDENTIFIER).includes(param.parameterName))
+            const jobProductStoreDep = (jobProductStoreDepList.find((dependent: any) => dependent.parameterValue) ?? jobProductStoreDepList[0])
+            let skipJob = false
             // Check for whether job is productStore dependent or not.
-            if(isJobProductStoreDependent()) {
-              const jobProductStore = job.serviceJobParameters.find((param: any) => param.parameterName === "productStoreIds")
-              // Checks if a product store-dependent job has the current product store set in its parameters.
-              if(jobProductStore?.parameterName && !jobProductStore.parameterValue) {
-                isDraftJob = true
+            if(jobProductStoreDep?.parameterName) {
+              const dependentValue = jobProductStoreDep.parameterName === "systemMessageRemoteId" ? useUserStore().getSelectedSystemMessageRemoteId : useUserStore().getCurrentProductStore.productStoreId
+              if(!jobProductStoreDep.parameterValue) {
+                job["isDraftJob"] = true
+              } else if(jobProductStoreDep.parameterValue !== dependentValue) {
+                skipJob = true
               }
             }
 
-            return {
-              ...job,
-              isDraftJob,
-              cronString: job.cronExpression ? getCronString(job.cronExpression) : ''
+            if(!skipJob) {
+              respJobs.push({
+                ...job,
+                cronString: job.cronExpression ? getCronString(job.cronExpression) : ""
+              })
             }
           })
 
-          total = respJobs.length
+          total = resp.data?.serviceJobList.length
           this.jobs = pageIndex > 0 ? this.jobs.concat(respJobs) : respJobs
           pageIndex++
         } while(total == 250)
@@ -78,10 +72,26 @@ export const useJobStore = defineStore("job", {
         logger.error("Failed to fetch jobs", err)
       } finally {
         this.loading = false
+
+        this.jobs = Object.values(this.jobs.reduce((jobs: any, job: any) => {
+          const current = jobs[job.instanceOfProductId];
+
+          // This check needs to be removed once verified that there is no job in the system without
+          // instanceOfProductId value
+          if(!job.instanceOfProductId) {
+            jobs[job.jobName] = job
+            return jobs
+          }
+
+          if(!current?.jobName || current?.isDraftJob) {
+            jobs[job.instanceOfProductId] = job
+          }
+          return jobs
+        }, {}))
       }
     },
     async fetchCategories() {
-      // if(this.categories.length) return;
+      if(this.categories.length) return;
       this.loading = true
       try {
         let total = 0
@@ -107,7 +117,7 @@ export const useJobStore = defineStore("job", {
       }
     },
     async fetchCategoryMembers() {
-      // if(this.categoryMembers.length) return;
+      if(this.categoryMembers.length) return;
       this.loading = true
       try {
         const productCategoryIds = this.categories.map((category: any) => {
@@ -137,7 +147,7 @@ export const useJobStore = defineStore("job", {
       }
     },
     async fetchCategoryRollup() {
-      // if(this.categoryRollups.length) return;
+      if(this.categoryRollups.length) return;
       this.loading = true
       try {
         const resp = await api({
@@ -183,16 +193,23 @@ export const useJobStore = defineStore("job", {
         })
         const job = resp.data.jobDetail || {}
 
-        const isJobProductStoreDependent = () => job.serviceJobParameters.some((param: any) => param.parameterName === "productStoreIds")
+        // Get all the parameters that shows dependency and then get the first one that has actual value
+        // as we have cases where a job can have multiple dependency params and only one of them have value
+        const jobProductStoreDepList = job.serviceJobParameters.filter((param: any) => JSON.parse(import.meta.env.VITE_PRT_STR_DEP_SER_JOB_IDENTIFIER).includes(param.parameterName))
+        const jobProductStoreDep = (jobProductStoreDepList.find((dependent: any) => dependent.parameterValue) ?? jobProductStoreDepList[0])
 
         // Check for whether job is productStore dependent or not.
-        if(isJobProductStoreDependent()) {
-          const jobProductStore = job.serviceJobParameters.find((param: any) => param.parameterName === "productStoreIds")
-          // Checks if a product store-dependent job has the current product store set in its parameters.
-          if(jobProductStore?.parameterName && jobProductStore.parameterValue === useUserStore().getCurrentProductStore.productStoreId) {
+        if(jobProductStoreDep?.parameterName) {
+          const dependentValue = jobProductStoreDep.parameterName === "systemMessageRemoteId" ? useUserStore().getSelectedSystemMessageRemoteId : useUserStore().getCurrentProductStore.productStoreId
+          if(jobProductStoreDep.parameterValue === dependentValue) {
             jobDetails = job
-          } else if(jobProductStore?.parameterName && !jobProductStore.parameterValue) {
+          } else if(!jobProductStoreDep.parameterValue) {
             jobDetails = { ...job, isDraftJob: true }
+          } else {
+            // If we have a parameter to check for dependent jobs, and if the parameterValue is not the one
+            // set in the app, then we will assume that the job is scheduled for some other store and will
+            // not display its details
+            jobDetails = {}
           }
         } else {
           jobDetails = job

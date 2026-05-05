@@ -8,6 +8,13 @@
 
     <ion-content>
       <ion-list>
+        <ion-item
+          button
+          @click="redirectToExternalLink()"
+        >
+          <ion-icon slot="start" :icon="openOutline" />
+          <ion-label>{{ translate("Legacy App") }}</ion-label>
+        </ion-item>
         <ion-menu-toggle :auto-hide="false" v-for="(page, index) in getValidMenuItems(appPages)" :key="index">
           <ion-item
             v-if="page.url"
@@ -23,13 +30,6 @@
             <ion-label color="medium">{{ translate(page.title) }}</ion-label>
           </ion-item-divider> 
         </ion-menu-toggle>
-        <ion-item
-            button
-            @click="redirectToExternalLink()"
-          >
-            <ion-icon slot="start" :icon="openOutline" />
-            <ion-label>{{ translate("Legacy App") }}</ion-label>
-          </ion-item>
       </ion-list>
     </ion-content>
 
@@ -39,7 +39,7 @@
           <ion-label class="ion-text-wrap">
             <p class="overline">{{ commonUtil.getOmsURL() }}</p>
           </ion-label>
-          <ion-note :color="browserTimeZone === userStore.current?.userTimeZone ? '' : 'danger'" slot="end">{{ userStore.current?.userTimeZone }}</ion-note>
+          <ion-note :color="browserTimeZone === userStore.current?.timeZone ? '' : 'danger'" slot="end">{{ userStore.current?.timeZone }}</ion-note>
         </ion-item>
         <!-- showing product stores only when there are multiple options to choose from. -->
         <ion-item v-if="userProfile.stores?.length > 2" lines="none">
@@ -59,10 +59,10 @@
 </template>
 
 <script setup lang="ts">
-import { IonContent, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenu, IonMenuToggle, IonTitle, IonToolbar } from "@ionic/vue";
+import { IonContent, IonFooter, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenu, IonMenuToggle, IonNote, IonSelect, IonSelectOption, IonTitle, IonToolbar } from "@ionic/vue";
 import { computed } from "vue";
 import { albumsOutline, cloudUploadOutline, fileTrayStackedOutline, globeOutline, openOutline, pulseOutline, settingsOutline, timeOutline } from "ionicons/icons";
-import { translate, commonUtil, cookieHelper } from "@common";
+import { translate, commonUtil, cookieHelper, emitter } from "@common";
 import { useAuth } from "@common/composables/useAuth";
 import router from "../router";
 import { useUserStore } from "@/store/user";
@@ -70,7 +70,7 @@ import { useUserStore } from "@/store/user";
 const { isAuthenticated } = useAuth();
 const userStore = useUserStore();
 
-const currentProductStore = userStore.getCurrentProductStore
+const currentProductStore = computed(() => userStore.getCurrentProductStore)
 const userProfile = computed(() => userStore.getUserProfile)
 
 const browserTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -157,14 +157,15 @@ const selectedIndex = computed(() => {
   return getValidMenuItems(appPages).findIndex((screen : any) => screen.url === path || screen.childRoutes?.includes(path) || screen.childRoutes?.some((route: string) => path.includes(route)))
 })
 
-const setProductStore = (event: any) => {
+const setProductStore = async (value: string) => {
   // If the value is same, no need to update
   // Handled case for programmatical changes
   // https://github.com/ionic-team/ionic-framework/discussions/25532
   // https://github.com/ionic-team/ionic-framework/issues/20106
   // https://github.com/ionic-team/ionic-framework/pull/25858
-  if(userStore.current && currentProductStore?.productStoreId !== event.detail.value) {
-    userStore.setCurrentProductStore({ "productStoreId": event.detail.value })
+  if(userStore.current && currentProductStore?.productStoreId !== value) {
+    await userStore.setCurrentProductStore({ "productStoreId": value })
+    emitter.emit("productStoreUpdated")
   }
 }
 

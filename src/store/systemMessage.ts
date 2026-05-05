@@ -1,15 +1,8 @@
 import { api, translate } from "@common";
 import { defineStore } from "pinia";
 import { getDateAndTime, showToast } from "@/utils";
-
 import logger from "@/logger";
 import { useUtilStore } from "./util";
-
-const getMessageCounts = (messages: any[]) => ({
-  sent: messages.filter((message: any) => message.statusId === "SmsgSent").length,
-  error: messages.filter((message: any) => message.statusId === "SmsgError").length,
-  consumed: messages.filter((message: any) => message.statusId === "SmsgConsumed").length
-});
 
 const getResponseEntity = (response: any) => {
   const data = response?.data;
@@ -24,34 +17,24 @@ const getResponseEntity = (response: any) => {
   return undefined;
 };
 
-const updateMessages = (messages: any[], payload: Record<string, any>) => {
-  return messages.map((message: any) =>
-    message.systemMessageId === payload.systemMessageId ? { ...message, ...payload } : message
-  );
-};
-
-const canUseMockFallback = (error: any) => !error?.response;
-
-const loadMockState = () => ({
-  systemMessageTypes: [],
-  allSystemMessages: [],
-  systemMessages: [],
-  systemMessageRemotes: [],
-  systemMessageErrors: [] as any[],
-  currentSystemMessage: undefined as Record<string, any> | undefined,
-  currentSystemMessageType: undefined as Record<string, any> | undefined,
-  currentSystemMessageRemote: undefined as Record<string, any> | undefined,
-  currentEnumSequence: [] as any[],
-  relatedMessages: [] as any[],
-  linkedMessages: [] as any[],
-  systemMessageTotal: 0,
-  loading: false,
-  enums: [] as any[],
-  currentSystemMessageStatusHistory: []
-});
-
 export const useSystemMessageStore = defineStore("systemMessage", {
-  state: loadMockState,
+  state: () => ({
+    systemMessageTypes: [],
+    allSystemMessages: [],
+    systemMessages: [],
+    systemMessageRemotes: [],
+    systemMessageErrors: [] as any[],
+    currentSystemMessage: undefined as Record<string, any> | undefined,
+    currentSystemMessageType: undefined as Record<string, any> | undefined,
+    currentSystemMessageRemote: undefined as Record<string, any> | undefined,
+    currentEnumSequence: [] as any[],
+    relatedMessages: [] as any[],
+    linkedMessages: [] as any[],
+    systemMessageTotal: 0,
+    loading: false,
+    enums: [] as any[],
+    currentSystemMessageStatusHistory: []
+  }),
   getters: {
     getSystemMessageTypes: (state: any) => state.systemMessageTypes,
     getSystemMessages: (state: any) => state.systemMessages,
@@ -77,16 +60,6 @@ export const useSystemMessageStore = defineStore("systemMessage", {
     getRelatedMessages: (state: any) => state.relatedMessages,
     getMessagesForType: (state: any) => (systemMessageTypeId: string) =>
       state.allSystemMessages.filter((message: any) => message.systemMessageTypeId === systemMessageTypeId),
-    getMessagesForRemote: (state: any) => (systemMessageRemoteId: string) =>
-      state.allSystemMessages.filter((message: any) => message.systemMessageRemoteId === systemMessageRemoteId),
-    getMessageTypeCounts: (state: any) => (systemMessageTypeId: string) =>
-      getMessageCounts(state.allSystemMessages.filter((message: any) => message.systemMessageTypeId === systemMessageTypeId)),
-    getRemoteCounts: (state: any) => (systemMessageRemoteId: string) =>
-      getMessageCounts(state.allSystemMessages.filter((message: any) => message.systemMessageRemoteId === systemMessageRemoteId)),
-    canDeleteMessageType: (state: any) => (systemMessageTypeId: string) =>
-      !state.allSystemMessages.some((message: any) => message.systemMessageTypeId === systemMessageTypeId),
-    canDeleteMessageRemote: (state: any) => (systemMessageRemoteId: string) =>
-      !state.allSystemMessages.some((message: any) => message.systemMessageRemoteId === systemMessageRemoteId),
     getTechnicalFields: (state: any) => (message: any) => {
       if (!message) return [];
 
@@ -159,7 +132,7 @@ export const useSystemMessageStore = defineStore("systemMessage", {
           return;
         }
 
-        throw new Error("System messages API did not return a collection payload.");
+        throw new Error(response.data);
       } catch (err) {
         logger.error("Failed to fetch system messages", err);
         this.systemMessages = []
@@ -434,10 +407,6 @@ export const useSystemMessageStore = defineStore("systemMessage", {
     async deleteSystemMessageType(systemMessageTypeId: string) {
       this.loading = true;
 
-      if (!this.canDeleteMessageType(systemMessageTypeId)) {
-        return { error: new Error("System message type is still referenced by messages.") };
-      }
-
       const result = {
         data: {},
         error: undefined as any
@@ -464,9 +433,6 @@ export const useSystemMessageStore = defineStore("systemMessage", {
     },
     async deleteSystemMessageRemote(systemMessageRemoteId: string) {
       this.loading = true;
-      if (!this.canDeleteMessageRemote(systemMessageRemoteId)) {
-        return { error: new Error("System message remote is still referenced by messages.") };
-      }
 
       const result = {
         data: {},

@@ -69,10 +69,13 @@
             </div>
           </div>
 
-          <ion-button size="small" fill="clear" @click="runNow">
-            <ion-icon slot="start" :icon="flashOutline" />
-            {{ translate("Run Now") }}
-          </ion-button>
+          <div class="metadata">
+            <ion-badge color="dark" v-if="job.paused === 'N' && job?.nextExecutionDateTime">{{ translate("running") }} {{ timeTillJob(job.nextExecutionDateTime) }}</ion-badge>
+            <ion-button size="small" fill="clear" @click="runNow">
+              <ion-icon slot="start" :icon="flashOutline" />
+              {{ translate("Run Now") }}
+            </ion-button>
+          </div>
         </div>
 
         <ion-segment v-model="activeTab">
@@ -331,21 +334,23 @@
               <ion-card-header>
                 <ion-card-title class="header-with-action">
                   {{ translate("Custom Parameters") }}
-                  <ion-button v-if="!isEditingParameters" fill="clear" @click="toggleEditParameters()">
-                    {{ translate(jobParameters.length ? "Edit" : "Add") }}
-                  </ion-button>
-                  <div v-else class="action-buttons">
-                    <ion-button color="primary" @click="saveParameters()">
-                      {{ translate("Save") }}
+                  <template v-if="requiredParams.length || optionalParams.length">
+                    <ion-button v-if="!isEditingParameters" fill="clear" @click="toggleEditParameters()">
+                      {{ translate(generateJobCustomParameters(requiredParams, optionalParams).length ? "Edit" : "Add") }}
                     </ion-button>
-                    <ion-button color="medium" @click="cancelEditParameters()">
-                      {{ translate("Cancel") }}
-                    </ion-button>
-                  </div>
+                    <div v-else class="action-buttons">
+                      <ion-button color="primary" :disabled="isRequiredParametersMissing" @click="saveParameters()">
+                        {{ translate("Save") }}
+                      </ion-button>
+                      <ion-button color="medium" @click="cancelEditParameters()">
+                        {{ translate("Cancel") }}
+                      </ion-button>
+                    </div>
+                  </template>
                 </ion-card-title>
               </ion-card-header>
               <ion-card-content>
-                <ion-list :lines="isEditingParameters ? 'none' : 'full'" v-if="generateJobCustomParameters(requiredParams, optionalParams).length || editableParametersList.length">
+                <ion-list :lines="isEditingParameters ? 'none' : 'full'" v-if="generateJobCustomParameters(requiredParams, optionalParams).length || (isEditingParameters && editableParametersList.length)">
                   <ion-item v-for="(param, index) in (isEditingParameters ? editableParametersList : generateJobCustomParameters(requiredParams, optionalParams))" :key="index">
                     <template v-if="!isEditingParameters">
                       <ion-label>{{ param.name }}</ion-label>
@@ -353,6 +358,7 @@
                     </template>
                     <div v-else class="parameter-edit-item">
                       <ion-input
+                        :class="{'requiredParam': param.required && !param.value}"
                         v-model="param.value"
                         :label="param.name"
                         label-placement="stacked"
@@ -362,6 +368,9 @@
                     </div>
                   </ion-item>
                 </ion-list>
+                <div v-else-if="!editableParametersList.length" class="ion-text-center ion-padding">
+                  <p>{{ translate("No parameters available for this job.") }}</p>
+                </div>
                 <div v-else class="ion-text-center ion-padding">
                   <p>{{ translate("No custom parameters set for this job.") }}</p>
                 </div>
@@ -454,7 +463,7 @@
                             </ion-label>
                             <ion-label>{{ log.createdByUserLogin || "-" }}</ion-label>
                             <ion-label>
-                              {{ log.createdDate ? getDateTimeWithOrdinalSuffix(log.createdDate as any) : '-' }}
+                              {{ log.createdDate ? commonUtil.getDateTimeWithOrdinalSuffix(log.createdDate as any) : '-' }}
                             </ion-label>
                           </div>
                         </ion-list>
@@ -542,7 +551,6 @@ import {
   IonCardHeader,
   IonCardTitle,
   IonCardContent,
-  IonText,
   IonIcon,
   IonButton,
   IonListHeader,
@@ -560,13 +568,14 @@ import {
   IonSkeletonText,
   IonSpinner,
   onIonViewWillEnter,
-  alertController
+  alertController,
+  onIonViewWillLeave
 } from '@ionic/vue';
 import { computed, ref, watch } from 'vue';
 import router from "../router"
 import { useUserStore } from '@/store/user';
-import { translate, commonUtil, logger } from '@common';
-import { getCronString, getFileSize, getDateAndTime, getDateTimeWithOrdinalSuffix, showToast } from '@/utils';
+import { translate, commonUtil, logger, emitter } from '@common';
+import { getCronString, getFileSize, getDateAndTime, showToast } from '@/utils';
 import { 
   alertCircleOutline,
   calendarOutline,
@@ -592,10 +601,9 @@ const categoryMembers = computed(() => jobStore.getCategoryMembers)
 const currentProductStore = computed(() => userStore.getCurrentProductStore)
 const products = computed(() => jobStore.getProducts)
 const product = computed(() => products.value[job.value?.instanceOfProductId] || {})
-
 const userTimeZone = computed(() => userStore.getUserTimeZone);
-const jobName = computed(() => route.params.jobName as string);
-// const job = computed(() => jobs.value.find((job: any) => job.jobName === jobName.value));
+const isRequiredParametersMissing = computed(() => requiredParams.value.some((param: any) => !param.value))
+
 let job: any = ref({})
 let runs: any = ref([])
 const isLoading = ref(true)
@@ -618,15 +626,6 @@ const jobCategories = computed(() => {
   const categoryIds = memberRecords.map((record: any) => record.productCategoryId);
   return categories.value.filter((category: any) => categoryIds.includes(category.productCategoryId));
 });
-
-// const runs = computed(() => {
-//   return mockJobRuns.filter(r => r.jobName === jobName.value).map(run => ({
-//     ...run,
-//     logs: mockDataManagerLogs.filter(log => log.createdByJobId === run.jobRunId)
-//   }));
-// });
-
-const jobParameters = computed(() => job.value.serviceJobParameters || []);
 
 const calculateDuration = (start: string | number | null, end: string | number | null) => {
   if (!start || !end) return 'N/A';
@@ -770,18 +769,25 @@ const loadRuns = async () => {
 }
 
 onIonViewWillEnter(async () => {
+  emitter.on("productStoreUpdated", init)
   Promise.allSettled([jobStore.fetchCategories(), jobStore.fetchCategoryRollup()])
-  // job.value = await jobStore.fetchJobDetail(route.params.jobName as string)
-  // if(job.value.instanceOfProductId) {
-  //   runs.value = await jobStore.fetchJobRuns(route.params.jobName as string)
-  // } 
+  await init()
+})
+
+onIonViewWillLeave(() => {
+  emitter.off("productStoreUpdated", init)
+})
+
+const init = async () => {
   await loadJob()
   void loadRuns()
-
-  const params = generateMaargJobCustomOptions(job.value)
-  optionalParams.value = params.optionalParameters
-  requiredParams.value = params.requiredParameters
-})
+  
+  if(job.value.jobName) {
+    const params = generateJobCustomOptions(job.value)
+    optionalParams.value = params.optionalParameters
+    requiredParams.value = params.requiredParameters
+  }
+}
 
 const updateRunsFilter = async () => {
   if (!hasLoadedRuns.value && activeTab.value !== 'history') {
@@ -864,11 +870,13 @@ async function runNow() {
                   showToast(translate("Failed to schedule service"));
                   return;
                 }
-                showToast(translate("Redirecting to cloned service"));
-                router.replace(`/job/${jobName}`)
                 clonedJob.serviceJobParameters.find((parameter: any) => {
-                  if(parameter.parameterName === "productStoreIds") {
+                  if(parameter.parameterName === "productStoreIds" || parameter.parameterName === "productStoreId") {
                     parameter.parameterValue = currentProductStore.value.productStoreId
+                    return true;
+                  }
+                  if(parameter.parameterName === "systemMessageRemoteId") {
+                    parameter.parameterValue = useUserStore().getSelectedSystemMessageRemoteId
                     return true;
                   }
                   return false;
@@ -878,6 +886,8 @@ async function runNow() {
                   jobName: clonedJob.jobName,
                   serviceJobParameters: clonedJob.serviceJobParameters
                 })
+                showToast(translate("Redirecting to cloned service"));
+                router.replace(`/job/${clonedJob.jobName}`)
                 if(!commonUtil.hasError(resp)) {
                   jobName = clonedJob.jobName
                 } else {
@@ -887,14 +897,7 @@ async function runNow() {
 
               resp = await jobStore.runNow(jobName)
               if(!commonUtil.hasError(resp) && resp.data.jobRunId) {
-                // If the job on which the operation is performed is a draft job, then we have created a clone
-                // in previous step and redirect the user to the cloned job
-                if(job.value.isDraftJob) {
-                  showToast("Service has been scheduled")
-                  router.replace(`/job/${jobName}`)
-                } else {
-                  showToast(translate("Service has been scheduled"))
-                }
+                showToast(translate("Service has been scheduled"))
               } else {
                 throw resp.data
               }
@@ -923,9 +926,14 @@ async function scheduleJob() {
       showToast(translate("Failed to update service"));
       return;
     }
+    clonedJob.paused = job.value.paused
     clonedJob.serviceJobParameters.find((parameter: any) => {
-      if(parameter.parameterName === "productStoreIds") {
-        parameter.parameterValue = userStore.getCurrentProductStore.productStoreId
+      if(parameter.parameterName === "productStoreIds" || parameter.parameterName === "productStoreId") {
+        parameter.parameterValue = currentProductStore.value.productStoreId
+        return true;
+      }
+      if(parameter.parameterName === "systemMessageRemoteId") {
+        parameter.parameterValue = useUserStore().getSelectedSystemMessageRemoteId
         return true;
       }
       return false;
@@ -936,14 +944,14 @@ async function scheduleJob() {
   const payload = { 
     jobName: job.value.jobName,
     paused: job.value.paused,
-    cronExpression: job.value.cronExpression
+    cronExpression: job.value.cronExpression,
+    serviceJobParameters: job.value.serviceJobParameters
   } as any;
 
-  await updateJobInfo(payload).then(() => {
-    if(job.value.isDraftJob) {
-      router.replace(`/job/${job.value.jobName}`)
-    }
-  })
+  await updateJobInfo(payload)
+
+  router.replace(`/job/${job.value.jobName}`)
+  showToast(translate("Redirecting to the cloned job"))
 }
 
 async function updateJobInfo(payload: any): Promise<any> {
@@ -1006,22 +1014,22 @@ const generateJobCustomParameters = (requiredParameters: any, optionalParameters
   return jobCustomParameters;
 }
 
-const generateMaargJobCustomOptions = (job: any) => {
+const generateJobCustomOptions = (job: any) => {
   let inputParameters = job?.serviceInParameters ? JSON.parse(JSON.stringify(job?.serviceInParameters)) : []
   const optionalParameters: Array<any> = [];
   const requiredParameters: Array<any> = [];
 
   // removing some fields that we don't want user to edit, and for which the values will be added programatically
-  const excludeParameters = ['productStoreIds']
+  const excludeParameters = JSON.parse(import.meta.env.VITE_PRT_STR_DEP_SER_JOB_IDENTIFIER)
   inputParameters = inputParameters.filter((parameter: any) =>!excludeParameters.includes(parameter.name))
 
   const paramValues = {} as any;
 
-  job.serviceJobParameters.map((parameter: any) => {
+  job.serviceJobParameters.forEach((parameter: any) => {
     paramValues[parameter.parameterName] = parameter.parameterValue
   })
 
-  inputParameters.map((parameter: any) => {
+  inputParameters.forEach((parameter: any) => {
     if(parameter.required === "true") {
       requiredParameters.push({
         name: parameter.name,
@@ -1044,6 +1052,11 @@ const generateMaargJobCustomOptions = (job: any) => {
     optionalParameters,
     requiredParameters
   }
+}
+
+const timeTillJob = (time: any) => {
+  const timeDiff = DateTime.fromMillis(time).diff(DateTime.local());
+  return DateTime.local().plus(timeDiff).toRelative();
 }
 </script>
 
@@ -1161,6 +1174,17 @@ const generateMaargJobCustomOptions = (job: any) => {
 ion-input.job-info {
   margin-top: var(--margin-top, 10px);
   margin-bottom: var(--margin-bottom, 10px);
+}
+
+.requiredParam {
+  --border-color: var(--ion-color-danger)
+}
+
+.metadata {
+  display: flex;
+  flex-direction: column;
+  margin-right: 10px;
+  align-items: end;
 }
 
 @media (min-width: 992px) {

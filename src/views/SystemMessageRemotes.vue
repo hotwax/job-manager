@@ -21,16 +21,12 @@
           </div>
         </div>
 
-        <ion-card>
-          <ion-card-content>
-            <ion-searchbar
-              :value="queryString"
-              @ionInput="queryString = $event.detail.value || ''"
-              :debounce="300"
-              :placeholder="translate('Search by remote ID or description')"
-            />
-          </ion-card-content>
-        </ion-card>
+        <ion-searchbar
+          :value="queryString"
+          @ionInput="queryString = $event.detail.value || ''"
+          :debounce="300"
+          :placeholder="translate('Search by remote ID or description')"
+        />
 
         <div class="catalog-grid">
           <div v-for="remote in filteredRemotes" :key="remote.systemMessageRemoteId">

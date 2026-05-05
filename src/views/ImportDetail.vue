@@ -29,8 +29,7 @@
             <div class="upload-area" @dragover.prevent @drop.prevent="onDrop">
               <ion-icon class="upload-icon" :icon="selectedFile ? documentTextOutline : cloudUploadOutline" color="medium" />
               <p class="ion-display-flex ion-justify-content-center ion-align-items-center" v-if="!selectedFile">
-                <a href="#" @click.prevent="triggerFileInput">{{ translate("Upload a file") }}</a> 
-                {{ translate(" or drag and drop") }}
+                <a href="#" @click.prevent="triggerFileInput">{{ translate("Upload a file") }}</a>&nbsp;{{ translate("or drag and drop") }}
               </p>
               <p class="ion-display-flex ion-justify-content-center ion-align-items-center" v-else>
                 {{ selectedFile.name }}

@@ -1,5 +1,5 @@
 <template>
-  <ion-page>
+  <ion-page class="settings">
     <ion-header>
       <ion-toolbar>
         <ion-menu-button slot="start" />
@@ -67,8 +67,8 @@
             {{ translate("A store represents a company or a unique catalog of products. If your OMS is connected to multiple eCommerce stores sellling different collections of products, you may have multiple Product Stores set up in HotWax Commerce.") }}
           </ion-card-content>
           <ion-item lines="none">
-            <ion-select :label="translate('Select store')" interface="popover" :value="currentProductStore.productStoreId" @ionChange="setEComStore($event)">
-              <ion-select-option v-for="store in (userProfile ? userProfile.stores : [])" :key="store.productStoreId" :value="store.productStoreId" >{{ store.storeName }}</ion-select-option>
+            <ion-select :label="translate('Select store')" interface="popover" :value="currentProductStore.productStoreId" @ionChange="setProductStore($event)">
+              <ion-select-option v-for="store in (userProfile ? userProfile.stores : [])" :key="store.productStoreId" :value="store.productStoreId">{{ store.storeName || store.productStoreId }}</ion-select-option>
             </ion-select>
           </ion-item>
         </ion-card>
@@ -184,7 +184,6 @@
 import { IonAvatar, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonContent, IonHeader, IonIcon, IonItem, IonMenuButton, IonPage, IonSelect, IonSelectOption, IonTitle, IonToolbar, IonModal, IonFab, IonFabButton, IonRadioGroup, IonSpinner, IonList, IonListHeader, IonRadio, IonSearchbar, IonLabel } from '@ionic/vue';
 import { computed, onBeforeMount, ref } from 'vue';
 import { closeOutline, openOutline, saveOutline } from 'ionicons/icons'
-import router from '@/router';
 import { useUserStore } from '@/store/user';
 import Image from '@/components/Image.vue'
 import { cookieHelper, commonUtil, translate } from '@common';
@@ -196,9 +195,9 @@ const userProfile = computed(() => userStore.getUserProfile)
 const currentProductStore = userStore.getCurrentProductStore
 const hasPermission = computed(() => (permissionId: string) =>  userStore.hasPermission(permissionId));
 
-const appInfo = (import.meta.env.VITE_VERSION_INFO ? JSON.parse(import.meta.env.VITE_VERSION_INFO) : {}) as any;
+const appInfo = (import.meta.env.VITE_APP_VERSION_INFO ? JSON.parse(import.meta.env.VITE_APP_VERSION_INFO) : {}) as any;
 const appVersion = appInfo.branch ? (appInfo.branch + "-" + appInfo.revision) : appInfo.tag;
-const getDateTime = (time: any) => time ? DateTime.fromMillis(time).setZone(userStore.current.timezoneId).toLocaleString(DateTime.DATETIME_MED) : DateTime.now();
+const getDateTime = (time: any) => time ? DateTime.fromMillis(time).setZone(userStore.current.timeZone).toLocaleString(DateTime.DATETIME_MED) : DateTime.now();
 
 const refreshApp = () => {
   userStore.updatePwaState({ registration: userStore.getPwaState.registration, updateExists: false })
@@ -206,7 +205,7 @@ const refreshApp = () => {
   userStore.getPwaState.registration.waiting.postMessage({ type: 'SKIP_WAITING' })
 }
 
-const setEComStore = (event: any) => {
+const setProductStore = (event: any) => {
   // If the value is same, no need to update
   // Handled case for programmatical changes
   // https://github.com/ionic-team/ionic-framework/discussions/25532
@@ -216,19 +215,9 @@ const setEComStore = (event: any) => {
     userStore.setCurrentProductStore({ 'productStoreId': event.detail.value })
   }
 }
-const setShopifyConfig = (event: any) => {
-  userStore.setCurrentShopifyConfig({ 'shopifyConfigId': event.detail.value });
-}
 
 const logout = () => {
-  useAuth().logout({ isUserUnauthorised: false }).then((redirectionUrl) => {
-    // redirectionUrl is only present when SSO enables, thus when not present redirect user to login
-    if(!redirectionUrl) {
-      router.replace("/login");
-    } else {
-      window.location.href = redirectionUrl
-    }
-  })
+  useAuth().logout({ isUserUnauthorised: false })
 }
 const goToLaunchpad = () => {
   window.location.href = `${import.meta.env.VITE_LAUNCHPAD_URL}`
@@ -271,9 +260,9 @@ onBeforeMount(async () => {
   isLoading.value = true;
   await userStore.fetchAvailableTimeZones();
 
-  if(userProfile.value && userProfile.value.userTimeZone) {
-    userProfile.value.timeZone = userProfile.value.userTimeZone
-    timeZoneId.value = userProfile.value.userTimeZone
+  if(userProfile.value && currentTimeZoneId.value) {
+    userProfile.value.timeZone = currentTimeZoneId.value
+    timeZoneId.value = currentTimeZoneId.value
   }
 
   if(props.showBrowserTimeZone) {
