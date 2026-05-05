@@ -249,11 +249,7 @@ const goToNextPage = () => {
   pageIndex.value += 1;
 };
 
-watch([queryString, selectedStatusId], () => {
-  pageIndex.value = 0
-})
-
-watch([pageIndex], async () => {
+watch([queryString, selectedStatusId, pageIndex], async (newValue, oldValue) => {
   const payload = {
     systemMessageTypeId: props.id,
     pageIndex: pageIndex.value,
@@ -266,6 +262,11 @@ watch([pageIndex], async () => {
 
   if(selectedStatusId.value) {
     payload["statusId"] = selectedStatusId.value;
+  }
+
+  // Reset pageIndex when queryString or selectedStatusId is changed
+  if(newValue[0] !== oldValue[0] || newValue[1] !== oldValue[1]) {
+    payload["pageIndex"] = 0
   }
 
   await store.fetchSystemMessages(payload)
