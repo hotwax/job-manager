@@ -335,7 +335,7 @@
                 <ion-card-title class="header-with-action">
                   {{ translate("Custom Parameters") }}
                   <ion-button v-if="!isEditingParameters" fill="clear" @click="toggleEditParameters()">
-                    {{ translate(jobParameters.length ? "Edit" : "Add") }}
+                    {{ translate(generateJobCustomParameters(requiredParams, optionalParams).length ? "Edit" : "Add") }}
                   </ion-button>
                   <div v-else class="action-buttons">
                     <ion-button color="primary" @click="saveParameters()">
@@ -348,7 +348,7 @@
                 </ion-card-title>
               </ion-card-header>
               <ion-card-content>
-                <ion-list :lines="isEditingParameters ? 'none' : 'full'" v-if="generateJobCustomParameters(requiredParams, optionalParams).length || editableParametersList.length">
+                <ion-list :lines="isEditingParameters ? 'none' : 'full'" v-if="generateJobCustomParameters(requiredParams, optionalParams).length || (isEditingParameters && editableParametersList.length)">
                   <ion-item v-for="(param, index) in (isEditingParameters ? editableParametersList : generateJobCustomParameters(requiredParams, optionalParams))" :key="index">
                     <template v-if="!isEditingParameters">
                       <ion-label>{{ param.name }}</ion-label>
