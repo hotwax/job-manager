@@ -375,6 +375,21 @@ const getUserProfile = async (token: any): Promise<any> => {
   }
 }
 
+const getUserAccountInfo = async (): Promise <any>  => {
+  const omsRedirectionInfo = store.getters['user/getOmsRedirectionInfo'];
+  const baseURL = store.getters['user/getMaargBaseUrl'];
+
+  return client({
+    url: "user/profile",
+    method: "GET",
+    baseURL,
+    headers: {
+      "api_key": omsRedirectionInfo.token,
+      "Content-Type": "application/json"
+    }
+  });
+}
+
 
 export const UserService = {
     createPinnedJobPref,
@@ -391,5 +406,6 @@ export const UserService = {
     updatePinnedJobPref,
     setUserPreference,
     getUserPermissions,
-    moquiLogin
+    moquiLogin,
+    getUserAccountInfo
 }

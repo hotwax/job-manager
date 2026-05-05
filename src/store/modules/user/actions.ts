@@ -89,6 +89,11 @@ const actions: ActionTree<UserState, RootState> = {
         const api_key = await UserService.moquiLogin(omsRedirectionUrl, token)
         if(api_key) {
           dispatch("setOmsRedirectionInfo", { url: omsRedirectionUrl, token: api_key })
+          const resp = await UserService.getUserAccountInfo()
+
+          if(resp.data?.userId) {
+            userProfile["moquiUserId"] = resp.data?.userId
+          }
         } else {
           showToast(translate("Some of the app functionality will not work due to missing configuration."))
           logger.error("Some of the app functionality will not work due to missing configuration.");

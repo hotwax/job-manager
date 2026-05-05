@@ -8,6 +8,13 @@
 
     <ion-content>
       <ion-list>
+        <ion-item
+          button
+          @click="goToExternalLink"
+        >
+          <ion-icon slot="start" :icon="openOutline" />
+          <ion-label>{{ translate("New App") }}</ion-label>
+        </ion-item>
         <ion-menu-toggle auto-hide="false" v-for="(page, index) in getValidMenuItems(appPages)" :key="index">
           <ion-item
             v-if="page.url"
@@ -45,12 +52,14 @@ import {
 } from "@ionic/vue";
 import { computed, defineComponent } from "vue";
 import { mapGetters } from "vuex";
-import { albumsOutline, calendarNumberOutline, compassOutline, iceCreamOutline, libraryOutline, pulseOutline, settingsOutline, sendOutline, shirtOutline, terminalOutline, ticketOutline } from "ionicons/icons";
+import { albumsOutline, calendarNumberOutline, compassOutline, iceCreamOutline, libraryOutline, pulseOutline, settingsOutline, sendOutline, shirtOutline, terminalOutline, ticketOutline, openOutline } from "ionicons/icons";
 import { useStore } from "@/store";
 import emitter from "@/event-bus"
 import { hasPermission } from "@/authorization";
 import { useRouter } from "vue-router";
-import { translate } from "@hotwax/dxp-components";
+import { translate, useAuthStore } from "@hotwax/dxp-components";
+import { UserService } from "@/services/UserService";
+import { showToast } from "@/utils";
 
 export default defineComponent({
   name: "Menu",
@@ -77,6 +86,7 @@ export default defineComponent({
       currentShopifyConfig: 'user/getCurrentShopifyConfig',
       currentEComStore: 'user/getCurrentEComStore',
       shopifyConfigs: 'user/getShopifyConfigs',
+      omsRedirectionInfo: 'user/getOmsRedirectionInfo',
     })
   },
   methods: {
@@ -89,11 +99,33 @@ export default defineComponent({
     async setShopifyConfig(event: CustomEvent){
       await this.store.dispatch('user/setCurrentShopifyConfig', { 'shopifyConfigId': event.detail.value });
       emitter.emit("productStoreOrConfigChanged", true)
+    },
+    set(name: string, value: string, maxAge?: number) {
+      let cookieString = `${encodeURIComponent(name)}=${encodeURIComponent(value)}; path=/; SameSite=Lax;`;
+      if (maxAge) {
+        cookieString += `; max-age=${maxAge}`;
+      } else {
+        cookieString += `; max-age=86400`; // Default to 1 day
+      }
+      document.cookie = cookieString;
+    },
+    async goToExternalLink() {
+      if(this.userProfile.userId) {
+        this.set("oms", this.authStore.oms)
+        this.set("token", this.authStore.token.value)
+        this.set("maarg", this.omsRedirectionInfo.url)
+        this.set("expirationTime", this.authStore.token.expiration)
+        this.set("userId", this.userProfile.userId)
+        window.location.href = "https://job-manager.hotwax.io/login"
+      } else {
+        showToast(translate("Redirection failed, please try again or contact administrator"))
+      }
     }
   },
   setup() {
     const store = useStore();
     const router = useRouter();
+    const authStore = useAuthStore();
     
     // Filtering array of app pages, retaining only those elements (pages) that have the necessary permissions for display.
     const getValidMenuItems = (appPages: any) => {
@@ -215,7 +247,9 @@ export default defineComponent({
       store,
       terminalOutline,
       ticketOutline,
-      translate
+      translate,
+      openOutline,
+      authStore
     };
   }
 });
