@@ -1020,7 +1020,7 @@ const generateJobCustomOptions = (job: any) => {
   const requiredParameters: Array<any> = [];
 
   // removing some fields that we don't want user to edit, and for which the values will be added programatically
-  const excludeParameters = import.meta.env.VITE_PRT_STR_DEP_SER_JOB_IDENTIFIER
+  const excludeParameters = JSON.parse(import.meta.env.VITE_PRT_STR_DEP_SER_JOB_IDENTIFIER)
   inputParameters = inputParameters.filter((parameter: any) =>!excludeParameters.includes(parameter.name))
 
   const paramValues = {} as any;
