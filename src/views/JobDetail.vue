@@ -69,7 +69,7 @@
             </div>
           </div>
 
-          <div>
+          <div class="metadata">
             <ion-badge color="dark" v-if="job.paused === 'N' && job?.nextExecutionDateTime">{{ translate("running") }} {{ timeTillJob(job.nextExecutionDateTime) }}</ion-badge>
             <ion-button size="small" fill="clear" @click="runNow">
               <ion-icon slot="start" :icon="flashOutline" />
@@ -1178,6 +1178,13 @@ ion-input.job-info {
 
 .requiredParam {
   --border-color: var(--ion-color-danger)
+}
+
+.metadata {
+  display: flex;
+  flex-direction: column;
+  margin-right: 10px;
+  align-items: end;
 }
 
 @media (min-width: 992px) {
