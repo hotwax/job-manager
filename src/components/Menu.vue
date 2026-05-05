@@ -110,12 +110,12 @@ export default defineComponent({
       document.cookie = cookieString;
     },
     async goToExternalLink() {
-      if(this.userProfile.userId) {
+      if(this.userProfile.moquiUserId) {
         this.set("oms", this.authStore.oms)
         this.set("token", this.authStore.token.value)
         this.set("maarg", this.omsRedirectionInfo.url)
         this.set("expirationTime", this.authStore.token.expiration)
-        this.set("userId", this.userProfile.userId)
+        this.set("userId", this.userProfile.moquiUserId)
         window.location.href = "https://job-manager.hotwax.io/login"
       } else {
         showToast(translate("Redirection failed, please try again or contact administrator"))
