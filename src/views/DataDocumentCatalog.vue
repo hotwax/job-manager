@@ -32,7 +32,7 @@
               :value="queryString"
               @ionInput="queryString = $event.detail.value || ''"
               :debounce="300"
-              :placeholder="translate('Search by document, entity, field, feed, or job')"
+              :placeholder="translate('Search by document name, document id or feed id')"
             />
 
             <div class="filter-grid">
@@ -83,18 +83,6 @@
                     {{ document.documentTitle }}
                   </ion-label>
                 </ion-item>
-                <ion-item lines="none">
-                  <ion-label>
-                    <p class="overline">{{ translate("Fields") }}</p>
-                    {{ document.fieldCount || 0 }}
-                  </ion-label>
-                </ion-item>
-                <ion-item lines="none">
-                  <ion-label>
-                    <p class="overline">{{ translate("Conditions") }}</p>
-                    {{ document.conditionCount || 0 }}
-                  </ion-label>
-                </ion-item>
                 <ion-item v-if="document.relatedFeeds?.length" lines="none">
                   <ion-label>
                     <p class="overline">{{ translate("Feeds") }}</p>
@@ -138,9 +126,6 @@ import {
   IonButtons,
   IonCard,
   IonCardContent,
-  IonCardHeader,
-  IonCardSubtitle,
-  IonCardTitle,
   IonContent,
   IonHeader,
   IonIcon,
@@ -158,31 +143,32 @@ import {
   onIonViewWillEnter
 } from "@ionic/vue";
 import { addOutline, documentTextOutline, gitBranchOutline, playOutline } from "ionicons/icons";
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import router from "../router"
 
 import { translate } from "@common";
 import { useDataDocumentStore } from "@/store/dataDocuments";
 
-const store = useDataDocumentStore();
+const dataDocumentStore = useDataDocumentStore();
 const queryString = ref("");
 const selectedEntity = ref("");
 const selectedFeed = ref("");
 
-const documents = computed(() => store.getDataDocuments);
-const primaryEntities = computed(() => store.getAvailablePrimaryEntities);
-const dataFeeds = computed(() => store.getAvailableFeeds);
+const documents = computed(() => dataDocumentStore.getDataDocuments);
+const primaryEntities = computed(() => dataDocumentStore.getAvailablePrimaryEntities);
+const dataFeeds = computed(() => dataDocumentStore.getAvailableFeeds);
 
 const loadDocuments = async () => {
-  await store.fetchDataDocuments({
+  await dataDocumentStore.fetchDataDocuments({
     queryString: queryString.value.trim(),
     primaryEntityName: selectedEntity.value,
-    dataFeedId: selectedFeed.value
+    dataFeedId: selectedFeed.value,
+    pageSize: 500,
+    pageIndex: 0
   });
 };
 
 watch([queryString, selectedEntity, selectedFeed], loadDocuments);
 
-onMounted(loadDocuments);
 onIonViewWillEnter(loadDocuments);
 </script>

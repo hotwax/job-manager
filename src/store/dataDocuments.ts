@@ -174,6 +174,8 @@ const toDataDocumentRunPayload = (dataDocumentId: string, payload: Record<string
 export const useDataDocumentStore = defineStore("dataDocuments", {
   state: () => ({
     dataDocuments: [] as any[],
+    dataDocumentPrimaryEntities: [] as String[],
+    dataDocumentRelatedFeeds: [] as String[],
     currentDocument: undefined as any,
     fields: [] as any[],
     conditions: [] as any[],
@@ -204,21 +206,26 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
     getTotal: (state) => state.total,
     isLoading: (state) => state.loading,
     getDataFeeds: (state) => normalizeDataFeeds(state.dataDocuments),
-    getAvailablePrimaryEntities: (state) => [...new Set(state.dataDocuments.map((document: any) => document.primaryEntityName).filter(Boolean))].sort(),
-    getAvailableFeeds: (state) => [...new Set(state.dataDocuments.flatMap((document: any) => document.relatedFeeds || []))].sort()
+    getAvailablePrimaryEntities: (state) => state.dataDocumentPrimaryEntities,
+    getAvailableFeeds: (state) => state.dataDocumentRelatedFeeds
   },
   actions: {
     async fetchDataDocuments(payload: Record<string, any> = {}) {
       this.loading = true;
       try {
         const response = await api({
-          url: API_ENDPOINTS.dataDocuments,
+          url: "admin/dataDocuments",
           method: "GET",
-          params: buildDataDocumentListParams(payload)
+          params: payload
         });
-        const documents = filterDocumentsForCatalog(normalizeDataDocuments(getCollection(response, "dataDocuments")), payload);
-        this.dataDocuments = documents;
-        this.total = payload.queryString || payload.dataFeedId ? documents.length : getCount(response, documents);
+        this.dataDocuments = response.data?.dataDocuments;
+        this.total = response.data?.dataDocumentsCount;
+
+        if(!payload.queryString && !payload.primaryEntityName && !payload.dataFeedId) {
+          this.dataDocumentPrimaryEntities = [...new Set(this.dataDocuments.map((document: any) => document.primaryEntityName).filter(Boolean))].sort()
+          this.dataDocumentRelatedFeeds = [...new Set(this.dataDocuments.map((document: any) => document.dataFeedId).filter(Boolean))].sort()
+        }
+
       } catch (error) {
         logger.error("Failed to fetch data documents", error);
         this.dataDocuments = [];
