@@ -40,14 +40,15 @@ export const useJobStore = defineStore("job", {
           })
 
           let respJobs: Array<any> = []
-          resp.data?.serviceJobList?.map((job: any) => {
-            const jobProductStoreDep = job.serviceJobParameters.find((param: any) => import.meta.env.VITE_PRT_STR_DEP_SER_JOB_IDENTIFIER.includes(param.parameterName))
-
+          resp.data?.serviceJobList?.forEach((job: any) => {
+            // Get all the parameters that shows dependency and then get the first one that has actual value
+            // as we have cases where a job can have multiple dependency params and only one of them have value
+            const jobProductStoreDepList = job.serviceJobParameters.filter((param: any) => JSON.parse(import.meta.env.VITE_PRT_STR_DEP_SER_JOB_IDENTIFIER).includes(param.parameterName))
+            const jobProductStoreDep = (jobProductStoreDepList.find((dependent: any) => dependent.parameterValue) ?? jobProductStoreDepList[0])
             let skipJob = false
             // Check for whether job is productStore dependent or not.
             if(jobProductStoreDep?.parameterName) {
               const dependentValue = jobProductStoreDep.parameterName === "systemMessageRemoteId" ? useUserStore().getSelectedSystemMessageRemoteId : useUserStore().getCurrentProductStore.productStoreId
-              // Checks if a product store-dependent job has the current product store set in its parameters.
               if(!jobProductStoreDep.parameterValue) {
                 job["isDraftJob"] = true
               } else if(jobProductStoreDep.parameterValue !== dependentValue) {
@@ -74,6 +75,14 @@ export const useJobStore = defineStore("job", {
 
         this.jobs = Object.values(this.jobs.reduce((jobs: any, job: any) => {
           const current = jobs[job.instanceOfProductId];
+
+          // This check needs to be removed once verified that there is no job in the system without
+          // instanceOfProductId value
+          if(!job.instanceOfProductId) {
+            jobs[job.jobName] = job
+            return jobs
+          }
+
           if(!current?.jobName || current?.isDraftJob) {
             jobs[job.instanceOfProductId] = job
           }
@@ -82,7 +91,7 @@ export const useJobStore = defineStore("job", {
       }
     },
     async fetchCategories() {
-      // if(this.categories.length) return;
+      if(this.categories.length) return;
       this.loading = true
       try {
         let total = 0
@@ -108,7 +117,7 @@ export const useJobStore = defineStore("job", {
       }
     },
     async fetchCategoryMembers() {
-      // if(this.categoryMembers.length) return;
+      if(this.categoryMembers.length) return;
       this.loading = true
       try {
         const productCategoryIds = this.categories.map((category: any) => {
@@ -138,7 +147,7 @@ export const useJobStore = defineStore("job", {
       }
     },
     async fetchCategoryRollup() {
-      // if(this.categoryRollups.length) return;
+      if(this.categoryRollups.length) return;
       this.loading = true
       try {
         const resp = await api({
@@ -184,12 +193,14 @@ export const useJobStore = defineStore("job", {
         })
         const job = resp.data.jobDetail || {}
 
-        const jobProductStoreDep = job.serviceJobParameters.find((param: any) => import.meta.env.VITE_PRT_STR_DEP_SER_JOB_IDENTIFIER.includes(param.parameterName))
+        // Get all the parameters that shows dependency and then get the first one that has actual value
+        // as we have cases where a job can have multiple dependency params and only one of them have value
+        const jobProductStoreDepList = job.serviceJobParameters.filter((param: any) => JSON.parse(import.meta.env.VITE_PRT_STR_DEP_SER_JOB_IDENTIFIER).includes(param.parameterName))
+        const jobProductStoreDep = (jobProductStoreDepList.find((dependent: any) => dependent.parameterValue) ?? jobProductStoreDepList[0])
 
         // Check for whether job is productStore dependent or not.
         if(jobProductStoreDep?.parameterName) {
           const dependentValue = jobProductStoreDep.parameterName === "systemMessageRemoteId" ? useUserStore().getSelectedSystemMessageRemoteId : useUserStore().getCurrentProductStore.productStoreId
-          // Checks if a product store dependent job has the current product store set in its parameters.
           if(jobProductStoreDep.parameterValue === dependentValue) {
             jobDetails = job
           } else if(!jobProductStoreDep.parameterValue) {
