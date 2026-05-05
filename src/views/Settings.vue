@@ -1,5 +1,5 @@
 <template>
-  <ion-page>
+  <ion-page class="settings">
     <ion-header>
       <ion-toolbar>
         <ion-menu-button slot="start" />
@@ -67,8 +67,8 @@
             {{ translate("A store represents a company or a unique catalog of products. If your OMS is connected to multiple eCommerce stores sellling different collections of products, you may have multiple Product Stores set up in HotWax Commerce.") }}
           </ion-card-content>
           <ion-item lines="none">
-            <ion-select :label="translate('Select store')" interface="popover" :value="currentProductStore.productStoreId" @ionChange="setEComStore($event)">
-              <ion-select-option v-for="store in (userProfile ? userProfile.stores : [])" :key="store.productStoreId" :value="store.productStoreId" >{{ store.storeName }}</ion-select-option>
+            <ion-select :label="translate('Select store')" interface="popover" :value="currentProductStore.productStoreId" @ionChange="setProductStore($event)">
+              <ion-select-option v-for="store in (userProfile ? userProfile.stores : [])" :key="store.productStoreId" :value="store.productStoreId">{{ store.storeName || store.productStoreId }}</ion-select-option>
             </ion-select>
           </ion-item>
         </ion-card>
@@ -206,7 +206,7 @@ const refreshApp = () => {
   userStore.getPwaState.registration.waiting.postMessage({ type: 'SKIP_WAITING' })
 }
 
-const setEComStore = (event: any) => {
+const setProductStore = (event: any) => {
   // If the value is same, no need to update
   // Handled case for programmatical changes
   // https://github.com/ionic-team/ionic-framework/discussions/25532
