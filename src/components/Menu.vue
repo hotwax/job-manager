@@ -39,7 +39,7 @@
           <ion-label class="ion-text-wrap">
             <p class="overline">{{ commonUtil.getOmsURL() }}</p>
           </ion-label>
-          <ion-note :color="browserTimeZone === userStore.current?.userTimeZone ? '' : 'danger'" slot="end">{{ userStore.current?.userTimeZone }}</ion-note>
+          <ion-note :color="browserTimeZone === userStore.current?.timeZone ? '' : 'danger'" slot="end">{{ userStore.current?.timeZone }}</ion-note>
         </ion-item>
         <!-- showing product stores only when there are multiple options to choose from. -->
         <ion-item v-if="userProfile.stores?.length > 2" lines="none">
@@ -66,12 +66,11 @@ import { translate, commonUtil, cookieHelper, emitter } from "@common";
 import { useAuth } from "@common/composables/useAuth";
 import router from "../router";
 import { useUserStore } from "@/store/user";
-import { useJobStore } from "@/store/jobs";
 
 const { isAuthenticated } = useAuth();
 const userStore = useUserStore();
 
-const currentProductStore = userStore.getCurrentProductStore
+const currentProductStore = computed(() => userStore.getCurrentProductStore)
 const userProfile = computed(() => userStore.getUserProfile)
 
 const browserTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone

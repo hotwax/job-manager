@@ -184,7 +184,6 @@
 import { IonAvatar, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonContent, IonHeader, IonIcon, IonItem, IonMenuButton, IonPage, IonSelect, IonSelectOption, IonTitle, IonToolbar, IonModal, IonFab, IonFabButton, IonRadioGroup, IonSpinner, IonList, IonListHeader, IonRadio, IonSearchbar, IonLabel } from '@ionic/vue';
 import { computed, onBeforeMount, ref } from 'vue';
 import { closeOutline, openOutline, saveOutline } from 'ionicons/icons'
-import router from '@/router';
 import { useUserStore } from '@/store/user';
 import Image from '@/components/Image.vue'
 import { cookieHelper, commonUtil, translate } from '@common';
@@ -196,9 +195,9 @@ const userProfile = computed(() => userStore.getUserProfile)
 const currentProductStore = userStore.getCurrentProductStore
 const hasPermission = computed(() => (permissionId: string) =>  userStore.hasPermission(permissionId));
 
-const appInfo = (import.meta.env.VITE_VERSION_INFO ? JSON.parse(import.meta.env.VITE_VERSION_INFO) : {}) as any;
+const appInfo = (import.meta.env.VITE_APP_VERSION_INFO ? JSON.parse(import.meta.env.VITE_APP_VERSION_INFO) : {}) as any;
 const appVersion = appInfo.branch ? (appInfo.branch + "-" + appInfo.revision) : appInfo.tag;
-const getDateTime = (time: any) => time ? DateTime.fromMillis(time).setZone(userStore.current.timezoneId).toLocaleString(DateTime.DATETIME_MED) : DateTime.now();
+const getDateTime = (time: any) => time ? DateTime.fromMillis(time).setZone(userStore.current.timeZone).toLocaleString(DateTime.DATETIME_MED) : DateTime.now();
 
 const refreshApp = () => {
   userStore.updatePwaState({ registration: userStore.getPwaState.registration, updateExists: false })
@@ -261,9 +260,9 @@ onBeforeMount(async () => {
   isLoading.value = true;
   await userStore.fetchAvailableTimeZones();
 
-  if(userProfile.value && userProfile.value.userTimeZone) {
-    userProfile.value.timeZone = userProfile.value.userTimeZone
-    timeZoneId.value = userProfile.value.userTimeZone
+  if(userProfile.value && currentTimeZoneId.value) {
+    userProfile.value.timeZone = currentTimeZoneId.value
+    timeZoneId.value = currentTimeZoneId.value
   }
 
   if(props.showBrowserTimeZone) {
