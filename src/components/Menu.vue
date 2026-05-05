@@ -103,27 +103,21 @@ export default defineComponent({
     set(name: string, value: string, maxAge?: number) {
       let cookieString = `${encodeURIComponent(name)}=${encodeURIComponent(value)}; path=/; SameSite=Lax;`;
       if (maxAge) {
-          cookieString += `; max-age=${maxAge}`;
+        cookieString += `; max-age=${maxAge}`;
       } else {
-          cookieString += `; max-age=86400`; // Default to 1 day
+        cookieString += `; max-age=86400`; // Default to 1 day
       }
       document.cookie = cookieString;
     },
     async goToExternalLink() {
-      try {
-        const resp = await UserService.getUserAccountInfo()
-
-        if(resp.data?.userId) {
-          this.set("oms", this.authStore.oms)
-          this.set("token", this.authStore.token.value)
-          this.set("maarg", this.omsRedirectionInfo.url)
-          this.set("expirationTime", this.authStore.token.expiration)
-          this.set("userId", resp.data.userId)
-          window.location.href = "https://job-manager.hotwax.io/login"
-        } else {
-          throw resp.data;
-        }
-      } catch(err) {
+      if(this.userProfile.userId) {
+        this.set("oms", this.authStore.oms)
+        this.set("token", this.authStore.token.value)
+        this.set("maarg", this.omsRedirectionInfo.url)
+        this.set("expirationTime", this.authStore.token.expiration)
+        this.set("userId", this.userProfile.userId)
+        window.location.href = "https://job-manager.hotwax.io/login"
+      } else {
         showToast(translate("Redirection failed, please try again or contact administrator"))
       }
     }
