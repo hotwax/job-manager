@@ -110,7 +110,7 @@ export default defineComponent({
       document.cookie = cookieString;
     },
     async goToExternalLink() {
-      if(this.userProfile.moquiUserId) {
+      if(this.userProfile?.moquiUserId) {
         this.set("oms", this.authStore.oms)
         this.set("token", this.authStore.token.value)
         this.set("maarg", this.omsRedirectionInfo.url)
