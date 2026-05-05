@@ -139,7 +139,7 @@ const utilStore = useUtilStore();
 const logs = computed(() => mdmStore.getLogs)
 const isScrollable = computed(() => mdmStore.islogsScrollable)
 const appliedFilters = computed(() => mdmStore.getAppliedFilters)
-const totalAppliedFilters = computed(() => Object.keys(appliedFilters.value).length)
+const totalAppliedFilters = computed(() => Object.values(appliedFilters.value).filter((value: any) => value.length)?.length)
 
 async function fetchLogs(pageSize = 10, pageIndex = 0) {
   await mdmStore.fetchDataManagerLogs({ pageSize, pageIndex });
