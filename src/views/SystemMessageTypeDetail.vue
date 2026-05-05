@@ -89,8 +89,18 @@
               </ion-select>
             </div>
 
+            <div class="pagination">
+              <ion-button fill="clear" slot="icon-only" :disabled="pageIndex === 0" @click="goToPreviousPage">
+                <ion-icon :icon="caretBackOutline" />
+              </ion-button>
+              <ion-note color="medium">{{ pageIndex + 1 }} / {{ pageCount }}</ion-note>
+              <ion-button fill="clear" slot="icon-only" :disabled="pageIndex >= pageCount - 1" @click="goToNextPage">
+                <ion-icon :icon="caretForwardOutline" />
+              </ion-button>
+            </div>
+
             <SystemMessageList
-              :messages="filteredMessages"
+              :messages="relatedMessages"
               :show-type="false"
               :empty-message="translate('No related messages found.')"
             />
@@ -110,10 +120,11 @@ import {
   IonCardContent,
   IonCardHeader,
   IonCardTitle,
-  IonChip,
   IonContent,
   IonHeader,
+  IonIcon,
   IonInput,
+  IonNote,
   IonPage,
   IonSearchbar,
   IonSelect,
@@ -123,7 +134,7 @@ import {
   IonToolbar,
   onIonViewWillEnter
 } from "@ionic/vue";
-import { computed, reactive, ref } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import router from "../router";
 
 import { translate } from "@common";
@@ -132,8 +143,12 @@ import SystemMessageList from "@/components/SystemMessageList.vue";
 import { useSystemMessageStore } from "@/store/systemMessage";
 import { showToast } from "@/utils";
 import { useUtilStore } from "@/store/util";
+import { caretBackOutline, caretForwardOutline } from "ionicons/icons";
 
 const props = defineProps<{ id?: string }>();
+
+const PAGE_SIZE = 25;
+const pageIndex = ref(0);
 
 const store = useSystemMessageStore();
 const utilStore = useUtilStore();
@@ -156,25 +171,8 @@ const isCreateMode = computed(() => !props.id);
 const pageTitle = computed(() => isCreateMode.value ? translate("Create Message Type") : translate("Message Type Detail"));
 const statuses = computed(() => utilStore.getStatusItemsByType("SystemMessage"));
 const relatedMessages = computed(() => store.getSystemMessages);
-const filteredMessages = computed(() => {
-  let messages = [...relatedMessages.value];
-
-  console.log('messages', messages)
-
-  if (selectedStatusId.value) {
-    messages = messages.filter((message: any) => message.statusId === selectedStatusId.value);
-  }
-
-  if (queryString.value.trim()) {
-    const query = queryString.value.trim().toLowerCase();
-    messages = messages.filter((message: any) =>
-      message.systemMessageId?.toLowerCase().includes(query) ||
-      message.systemMessageRemoteId?.toLowerCase().includes(query)
-    );
-  }
-
-  return messages;
-});
+const total = computed(() => store.getSystemMessageTotal);
+const pageCount = computed(() => Math.max(Math.ceil(total.value / PAGE_SIZE), 1));
 
 const setForm = (payload?: Record<string, any>) => {
   for (const key of Object.keys(form)) {
@@ -195,7 +193,9 @@ const loadType = async() => {
   if (props.id) {
     const entity = await store.fetchSystemMessageTypeById(props.id);
     await store.fetchSystemMessages({
-      systemMessageTypeId: props.id
+      systemMessageTypeId: props.id,
+      pageIndex: pageIndex.value,
+      pageSize: PAGE_SIZE,
     })
     setForm(entity);
   } else {
@@ -241,7 +241,42 @@ const deleteType = async () => {
   router.replace("/system-message-types");
 };
 
-onIonViewWillEnter(loadType);
+const goToPreviousPage = () => {
+  pageIndex.value -= 1;
+};
+
+const goToNextPage = () => {
+  pageIndex.value += 1;
+};
+
+watch([queryString, selectedStatusId], () => {
+  pageIndex.value = 0
+})
+
+watch([pageIndex], async () => {
+  const payload = {
+    systemMessageTypeId: props.id,
+    pageIndex: pageIndex.value,
+    pageSize: PAGE_SIZE
+  } as Record<string, any>
+
+  if(queryString.value.trim()) {
+    payload["queryString"] = queryString.value.trim().toLowerCase()
+  }
+
+  if(selectedStatusId.value) {
+    payload["statusId"] = selectedStatusId.value;
+  }
+
+  await store.fetchSystemMessages(payload)
+});
+
+onIonViewWillEnter(() => {
+  pageIndex.value = 0
+  queryString.value = ""
+  selectedStatusId.value = ""
+  loadType()
+});
 </script>
 
 <style scoped>
@@ -256,5 +291,12 @@ onIonViewWillEnter(loadType);
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 16px;
+}
+
+.pagination {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
 }
 </style>
