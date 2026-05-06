@@ -2,68 +2,48 @@
   <img :src="imageUrl"/>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { onMounted, onUpdated } from "vue";
+import defaultImgUrl from "../assets/images/defaultImage.png"
+import { logger } from "@common";
 
-export default defineComponent({
-  name: "Image",
-  props: ['src'],
-  components: {},
-  created() {
-    if (
-      import.meta.env.VUE_APP_RESOURCE_URL
-    ) {
-      this.resourceUrl = import.meta.env.VUE_APP_RESOURCE_URL;
+let imageUrl = defaultImgUrl
+
+const props = defineProps(["src"])
+
+onMounted(() => {
+  setImageUrl();
+})
+
+onUpdated(() => {
+  setImageUrl();
+})
+
+function checkIfImageExists(src: string) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = function () {
+      resolve(true);
     }
-  },
-  mounted() {
-    this.setImageUrl();
-  },
-  updated() {
-    this.setImageUrl();
-  },
-  data() {
-    return {
-      resourceUrl: '',
-      imageUrl: require("@/assets/images/defaultImage.png")
+    img.onerror = function () {
+      reject(false);
     }
-  },
-  methods: {
-    checkIfImageExists(src: string) {
-      return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = function () {
-          resolve(true);
-        }
-        img.onerror = function () {
-          reject(false);
-        }
-        img.src = src;
+    img.src = src;
+  })
+}
+function setImageUrl() {
+  if (props.src) {
+    if (props.src.indexOf('assets/') != -1) {
+      // Assign directly in case of assets
+      imageUrl = props.src;
+    } else if (props.src.startsWith('http')) {
+      // If starts with http, it is web url check for existence and assign
+      checkIfImageExists(props.src).then(() => {
+        imageUrl = props.src;
+      }).catch(() => {
+        logger.warn("Image doesn't exist", props.src);
       })
-    },
-    setImageUrl() {
-      if (this.src) {
-        if (this.src.indexOf('assets/') != -1) {
-          // Assign directly in case of assets
-          this.imageUrl = this.src;
-        } else if (this.src.startsWith('http')) {
-          // If starts with http, it is web url check for existence and assign
-          this.checkIfImageExists(this.src).then(() => {
-            this.imageUrl = this.src;
-          }).catch(() => {
-            this.$log.warn("Image doesn't exist", this.src);
-          })
-        } else {
-          // Image is from resource server, hence append to base resource url, check for existence and assign
-          const imageUrl = this.resourceUrl.concat(this.src)
-          this.checkIfImageExists(imageUrl).then(() => {
-            this.imageUrl = imageUrl;
-          }).catch(() => {
-            this.$log.warn("Image doesn't exist", imageUrl);
-          })
-        }
-      }
     }
-  },
-});
+  }
+}
 </script>

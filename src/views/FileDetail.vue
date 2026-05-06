@@ -1,6 +1,6 @@
 <template>
   <ion-page>
-    <ion-header :translucent="true">
+    <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-back-button default-href="/file-history"></ion-back-button>
@@ -16,27 +16,28 @@
           <ion-card-header>
             <div class="file-header">
               <div class="file-info">
-                <h1><ion-icon :icon="documentOutline" /> {{ fileName }}</h1>
+                <ion-note :color="commonUtil.getStatusColor(currentLogInfo.statusId)">{{ getStatusDesc(currentLogInfo.statusId) }}</ion-note>
+                <h1><ion-icon :icon="documentOutline" />{{ currentLogInfo.fileName }}</h1>
                 <p>
-                  <ion-icon :icon="briefcaseOutline" /> {{ importType }} 
+                  {{ currentLogInfo.scriptTitle || currentLogInfo.description || currentLogInfo.configId }} 
                   <span class="separator">|</span> 
-                  <ion-icon :icon="timeOutline" /> {{ uploadTime }}
+                  <ion-icon :icon="timeOutline" />{{ commonUtil.getDateTimeWithOrdinalSuffix(currentLogInfo.createdDate) }}
                 </p>
               </div>
-              <div class="score-card">
+              <div class="score-card" v-if="currentLogInfo.failedRecordCount || currentLogInfo.totalRecordCount">
                 <div class="badge success">
-                  <span class="count">{{ successCount }}</span>
+                  <span class="count">{{ currentLogInfo.successRecordCount }}</span>
                   <span class="label">{{ translate("SUCCESS") }}</span>
                 </div>
                 <div class="badge failed">
-                  <span class="count">{{ failedCount }}</span>
+                  <span class="count">{{ currentLogInfo.failedRecordCount || 0 }}</span>
                   <span class="label">{{ translate("FAILED") }}</span>
                 </div>
               </div>
             </div>
           </ion-card-header>
 
-          <ion-card-content>
+          <ion-card-content v-if="currentLogInfo.failedRecordCount">
             <div class="actions">
               <ion-item lines="none">
                 <ion-icon :icon="warningOutline" slot="start" color="warning" />
@@ -45,13 +46,9 @@
                 </ion-label>
               </ion-item>
               <div class="buttons">
-                <ion-button fill="outline" color="dark">
+                <ion-button fill="outline" color="dark" @click="downloadFailedRecords">
                   <ion-icon slot="start" :icon="downloadOutline" />
                   {{ translate("Download Failed Rows") }}
-                </ion-button>
-                <ion-button color="primary">
-                  <ion-icon slot="start" :icon="refreshOutline" />
-                  {{ translate("Retry File") }}
                 </ion-button>
               </div>
             </div>
@@ -59,7 +56,7 @@
         </ion-card>
 
         <!-- Bottom Section: Error Log -->
-        <ion-card>
+        <ion-card v-if="currentLogInfo.failedRecordCount">
           <ion-card-header>
              <ion-card-title>
                <ion-icon :icon="bugOutline" color="danger" />
@@ -68,14 +65,12 @@
           </ion-card-header>
           <ion-list>
             <div class="list-item table-header error-log">
-              <ion-label>{{ translate("Row") }}</ion-label>
               <ion-label>{{ translate("Record ID") }}</ion-label>
               <ion-label>{{ translate("Description") }}</ion-label>
             </div>
-            <div class="list-item error-log" v-for="(error, index) in errorLogs" :key="index">
-              <ion-label>Row {{ error.row }}</ion-label>
-              <ion-label>{{ error.recordId }}</ion-label>
-              <ion-label>{{ error.description }}</ion-label>
+            <div class="list-item error-log" v-for="error in errorLogs" :key="error['_recordNumber']">
+              <ion-label>{{ error["_recordNumber"] }}</ion-label>
+              <ion-label>{{ error["_ERROR_MESSAGE_"] }}</ion-label>
             </div>
           </ion-list>
         </ion-card>
@@ -85,63 +80,37 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonBackButton,
-  IonButtons,
-  IonContent,
-  IonHeader,
-  IonPage,
-  IonTitle,
-  IonToolbar,
-  IonCard,
-  IonCardHeader,
-  IonCardContent,
-  IonIcon,
-  IonButton,
-  IonBadge,
-  IonCardTitle,
-  IonList,
-  IonItem,
-  IonLabel
-} from '@ionic/vue';
-import { translate } from '@common';
-import { 
-  documentOutline, 
-  briefcaseOutline, 
-  timeOutline, 
-  warningOutline, 
-  downloadOutline, 
-  refreshOutline,
-  bugOutline
-} from 'ionicons/icons';
-import { ref } from 'vue';
+import { IonBackButton, IonButtons, IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonCard, IonCardHeader, IonCardContent, IonIcon, IonButton, IonCardTitle, IonList, IonItem, IonLabel, onIonViewWillEnter } from '@ionic/vue';
+import { translate, commonUtil } from '@common';
+import { documentOutline, timeOutline, warningOutline, downloadOutline, bugOutline } from 'ionicons/icons';
+import { saveAs } from 'file-saver';
+import { getStatusDesc } from '@/utils/config';
+import { useMdmLog } from '@/composables/mdmLogs';
 
-// Mock Data
-const fileName = ref("IMP_ORD_NS_20231024_001.csv");
-const importType = ref("Import Sales Orders (NS)");
-const uploadTime = ref("Oct 27, 10:42 AM");
-const successCount = ref(142);
-const failedCount = ref(8);
+const props = defineProps(["id"])
+const { currentLogInfo, fetchLogDetails, errorLogs, errorCsvRecords } = useMdmLog();
 
-const errorLogs = ref([
-  {
-    row: 14,
-    recordId: "ORD-10294",
-    errorCode: "MISSING_SKU",
-    description: "Product SKU \"TSHIRT-BLK-L\" not found in HotWax."
-  }
-]);
+function downloadFailedRecords() {
+  const blob = new Blob([errorCsvRecords.value!], { type: 'text/csv;charset=utf-8;' });
+  saveAs(blob, currentLogInfo.value.errorFileName ? currentLogInfo.value.errorFileName : "ErrorDataManagerContent.csv");
+}
+
+onIonViewWillEnter(async () => {
+  await fetchLogDetails(props.id)
+})
 </script>
 
 <style scoped>
-
-
 .file-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   flex-wrap: wrap;
   gap: 1rem;
+}
+
+.file-info {
+  flex: 1;
 }
 
 .file-info h1 {
@@ -215,7 +184,7 @@ const errorLogs = ref([
 }
 
 .list-item.error-log {
-  --columns-desktop: 4;
+  --columns-desktop: 3;
   padding: var(--spacer-sm);
   border-bottom: 1px solid var(--ion-color-light);
 }
@@ -223,5 +192,4 @@ const errorLogs = ref([
 .list-item.error-log:last-child {
   border-bottom: none;
 }
-
 </style>

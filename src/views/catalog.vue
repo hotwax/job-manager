@@ -1,9 +1,15 @@
 <template>
   <ion-page>
-    <ion-header :translucent="true">
+    <ion-header>
       <ion-toolbar>
         <ion-menu-button slot="start" />
         <ion-title>{{ translate("Catalog") }}</ion-title>
+        <!-- <ion-buttons slot="end">
+          <ion-button color="primary" @click="openCreateJobModal()">
+            <ion-icon slot="end" :icon="addOutline"></ion-icon>
+            {{ translate("Add job") }}
+          </ion-button>
+        </ion-buttons> -->
       </ion-toolbar>
     </ion-header>
 
@@ -18,34 +24,96 @@
               Manage and configure integration tasks.
             </p>
           </div>
-          <ion-button>
-            <ion-icon slot="end" :ios="addOutline" :md="addOutline"></ion-icon>
-            Add job
-          </ion-button>
         </div>
 
         <ion-card>
-          <ion-searchbar :placeholder="translate('Search jobs')"></ion-searchbar>
+          <ion-searchbar :value="queryString" @ionInput="queryString = $event.detail.value || ''" :debounce="300" :placeholder="translate('Search jobs')"></ion-searchbar>
+          
+          <!-- Primary Categories (Row 1) -->
           <div class="categories">
-            <ion-chip v-for="category in categories" :key="category" @click="selectedCategory = category" :outline="selectedCategory !== category" :color="selectedCategory === category ? 'primary' : ''">
-              <ion-label>{{ category }}</ion-label>
+            <ion-chip @click="selectParentCategory('ALL')" :outline="selectedParentCategoryId !== 'ALL'" :color="selectedParentCategoryId === 'ALL' ? 'primary' : ''">
+              <ion-label>{{ translate("All") }}</ion-label>
+            </ion-chip>
+            <ion-chip v-for="category in primaryCategories" :key="category.productCategoryId" @click="selectParentCategory(category.productCategoryId)" :outline="selectedParentCategoryId !== category.productCategoryId" :color="selectedParentCategoryId === category.productCategoryId ? 'primary' : ''">
+              <ion-label>{{ category.categoryName }}</ion-label>
+            </ion-chip>
+          </div>
+
+          <!-- Sub Categories (Row 2) - Visible only if children exist -->
+          <div v-if="subCategories.length > 0" class="sub-categories">
+            <ion-chip v-for="sub in subCategories" :key="sub.productCategoryId" @click="selectedSubCategoryId = sub.productCategoryId" :outline="selectedSubCategoryId !== sub.productCategoryId" :color="selectedSubCategoryId === sub.productCategoryId ? 'primary' : ''">
+              <ion-label>{{ sub.categoryName }}</ion-label>
+            </ion-chip>
+          </div>
+
+          <!-- Status Filters (Row 3) -->
+          <div class="status-filters">
+            <ion-chip @click="selectedStatus = 'ALL'" :outline="selectedStatus !== 'ALL'" :color="selectedStatus === 'ALL' ? 'primary' : ''">
+              <ion-label>{{ translate("All") }}</ion-label>
+            </ion-chip>
+            <ion-chip @click="selectedStatus = 'SCHEDULED'" :outline="selectedStatus !== 'SCHEDULED'" :color="selectedStatus === 'SCHEDULED' ? 'primary' : ''">
+              <ion-label>{{ translate("Scheduled") }}</ion-label>
+            </ion-chip>
+            <ion-chip @click="selectedStatus = 'PAUSED'" :outline="selectedStatus !== 'PAUSED'" :color="selectedStatus === 'PAUSED' ? 'primary' : ''">
+              <ion-label>{{ translate("Paused") }}</ion-label>
+            </ion-chip>
+            <ion-chip @click="selectedStatus = 'NO_SCHEDULE'" :outline="selectedStatus !== 'NO_SCHEDULE'" :color="selectedStatus === 'NO_SCHEDULE' ? 'primary' : ''">
+              <ion-label>{{ translate("No schedule") }}</ion-label>
             </ion-chip>
           </div>
         </ion-card>
 
         <div class="jobs">
-          <ion-card v-for="job in filteredJobs" :key="job.id">
-            <ion-card-header>
-              <ion-card-subtitle>{{ job.direction }}</ion-card-subtitle>
-              <ion-card-title>{{ job.name }}</ion-card-title>
-              <code>{{ job.code }}</code>
-            </ion-card-header>
-            <ion-item lines="none" detail button @click="router.push(job.path)">
-              <ion-label>
-                {{ job.status }}: {{ job.frequency }}
-              </ion-label>
-            </ion-item>
-          </ion-card>
+          <template v-if="jobStore.isLoading">
+            <ion-card v-for="i in 6" :key="i">
+              <ion-card-header>
+                <ion-card-title><ion-skeleton-text animated style="width: 60%" /></ion-card-title>
+                <ion-skeleton-text animated style="width: 40%" /><br>
+                <ion-skeleton-text animated style="width: 80%" />
+              </ion-card-header>
+              <ion-item lines="none">
+                <ion-label>
+                  <ion-skeleton-text animated style="width: 30%" />
+                  <p><ion-skeleton-text animated style="width: 50%" /></p>
+                </ion-label>
+              </ion-item>
+            </ion-card>
+          </template>
+          <template v-else>
+            <ion-card v-for="(job, index) in filteredJobs" :key="job.jobId ? job.jobId : `${job.jobName}-${index}`" :class="{ 'paused-job': job.paused === 'Y' }" :color="job.isDraftJob ? 'light' : ''">
+              <ion-card-header>
+                <div class="job-card-header">
+                  <ion-card-title v-html="highlightText(job.jobName, queryString)"></ion-card-title>
+                </div>
+                <code>ID: <span v-html="highlightText(job.instanceOfProductId, queryString)"></span></code><br>
+                <code v-html="highlightText(job.serviceName, queryString)"></code>
+              </ion-card-header>
+              <ion-item lines="none" detail button @click="router.push(`/job/${job.jobName}`)">
+                <template v-if="job.isDraftJob">
+                  <ion-icon slot="start" :icon="lockClosedOutline" />
+                  <ion-label>
+                    {{ translate("Draft") }}
+                  </ion-label>
+                </template>
+                <template v-else>
+                  <ion-icon v-if="job.paused === 'Y'" slot="start" :icon="pauseCircleOutline" color="warning" />
+                  <ion-icon v-else-if="job.cronExpression" slot="start" :icon="playCircleOutline" color="success" />
+                  <ion-icon v-else slot="start" :icon="ellipseOutline" color="medium" />
+                  <ion-label>
+                    {{ job.paused === 'Y' ? translate('Paused') : translate('Enabled') }}
+                    <p v-if="job.cronString">{{ job.cronString }}</p>
+                  </ion-label>
+                </template>
+              </ion-item>
+            </ion-card>
+          </template>
+        </div>
+
+        <div class="empty-state" v-if="!jobStore.isLoading && !filteredJobs.length">
+          <p>{{ translate("No jobs found") }}</p>
+          <p v-if="selectedParentCategoryId !== 'ALL' || selectedStatus !== 'ALL' || queryString" class="helper-text">
+            {{ translate("Try clearing filters or search to see more results.") }}
+          </p>
         </div>
 
       </main>
@@ -53,12 +121,13 @@
   </ion-page>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
+  IonBadge,
   IonButton,
+  IonButtons,
   IonCard,
   IonCardHeader,
-  IonCardSubtitle,
   IonCardTitle,
   IonChip,
   IonContent,
@@ -69,137 +138,138 @@ import {
   IonMenuButton,
   IonPage,
   IonSearchbar,
+  IonSkeletonText,
   IonTitle,
   IonToolbar,
+  modalController,
+  onIonViewWillEnter,
+  onIonViewWillLeave
 } from '@ionic/vue';
-import { defineComponent, ref, computed } from 'vue';
+import { ref, computed } from 'vue';
 import router from '@/router';
-import { addOutline } from 'ionicons/icons';
-import { translate } from '@common';
+import { ellipseOutline, lockClosedOutline, pauseCircleOutline, playCircleOutline } from 'ionicons/icons';
+import { emitter, translate } from '@common';
+import CreateJobModal from '@/components/CreateJobModal.vue';
+import { useJobStore } from '@/store/jobs';
 
-export default defineComponent({
-  name: 'Catalog',
-  components: {
-    IonButton,
-    IonCard,
-    IonCardHeader,
-    IonCardSubtitle,
-    IonCardTitle,
-    IonChip,
-    IonContent,
-    IonHeader,
-    IonIcon,
-    IonItem,
-    IonLabel,
-    IonMenuButton,
-    IonPage,
-    IonSearchbar,
-    IonTitle,
-    IonToolbar
-  },
-  setup() {
-    const categories = ['All', 'Shopify', 'NetSuite', 'Orders', 'Inventory'];
-    const selectedCategory = ref('All');
+const jobStore = useJobStore();
 
-    const jobs = [
-      {
-        id: 'import-sales-orders-shopify',
-        name: 'Import Sales Orders (Shopify)',
-        code: 'importShopifySalesOrders',
-        direction: 'SHOPIFY → HOTWAX',
-        frequency: 'Every 15m',
-        status: 'Enabled',
-        path: '/partner/HotWax/category/Shopify/job/import-sales-order',
-        categories: ['Shopify', 'Orders']
-      },
-      {
-        id: 'import-sales-orders',
-        name: 'Import Sales Orders (NS)',
-        code: 'importNetSuiteSalesOrders',
-        direction: 'NETSUITE → HOTWAX',
-        frequency: 'Every 15m',
-        status: 'Enabled',
-        path: '/partner/HotWax/category/NetSuite/job/import-sales-order',
-        categories: ['NetSuite', 'Orders']
-      },
-      {
-        id: 'order-status',
-        name: 'Sync Order Status to NS',
-        code: 'syncOrderStatusNetSuite',
-        direction: 'HOTWAX → NETSUITE',
-        frequency: 'Every 15m',
-        status: 'Enabled',
-        path: '/partner/HotWax/category/NetSuite/job/sync-order-status',
-        categories: ['NetSuite', 'Orders']
-      },
-      {
-        id: 'transfer-orders',
-        name: 'Import Transfer Orders',
-        code: 'importNetSuiteTransferOrders',
-        direction: 'NETSUITE → HOTWAX',
-        frequency: 'Hourly',
-        status: 'Enabled',
-        path: '/partner/HotWax/category/NetSuite/job/import-transfer-orders',
-        categories: ['NetSuite', 'Orders', 'Inventory']
-      },
-      {
-        id: 'fulfillments',
-        name: 'Export Fulfillments to NS',
-        code: 'exportFulfillmentsNetSuite',
-        direction: 'HOTWAX → NETSUITE',
-        frequency: 'Every 30m',
-        status: 'Enabled',
-        path: '/partner/HotWax/category/NetSuite/job/export-fulfillments',
-        categories: ['NetSuite', 'Orders']
-      },
-      {
-        id: 'customer-deposits',
-        name: 'Sync Customer Deposits',
-        code: 'syncNetSuiteDeposits',
-        direction: 'NETSUITE → HOTWAX',
-        frequency: 'Every 2h',
-        status: 'Paused',
-        path: '/partner/HotWax/category/NetSuite/job/sync-customer-deposits',
-        categories: ['NetSuite']
-      },
-      {
-        id: 'sync-inventory-shopify',
-        name: 'Sync Inventory to Shopify',
-        code: 'syncShopifyInventory',
-        direction: 'HOTWAX → SHOPIFY',
-        frequency: 'Every 15m',
-        status: 'Enabled',
-        path: '/partner/HotWax/category/Shopify/job/sync-inventory',
-        categories: ['Shopify', 'Inventory']
-      },
-      {
-        id: 'import-bulk-orders',
-        name: 'Import Bulk Orders',
-        code: 'importBulkOrders',
-        direction: 'FILE → HOTWAX',
-        frequency: 'Daily',
-        status: 'Enabled',
-        path: '/partner/HotWax/category/Orders/job/import-bulk-orders',
-        categories: ['Orders']
+const jobs = computed(() => jobStore.getJobs)
+const categories = computed(() => jobStore.getCategories)
+const categoryMembers = computed(() => jobStore.getCategoryMembers)
+const categoryRollups = computed(() => jobStore.getCategoryRollups)
+
+onIonViewWillEnter(async () => {
+  emitter.on("productStoreUpdated", jobStore.fetchJobs)
+  await Promise.allSettled([jobStore.fetchJobs(), jobStore.fetchCategories(), jobStore.fetchCategoryRollup()])
+})
+
+onIonViewWillLeave(() => {
+  emitter.off("productStoreUpdated", jobStore.fetchJobs)
+})
+
+const selectedParentCategoryId = ref('ALL');
+const selectedSubCategoryId = ref('');
+const queryString = ref('');
+const selectedStatus = ref('ALL');
+
+const primaryCategories = computed(() => categories.value.filter((category: any) => category.primaryParentCategoryId === 'SYSTEM_JOB'));
+
+const subCategories = computed(() => {
+  if (selectedParentCategoryId.value === 'ALL') return [];
+  
+  const subCategoryIds = categoryRollups.value
+    .filter((rollup: any) => rollup.parentProductCategoryId === selectedParentCategoryId.value)
+    .map((rollup: any) => rollup.productCategoryId);
+  
+  return categories.value.filter((category: any) => subCategoryIds.includes(category.productCategoryId));
+});
+
+const selectParentCategory = (productCategoryId: string) => {
+  selectedParentCategoryId.value = productCategoryId;
+  selectedSubCategoryId.value = ""; // Reset sub-category on parent change
+};
+
+const filteredJobs = computed(() => {
+  let filtered = jobs.value;
+  if (selectedParentCategoryId.value !== "ALL") {
+
+    const parentCategoryJobIds: Array<string> = []
+    const subCategoryJobIds: Array<string> = []
+
+    categoryMembers.value.map((member: any) => {
+      if(member.productCategoryId === selectedParentCategoryId.value) {
+        parentCategoryJobIds.push(member.productId)
       }
-    ];
 
-    const filteredJobs = computed(() => {
-      if (selectedCategory.value === 'All') return jobs;
-      return jobs.filter(job => job.categories.includes(selectedCategory.value));
-    });
+      if(member.productCategoryId === selectedSubCategoryId.value) {
+        subCategoryJobIds.push(member.productId)
+      }
+    })
 
-    return {
-      addOutline,
-      categories,
-      filteredJobs,
-      jobs,
-      router,
-      selectedCategory,
-      translate
+    filtered = filtered.filter((job: any) => parentCategoryJobIds.includes(job.instanceOfProductId) && (!subCategoryJobIds.length || subCategoryJobIds.includes(job.instanceOfProductId)));
+  }
+
+  if (selectedStatus.value !== 'ALL') {
+    if (selectedStatus.value === 'PAUSED') {
+      filtered = filtered.filter((job: any) => job.paused === 'Y');
+    } else if (selectedStatus.value === 'SCHEDULED') {
+      filtered = filtered.filter((job: any) => job.paused === 'N' && !!job.cronExpression);
+    } else if (selectedStatus.value === 'NO_SCHEDULE') {
+      filtered = filtered.filter((job: any) => !job.cronExpression);
     }
   }
+
+  if (queryString.value.trim()) {
+    const queryTokens = queryString.value.toLowerCase().trim().split(/\s+/);
+    filtered = filtered.filter((job: any) => {
+      // For each token, it must match at least one of the fields
+      return queryTokens.every(token => 
+        (job.jobName && job.jobName.toLowerCase().includes(token)) ||
+        (job.serviceName && job.serviceName.toLowerCase().includes(token)) ||
+        (job.jobId && job.jobId.toString().toLowerCase().includes(token)) ||
+        (job.instanceOfProductId && job.instanceOfProductId.toLowerCase().includes(token))
+      );
+    });
+  }
+
+  return filtered;
 });
+
+const highlightText = (text: string | number, query: string) => {
+  if (!text) return '';
+  const textStr = String(text);
+  if (!query || !query.trim()) return textStr;
+  
+  const tokens = query.toLowerCase().trim().split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) return textStr;
+
+  // Escape special regex characters to prevent regex injection errors
+  const escapeRegExp = (string: string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const escapedTokens = tokens.map(escapeRegExp);
+  
+  // Create a regex matching any of the tokens, case-insensitive
+  const regex = new RegExp(`(${escapedTokens.join('|')})`, 'gi');
+  
+  // Replace matched tokens with mark tag
+  return textStr.replace(regex, '<mark class="search-highlight">$1</mark>');
+};
+
+const openCreateJobModal = async () => {
+  const modal = await modalController.create({
+    component: CreateJobModal,
+    componentProps: {
+      categories: categories.value, // Passing all flat categories
+      existingJobNames: jobs.value.map((job: any) => job.jobName)
+    }
+  });
+  modal.present();
+
+  const { data, role } = await modal.onDidDismiss();
+  if (role === 'confirm') {
+    console.log('Job created:', data);
+  }
+};
 </script>
 
 <style scoped>
@@ -210,13 +280,18 @@ export default defineComponent({
   justify-content: space-between;
 }
 
-.categories {
+.categories, .sub-categories, .status-filters {
   padding: 0 8px 8px;
   display: flex;
   flex-wrap: wrap;
 }
 
-.categories ion-chip {
+.status-filters {
+  border-top: 1px solid var(--ion-color-light);
+  padding-top: 8px;
+}
+
+.categories ion-chip, .sub-categories ion-chip, .status-filters ion-chip {
   cursor: pointer;
 }
 
@@ -230,4 +305,33 @@ ion-card ion-item {
   --background: var(--ion-color-light);
 }
 
+.job-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  word-break: break-all;
+}
+
+.paused-job {
+  opacity: 0.8;
+}
+
+.empty-state {
+  text-align: center;
+  margin-top: 40px;
+  color: var(--ion-color-medium);
+}
+
+.empty-state .helper-text {
+  font-size: 0.9em;
+  margin-top: 8px;
+}
+
+.search-highlight {
+  background-color: var(--ion-color-warning);
+  color: var(--ion-color-warning-contrast);
+  border-radius: 2px;
+  padding: 0 2px;
+  font-weight: bold;
+}
 </style>

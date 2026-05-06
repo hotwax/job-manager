@@ -4,6 +4,8 @@ import legacy from '@vitejs/plugin-legacy'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
 import { defineConfig } from 'vite'
+import { versionInfoUtil } from '../../common/utils/versionInfoUtil'
+import pkg from './package.json'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -11,7 +13,11 @@ export default defineConfig({
     vue(),
     legacy()
   ],
+  define: {
+    'import.meta.env.VITE_APP_VERSION_INFO': JSON.stringify(JSON.stringify(versionInfoUtil.getVersionInfo(pkg.version)))
+  },
   resolve: {
+    dedupe: ['vue', 'pinia'],
     alias: {
       '@': path.resolve(__dirname, 'src'),
       '@common': path.resolve(__dirname, '../../common')
