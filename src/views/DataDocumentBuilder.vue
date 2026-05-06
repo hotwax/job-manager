@@ -54,7 +54,7 @@ import {
 } from "@ionic/vue";
 import { cloudUploadOutline, playOutline, saveOutline } from "ionicons/icons";
 import { computed } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import router from "../router";
 import { translate } from "@common";
 import { showToast } from "@/utils";
 
@@ -62,8 +62,7 @@ import { useDataDocumentGraphStore } from "@/store/dataDocumentGraph";
 import { useDataDocumentStore } from "@/store/dataDocuments";
 import DataDocumentFormView from "./DataDocumentFormView.vue";
 
-const route = useRoute();
-const router = useRouter();
+const route = router.currentRoute.value;
 const graphStore = useDataDocumentGraphStore();
 const dataDocumentStore = useDataDocumentStore();
 
