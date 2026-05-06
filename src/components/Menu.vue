@@ -9,7 +9,7 @@
     <ion-content>
       <ion-list>
         <ion-item
-          v-if="systemInformation?.instanceInfo?.componentRelease == systemVersion"
+          v-if="isNewAppMenuVisible"
           button
           @click="goToExternalLink"
         >
@@ -94,7 +94,25 @@ export default defineComponent({
       shopifyConfigs: 'user/getShopifyConfigs',
       omsRedirectionInfo: 'user/getOmsRedirectionInfo',
       systemInformation: "util/getSystemInfo"
-    })
+    }),
+    isNewAppMenuVisible() {
+      const currentVersion = this.systemInformation?.instanceInfo?.componentRelease;
+      const requiredVersion = process.env.VUE_APP_REDIRECT_COMPATIBLE_VERSION;
+
+      if (!currentVersion || !requiredVersion) return false;
+
+      const currentParts = currentVersion.split('.').map(Number);
+      const requiredParts = requiredVersion.split('.').map(Number);
+
+      for (let i = 0; i < 3; i++) {
+        const part1 = currentParts[i] || 0;
+        const part2 = requiredParts[i] || 0;
+        if (part1 >= part2) {
+          return true;
+        }
+      }
+      return false;
+    }
   },
   methods: {
     async setEComStore(event: CustomEvent) {
