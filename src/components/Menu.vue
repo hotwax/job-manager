@@ -9,6 +9,7 @@
     <ion-content>
       <ion-list>
         <ion-item
+          v-if="systemInformation?.instanceInfo?.componentRelease != systemVersion"
           button
           @click="goToExternalLink"
         >
@@ -76,6 +77,11 @@ export default defineComponent({
     IonTitle,
     IonToolbar
   },
+  data() {
+    return {
+      systemVersion: process.env.VUE_APP_NEW_APP_COMPATIBLE_VERSION
+    }
+  },
   computed: {
     ...mapGetters({
       isUserAuthenticated: 'user/isUserAuthenticated',
@@ -87,6 +93,7 @@ export default defineComponent({
       currentEComStore: 'user/getCurrentEComStore',
       shopifyConfigs: 'user/getShopifyConfigs',
       omsRedirectionInfo: 'user/getOmsRedirectionInfo',
+      systemInformation: "util/getSystemInfo"
     })
   },
   methods: {

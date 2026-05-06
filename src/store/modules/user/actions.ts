@@ -114,6 +114,7 @@ const actions: ActionTree<UserState, RootState> = {
       // Getting service status description
       // TODO check if we could move it to logic for fetching jobs
       this.dispatch('util/getServiceStatusDesc')
+      this.dispatch('util/getSystemInformation')
     } catch (err: any) {
       // If any of the API call in try block has status code other than 2xx it will be handled in common catch block.
       // TODO Check if handling of specific status codes is required.
@@ -156,6 +157,7 @@ const actions: ActionTree<UserState, RootState> = {
     // TODO add any other tasks if need
     store.dispatch('job/clearJobState', null, { root: true });
     store.dispatch('maargJob/clearMaargJobState');
+    store.dispatch("util/clearSystemInformation")
     commit(types.USER_END_SESSION)
     resetConfig();
     resetPermissions();

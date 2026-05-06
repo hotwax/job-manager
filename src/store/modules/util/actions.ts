@@ -29,6 +29,19 @@ const actions: ActionTree<UtilState, RootState> = {
       logger.error(err)
     }
   },
+  async getSystemInformation({ commit }) {
+    try {
+      const resp = await UtilService.getSystemInformation()
+      if(!hasError(resp) && resp.data?.instanceInfo) {
+        commit(types.UTIL_SYSTEM_INFORMATION_UPDATED, resp.data);
+      }
+    } catch(err) {
+      logger.error(err)
+    }
+  },
+  clearSystemInformation({ commit }) {
+    commit(types.UTIL_SYSTEM_INFORMATION_UPDATED, {});
+  }
 }
 
 export default actions;
