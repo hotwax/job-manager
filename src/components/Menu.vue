@@ -9,7 +9,7 @@
     <ion-content>
       <ion-list>
         <ion-item
-          v-if="systemInformation?.instanceInfo?.componentRelease != systemVersion"
+          v-if="systemInformation?.instanceInfo?.componentRelease == systemVersion"
           button
           @click="goToExternalLink"
         >
@@ -79,7 +79,7 @@ export default defineComponent({
   },
   data() {
     return {
-      systemVersion: process.env.VUE_APP_NEW_APP_COMPATIBLE_VERSION
+      systemVersion: process.env.VUE_APP_REDIRECT_COMPATIBLE_VERSION
     }
   },
   computed: {
