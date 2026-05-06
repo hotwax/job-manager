@@ -286,13 +286,10 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
       this.loading = true;
       try {
         const response = await api({
-          url: `${API_ENDPOINTS.dataDocuments}/${encodeURIComponent(dataDocumentId)}`,
-          method: "GET",
-          params: {
-            dependentLevels: 1
-          }
+          url: `moqui/dataDocuments/${dataDocumentId}`,
+          method: "GET"
         });
-        this.currentDocument = normalizeDataDocument(getEntity(response));
+        this.currentDocument = response.data;
         this.fields = this.currentDocument?.fields || [];
         this.conditions = this.currentDocument?.conditions || [];
         this.relatedFeeds = this.currentDocument?.feeds || [];
