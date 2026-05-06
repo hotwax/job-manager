@@ -8,6 +8,9 @@
       "hosting": {
         "prod": [
           "hotwax-job-manager"
+        ],
+        "prod-legacy": [
+          "hotwax-job-manager-legacy"
         ]
       }
     },
