@@ -3,9 +3,11 @@ import { toastController } from '@ionic/vue';
 import Papa from 'papaparse'
 import { DateTime } from "luxon";
 import logger from "@/logger";
-import { translate } from "@common";
+import { cookieHelper, translate } from "@common";
 import {Clipboard} from "@capacitor/clipboard";
 import cronstrue from "cronstrue"
+import { useUtilStore } from "@/store/util";
+import { useUserStore } from "@/store/user";
 
 const showToast = async (message: string) => {
   const toast = await toastController
@@ -148,11 +150,43 @@ const getFileSize = (size: string) => {
   return size ? `${(Number(size) / (1024 * 1024)).toFixed(3)} MB` : "-"
 }
 
+const isAppCompatible = () => {
+  const currentVersion = useUtilStore().systemInformation?.instanceInfo?.componentRelease;
+  const requiredVersion = import.meta.env.VITE_REDIRECT_COMPATIBLE_VERSION;
+  
+  if(!currentVersion || !requiredVersion) return false;
+  
+  if(currentVersion === "main") return true;
+  
+  const currentParts = currentVersion.split('.').map(Number);
+  const requiredParts = requiredVersion.split('.').map(Number);
+  
+  for (let i = 0; i < 3; i++) {
+    const part1 = currentParts[i] || 0;
+    const part2 = requiredParts[i] || 0;
+    if (part1 >= part2) {
+      return true;
+    }
+  }
+  return false;
+}
+
+const redirectToLegacyApp = () => {
+  const oms = useUserStore().oms
+  const token = cookieHelper().get("token")!
+  const expirationTime = cookieHelper().get("expirationTime")!
+  const maarg = decodeURIComponent(cookieHelper().get("maarg")!)
+  const link = import.meta.env.VITE_LEGACY_APP_URL
+  window.location.href = link.replace("{oms}", oms).replace("{token}", token).replace("{expirationTime}", expirationTime).replace("{omsRedirectionUrl}", maarg)
+}
+
 export {
   getCronString,
   getDateAndTime,
   handleDateTimeInput,
   hasJobDataError,
+  isAppCompatible,
+  redirectToLegacyApp,
   showToast,
   saveDataFile,
   timeTillRun,

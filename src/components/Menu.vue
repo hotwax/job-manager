@@ -10,7 +10,7 @@
       <ion-list>
         <ion-item
           button
-          @click="redirectToExternalLink()"
+          @click="redirectToLegacyApp()"
         >
           <ion-icon slot="start" :icon="openOutline" />
           <ion-label>{{ translate("Legacy App") }}</ion-label>
@@ -62,10 +62,11 @@
 import { IonContent, IonFooter, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenu, IonMenuToggle, IonNote, IonSelect, IonSelectOption, IonTitle, IonToolbar } from "@ionic/vue";
 import { computed } from "vue";
 import { albumsOutline, cloudUploadOutline, fileTrayStackedOutline, globeOutline, openOutline, pulseOutline, settingsOutline, timeOutline } from "ionicons/icons";
-import { translate, commonUtil, cookieHelper, emitter } from "@common";
+import { translate, commonUtil, emitter } from "@common";
 import { useAuth } from "@common/composables/useAuth";
 import router from "../router";
 import { useUserStore } from "@/store/user";
+import { redirectToLegacyApp } from "@/utils";
 
 const { isAuthenticated } = useAuth();
 const userStore = useUserStore();
@@ -167,15 +168,6 @@ const setProductStore = async (value: string) => {
     await userStore.setCurrentProductStore({ "productStoreId": value })
     emitter.emit("productStoreUpdated")
   }
-}
-
-const redirectToExternalLink = () => {
-  const oms = userStore.oms
-  const token = cookieHelper().get("token")!
-  const expirationTime = cookieHelper().get("expirationTime")!
-  const maarg = decodeURIComponent(cookieHelper().get("maarg")!)
-  const link = import.meta.env.VITE_LEGACY_APP_URL
-  window.location.href = link.replace("{oms}", oms).replace("{token}", token).replace("{expirationTime}", expirationTime).replace("{omsRedirectionUrl}", maarg)
 }
 </script>
 
