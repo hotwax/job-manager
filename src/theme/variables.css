@@ -245,6 +245,19 @@ http://ionicframework.com/docs/theming/ */
   }
 }
 
+main {
+  display: block;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacer-base);
+}
+
+.table-header.list-item {
+  padding: var(--spacer-sm) var(--spacer-base);
+  background: var(--ion-color-light);
+  border-bottom: 1px solid var(--ion-color-light-shade);
+}
+
 body {
   /** Border variable **/
   --border-medium: 1px solid var(--ion-color-medium);
@@ -252,13 +265,6 @@ body {
 
 ion-select {
   max-width: 100%;
-}
-
-aside {
-  flex: 1 0 355px;
-  position: sticky;
-  top: var(--spacer-lg);
-  flex: 1;
 }
 
 .desktop-only {
@@ -308,20 +314,6 @@ aside {
 }
 
 @media (min-width: 991px) {
-  main {
-    display: flex;
-    justify-content: center;
-    align-items: start;
-    gap: var(--spacer-2xl);
-    max-width: 990px;
-    margin: var(--spacer-base) auto 0;
-  }
-
-  main > section {
-    display: grid;
-    grid-template-columns: minmax(400px, 1fr);
-    max-width: 50ch;
-  }
 
   .desktop-only {
     display: unset;
@@ -331,8 +323,4 @@ aside {
     display: none;
   }
 
-  aside {
-    width: 0px;
-    opacity: 0;
-  }
 }
