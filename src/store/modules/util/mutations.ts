@@ -7,6 +7,9 @@ const mutations: MutationTree <UtilState> = {
     payload.map((status: any) => {
       state.statusDesc[status.statusId] = status.description;
     })
+  },
+  [types.UTIL_SYSTEM_INFORMATION_UPDATED] (state, payload) {
+    state.systemInformation = payload
   }
 }
 export default mutations;
