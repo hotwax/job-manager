@@ -151,13 +151,13 @@ let appPages = [
     mdIcon: documentTextOutline,
     childRoutes: ["/data-documents/"]
   },
-  {
-    title: "Feeds",
-    url: "/data-document-feeds",
-    iosIcon: gitNetworkOutline,
-    mdIcon: gitNetworkOutline,
-    childRoutes: ["/data-document-feeds/"]
-  },
+  // {
+  //   title: "Feeds",
+  //   url: "/data-document-feeds",
+  //   iosIcon: gitNetworkOutline,
+  //   mdIcon: gitNetworkOutline,
+  //   childRoutes: ["/data-document-feeds/"]
+  // },
   {
     title: "Export History",
     url: "/data-document-export-history",
