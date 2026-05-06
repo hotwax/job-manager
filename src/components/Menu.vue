@@ -77,11 +77,6 @@ export default defineComponent({
     IonTitle,
     IonToolbar
   },
-  data() {
-    return {
-      systemVersion: process.env.VUE_APP_REDIRECT_COMPATIBLE_VERSION
-    }
-  },
   computed: {
     ...mapGetters({
       isUserAuthenticated: 'user/isUserAuthenticated',
