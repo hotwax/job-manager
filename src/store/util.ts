@@ -2,11 +2,6 @@ import { defineStore } from "pinia";
 import { api, commonUtil, translate } from "@common";
 import logger from "@/logger";
 import { StatusItem, StatusItemAndType } from "@/types";
-import { mockEntityFields, mockEntityNames, mockEntityRelationships } from "@/mock/dataDocuments";
-
-const sortFields = (fields: any[]) => fields.sort((a: any, b: any) => a.fieldName.localeCompare(b.fieldName));
-const getShortEntityName = (entityName: string) => entityName.split(".").pop() || entityName;
-const getMockEntityFields = (entityName: string) => mockEntityFields[entityName] || mockEntityFields[getShortEntityName(entityName)];
 
 export const useUtilStore = defineStore("util", {
   state: () => ({
@@ -120,11 +115,6 @@ export const useUtilStore = defineStore("util", {
       } catch (error) {
         logger.error("Failed to fetch entities", error);
         this.fetchStatus.entities = 'error'
-        
-        // Mock fallback to keep UI functional if API fails
-        if (!this.entities.length) {
-          this.entities = mockEntityNames;
-        }
       }
     },
     async fetchEntityFields(entityName: string, force = false) {
@@ -150,20 +140,6 @@ export const useUtilStore = defineStore("util", {
       } catch (error) {
         logger.error(`Failed to fetch fields for entity ${entityName}`, error);
         this.fetchStatus.entityFields = 'error'
-        
-        const mockFields = getMockEntityFields(entityName);
-        if (mockFields) {
-          this.entityFields[entityName] = sortFields([...mockFields]);
-          this.fetchStatus.entityFields = 'success';
-        } else {
-          // Generic fallback for unknown entities
-          this.entityFields[entityName] = [
-            { fieldName: 'id', description: 'Generic identifier field.' },
-            { fieldName: 'name', description: 'Generic name field.' },
-            { fieldName: 'description', description: 'Generic description field.' }
-          ];
-          this.fetchStatus.entityFields = 'success';
-        }
       }
     },
     async fetchEntityRelationships(entityName: string, force = false) {
@@ -185,11 +161,6 @@ export const useUtilStore = defineStore("util", {
       } catch (error) {
         logger.error(`Failed to fetch relationships for entity ${entityName}`, error);
         this.fetchStatus.entityRelationships = 'error'
-
-        const shortName = getShortEntityName(entityName);
-        const mockRelations = mockEntityRelationships[entityName] || mockEntityRelationships[shortName] || [];
-        this.entityRelationships[entityName] = [...mockRelations].sort((a: any, b: any) => a.relationshipName.localeCompare(b.relationshipName));
-        this.fetchStatus.entityRelationships = 'success';
       }
     },
     async fetchSystemInformation() {
