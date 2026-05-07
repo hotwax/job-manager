@@ -152,7 +152,7 @@ const getFileSize = (size: string) => {
 
 const isAppCompatible = () => {
   const currentVersion = useUtilStore().systemInformation?.instanceInfo?.componentRelease;
-  const requiredVersion = import.meta.env.VITE_REDIRECT_COMPATIBLE_VERSION;
+  const requiredVersion = import.meta.env.VITE_MAARG_COMPATIBLE_VERSION;
   
   if(!currentVersion || !requiredVersion) return false;
   
