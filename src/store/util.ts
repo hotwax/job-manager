@@ -7,7 +7,7 @@ export const useUtilStore = defineStore("util", {
   state: () => ({
     statusItems: {} as Record<string, StatusItemAndType>,
     statusFlowTransitions: [] as any,
-    systemInformation: ""
+    systemInformation: {} as any
   }),
   getters: {
     getStatusItemsByType: (state: any) => (typeId: string) => state.statusItems[typeId] || [],

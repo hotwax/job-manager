@@ -278,7 +278,7 @@ export const useUserStore = defineStore("user", {
         await this.fetchProductStores()
         await useUtilStore().fetchSystemInformation()
         // If the oms version is not compatible with the app, redirecting the user to the legacy app
-        if(!isAppCompatible) {
+        if(!(isAppCompatible())) {
           commonUtil.showToast(translate("App is not compatible with oms version and will not work as expected, redirecting to legacy app"));
           redirectToLegacyApp();
         }

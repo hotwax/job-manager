@@ -161,12 +161,11 @@ const isAppCompatible = () => {
   const currentParts = currentVersion.split('.').map(Number);
   const requiredParts = requiredVersion.split('.').map(Number);
   
-  for (let i = 0; i < 3; i++) {
+  for(let i = 0; i < 3; i++) {
     const part1 = currentParts[i] || 0;
     const part2 = requiredParts[i] || 0;
-    if (part1 >= part2) {
-      return true;
-    }
+    if(part1 >= part2) return true;
+    if(part1 < part2) return false;
   }
   return false;
 }
