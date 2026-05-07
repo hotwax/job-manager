@@ -1,12 +1,13 @@
 import { defineStore } from "pinia";
-import { api, commonUtil } from "@common";
+import { api, commonUtil, translate } from "@common";
 import logger from "@/logger";
 import { StatusItem, StatusItemAndType } from "@/types";
 
 export const useUtilStore = defineStore("util", {
   state: () => ({
     statusItems: {} as Record<string, StatusItemAndType>,
-    statusFlowTransitions: [] as any
+    statusFlowTransitions: [] as any,
+    systemInformation: {} as any
   }),
   getters: {
     getStatusItemsByType: (state: any) => (typeId: string) => state.statusItems[typeId] || [],
@@ -78,6 +79,18 @@ export const useUtilStore = defineStore("util", {
         this.statusFlowTransitions = transitionsByStatusId
       } catch(error: any) {
         logger.error("Failed to fetch status flow transitions");
+      }
+    },
+    async fetchSystemInformation() {
+      try {
+        const resp = await api({
+          url: "admin/maarg",
+          method: "GET"
+        });
+        this.systemInformation = resp.data
+      } catch(error: any) {
+        logger.error("Failed to fetch system information");
+        commonUtil.showToast(translate("App is not compatible with oms version and will not work as expected, please contact administrator"));
       }
     }
   },
