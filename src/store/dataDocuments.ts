@@ -484,14 +484,15 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
       this.presets = this.presets.filter((item: any) => item.presetId !== preset.presetId).concat(preset);
       return preset;
     },
-    async queueExport(dataDocumentId: string, payload: Record<string, any>) {
+    async queueExport(dataDocumentId: string) {
       try {
-        const response = await api({
-          url: `${API_ENDPOINTS.exports}/${encodeURIComponent(dataDocumentId)}/exports`,
+        await api({
+          url: "admin/dataDocuments/export",
           method: "POST",
-          data: toDataDocumentRunPayload(dataDocumentId, payload)
+          data: {
+            dataDocumentId
+          }
         });
-        return getEntity(response) || response?.data;
       } catch (error) {
         logger.error(`Failed to queue data document export for ${dataDocumentId}`, error);
         throw error;
@@ -499,31 +500,31 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
     },
     async fetchExportHistory(payload: Record<string, any> = {}) {
       this.loading = true;
+      this.exportHistory = [];
       try {
         const response = await api({
-          url: `${API_ENDPOINTS.exports}/exports`,
+          url: "admin/systemMessages",
           method: "GET",
           params: {
-            pageSize: Number(payload.pageSize ?? 25),
-            pageIndex: Number(payload.pageIndex ?? 0),
-            systemMessageTypeId: "ExportDataDocument",
-            orderBy: "-initDate",
-            ...payload
+            systemMessageTypeId: "ExportDocumentData",
+            pageSize: 500
           }
         });
-        this.exportHistory = getCollection(response, "systemMessages");
+        if(payload.dataDocumentId) {
+          this.exportHistory = response.data.systemMessages?.filter((message: any) => message.messageText.includes(payload.dataDocumentId))
+        } else {
+          this.exportHistory = response.data.systemMessages || [];
+        }
       } catch (error) {
         logger.error("Failed to fetch data document export history", error);
-        this.exportHistory = [];
       } finally {
         this.loading = false;
       }
     },
     async downloadExport(systemMessageId: string) {
       return api({
-        url: `${API_ENDPOINTS.exports}/exports/${encodeURIComponent(systemMessageId)}`,
-        method: "GET",
-        responseType: "blob"
+        url: `admin/dataDocuments/export/${systemMessageId}`,
+        method: "GET"
       });
     }
   }
