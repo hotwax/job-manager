@@ -1,6 +1,6 @@
 import { DateTime, Settings } from "luxon";
 import { defineStore } from "pinia";
-import { showToast } from "@/utils";
+import { isAppCompatible, redirectToLegacyApp, showToast } from "@/utils";
 import { api, commonUtil, translate } from "@common";
 import logger from "@/logger";
 import { useAuth } from "@common/composables/useAuth";
@@ -287,6 +287,12 @@ export const useUserStore = defineStore("user", {
       try {
         await this.fetchUserProfile();
         await this.fetchPermissions();
+        await useUtilStore().fetchSystemInformation()
+        // If the oms version is not compatible with the app, redirecting the user to the legacy app
+        if(!(isAppCompatible())) {
+          commonUtil.showToast(translate("App is not compatible with oms version and will not work as expected, redirecting to legacy app"));
+          redirectToLegacyApp();
+        }
         await this.fetchProductStores()
         await Promise.allSettled([
           useUtilStore().fetchEntities(),
