@@ -4,13 +4,6 @@
 
 The primary goal of code review for the Job Manager Application is to ensure the long-term health and maintainability of the codebase. This guide provides a framework for reviewers to evaluate code changes, ensuring they align with our established patterns and architectural goals.
 
-## Review Principles
-
-*   **Code Health:** Prioritize the overall health of the codebase. A change should generally leave the code better than it was found.
-*   **Simplicity:** Reviewers should favor simple, readable solutions over complex or "clever" ones.
-*   **Technical Debt:** Avoid introducing patterns that will be difficult to change or maintain in the future.
-*   **Consistency:** Verify that new code follows existing conventions to reduce cognitive load for the team.
-
 ## Review Checklist: Language & Formatting
 
 ### General Standards
@@ -39,6 +32,9 @@ The primary goal of code review for the Job Manager Application is to ensure the
 *   **Data Fetching:** **Strictly verify** that `api` or `client` are NOT imported directly in `.vue` files. These interactions should be encapsulated in Pinia store actions or composables.
 *   **Props & Emits:** Check that `defineProps` and `defineEmits` are used correctly within the setup block.
 *   **Ionic Patterns:** Verify the use of the `slot` attribute for positioning Ionic elements (e.g., `slot="start"`).
+*   **Layout & Components:** Discourage the use of `ion-grid` for simple layouts; prefer `ion-item` where appropriate for better alignment and simplicity.
+*   **Markup Complexity:** Identify and point out deeply nested or overly complex markup. Suggest simplifications to improve readability and performance.
+*   **Custom CSS:** Question any custom CSS added directly to templates (e.g., inline styles or large scoped style blocks). Verify if the desired effect can be achieved using Ionic utilities or global theme variables.
 
 ## Review Checklist: State Management & i18n
 
