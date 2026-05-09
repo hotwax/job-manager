@@ -32,6 +32,7 @@
         <ion-card>
           <ion-card-header>
             <ion-card-title>{{ translate("Output Fields") }}</ion-card-title>
+            <p><ion-text color="medium">{{ translate("Choose which fields to include in the preview and final export.") }}</ion-text></p>
           </ion-card-header>
           <ion-list>
             <ion-item v-for="field in fields" :key="field.fieldSeqId || field.fieldNameAlias">
@@ -51,6 +52,7 @@
         <ion-card>
           <ion-card-header>
             <ion-card-title>{{ translate("Runtime Filters") }}</ion-card-title>
+            <p><ion-text color="medium">{{ translate("Apply dynamic filters to narrow down the data for this specific run. These filters are not saved to the document definition.") }}</ion-text></p>
           </ion-card-header>
           <ion-list>
             <ion-item v-for="(filter, index) in filters" :key="filter.localId">
@@ -180,7 +182,7 @@ import { useRoute } from "vue-router";
 
 import { translate } from "@common";
 import { showToast } from "@/utils";
-import { useDataDocumentStore } from "@/store/dataDocuments";
+import { useDataDocumentStore } from "@/store/useDataDocumentStore";
 
 const route = useRoute();
 const store = useDataDocumentStore();

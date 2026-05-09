@@ -13,6 +13,7 @@
           <ion-card-header>
             <ion-card-title>{{ translate("Export History") }}</ion-card-title>
             <ion-card-subtitle>{{ translate("Review Data Document export System Messages.") }}</ion-card-subtitle>
+            <p><ion-text color="medium">{{ translate("Track the progress of your scheduled exports. You can filter by document, status, or date, and download completed files.") }}</ion-text></p>
           </ion-card-header>
           <ion-list>
             <ion-item>
@@ -123,7 +124,7 @@ import { useRouter } from "vue-router";
 
 import { translate } from "@common";
 import { getDateAndTime, showToast } from "@/utils";
-import { useDataDocumentStore } from "@/store/dataDocuments";
+import { useDataDocumentStore } from "@/store/useDataDocumentStore";
 
 const store = useDataDocumentStore();
 const router = useRouter();

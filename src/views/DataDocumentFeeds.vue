@@ -12,7 +12,7 @@
         <div class="header">
           <div class="title">
             <h1>{{ translate("Feeds") }}</h1>
-            <p>{{ translate("Browse Moqui Data Feeds and their attached documents.") }}</p>
+            <p>{{ translate("Data feeds are used to replicate Moqui data documents into external systems. Monitor feed status and browse associated documents.") }}</p>
           </div>
         </div>
 
@@ -107,7 +107,7 @@ import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 
 import { translate } from "@common";
-import { useDataDocumentStore } from "@/store/dataDocuments";
+import { useDataDocumentStore } from "@/store/useDataDocumentStore";
 
 const store = useDataDocumentStore();
 const router = useRouter();

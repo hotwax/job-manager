@@ -702,8 +702,8 @@ import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 import { translate } from "@common";
-import { useDataDocumentGraphStore } from "@/store/dataDocumentGraph";
-import { useDataDocumentStore } from "@/store/dataDocuments";
+import { useDataDocumentGraphStore } from "@/store/useDataDocumentGraphStore";
+import { useDataDocumentStore } from "@/store/useDataDocumentStore";
 import DataDocumentExportList from "@/components/DataDocumentExportList.vue";
 import { showToast } from "@/utils";
 import { useUtilStore } from "@/store/util";

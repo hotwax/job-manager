@@ -171,7 +171,7 @@ const toDataDocumentRunPayload = (dataDocumentId: string, payload: Record<string
   };
 };
 
-export const useDataDocumentStore = defineStore("dataDocuments", {
+export const useDataDocumentStore = defineStore("useDataDocumentStore", {
   state: () => ({
     dataDocuments: [] as any[],
     dataDocumentPrimaryEntities: [] as String[],

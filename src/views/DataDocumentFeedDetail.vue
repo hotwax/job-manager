@@ -20,6 +20,7 @@
           <ion-card-header>
             <ion-card-title>{{ feed.feedName || feed.dataFeedId }}</ion-card-title>
             <ion-card-subtitle>{{ feed.dataFeedId }}</ion-card-subtitle>
+            <p><ion-text color="medium">{{ translate("Manage how this feed replicates data documents. Review the attached documents and the services used for processing and deletion.") }}</ion-text></p>
           </ion-card-header>
           <ion-list>
             <ion-item v-if="feed.dataFeedTypeEnumId">
@@ -153,7 +154,7 @@ import { computed, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 import { translate } from "@common";
-import { useDataDocumentStore } from "@/store/dataDocuments";
+import { useDataDocumentStore } from "@/store/useDataDocumentStore";
 
 const route = useRoute();
 const router = useRouter();
