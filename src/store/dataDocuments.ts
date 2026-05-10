@@ -127,20 +127,6 @@ const buildFeedFromDocument = (document: any, dataFeedId: string) => {
   };
 };
 
-const buildDataDocumentListParams = (payload: Record<string, any> = {}) => {
-  const { queryString, dataFeedId, ...apiPayload } = payload;
-  return Object.entries({
-    pageSize: Number(payload.pageSize ?? 250),
-    pageIndex: Number(payload.pageIndex ?? 0),
-    orderByField: payload.orderByField || "dataDocumentId",
-    dependentLevels: Number(payload.dependentLevels ?? 1),
-    ...apiPayload
-  }).reduce((params: Record<string, any>, [key, value]) => {
-    if (value !== "" && value !== undefined && value !== null) params[key] = value;
-    return params;
-  }, {});
-};
-
 const hasDocumentRelations = (document: any, dataDocumentId: string) => document?.dataDocumentId === dataDocumentId;
 
 const stripUiFields = (payload: Record<string, any>) => {
@@ -284,6 +270,7 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
     },
     async fetchDataDocument(dataDocumentId: string) {
       this.loading = true;
+      this.currentDocument = undefined;
       try {
         const response = await api({
           url: `moqui/dataDocuments/${dataDocumentId}`,
@@ -296,106 +283,15 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
         this.relatedJobs = this.currentDocument?.jobs || [];
       } catch (error) {
         logger.error(`Failed to fetch data document ${dataDocumentId}`, error);
-        this.currentDocument = undefined;
       } finally {
         this.loading = false;
       }
 
       await Promise.all([
-        this.fetchFields(dataDocumentId),
-        this.fetchConditions(dataDocumentId),
-        this.fetchRelatedFeeds(dataDocumentId),
-        this.fetchRelatedJobs(dataDocumentId),
-        this.fetchPresets(dataDocumentId),
         this.fetchExportHistory({ dataDocumentId, pageSize: 5 })
       ]);
 
       return this.currentDocument;
-    },
-    async fetchFields(dataDocumentId: string) {
-      if (hasDocumentRelations(this.currentDocument, dataDocumentId)) {
-        this.fields = Array.isArray(this.currentDocument?.fields) ? this.currentDocument.fields : [];
-        return;
-      }
-      try {
-        const response = await api({
-          url: `${API_ENDPOINTS.dataDocuments}/${encodeURIComponent(dataDocumentId)}/fields`,
-          method: "GET",
-          params: { pageSize: 500 }
-        });
-        this.fields = getCollection(response, "fields");
-      } catch (error) {
-        logger.error(`Failed to fetch fields for ${dataDocumentId}`, error);
-        this.fields = [];
-      }
-    },
-    async fetchConditions(dataDocumentId: string) {
-      if (hasDocumentRelations(this.currentDocument, dataDocumentId)) {
-        this.conditions = Array.isArray(this.currentDocument?.conditions) ? this.currentDocument.conditions : [];
-        return;
-      }
-      try {
-        const response = await api({
-          url: `${API_ENDPOINTS.dataDocuments}/${encodeURIComponent(dataDocumentId)}/conditions`,
-          method: "GET",
-          params: { pageSize: 500 }
-        });
-        this.conditions = getCollection(response, "conditions");
-      } catch (error) {
-        logger.error(`Failed to fetch conditions for ${dataDocumentId}`, error);
-        this.conditions = [];
-      }
-    },
-    async fetchRelatedFeeds(dataDocumentId: string) {
-      if (hasDocumentRelations(this.currentDocument, dataDocumentId)) {
-        this.relatedFeeds = Array.isArray(this.currentDocument?.feeds) ? this.currentDocument.feeds : [];
-        return;
-      }
-      try {
-        const response = await api({
-          url: `${API_ENDPOINTS.dataDocuments}/${encodeURIComponent(dataDocumentId)}/feeds`,
-          method: "GET",
-          params: { pageSize: 250 }
-        });
-        this.relatedFeeds = getCollection(response, "feeds");
-      } catch (error) {
-        logger.error(`Failed to fetch related feeds for ${dataDocumentId}`, error);
-        this.relatedFeeds = [];
-      }
-    },
-    async fetchRelatedJobs(dataDocumentId: string) {
-      if (hasDocumentRelations(this.currentDocument, dataDocumentId)) {
-        this.relatedJobs = Array.isArray(this.currentDocument?.jobs) ? this.currentDocument.jobs : [];
-        return;
-      }
-      try {
-        const response = await api({
-          url: `${API_ENDPOINTS.dataDocuments}/${encodeURIComponent(dataDocumentId)}/jobs`,
-          method: "GET",
-          params: { pageSize: 250 }
-        });
-        this.relatedJobs = getCollection(response, "jobs");
-      } catch (error) {
-        logger.error(`Failed to fetch related jobs for ${dataDocumentId}`, error);
-        this.relatedJobs = [];
-      }
-    },
-    async fetchPresets(dataDocumentId: string) {
-      if (hasDocumentRelations(this.currentDocument, dataDocumentId)) {
-        this.presets = Array.isArray(this.currentDocument?.presets) ? this.currentDocument.presets : [];
-        return;
-      }
-      try {
-        const response = await api({
-          url: `${API_ENDPOINTS.dataDocuments}/${encodeURIComponent(dataDocumentId)}/presets`,
-          method: "GET",
-          params: { pageSize: 250 }
-        });
-        this.presets = getCollection(response, "presets");
-      } catch (error) {
-        logger.error(`Failed to fetch query presets for ${dataDocumentId}`, error);
-        this.presets = [];
-      }
     },
     async saveDataDocument(payload: Record<string, any>) {
       const isNew = !this.currentDocument?.dataDocumentId || this.currentDocument.dataDocumentId !== payload.dataDocumentId;
