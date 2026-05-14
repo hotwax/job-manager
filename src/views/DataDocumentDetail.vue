@@ -40,7 +40,7 @@
             <ion-item>
               <ion-label>
                 <p>{{ translate("Document Title") }}</p>
-                {{ document.documentTitle }}
+                {{ document.documentTitle || "-" }}
               </ion-label>
             </ion-item>
             <ion-item v-if="document.description">
@@ -100,44 +100,40 @@
               <p v-if="condition.postQuery">{{ translate("Post Query") }}: {{ condition.postQuery }}</p>
             </ion-label>
           </ion-item>
-          <ion-item v-if="!conditions.length">
-            <ion-label>{{ translate("No conditions.") }}</ion-label>
-          </ion-item>
+          <p class="empty-state" v-if="!conditions.length">{{ translate("No conditions") }}</p>
         </ion-list>
 
         <ion-list v-else-if="activeSection === 'usage'">
-          <ion-item-divider>
+          <ion-item-divider color="light">
             <ion-label>{{ translate("Related feeds") }}</ion-label>
           </ion-item-divider>
           <ion-item
             v-for="feed in relatedFeeds"
             :key="feed.dataFeedId || feed.dataDocumentId"
-            button
-            @click="openFeed(feed)"
           >
             <ion-label>{{ feed.dataFeedId || feed.feedName || feed.dataDocumentId }}</ion-label>
           </ion-item>
-          <ion-item-divider>
+          <p v-if="!relatedFeeds.length" class="empty-state">{{ translate("No related feeds found") }}</p>
+          <ion-item-divider color="light">
             <ion-label>{{ translate("Related jobs") }}</ion-label>
           </ion-item-divider>
           <ion-item v-for="job in relatedJobs" :key="job.jobName || job.jobId">
             <ion-label>{{ job.jobName || job.jobId }}</ion-label>
           </ion-item>
+          <p v-if="!relatedJobs.length" class="empty-state">{{ translate("No related jobs found") }}</p>
         </ion-list>
 
         <template v-else>
           <DataDocumentExportList :messages="exportHistory" :empty-message="translate('No recent exports.')" />
-          <ion-list>
+          <!-- <ion-list>
             <ion-item button @click="router.push('/data-document-export-history')">
               <ion-label>{{ translate("View export history") }}</ion-label>
             </ion-item>
-          </ion-list>
+          </ion-list> -->
         </template>
       </main>
 
-      <div v-else class="empty-state">
-        <p>{{ translate("Data document not found.") }}</p>
-      </div>
+      <p v-else class="empty-state">{{ translate("Data document not found") }}</p>
     </ion-content>
   </ion-page>
 </template>
@@ -145,7 +141,6 @@
 <script setup lang="ts">
 import {
   IonBackButton,
-  IonBadge,
   IonButton,
   IonButtons,
   IonCard,
@@ -170,7 +165,7 @@ import { cloudDownloadOutline, createOutline, filterOutline, gitBranchOutline, l
 import { computed, ref } from "vue";
 import router from "../router";
 
-import { translate } from "@common";
+import { commonUtil, translate } from "@common";
 import DataDocumentExportList from "@/components/DataDocumentExportList.vue";
 import { useDataDocumentStore } from "@/store/dataDocuments";
 
@@ -207,11 +202,6 @@ const getConditionExpression = (condition: any) => {
   return [condition.fieldNameAlias, condition.operator, getConditionValue(condition)]
     .filter((value) => value !== undefined && value !== null && value !== "")
     .join(" ");
-};
-
-const openFeed = (feed: any) => {
-  const dataFeedId = feed.dataFeedId || feed.feedName || feed;
-  if (dataFeedId) router.push(`/data-document-feeds/${encodeURIComponent(dataFeedId)}`);
 };
 
 const fieldGroups = computed(() => {
