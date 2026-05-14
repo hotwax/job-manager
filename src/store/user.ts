@@ -292,6 +292,7 @@ export const useUserStore = defineStore("user", {
         if(!(isAppCompatible())) {
           commonUtil.showToast(translate("App is not compatible with oms version and will not work as expected, redirecting to legacy app"));
           redirectToLegacyApp();
+          useAuth().clearAuth();
         }
         await this.fetchProductStores()
         await Promise.allSettled([
@@ -304,6 +305,7 @@ export const useUserStore = defineStore("user", {
     },
     async postLogout() {
       this.$reset();
+      useUtilStore().$reset();
     }
   },
   persist: true,
