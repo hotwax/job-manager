@@ -1,13 +1,13 @@
 import { defineStore } from "pinia";
 import { api, commonUtil, translate } from "@common";
 import logger from "@/logger";
-import { StatusItem, StatusItemAndType } from "@/types";
+import { EntityInfo, StatusItem, StatusItemAndType } from "@/types";
 
 export const useUtilStore = defineStore("util", {
   state: () => ({
     statusItems: {} as Record<string, StatusItemAndType>,
     statusFlowTransitions: [] as any,
-    entities: [] as any[],
+    entities: [] as Array<EntityInfo>,
     entityFields: {} as Record<string, any[]>,
     entityRelationships: {} as Record<string, any[]>,
     fetchStatus: {
@@ -98,23 +98,27 @@ export const useUtilStore = defineStore("util", {
       }
     },
     async fetchEntities(force = false) {
-      if (this.entities.length && !force) return;
-      this.fetchStatus.entities = 'pending'
+      if(this.entities.length && !force) return;
+      this.fetchStatus.entities = "pending"
 
       try {
         const resp = await api({
-          url: "moqui/entity/EntityServices/getEntityNames",
-          method: "GET"
+          url: "admin/entities",
+          method: "GET",
+          params: {
+            excludeViewEntities: true,
+            orderByField: "entityName"
+          }
         });
-        if (resp.data.entityNames) {
-          this.entities = resp.data.entityNames.sort();
-          this.fetchStatus.entities = 'success'
+        if(resp.data.entityInfoList) {
+          this.entities = resp.data.entityInfoList;
+          this.fetchStatus.entities = "success"
         } else {
           throw new Error("Empty entity list");
         }
       } catch (error) {
         logger.error("Failed to fetch entities", error);
-        this.fetchStatus.entities = 'error'
+        this.fetchStatus.entities = "error"
       }
     },
     async fetchEntityFields(entityName: string, force = false) {
