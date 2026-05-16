@@ -156,14 +156,20 @@ const isAppCompatible = () => {
   
   if(!currentVersion || !requiredVersion) return false;
   
-  if(currentVersion === "main") return true;
-  
-  const currentParts = currentVersion.split('.').map(Number);
-  const requiredParts = requiredVersion.split('.').map(Number);
+  const currentParts = currentVersion.split('.');
+  const requiredParts = requiredVersion.split('.');
+
+  // In all the cases the release will have a version split in 3 parts, and if instance is on some
+  // custom branch then in that case it will have a single part and thus assuming
+  // its on custom branch and allow accessing new app
+  if(currentParts.length < 3) return true;
+
+  // There might be cases when the version in api has a `v` prefixed with it
+  currentParts[0] = currentParts[0].replace("v", "")
   
   for(let i = 0; i < 3; i++) {
-    const part1 = currentParts[i] || 0;
-    const part2 = requiredParts[i] || 0;
+    const part1 = Number(currentParts[i]) || 0;
+    const part2 = Number(requiredParts[i]) || 0;
     if(part1 >= part2) return true;
     if(part1 < part2) return false;
   }
