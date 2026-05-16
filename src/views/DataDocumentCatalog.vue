@@ -76,7 +76,8 @@
                   <p>{{ document.primaryEntityName }}</p>
                 </ion-label>
               </ion-item>
-              <ion-list>
+              <!-- Added if check on list, because when all three values are empty, the list is taking space in the DOM -->
+              <ion-list v-if="document.documentTitle || document.relatedFeeds || document.relatedJobs">
                 <ion-item v-if="document.documentTitle" lines="none">
                   <ion-label>
                     <p class="overline">{{ translate("Title") }}</p>
