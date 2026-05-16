@@ -31,11 +31,7 @@
       </ion-button>
     </ion-card>
   </ion-list>
-  <ion-card v-else>
-    <ion-card-content>
-      <ion-text color="medium">{{ emptyMessage }}</ion-text>
-    </ion-card-content>
-  </ion-card>
+  <p v-else class="empty-state">{{ emptyMessage }}</p>
 </template>
 
 <script setup lang="ts">
