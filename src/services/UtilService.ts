@@ -15,7 +15,7 @@ const getSystemInformation = async (): Promise<any> => {
   const baseURL = store.getters['user/getMaargBaseUrl'];
 
   return client({
-    url: "admin/maarg",
+    url: "maarg",
     method: "GET",
     baseURL,
     headers: {
