@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { RouteRecordRaw } from 'vue-router';
-import Catalog from '@/views/catalog.vue'
+import Catalog from "@/views/Catalog.vue";
 import Settings from "@/views/Settings.vue"
 import FileHistory from "@/views/FileHistory.vue"
 import FileDetail from "@/views/FileDetail.vue"
