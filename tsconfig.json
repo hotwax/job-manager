@@ -18,10 +18,10 @@
         "src/*"
       ],
       "@common": [
-        "../../common/index.ts"
+        "../accxui/common/index.ts"
       ],
       "@common/*": [
-        "../../common/*"
+        "../accxui/common/*"
       ]
     },
     "lib": [
