@@ -73,7 +73,6 @@
               </ion-segment-button>
             </ion-segment>
             <ion-searchbar
-              v-slot="searchbar"
               v-model="repairQuery"
               :placeholder="repairPlaceholder"
               enterkeyhint="search"
@@ -134,7 +133,8 @@ import {
   IonSpinner,
   IonTitle,
   IonToolbar,
-  onIonViewWillEnter
+  onIonViewWillEnter,
+  onIonViewWillLeave
 } from "@ionic/vue";
 import { computed, onUnmounted, ref } from "vue";
 import { constructOutline, playCircleOutline, pulseOutline, refreshOutline, searchOutline, syncCircleOutline } from "ionicons/icons";
@@ -164,6 +164,8 @@ onIonViewWillEnter(async () => {
   }
 });
 
+onIonViewWillLeave(() => stopRebuildPolling());
+
 onUnmounted(() => stopRebuildPolling());
 
 const loadSummary = async () => {
@@ -175,6 +177,8 @@ const startRebuild = async () => {
   if (operation.jobRunId) {
     showToast(translate("Solr rebuild has been scheduled"));
     startRebuildPolling(operation.jobRunId);
+  } else {
+    showToast(translate("Something went wrong"));
   }
 };
 
@@ -216,6 +220,8 @@ const reindexRepairDocument = async (document: any) => {
       showToast(translate("Solr document rebuilt"));
       await searchRepairDocuments();
       await loadSummary();
+    } else {
+      showToast(translate("Something went wrong"));
     }
   } finally {
     repairingPrimaryId.value = "";

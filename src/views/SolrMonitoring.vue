@@ -149,7 +149,7 @@
           </ion-card-content>
         </ion-card>
 
-        <ion-item v-slot="loadingItem" v-if="store.isLoading" lines="none">
+        <ion-item v-if="store.isLoading" lines="none">
           <ion-spinner slot="start" name="crescent" />
           <ion-label>{{ translate("Loading Solr monitoring") }}</ion-label>
         </ion-item>
@@ -260,7 +260,11 @@ const collectionStatus = (collection: any) => {
   return translate("Available");
 };
 
-const formatDate = (value?: string) => value ? new Date(value).toLocaleString() : translate("Unknown");
+const formatDate = (value?: string) => {
+  if (!value) return translate("Unknown");
+  const date = new Date(value);
+  return isNaN(date.getTime()) ? translate("Unknown") : date.toLocaleString();
+};
 
 const formatNumber = (value: any) => typeof value === "number" ? value.toLocaleString() : translate("Unknown");
 
