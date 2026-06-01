@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import { api } from "@common";
 import logger from "@/logger";
 
-export const useSolrMonitoringStore = defineStore("solrMonitoring", {
+export const useSolrMonitoringStore = defineStore("solrmonitoring", {
   state: () => ({
     summary: {} as Record<string, any>,
     repairResults: [] as Array<any>,
