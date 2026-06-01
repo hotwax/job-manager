@@ -92,7 +92,7 @@ describe("user store permissions", () => {
 
     expect(apiMock).toHaveBeenCalledWith({
       url: "getPermissions",
-      method: "post",
+      method: "POST",
       baseURL: "http://localhost:8080/rest/s1/",
       data: { viewIndex: 0, viewSize: 200 }
     });
