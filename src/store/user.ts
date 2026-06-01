@@ -131,10 +131,10 @@ export const useUserStore = defineStore("user", {
         let resp;
         do {
           resp = await api({
-            url: "getPermissions",
-            method: "post",
-            baseURL: commonUtil.getOmsURL(),
-            data: { viewIndex, viewSize }
+            url: "admin/user/permissions",
+            method: "get",
+            baseURL: commonUtil.getMaargURL(),
+            params: { viewIndex, viewSize }
           }) as any
 
           if (resp.status === 200 && resp.data.docs?.length && !commonUtil.hasError(resp)) {
