@@ -129,11 +129,11 @@ export const useUserStore = defineStore("user", {
 
       try {
         let resp;
+        const isMoqui = commonUtil.isMoqui?.();
         do {
-          const isMoqui = commonUtil.isMoqui?.();
           resp = await api({
             url: isMoqui ? "admin/user/permissions" : "getPermissions",
-            method: isMoqui ? "GET" : "post",
+            method: isMoqui ? "GET" : "POST",
             baseURL: commonUtil.getOmsURL(),
             [isMoqui ? "params" : "data"]: { viewIndex, viewSize }
           }) as any
