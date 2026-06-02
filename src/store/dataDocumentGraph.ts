@@ -12,18 +12,6 @@ import {
   serializeGraphFields
 } from "@/utils/dataDocumentGraph";
 
-const shouldUseMockData = () => {
-  const locationSearch = typeof window !== "undefined" ? window.location.search : "";
-  const storage = typeof window !== "undefined" ? window.localStorage : undefined;
-  if (locationSearch.includes("mockDataDocuments=true")) {
-    if (typeof storage?.setItem === "function") storage.setItem("JOB_MANAGER_DATA_DOCUMENTS_MOCK", "true");
-    return true;
-  }
-  return typeof storage?.getItem === "function" && storage.getItem("JOB_MANAGER_DATA_DOCUMENTS_MOCK") === "true";
-};
-
-const canUseMockFallback = (error: any) => !error?.response || [404, 501].includes(Number(error?.response?.status));
-
 const getCollection = (response: any, fallbackKey?: string) => {
   const data = response?.data;
   if (Array.isArray(data)) return data;
@@ -60,7 +48,6 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
   }),
   getters: {
     getGraph: (state) => state.graph,
-    getRelAliases: (state) => state.relAliases,
     getLinks: (state) => state.links,
     isLoading: (state) => state.loading,
     isSaving: (state) => state.saving
@@ -99,45 +86,17 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
       const dataDocumentStore = useDataDocumentStore();
       try {
         await dataDocumentStore.fetchDataDocument(dataDocumentId);
-        await Promise.all([
-          this.fetchRelAliases(dataDocumentId),
-          this.fetchLinks(dataDocumentId)
-        ]);
         this.graph = projectDataDocumentGraph({
           document: dataDocumentStore.getCurrentDocument,
           fields: dataDocumentStore.getFields,
           conditions: dataDocumentStore.getConditions,
-          relAliases: this.relAliases,
-          links: this.links
+          relAliases: dataDocumentStore.getCurrentDocument?.relAliases || [],
+          links: dataDocumentStore.getCurrentDocument?.links || []
         });
       } finally {
         this.loading = false;
       }
       return this.graph;
-    },
-    async fetchRelAliases(dataDocumentId: string) {
-      try {
-        const response = await api({
-          url: `admin/dataDocuments/${encodeURIComponent(dataDocumentId)}/relAliases`,
-          method: "GET",
-          params: { pageSize: 250 }
-        });
-        this.relAliases = getCollection(response, "relAliases");
-      } catch (error) {
-        logger.error(`Failed to fetch relationship aliases for ${dataDocumentId}`, error);
-      }
-    },
-    async fetchLinks(dataDocumentId: string) {
-      try {
-        const response = await api({
-          url: `admin/dataDocuments/${encodeURIComponent(dataDocumentId)}/links`,
-          method: "GET",
-          params: { pageSize: 250 }
-        });
-        this.links = getCollection(response, "links");
-      } catch (error) {
-        logger.error(`Failed to fetch links for ${dataDocumentId}`, error);
-      }
     },
     updateField(fieldSeqId: string | undefined, fieldPath: string, patch: Record<string, any>) {
       if (!this.graph) return;
@@ -193,27 +152,20 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
         links: this.links
       });
     },
-    addCondition(fieldNameAlias: string) {
+    addCondition(condition: any) {
       if (!this.graph) return undefined;
-      const condition: DataDocumentConditionRecord = {
-        dataDocumentId: this.graph.dataDocumentId,
-        conditionSeqId: `new-${Date.now()}`,
-        fieldNameAlias,
-        operator: "equals",
-        value: "",
-        fieldValue: "",
-        toFieldNameAlias: "",
-        postQuery: "N",
-        isNew: true
-      };
       this.graph = projectDataDocumentGraph({
         document: this.graph.metadata,
         fields: serializeGraphFields(this.graph),
-        conditions: [...serializeGraphConditions(this.graph), condition],
+        conditions: [...serializeGraphConditions(this.graph), {
+          dataDocumentId: this.graph.dataDocumentId,
+          conditionSeqId: "",
+          isNew: true,
+          ...condition
+        }],
         relAliases: this.relAliases,
         links: this.links
       });
-      return condition;
     },
     updateCondition(conditionSeqId: string | undefined, patch: Record<string, any>) {
       if (!this.graph) return;
@@ -242,9 +194,12 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
       if (!this.graph) return;
       this.saving = true;
       const dataDocumentStore = useDataDocumentStore();
+      console.log('this.graph', this.graph)
       try {
         await dataDocumentStore.saveDataDocument(this.graph.metadata);
+        console.log('serializeGraphConditions(this.graph)', serializeGraphConditions(this.graph))
         for (const field of serializeGraphFields(this.graph)) {
+          console.log('stripGraphFields(field)', stripGraphFields(field))
           await dataDocumentStore.saveField(this.graph.dataDocumentId, stripGraphFields(field));
         }
         for (const condition of serializeGraphConditions(this.graph)) {
@@ -259,7 +214,6 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
       await this.fetchGraph(this.graph.dataDocumentId);
     },
     async saveRelAlias(dataDocumentId: string, relAlias: any) {
-      if (shouldUseMockData()) return relAlias;
       try {
         const response = await api({
           url: `admin/dataDocuments/${encodeURIComponent(dataDocumentId)}/relAliases/${encodeURIComponent(relAlias.relationshipName)}`,
@@ -269,8 +223,6 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
         return getEntity(response) || relAlias;
       } catch (error) {
         logger.error(`Failed to save relationship alias for ${dataDocumentId}`, error);
-        if (!canUseMockFallback(error)) throw error;
-        return relAlias;
       }
     }
   }

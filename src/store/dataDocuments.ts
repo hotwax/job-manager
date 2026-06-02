@@ -287,9 +287,7 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
         this.loading = false;
       }
 
-      await Promise.all([
-        this.fetchExportHistory({ dataDocumentId, pageSize: 5 })
-      ]);
+      await this.fetchExportHistory(dataDocumentId)
 
       return this.currentDocument;
     },
@@ -309,13 +307,13 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
       return this.currentDocument;
     },
     async saveField(dataDocumentId: string, field: Record<string, any>) {
-      const isNew = !field.fieldSeqId || field.isNew;
+      const isNew = !field.fieldSeqId;
       const payload = stripUiFields({ ...field, dataDocumentId });
       try {
         const response = await api({
           url: isNew
-            ? `${API_ENDPOINTS.dataDocuments}/${encodeURIComponent(dataDocumentId)}/fields`
-            : `${API_ENDPOINTS.dataDocuments}/${encodeURIComponent(dataDocumentId)}/fields/${encodeURIComponent(field.fieldSeqId)}`,
+            ? `admin/dataDocuments/${encodeURIComponent(dataDocumentId)}/fields`
+            : `admin/dataDocuments/${encodeURIComponent(dataDocumentId)}/fields/${encodeURIComponent(field.fieldSeqId)}`,
           method: isNew ? "POST" : "PUT",
           data: payload
         });
@@ -326,15 +324,15 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
       }
     },
     async saveCondition(dataDocumentId: string, condition: Record<string, any>) {
-      const isNew = !condition.conditionSeqId || condition.isNew;
+      const isNew = !condition.conditionSeqId;
       const payload = stripUiFields({ ...condition, dataDocumentId });
       try {
         const response = await api({
           url: isNew
-            ? `${API_ENDPOINTS.dataDocuments}/${encodeURIComponent(dataDocumentId)}/conditions`
-            : `${API_ENDPOINTS.dataDocuments}/${encodeURIComponent(dataDocumentId)}/conditions/${encodeURIComponent(condition.conditionSeqId)}`,
+            ? `admin/dataDocuments/${encodeURIComponent(dataDocumentId)}/conditions`
+            : `admin/dataDocuments/${encodeURIComponent(dataDocumentId)}/conditions/${encodeURIComponent(condition.conditionSeqId)}`,
           method: isNew ? "POST" : "PUT",
-          data: payload
+          data: condition
         });
         return getEntity(response) || payload;
       } catch (error) {
@@ -394,7 +392,7 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
         throw error;
       }
     },
-    async fetchExportHistory(payload: Record<string, any> = {}) {
+    async fetchExportHistory(dataDocumentId: string) {
       this.loading = true;
       this.exportHistory = [];
       try {
@@ -406,8 +404,8 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
             pageSize: 500
           }
         });
-        if(payload.dataDocumentId) {
-          this.exportHistory = response.data.systemMessages?.filter((message: any) => message.messageText.includes(payload.dataDocumentId))
+        if(dataDocumentId) {
+          this.exportHistory = response.data.systemMessages?.filter((message: any) => message.messageText.includes(dataDocumentId))
         } else {
           this.exportHistory = response.data.systemMessages || [];
         }

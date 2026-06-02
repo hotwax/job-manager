@@ -25,8 +25,8 @@
           <ion-list class="graph-metadata-list">
             <ion-item detail button @click="openEntityModal">
               <ion-label>
-                {{ translate("Primary Entity") }}
-                <p>{{ graph.metadata.primaryEntityName || translate("Select Entity") }}</p>
+                <p>{{ translate("Primary Entity") }}</p>
+                {{ graph.metadata.primaryEntityName || translate("Select Entity") }}
               </ion-label>
             </ion-item>
             <ion-item>
@@ -103,10 +103,6 @@
               <ion-item-divider>
                 <ion-label>{{ translate("Configure entity") }}</ion-label>
               </ion-item-divider>
-              <ion-item button @click="openGraphFieldModal">
-                <ion-icon slot="start" :icon="addOutline" />
-                <ion-label>{{ translate("Add field") }}</ion-label>
-              </ion-item>
               <ion-item button @click="openRelatedFieldModal">
                 <ion-icon slot="start" :icon="gitBranchOutline" />
                 <ion-label>
@@ -116,6 +112,10 @@
               </ion-item>
               <ion-item-divider>
                 <ion-label>{{ translate("Fields") }}</ion-label>
+                <ion-button fill="clear" slot="end" @click="openGraphFieldModal">
+                  <ion-label>{{ translate("Add") }}</ion-label>
+                  <ion-icon :icon="addOutline" />
+                </ion-button>
               </ion-item-divider>
               <ion-item v-for="field in selectedNodeFields" :key="field.fieldSeqId || field.fieldPath" button @click="selectField(field.fieldSeqId || field.fieldPath)">
                 <ion-label>
@@ -196,20 +196,17 @@
                 />
               </ion-item>
               <ion-item-divider>
-                <ion-label>{{ translate("Configure field") }}</ion-label>
-              </ion-item-divider>
-              <ion-item button @click="addConditionToSelection">
-                <ion-icon slot="start" :icon="filterOutline" />
-                <ion-label>{{ translate("Add condition") }}</ion-label>
-              </ion-item>
-              <ion-item-divider>
                 <ion-label>{{ translate("Conditions") }}</ion-label>
+                <ion-button fill="clear" slot="end" @click="openConditionModal">
+                  <ion-label>{{ translate("Add") }}</ion-label>
+                  <ion-icon :icon="addOutline" />
+                </ion-button>
               </ion-item-divider>
               <ion-item
                 v-for="condition in selectedFieldConditions"
                 :key="condition.conditionSeqId || condition.fieldNameAlias"
                 button
-                @click="openCondition(condition.conditionSeqId)"
+                @click="openCondition(condition)"
               >
                 <ion-icon slot="start" :icon="filterOutline" color="warning" />
                 <ion-label>
@@ -219,9 +216,9 @@
                   <p v-if="condition.postQuery">{{ translate("Post Query") }}: {{ condition.postQuery }}</p>
                 </ion-label>
               </ion-item>
-              <ion-item v-if="!selectedFieldConditions.length">
-                <ion-label>{{ translate("No conditions.") }}</ion-label>
-              </ion-item>
+              <p class="empty-state" v-if="!selectedFieldConditions.length">
+                {{ translate("No conditions") }}
+              </p>
             </ion-list>
 
             <ion-list v-else>
@@ -298,7 +295,7 @@
               v-for="condition in graph.conditions"
               :key="condition.conditionSeqId || condition.fieldNameAlias"
               button
-              @click="openCondition(condition.conditionSeqId)"
+              @click="openCondition(condition)"
             >
               <ion-icon slot="start" :icon="filterOutline" />
               <ion-label>
@@ -309,9 +306,9 @@
                 <p v-if="condition.postQuery">{{ translate("Post Query") }}: {{ condition.postQuery }}</p>
               </ion-label>
             </ion-item>
-            <ion-item v-if="!graph.conditions.length">
-              <ion-label>{{ translate("No conditions.") }}</ion-label>
-            </ion-item>
+            <p class="empty-state" v-if="!graph.conditions.length">
+              {{ translate("No conditions") }}
+            </p>
           </ion-list>
 
           <ion-list v-else-if="bottomPanel === 'preview'">
@@ -389,8 +386,13 @@
         <ion-content>
           <ion-radio-group :value="graph?.metadata.primaryEntityName" @ionChange="selectEntity($event.detail.value)">
             <ion-list>
-              <ion-item v-for="entity in filteredEntities" :key="entity">
-                <ion-radio :value="entity" label-placement="end" justify="start">{{ entity }}</ion-radio>
+              <ion-item v-for="entity in filteredEntities" :key="entity.fullEntityName">
+                <ion-radio :value="entity.fullEntityName" label-placement="end" justify="start">
+                  <ion-label>
+                    {{ entity.entityName }}
+                    <p>{{ entity.package }}</p>
+                  </ion-label>
+                </ion-radio>
               </ion-item>
             </ion-list>
           </ion-radio-group>
@@ -422,10 +424,9 @@
             <p>{{ translate("Fetching fields...") }}</p>
           </div>
           <ion-list v-else>
-            <ion-item v-for="field in filteredEntityFields" :key="field.fieldName" button @click="selectGraphField(field)">
+            <ion-item v-for="field in filteredEntityFields" :key="field.name" button @click="selectGraphField(field)">
               <ion-label>
-                <h2>{{ field.fieldName }}</h2>
-                <p v-if="field.description">{{ field.description }}</p>
+                <h2>{{ field.name }}</h2>
               </ion-label>
             </ion-item>
             <ion-item v-if="!filteredEntityFields.length">
@@ -583,19 +584,17 @@
           <ion-list v-if="activeCondition">
             <ion-item>
               <ion-input
-                :value="activeCondition.fieldNameAlias"
+                v-model="activeCondition.fieldNameAlias"
                 :label="translate('Field Alias')"
                 label-placement="stacked"
-                @ionInput="updateActiveCondition({ fieldNameAlias: $event.detail.value || '' })"
               />
             </ion-item>
             <ion-item>
               <ion-select
-                :value="activeCondition.operator"
+                v-model="activeCondition.operator"
                 :label="translate('Operator')"
                 label-placement="stacked"
                 interface="popover"
-                @ionChange="updateActiveCondition({ operator: $event.detail.value })"
               >
                 <ion-select-option v-for="operator in operators" :key="operator.value" :value="operator.value">
                   {{ translate(operator.label) }}
@@ -604,18 +603,39 @@
             </ion-item>
             <ion-item>
               <ion-input
-                :value="activeCondition.fieldValue"
+                v-model="activeCondition.fieldValue"
                 :label="translate('Value')"
                 label-placement="stacked"
-                @ionInput="updateActiveCondition({ fieldValue: $event.detail.value || '' })"
               />
+            </ion-item>
+            <ion-item>
+              <ion-input
+                v-model="activeCondition.toFieldNameAlias"
+                :label="translate('To Field Alias')"
+                label-placement="stacked"
+              />
+            </ion-item>
+            <ion-item>
+              <ion-select
+                v-model="activeCondition.postQuery"
+                :label="translate('Post Query')"
+                label-placement="stacked"
+                interface="popover"
+              >
+                <ion-select-option value="N">
+                  {{ translate("N") }}
+                </ion-select-option>
+                <ion-select-option value="Y">
+                  {{ translate("Y") }}
+                </ion-select-option>
+              </ion-select>
             </ion-item>
             <ion-item lines="none">
               <ion-button color="danger" fill="clear" @click="removeActiveCondition">
-                {{ translate("Remove condition") }}
+                {{ translate("Remove") }}
               </ion-button>
-              <ion-button slot="end" @click="closeConditionModal">
-                {{ translate("Done") }}
+              <ion-button slot="end" fill="clear" @click="closeConditionModal(true)">
+                {{ translate("Add") }}
               </ion-button>
             </ion-item>
           </ion-list>
@@ -685,6 +705,7 @@ import {
   IonLabel,
   IonList,
   IonModal,
+  IonNote,
   IonPage,
   IonProgressBar,
   IonRadio,
@@ -712,6 +733,7 @@ import DataDocumentExportList from "@/components/DataDocumentExportList.vue";
 import { showToast } from "@/utils";
 import { useUtilStore } from "@/store/util";
 import type { GraphCondition, GraphEdge, GraphField } from "@/utils/dataDocumentGraph";
+import { EntityInfo } from "@/types";
 
 const route = router.currentRoute.value;
 const graphStore = useDataDocumentGraphStore();
@@ -734,7 +756,14 @@ const relatedFieldStep = ref<"relationship" | "confirm" | "fields">("relationshi
 const relatedRelationshipPath = ref("");
 const relatedEntityName = ref("");
 const selectedRelationship = ref<any>();
-const activeConditionId = ref("");
+const activeCondition = ref({
+  conditionSeqId: "",
+  fieldNameAlias: "",
+  operator: "equals",
+  fieldValue: "",
+  toFieldNameAlias: "",
+  postQuery: "N",
+});
 
 const operators = [
   { value: "equals", label: "Equals" },
@@ -811,25 +840,21 @@ const selectedEdge = computed(() => selectedTarget.value.kind === "edge"
 const selectedField = computed(() => selectedTarget.value.kind === "field"
   ? graph.value?.fields.find((field) => field.fieldSeqId === selectedTarget.value.id || field.fieldPath === selectedTarget.value.id)
   : undefined);
-const activeCondition = computed(() => graph.value?.conditions.find((condition) => condition.conditionSeqId === activeConditionId.value));
 const selectedNodeFields = computed(() => graph.value?.fields.filter((field) => field.nodeId === selectedNode.value?.nodeId) || []);
 const selectedFieldConditions = computed(() => selectedField.value ? getConditionsForField(selectedField.value) : []);
 const entities = computed(() => utilStore.getEntities);
 const filteredEntities = computed(() => {
   const query = entityQueryString.value.trim().toLowerCase();
-  if (!query) return entities.value;
-  return entities.value.filter((entity: string) => entity.toLowerCase().includes(query));
+  if(!query) return entities.value;
+  return entities.value.filter((entity: EntityInfo) => entity.fullEntityName.toLowerCase().includes(query));
 });
 const activeFieldEntityName = computed(() => selectedNode.value?.entityName || graph.value?.metadata.primaryEntityName || "");
 const entityFields = computed(() => activeFieldEntityName.value ? utilStore.getEntityFields(activeFieldEntityName.value) : []);
 const filteredEntityFields = computed(() => {
   const query = fieldQueryString.value.trim().toLowerCase();
-  const fields = entityFields.value.map((field: any) => typeof field === "string" ? { fieldName: field, description: "" } : field);
-  if (!query) return fields;
-  return fields.filter((field: any) => (
-    field.fieldName.toLowerCase().includes(query) ||
-    field.description?.toLowerCase().includes(query)
-  ));
+  console.log('entityFields', entityFields.value)
+  if (!query) return entityFields.value;
+  return entityFields.value.filter((field: any) => field.name.toLowerCase().includes(query));
 });
 const relatedEntityFields = computed(() => relatedEntityName.value ? utilStore.getEntityFields(relatedEntityName.value) : []);
 const activeRelationshipEntityName = computed(() => selectedNode.value?.entityName || graph.value?.metadata.primaryEntityName || "");
@@ -913,9 +938,8 @@ const getConditionsForField = (field: GraphField) => {
   )) || [];
 };
 
-const openCondition = (conditionId?: string) => {
-  if (!conditionId) return;
-  activeConditionId.value = conditionId;
+const openCondition = (condition: any) => {
+  activeCondition.value = condition;
   conditionModal.value.$el.present();
 };
 
@@ -947,8 +971,8 @@ const closeEntityModal = () => {
 
 const openGraphFieldModal = async () => {
   fieldQueryString.value = "";
-  if (activeFieldEntityName.value) {
-    await utilStore.fetchEntityFields(activeFieldEntityName.value);
+  if(selectedNode.value?.entityName) {
+    await utilStore.fetchEntityFields(selectedNode.value?.entityName);
   }
   fieldModal.value.$el.present();
 };
@@ -960,9 +984,9 @@ const refreshActiveFieldEntity = () => {
 };
 
 const selectGraphField = (field: any) => {
-  const addedField = graphStore.addField(selectedNode.value?.nodeId || "node:root", field.fieldName);
+  const addedField = graphStore.addField(selectedNode.value?.nodeId || "node:root", field.name);
   if (addedField) {
-    selectedTarget.value = { kind: "field", id: addedField.fieldSeqId || addedField.fieldPath || field.fieldName };
+    selectedTarget.value = { kind: "field", id: addedField.fieldSeqId || addedField.fieldPath || field.name };
   }
   closeFieldModal();
 };
@@ -1045,26 +1069,25 @@ const updateSelectedField = (patch: Record<string, any>) => {
   graphStore.updateField(selectedField.value.fieldSeqId, selectedField.value.fieldPath, patch);
 };
 
-const addConditionToSelection = () => {
-  if (!selectedField.value) return;
-  const condition = graphStore.addCondition(selectedField.value.outputName);
-  if (!condition?.conditionSeqId) return;
-  activeConditionId.value = condition.conditionSeqId;
+const openConditionModal = () => {
+  if(!selectedField.value) return;
+  activeCondition.value["fieldNameAlias"] = selectedField.value.outputName
+  activeCondition.value["operator"] = "equals"
+  activeCondition.value["postQuery"] = "N"
   conditionModal.value.$el.present();
 };
 
-const updateActiveCondition = (patch: Record<string, any>) => {
-  if (!activeCondition.value) return;
-  graphStore.updateCondition(activeCondition.value.conditionSeqId, patch);
-};
-
 const removeActiveCondition = () => {
-  if (!activeCondition.value?.conditionSeqId) return;
-  graphStore.removeCondition(activeCondition.value.conditionSeqId);
+  if(activeCondition.value?.conditionSeqId) {
+    graphStore.removeCondition(activeCondition.value.conditionSeqId);
+  }
   closeConditionModal();
 };
 
-const closeConditionModal = () => {
+const closeConditionModal = (save = false) => {
+  if(save) {
+    graphStore.addCondition(activeCondition.value);
+  }
   conditionModal.value.$el.dismiss();
 };
 
@@ -1135,7 +1158,7 @@ onIonViewWillEnter(async () => {
 
 .graph-workspace {
   display: flex;
-  min-height: 620px;
+  height: 500px;
 }
 
 .graph-inspector {

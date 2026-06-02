@@ -127,16 +127,11 @@ export const useUtilStore = defineStore("util", {
 
       try {
         const resp = await api({
-          url: `moqui/entity/EntityServices/getEntityFields`,
-          method: "GET",
-          params: { entityName }
+          url: `admin/entities/${entityName}/definition`,
+          method: "GET"
         });
-        if (resp.data.fields) {
-          this.entityFields[entityName] = resp.data.fields.sort((a: any, b: any) => a.fieldName.localeCompare(b.fieldName));
-          this.fetchStatus.entityFields = 'success'
-        } else if (resp.data.fieldNames) {
-          // Fallback if only names are returned
-          this.entityFields[entityName] = resp.data.fieldNames.map((name: string) => ({ fieldName: name, description: "" })).sort((a: any, b: any) => a.fieldName.localeCompare(b.fieldName));
+        if (resp.data?.entityDefinition?.fields) {
+          this.entityFields[entityName] = resp.data.entityDefinition.fields.sort((a: any, b: any) => a.name.localeCompare(b.name));
           this.fetchStatus.entityFields = 'success'
         } else {
           throw new Error("Empty field list");
