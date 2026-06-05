@@ -2,10 +2,6 @@ import { api } from "@common";
 import { defineStore } from "pinia";
 
 import logger from "@/logger";
-import {
-  mockDataDocumentLinks,
-  mockDataDocumentRelAliases
-} from "@/mock/dataDocuments";
 import { useDataDocumentStore } from "@/store/dataDocuments";
 import {
   DataDocumentGraph,
@@ -120,10 +116,6 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
       return this.graph;
     },
     async fetchRelAliases(dataDocumentId: string) {
-      if (shouldUseMockData()) {
-        this.relAliases = mockDataDocumentRelAliases.filter((item) => item.dataDocumentId === dataDocumentId);
-        return;
-      }
       try {
         const response = await api({
           url: `admin/dataDocuments/${encodeURIComponent(dataDocumentId)}/relAliases`,
@@ -133,16 +125,9 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
         this.relAliases = getCollection(response, "relAliases");
       } catch (error) {
         logger.error(`Failed to fetch relationship aliases for ${dataDocumentId}`, error);
-        if (canUseMockFallback(error)) {
-          this.relAliases = mockDataDocumentRelAliases.filter((item) => item.dataDocumentId === dataDocumentId);
-        }
       }
     },
     async fetchLinks(dataDocumentId: string) {
-      if (shouldUseMockData()) {
-        this.links = mockDataDocumentLinks.filter((item) => item.dataDocumentId === dataDocumentId);
-        return;
-      }
       try {
         const response = await api({
           url: `admin/dataDocuments/${encodeURIComponent(dataDocumentId)}/links`,
@@ -152,9 +137,6 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
         this.links = getCollection(response, "links");
       } catch (error) {
         logger.error(`Failed to fetch links for ${dataDocumentId}`, error);
-        if (canUseMockFallback(error)) {
-          this.links = mockDataDocumentLinks.filter((item) => item.dataDocumentId === dataDocumentId);
-        }
       }
     },
     updateField(fieldSeqId: string | undefined, fieldPath: string, patch: Record<string, any>) {

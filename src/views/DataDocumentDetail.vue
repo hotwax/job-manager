@@ -61,10 +61,6 @@
             <ion-icon :icon="filterOutline" />
             <ion-label>{{ translate("Conditions") }} ({{ conditions.length }})</ion-label>
           </ion-segment-button>
-          <ion-segment-button value="presets" layout="icon-start">
-            <ion-icon :icon="bookmarkOutline" />
-            <ion-label>{{ translate("Saved Presets") }} ({{ presets.length }})</ion-label>
-          </ion-segment-button>
           <ion-segment-button value="usage" layout="icon-start">
             <ion-icon :icon="gitBranchOutline" />
             <ion-label>{{ translate("Usage") }}</ion-label>
@@ -109,19 +105,6 @@
           </ion-item>
         </ion-list>
 
-        <ion-list v-else-if="activeSection === 'presets'">
-          <ion-item v-for="preset in presets" :key="preset.presetId" button @click="router.push(`/data-documents/${document.dataDocumentId}/presets/${preset.presetId}`)">
-            <ion-label>
-              <h2>{{ preset.presetName }}</h2>
-              <p>{{ preset.presetId }}</p>
-            </ion-label>
-          </ion-item>
-          <ion-item button @click="router.push(`/data-documents/${document.dataDocumentId}/presets/new`)">
-            <ion-icon slot="start" :icon="addOutline" />
-            <ion-label>{{ translate("Create query preset") }}</ion-label>
-          </ion-item>
-        </ion-list>
-
         <ion-list v-else-if="activeSection === 'usage'">
           <ion-item-divider>
             <ion-label>{{ translate("Related feeds") }}</ion-label>
@@ -152,11 +135,9 @@
         </template>
       </main>
 
-      <ion-card v-else>
-        <ion-card-content>
-          <ion-text color="medium">{{ translate("Data document not found.") }}</ion-text>
-        </ion-card-content>
-      </ion-card>
+      <div v-else class="empty-state">
+        <p>{{ translate("Data document not found.") }}</p>
+      </div>
     </ion-content>
   </ion-page>
 </template>
@@ -168,7 +149,6 @@ import {
   IonButton,
   IonButtons,
   IonCard,
-  IonCardContent,
   IonCardHeader,
   IonCardSubtitle,
   IonCardTitle,
@@ -182,30 +162,27 @@ import {
   IonPage,
   IonSegment,
   IonSegmentButton,
-  IonText,
   IonTitle,
   IonToolbar,
   onIonViewWillEnter
 } from "@ionic/vue";
-import { addOutline, bookmarkOutline, cloudDownloadOutline, createOutline, filterOutline, gitBranchOutline, listOutline, playOutline } from "ionicons/icons";
+import { cloudDownloadOutline, createOutline, filterOutline, gitBranchOutline, listOutline, playOutline } from "ionicons/icons";
 import { computed, ref } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import router from "../router";
 
 import { translate } from "@common";
 import DataDocumentExportList from "@/components/DataDocumentExportList.vue";
 import { useDataDocumentStore } from "@/store/dataDocuments";
 
-const route = useRoute();
-const router = useRouter();
-const store = useDataDocumentStore();
+const route = router.currentRoute.value;
+const dataDocumentStore = useDataDocumentStore();
 
-const document = computed(() => store.getCurrentDocument);
-const fields = computed(() => store.getFields);
-const conditions = computed(() => store.getConditions);
-const relatedFeeds = computed(() => store.getRelatedFeeds);
-const relatedJobs = computed(() => store.getRelatedJobs);
-const presets = computed(() => store.getPresets);
-const exportHistory = computed(() => store.getExportHistory);
+const document = computed(() => dataDocumentStore.getCurrentDocument);
+const fields = computed(() => dataDocumentStore.getFields);
+const conditions = computed(() => dataDocumentStore.getConditions);
+const relatedFeeds = computed(() => dataDocumentStore.getRelatedFeeds);
+const relatedJobs = computed(() => dataDocumentStore.getRelatedJobs);
+const exportHistory = computed(() => dataDocumentStore.getExportHistory);
 const activeSection = ref("fields");
 
 const getPathLabel = (path: string) => {
@@ -251,6 +228,6 @@ const fieldGroups = computed(() => {
 });
 
 onIonViewWillEnter(async () => {
-  await store.fetchDataDocument(route.params.id as string);
+  await dataDocumentStore.fetchDataDocument(route.params.id as string);
 });
 </script>

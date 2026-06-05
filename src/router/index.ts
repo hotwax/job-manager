@@ -155,19 +155,19 @@ const routes: Array<RouteRecordRaw> = [
     component: DataDocumentCatalog,
     beforeEnter: authGuard
   },
-  {
-    path: '/data-document-feeds',
-    name: 'DataDocumentFeeds',
-    component: DataDocumentFeeds,
-    beforeEnter: authGuard
-  },
-  {
-    path: '/data-document-feeds/:id',
-    name: 'DataDocumentFeedDetail',
-    component: DataDocumentFeedDetail,
-    beforeEnter: authGuard,
-    props: true
-  },
+  // {
+  //   path: '/data-document-feeds',
+  //   name: 'DataDocumentFeeds',
+  //   component: DataDocumentFeeds,
+  //   beforeEnter: authGuard
+  // },
+  // {
+  //   path: '/data-document-feeds/:id',
+  //   name: 'DataDocumentFeedDetail',
+  //   component: DataDocumentFeedDetail,
+  //   beforeEnter: authGuard,
+  //   props: true
+  // },
   {
     path: '/data-documents/new',
     name: 'CreateDataDocument',

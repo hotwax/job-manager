@@ -11,10 +11,6 @@
             <ion-icon slot="start" :icon="saveOutline" />
             {{ translate("Save") }}
           </ion-button>
-          <ion-button @click="runPreview" :disabled="!graph?.dataDocumentId">
-            <ion-icon slot="start" :icon="playOutline" />
-            {{ translate("Preview") }}
-          </ion-button>
           <ion-button @click="queueExport" :disabled="!graph?.dataDocumentId">
             <ion-icon slot="start" :icon="cloudUploadOutline" />
             {{ translate("Export") }}
@@ -26,35 +22,35 @@
     <ion-content>
       <main v-if="graph" class="graph-builder">
         <ion-card>
-            <ion-list class="graph-metadata-list">
-             <ion-item detail button @click="openEntityModal">
-                <ion-label>
-                  {{ translate("Primary Entity") }}
-                  <p>{{ graph.metadata.primaryEntityName || translate("Select Entity") }}</p>
-                </ion-label>
-              </ion-item>
-              <ion-item>
-                <ion-input
-                  :value="graph.metadata.documentName"
-                  :label="translate('Name')"
-                  label-placement="stacked"
-                  @ionInput="updateMetadata('documentName', $event.detail.value || '')"
-                />
-              </ion-item>
-              <ion-item>
-                <ion-input
-                  :value="graph.metadata.documentTitle"
-                  :label="translate('Title')"
-                  label-placement="stacked"
-                  @ionInput="updateMetadata('documentTitle', $event.detail.value || '')"
-                />
-              </ion-item>
-              <ion-buttons>
-                <ion-button fill="clear" slot="end" @click="openAdvancedMetadataModal" :aria-label="translate('Advanced Metadata')">
-                  <ion-icon slot="icon-only" :icon="optionsOutline" />
-                </ion-button>
-              </ion-buttons>
-            </ion-list>
+          <ion-list class="graph-metadata-list">
+            <ion-item detail button @click="openEntityModal">
+              <ion-label>
+                {{ translate("Primary Entity") }}
+                <p>{{ graph.metadata.primaryEntityName || translate("Select Entity") }}</p>
+              </ion-label>
+            </ion-item>
+            <ion-item>
+              <ion-input
+                :value="graph.metadata.documentName"
+                :label="translate('Name')"
+                label-placement="stacked"
+                @ionInput="updateMetadata('documentName', $event.detail.value || '')"
+              />
+            </ion-item>
+            <ion-item>
+              <ion-input
+                :value="graph.metadata.documentTitle"
+                :label="translate('Title')"
+                label-placement="stacked"
+                @ionInput="updateMetadata('documentTitle', $event.detail.value || '')"
+              />
+            </ion-item>
+            <ion-buttons>
+              <ion-button fill="clear" slot="end" @click="openAdvancedMetadataModal" :aria-label="translate('Advanced Metadata')">
+                <ion-icon slot="icon-only" :icon="optionsOutline" />
+              </ion-button>
+            </ion-buttons>
+          </ion-list>
         </ion-card>
 
         <section class="graph-workspace">
@@ -319,6 +315,10 @@
           </ion-list>
 
           <ion-list v-else-if="bottomPanel === 'preview'">
+            <ion-button @click="runPreview" :disabled="!graph?.dataDocumentId">
+              <ion-icon slot="start" :icon="playOutline" />
+              {{ translate("Preview") }}
+            </ion-button>
             <ion-item v-for="(row, index) in previewRows" :key="index">
               <ion-label>
                 <h2>{{ translate("Record") }} {{ index + 1 }}</h2>
@@ -326,9 +326,6 @@
                   <strong>{{ field }}:</strong> {{ row[field] }}
                 </p>
               </ion-label>
-            </ion-item>
-            <ion-item v-if="!previewRows.length">
-              <ion-label>{{ translate("Run preview to see rows.") }}</ion-label>
             </ion-item>
           </ion-list>
 
@@ -706,9 +703,9 @@ import {
 } from "@ionic/vue";
 import { addOutline, arrowBackOutline, closeOutline, cloudDownloadOutline, cloudUploadOutline, filterOutline, gitBranchOutline, listOutline, optionsOutline, playOutline, refreshOutline, saveOutline } from "ionicons/icons";
 import { computed, ref, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import router from "../router"
 
-import { translate } from "@common";
+import { commonUtil, translate } from "@common";
 import { useDataDocumentGraphStore } from "@/store/dataDocumentGraph";
 import { useDataDocumentStore } from "@/store/dataDocuments";
 import DataDocumentExportList from "@/components/DataDocumentExportList.vue";
@@ -716,8 +713,7 @@ import { showToast } from "@/utils";
 import { useUtilStore } from "@/store/util";
 import type { GraphCondition, GraphEdge, GraphField } from "@/utils/dataDocumentGraph";
 
-const route = useRoute();
-const router = useRouter();
+const route = router.currentRoute.value;
 const graphStore = useDataDocumentGraphStore();
 const dataDocumentStore = useDataDocumentStore();
 const utilStore = useUtilStore();
@@ -1099,18 +1095,16 @@ const saveGraph = async () => {
 };
 
 const runPreview = async () => {
-  if (!graph.value?.dataDocumentId) return;
-  await dataDocumentStore.runPreview(graph.value.dataDocumentId, buildQuery());
-  bottomPanel.value = "preview";
+  await dataDocumentStore.runPreview(graph.value?.dataDocumentId as string, buildQuery());
 };
 
 const queueExport = async () => {
-  if (!graph.value?.dataDocumentId) return;
-  await dataDocumentStore.queueExport(graph.value.dataDocumentId, {
-    query: buildQuery(),
-    format: "csv"
-  });
-  showToast(translate("Data document export queued."));
+  try {
+    await dataDocumentStore.queueExport(graph.value?.dataDocumentId as string);
+    commonUtil.showToast(translate("Data document export queued."));
+  } catch(err) {
+    commonUtil.showToast(translate(`Failed to queue data document export for ${graph.value?.dataDocumentId}`))
+  }
 };
 
 watch(graph, (currentGraph) => {
@@ -1121,7 +1115,7 @@ watch(graph, (currentGraph) => {
 }, { immediate: true });
 
 onIonViewWillEnter(async () => {
-  if (isNew.value) {
+  if(isNew.value) {
     graphStore.startNewGraph();
   } else {
     await graphStore.fetchGraph(route.params.id as string);

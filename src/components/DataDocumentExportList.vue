@@ -54,14 +54,24 @@ defineProps<{
 }>();
 
 const router = useRouter();
-const store = useDataDocumentStore();
+const dataDocumentStore = useDataDocumentStore();
 
-const canDownload = (message: any) => message.statusId === "SmsgSent" && (message.filePath || message.fileName);
+const canDownload = (message: any) => message.statusId === "SmsgSent" && message.messageText;
+
+function extractFilename(message: any) {
+  if(message?.messageText) {
+    const parts = message?.messageText.split("/")
+    return parts[parts.length - 1] || ""
+  }
+  return ""
+}
 
 const download = async (message: any) => {
   try {
-    const response = await store.downloadExport(message.systemMessageId);
-    saveAs(response.data, message.fileName || `${message.systemMessageId}.csv`);
+    const resp = await dataDocumentStore.downloadExport(message.systemMessageId);
+    const csvData = resp?.data?.csvData;
+    const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+    saveAs(blob, extractFilename(message) || `${message.systemMessageId}.csv`);
   } catch (error) {
     showToast(translate("Failed to download linked file."));
   }
