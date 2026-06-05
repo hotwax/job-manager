@@ -2,12 +2,26 @@ import { defineStore } from "pinia";
 import { api, commonUtil, translate } from "@common";
 import logger from "@/logger";
 import { StatusItem, StatusItemAndType } from "@/types";
+import { mockEntityFields, mockEntityNames, mockEntityRelationships } from "@/mock/dataDocuments";
+
+const sortFields = (fields: any[]) => fields.sort((a: any, b: any) => a.fieldName.localeCompare(b.fieldName));
+const getShortEntityName = (entityName: string) => entityName.split(".").pop() || entityName;
+const getMockEntityFields = (entityName: string) => mockEntityFields[entityName] || mockEntityFields[getShortEntityName(entityName)];
 
 export const useUtilStore = defineStore("util", {
   state: () => ({
     statusItems: {} as Record<string, StatusItemAndType>,
     statusFlowTransitions: [] as any,
-    systemInformation: {} as any
+    systemInformation: {} as any,
+    entities: [] as any[],
+    entityFields: {} as Record<string, any[]>,
+    entityRelationships: {} as Record<string, any[]>,
+    fetchStatus: {
+      statusFlowTransitions: 'none',
+      entities: 'none',
+      entityFields: 'none',
+      entityRelationships: 'none'
+    } as any
   }),
   getters: {
     getStatusItemsByType: (state: any) => (typeId: string) => state.statusItems[typeId] || [],
@@ -21,7 +35,11 @@ export const useUtilStore = defineStore("util", {
         toStatusDescription: state.getStatusItemDesc(transition.toStatusId || ""),
         toStatusColor: commonUtil.getStatusColor(state.getStatusItemDesc(transition.toStatusId || ""))
       }));
-    }
+    },
+    getEntities: (state: any) => state.entities,
+    getEntityFields: (state: any) => (entityName: string) => state.entityFields[entityName] || [],
+    getEntityRelationships: (state: any) => (entityName: string) => state.entityRelationships[entityName] || [],
+    getFetchStatus: (state: any) => state.fetchStatus
   },
   actions: {
     async fetchStatusItemsByType(typeId: string) {
@@ -44,6 +62,7 @@ export const useUtilStore = defineStore("util", {
       }
     },
     async fetchStatusFlowTransitions() {
+      this.fetchStatus.statusFlowTransitions = 'pending'
       try {
         const resp = await api({
           url: "admin/statusFlows/transitions",
@@ -77,8 +96,100 @@ export const useUtilStore = defineStore("util", {
         }
 
         this.statusFlowTransitions = transitionsByStatusId
+        this.fetchStatus.statusFlowTransitions = 'success'
       } catch(error: any) {
         logger.error("Failed to fetch status flow transitions");
+        this.fetchStatus.statusFlowTransitions = 'error'
+      }
+    },
+    async fetchEntities(force = false) {
+      if (this.entities.length && !force) return;
+      this.fetchStatus.entities = 'pending'
+
+      try {
+        const resp = await api({
+          url: "moqui/entity/EntityServices/getEntityNames",
+          method: "GET"
+        });
+        if (resp.data.entityNames) {
+          this.entities = resp.data.entityNames.sort();
+          this.fetchStatus.entities = 'success'
+        } else {
+          throw new Error("Empty entity list");
+        }
+      } catch (error) {
+        logger.error("Failed to fetch entities", error);
+        this.fetchStatus.entities = 'error'
+
+        // Mock fallback to keep UI functional if API fails
+        if (!this.entities.length) {
+          this.entities = mockEntityNames;
+        }
+      }
+    },
+    async fetchEntityFields(entityName: string, force = false) {
+      if (!force && this.entityFields[entityName]?.length && typeof this.entityFields[entityName][0] === 'object') return;
+      this.fetchStatus.entityFields = 'pending'
+
+      try {
+        const resp = await api({
+          url: `moqui/entity/EntityServices/getEntityFields`,
+          method: "GET",
+          params: { entityName }
+        });
+        if (resp.data.fields) {
+          this.entityFields[entityName] = resp.data.fields.sort((a: any, b: any) => a.fieldName.localeCompare(b.fieldName));
+          this.fetchStatus.entityFields = 'success'
+        } else if (resp.data.fieldNames) {
+          // Fallback if only names are returned
+          this.entityFields[entityName] = resp.data.fieldNames.map((name: string) => ({ fieldName: name, description: "" })).sort((a: any, b: any) => a.fieldName.localeCompare(b.fieldName));
+          this.fetchStatus.entityFields = 'success'
+        } else {
+          throw new Error("Empty field list");
+        }
+      } catch (error) {
+        logger.error(`Failed to fetch fields for entity ${entityName}`, error);
+        this.fetchStatus.entityFields = 'error'
+
+        const mockFields = getMockEntityFields(entityName);
+        if (mockFields) {
+          this.entityFields[entityName] = sortFields([...mockFields]);
+          this.fetchStatus.entityFields = 'success';
+        } else {
+          // Generic fallback for unknown entities
+          this.entityFields[entityName] = [
+            { fieldName: 'id', description: 'Generic identifier field.' },
+            { fieldName: 'name', description: 'Generic name field.' },
+            { fieldName: 'description', description: 'Generic description field.' }
+          ];
+          this.fetchStatus.entityFields = 'success';
+        }
+      }
+    },
+    async fetchEntityRelationships(entityName: string, force = false) {
+      if (!force && this.entityRelationships[entityName]?.length) return;
+      this.fetchStatus.entityRelationships = 'pending'
+
+      try {
+        const resp = await api({
+          url: `moqui/entity/EntityServices/getEntityRelationships`,
+          method: "GET",
+          params: { entityName }
+        });
+        if (resp.data.relationships) {
+          this.entityRelationships[entityName] = resp.data.relationships.sort((a: any, b: any) => (a.relationshipName || "").localeCompare(b.relationshipName || ""));
+          this.fetchStatus.entityRelationships = 'success'
+        } else {
+          throw new Error("Empty relationship list");
+        }
+      } catch (error) {
+        logger.error(`Failed to fetch relationships for entity ${entityName}`, error);
+        this.fetchStatus.entityRelationships = 'error'
+
+        const shortName = getShortEntityName(entityName);
+        const mockRelations = mockEntityRelationships[entityName] || mockEntityRelationships[shortName] || [];
+        this.entityRelationships[entityName] = [...mockRelations].sort((a: any, b: any) => a.relationshipName.localeCompare(b.relationshipName));
+        this.fetchStatus.entityRelationships = 'success';
       }
     },
     async fetchSystemInformation() {
