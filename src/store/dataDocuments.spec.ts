@@ -16,7 +16,7 @@ vi.mock("@/logger", () => ({
   }
 }));
 
-import { useDataDocumentStore } from "@/store/dataDocuments";
+import { useDataDocumentStore } from "@/store/useDataDocumentStore";
 
 describe("data document store", () => {
   beforeEach(() => {
