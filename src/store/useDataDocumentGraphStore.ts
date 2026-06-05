@@ -2,7 +2,7 @@ import { api } from "@common";
 import { defineStore } from "pinia";
 
 import logger from "@/logger";
-import { useDataDocumentStore } from "@/store/dataDocuments";
+import { useDataDocumentStore } from "@/store/useDataDocumentStore";
 import {
   DataDocumentGraph,
   DataDocumentConditionRecord,
@@ -50,7 +50,7 @@ const stripGraphFields = (payload: Record<string, any>) => {
   return apiPayload;
 };
 
-export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
+export const useDataDocumentGraphStore = defineStore("useDataDocumentGraphStore", {
   state: () => ({
     graph: undefined as DataDocumentGraph | undefined,
     relAliases: [] as any[],

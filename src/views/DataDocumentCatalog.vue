@@ -22,7 +22,7 @@
         <div class="header">
           <div class="title">
             <h1>{{ translate("Documents") }}</h1>
-            <p>{{ translate("Browse saved Moqui Data Document definitions.") }}</p>
+            <p>{{ translate("Manage and configure your Moqui Data Documents. Use these definitions to search, export, or feed data into external systems like Elasticsearch.") }}</p>
           </div>
         </div>
 
@@ -147,7 +147,7 @@ import { computed, ref, watch } from "vue";
 import router from "../router"
 
 import { translate } from "@common";
-import { useDataDocumentStore } from "@/store/dataDocuments";
+import { useDataDocumentStore } from "@/store/useDataDocumentStore";
 
 const dataDocumentStore = useDataDocumentStore();
 const queryString = ref("");

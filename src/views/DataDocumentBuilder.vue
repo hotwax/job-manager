@@ -23,16 +23,22 @@
       </ion-toolbar>
     </ion-header>
 
-    <ion-content v-if="loading">
-      <ion-card>
-        <ion-card-content class="ion-text-center">
-          <ion-spinner />
-          <p>{{ translate("Loading document...") }}</p>
-        </ion-card-content>
-      </ion-card>
+    <ion-content>
+      <div v-if="loading">
+        <ion-card>
+          <ion-card-content class="ion-text-center">
+            <ion-spinner />
+            <p>{{ translate("Loading document...") }}</p>
+          </ion-card-content>
+        </ion-card>
+      </div>
+      <template v-else>
+        <div class="ion-padding-horizontal">
+          <p class="ion-no-margin"><ion-text color="medium"><small>{{ translate("Build complex data documents by selecting entities, fields, and conditions.") }}</small></ion-text></p>
+        </div>
+        <DataDocumentFormView />
+      </template>
     </ion-content>
-
-    <DataDocumentFormView v-else />
   </ion-page>
 </template>
 
@@ -58,8 +64,8 @@ import router from "../router";
 import { translate } from "@common";
 import { showToast } from "@/utils";
 
-import { useDataDocumentGraphStore } from "@/store/dataDocumentGraph";
-import { useDataDocumentStore } from "@/store/dataDocuments";
+import { useDataDocumentGraphStore } from "@/store/useDataDocumentGraphStore";
+import { useDataDocumentStore } from "@/store/useDataDocumentStore";
 import DataDocumentFormView from "./DataDocumentFormView.vue";
 
 const route = router.currentRoute.value;

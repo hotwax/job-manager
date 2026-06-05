@@ -34,7 +34,7 @@
       </ion-card>
 
       <h2>{{ translate("Fields") }}</h2>
-      <p>{{ translate("Use direct fields or relation paths such as product:internalName.") }}</p>
+      <p>{{ translate("Define the fields to include in your document. You can select direct attributes or navigate relationships (e.g., product:internalName) to pull data from related entities.") }}</p>
       <ion-card v-for="group in fieldGroups" :key="group.entityPath">
         <ion-card-header>
           <ion-card-title>{{ group.entityLabel }}</ion-card-title>
@@ -95,7 +95,7 @@
       <ion-card>
         <ion-card-header>
           <ion-card-title>{{ translate("Conditions") }}</ion-card-title>
-          <ion-card-subtitle>{{ translate("Add conditions that always apply to this document.") }}</ion-card-subtitle>
+          <ion-card-subtitle>{{ translate("Filter your data by adding conditions. These filters will always be applied whenever this data document is used for exports or indexing.") }}</ion-card-subtitle>
         </ion-card-header>
         <ion-list>
           <ion-item v-for="condition in graph.conditions" :key="condition.conditionSeqId">
@@ -301,7 +301,7 @@ import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 
 import { translate } from "@common";
-import { useDataDocumentGraphStore } from "@/store/dataDocumentGraph";
+import { useDataDocumentGraphStore } from "@/store/useDataDocumentGraphStore";
 import { useUtilStore } from "@/store/util";
 
 const route = useRoute();

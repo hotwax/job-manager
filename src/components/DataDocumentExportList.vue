@@ -45,7 +45,7 @@ import { saveAs } from "file-saver";
 import { useRouter } from "vue-router";
 
 import { translate } from "@common";
-import { useDataDocumentStore } from "@/store/dataDocuments";
+import { useDataDocumentStore } from "@/store/useDataDocumentStore";
 import { getDateAndTime, showToast } from "@/utils";
 
 defineProps<{

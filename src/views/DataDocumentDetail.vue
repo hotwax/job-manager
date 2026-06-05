@@ -29,6 +29,7 @@
           <ion-card-header>
             <ion-card-title>{{ document.documentName || document.dataDocumentId }}</ion-card-title>
             <ion-card-subtitle>{{ document.dataDocumentId }}</ion-card-subtitle>
+            <p><ion-text color="medium">{{ translate("View the definition details including fields, filtering conditions, and its current usage in feeds and scheduled jobs.") }}</ion-text></p>
           </ion-card-header>
           <ion-list>
             <ion-item>
@@ -172,7 +173,7 @@ import router from "../router";
 
 import { translate } from "@common";
 import DataDocumentExportList from "@/components/DataDocumentExportList.vue";
-import { useDataDocumentStore } from "@/store/dataDocuments";
+import { useDataDocumentStore } from "@/store/useDataDocumentStore";
 
 const route = router.currentRoute.value;
 const dataDocumentStore = useDataDocumentStore();

@@ -1,56 +1,39 @@
 <template>
-  <ion-page>
-    <ion-header>
-      <ion-toolbar>
-        <ion-buttons slot="start">
-          <ion-back-button default-href="/data-documents" />
-        </ion-buttons>
-        <ion-title>{{ translate("Graph Builder") }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button @click="saveGraph" :disabled="!graph || graphHasErrors">
-            <ion-icon slot="start" :icon="saveOutline" />
-            {{ translate("Save") }}
-          </ion-button>
-          <ion-button @click="queueExport" :disabled="!graph?.dataDocumentId">
-            <ion-icon slot="start" :icon="cloudUploadOutline" />
-            {{ translate("Export") }}
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
 
     <ion-content>
       <main v-if="graph" class="graph-builder">
         <ion-card>
-          <ion-list class="graph-metadata-list">
-            <ion-item detail button @click="openEntityModal">
-              <ion-label>
-                {{ translate("Primary Entity") }}
-                <p>{{ graph.metadata.primaryEntityName || translate("Select Entity") }}</p>
-              </ion-label>
-            </ion-item>
-            <ion-item>
-              <ion-input
-                :value="graph.metadata.documentName"
-                :label="translate('Name')"
-                label-placement="stacked"
-                @ionInput="updateMetadata('documentName', $event.detail.value || '')"
-              />
-            </ion-item>
-            <ion-item>
-              <ion-input
-                :value="graph.metadata.documentTitle"
-                :label="translate('Title')"
-                label-placement="stacked"
-                @ionInput="updateMetadata('documentTitle', $event.detail.value || '')"
-              />
-            </ion-item>
-            <ion-buttons>
-              <ion-button fill="clear" slot="end" @click="openAdvancedMetadataModal" :aria-label="translate('Advanced Metadata')">
-                <ion-icon slot="icon-only" :icon="optionsOutline" />
-              </ion-button>
-            </ion-buttons>
-          </ion-list>
+          <ion-card-content>
+            <ion-list class="graph-metadata-list">
+              <ion-item>
+                <ion-input
+                  :value="graph.metadata.documentName"
+                  :label="translate('Name')"
+                  label-placement="stacked"
+                  @ionInput="updateMetadata('documentName', $event.detail.value || '')"
+                />
+              </ion-item>
+              <ion-item detail button @click="openEntityModal">
+                <ion-label>
+                  {{ translate("Primary Entity") }}
+                  <p>{{ graph.metadata.primaryEntityName || translate("Select Entity") }}</p>
+                </ion-label>
+              </ion-item>
+              <ion-item>
+                <ion-input
+                  :value="graph.metadata.documentTitle"
+                  :label="translate('Title')"
+                  label-placement="stacked"
+                  @ionInput="updateMetadata('documentTitle', $event.detail.value || '')"
+                />
+              </ion-item>
+              <ion-item lines="none">
+                <ion-button fill="clear" slot="end" @click="openAdvancedMetadataModal" :aria-label="translate('Advanced Metadata')">
+                  <ion-icon slot="icon-only" :icon="optionsOutline" />
+                </ion-button>
+              </ion-item>
+            </ion-list>
+          </ion-card-content>
         </ion-card>
 
         <section class="graph-workspace">
@@ -127,6 +110,10 @@
                   {{ getFieldConditionCount(field) }}
                 </ion-badge>
               </ion-item>
+              <ion-item button lines="none" color="danger" @click="removeNodeFields(selectedNode.nodeId)" v-if="!selectedNode.isPrimary">
+                <ion-icon slot="start" :icon="trashOutline" />
+                <ion-label>{{ translate("Delete node and fields") }}</ion-label>
+              </ion-item>
             </ion-list>
 
             <ion-list v-else-if="selectedEdge">
@@ -139,6 +126,10 @@
                   <p>{{ selectedEdge.pathText }}</p>
                   <p>{{ selectedEdge.relationshipType }}</p>
                 </ion-label>
+              </ion-item>
+              <ion-item button lines="none" color="danger" @click="removeNodeFields(selectedEdge.toNodeId)">
+                <ion-icon slot="start" :icon="trashOutline" />
+                <ion-label>{{ translate("Delete relationship and fields") }}</ion-label>
               </ion-item>
             </ion-list>
 
@@ -173,6 +164,7 @@
               </ion-item>
               <ion-item>
                 <ion-toggle
+                  slot="end"
                   :checked="selectedField.sortable === 'Y'"
                   @ionChange="updateSelectedField({ sortable: $event.detail.checked ? 'Y' : 'N' })"
                 >
@@ -181,6 +173,7 @@
               </ion-item>
               <ion-item>
                 <ion-toggle
+                  slot="end"
                   :checked="selectedField.defaultDisplay !== 'N'"
                   @ionChange="updateSelectedField({ defaultDisplay: $event.detail.checked ? 'Y' : 'N' })"
                 >
@@ -221,6 +214,10 @@
               </ion-item>
               <ion-item v-if="!selectedFieldConditions.length">
                 <ion-label>{{ translate("No conditions.") }}</ion-label>
+              </ion-item>
+              <ion-item button lines="none" color="danger" @click="removeSelectedField">
+                <ion-icon slot="start" :icon="trashOutline" />
+                <ion-label>{{ translate("Delete field") }}</ion-label>
               </ion-item>
             </ion-list>
 
@@ -315,10 +312,6 @@
           </ion-list>
 
           <ion-list v-else-if="bottomPanel === 'preview'">
-            <ion-button @click="runPreview" :disabled="!graph?.dataDocumentId">
-              <ion-icon slot="start" :icon="playOutline" />
-              {{ translate("Preview") }}
-            </ion-button>
             <ion-item v-for="(row, index) in previewRows" :key="index">
               <ion-label>
                 <h2>{{ translate("Record") }} {{ index + 1 }}</h2>
@@ -326,6 +319,9 @@
                   <strong>{{ field }}:</strong> {{ row[field] }}
                 </p>
               </ion-label>
+            </ion-item>
+            <ion-item v-if="!previewRows.length">
+              <ion-label>{{ translate("Run preview to see rows.") }}</ion-label>
             </ion-item>
           </ion-list>
 
@@ -664,11 +660,11 @@
         </ion-content>
       </ion-modal>
     </ion-content>
-  </ion-page>
 </template>
 
 <script setup lang="ts">
 import {
+  alertController,
   IonBackButton,
   IonBadge,
   IonButton,
@@ -701,11 +697,11 @@ import {
   IonToolbar,
   onIonViewWillEnter
 } from "@ionic/vue";
-import { addOutline, arrowBackOutline, closeOutline, cloudDownloadOutline, cloudUploadOutline, filterOutline, gitBranchOutline, listOutline, optionsOutline, playOutline, refreshOutline, saveOutline } from "ionicons/icons";
+import { addOutline, arrowBackOutline, closeOutline, cloudDownloadOutline, filterOutline, gitBranchOutline, listOutline, optionsOutline, playOutline, refreshOutline } from "ionicons/icons";
 import { computed, ref, watch } from "vue";
-import router from "../router"
+import { useRoute, useRouter } from "vue-router";
 
-import { commonUtil, translate } from "@common";
+import { translate } from "@common";
 import { useDataDocumentGraphStore } from "@/store/useDataDocumentGraphStore";
 import { useDataDocumentStore } from "@/store/useDataDocumentStore";
 import DataDocumentExportList from "@/components/DataDocumentExportList.vue";
@@ -713,12 +709,13 @@ import { showToast } from "@/utils";
 import { useUtilStore } from "@/store/util";
 import type { GraphCondition, GraphEdge, GraphField } from "@/utils/dataDocumentGraph";
 
-const route = router.currentRoute.value;
+const route = useRoute();
+const router = useRouter();
 const graphStore = useDataDocumentGraphStore();
 const dataDocumentStore = useDataDocumentStore();
 const utilStore = useUtilStore();
 
-const selectedTarget = ref<{ kind: "node" | "edge" | "field"; id: string }>({ kind: "node", id: "node:root" });
+const selectedTarget = ref<{ kind: "node" | "edge" | "field" | "none"; id: string }>({ kind: "node", id: "node:root" });
 const selectedFields = ref<string[]>([]);
 const bottomPanel = ref("issues");
 const pageSize = ref(25);
@@ -867,14 +864,6 @@ const selectNode = (nodeId: string) => {
   selectedTarget.value = { kind: "node", id: nodeId };
 };
 
-const selectEdge = (edgeId: string) => {
-  selectedTarget.value = { kind: "edge", id: edgeId };
-};
-
-const selectField = (fieldId: string) => {
-  selectedTarget.value = { kind: "field", id: fieldId };
-};
-
 const getConditionValue = (condition: GraphCondition) => {
   const value = condition.fieldValue ?? condition.sourceRecord?.value ?? condition.toFieldNameAlias ?? "";
   return value === null || value === undefined ? "" : String(value);
@@ -924,6 +913,43 @@ const openFeed = (feed: any) => {
   if (dataFeedId) router.push(`/data-document-feeds/${encodeURIComponent(dataFeedId)}`);
 };
 
+const removeSelectedField = () => {
+  if (selectedField.value) {
+    graphStore.removeField(selectedField.value.fieldSeqId || selectedField.value.fieldPath);
+    selectedTarget.value = { kind: "none", id: "" };
+  }
+};
+
+const removeNodeFields = (nodeId: string) => {
+  if (!graph.value) return;
+  const targetNode = graph.value.nodes.find(n => n.nodeId === nodeId);
+  if (!targetNode || !targetNode.relationshipPath.length) return;
+  
+  const pathPrefix = targetNode.relationshipPath.join(":");
+  
+  // Find all fields that start with this relationship path
+  const fieldsToRemove = graph.value.fields.filter(f => f.fieldPath.startsWith(pathPrefix));
+  fieldsToRemove.forEach(f => {
+    graphStore.removeField(f.fieldSeqId || f.fieldPath);
+  });
+  
+  // Also remove conditions
+  const conditionsToRemove = graph.value.conditions.filter(c => c.fieldNameAlias.startsWith(pathPrefix) || c.toFieldNameAlias.startsWith(pathPrefix));
+  conditionsToRemove.forEach(c => {
+    graphStore.removeCondition(c.conditionSeqId || "");
+  });
+  
+  selectedTarget.value = { kind: "none", id: "" };
+};
+
+const selectEdge = (edgeId: string) => {
+  selectedTarget.value = { kind: "edge", id: edgeId };
+};
+
+const selectField = (fieldId: string) => {
+  selectedTarget.value = { kind: "field", id: fieldId };
+};
+
 const updateMetadata = (field: string, value: any) => {
   graphStore.updateMetadata({ [field]: value });
 };
@@ -934,11 +960,35 @@ const openEntityModal = async () => {
   entityModal.value.$el.present();
 };
 
-const selectEntity = (entity: string) => {
-  updateMetadata("primaryEntityName", entity);
-  utilStore.fetchEntityFields(entity);
-  selectedTarget.value = { kind: "node", id: "node:root" };
-  closeEntityModal();
+const selectEntity = async (entity: string) => {
+  if (graph.value && (graph.value.fields.length > 0 || graph.value.conditions.length > 0)) {
+    const alert = await alertController.create({
+      header: translate("Change Primary Entity?"),
+      message: translate("You already have fields and conditions defined. Changing the primary entity will re-evaluate them, and existing connections may become invalid and need to be reworked or remapped. Do you wish to proceed?"),
+      buttons: [
+        {
+          text: translate("Cancel"),
+          role: "cancel"
+        },
+        {
+          text: translate("Proceed"),
+          role: "confirm",
+          handler: () => {
+            updateMetadata("primaryEntityName", entity);
+            utilStore.fetchEntityFields(entity);
+            selectedTarget.value = { kind: "node", id: "node:root" };
+            closeEntityModal();
+          }
+        }
+      ]
+    });
+    await alert.present();
+  } else {
+    updateMetadata("primaryEntityName", entity);
+    utilStore.fetchEntityFields(entity);
+    selectedTarget.value = { kind: "node", id: "node:root" };
+    closeEntityModal();
+  }
 };
 
 const closeEntityModal = () => {
@@ -1086,26 +1136,7 @@ const buildQuery = () => ({
   pageSize: pageSize.value
 });
 
-const saveGraph = async () => {
-  await graphStore.saveGraph();
-  showToast(translate("Data document graph saved."));
-  if (isNew.value && graph.value?.dataDocumentId) {
-    router.replace(`/data-documents/${graph.value.dataDocumentId}/graph`);
-  }
-};
 
-const runPreview = async () => {
-  await dataDocumentStore.runPreview(graph.value?.dataDocumentId as string, buildQuery());
-};
-
-const queueExport = async () => {
-  try {
-    await dataDocumentStore.queueExport(graph.value?.dataDocumentId as string);
-    commonUtil.showToast(translate("Data document export queued."));
-  } catch(err) {
-    commonUtil.showToast(translate(`Failed to queue data document export for ${graph.value?.dataDocumentId}`))
-  }
-};
 
 watch(graph, (currentGraph) => {
   if (!currentGraph) return;
@@ -1113,14 +1144,6 @@ watch(graph, (currentGraph) => {
     .filter((field) => field.defaultDisplay !== "N")
     .map((field) => field.outputName);
 }, { immediate: true });
-
-onIonViewWillEnter(async () => {
-  if(isNew.value) {
-    graphStore.startNewGraph();
-  } else {
-    await graphStore.fetchGraph(route.params.id as string);
-  }
-});
 </script>
 
 <style scoped>
@@ -1130,7 +1153,7 @@ onIonViewWillEnter(async () => {
 
 .graph-metadata-list {
   display: grid;
-  grid-template-columns: 1fr auto auto min-content;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
 .graph-workspace {
@@ -1140,16 +1163,22 @@ onIonViewWillEnter(async () => {
 
 .graph-inspector {
   flex: 0 0 280px;
+  border-inline-end: 1px solid var(--ion-color-step-150, #d7d8da);
+  background: var(--ion-background-color, #fff);
   overflow: auto;
-  border-inline-start: 1px solid var(--ion-color-light);
+}
+
+.graph-inspector {
+  border-inline-start: 1px solid var(--ion-color-step-150, #d7d8da);
+  border-inline-end: 0;
 }
 
 .graph-canvas-panel {
   flex: 1 1 auto;
   overflow: auto;
   background:
-    linear-gradient(90deg, rgba(var(--ion-text-color-rgb, 0, 0, 0), 0.08) 1px, transparent 1px),
-    linear-gradient(rgba(var(--ion-text-color-rgb, 0, 0, 0), 0.08) 1px, transparent 1px);
+    linear-gradient(90deg, rgba(60, 72, 88, 0.08) 1px, transparent 1px),
+    linear-gradient(rgba(60, 72, 88, 0.08) 1px, transparent 1px);
   background-size: 28px 28px;
 }
 
@@ -1167,20 +1196,20 @@ onIonViewWillEnter(async () => {
 }
 
 .graph-edges line {
-  stroke: var(--ion-color-medium);
+  stroke: #6b7280;
   stroke-width: 2;
 }
 
 .graph-edges line.selected {
-  stroke: var(--ion-color-primary);
+  stroke: var(--ion-color-primary, #3880ff);
   stroke-width: 4;
 }
 
 .graph-edges text {
-  fill: var(--ion-text-color);
+  fill: #374151;
   font-size: 12px;
   paint-order: stroke;
-  stroke: var(--ion-background-color, #FFF);
+  stroke: #fff;
   stroke-width: 4px;
   text-anchor: middle;
   cursor: pointer;
@@ -1190,11 +1219,11 @@ onIonViewWillEnter(async () => {
   position: absolute;
   width: 192px;
   min-height: 88px;
-  border: 1px solid var(--ion-color-light-shade);
+  border: 1px solid #b8c0cc;
   border-radius: 10px;
-  background: var(--ion-background-color, #FFF);
-  box-shadow: 0 8px 20px rgba(var(--ion-color-dark-rgb, 15, 23, 42), 0.12);
-  color: var(--ion-text-color);
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+  color: #111827;
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -1204,32 +1233,30 @@ onIonViewWillEnter(async () => {
 }
 
 .graph-node.primary {
-  border-color: var(--ion-color-primary);
+  border-color: var(--ion-color-primary, #3880ff);
 }
 
 .graph-node.selected {
-  outline: 3px solid rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.28);
+  outline: 3px solid rgba(56, 128, 255, 0.28);
 }
 
 .graph-node span {
   font-weight: 700;
 }
 
-.graph-node-subtitle {
-  font-size: 11px;
-  color: var(--ion-color-medium);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+.graph-node small {
+  color: #4b5563;
+  overflow-wrap: anywhere;
 }
 
 .graph-node strong {
-  color: var(--ion-color-primary);
+  color: var(--ion-color-primary, #3880ff);
   font-size: 12px;
 }
 
 .graph-bottom {
-  border-top: 1px solid var(--ion-color-light-shade);
-  background: var(--ion-background-color);
+  border-top: 1px solid var(--ion-color-step-150, #d7d8da);
+  background: var(--ion-background-color, #fff);
 }
 
 @media (max-width: 900px) {
@@ -1239,7 +1266,7 @@ onIonViewWillEnter(async () => {
 
   .graph-inspector {
     border: 0;
-    border-bottom: 1px solid var(--ion-color-light-shade);
+    border-bottom: 1px solid var(--ion-color-step-150, #d7d8da);
     max-height: 360px;
   }
 
