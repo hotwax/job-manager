@@ -603,5 +603,9 @@
   "System Health": "System Health",
   "Unavailable": "Unavailable",
   "Unknown": "Unknown",
-  "Waiting for job progress": "Waiting for job progress"
+  "Waiting for job progress": "Waiting for job progress",
+  "Solr Repair": "Solr Repair",
+  "Go to Repair": "Go to Repair",
+  "Go to Monitoring": "Go to Monitoring",
+  "Rebuild and repair Solr documents": "Rebuild and repair Solr documents"
 }
