@@ -1,12 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-const { systemInformation } = vi.hoisted(() => ({
-  systemInformation: {
-    instanceInfo: {
-      componentRelease: ""
-    }
-  }
-}));
+import { createPinia, setActivePinia } from "pinia";
 
 vi.mock("file-saver", () => ({
   default: vi.fn()
@@ -33,38 +26,59 @@ vi.mock("@common", () => ({
 
 vi.mock("@/logger", () => ({
   default: {
-    error: vi.fn()
+    error: vi.fn(),
+    warn: vi.fn()
   }
 }));
 
-vi.mock("@/store/util", () => ({
-  useUtilStore: () => ({
-    systemInformation
-  })
-}));
-
-vi.mock("@/store/user", () => ({
-  useUserStore: () => ({
-    oms: "http://localhost:8080"
-  })
-}));
-
+import { useUtilStore } from "@/store/util";
 import { isAppCompatible } from "@/utils";
 
-describe("app compatibility", () => {
+describe("app compatibility utilities", () => {
   beforeEach(() => {
-    vi.stubEnv("VITE_MAARG_COMPATIBLE_VERSION", "5.2.0");
+    setActivePinia(createPinia());
+    import.meta.env.VITE_MAARG_COMPATIBLE_VERSION = undefined;
+  });
+
+  it("treats a missing required maarg version as compatibility check disabled", () => {
+    useUtilStore().systemInformation = {
+      instanceInfo: {
+        componentRelease: "5.1.0"
+      }
+    };
+
+    expect(isAppCompatible()).toBe(true);
+  });
+
+  it("rejects versions below the configured required maarg version", () => {
+    import.meta.env.VITE_MAARG_COMPATIBLE_VERSION = "5.2.0";
+    useUtilStore().systemInformation = {
+      instanceInfo: {
+        componentRelease: "5.1.0"
+      }
+    };
+
+    expect(isAppCompatible()).toBe(false);
   });
 
   it("treats the local Moqui UpcomingRelease label as compatible", () => {
-    systemInformation.instanceInfo.componentRelease = "UpcomingRelease";
+    import.meta.env.VITE_MAARG_COMPATIBLE_VERSION = "5.2.0";
+    useUtilStore().systemInformation = {
+      instanceInfo: {
+        componentRelease: "UpcomingRelease"
+      }
+    };
 
     expect(isAppCompatible()).toBe(true);
   });
 
   it("does not block login when no required compatible version is configured", () => {
-    vi.stubEnv("VITE_MAARG_COMPATIBLE_VERSION", "");
-    systemInformation.instanceInfo.componentRelease = "UpcomingRelease";
+    import.meta.env.VITE_MAARG_COMPATIBLE_VERSION = "";
+    useUtilStore().systemInformation = {
+      instanceInfo: {
+        componentRelease: "UpcomingRelease"
+      }
+    };
 
     expect(isAppCompatible()).toBe(true);
   });

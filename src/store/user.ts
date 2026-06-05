@@ -138,12 +138,13 @@ export const useUserStore = defineStore("user", {
 
       try {
         let resp;
+        const isMoqui = commonUtil.isMoqui?.();
         do {
           resp = await api({
-            url: "admin/user/permissions",
-            method: "get",
-            baseURL: commonUtil.getMaargURL(),
-            params: { viewIndex, viewSize }
+            url: isMoqui ? "admin/user/permissions" : "getPermissions",
+            method: isMoqui ? "GET" : "POST",
+            baseURL: commonUtil.getOmsURL(),
+            [isMoqui ? "params" : "data"]: { viewIndex, viewSize }
           }) as any
 
           if (resp.status === 200 && resp.data.docs?.length && !commonUtil.hasError(resp)) {
