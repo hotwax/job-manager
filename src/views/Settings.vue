@@ -233,14 +233,14 @@
         <ion-card>
           <ion-card-header>
             <ion-card-title>
-              {{ translate('Legacy App') }}
+              {{ translate("Legacy App") }}
             </ion-card-title>
           </ion-card-header>
           <ion-card-content>
-            {{ translate('Access the legacy application for backward compatibility and features not yet migrated.') }}
+            {{ translate("Access the legacy application for backward compatibility and features not yet migrated.") }}
           </ion-card-content>
           <ion-button fill="clear" @click="redirectToLegacyApp()">
-            {{ translate('Go to Legacy App') }}
+            {{ translate("Go to Legacy App") }}
             <ion-icon slot="end" :icon="openOutline" />
           </ion-button>
         </ion-card>
