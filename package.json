@@ -21,6 +21,7 @@
     "@ionic/core": "catalog:",
     "@ionic/vue": "catalog:",
     "@ionic/vue-router": "catalog:",
+    "ionicons": "catalog:",
     "vue-router": "catalog:",
     "cronstrue": "catalog:",
     "cron-parser": "catalog:",
@@ -42,7 +43,12 @@
     "@types/luxon": "catalog:",
     "@types/file-saver": "catalog:",
     "@types/papaparse": "catalog:",
+    "@vitejs/plugin-legacy": "catalog:",
+    "@vitejs/plugin-vue": "catalog:",
+    "eslint": "catalog:",
+    "terser": "^5.46.1",
     "typescript": "~4.7.4",
-    "eslint": "catalog:"
+    "vite": "catalog:",
+    "vitest": "catalog:"
   }
 }

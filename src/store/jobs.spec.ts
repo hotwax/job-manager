@@ -7,6 +7,9 @@ const { apiMock } = vi.hoisted(() => ({
 
 vi.mock("@common", () => ({
   api: apiMock,
+  cookieHelper: () => ({
+    get: vi.fn()
+  }),
   translate: (value: string) => value
 }));
 

@@ -153,10 +153,12 @@ const getFileSize = (size: string) => {
 const isAppCompatible = () => {
   const currentVersion = useUtilStore().systemInformation?.instanceInfo?.componentRelease;
   const requiredVersion = import.meta.env.VITE_MAARG_COMPATIBLE_VERSION;
+  const compatibleDevelopmentReleases = ["main", "UpcomingRelease"];
   
-  if(!currentVersion || !requiredVersion) return false;
+  if(!requiredVersion) return true;
+  if(!currentVersion) return false;
   
-  if(currentVersion === "main") return true;
+  if(compatibleDevelopmentReleases.includes(currentVersion)) return true;
   
   const currentParts = currentVersion.split('.').map(Number);
   const requiredParts = requiredVersion.split('.').map(Number);
@@ -164,10 +166,10 @@ const isAppCompatible = () => {
   for(let i = 0; i < 3; i++) {
     const part1 = currentParts[i] || 0;
     const part2 = requiredParts[i] || 0;
-    if(part1 >= part2) return true;
+    if(part1 > part2) return true;
     if(part1 < part2) return false;
   }
-  return false;
+  return true;
 }
 
 const redirectToLegacyApp = () => {
@@ -176,6 +178,10 @@ const redirectToLegacyApp = () => {
   const expirationTime = cookieHelper().get("expirationTime")!
   const maarg = decodeURIComponent(cookieHelper().get("maarg")!)
   const link = import.meta.env.VITE_LEGACY_APP_URL
+  if(!link) {
+    logger.warn("Legacy app URL is not configured; skipping legacy redirect")
+    return;
+  }
   window.location.href = link.replace("{oms}", oms).replace("{token}", token).replace("{expirationTime}", expirationTime).replace("{omsRedirectionUrl}", maarg)
 }
 

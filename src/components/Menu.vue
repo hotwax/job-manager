@@ -61,7 +61,7 @@
 <script setup lang="ts">
 import { IonContent, IonFooter, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenu, IonMenuToggle, IonNote, IonSelect, IonSelectOption, IonTitle, IonToolbar } from "@ionic/vue";
 import { computed } from "vue";
-import { albumsOutline, cloudUploadOutline, fileTrayStackedOutline, globeOutline, openOutline, pulseOutline, settingsOutline, timeOutline } from "ionicons/icons";
+import { albumsOutline, cloudDownloadOutline, cloudUploadOutline, constructOutline, documentTextOutline, fileTrayStackedOutline, gitNetworkOutline, globeOutline, openOutline, pulseOutline, searchCircleOutline, settingsOutline, timeOutline } from "ionicons/icons";
 import { translate, commonUtil, emitter } from "@common";
 import { useAuth } from "@common/composables/useAuth";
 import router from "../router";
@@ -141,6 +141,45 @@ let appPages = [
     iosIcon: globeOutline,
     mdIcon: globeOutline,
     childRoutes: ["/system-message-remotes/"]
+  },
+  {
+    title: "Data Documents"
+  },
+  {
+    title: "Documents",
+    url: "/data-documents",
+    iosIcon: documentTextOutline,
+    mdIcon: documentTextOutline,
+    childRoutes: ["/data-documents/"]
+  },
+  // {
+  //   title: "Feeds",
+  //   url: "/data-document-feeds",
+  //   iosIcon: gitNetworkOutline,
+  //   mdIcon: gitNetworkOutline,
+  //   childRoutes: ["/data-document-feeds/"]
+  // },
+  {
+    title: "Export History",
+    url: "/data-document-export-history",
+    iosIcon: cloudDownloadOutline,
+    mdIcon: cloudDownloadOutline,
+    childRoutes: ["/data-document-export-history/"]
+  },
+  {
+    title: "System Health"
+  },
+  {
+    title: "Solr Monitoring",
+    url: "/solr-monitoring",
+    iosIcon: searchCircleOutline,
+    mdIcon: searchCircleOutline,
+  },
+  {
+    title: "Solr Repair",
+    url: "/solr-repair",
+    iosIcon: constructOutline,
+    mdIcon: constructOutline,
   },
   {
     title: "Settings"
