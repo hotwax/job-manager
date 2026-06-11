@@ -229,6 +229,21 @@
             </ion-item>
           </ion-list>
         </ion-card>
+
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>
+              {{ translate('Legacy App') }}
+            </ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            {{ translate('Access the legacy application for backward compatibility and features not yet migrated.') }}
+          </ion-card-content>
+          <ion-button fill="clear" @click="redirectToLegacyApp()">
+            {{ translate('Go to Legacy App') }}
+            <ion-icon slot="end" :icon="openOutline" />
+          </ion-button>
+        </ion-card>
       </section>
     </ion-content>
   </ion-page>
@@ -244,6 +259,7 @@ import Image from '@/components/Image.vue'
 import { cookieHelper, commonUtil, translate } from '@common';
 import { useAuth } from '@common/composables/useAuth';
 import { DateTime } from 'luxon';
+import { redirectToLegacyApp } from '@/utils';
 
 const userStore = useUserStore();
 const utilStore = useUtilStore();

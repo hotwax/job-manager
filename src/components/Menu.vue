@@ -8,19 +8,21 @@
 
     <ion-content>
       <ion-list>
-        <ion-item
-          button
-          @click="redirectToLegacyApp()"
-        >
-          <ion-icon slot="start" :icon="openOutline" />
-          <ion-label>{{ translate("Legacy App") }}</ion-label>
-        </ion-item>
         <ion-menu-toggle :auto-hide="false" v-for="(page, index) in getValidMenuItems(appPages)" :key="index">
           <ion-item
             v-if="page.url"
             button
             router-direction="root"
             :router-link="page.url"
+            class="hydrated"
+            :class="{ selected: selectedIndex === index }">
+            <ion-icon slot="start" :ios="page.iosIcon" :md="page.mdIcon" />
+            <ion-label>{{ translate(page.title) }}</ion-label>
+          </ion-item>
+          <ion-item
+            v-else-if="page.action"
+            button
+            @click="page.action()"
             class="hydrated"
             :class="{ selected: selectedIndex === index }">
             <ion-icon slot="start" :ios="page.iosIcon" :md="page.mdIcon" />
