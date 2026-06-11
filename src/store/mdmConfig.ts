@@ -7,8 +7,7 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
     configs: [] as Array<any>,
     logs: [] as Array<any>,
     logsCount: 0,
-    filters: {} as Record<string, any>,
-    globalStats: { total: 0, successful: 0, failed: 0 }
+    filters: {} as Record<string, any>
   }),
   getters: {
     getConfigs: (state: any) => state.configs,
@@ -16,8 +15,7 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
     getLogs: (state: any) => state.logs,
     getLogsCount: (state: any) => state.logsCount,
     islogsScrollable: (state: any) => state.logs?.length > 0 && state.logs?.length < state.logsCount,
-    getAppliedFilters: (state: any) => JSON.parse(JSON.stringify(state.filters)),
-    getGlobalStats: (state: any) => state.globalStats
+    getAppliedFilters: (state: any) => JSON.parse(JSON.stringify(state.filters))
   },
   actions: {
     async fetchConfigs() {
@@ -96,31 +94,18 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
         })
 
         if(resp.data?.dataManagerLogsCount) {
-          this.logs = resp.data.dataManagerLogs
-          this.logsCount = resp.data.dataManagerLogsCount
-        } else {
+          if(params?.pageIndex > 0) {
+            this.logs = this.logs.concat(resp.data.dataManagerLogs)
+          } else {
+            this.logs = resp.data.dataManagerLogs
+            this.logsCount = resp.data.dataManagerLogsCount
+          }
+        } else if(params?.pageIndex == 0) {
           this.logs = []
           this.logsCount = 0
         }
       } catch(err) {
         logger.error("Failed to fetch logs", err)
-      }
-    },
-    async fetchDataManagerLogById(logId: string) {
-      try {
-        let resp = await api({
-          url: "admin/dataManager/details",
-          method: "get",
-          params: { logId }
-        })
-
-        if(resp.data?.dataManagerLogs?.length) {
-          return resp.data.dataManagerLogs[0]
-        }
-        return null
-      } catch(err) {
-        logger.error(`Failed to fetch log with id ${logId}`, err)
-        return null
       }
     },
     async cancelDataManagerLog(configId: string, logId: string) {
@@ -143,23 +128,6 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
     },
     async updateAppliedFilters(filterType: string, value: any) {
       this.filters[filterType] = value
-    },
-    async fetchGlobalStats() {
-      const MOQUI_STATUSES = "DmlsCancelled,DmlsCrashed,DmlsFailed,DmlsFinished,DmlsPending,DmlsQueued,DmlsRunning"
-      try {
-        const [totalResp, successResp, failedResp] = await Promise.all([
-          api({ url: "admin/dataManager/details", method: "get", params: { pageSize: 1, pageIndex: 0, statusId: MOQUI_STATUSES, statusId_op: "in" } }),
-          api({ url: "admin/dataManager/details", method: "get", params: { pageSize: 1, pageIndex: 0, statusId: "DmlsFinished" } }),
-          api({ url: "admin/dataManager/details", method: "get", params: { pageSize: 1, pageIndex: 0, statusId: "DmlsFailed,DmlsCrashed", statusId_op: "in" } })
-        ])
-        this.globalStats = {
-          total: totalResp.data?.dataManagerLogsCount || 0,
-          successful: successResp.data?.dataManagerLogsCount || 0,
-          failed: failedResp.data?.dataManagerLogsCount || 0
-        }
-      } catch(err) {
-        logger.error("Failed to fetch global stats", err)
-      }
     }
   }
 });

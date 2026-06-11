@@ -164,10 +164,10 @@ const isAppCompatible = () => {
   for(let i = 0; i < 3; i++) {
     const part1 = currentParts[i] || 0;
     const part2 = requiredParts[i] || 0;
-    if(part1 > part2) return true;
+    if(part1 >= part2) return true;
     if(part1 < part2) return false;
   }
-  return true;
+  return false;
 }
 
 const redirectToLegacyApp = () => {
