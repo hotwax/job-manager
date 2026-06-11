@@ -1,9 +1,9 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { RouteRecordRaw } from 'vue-router';
-import Catalog from '@/views/Catalog.vue'
+import Catalog from '@/views/catalog.vue'
 import Settings from "@/views/Settings.vue"
 import FileHistory from "@/views/FileHistory.vue"
-import FileDetail from "@/views/FileDetail.vue"
+import FileHistoryDetail from "@/views/FileHistoryDetail.vue"
 import { showToast } from '@/utils'
 import { translate } from '@common'
 import 'vue-router'
@@ -66,8 +66,8 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: "/file-history/:id",
-    name: "FileDetail",
-    component: FileDetail,
+    name: "FileHistoryDetail",
+    component: FileHistoryDetail,
     beforeEnter: authGuard,
     props: true
   },
