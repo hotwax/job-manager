@@ -264,8 +264,8 @@
                     size="small"
                     @click="commonUtil.copyToClipboard(message?.messageText)"
                   >
-                   {{ translate("Copy") }}
-                   <ion-icon slot="start" :icon="copyOutline" />
+                    {{ translate("Copy") }}
+                    <ion-icon slot="start" :icon="copyOutline" />
                   </ion-button>
                   <ion-button
                     v-if="isEditable && !isEditing"
