@@ -123,6 +123,24 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
         return null
       }
     },
+    async fetchDataManagerFileContent(configId: string, logContentId: string) {
+      try {
+        const resp = await api({
+          url: "admin/dataManager/downloadDataManagerFile",
+          method: "GET",
+          params: { configId, logContentId }
+        })
+        // The endpoint returns the file payload wrapped as { csvData }. A bare {} means
+        // no downloadable content is stored for this log content id.
+        const content = resp?.data?.csvData ?? resp?.data
+        if (content && typeof content === "object" && !Object.keys(content).length) return null
+        const text = typeof content === "string" ? content : JSON.stringify(content)
+        return text && text.replace(/\s/g, "") !== "{}" ? text : null
+      } catch (err) {
+        logger.error(`Failed to fetch file content for log content ${logContentId}`, err)
+        return null
+      }
+    },
     async cancelDataManagerLog(configId: string, logId: string) {
       try {
         await api({
