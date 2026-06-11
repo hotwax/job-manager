@@ -10,7 +10,7 @@
     </ion-header>
 
     <ion-content>
-      <section v-if="systemMessageStore.isLoading || !message" class="details">
+      <section v-if="initialLoading || !message" class="details">
         <ion-card class="summary">
           <ion-card-header>
             <ion-skeleton-text animated style="width: 30%; height: 16px;" />
@@ -378,6 +378,7 @@ import {
   IonItemDivider,
   IonLabel,
   IonList,
+  IonNote,
   IonPage,
   IonSkeletonText,
   IonText,
@@ -424,6 +425,10 @@ const systemMessageStore = useSystemMessageStore();
 const utilStore = useUtilStore();
 const isEditing = ref(false);
 const editedText = ref("");
+// Local flag for the initial page load only. The store's shared `loading` flips on every
+// fetch, so gating the whole-page skeleton on it makes the page flicker skeleton<->content
+// as the sequential detail fetches run. This stays true only until the core data arrives.
+const initialLoading = ref(true);
 
 const message = computed(() => systemMessageStore.getCurrentSystemMessage);
 const messageType = computed(() => systemMessageStore.getCurrentSystemMessageType);
@@ -542,13 +547,19 @@ const goToStep = (step: any) => {
 };
 
 const loadMessage = async () => {
-  await Promise.all([
-    systemMessageStore.fetchSystemMessageById(props.id),
-    systemMessageStore.fetchSystemMessageErrors(props.id),
-    systemMessageStore.fetchSystemMessageStatusMetadata(),
-    systemMessageStore.fetchSystemMessageStatusHistory(props.id)
-  ]);
- 
+  initialLoading.value = true;
+  try {
+    await Promise.all([
+      systemMessageStore.fetchSystemMessageById(props.id),
+      systemMessageStore.fetchSystemMessageErrors(props.id),
+      systemMessageStore.fetchSystemMessageStatusMetadata(),
+      systemMessageStore.fetchSystemMessageStatusHistory(props.id)
+    ]);
+  } finally {
+    // Core data is in; reveal the page. Remaining fetches fill sub-sections in place.
+    initialLoading.value = false;
+  }
+
   if(message.value) {
     await systemMessageStore.fetchRelatedMessages()
     const tasks = [systemMessageStore.fetchSystemMessageTypeById(message.value.systemMessageTypeId)];
