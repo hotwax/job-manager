@@ -246,29 +246,40 @@
                 </ion-item>
               </template>
 
-              <ion-item-divider color="light">
-                <ion-label>{{ translate("Message Content") }}</ion-label>
-                <div slot="end" class="content-actions">
-                  <ion-button
-                    v-if="downloadableFilePath && !isEditing"
-                    fill="clear"
-                    size="small"
-                    @click="downloadLinkedFile"
-                  >
-                    {{ translate("Download File") }}
-                    <ion-icon slot="start" :icon="downloadOutline" />
-                  </ion-button>
-                  <ion-button
-                    v-if="isEditable && !isEditing"
-                    fill="clear"
-                    size="small"
-                    @click="isEditing = true"
-                  >
-                    {{ translate("Edit Content") }}
-                    <ion-icon slot="start" :icon="addCircleOutline" />
-                  </ion-button>
-                </div>
-              </ion-item-divider>
+         <ion-item-divider color="light">
+           <ion-label>{{ translate("Message Content") }}</ion-label>
+           <div slot="end" class="content-actions">
+             <ion-button
+               v-if="downloadableFilePath && !isEditing"
+               fill="clear"
+               size="small"
+               @click="downloadLinkedFile"
+             >
+               {{ translate("Download File") }}
+               <ion-icon slot="start" :icon="downloadOutline" />
+             </ion-button>
+
+             <ion-button
+               v-if="formattedContent && !isEditing"
+               fill="clear"
+               size="small"
+               @click="commonUtil.copyToClipboard(message?.messageText)"
+             >
+               {{ translate("Copy") }}
+               <ion-icon slot="start" :icon="copyOutline" />
+             </ion-button>
+
+             <ion-button
+               v-if="isEditable && !isEditing"
+               fill="clear"
+               size="small"
+               @click="isEditing = true"
+             >
+               {{ translate("Edit Content") }}
+               <ion-icon slot="start" :icon="addCircleOutline" />
+             </ion-button>
+           </div>
+         </ion-item-divider>
 
               <div class="content-container">
                 <ion-item v-if="downloadableFilePath && !isEditing" lines="none" class="detected-file-path">
@@ -398,6 +409,7 @@ import {
   chevronUpOutline,
   checkmarkCircleOutline,
   documentAttachOutline,
+  copyOutline,
   downloadOutline,
   globeOutline,
   hourglassOutline,
