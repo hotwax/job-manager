@@ -106,24 +106,13 @@
               </div>
 
               <div class="filter-item">
-                <ion-select
-                  :label="translate('Config')"
-                  label-placement="stacked"
-                  interface="popover"
-                  multiple="true"
-                  :placeholder="translate('All')"
-                  :value="selectedConfig"
-                  @ionChange="selectedConfig = $event.detail.value"
-                >
-                  <ion-select-option
-                    v-for="config in configs"
-                    :key="config.configId"
-                    :value="config.configId"
-                  >
-                    {{ config.configId }}
-                  </ion-select-option>
-                </ion-select>
-                <ion-button v-if="selectedConfig.length > 0" fill="clear" class="clear-filter-btn" @click="selectedConfig = []" :title="translate('Clear')">
+                <ion-item id="config-filter-trigger" button lines="none" class="config-filter-trigger">
+                  <ion-label>
+                    <p>{{ translate("Config") }}</p>
+                    {{ selectedConfigText }}
+                  </ion-label>
+                </ion-item>
+                <ion-button v-if="selectedConfig.length > 0" fill="clear" class="clear-filter-btn" @click.stop="selectedConfig = []" :title="translate('Clear')">
                   <ion-icon slot="icon-only" :icon="closeCircleOutline" />
                 </ion-button>
               </div>
@@ -154,55 +143,86 @@
         </div>
 
         <ion-list>
-          <div class="list-item table-header log">
-            <ion-label class="file-info">{{ translate("File & Log ID") }}</ion-label>
-            <ion-label>{{ translate("Status & Results") }}</ion-label>
-            <ion-label>{{ translate("Uploaded By") }}</ion-label>
-            <ion-label>{{ translate("Uploaded") }}</ion-label>
-            <ion-label>{{ translate("Duration") }}</ion-label>
-            <ion-label></ion-label>
-          </div>
-          <template v-for="log in logs" :key="log.logId">
-            <div class="list-item log" style="cursor: pointer;" @click="goToLogDetails(log.logId)">
-              <ion-item lines="none" class="file-info" button @click="goToLogDetails(log.logId)">
+          <ion-card
+            v-for="log in logs"
+            :key="log.logId"
+            class="list-item log log-card-layout"
+            @click="goToLogDetails(log.logId)"
+          >
+            <ion-item lines="none" class="log-file-info">
               <ion-label class="ion-text-wrap">
-                <p>{{ log.logId }}</p>
-                {{ log.fileName }}
-                <p>{{ getFileSize(log.fileSize) }}</p>
+                <p class="overline">{{ log.logId }}</p>
+                {{ log.configId || "-" }}
+                <p class="log-file-name" :title="log.fileName || ''">
+                  <span class="tm-start">{{ splitFileName(log.fileName)[0] }}</span><span class="tm-end">{{ splitFileName(log.fileName)[1] }}</span>
+                </p>
               </ion-label>
             </ion-item>
-            <ion-label>
-              <div class="status-results">
-                <ion-chip :color="commonUtil.getStatusColor(log.statusId)">
-                  {{ translate(getStatusDesc(log.statusId)) }}
-                </ion-chip>
-                <div v-if="log.totalRecordCount" class="score-card">
-                  <div class="badge success">
-                    <span class="count">{{ (Number(log.totalRecordCount) || 0) - (Number(log.failedRecordCount) || 0) }}</span>
-                    <span class="label">{{ translate("SUCCESS") }}</span>
-                  </div>
-                  <div class="badge failed">
-                    <span class="count">{{ Number(log.failedRecordCount) || 0 }}</span>
-                    <span class="label">{{ translate("FAILED") }}</span>
-                  </div>
-                </div>
-              </div>
+
+            <div v-if="log.totalRecordCount" class="log-result-stack">
+              <ion-badge color="success">{{ getSuccessRecordCount(log) }} {{ translate("success") }}</ion-badge>
+              <ion-badge color="danger">{{ getFailedRecordCount(log) }} {{ translate("failed") }}</ion-badge>
+            </div>
+
+            <ion-label class="log-cell-stack">
+              <p>{{ translate("Uploaded") }}: {{ commonUtil.getDateTimeWithOrdinalSuffix(log.createdDate) }}</p>
+              <p>{{ translate("By") }}: {{ log.createdByUserLogin || "-" }}</p>
             </ion-label>
-            <ion-label>{{ log.createdByUserLogin || "-" }}</ion-label>
-            <ion-label>
-              {{ commonUtil.getDateTimeWithOrdinalSuffix(log.createdDate) }}
-            </ion-label>
-            <ion-label>
-              {{ log.createdDate && (log.finishDateTime || log.lastUpdatedTxStamp) ? getDuration(log.createdDate, log.finishDateTime || log.lastUpdatedTxStamp) : '-' }}
-            </ion-label>
+
+            <ion-label class="log-cell-stack log-meta">
+              <ion-badge :color="getLogStatusColor(log)">
+                {{ translate(getLogStatusLabel(log)) }}
+              </ion-badge>
+              <p>{{ getFileSize(log.fileSize) }}</p>
+              <p>{{ log.createdDate && (log.finishDateTime || log.lastUpdatedTxStamp) ? getDuration(log.createdDate, log.finishDateTime || log.lastUpdatedTxStamp) : '-' }}</p>
               <ion-button v-if="log.statusId === 'DmlsPending'" color="danger" fill="clear" @click.stop="mdmStore.cancelDataManagerLog(log.configId, log.logId)">
                 <ion-icon slot="icon-only" :icon="closeOutline" />
               </ion-button>
-            </div>
-          </template>
+            </ion-label>
+          </ion-card>
           <p class="empty-state" v-if="!logs.length">{{ translate("No logs found") }}</p>
         </ion-list>
       </main>
+
+      <ion-modal trigger="config-filter-trigger" @willPresent="handleConfigModalWillPresent" @didDismiss="clearConfigModal">
+        <ion-header>
+          <ion-toolbar>
+            <ion-buttons slot="start">
+              <ion-button @click="closeConfigModal" :title="translate('Close')">
+                <ion-icon slot="icon-only" :icon="closeOutline" />
+              </ion-button>
+            </ion-buttons>
+            <ion-title>{{ translate("Select Config") }}</ion-title>
+          </ion-toolbar>
+          <ion-toolbar>
+            <ion-searchbar
+              :value="configQuery"
+              @ionInput="configQuery = ($event as any).detail.value || ''"
+              :debounce="200"
+              :placeholder="translate('Search config name')"
+            />
+          </ion-toolbar>
+        </ion-header>
+
+        <ion-content>
+          <ion-list v-if="filteredConfigs.length">
+            <ion-item v-for="config in filteredConfigs" :key="config.configId">
+              <ion-checkbox
+                label-placement="end"
+                justify="start"
+                :checked="selectedConfig.includes(config.configId)"
+                @ionChange="toggleConfig(config.configId, $event.detail.checked)"
+              >
+                <ion-label>
+                  {{ getConfigDisplayName(config) }}
+                  <p v-if="getConfigDisplayName(config) !== config.configId">{{ config.configId }}</p>
+                </ion-label>
+              </ion-checkbox>
+            </ion-item>
+          </ion-list>
+          <p v-else class="empty-state">{{ translate("No configs found") }}</p>
+        </ion-content>
+      </ion-modal>
     </ion-content>
   </ion-page>
 </template>
@@ -216,12 +236,13 @@ import {
   IonCardHeader,
   IonCardSubtitle,
   IonCardTitle,
+  IonCheckbox,
   IonContent,
   IonHeader,
   IonItem,
   IonLabel,
   IonList,
-  IonNote,
+  IonModal,
   IonPage,
   IonSearchbar,
   IonSelect,
@@ -231,19 +252,15 @@ import {
   IonMenuButton,
   IonIcon,
   IonChip,
-  IonModal,
+  IonBadge,
+  modalController,
   onIonViewWillEnter,
 } from '@ionic/vue';
 import { translate, commonUtil } from '@common';
-import {
-  closeOutline, documentOutline, chevronDownOutline, chevronForwardOutline,
-  hardwareChipOutline, timeOutline, codeWorkingOutline, copyOutline, closeCircleOutline,
-  archiveOutline, openOutline
-} from 'ionicons/icons';
+import { closeOutline, closeCircleOutline } from 'ionicons/icons';
 import { computed, ref, watch } from 'vue';
 import { useMdmConfigStore } from '@/store/mdmConfig';
-import { getFileSize, showToast } from '@/utils';
-import { Clipboard } from '@capacitor/clipboard';
+import { getFileSize } from '@/utils';
 import { getStatusDesc } from '@/utils/config';
 import { useUtilStore } from '@/store/util';
 import router from '@/router';
@@ -257,6 +274,7 @@ const queryString = ref("");
 const selectedStatus = ref<string[]>([]);
 const selectedPriority = ref<string[]>([]);
 const selectedConfig = ref<string[]>([]);
+const configQuery = ref("");
 const pageIndex = ref(0);
 
 const rawLogs = computed(() => mdmStore.getLogs);
@@ -321,6 +339,25 @@ const avgProcessingTime = computed(() => {
   return `${minutes}m ${remainingSeconds}s`;
 });
 
+const selectedConfigText = computed(() => {
+  if (!selectedConfig.value.length) return translate("All");
+  if (selectedConfig.value.length === 1) return selectedConfig.value[0];
+  return `${selectedConfig.value.length} ${translate("selected")}`;
+});
+
+const filteredConfigs = computed(() => {
+  const query = configQuery.value.trim().toLowerCase();
+  if (!query) return configs.value;
+  return configs.value.filter((config: any) => {
+    const searchableText = [
+      config.configId,
+      config.description,
+      config.scriptTitle
+    ].filter(Boolean).join(" ").toLowerCase();
+    return searchableText.includes(query);
+  });
+});
+
 const logs = computed(() => {
   if (!isServerSideSearch.value) {
     const start = pageIndex.value * PAGE_SIZE;
@@ -346,6 +383,59 @@ const pageCount = computed(() => {
 
 const handleQueryInput = (event: CustomEvent) => {
   queryString.value = (event as any).detail.value || "";
+};
+
+const getFailedRecordCount = (log: any) => Number(log.failedRecordCount) || 0;
+
+const getSuccessRecordCount = (log: any) => {
+  return Math.max((Number(log.totalRecordCount) || 0) - getFailedRecordCount(log), 0);
+};
+
+const getLogStatusLabel = (log: any) => {
+  if (log.statusId === "DmlsFinished" && getFailedRecordCount(log) > 0) {
+    return "Finished with errors";
+  }
+  return getStatusDesc(log.statusId);
+};
+
+const getLogStatusColor = (log: any) => {
+  if (log.statusId === "DmlsFinished" && getFailedRecordCount(log) > 0) {
+    return "warning";
+  }
+  return commonUtil.getStatusColor(log.statusId);
+};
+
+const getConfigDisplayName = (config: any) => config.scriptTitle || config.description || config.configId;
+
+const handleConfigModalWillPresent = async () => {
+  if (!configs.value.length) {
+    await mdmStore.fetchConfigs();
+  }
+};
+
+const closeConfigModal = () => {
+  modalController.dismiss();
+};
+
+const clearConfigModal = () => {
+  configQuery.value = "";
+};
+
+const toggleConfig = (configId: string, checked: boolean) => {
+  if (checked && !selectedConfig.value.includes(configId)) {
+    selectedConfig.value = [...selectedConfig.value, configId];
+  } else if (!checked) {
+    selectedConfig.value = selectedConfig.value.filter((selectedId) => selectedId !== configId);
+  }
+};
+
+// Split a file name into [head, tail] so the head can ellipsize while the tail
+// (extension + a few chars) stays visible — i.e. middle truncation via CSS.
+const splitFileName = (name?: string): [string, string] => {
+  const value = name || "";
+  const tailLength = 10;
+  if (value.length <= tailLength + 6) return [value, ""];
+  return [value.slice(0, value.length - tailLength), value.slice(value.length - tailLength)];
 };
 
 const getDuration = (start: number, end: number) => {
@@ -769,5 +859,59 @@ onIonViewWillEnter(async () => {
 .list-item.log.is-expanded {
   border-bottom: none;
   background: var(--ion-color-step-50, #fafafa);
+}
+
+.config-filter-trigger {
+  flex: 1;
+  --min-height: 52px;
+  --padding-start: 0;
+  --inner-padding-end: 0;
+}
+
+.list-item.log.log-card-layout {
+  --columns-desktop: 5;
+  padding-block: var(--spacer-sm);
+  padding-inline-start: 0;
+  padding-inline-end: var(--spacer-sm);
+}
+
+.log-file-info {
+  grid-column: span 2;
+  --inner-padding-end: 0;
+}
+
+.list-item.log > .log-result-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacer-2xs);
+}
+
+.log-cell-stack p {
+  margin: 2px 0;
+}
+
+.log-meta {
+  justify-self: end;
+  text-align: end;
+}
+
+.log-file-name {
+  display: flex;
+  flex-wrap: nowrap;
+  max-width: 100%;
+  margin-top: 2px;
+}
+
+.log-file-name .tm-start {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.log-file-name .tm-end {
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 </style>
