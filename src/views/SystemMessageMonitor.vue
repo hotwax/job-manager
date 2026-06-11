@@ -98,13 +98,31 @@
         </ion-card>
 
         <div class="pagination">
-          <ion-button fill="outline" :disabled="pageIndex === 0" @click="goToPreviousPage">
-            {{ translate("Previous") }}
-          </ion-button>
-          <ion-note color="medium">{{ translate("Page") }} {{ pageIndex + 1 }} / {{ pageCount }}</ion-note>
-          <ion-button fill="outline" :disabled="pageIndex >= pageCount - 1" @click="goToNextPage">
-            {{ translate("Next") }}
-          </ion-button>
+          <div class="limit-container">
+            <ion-select
+              :label="translate('Limit')"
+              label-placement="start"
+              interface="popover"
+              :value="pageSize"
+              @ionChange="pageSize = $event.detail.value"
+            >
+              <ion-select-option :value="10">10</ion-select-option>
+              <ion-select-option :value="20">20</ion-select-option>
+              <ion-select-option :value="50">50</ion-select-option>
+              <ion-select-option :value="100">100</ion-select-option>
+              <ion-select-option :value="200">200</ion-select-option>
+              <ion-select-option :value="500">500</ion-select-option>
+            </ion-select>
+          </div>
+          <div class="pagination-buttons">
+            <ion-button fill="outline" :disabled="pageIndex === 0" @click="goToPreviousPage">
+              {{ translate("Previous") }}
+            </ion-button>
+            <ion-note color="medium">{{ translate("Page") }} {{ pageIndex + 1 }} / {{ pageCount }}</ion-note>
+            <ion-button fill="outline" :disabled="pageIndex >= pageCount - 1" @click="goToNextPage">
+              {{ translate("Next") }}
+            </ion-button>
+          </div>
         </div>
         <SystemMessageList
           :messages="messages"
@@ -140,7 +158,7 @@ import SystemMessageList from "@/components/SystemMessageList.vue";
 import { useSystemMessageStore } from "@/store/systemMessage";
 import { useUtilStore } from "@/store/util";
 
-const PAGE_SIZE = 25;
+const pageSize = ref(25);
 
 const store = useSystemMessageStore();
 const utilStore = useUtilStore();
@@ -157,7 +175,7 @@ const types = computed(() => store.getSystemMessageTypes);
 const parentTypes = computed(() => store.getSystemMessageParentTypes);
 const remotes = computed(() => store.getSystemMessageRemotes);
 const statuses = computed(() => utilStore.getStatusItemsByType("SystemMessage"));
-const pageCount = computed(() => Math.max(Math.ceil(total.value / PAGE_SIZE), 1));
+const pageCount = computed(() => Math.max(Math.ceil(total.value / pageSize.value), 1));
 
 const filteredTypes = computed(() => {
   if (!selectedParentTypeId.value) return types.value;
@@ -167,7 +185,7 @@ const filteredTypes = computed(() => {
 const loadMessages = async () => {
   const payload = {
     pageIndex: pageIndex.value,
-    pageSize: PAGE_SIZE,
+    pageSize: pageSize.value,
   } as Record<string, any>
 
   if(queryString.value.trim()) {
@@ -214,9 +232,12 @@ const goToNextPage = () => {
   pageIndex.value += 1;
 };
 
-watch([queryString, selectedStatusId, selectedTypeId, selectedParentTypeId, selectedRemoteId], async () => {
-  resetToFirstPage();
-  await loadMessages();
+watch([queryString, selectedStatusId, selectedTypeId, selectedParentTypeId, selectedRemoteId, pageSize], async () => {
+  if (pageIndex.value !== 0) {
+    pageIndex.value = 0;
+  } else {
+    await loadMessages();
+  }
 });
 
 watch(pageIndex, loadMessages);
@@ -248,9 +269,21 @@ onIonViewWillEnter(async () => {
 
 .pagination {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
   gap: 12px;
   padding: 16px;
+}
+
+.pagination-buttons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.limit-container {
+  display: flex;
+  align-items: center;
+  max-width: 150px;
 }
 </style>

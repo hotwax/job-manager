@@ -92,13 +92,31 @@
               </div>
 
               <div class="pagination">
-                <ion-button fill="clear" slot="icon-only" :disabled="pageIndex === 0" @click="goToPreviousPage">
-                  <ion-icon :icon="caretBackOutline" />
-                </ion-button>
-                <ion-note color="medium">{{ pageIndex + 1 }} / {{ pageCount }}</ion-note>
-                <ion-button fill="clear" slot="icon-only" :disabled="pageIndex >= pageCount - 1" @click="goToNextPage">
-                  <ion-icon :icon="caretForwardOutline" />
-                </ion-button>
+                <div class="limit-container">
+                  <ion-select
+                    :label="translate('Limit')"
+                    label-placement="start"
+                    interface="popover"
+                    :value="pageSize"
+                    @ionChange="pageSize = $event.detail.value"
+                  >
+                    <ion-select-option :value="10">10</ion-select-option>
+                    <ion-select-option :value="20">20</ion-select-option>
+                    <ion-select-option :value="50">50</ion-select-option>
+                    <ion-select-option :value="100">100</ion-select-option>
+                    <ion-select-option :value="200">200</ion-select-option>
+                    <ion-select-option :value="500">500</ion-select-option>
+                  </ion-select>
+                </div>
+                <div class="pagination-buttons">
+                  <ion-button fill="clear" slot="icon-only" :disabled="pageIndex === 0" @click="goToPreviousPage">
+                    <ion-icon :icon="caretBackOutline" />
+                  </ion-button>
+                  <ion-note color="medium">{{ pageIndex + 1 }} / {{ pageCount }}</ion-note>
+                  <ion-button fill="clear" slot="icon-only" :disabled="pageIndex >= pageCount - 1" @click="goToNextPage">
+                    <ion-icon :icon="caretForwardOutline" />
+                  </ion-button>
+                </div>
               </div>
 
               <SystemMessageList
@@ -151,7 +169,7 @@ import { caretBackOutline, caretForwardOutline } from "ionicons/icons";
 // Type based declaration
 const props = defineProps<{ id?: string }>();
 
-const PAGE_SIZE = 25;
+const pageSize = ref(25);
 const pageIndex = ref(0);
 
 const systemMessageStore = useSystemMessageStore();
@@ -184,7 +202,7 @@ const pageTitle = computed(() => isCreateMode.value ? translate("Create Remote S
 const statuses = computed(() => utilStore.getStatusItemsByType("SystemMessage"));
 const relatedMessages = computed(() => systemMessageStore.getSystemMessages);
 const total = computed(() => systemMessageStore.getSystemMessageTotal);
-const pageCount = computed(() => Math.max(Math.ceil(total.value / PAGE_SIZE), 1));
+const pageCount = computed(() => Math.max(Math.ceil(total.value / pageSize.value), 1));
 
 const setForm = (payload?: Record<string, any>) => {
   for (const key of Object.keys(form)) {
@@ -207,7 +225,7 @@ const loadRemote = async () => {
     await systemMessageStore.fetchSystemMessages({
       systemMessageRemoteId: props.id,
       pageIndex: pageIndex.value,
-      pageSize: PAGE_SIZE,
+      pageSize: pageSize.value,
     })
     setForm(entity);
   } else {
@@ -260,28 +278,33 @@ const goToPreviousPage = () => {
 const goToNextPage = () => {
   pageIndex.value += 1;
 };
-
-watch([queryString, selectedStatusId], () => {
-  pageIndex.value = 0
-})
-
-watch([pageIndex], async () => {
+const fetchRelatedMessages = async () => {
   const payload = {
     systemMessageRemoteId: props.id,
     pageIndex: pageIndex.value,
-    pageSize: PAGE_SIZE
+    pageSize: pageSize.value
   } as Record<string, any>
 
-  if(queryString.value.trim()) {
+  if (queryString.value.trim()) {
     payload["queryString"] = queryString.value.trim().toLowerCase()
   }
 
-  if(selectedStatusId.value) {
+  if (selectedStatusId.value) {
     payload["statusId"] = selectedStatusId.value;
   }
 
   await systemMessageStore.fetchSystemMessages(payload)
+};
+
+watch([queryString, selectedStatusId, pageSize], async () => {
+  if (pageIndex.value !== 0) {
+    pageIndex.value = 0;
+  } else {
+    await fetchRelatedMessages();
+  }
 });
+
+watch(pageIndex, fetchRelatedMessages);
 
 onIonViewWillEnter(() => {
   pageIndex.value = 0
@@ -307,8 +330,20 @@ onIonViewWillEnter(() => {
 
 .pagination {
   display: flex;
-  justify-content: flex-start;
+  justify-content: space-between;
   align-items: center;
   gap: 10px;
+}
+
+.pagination-buttons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.limit-container {
+  display: flex;
+  align-items: center;
+  max-width: 150px;
 }
 </style>
