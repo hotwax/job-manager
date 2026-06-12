@@ -115,19 +115,51 @@ export const useSystemMessageStore = defineStore("systemMessage", {
       this.loading = true;
 
       try {
+        const pageSize = Number(payload.pageSize ?? 25);
+        let frontendPageIndex = Number(payload.pageIndex ?? 0);
+        let fetchPageIndex = frontendPageIndex;
+        let isReversed = false;
+
+        // Safely attempt reverse pagination hack
+        try {
+          const countPayload = { ...payload };
+          delete countPayload.pageIndex;
+          delete countPayload.pageSize;
+          
+          const countResponse = await api({
+            url: "admin/systemMessages",
+            method: "GET",
+            params: { pageSize: 1, pageIndex: 0, ...countPayload }
+          });
+          
+          const totalCount = countResponse.data?.systemMessagesCount;
+          if (totalCount > 0) {
+            const totalPages = Math.ceil(totalCount / pageSize);
+            fetchPageIndex = totalPages - 1 - frontendPageIndex;
+            if (fetchPageIndex < 0) fetchPageIndex = 0;
+            isReversed = true;
+          }
+        } catch (countErr) {
+          logger.warn("Failed to fetch system messages count for reverse pagination, falling back to normal pagination.", countErr);
+        }
+
         const response = await api({
           url: "admin/systemMessages",
           method: "GET",
           params: {
-            pageSize: Number(payload.pageSize ?? 25),
-            pageIndex: Number(payload.pageIndex ?? 0),
-            orderBy: "-initDate",
-            ...payload
+            ...payload,
+            pageSize,
+            pageIndex: fetchPageIndex,
+            orderByField: "-initDate"
           }
         });
 
         if(response.data?.systemMessagesCount) {
-          this.systemMessages = response.data.systemMessages;
+          if (isReversed) {
+            this.systemMessages = response.data.systemMessages.reverse();
+          } else {
+            this.systemMessages = response.data.systemMessages;
+          }
           this.systemMessageTotal = response.data.systemMessagesCount;
           return;
         }
