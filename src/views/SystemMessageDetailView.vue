@@ -417,7 +417,7 @@ import {
   playOutline,
   syncOutline,
   timeOutline,
-  warningOutline,
+  warningOutline
 } from "ionicons/icons";
 import { computed, ref, watch } from "vue";
 import router from "../router";
