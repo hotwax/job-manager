@@ -72,10 +72,10 @@
               <p v-if="message.errorSummary">{{ translate("Error") }}: {{ message.errorSummary }}</p>
             </ion-label>
             <ion-button
-              v-if="message.statusId === 'SmsgSent' && message.filePath"
+              v-if="message.statusId === 'SmsgSent' && message.messageText"
               fill="clear"
               slot="end"
-              @click.stop="download(message)"
+              @click.stop="downloadDataDocumentExport(message)"
             >
               <ion-icon slot="icon-only" :icon="downloadOutline" />
             </ion-button>
@@ -118,11 +118,10 @@ import {
 } from "@ionic/vue";
 import { cloudDownloadOutline, downloadOutline } from "ionicons/icons";
 import { computed, ref, watch } from "vue";
-import { saveAs } from "file-saver";
 import { useRouter } from "vue-router";
 
 import { translate } from "@common";
-import { getDateAndTime, showToast } from "@/utils";
+import { downloadDataDocumentExport, getDateAndTime } from "@/utils";
 import { useDataDocumentStore } from "@/store/dataDocuments";
 
 const store = useDataDocumentStore();
@@ -144,15 +143,6 @@ const loadHistory = async () => {
     fromDate: fromDate.value,
     thruDate: thruDate.value
   });
-};
-
-const download = async (message: any) => {
-  try {
-    const response = await store.downloadExport(message.systemMessageId);
-    saveAs(response.data, message.fileName || `${message.systemMessageId}.csv`);
-  } catch (error) {
-    showToast(translate("Failed to download linked file."));
-  }
 };
 
 watch([selectedDocumentId, selectedStatusId, startedBy, fromDate, thruDate], loadHistory);

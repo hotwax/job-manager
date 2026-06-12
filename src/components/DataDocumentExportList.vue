@@ -26,7 +26,7 @@
         <h2>{{ message.recordCount ?? "-" }}</h2>
         <p v-if="message.startedBy">{{ translate("Started By") }}: {{ message.startedBy }}</p>
       </div>
-      <ion-button fill="clear" :disabled="!canDownload(message)" @click.stop="download(message)">
+      <ion-button fill="clear" :disabled="!canDownload(message)" @click.stop="downloadDataDocumentExport(message)">
         <ion-icon slot="icon-only" :icon="downloadOutline" />
       </ion-button>
     </ion-card>
@@ -35,14 +35,12 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonCard, IonCardContent, IonIcon, IonList, IonText } from "@ionic/vue";
+import { IonButton, IonCard, IonIcon, IonList } from "@ionic/vue";
 import { downloadOutline } from "ionicons/icons";
-import { saveAs } from "file-saver";
 import { useRouter } from "vue-router";
 
 import { translate } from "@common";
-import { useDataDocumentStore } from "@/store/dataDocuments";
-import { getDateAndTime, showToast } from "@/utils";
+import { downloadDataDocumentExport, getDateAndTime } from "@/utils";
 
 defineProps<{
   messages: Record<string, any>[];
@@ -50,28 +48,8 @@ defineProps<{
 }>();
 
 const router = useRouter();
-const dataDocumentStore = useDataDocumentStore();
 
 const canDownload = (message: any) => message.statusId === "SmsgSent" && message.messageText;
-
-function extractFilename(message: any) {
-  if(message?.messageText) {
-    const parts = message?.messageText.split("/")
-    return parts[parts.length - 1] || ""
-  }
-  return ""
-}
-
-const download = async (message: any) => {
-  try {
-    const resp = await dataDocumentStore.downloadExport(message.systemMessageId);
-    const csvData = resp?.data?.csvData;
-    const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
-    saveAs(blob, extractFilename(message) || `${message.systemMessageId}.csv`);
-  } catch (error) {
-    showToast(translate("Failed to download linked file."));
-  }
-};
 </script>
 
 <style scoped>

@@ -8,6 +8,7 @@ import {Clipboard} from "@capacitor/clipboard";
 import cronstrue from "cronstrue"
 import { useUtilStore } from "@/store/util";
 import { useUserStore } from "@/store/user";
+import { useDataDocumentStore } from "@/store/dataDocuments";
 
 const showToast = async (message: string) => {
   const toast = await toastController
@@ -114,6 +115,30 @@ const saveDataFile = async (response: any, fileName: string) => {
   saveAs(blob, fileName);
 }
 
+const extractExportFilename = (message: any) => {
+  if(message?.messageText) {
+    const parts = message.messageText.split("/")
+    return parts[parts.length - 1] || ""
+  }
+  return ""
+}
+
+// The export endpoint returns JSON shaped as { csvData: "..." }, not a file stream
+const downloadDataDocumentExport = async (message: any) => {
+  try {
+    const resp = await useDataDocumentStore().downloadExport(message.systemMessageId);
+    const csvData = resp?.data?.csvData;
+    if(!csvData) {
+      showToast(translate("Failed to download linked file."));
+      return;
+    }
+    const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
+    saveAs(blob, extractExportFilename(message) || `${message.systemMessageId}.csv`);
+  } catch (error) {
+    showToast(translate("Failed to download linked file."));
+  }
+}
+
 function getDateAndTime(time: any) {
   if (!time) return "-";
   
@@ -186,6 +211,7 @@ const redirectToLegacyApp = () => {
 }
 
 export {
+  downloadDataDocumentExport,
   getCronString,
   getDateAndTime,
   handleDateTimeInput,
