@@ -90,7 +90,7 @@
 
           <aside class="graph-inspector">
             <ion-list v-if="selectedNode">
-              <ion-item-divider>
+              <ion-item-divider color="light">
                 <ion-label>{{ translate("Entity") }}</ion-label>
               </ion-item-divider>
               <ion-item>
@@ -100,7 +100,7 @@
                   <p>{{ selectedNode.relationshipType || translate("unknown") }}</p>
                 </ion-label>
               </ion-item>
-              <ion-item-divider>
+              <ion-item-divider color="light">
                 <ion-label>{{ translate("Configure entity") }}</ion-label>
               </ion-item-divider>
               <ion-item button @click="openRelatedFieldModal">
@@ -110,7 +110,7 @@
                   <p>{{ translate("Create a related node from a relationship path.") }}</p>
                 </ion-label>
               </ion-item>
-              <ion-item-divider>
+              <ion-item-divider color="light">
                 <ion-label>{{ translate("Fields") }}</ion-label>
                 <ion-button fill="clear" slot="end" @click="openGraphFieldModal">
                   <ion-label>{{ translate("Add") }}</ion-label>
@@ -130,7 +130,7 @@
             </ion-list>
 
             <ion-list v-else-if="selectedEdge">
-              <ion-item-divider>
+              <ion-item-divider color="light">
                 <ion-label>{{ translate("Relationship") }}</ion-label>
               </ion-item-divider>
               <ion-item>
@@ -143,7 +143,7 @@
             </ion-list>
 
             <ion-list v-else-if="selectedField">
-              <ion-item-divider>
+              <ion-item-divider color="light">
                 <ion-label>{{ translate("Field") }}</ion-label>
               </ion-item-divider>
               <ion-item>
@@ -195,7 +195,7 @@
                   @ionInput="updateSelectedField({ functionName: $event.detail.value || '' })"
                 />
               </ion-item>
-              <ion-item-divider>
+              <ion-item-divider color="light">
                 <ion-label>{{ translate("Conditions") }}</ion-label>
                 <ion-button fill="clear" slot="end" @click="openConditionModal">
                   <ion-label>{{ translate("Add") }}</ion-label>
@@ -327,7 +327,7 @@
           </ion-list>
 
           <ion-list v-else-if="bottomPanel === 'usage'">
-            <ion-item-divider>
+            <ion-item-divider color="light">
               <ion-label>{{ translate("Related feeds") }}</ion-label>
             </ion-item-divider>
             <ion-item
@@ -341,7 +341,7 @@
             <ion-item v-if="!relatedFeeds.length">
               <ion-label>{{ translate("No related feeds.") }}</ion-label>
             </ion-item>
-            <ion-item-divider>
+            <ion-item-divider color="light">
               <ion-label>{{ translate("Related jobs") }}</ion-label>
             </ion-item-divider>
             <ion-item v-for="job in relatedJobs" :key="job.jobName || job.jobId">
@@ -380,20 +380,37 @@
             <ion-title>{{ translate("Select Primary Entity") }}</ion-title>
           </ion-toolbar>
           <ion-toolbar>
-            <ion-searchbar v-model="entityQueryString" :placeholder="translate('Search entities')" />
+            <ion-searchbar
+              ref="entitySearchbar"
+              v-model="entityQueryString"
+              :placeholder="translate('Search entities')"
+              role="combobox"
+              aria-expanded="true"
+              :aria-controls="entityPickerNavigation.listId"
+              :aria-activedescendant="entityPickerNavigation.activeDescendant.value"
+              @keydown="entityPickerNavigation.handleInputKeydown"
+            />
           </ion-toolbar>
         </ion-header>
         <ion-content>
-          <ion-radio-group :value="graph?.metadata.primaryEntityName" @ionChange="selectEntity($event.detail.value)">
-            <ion-list>
-              <ion-item v-for="entity in filteredEntities" :key="entity.fullEntityName">
-                <ion-radio :value="entity.fullEntityName" label-placement="end" justify="start">
-                  <ion-label>
-                    {{ entity.entityName }}
-                    <p>{{ entity.package }}</p>
-                  </ion-label>
-                </ion-radio>
-              </ion-item>
+          <ion-radio-group :value="graph?.metadata.primaryEntityName">
+            <ion-list :id="entityPickerNavigation.listId" role="listbox">
+              <template v-for="entityGroup in groupedEntities" :key="entityGroup.packageName">
+                <ion-item-divider color="light">
+                  <ion-label>{{ entityGroup.packageName }}</ion-label>
+                </ion-item-divider>
+                <ion-item
+                  v-for="entity in entityGroup.entities"
+                  :key="getEntityValue(entity)"
+                  v-bind="entityPickerNavigation.getItemAttributes(entity, getEntityKeyboardIndex(entity))"
+                  :ref="(element) => entityPickerNavigation.setItemRef(getEntityKeyboardIndex(entity), element)"
+                  button
+                  @click="selectEntity(getEntityValue(entity))"
+                  @keydown="entityPickerNavigation.handleItemKeydown($event, getEntityKeyboardIndex(entity))"
+                >
+                  <ion-radio :value="getEntityValue(entity)" label-placement="end" justify="start">{{ getEntityLabel(entity) }}</ion-radio>
+                </ion-item>
+              </template>
             </ion-list>
           </ion-radio-group>
         </ion-content>
@@ -415,7 +432,16 @@
             </ion-buttons>
           </ion-toolbar>
           <ion-toolbar>
-            <ion-searchbar v-model="fieldQueryString" :placeholder="translate('Search fields')" />
+            <ion-searchbar
+              ref="fieldSearchbar"
+              v-model="fieldQueryString"
+              :placeholder="translate('Search fields')"
+              role="combobox"
+              aria-expanded="true"
+              :aria-controls="fieldPickerNavigation.listId"
+              :aria-activedescendant="fieldPickerNavigation.activeDescendant.value"
+              @keydown="fieldPickerNavigation.handleInputKeydown"
+            />
           </ion-toolbar>
         </ion-header>
         <ion-content>
@@ -423,8 +449,16 @@
             <ion-spinner name="crescent" />
             <p>{{ translate("Fetching fields...") }}</p>
           </div>
-          <ion-list v-else>
-            <ion-item v-for="field in filteredEntityFields" :key="field.name" button @click="selectGraphField(field)">
+          <ion-list v-else :id="fieldPickerNavigation.listId" role="listbox">
+            <ion-item
+              v-for="field in filteredEntityFields"
+              :key="field.name"
+              v-bind="fieldPickerNavigation.getItemAttributes(field, getGraphFieldPickerIndex(field))"
+              :ref="(element) => fieldPickerNavigation.setItemRef(getGraphFieldPickerIndex(field), element)"
+              button
+              @click="selectGraphField(field)"
+              @keydown="fieldPickerNavigation.handleItemKeydown($event, getGraphFieldPickerIndex(field))"
+            >
               <ion-label>
                 <h2>{{ field.name }}</h2>
               </ion-label>
@@ -451,20 +485,34 @@
           <ion-progress-bar :value="relatedFieldProgress" />
           <ion-toolbar v-if="relatedFieldStep !== 'confirm'">
             <ion-searchbar
+              ref="relatedFieldSearchbar"
               v-model="relatedFieldQueryString"
               :placeholder="relatedFieldStep === 'relationship' ? translate('Search relationships') : translate('Search fields')"
+              role="combobox"
+              aria-expanded="true"
+              :aria-controls="relatedFieldPickerNavigation.listId"
+              :aria-activedescendant="relatedFieldPickerNavigation.activeDescendant.value"
+              @keydown="relatedFieldPickerNavigation.handleInputKeydown"
             />
           </ion-toolbar>
         </ion-header>
         <ion-content>
-          <ion-list v-if="relatedFieldStep === 'relationship'">
-            <ion-item-divider>
+          <ion-list v-if="relatedFieldStep === 'relationship'" :id="relatedFieldPickerNavigation.listId" role="listbox">
+            <ion-item-divider color="light">
               <ion-label>
                 {{ translate("Select related entity") }}
                 <p>{{ translate("Choose the relationship that reaches the entity you want to query.") }}</p>
               </ion-label>
             </ion-item-divider>
-            <ion-item v-for="relationship in filteredActiveEntityRelationships" :key="relationship.relationshipName" button @click="selectRelationship(relationship)">
+            <ion-item
+              v-for="relationship in filteredActiveEntityRelationships"
+              :key="relationship.relationshipName"
+              v-bind="relatedFieldPickerNavigation.getItemAttributes(getRelatedFieldPickerOption('relationship', relationship.relationshipName), getRelatedFieldPickerIndex('relationship', relationship.relationshipName))"
+              :ref="(element) => relatedFieldPickerNavigation.setItemRef(getRelatedFieldPickerIndex('relationship', relationship.relationshipName), element)"
+              button
+              @click="selectRelationship(relationship)"
+              @keydown="relatedFieldPickerNavigation.handleItemKeydown($event, getRelatedFieldPickerIndex('relationship', relationship.relationshipName))"
+            >
               <ion-label>
                 <h2>{{ relationship.title || relationship.relationshipName }}</h2>
                 <p>{{ relationship.relationshipName }}</p>
@@ -480,7 +528,7 @@
           </ion-list>
 
           <ion-list v-else-if="relatedFieldStep === 'confirm'">
-            <ion-item-divider>
+            <ion-item-divider color="light">
               <ion-label>
                 {{ translate("Confirm relationship") }}
                 <p>{{ translate("Review the target entity and generated path before choosing fields.") }}</p>
@@ -545,14 +593,22 @@
                 <p>{{ relatedRelationshipPath }}</p>
               </ion-label>
             </ion-item>
-            <ion-list>
-            <ion-item-divider>
+            <ion-list :id="relatedFieldPickerNavigation.listId" role="listbox">
+            <ion-item-divider color="light">
               <ion-label>
                 {{ translate("Choose one field") }}
                 <p>{{ translate("Selecting a field adds it to the data document and closes this modal.") }}</p>
               </ion-label>
             </ion-item-divider>
-            <ion-item v-for="field in filteredRelatedEntityFields" :key="field.fieldName" button @click="selectRelatedGraphField(field)">
+            <ion-item
+              v-for="field in filteredRelatedEntityFields"
+              :key="field.fieldName"
+              v-bind="relatedFieldPickerNavigation.getItemAttributes(getRelatedFieldPickerOption('field', field.fieldName), getRelatedFieldPickerIndex('field', field.fieldName))"
+              :ref="(element) => relatedFieldPickerNavigation.setItemRef(getRelatedFieldPickerIndex('field', field.fieldName), element)"
+              button
+              @click="selectRelatedGraphField(field)"
+              @keydown="relatedFieldPickerNavigation.handleItemKeydown($event, getRelatedFieldPickerIndex('field', field.fieldName))"
+            >
               <ion-label>
                 <h2>{{ field.fieldName }}</h2>
                 <p>{{ [relatedRelationshipPath, field.fieldName].filter(Boolean).join(":") }}</p>
@@ -602,7 +658,24 @@
               </ion-select>
             </ion-item>
             <ion-item>
+              <ion-select
+                v-if="activeConditionValueOptions"
+                v-model="activeCondition.fieldValue"
+                :label="translate('Value')"
+                :placeholder="activeConditionValueOptions.label || translate('Select value')"
+                label-placement="stacked"
+                interface="popover"
+              >
+                <ion-select-option
+                  v-for="option in activeConditionValueOptions.options"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </ion-select-option>
+              </ion-select>
               <ion-input
+                v-else
                 v-model="activeCondition.fieldValue"
                 :label="translate('Value')"
                 label-placement="stacked"
@@ -733,7 +806,10 @@ import DataDocumentExportList from "@/components/DataDocumentExportList.vue";
 import { showToast } from "@/utils";
 import { useUtilStore } from "@/store/util";
 import type { GraphCondition, GraphEdge, GraphField } from "@/utils/dataDocumentGraph";
-import { EntityInfo } from "@/types";
+import { getConditionValueOptionSource } from "@/utils/conditionValueOptions";
+import { getEntityLabel, getEntitySearchText, getEntityValue, groupEntityOptions } from "@/utils/entityOptions";
+import type { EntityOption } from "@/utils/entityOptions";
+import { useKeyboardListNavigation } from "@/utils/keyboardListNavigation";
 
 const route = router.currentRoute.value;
 const graphStore = useDataDocumentGraphStore();
@@ -745,10 +821,13 @@ const selectedFields = ref<string[]>([]);
 const bottomPanel = ref("issues");
 const pageSize = ref(25);
 const entityModal = ref();
+const entitySearchbar = ref();
 const entityQueryString = ref("");
 const fieldModal = ref();
+const fieldSearchbar = ref();
 const fieldQueryString = ref("");
 const relatedFieldModal = ref();
+const relatedFieldSearchbar = ref();
 const advancedMetadataModal = ref();
 const conditionModal = ref();
 const relatedFieldQueryString = ref("");
@@ -842,11 +921,24 @@ const selectedField = computed(() => selectedTarget.value.kind === "field"
   : undefined);
 const selectedNodeFields = computed(() => graph.value?.fields.filter((field) => field.nodeId === selectedNode.value?.nodeId) || []);
 const selectedFieldConditions = computed(() => selectedField.value ? getConditionsForField(selectedField.value) : []);
-const entities = computed(() => utilStore.getEntities);
+const entities = computed<EntityOption[]>(() => utilStore.getEntities);
 const filteredEntities = computed(() => {
   const query = entityQueryString.value.trim().toLowerCase();
   if(!query) return entities.value;
-  return entities.value.filter((entity: EntityInfo) => entity.fullEntityName.toLowerCase().includes(query));
+  return entities.value.filter((entity) => getEntitySearchText(entity).includes(query));
+});
+const groupedEntities = computed(() => groupEntityOptions(filteredEntities.value));
+const entityKeyboardItems = computed(() => groupedEntities.value.flatMap((entityGroup) => entityGroup.entities));
+const getSafeDomId = (value: string) => value.replace(/[^A-Za-z0-9_-]/g, "-");
+const getEntityKeyboardIndex = (entity: EntityOption) => entityKeyboardItems.value.findIndex((item) => (
+  getEntityValue(item) === getEntityValue(entity)
+));
+const entityPickerNavigation = useKeyboardListNavigation<EntityOption>({
+  items: entityKeyboardItems,
+  inputRef: entitySearchbar,
+  listId: "data-document-graph-entity-picker",
+  getItemId: (entity) => `data-document-graph-entity-option-${getSafeDomId(getEntityValue(entity))}`,
+  onSelect: (entity) => selectEntity(getEntityValue(entity))
 });
 const activeFieldEntityName = computed(() => selectedNode.value?.entityName || graph.value?.metadata.primaryEntityName || "");
 const entityFields = computed(() => activeFieldEntityName.value ? utilStore.getEntityFields(activeFieldEntityName.value) : []);
@@ -855,6 +947,14 @@ const filteredEntityFields = computed(() => {
   console.log('entityFields', entityFields.value)
   if (!query) return entityFields.value;
   return entityFields.value.filter((field: any) => field.name.toLowerCase().includes(query));
+});
+const getGraphFieldPickerIndex = (field: any) => filteredEntityFields.value.findIndex((item: any) => item.name === field.name);
+const fieldPickerNavigation = useKeyboardListNavigation<any>({
+  items: filteredEntityFields,
+  inputRef: fieldSearchbar,
+  listId: "data-document-graph-field-picker",
+  getItemId: (field) => `data-document-graph-field-option-${getSafeDomId(field.name)}`,
+  onSelect: (field) => selectGraphField(field)
 });
 const relatedEntityFields = computed(() => relatedEntityName.value ? utilStore.getEntityFields(relatedEntityName.value) : []);
 const activeRelationshipEntityName = computed(() => selectedNode.value?.entityName || graph.value?.metadata.primaryEntityName || "");
@@ -876,6 +976,53 @@ const filteredRelatedEntityFields = computed(() => {
     field.fieldName.toLowerCase().includes(query) ||
     field.description?.toLowerCase().includes(query)
   ));
+});
+type RelatedFieldPickerOption = {
+  kind: "relationship" | "field";
+  key: string;
+  item: any;
+};
+
+const relatedFieldPickerItems = computed<RelatedFieldPickerOption[]>(() => {
+  if (relatedFieldStep.value === "relationship") {
+    return filteredActiveEntityRelationships.value.map((relationship: any) => ({
+      kind: "relationship" as const,
+      key: relationship.relationshipName,
+      item: relationship
+    }));
+  }
+
+  if (relatedFieldStep.value === "fields") {
+    return filteredRelatedEntityFields.value.map((field: any) => ({
+      kind: "field" as const,
+      key: field.fieldName,
+      item: field
+    }));
+  }
+
+  return [];
+});
+
+const getRelatedFieldPickerIndex = (kind: RelatedFieldPickerOption["kind"], key: string) => relatedFieldPickerItems.value.findIndex((option) => (
+  option.kind === kind && option.key === key
+));
+
+const getRelatedFieldPickerOption = (kind: RelatedFieldPickerOption["kind"], key: string) => {
+  return relatedFieldPickerItems.value.find((option) => option.kind === kind && option.key === key) || { kind, key, item: {} };
+};
+
+const relatedFieldPickerNavigation = useKeyboardListNavigation<RelatedFieldPickerOption>({
+  items: relatedFieldPickerItems,
+  inputRef: relatedFieldSearchbar,
+  listId: "data-document-graph-related-field-picker",
+  getItemId: (option) => `data-document-graph-related-field-option-${option.kind}-${getSafeDomId(option.key)}`,
+  onSelect: (option) => {
+    if (option.kind === "relationship") {
+      selectRelationship(option.item);
+    } else {
+      selectRelatedGraphField(option.item);
+    }
+  }
 });
 const selectedRelationshipJoinSummary = computed(() => {
   const keyMaps = selectedRelationship.value?.keyMaps || [];
@@ -938,6 +1085,59 @@ const getConditionsForField = (field: GraphField) => {
   )) || [];
 };
 
+const getConditionField = (condition: any) => graph.value?.fields.find((field) => (
+  field.fieldSeqId === condition.targetId ||
+  field.fieldPath === condition.targetId ||
+  field.outputName === condition.fieldNameAlias ||
+  field.fieldNameAlias === condition.fieldNameAlias ||
+  field.fieldName === condition.fieldNameAlias ||
+  field.fieldPath === condition.fieldNameAlias
+));
+
+const getRelationshipSegments = (fieldPath: string) => {
+  const segments = String(fieldPath || "").split(":");
+  segments.pop();
+  return segments.filter(Boolean);
+};
+
+const getRelationship = (entityName: string, relationshipName: string) => (
+  utilStore.getEntityRelationships(entityName).find((relationship: any) => (
+    relationship.relationshipName === relationshipName ||
+    relationship.shortAlias === relationshipName ||
+    relationship.title === relationshipName
+  ))
+);
+
+const getFieldEntityName = (field: any) => {
+  let entityName = graph.value?.metadata.primaryEntityName || "";
+  if (!entityName || !field?.fieldPath) return entityName;
+
+  for (const segment of getRelationshipSegments(field.fieldPath)) {
+    const relationship = getRelationship(entityName, segment);
+    if (!relationship?.relatedEntityName) return entityName;
+    entityName = relationship.relatedEntityName;
+  }
+
+  return entityName;
+};
+
+const getConditionValueOptions = (condition: any) => {
+  const field = getConditionField(condition);
+  const entityName = getFieldEntityName(field);
+
+  if (!field || !entityName) return undefined;
+
+  return getConditionValueOptionSource({
+    condition,
+    fields: [field],
+    relationships: utilStore.getEntityRelationships(entityName),
+    enumerations: utilStore.getEnumerations,
+    statuses: utilStore.getStatuses
+  });
+};
+
+const activeConditionValueOptions = computed(() => getConditionValueOptions(activeCondition.value));
+
 const openCondition = (condition: any) => {
   activeCondition.value = condition;
   conditionModal.value.$el.present();
@@ -954,6 +1154,7 @@ const updateMetadata = (field: string, value: any) => {
 
 const openEntityModal = async () => {
   entityQueryString.value = "";
+  entityPickerNavigation.resetNavigation();
   await utilStore.fetchEntities();
   entityModal.value.$el.present();
 };
@@ -971,6 +1172,7 @@ const closeEntityModal = () => {
 
 const openGraphFieldModal = async () => {
   fieldQueryString.value = "";
+  fieldPickerNavigation.resetNavigation();
   if(selectedNode.value?.entityName) {
     await utilStore.fetchEntityFields(selectedNode.value?.entityName);
   }
@@ -998,6 +1200,7 @@ const closeFieldModal = () => {
 const openRelatedFieldModal = async () => {
   relatedFieldQueryString.value = "";
   relatedFieldStep.value = "relationship";
+  relatedFieldPickerNavigation.resetNavigation();
   relatedRelationshipPath.value = selectedNode.value?.relationshipPath.join(":") || "";
   relatedEntityName.value = "";
   selectedRelationship.value = undefined;
@@ -1014,6 +1217,7 @@ const selectRelationship = async (relationship: any) => {
   relatedEntityName.value = relationship.relatedEntityName || "";
   relatedFieldQueryString.value = "";
   relatedFieldStep.value = "confirm";
+  relatedFieldPickerNavigation.resetNavigation();
 };
 
 const confirmRelatedFieldPath = async () => {
@@ -1022,6 +1226,7 @@ const confirmRelatedFieldPath = async () => {
   }
   relatedFieldQueryString.value = "";
   relatedFieldStep.value = "fields";
+  relatedFieldPickerNavigation.resetNavigation();
 };
 
 const fetchRelatedEntityFields = () => {
@@ -1137,11 +1342,28 @@ watch(graph, (currentGraph) => {
     .map((field) => field.outputName);
 }, { immediate: true });
 
+watch(entityQueryString, () => {
+  entityPickerNavigation.resetNavigation();
+});
+
+watch([fieldQueryString, activeFieldEntityName], () => {
+  fieldPickerNavigation.resetNavigation();
+});
+
+watch([relatedFieldQueryString, relatedFieldStep, relatedEntityName, activeRelationshipEntityName], () => {
+  relatedFieldPickerNavigation.resetNavigation();
+});
+
 onIonViewWillEnter(async () => {
+  utilStore.fetchEnumerations();
+  utilStore.fetchStatuses();
   if(isNew.value) {
     graphStore.startNewGraph();
   } else {
     await graphStore.fetchGraph(route.params.id as string);
+    if (graph.value?.metadata.primaryEntityName) {
+      await utilStore.fetchEntityFields(graph.value.metadata.primaryEntityName);
+    }
   }
 });
 </script>

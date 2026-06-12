@@ -17,6 +17,7 @@ export type DataDocumentFieldRecord = Record<string, any> & {
 export type DataDocumentConditionRecord = Record<string, any> & {
   dataDocumentId?: string;
   conditionSeqId?: string;
+  localId?: string;
   fieldNameAlias?: string;
   operator?: string;
   value?: string;
@@ -93,6 +94,7 @@ export type GraphField = {
 export type GraphCondition = {
   dataDocumentId: string;
   conditionSeqId?: string;
+  localId?: string;
   targetKind: "field" | "edge" | "document";
   targetId?: string;
   fieldNameAlias: string;
@@ -408,6 +410,7 @@ export const projectDataDocumentGraph = ({
     const graphCondition: GraphCondition = {
       dataDocumentId,
       conditionSeqId: condition.conditionSeqId,
+      localId: condition.localId,
       targetKind: targetField ? "field" : "document",
       targetId: targetField?.fieldSeqId,
       fieldNameAlias,

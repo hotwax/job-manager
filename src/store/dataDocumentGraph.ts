@@ -38,6 +38,22 @@ const stripGraphFields = (payload: Record<string, any>) => {
   return apiPayload;
 };
 
+const NEW_FIELD_PLACEHOLDER = "newField";
+
+const getTerminalFieldName = (fieldPath?: string) => String(fieldPath || "").split(":").pop() || "";
+
+const shouldDefaultFieldAlias = (field: DataDocumentFieldRecord, patch: Record<string, any>) => {
+  if (!("fieldPath" in patch) || "fieldNameAlias" in patch) return false;
+
+  const nextFieldName = getTerminalFieldName(patch.fieldPath);
+  if (!nextFieldName) return false;
+
+  const currentFieldName = getTerminalFieldName(field.fieldPath) || NEW_FIELD_PLACEHOLDER;
+  const currentAlias = String(field.fieldNameAlias || "");
+
+  return !currentAlias || currentAlias === NEW_FIELD_PLACEHOLDER || currentAlias === currentFieldName;
+};
+
 export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
   state: () => ({
     graph: undefined as DataDocumentGraph | undefined,
@@ -102,7 +118,10 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
       if (!this.graph) return;
       this.graph.fields = this.graph.fields.map((field) => {
         const matchesField = fieldSeqId ? field.fieldSeqId === fieldSeqId : field.fieldPath === fieldPath;
-        return matchesField ? { ...field, ...patch } : field;
+        const nextPatch = shouldDefaultFieldAlias(field, patch)
+          ? { ...patch, fieldNameAlias: getTerminalFieldName(patch.fieldPath) }
+          : patch;
+        return matchesField ? { ...field, ...nextPatch } : field;
       });
       this.graph = projectDataDocumentGraph({
         document: this.graph.metadata,
@@ -121,12 +140,12 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
     },
     addFieldPath(fieldPath: string, alias?: string) {
       if (!this.graph) return;
-      const fieldName = fieldPath.split(":").pop() || "newField";
+      const fieldName = getTerminalFieldName(fieldPath) || NEW_FIELD_PLACEHOLDER;
       const field: DataDocumentFieldRecord = {
         dataDocumentId: this.graph.dataDocumentId,
         fieldSeqId: `new-${Date.now()}`,
         fieldPath,
-        fieldNameAlias: alias || fieldName,
+        fieldNameAlias: alias || (fieldPath ? fieldName : ""),
         defaultDisplay: "Y",
         sortable: "N",
         functionName: "",
@@ -154,23 +173,25 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
     },
     addCondition(condition: any) {
       if (!this.graph) return undefined;
+      const conditionPayload = condition && typeof condition === "object" ? condition : {};
       this.graph = projectDataDocumentGraph({
         document: this.graph.metadata,
         fields: serializeGraphFields(this.graph),
         conditions: [...serializeGraphConditions(this.graph), {
           dataDocumentId: this.graph.dataDocumentId,
           conditionSeqId: "",
+          localId: `condition-${Date.now()}-${this.graph.conditions.length}`,
           isNew: true,
-          ...condition
+          ...conditionPayload
         }],
         relAliases: this.relAliases,
         links: this.links
       });
     },
-    updateCondition(conditionSeqId: string | undefined, patch: Record<string, any>) {
+    updateCondition(conditionId: string | undefined, patch: Record<string, any>) {
       if (!this.graph) return;
       this.graph.conditions = this.graph.conditions.map((condition) => (
-        condition.conditionSeqId === conditionSeqId ? { ...condition, ...patch } : condition
+        condition.conditionSeqId === conditionId || condition.localId === conditionId ? { ...condition, ...patch } : condition
       ));
       this.graph = projectDataDocumentGraph({
         document: this.graph.metadata,
@@ -180,12 +201,12 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
         links: this.links
       });
     },
-    removeCondition(conditionSeqId: string) {
+    removeCondition(conditionId: string) {
       if (!this.graph) return;
       this.graph = projectDataDocumentGraph({
         document: this.graph.metadata,
         fields: serializeGraphFields(this.graph),
-        conditions: serializeGraphConditions(this.graph).filter((c) => c.conditionSeqId !== conditionSeqId),
+        conditions: serializeGraphConditions(this.graph).filter((c) => c.conditionSeqId !== conditionId && c.localId !== conditionId),
         relAliases: this.relAliases,
         links: this.links
       });

@@ -3,9 +3,30 @@ import { api, commonUtil, translate } from "@common";
 import logger from "@/logger";
 import { EntityInfo, StatusItem, StatusItemAndType } from "@/types";
 
+export const normalizeEntityField = (field: any) => {
+  if (typeof field === "string") {
+    return {
+      name: field,
+      fieldName: field,
+      description: ""
+    };
+  }
+
+  const fieldName = field.fieldName || field.name || "";
+
+  return {
+    ...field,
+    name: field.name || fieldName,
+    fieldName,
+    description: field.description || ""
+  };
+};
+
 export const useUtilStore = defineStore("util", {
   state: () => ({
     statusItems: {} as Record<string, StatusItemAndType>,
+    enumerations: [] as any[],
+    statuses: [] as any[],
     statusFlowTransitions: [] as any,
     entities: [] as Array<EntityInfo>,
     entityFields: {} as Record<string, any[]>,
@@ -14,7 +35,9 @@ export const useUtilStore = defineStore("util", {
       statusFlowTransitions: 'none',
       entities: 'none',
       entityFields: 'none',
-      entityRelationships: 'none'
+      entityRelationships: 'none',
+      enumerations: 'none',
+      statuses: 'none'
     } as any,
     systemInformation: {} as any
   }),
@@ -32,7 +55,9 @@ export const useUtilStore = defineStore("util", {
       }));
     },
     getEntities: (state: any) => state.entities,
-    getEntityFields: (state: any) => (entityName: string) => state.entityFields[entityName] || [],
+    getEnumerations: (state: any) => state.enumerations,
+    getStatuses: (state: any) => state.statuses,
+    getEntityFields: (state: any) => (entityName: string) => (state.entityFields[entityName] || []).map(normalizeEntityField),
     getEntityRelationships: (state: any) => (entityName: string) => state.entityRelationships[entityName] || [],
     getFetchStatus: (state: any) => state.fetchStatus
   },
@@ -122,7 +147,12 @@ export const useUtilStore = defineStore("util", {
       }
     },
     async fetchEntityFields(entityName: string, force = false) {
-      if (!force && this.entityFields[entityName]?.length && typeof this.entityFields[entityName][0] === 'object') return;
+      if (
+        !force &&
+        this.entityFields[entityName]?.length &&
+        this.entityRelationships[entityName]?.length &&
+        typeof this.entityFields[entityName][0] === 'object'
+      ) return;
       this.fetchStatus.entityFields = 'pending'
 
       try {
@@ -131,7 +161,13 @@ export const useUtilStore = defineStore("util", {
           method: "GET"
         });
         if (resp.data?.entityDefinition?.fields) {
-          this.entityFields[entityName] = resp.data.entityDefinition.fields.sort((a: any, b: any) => a.name.localeCompare(b.name));
+          this.entityFields[entityName] = resp.data.entityDefinition.fields
+            .map(normalizeEntityField)
+            .sort((a: any, b: any) => a.fieldName.localeCompare(b.fieldName));
+          if (resp.data.entityDefinition.relationships) {
+            this.entityRelationships[entityName] = resp.data.entityDefinition.relationships
+              .sort((a: any, b: any) => (a.relationshipName || "").localeCompare(b.relationshipName || ""));
+          }
           this.fetchStatus.entityFields = 'success'
         } else {
           throw new Error("Empty field list");
@@ -147,12 +183,17 @@ export const useUtilStore = defineStore("util", {
 
       try {
         const resp = await api({
-          url: `moqui/entity/EntityServices/getEntityRelationships`,
-          method: "GET",
-          params: { entityName }
+          url: `admin/entities/${entityName}/definition`,
+          method: "GET"
         });
-        if (resp.data.relationships) {
-          this.entityRelationships[entityName] = resp.data.relationships.sort((a: any, b: any) => (a.relationshipName || "").localeCompare(b.relationshipName || ""));
+        if (resp.data?.entityDefinition?.relationships) {
+          this.entityRelationships[entityName] = resp.data.entityDefinition.relationships
+            .sort((a: any, b: any) => (a.relationshipName || "").localeCompare(b.relationshipName || ""));
+          if (resp.data.entityDefinition.fields && !this.entityFields[entityName]?.length) {
+            this.entityFields[entityName] = resp.data.entityDefinition.fields
+              .map(normalizeEntityField)
+              .sort((a: any, b: any) => a.fieldName.localeCompare(b.fieldName));
+          }
           this.fetchStatus.entityRelationships = 'success'
         } else {
           throw new Error("Empty relationship list");
@@ -160,6 +201,44 @@ export const useUtilStore = defineStore("util", {
       } catch (error) {
         logger.error(`Failed to fetch relationships for entity ${entityName}`, error);
         this.fetchStatus.entityRelationships = 'error'
+      }
+    },
+    async fetchEnumerations(force = false) {
+      if (this.enumerations.length && !force) return;
+      this.fetchStatus.enumerations = 'pending'
+
+      try {
+        const resp = await api({
+          url: "admin/enums",
+          method: "GET",
+          params: {
+            pageSize: 5000
+          }
+        });
+        this.enumerations = Array.isArray(resp.data) ? resp.data : [];
+        this.fetchStatus.enumerations = 'success'
+      } catch(error: any) {
+        logger.error("Failed to fetch enumerations", error);
+        this.fetchStatus.enumerations = 'error'
+      }
+    },
+    async fetchStatuses(force = false) {
+      if (this.statuses.length && !force) return;
+      this.fetchStatus.statuses = 'pending'
+
+      try {
+        const resp = await api({
+          url: "admin/status",
+          method: "GET",
+          params: {
+            pageSize: 5000
+          }
+        });
+        this.statuses = Array.isArray(resp.data) ? resp.data : [];
+        this.fetchStatus.statuses = 'success'
+      } catch(error: any) {
+        logger.error("Failed to fetch statuses", error);
+        this.fetchStatus.statuses = 'error'
       }
     },
     async fetchSystemInformation() {
