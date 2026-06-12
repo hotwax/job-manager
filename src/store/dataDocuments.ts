@@ -1,4 +1,5 @@
 import { api } from "@common";
+import { DateTime } from "luxon";
 import { defineStore } from "pinia";
 
 import logger from "@/logger";
@@ -37,6 +38,16 @@ const getEntity = (response: any) => {
 };
 
 const matchesQuery = (value: any, query: string) => String(value || "").toLowerCase().includes(query);
+
+// initDate comes back as epoch millis or a date string depending on the instance
+const toMillis = (time: any) => {
+  if (!time) return 0;
+  if (typeof time === "number") return time;
+  let dt = DateTime.fromFormat(time, "yyyy-MM-dd HH:mm:ss.SSS");
+  if (!dt.isValid) dt = DateTime.fromSQL(time);
+  if (!dt.isValid) dt = DateTime.fromISO(time);
+  return dt.isValid ? dt.toMillis() : 0;
+};
 
 const filterDocumentsForCatalog = (documents: any[], payload: Record<string, any> = {}) => {
   const query = String(payload.queryString || "").trim().toLowerCase();
@@ -199,10 +210,14 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
     async fetchDataDocuments(payload: Record<string, any> = {}) {
       this.loading = true;
       try {
+        const params = Object.entries(payload).reduce((params: Record<string, any>, [key, value]) => {
+          if(value !== "" && value !== undefined && value !== null) params[key] = value;
+          return params;
+        }, {});
         const response = await api({
           url: "admin/dataDocuments",
           method: "GET",
-          params: payload
+          params
         });
         this.dataDocuments = response.data?.dataDocuments;
         this.total = response.data?.dataDocumentsCount;
@@ -287,7 +302,7 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
         this.loading = false;
       }
 
-      await this.fetchExportHistory(dataDocumentId)
+      await this.fetchExportHistory({ dataDocumentId })
 
       return this.currentDocument;
     },
@@ -392,23 +407,46 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
         throw error;
       }
     },
-    async fetchExportHistory(dataDocumentId: string) {
+    async fetchExportHistory(payload: Record<string, any> = {}) {
       this.loading = true;
       this.exportHistory = [];
+
+      const params: Record<string, any> = {
+        systemMessageTypeId: "ExportDocumentData",
+        orderBy: "-initDate",
+        pageSize: 500
+      };
+      if(payload.statusId) {
+        params.statusId = payload.statusId;
+      }
+
       try {
         const response = await api({
           url: "admin/systemMessages",
           method: "GET",
-          params: {
-            systemMessageTypeId: "ExportDocumentData",
-            pageSize: 500
-          }
+          params
         });
-        if(dataDocumentId) {
-          this.exportHistory = response.data.systemMessages?.filter((message: any) => message.messageText.includes(dataDocumentId))
-        } else {
-          this.exportHistory = response.data.systemMessages || [];
+        // admin/systemMessages only supports statusId of the history filters, the rest are applied client-side
+        let messages = response.data.systemMessages || [];
+        if(payload.dataDocumentId) {
+          messages = messages.filter((message: any) => message.messageText?.includes(payload.dataDocumentId));
         }
+        if(payload.startedBy) {
+          const startedBy = String(payload.startedBy).toLowerCase();
+          messages = messages.filter((message: any) => matchesQuery(message.startedBy, startedBy));
+        }
+        if(payload.fromDate) {
+          const fromTime = DateTime.fromISO(payload.fromDate).startOf("day").toMillis();
+          messages = messages.filter((message: any) => toMillis(message.initDate) >= fromTime);
+        }
+        if(payload.thruDate) {
+          const thruTime = DateTime.fromISO(payload.thruDate).endOf("day").toMillis();
+          messages = messages.filter((message: any) => {
+            const initTime = toMillis(message.initDate);
+            return initTime && initTime <= thruTime;
+          });
+        }
+        this.exportHistory = messages;
       } catch (error) {
         logger.error("Failed to fetch data document export history", error);
       } finally {
