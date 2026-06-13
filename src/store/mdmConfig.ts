@@ -15,7 +15,6 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
     getConfigById: (state: any) => (configId: string) => state.configs.find((config: any) => config.configId === configId) || {},
     getLogs: (state: any) => state.logs,
     getLogsCount: (state: any) => state.logsCount,
-    islogsScrollable: (state: any) => state.logs?.length > 0 && state.logs?.length < state.logsCount,
     getAppliedFilters: (state: any) => JSON.parse(JSON.stringify(state.filters)),
     getGlobalStats: (state: any) => state.globalStats
   },
@@ -120,6 +119,24 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
         return null
       } catch (err) {
         logger.error(`Failed to fetch log with id ${logId}`, err)
+        return null
+      }
+    },
+    async fetchDataManagerFileContent(configId: string, logContentId: string) {
+      try {
+        const resp = await api({
+          url: "admin/dataManager/downloadDataManagerFile",
+          method: "GET",
+          params: { configId, logContentId }
+        })
+        // The endpoint returns the file payload wrapped as { csvData }. A bare {} means
+        // no downloadable content is stored for this log content id.
+        const content = resp?.data?.csvData ?? resp?.data
+        if (content && typeof content === "object" && !Object.keys(content).length) return null
+        const text = typeof content === "string" ? content : JSON.stringify(content)
+        return text && text.replace(/\s/g, "") !== "{}" ? text : null
+      } catch (err) {
+        logger.error(`Failed to fetch file content for log content ${logContentId}`, err)
         return null
       }
     },
