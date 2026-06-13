@@ -175,6 +175,60 @@
             </ion-fab>
           </ion-content>
         </ion-modal>
+
+        <ion-card>
+          <ion-card-header>
+            <div class="card-header">
+              <ion-card-title>{{ translate('Data Fetch Status') }}</ion-card-title>
+              <ion-button fill="clear" @click="refreshAll()" size="small">
+                {{ translate("Refresh All") }}
+                <ion-icon slot="end" :icon="syncOutline" />
+              </ion-button>
+            </div>
+          </ion-card-header>
+          <ion-list lines="none">
+            <ion-item>
+              <ion-icon slot="start" :icon="getStatusIcon(userFetchStatus.profile)" :color="getStatusColor(userFetchStatus.profile)" />
+              <ion-label>
+                {{ translate("User Profile") }}
+                <p>{{ translate(getStatusLabel(userFetchStatus.profile)) }}</p>
+              </ion-label>
+              <ion-button slot="end" fill="clear" @click="userStore.fetchUserProfile()">
+                <ion-icon slot="icon-only" :icon="syncOutline" />
+              </ion-button>
+            </ion-item>
+            <ion-item>
+              <ion-icon slot="start" :icon="getStatusIcon(userFetchStatus.permissions)" :color="getStatusColor(userFetchStatus.permissions)" />
+              <ion-label>
+                {{ translate("Permissions") }}
+                <p>{{ translate(getStatusLabel(userFetchStatus.permissions)) }}</p>
+              </ion-label>
+              <ion-button slot="end" fill="clear" @click="userStore.fetchPermissions()">
+                <ion-icon slot="icon-only" :icon="syncOutline" />
+              </ion-button>
+            </ion-item>
+            <ion-item>
+              <ion-icon slot="start" :icon="getStatusIcon(utilFetchStatus.entities)" :color="getStatusColor(utilFetchStatus.entities)" />
+              <ion-label>
+                {{ translate("Entities") }}
+                <p>{{ translate(getStatusLabel(utilFetchStatus.entities)) }}</p>
+              </ion-label>
+              <ion-button slot="end" fill="clear" @click="utilStore.fetchEntities(true)">
+                <ion-icon slot="icon-only" :icon="syncOutline" />
+              </ion-button>
+            </ion-item>
+            <ion-item>
+              <ion-icon slot="start" :icon="getStatusIcon(utilFetchStatus.statusFlowTransitions)" :color="getStatusColor(utilFetchStatus.statusFlowTransitions)" />
+              <ion-label>
+                {{ translate("Status Transitions") }}
+                <p>{{ translate(getStatusLabel(utilFetchStatus.statusFlowTransitions)) }}</p>
+              </ion-label>
+              <ion-button slot="end" fill="clear" @click="utilStore.fetchStatusFlowTransitions()">
+                <ion-icon slot="icon-only" :icon="syncOutline" />
+              </ion-button>
+            </ion-item>
+          </ion-list>
+        </ion-card>
       </section>
     </ion-content>
   </ion-page>
@@ -183,17 +237,54 @@
 <script setup lang="ts">
 import { IonAvatar, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonContent, IonHeader, IonIcon, IonItem, IonMenuButton, IonPage, IonSelect, IonSelectOption, IonTitle, IonToolbar, IonModal, IonFab, IonFabButton, IonRadioGroup, IonSpinner, IonList, IonListHeader, IonRadio, IonSearchbar, IonLabel } from '@ionic/vue';
 import { computed, onBeforeMount, ref } from 'vue';
-import { closeOutline, openOutline, saveOutline } from 'ionicons/icons'
+import { closeOutline, openOutline, saveOutline, checkmarkCircle, closeCircle, syncOutline } from 'ionicons/icons'
+import router from '@/router';
 import { useUserStore } from '@/store/user';
+import { useUtilStore } from '@/store/util';
 import Image from '@/components/Image.vue'
 import { cookieHelper, commonUtil, translate } from '@common';
 import { useAuth } from '@common/composables/useAuth';
 import { DateTime } from 'luxon';
 
 const userStore = useUserStore();
+const utilStore = useUtilStore();
 const userProfile = computed(() => userStore.getUserProfile)
 const currentProductStore = userStore.getCurrentProductStore
 const hasPermission = computed(() => (permissionId: string) =>  userStore.hasPermission(permissionId));
+
+const userFetchStatus = computed(() => userStore.getFetchStatus)
+const utilFetchStatus = computed(() => utilStore.getFetchStatus)
+
+const getStatusIcon = (status: string) => {
+  switch (status) {
+    case 'success': return checkmarkCircle;
+    case 'error': return closeCircle;
+    case 'pending': return syncOutline;
+    default: return syncOutline;
+  }
+}
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'success': return 'success';
+    case 'error': return 'danger';
+    case 'pending': return 'warning';
+    default: return 'medium';
+  }
+}
+
+const getStatusLabel = (status: string) => {
+  switch (status) {
+    case 'success': return 'Fetched';
+    case 'error': return 'Failed';
+    case 'pending': return 'Fetching';
+    default: return 'Not Fetched';
+  }
+}
+
+const refreshAll = () => {
+  userStore.postLogin();
+}
 
 const appInfo = (import.meta.env.VITE_APP_VERSION_INFO ? JSON.parse(import.meta.env.VITE_APP_VERSION_INFO) : {}) as any;
 const appVersion = appInfo.branch ? (appInfo.branch + "-" + appInfo.revision) : appInfo.tag;
@@ -327,5 +418,11 @@ function clearSearch() {
     justify-content: space-between;
     align-items: center;
     padding: var(--spacer-xs) 10px 0px;
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
 </style>

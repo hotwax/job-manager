@@ -18,3 +18,11 @@ export interface StatusType {
 }
 
 export interface StatusItemAndType extends StatusItem, StatusType {}
+
+export interface EntityInfo {
+  entityName: string
+  package: string
+  isView: string
+  fullEntityName: string
+  tableName: string
+}

@@ -1,0 +1,250 @@
+import { api } from "@common";
+import { defineStore } from "pinia";
+
+import logger from "@/logger";
+import { useDataDocumentStore } from "@/store/dataDocuments";
+import {
+  DataDocumentGraph,
+  DataDocumentConditionRecord,
+  DataDocumentFieldRecord,
+  projectDataDocumentGraph,
+  serializeGraphConditions,
+  serializeGraphFields
+} from "@/utils/dataDocumentGraph";
+
+const getCollection = (response: any, fallbackKey?: string) => {
+  const data = response?.data;
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.data)) return data.data;
+  if (fallbackKey && Array.isArray(data?.[fallbackKey])) return data[fallbackKey];
+  if (Array.isArray(data?.items)) return data.items;
+  if (Array.isArray(data?.list)) return data.list;
+  if (Array.isArray(data?.entityValueList)) return data.entityValueList;
+  return [];
+};
+
+const getEntity = (response: any) => {
+  const data = response?.data;
+  if (Array.isArray(data)) return data[0];
+  if (data?.entity && typeof data.entity === "object") return data.entity;
+  if (data?.item && typeof data.item === "object") return data.item;
+  if (data?.data && !Array.isArray(data.data) && typeof data.data === "object") return data.data;
+  if (data && typeof data === "object") return data;
+  return undefined;
+};
+
+const stripGraphFields = (payload: Record<string, any>) => {
+  const { nodeId, fieldName, outputName, isManualPath, targetKind, targetId, localId, isNew, ...apiPayload } = payload;
+  return apiPayload;
+};
+
+const NEW_FIELD_PLACEHOLDER = "newField";
+
+const getTerminalFieldName = (fieldPath?: string) => String(fieldPath || "").split(":").pop() || "";
+
+const shouldDefaultFieldAlias = (field: DataDocumentFieldRecord, patch: Record<string, any>) => {
+  if (!("fieldPath" in patch) || "fieldNameAlias" in patch) return false;
+
+  const nextFieldName = getTerminalFieldName(patch.fieldPath);
+  if (!nextFieldName) return false;
+
+  const currentFieldName = getTerminalFieldName(field.fieldPath) || NEW_FIELD_PLACEHOLDER;
+  const currentAlias = String(field.fieldNameAlias || "");
+
+  return !currentAlias || currentAlias === NEW_FIELD_PLACEHOLDER || currentAlias === currentFieldName;
+};
+
+export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
+  state: () => ({
+    graph: undefined as DataDocumentGraph | undefined,
+    relAliases: [] as any[],
+    links: [] as any[],
+    loading: false,
+    saving: false
+  }),
+  getters: {
+    getGraph: (state) => state.graph,
+    getLinks: (state) => state.links,
+    isLoading: (state) => state.loading,
+    isSaving: (state) => state.saving
+  },
+  actions: {
+    startNewGraph() {
+      this.relAliases = [];
+      this.links = [];
+      this.graph = projectDataDocumentGraph({
+        document: {
+          dataDocumentId: "",
+          documentName: "",
+          primaryEntityName: "",
+          documentTitle: "",
+          indexName: "",
+          manualDataServiceName: ""
+        },
+        fields: [],
+        conditions: [],
+        relAliases: [],
+        links: []
+      });
+    },
+    updateMetadata(patch: Record<string, any>) {
+      if (!this.graph) return;
+      this.graph = projectDataDocumentGraph({
+        document: { ...this.graph.metadata, ...patch },
+        fields: serializeGraphFields(this.graph),
+        conditions: serializeGraphConditions(this.graph),
+        relAliases: this.relAliases,
+        links: this.links
+      });
+    },
+    async fetchGraph(dataDocumentId: string) {
+      this.loading = true;
+      const dataDocumentStore = useDataDocumentStore();
+      try {
+        await dataDocumentStore.fetchDataDocument(dataDocumentId);
+        this.graph = projectDataDocumentGraph({
+          document: dataDocumentStore.getCurrentDocument,
+          fields: dataDocumentStore.getFields,
+          conditions: dataDocumentStore.getConditions,
+          relAliases: dataDocumentStore.getCurrentDocument?.relAliases || [],
+          links: dataDocumentStore.getCurrentDocument?.links || []
+        });
+      } finally {
+        this.loading = false;
+      }
+      return this.graph;
+    },
+    updateField(fieldSeqId: string | undefined, fieldPath: string, patch: Record<string, any>) {
+      if (!this.graph) return;
+      this.graph.fields = this.graph.fields.map((field) => {
+        const matchesField = fieldSeqId ? field.fieldSeqId === fieldSeqId : field.fieldPath === fieldPath;
+        const nextPatch = shouldDefaultFieldAlias(field, patch)
+          ? { ...patch, fieldNameAlias: getTerminalFieldName(patch.fieldPath) }
+          : patch;
+        return matchesField ? { ...field, ...nextPatch } : field;
+      });
+      this.graph = projectDataDocumentGraph({
+        document: this.graph.metadata,
+        fields: serializeGraphFields(this.graph),
+        conditions: serializeGraphConditions(this.graph),
+        relAliases: this.relAliases,
+        links: this.links
+      });
+    },
+    addField(nodeId: string, fieldName = "newField") {
+      if (!this.graph) return;
+      const node = this.graph.nodes.find((item) => item.nodeId === nodeId);
+      if (!node) return;
+      const fieldPath = node.relationshipPath.length ? `${node.relationshipPath.join(":")}:${fieldName}` : fieldName;
+      return this.addFieldPath(fieldPath, fieldName);
+    },
+    addFieldPath(fieldPath: string, alias?: string) {
+      if (!this.graph) return;
+      const fieldName = getTerminalFieldName(fieldPath) || NEW_FIELD_PLACEHOLDER;
+      const field: DataDocumentFieldRecord = {
+        dataDocumentId: this.graph.dataDocumentId,
+        fieldSeqId: `new-${Date.now()}`,
+        fieldPath,
+        fieldNameAlias: alias || (fieldPath ? fieldName : ""),
+        defaultDisplay: "Y",
+        sortable: "N",
+        functionName: "",
+        sequenceNum: (this.graph.fields.length + 1) * 10,
+        isNew: true
+      };
+      this.graph = projectDataDocumentGraph({
+        document: this.graph.metadata,
+        fields: [...serializeGraphFields(this.graph), field],
+        conditions: serializeGraphConditions(this.graph),
+        relAliases: this.relAliases,
+        links: this.links
+      });
+      return field;
+    },
+    removeField(fieldSeqIdOrPath: string) {
+      if (!this.graph) return;
+      this.graph = projectDataDocumentGraph({
+        document: this.graph.metadata,
+        fields: serializeGraphFields(this.graph).filter((f) => f.fieldSeqId !== fieldSeqIdOrPath && f.fieldPath !== fieldSeqIdOrPath),
+        conditions: serializeGraphConditions(this.graph),
+        relAliases: this.relAliases,
+        links: this.links
+      });
+    },
+    addCondition(condition: any) {
+      if (!this.graph) return undefined;
+      const conditionPayload = condition && typeof condition === "object" ? condition : {};
+      this.graph = projectDataDocumentGraph({
+        document: this.graph.metadata,
+        fields: serializeGraphFields(this.graph),
+        conditions: [...serializeGraphConditions(this.graph), {
+          dataDocumentId: this.graph.dataDocumentId,
+          conditionSeqId: "",
+          localId: `condition-${Date.now()}-${this.graph.conditions.length}`,
+          isNew: true,
+          ...conditionPayload
+        }],
+        relAliases: this.relAliases,
+        links: this.links
+      });
+    },
+    updateCondition(conditionId: string | undefined, patch: Record<string, any>) {
+      if (!this.graph) return;
+      this.graph.conditions = this.graph.conditions.map((condition) => (
+        condition.conditionSeqId === conditionId || condition.localId === conditionId ? { ...condition, ...patch } : condition
+      ));
+      this.graph = projectDataDocumentGraph({
+        document: this.graph.metadata,
+        fields: serializeGraphFields(this.graph),
+        conditions: serializeGraphConditions(this.graph),
+        relAliases: this.relAliases,
+        links: this.links
+      });
+    },
+    removeCondition(conditionId: string) {
+      if (!this.graph) return;
+      this.graph = projectDataDocumentGraph({
+        document: this.graph.metadata,
+        fields: serializeGraphFields(this.graph),
+        conditions: serializeGraphConditions(this.graph).filter((c) => c.conditionSeqId !== conditionId && c.localId !== conditionId),
+        relAliases: this.relAliases,
+        links: this.links
+      });
+    },
+    async saveGraph() {
+      if (!this.graph) return;
+      this.saving = true;
+      const dataDocumentStore = useDataDocumentStore();
+      console.log('this.graph', this.graph)
+      try {
+        await dataDocumentStore.saveDataDocument(this.graph.metadata);
+        console.log('serializeGraphConditions(this.graph)', serializeGraphConditions(this.graph))
+        for (const field of serializeGraphFields(this.graph)) {
+          console.log('stripGraphFields(field)', stripGraphFields(field))
+          await dataDocumentStore.saveField(this.graph.dataDocumentId, stripGraphFields(field));
+        }
+        for (const condition of serializeGraphConditions(this.graph)) {
+          await dataDocumentStore.saveCondition(this.graph.dataDocumentId, stripGraphFields(condition));
+        }
+        for (const relAlias of this.relAliases) {
+          await this.saveRelAlias(this.graph.dataDocumentId, relAlias);
+        }
+      } finally {
+        this.saving = false;
+      }
+      await this.fetchGraph(this.graph.dataDocumentId);
+    },
+    async saveRelAlias(dataDocumentId: string, relAlias: any) {
+      try {
+        const response = await api({
+          url: `admin/dataDocuments/${encodeURIComponent(dataDocumentId)}/relAliases/${encodeURIComponent(relAlias.relationshipName)}`,
+          method: relAlias.isNew ? "POST" : "PUT",
+          data: relAlias
+        });
+        return getEntity(response) || relAlias;
+      } catch (error) {
+        logger.error(`Failed to save relationship alias for ${dataDocumentId}`, error);
+      }
+    }
+  }
+});

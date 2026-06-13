@@ -36,4 +36,5 @@ npm-debug.log*
 .history
 .firebase
 .gradle
-src/mock/
+/src/mock/*
+!/src/mock/dataDocuments.ts

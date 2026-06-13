@@ -19,6 +19,14 @@ import SystemMessageRemotes from '@/views/SystemMessageRemotes.vue';
 import SystemMessageRemoteDetail from '@/views/SystemMessageRemoteDetail.vue';
 import Login from '@common/components/Login.vue';
 import { useUserStore } from '@/store/user';
+import DataDocumentCatalog from '@/views/DataDocumentCatalog.vue';
+import DataDocumentDetail from '@/views/DataDocumentDetail.vue';
+import DataDocumentBuilder from '@/views/DataDocumentBuilder.vue';
+import DataDocumentGraphBuilder from '@/views/DataDocumentGraphBuilder.vue';
+import DataDocumentQueryPreview from '@/views/DataDocumentQueryPreview.vue';
+import DataDocumentExportHistory from '@/views/DataDocumentExportHistory.vue';
+import DataDocumentFeeds from '@/views/DataDocumentFeeds.vue';
+import DataDocumentFeedDetail from '@/views/DataDocumentFeedDetail.vue';
 
 // Defining types for the meta values
 declare module 'vue-router' {
@@ -138,6 +146,92 @@ const routes: Array<RouteRecordRaw> = [
     path: '/system-message-remotes/:id',
     name: 'SystemMessageRemoteDetail',
     component: SystemMessageRemoteDetail,
+    beforeEnter: authGuard,
+    props: true
+  },
+  {
+    path: '/data-documents',
+    name: 'DataDocuments',
+    component: DataDocumentCatalog,
+    beforeEnter: authGuard
+  },
+  // {
+  //   path: '/data-document-feeds',
+  //   name: 'DataDocumentFeeds',
+  //   component: DataDocumentFeeds,
+  //   beforeEnter: authGuard
+  // },
+  // {
+  //   path: '/data-document-feeds/:id',
+  //   name: 'DataDocumentFeedDetail',
+  //   component: DataDocumentFeedDetail,
+  //   beforeEnter: authGuard,
+  //   props: true
+  // },
+  {
+    path: '/data-documents/new',
+    name: 'CreateDataDocument',
+    component: DataDocumentBuilder,
+    beforeEnter: authGuard
+  },
+  {
+    path: '/data-documents/new/graph',
+    name: 'CreateDataDocumentGraph',
+    component: DataDocumentGraphBuilder,
+    beforeEnter: authGuard
+  },
+  {
+    path: '/data-documents/:id',
+    name: 'DataDocumentDetail',
+    component: DataDocumentDetail,
+    beforeEnter: authGuard,
+    props: true
+  },
+  {
+    path: '/data-documents/:id/edit',
+    name: 'EditDataDocument',
+    component: DataDocumentBuilder,
+    beforeEnter: authGuard,
+    props: true
+  },
+  {
+    path: '/data-documents/:id/graph',
+    name: 'DataDocumentGraphBuilder',
+    component: DataDocumentGraphBuilder,
+    beforeEnter: authGuard,
+    props: true
+  },
+  {
+    path: '/data-documents/:id/run',
+    name: 'RunDataDocument',
+    component: DataDocumentQueryPreview,
+    beforeEnter: authGuard,
+    props: true
+  },
+  {
+    path: '/data-documents/:id/presets/new',
+    name: 'CreateDataDocumentPreset',
+    component: DataDocumentQueryPreview,
+    beforeEnter: authGuard,
+    props: true
+  },
+  {
+    path: '/data-documents/:id/presets/:presetId',
+    name: 'DataDocumentPreset',
+    component: DataDocumentQueryPreview,
+    beforeEnter: authGuard,
+    props: true
+  },
+  {
+    path: '/data-document-export-history',
+    name: 'DataDocumentExportHistory',
+    component: DataDocumentExportHistory,
+    beforeEnter: authGuard
+  },
+  {
+    path: '/data-document-export-history/:id',
+    name: 'DataDocumentExportDetail',
+    component: SystemMessageDetailView,
     beforeEnter: authGuard,
     props: true
   }
