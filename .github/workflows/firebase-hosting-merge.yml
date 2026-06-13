@@ -3,6 +3,7 @@ name: Deploy to Firebase Hosting on merge
   push:
     branches:
       - main
+      - JUNE-15
 jobs:
   call-workflow-in-another-repo:
     uses: hotwax/accxui/.github/workflows/common-firebase-hosting-merge.yml@main
