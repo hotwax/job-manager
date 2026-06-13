@@ -27,7 +27,9 @@
           </ion-card-content>
         </ion-card>
 
-        <div v-if="filteredFeeds.length" class="catalog-grid">
+        <ListPageSkeleton v-if="store.isLoading" />
+
+        <div v-else-if="filteredFeeds.length" class="catalog-grid">
           <div v-for="feed in filteredFeeds" :key="feed.dataFeedId">
             <ion-card>
               <ion-item lines="none" button @click="openFeed(feed)">
@@ -108,6 +110,7 @@ import { useRouter } from "vue-router";
 
 import { translate } from "@common";
 import { useDataDocumentStore } from "@/store/dataDocuments";
+import ListPageSkeleton from "@/components/ListPageSkeleton.vue";
 
 const store = useDataDocumentStore();
 const router = useRouter();

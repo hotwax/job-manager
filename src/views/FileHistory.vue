@@ -70,7 +70,22 @@
             <ion-label>{{ translate("Uploaded By") }}</ion-label>
             <ion-label>{{ translate("Uploaded") }}</ion-label>
           </div>
-          <div v-for="log in logs" :key="log.logId" class="list-item log" @click="router.push({ name: 'FileDetail', params: { id: log.logId } })">
+          <template v-if="isLoading">
+            <div v-for="index in 6" :key="index" class="list-item log">
+              <ion-label><ion-skeleton-text animated style="width: 70%" /></ion-label>
+              <ion-item lines="none" class="file-name">
+                <ion-skeleton-text animated style="width: 24px; height: 24px" slot="start" />
+                <ion-label>
+                  <ion-skeleton-text animated style="width: 80%" />
+                  <p><ion-skeleton-text animated style="width: 45%" /></p>
+                </ion-label>
+              </ion-item>
+              <ion-label><ion-skeleton-text animated style="width: 80px; height: 24px" /></ion-label>
+              <ion-label><ion-skeleton-text animated style="width: 70%" /></ion-label>
+              <ion-label><ion-skeleton-text animated style="width: 85%" /></ion-label>
+            </div>
+          </template>
+          <div v-else v-for="log in logs" :key="log.logId" class="list-item log" @click="router.push({ name: 'FileDetail', params: { id: log.logId } })">
             <ion-label>{{ log.logId }}</ion-label>
             <ion-item lines="none" class="file-name">
               <ion-icon slot="start" :icon="documentOutline" />
@@ -92,7 +107,7 @@
               <ion-icon slot="icon-only" :icon="closeOutline" />
             </ion-button>
           </div>
-          <p class="empty-state" v-if="!logs.length">{{ translate("No logs found") }}</p>
+          <p class="empty-state" v-if="!isLoading && !logs.length">{{ translate("No logs found") }}</p>
 
           <ion-infinite-scroll @ionInfinite="logMoreLogs($event)" threshold="300px" v-show="isScrollable" ref="infiniteScrollRef">
             <ion-infinite-scroll-content loading-spinner="crescent" :loading-text="translate('Loading')"/>
@@ -120,12 +135,13 @@ import {
   IonChip,
   IonInfiniteScroll,
   IonInfiniteScrollContent,
+  IonSkeletonText,
   onIonViewWillEnter,
   modalController
 } from '@ionic/vue';
 import { translate, commonUtil } from '@common';
 import { closeOutline, documentOutline, filter } from 'ionicons/icons';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import router from '@/router';
 import { useMdmConfigStore } from '@/store/mdmConfig';
 import { getFileSize } from '@/utils';
@@ -140,6 +156,7 @@ const logs = computed(() => mdmStore.getLogs)
 const isScrollable = computed(() => mdmStore.islogsScrollable)
 const appliedFilters = computed(() => mdmStore.getAppliedFilters)
 const totalAppliedFilters = computed(() => Object.values(appliedFilters.value).filter((value: any) => value.length)?.length)
+const isLoading = ref(true)
 
 async function fetchLogs(pageSize = 10, pageIndex = 0) {
   await mdmStore.fetchDataManagerLogs({ pageSize, pageIndex });
@@ -164,9 +181,14 @@ async function openFiltersModal() {
 }
 
 onIonViewWillEnter(async () => {
-  await fetchLogs();
-  useMdmConfigStore().fetchConfigs();
-  await utilStore.fetchStatusItemsByType("DataManagerLog");
+  isLoading.value = true
+  try {
+    await fetchLogs();
+    useMdmConfigStore().fetchConfigs();
+    await utilStore.fetchStatusItemsByType("DataManagerLog");
+  } finally {
+    isLoading.value = false
+  }
 })
 </script>
 

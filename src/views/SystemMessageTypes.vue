@@ -32,7 +32,9 @@
           </ion-card-content>
         </ion-card>
 
-        <div class="catalog-grid">
+        <ListPageSkeleton v-if="isLoading" />
+
+        <div v-else class="catalog-grid">
           <div v-for="type in filteredTypes" :key="type.systemMessageTypeId">
             <ion-card
               button
@@ -49,7 +51,7 @@
           </div>
         </div>
 
-        <div v-if="!filteredTypes.length" class="empty-state">
+        <div v-if="!isLoading && !filteredTypes.length" class="empty-state">
           <p>{{ translate("No message types found.") }}</p>
         </div>
       </main>
@@ -81,9 +83,11 @@ import router from "../router";
 import { translate } from "@common";
 
 import { useSystemMessageStore } from "@/store/systemMessage";
+import ListPageSkeleton from "@/components/ListPageSkeleton.vue";
 
 const store = useSystemMessageStore();
 const queryString = ref("");
+const isLoading = ref(true);
 
 const types = computed(() => store.getSystemMessageTypes);
 const filteredTypes = computed(() => {
@@ -97,7 +101,12 @@ const filteredTypes = computed(() => {
 });
 
 onIonViewWillEnter(async () => {
-  await store.fetchSystemMessageTypes();
+  isLoading.value = true;
+  try {
+    await store.fetchSystemMessageTypes();
+  } finally {
+    isLoading.value = false;
+  }
 });
 </script>
 

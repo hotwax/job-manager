@@ -1,5 +1,27 @@
 <template>
-  <ion-list v-if="messages.length">
+  <ion-list v-if="isLoading">
+    <ion-card v-for="index in 6" :key="index" class="list-item">
+      <ion-item lines="none">
+        <ion-skeleton-text animated style="width: 24px; height: 24px" slot="start" />
+        <ion-label>
+          <h2><ion-skeleton-text animated style="width: 65%" /></h2>
+          <p><ion-skeleton-text animated style="width: 85%" /></p>
+        </ion-label>
+        <ion-skeleton-text animated style="width: 36px; height: 36px" slot="end" />
+      </ion-item>
+
+      <div class="meta">
+        <p><ion-skeleton-text animated style="width: 60%" /></p>
+        <p><ion-skeleton-text animated style="width: 50%" /></p>
+        <p><ion-skeleton-text animated style="width: 45%" /></p>
+      </div>
+
+      <div class="status">
+        <ion-skeleton-text animated style="width: 80px; height: 24px" />
+      </div>
+    </ion-card>
+  </ion-list>
+  <ion-list v-else-if="messages.length">
     <ion-card
       v-for="message in messages"
       :key="message.systemMessageId"
@@ -45,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonBadge, IonButton, IonCard, IonIcon, IonItem, IonLabel, IonList } from "@ionic/vue";
+import { IonBadge, IonButton, IonCard, IonIcon, IonItem, IonLabel, IonList, IonSkeletonText } from "@ionic/vue";
 import { cloudDownloadOutline, downloadOutline } from "ionicons/icons";
 
 import { translate } from "@common";
@@ -55,6 +77,7 @@ import { downloadDataDocumentExport, getDateAndTime, getExportStatus } from "@/u
 defineProps<{
   messages: Record<string, any>[];
   emptyMessage: string;
+  isLoading?: boolean;
 }>();
 
 const canDownload = (message: any) => message.statusId === "SmsgSent" && message.messageText;

@@ -85,14 +85,13 @@
                 fill="outline"
                 @ionInput="updateField(field, { sequenceNum: Number($event.detail.value || 0) })"
               />
-              <ion-toggle
-                class="field-display"
-                :checked="field.defaultDisplay === 'Y'"
-                label-placement="stacked"
-                @ionChange="updateField(field, { defaultDisplay: $event.detail.checked ? 'Y' : 'N' })"
-              >
-                {{ translate("Display") }}
-              </ion-toggle>
+              <div class="field-display">
+                <ion-toggle
+                  :checked="field.defaultDisplay === 'Y'"
+                  @ionChange="updateField(field, { defaultDisplay: $event.detail.checked ? 'Y' : 'N' })"
+                />
+                <span class="field-display-label">{{ translate("Display") }}</span>
+              </div>
               <ion-button
                 class="field-remove-button"
                 fill="clear"
@@ -872,8 +871,8 @@ ion-card-header ion-buttons {
 }
 
 .field-selector {
-  flex: 0 0 auto;
-  max-width: 11rem;
+  flex: 0 0 10rem;
+  width: 10rem;
   margin: 0;
   cursor: pointer;
 }
@@ -893,12 +892,19 @@ ion-card-header ion-buttons {
   flex: 0 0 6rem;
 }
 
-/* "Display" label sits stacked above its toggle (label-placement="stacked"), vertically
-   aligned. Fixed basis so the toggle can't stretch to its full intrinsic width and push the
-   row into overflow. */
+/* Display = toggle on top, label below, centered. Fixed basis so the toggle can't stretch to
+   its full intrinsic width and push the row into overflow. */
 .field-display {
   flex: 0 0 6.5rem;
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.field-display-label {
+  font-size: 0.8125rem;
+  color: var(--ion-color-medium);
 }
 
 .field-remove-button {

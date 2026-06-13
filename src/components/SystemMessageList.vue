@@ -1,5 +1,23 @@
 <template>
-  <ion-list v-if="messages.length">
+  <ion-list v-if="isLoading">
+    <ion-card v-for="index in 6" :key="index" class="list-item">
+      <ion-item lines="none">
+        <ion-skeleton-text animated style="width: 24px; height: 24px" slot="start" />
+        <ion-label>
+          <ion-skeleton-text animated style="width: 70%" />
+        </ion-label>
+      </ion-item>
+      <p><ion-skeleton-text animated style="width: 45%" /></p>
+      <div>
+        <p><ion-skeleton-text animated style="width: 60%" /></p>
+        <p><ion-skeleton-text animated style="width: 50%" /></p>
+      </div>
+      <div class="status">
+        <ion-skeleton-text animated style="width: 80px; height: 24px" />
+      </div>
+    </ion-card>
+  </ion-list>
+  <ion-list v-else-if="messages.length">
     <ion-card v-for="message in messages" :key="message.systemMessageId" class="list-item"
         @click="router.push(`/system-messages/${message.systemMessageId}`)">
       <ion-item lines="none">
@@ -29,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonBadge, IonCard, IonIcon, IonItem, IonLabel, IonList } from "@ionic/vue";
+import { IonBadge, IonCard, IonIcon, IonItem, IonLabel, IonList, IonSkeletonText } from "@ionic/vue";
 import { downloadOutline, sendOutline } from "ionicons/icons";
 import { translate } from "@common";
 import { commonUtil } from "@common/utils/commonUtil"
@@ -43,10 +61,12 @@ withDefaults(defineProps<{
   emptyMessage?: string;
   showRemote?: boolean;
   showType?: boolean;
+  isLoading?: boolean;
 }>(), {
   emptyMessage: "No messages found.",
   showRemote: true,
-  showType: true
+  showType: true,
+  isLoading: false
 });
 
 const systemMessageStore = useSystemMessageStore();

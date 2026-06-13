@@ -28,7 +28,9 @@
           :placeholder="translate('Search by remote ID or description')"
         />
 
-        <div class="catalog-grid">
+        <ListPageSkeleton v-if="isLoading" />
+
+        <div v-else class="catalog-grid">
           <div v-for="remote in filteredRemotes" :key="remote.systemMessageRemoteId">
             <ion-card
               button
@@ -48,7 +50,7 @@
           </div>
         </div>
 
-        <div v-if="!filteredRemotes.length" class="empty-state">
+        <div v-if="!isLoading && !filteredRemotes.length" class="empty-state">
           <p>{{ translate("No remote systems found.") }}</p>
         </div>
       </main>
@@ -80,9 +82,11 @@ import router from "../router";
 import { translate } from "@common";
 
 import { useSystemMessageStore } from "@/store/systemMessage";
+import ListPageSkeleton from "@/components/ListPageSkeleton.vue";
 
 const systemMessageStore = useSystemMessageStore();
 const queryString = ref("");
+const isLoading = ref(true);
 
 const remotes = computed(() => systemMessageStore.getSystemMessageRemotes);
 const filteredRemotes = computed(() => {
@@ -96,7 +100,12 @@ const filteredRemotes = computed(() => {
 });
 
 onIonViewWillEnter(async () => {
-  await systemMessageStore.fetchSystemMessageRemotes();
+  isLoading.value = true;
+  try {
+    await systemMessageStore.fetchSystemMessageRemotes();
+  } finally {
+    isLoading.value = false;
+  }
   await systemMessageStore.fetchSystemMessages({ pageSize: 1 });
 });
 </script>

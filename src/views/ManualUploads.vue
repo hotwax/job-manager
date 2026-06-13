@@ -18,12 +18,7 @@
 
         <ion-searchbar v-model="queryString" @ionInput="searchConfig" :placeholder="translate('Search uploads')"></ion-searchbar>
 
-        <div class="empty-state" v-if="isLoading">
-          <ion-item lines="none">
-            <ion-spinner color="secondary" name="crescent" slot="start" />
-            {{ translate("Fetching configs") }}
-          </ion-item>
-        </div>
+        <ListPageSkeleton v-if="isLoading" />
         <div class="imports" v-else-if="importConfigs.length">
           <ion-card v-for="config in importConfigs" :key="config.configId">
             <ion-card-content>
@@ -54,11 +49,12 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { IonSpinner, IonPage, IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonCard, IonCardContent, IonIcon, IonButton, IonSearchbar, IonLabel, IonItem, onIonViewWillEnter } from '@ionic/vue';
+import { IonPage, IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonCard, IonCardContent, IonIcon, IonButton, IonSearchbar, IonLabel, IonItem, onIonViewWillEnter } from '@ionic/vue';
 import { arrowForwardOutline } from 'ionicons/icons';
 import router from '@/router';
 import { translate } from '@common';
 import { useMdmConfigStore } from '@/store/mdmConfig';
+import ListPageSkeleton from '@/components/ListPageSkeleton.vue';
 
 const queryString = ref("");
 const mdmStore = useMdmConfigStore();
@@ -68,9 +64,13 @@ let importConfigs = ref([]) as any
 let isLoading = ref(true)
 
 onIonViewWillEnter(async () => {
-  await mdmStore.fetchConfigs();
-  searchConfig()
-  isLoading.value = false
+  isLoading.value = true
+  try {
+    await mdmStore.fetchConfigs();
+    searchConfig()
+  } finally {
+    isLoading.value = false
+  }
 })
 
 const startImport = (typeId: string) => {

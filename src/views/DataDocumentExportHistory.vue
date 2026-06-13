@@ -80,7 +80,7 @@
           </ion-card-content>
         </ion-card>
 
-        <div class="pagination" v-if="filteredMessages.length">
+        <div class="pagination" v-if="!isLoading && filteredMessages.length">
           <ion-button fill="outline" :disabled="pageIndex === 0" @click="pageIndex -= 1">
             {{ translate("Previous") }}
           </ion-button>
@@ -93,6 +93,7 @@
         <DataDocumentExportList
           :messages="pagedMessages"
           :empty-message="translate('No data document exports found.')"
+          :is-loading="isLoading"
         />
       </main>
     </ion-content>
@@ -134,6 +135,7 @@ const fromDate = ref("");
 const thruDate = ref("");
 const queryString = ref("");
 const pageIndex = ref(0);
+const isLoading = ref(true);
 
 const documents = computed(() => store.getDataDocuments);
 const messages = computed(() => store.getExportHistory);
@@ -155,12 +157,17 @@ const pageCount = computed(() => Math.max(Math.ceil(filteredMessages.value.lengt
 const pagedMessages = computed(() => filteredMessages.value.slice(pageIndex.value * PAGE_SIZE, (pageIndex.value + 1) * PAGE_SIZE));
 
 const loadHistory = async () => {
-  await store.fetchExportHistory({
-    dataDocumentId: selectedDocumentId.value,
-    startedBy: startedBy.value.trim(),
-    fromDate: fromDate.value,
-    thruDate: thruDate.value
-  });
+  isLoading.value = true;
+  try {
+    await store.fetchExportHistory({
+      dataDocumentId: selectedDocumentId.value,
+      startedBy: startedBy.value.trim(),
+      fromDate: fromDate.value,
+      thruDate: thruDate.value
+    });
+  } finally {
+    isLoading.value = false;
+  }
 };
 
 // Server-side filters refetch; all filter/search changes reset to the first page.
@@ -178,6 +185,7 @@ watch(pageCount, (count) => {
 });
 
 onIonViewWillEnter(async () => {
+  isLoading.value = true;
   await store.fetchDataDocuments();
   await loadHistory();
 });

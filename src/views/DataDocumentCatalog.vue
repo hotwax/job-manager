@@ -61,7 +61,9 @@
           </ion-card-content>
         </ion-card>
 
-        <div v-if="documents.length" class="catalog-grid">
+        <ListPageSkeleton v-if="dataDocumentStore.isLoading" />
+
+        <div v-else-if="documents.length" class="catalog-grid">
           <div v-for="document in documents" :key="document.dataDocumentId">
             <ion-card>
               <ion-item lines="none" detail button @click="router.push(`/data-documents/${document.dataDocumentId}/graph`)">
@@ -145,6 +147,7 @@ import router from "../router"
 
 import { translate } from "@common";
 import { useDataDocumentStore } from "@/store/dataDocuments";
+import ListPageSkeleton from "@/components/ListPageSkeleton.vue";
 
 const dataDocumentStore = useDataDocumentStore();
 const queryString = ref("");

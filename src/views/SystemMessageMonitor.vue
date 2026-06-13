@@ -109,6 +109,7 @@
         <SystemMessageList
           :messages="messages"
           :empty-message="translate('No system messages found for the selected filters.')"
+          :is-loading="isLoadingMessages"
         />
       </main>
     </ion-content>
@@ -150,6 +151,7 @@ const selectedTypeId = ref("");
 const selectedParentTypeId = ref("");
 const selectedRemoteId = ref("");
 const pageIndex = ref(0);
+const isLoadingMessages = ref(true);
 
 const messages = computed(() => store.getSystemMessages);
 const total = computed(() => store.getSystemMessageTotal);
@@ -165,32 +167,37 @@ const filteredTypes = computed(() => {
 });
 
 const loadMessages = async () => {
-  const payload = {
-    pageIndex: pageIndex.value,
-    pageSize: PAGE_SIZE,
-  } as Record<string, any>
+  isLoadingMessages.value = true;
+  try {
+    const payload = {
+      pageIndex: pageIndex.value,
+      pageSize: PAGE_SIZE,
+    } as Record<string, any>
 
-  if(queryString.value.trim()) {
-    payload["queryString"] = queryString.value.trim()
+    if(queryString.value.trim()) {
+      payload["queryString"] = queryString.value.trim()
+    }
+
+    if(selectedStatusId.value) {
+      payload["statusId"] = selectedStatusId.value
+    }
+
+    if(selectedTypeId.value) {
+      payload["systemMessageTypeId"] = selectedTypeId.value
+    }
+
+    if(selectedParentTypeId.value) {
+      payload["parentTypeId"] = selectedParentTypeId.value
+    }
+
+    if(selectedRemoteId.value) {
+      payload["systemMessageRemoteId"] = selectedRemoteId.value
+    }
+
+    await store.fetchSystemMessages(payload);
+  } finally {
+    isLoadingMessages.value = false;
   }
-
-  if(selectedStatusId.value) {
-    payload["statusId"] = selectedStatusId.value
-  }
-
-  if(selectedTypeId.value) {
-    payload["systemMessageTypeId"] = selectedTypeId.value
-  }
-
-  if(selectedParentTypeId.value) {
-    payload["parentTypeId"] = selectedParentTypeId.value
-  }
-
-  if(selectedRemoteId.value) {
-    payload["systemMessageRemoteId"] = selectedRemoteId.value
-  }
-
-  await store.fetchSystemMessages(payload);
 };
 
 const resetToFirstPage = () => {
@@ -222,6 +229,7 @@ watch([queryString, selectedStatusId, selectedTypeId, selectedParentTypeId, sele
 watch(pageIndex, loadMessages);
 
 onIonViewWillEnter(async () => {
+  isLoadingMessages.value = true;
   await Promise.all([
     store.fetchSystemMessageTypes(),
     store.fetchSystemMessageRemotes(),
