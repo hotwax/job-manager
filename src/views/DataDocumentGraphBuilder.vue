@@ -1417,9 +1417,6 @@ const setFieldRole = (role: string | undefined) => {
   }
 };
 
-const measureCount = computed(() => (graph.value?.fields || []).filter((field) => field.functionName).length);
-const dimensionCount = computed(() => (graph.value?.fields || []).filter((field) => !field.functionName).length);
-
 // True when the condition modal is editing a condition that already exists on the graph
 // (drives the "Save changes" vs "Add" footer label).
 const isEditingCondition = computed(() => {
@@ -1468,11 +1465,6 @@ const closeConditionModal = (save = false) => {
   conditionModal.value.$el.dismiss();
 };
 
-const toggleSelectedField = (fieldName: string, checked: boolean) => {
-  selectedFields.value = checked
-    ? [...new Set(selectedFields.value.concat(fieldName))]
-    : selectedFields.value.filter((field) => field !== fieldName);
-};
 
 const buildQuery = () => ({
   selectedFields: selectedFields.value,
