@@ -68,7 +68,7 @@
             <ion-card v-for="i in 6" :key="i">
               <ion-card-header>
                 <ion-card-title><ion-skeleton-text animated style="width: 60%" /></ion-card-title>
-                <ion-skeleton-text animated style="width: 40%" /><br>
+                <ion-skeleton-text animated style="width: 40%" /><br />
                 <ion-skeleton-text animated style="width: 80%" />
               </ion-card-header>
               <ion-item lines="none">
@@ -85,7 +85,7 @@
                 <div class="job-card-header">
                   <ion-card-title v-html="highlightText(job.jobName, queryString)"></ion-card-title>
                 </div>
-                <code>ID: <span v-html="highlightText(job.instanceOfProductId, queryString)"></span></code><br>
+                <code>ID: <span v-html="highlightText(job.instanceOfProductId, queryString)"></span></code><br />
                 <code v-html="highlightText(job.serviceName, queryString)"></code>
               </ion-card-header>
               <ion-item lines="none" detail button @click="router.push(`/job/${job.jobName}`)">

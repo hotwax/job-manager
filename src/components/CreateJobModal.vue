@@ -26,7 +26,7 @@
             :error-text="isNameUnique ? translate('Field is required') : translate('Job name must be unique')"
             :class="{ 'ion-invalid': !isNameUnique && jobData.name }"
           ></ion-input>
-          <br>
+          <br />
           <ion-textarea
             v-model="jobData.description"
             :label="translate('Description')"
@@ -34,7 +34,7 @@
             fill="outline"
             :auto-grow="true"
           ></ion-textarea>
-          <br>
+          <br />
           <ion-select
             interface="popover"
             v-model="jobData.primaryCategory"
@@ -48,7 +48,7 @@
               {{ category.categoryName }}
             </ion-select-option>
           </ion-select>
-          <br>
+          <br />
           <ion-input
             v-model="jobData.service"
             :label="translate('Service')"
@@ -58,7 +58,7 @@
             :required="true"
             :error-text="translate('Field is required')"
           ></ion-input>
-          <br>
+          <br />
           <ion-input
             v-model="jobData.cronExpression"
             :label="translate('Cron Expression')"
