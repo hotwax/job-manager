@@ -259,6 +259,15 @@
                     <ion-icon slot="start" :icon="downloadOutline" />
                   </ion-button>
                   <ion-button
+                    v-if="formattedContent && !isEditing"
+                    fill="clear"
+                    size="small"
+                    @click="commonUtil.copyToClipboard(formattedContent)"
+                  >
+                    {{ translate("Copy") }}
+                    <ion-icon slot="start" :icon="copyOutline" />
+                  </ion-button>
+                  <ion-button
                     v-if="isEditable && !isEditing"
                     fill="clear"
                     size="small"
@@ -398,6 +407,7 @@ import {
   chevronForwardOutline,
   chevronUpOutline,
   checkmarkCircleOutline,
+  copyOutline,
   documentAttachOutline,
   downloadOutline,
   globeOutline,
