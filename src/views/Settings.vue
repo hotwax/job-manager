@@ -259,7 +259,7 @@ import Image from '@/components/Image.vue'
 import { cookieHelper, commonUtil, translate } from '@common';
 import { useAuth } from '@common/composables/useAuth';
 import { DateTime } from 'luxon';
-import { redirectToLegacyApp } from '@/utils';
+import { redirectToLegacyApp } from "@/utils";
 
 const userStore = useUserStore();
 const utilStore = useUtilStore();

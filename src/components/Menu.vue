@@ -14,20 +14,11 @@
             button
             router-direction="root"
             :router-link="page.url"
-            class="hydrated"
             :class="{ selected: selectedIndex === index }">
             <ion-icon slot="start" :ios="page.iosIcon" :md="page.mdIcon" />
             <ion-label>{{ translate(page.title) }}</ion-label>
           </ion-item>
-          <ion-item
-            v-else-if="page.action"
-            button
-            @click="page.action()"
-            class="hydrated"
-            :class="{ selected: selectedIndex === index }">
-            <ion-icon slot="start" :ios="page.iosIcon" :md="page.mdIcon" />
-            <ion-label>{{ translate(page.title) }}</ion-label>
-          </ion-item>
+
           <ion-item-divider color="light" v-else>
             <ion-label color="medium">{{ translate(page.title) }}</ion-label>
           </ion-item-divider> 
