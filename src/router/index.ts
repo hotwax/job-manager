@@ -3,7 +3,7 @@ import { RouteRecordRaw } from 'vue-router';
 import Catalog from "@/views/Catalog.vue";
 import Settings from "@/views/Settings.vue"
 import FileHistory from "@/views/FileHistory.vue"
-import FileDetail from "@/views/FileDetail.vue"
+import FileHistoryDetail from "@/views/FileHistoryDetail.vue"
 import { showToast } from '@/utils'
 import { translate } from '@common'
 import { alertController } from '@ionic/vue'
@@ -18,6 +18,8 @@ import SystemMessageTypes from '@/views/SystemMessageTypes.vue';
 import SystemMessageTypeDetail from '@/views/SystemMessageTypeDetail.vue';
 import SystemMessageRemotes from '@/views/SystemMessageRemotes.vue';
 import SystemMessageRemoteDetail from '@/views/SystemMessageRemoteDetail.vue';
+import SolrMonitoring from '@/views/SolrMonitoring.vue';
+import SolrRepair from '@/views/SolrRepair.vue';
 import Login from '@common/components/Login.vue';
 import { useUserStore } from '@/store/user';
 import { useDataDocumentGraphStore } from '@/store/dataDocumentGraph';
@@ -26,6 +28,8 @@ import DataDocumentGraphBuilder from '@/views/DataDocumentGraphBuilder.vue';
 import DataDocumentExportHistory from '@/views/DataDocumentExportHistory.vue';
 import DataDocumentFeeds from '@/views/DataDocumentFeeds.vue';
 import DataDocumentFeedDetail from '@/views/DataDocumentFeedDetail.vue';
+
+import Pipeline from '@/views/Pipeline.vue';
 
 // Defining types for the meta values
 declare module 'vue-router' {
@@ -43,7 +47,13 @@ const authGuard = async () => {
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
-    redirect: '/catalog'
+    redirect: '/pipeline'
+  },
+  {
+    path: '/pipeline',
+    name: 'Pipeline',
+    component: Pipeline,
+    beforeEnter: authGuard
   },
   {
     path: '/catalog',
@@ -73,8 +83,8 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: "/file-history/:id",
-    name: "FileDetail",
-    component: FileDetail,
+    name: "FileHistoryDetail",
+    component: FileHistoryDetail,
     beforeEnter: authGuard,
     props: true
   },
@@ -189,6 +199,18 @@ const routes: Array<RouteRecordRaw> = [
     component: SystemMessageDetailView,
     beforeEnter: authGuard,
     props: true
+  },
+  {
+    path: '/solr-monitoring',
+    name: 'SolrMonitoring',
+    component: SolrMonitoring,
+    beforeEnter: authGuard
+  },
+  {
+    path: '/solr-repair',
+    name: 'SolrRepair',
+    component: SolrRepair,
+    beforeEnter: authGuard
   }
 ]
 

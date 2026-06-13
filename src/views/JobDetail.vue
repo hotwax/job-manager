@@ -453,12 +453,33 @@
                               <ion-icon slot="start" :icon="documentOutline" />
                               <ion-label class="ion-text-wrap">
                                 {{ log.fileName || translate('File') }}
-                                <p v-if="log.fileSize">{{ getFileSize(log.fileSize) }}</p>
+                                <p>
+                                  <span v-if="log.fileSize">{{ getFileSize(log.fileSize) }}</span>
+                                  <span v-if="log.totalRecordCount != null" style="margin-left: var(--spacer-xs);">
+                                    | {{ translate("Failed") }}: {{ log.failedRecordCount || 0 }} / {{ translate("Total") }}: {{ log.totalRecordCount }}
+                                  </span>
+                                </p>
                               </ion-label>
                             </ion-item>
                             <ion-label>
-                              <ion-chip v-if="log.statusId" :color="commonUtil.getStatusColor(log.statusId)">
-                                {{ translate(getStatusDesc(log.statusId)) }}
+                              <ion-chip
+                                v-if="log.statusId"
+                                :color="log.statusId === 'DmlsFinished' && Number(log.failedRecordCount || 0) > 0 ? 'warning' : commonUtil.getStatusColor(log.statusId)"
+                                style="display: inline-flex; align-items: center;"
+                              >
+                                <ion-icon
+                                  v-if="log.statusId === 'DmlsFinished' && Number(log.failedRecordCount || 0) > 0"
+                                  :icon="warningOutline"
+                                  style="margin-inline-end: 4px;"
+                                />
+                                <ion-icon
+                                  v-else-if="['DmlsFailed', 'DmlsCrashed'].includes(log.statusId)"
+                                  :icon="alertCircleOutline"
+                                  style="margin-inline-end: 4px;"
+                                />
+                                <ion-label>
+                                  {{ log.statusId === 'DmlsFinished' && Number(log.failedRecordCount || 0) > 0 ? translate('Finished with errors') : translate(getStatusDesc(log.statusId)) }}
+                                </ion-label>
                               </ion-chip>
                             </ion-label>
                             <ion-label>{{ log.createdByUserLogin || "-" }}</ion-label>
@@ -586,7 +607,8 @@ import {
   pauseOutline, 
   personOutline,
   playOutline,
-  timeOutline
+  timeOutline,
+  warningOutline
 } from 'ionicons/icons';
 import { getStatusDesc } from '@/utils/config';
 import { useJobStore } from '@/store/jobs';
@@ -724,7 +746,7 @@ const saveSchedule = async () => {
 };
 
 const goToLogDetail = (logId: string | number) => {
-  router.push({ name: "FileDetail", params: { id: logId } });
+  router.push({ name: "FileHistoryDetail", params: { id: logId } });
 };
 
 const loadJob = async () => {

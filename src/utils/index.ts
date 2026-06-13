@@ -1,7 +1,7 @@
 import saveAs from "file-saver";
 import { toastController } from '@ionic/vue';
 import Papa from 'papaparse'
-import { DateTime } from "luxon";
+import { DateTime, Duration } from "luxon";
 import logger from "@/logger";
 import { cookieHelper, translate } from "@common";
 import {Clipboard} from "@capacitor/clipboard";
@@ -193,6 +193,16 @@ const getFileSize = (size: string) => {
   return size ? `${(Number(size) / (1024 * 1024)).toFixed(3)} MB` : "-"
 }
 
+const getDuration = (start: number, end: number) => {
+  const diff = end - start;
+  if (diff < 0) return "-";
+  const duration = Duration.fromMillis(diff).shiftTo("minutes", "seconds");
+  const minutes = duration.minutes;
+  const seconds = Math.floor(duration.seconds);
+  if (minutes === 0) return `${seconds}s`;
+  return `${minutes}m ${seconds}s`;
+}
+
 const isAppCompatible = () => {
   const currentVersion = useUtilStore().systemInformation?.instanceInfo?.componentRelease;
   const requiredVersion = import.meta.env.VITE_MAARG_COMPATIBLE_VERSION;
@@ -241,5 +251,6 @@ export {
   showToast,
   saveDataFile,
   timeTillRun,
+  getDuration,
   getFileSize
 }

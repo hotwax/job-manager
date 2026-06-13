@@ -7,6 +7,11 @@ const { apiMock } = vi.hoisted(() => ({
 
 vi.mock("@common", () => ({
   api: apiMock,
+  cookieHelper: () => ({
+    get: vi.fn(),
+    set: vi.fn(),
+    remove: vi.fn()
+  }),
   translate: (value: string) => value
 }));
 
@@ -24,31 +29,21 @@ describe("system message store", () => {
     apiMock.mockReset();
   });
 
-  it("falls back to split mock data when the API is unavailable", async () => {
+  it("clears monitor data when the API is unavailable", async () => {
     apiMock.mockRejectedValue(new Error("offline"));
 
     const store = useSystemMessageStore();
 
-    await Promise.all([
-      store.fetchSystemMessageTypes(),
-      store.fetchSystemMessageRemotes(),
-      store.fetchSystemMessages(),
-      store.fetchSystemMessageErrors("100117")
-    ]);
+    await store.fetchSystemMessages();
 
-    expect(store.getSystemMessageTypes.length).toBeGreaterThan(0);
-    expect(store.getSystemMessageRemotes.length).toBeGreaterThan(0);
-    expect(store.getSystemMessages.length).toBeGreaterThan(0);
-    expect(store.getSystemMessageErrors.length).toBeGreaterThan(0);
-    expect(store.getSystemMessageStatuses.length).toBeGreaterThan(0);
-    expect(store.getSystemMessageStatusFlows.length).toBeGreaterThan(0);
-    expect(store.getSystemMessageStatusTransitions.length).toBeGreaterThan(0);
+    expect(store.getSystemMessages).toEqual([]);
+    expect(store.getSystemMessageTotal).toBe(0);
   });
 
-  it("uses API results for monitor data when a collection payload is returned", async () => {
+  it("uses API results for monitor data when a system message payload is returned", async () => {
     apiMock.mockResolvedValue({
       data: {
-        data: [
+        systemMessages: [
           {
             systemMessageId: "api-1001",
             systemMessageTypeId: "ApiMessageType",
@@ -58,7 +53,7 @@ describe("system message store", () => {
             messageText: "{\"ping\":true}"
           }
         ],
-        count: 42
+        systemMessagesCount: 42
       }
     });
 
@@ -67,11 +62,12 @@ describe("system message store", () => {
 
     expect(apiMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        url: "system/messages",
+        url: "admin/systemMessages",
         method: "GET",
         params: expect.objectContaining({
           pageSize: 25,
           pageIndex: 0,
+          orderBy: "-initDate",
           statusId: "SmsgError"
         })
       })
@@ -103,8 +99,8 @@ describe("system message store", () => {
 
     expect(apiMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        url: "system/message/types",
-        method: "POST"
+        url: "admin/systemMessages/types/ApiCreatedType",
+        method: "PUT"
       })
     );
     expect(result.data?.success).toBe(true);
@@ -139,39 +135,6 @@ describe("system message store", () => {
     expect(result.data).toBe(mockBlob);
   });
 
-  it("still exposes allowed transitions derived from the status flow graph", () => {
-    const store = useSystemMessageStore();
-    const replayTransitions = store.getAllowedTransitions({
-      statusId: "SmsgError",
-      isOutgoing: "Y"
-    });
-
-    const transitionStatusIds = replayTransitions.map((transition: any) => transition.toStatusId);
-
-    expect(transitionStatusIds).toEqual(
-      expect.arrayContaining([
-        "SmsgCancelled",
-        "SmsgProduced",
-        "SmsgSending",
-        "SmsgSent"
-      ])
-    );
-    expect(replayTransitions).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          toStatusId: "SmsgProduced",
-          toStatusDescription: "Produced",
-          toStatusColor: "primary"
-        }),
-        expect.objectContaining({
-          toStatusId: "SmsgCancelled",
-          toStatusDescription: "Cancelled",
-          toStatusColor: "medium"
-        })
-      ])
-    );
-  });
-
   it("fetches the entire enum sequence bidirectionally", async () => {
     const store = useSystemMessageStore();
     // Setup a 3-step sequence: StepA -> StepB -> StepC
@@ -184,9 +147,10 @@ describe("system message store", () => {
     });
 
     // Start fetching from the middle step (StepB)
-    const sequence = await store.fetchEnumSequence("StepB");
+    await store.fetchEnumSequence("StepB");
     
     // Should result in [StepA, StepB, StepC]
+    const sequence = store.getCurrentEnumSequence;
     expect(sequence).toHaveLength(3);
     expect(sequence[0].enumId).toBe("StepA");
     expect(sequence[1].enumId).toBe("StepB");

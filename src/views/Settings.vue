@@ -238,7 +238,6 @@
 import { IonAvatar, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonContent, IonHeader, IonIcon, IonItem, IonMenuButton, IonPage, IonSelect, IonSelectOption, IonTitle, IonToolbar, IonModal, IonFab, IonFabButton, IonRadioGroup, IonSpinner, IonList, IonListHeader, IonRadio, IonSearchbar, IonLabel } from '@ionic/vue';
 import { computed, onBeforeMount, ref } from 'vue';
 import { closeOutline, openOutline, saveOutline, checkmarkCircle, closeCircle, syncOutline } from 'ionicons/icons'
-import router from '@/router';
 import { useUserStore } from '@/store/user';
 import { useUtilStore } from '@/store/util';
 import Image from '@/components/Image.vue'

@@ -136,10 +136,12 @@ import { computed, ref, watch } from "vue";
 
 import { translate } from "@common";
 
+import { useRoute } from "vue-router";
 import SystemMessageList from "@/components/SystemMessageList.vue";
 import { useSystemMessageStore } from "@/store/systemMessage";
 import { useUtilStore } from "@/store/util";
 
+const route = useRoute();
 const PAGE_SIZE = 25;
 
 const store = useSystemMessageStore();
@@ -222,6 +224,11 @@ watch([queryString, selectedStatusId, selectedTypeId, selectedParentTypeId, sele
 watch(pageIndex, loadMessages);
 
 onIonViewWillEnter(async () => {
+  if (route.query.statusId) {
+    selectedStatusId.value = route.query.statusId as string;
+  } else {
+    selectedStatusId.value = "";
+  }
   await Promise.all([
     store.fetchSystemMessageTypes(),
     store.fetchSystemMessageRemotes(),
