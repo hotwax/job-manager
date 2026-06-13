@@ -291,10 +291,11 @@ describe("data document store", () => {
   });
 
   it("previews through the existing Moqui dataDocumentView service contract", async () => {
+    // Live oms/dataDocumentView returns ONLY { entityValueList } and no total count,
+    // so previewTotal falls back to the number of returned rows.
     apiMock.mockResolvedValue({
       data: {
-        data: [{ productId: "10001" }],
-        count: 1
+        entityValueList: [{ productId: "10001" }]
       }
     });
 
@@ -313,7 +314,8 @@ describe("data document store", () => {
         method: "POST",
         data: expect.objectContaining({
           dataDocumentId: "ProductFacilityAndInventoryItem",
-          fieldsToSelect: ["productId"],
+          // fieldsToSelect is sent as a comma-separated string (Moqui ignores the array form).
+          fieldsToSelect: "productId",
           customParametersMap: { facilityId: "WH1" },
           orderByField: "-productId",
           distinct: true,
@@ -321,12 +323,42 @@ describe("data document store", () => {
         })
       })
     );
+    expect(store.getPreviewRows).toHaveLength(1);
     expect(store.getPreviewTotal).toBe(1);
   });
 
-  it("queues exports and reads history from Data Document System Message endpoints", async () => {
+  it("encodes filter operators into Moqui search-form-inputs suffixes for the preview", async () => {
+    apiMock.mockResolvedValue({ data: { entityValueList: [] } });
+    const store = useDataDocumentStore();
+    await store.runPreview("Doc", {
+      filters: [
+        { fieldNameAlias: "statusId", operator: "equals", value: "OPEN" },
+        { fieldNameAlias: "name", operator: "contains", value: "abc" },
+        { fieldNameAlias: "code", operator: "starts-with", value: "X" },
+        { fieldNameAlias: "type", operator: "not-equals", value: "T" },
+        { fieldNameAlias: "tags", operator: "in", value: "a,b" },
+        { fieldNameAlias: "note", operator: "not-empty" },
+        { fieldNameAlias: "qty", operator: "greater-equals", value: "5" },
+        { fieldNameAlias: "amount", operator: "between", value: "10", toValue: "20" }
+      ]
+    });
+
+    const sentMap = apiMock.mock.calls[0][0].data.customParametersMap;
+    expect(sentMap).toEqual({
+      statusId: "OPEN",
+      name: "abc", name_op: "contains",
+      code: "X", code_op: "begins",
+      type: "T", type_op: "equals", type_not: "Y",
+      tags: "a,b", tags_op: "in",
+      note_op: "empty", note_not: "Y",
+      qty_from: "5",
+      amount_from: "10", amount_thru: "20"
+    });
+  });
+
+  it("queues exports and refreshes history from Data Document System Message endpoints", async () => {
     apiMock
-      .mockResolvedValueOnce({ data: { systemMessageId: "DDX2001", statusId: "SmsgProduced" } })
+      .mockResolvedValueOnce({ data: {} })
       .mockResolvedValueOnce({
         data: {
           systemMessages: [
@@ -338,8 +370,8 @@ describe("data document store", () => {
       });
 
     const store = useDataDocumentStore();
+    // queueExport now POSTs the export AND refreshes the history so the queued export appears.
     await store.queueExport("ProductFacilityAndInventoryItem");
-    await store.fetchExportHistory({ dataDocumentId: "ProductFacilityAndInventoryItem" });
 
     expect(apiMock).toHaveBeenNthCalledWith(1,
       expect.objectContaining({
@@ -452,5 +484,74 @@ describe("data document store", () => {
         systemMessageId: "DDX3001"
       })
     ]);
+  });
+
+  it("creates a new field with POST when it has no seq id, and updates with PUT when it does", async () => {
+    apiMock.mockResolvedValue({ data: {} });
+    const store = useDataDocumentStore();
+
+    await store.saveField("ApiDocument", { fieldPath: "statusId", fieldNameAlias: "statusId" });
+    expect(apiMock).toHaveBeenNthCalledWith(1,
+      expect.objectContaining({
+        url: "admin/dataDocuments/ApiDocument/fields",
+        method: "POST"
+      })
+    );
+
+    await store.saveField("ApiDocument", { fieldSeqId: "03", fieldPath: "statusId", fieldNameAlias: "statusId" });
+    expect(apiMock).toHaveBeenNthCalledWith(2,
+      expect.objectContaining({
+        url: "admin/dataDocuments/ApiDocument/fields/03",
+        method: "PUT"
+      })
+    );
+  });
+
+  it("deletes fields and conditions through the admin sub-resource endpoints", async () => {
+    apiMock.mockResolvedValue({ data: {} });
+    const store = useDataDocumentStore();
+
+    await store.deleteField("ApiDocument", "03");
+    expect(apiMock).toHaveBeenNthCalledWith(1,
+      expect.objectContaining({
+        url: "admin/dataDocuments/ApiDocument/fields/03",
+        method: "DELETE"
+      })
+    );
+
+    await store.deleteCondition("ApiDocument", "01");
+    expect(apiMock).toHaveBeenNthCalledWith(2,
+      expect.objectContaining({
+        url: "admin/dataDocuments/ApiDocument/conditions/01",
+        method: "DELETE"
+      })
+    );
+  });
+
+  it("forwards only the export params the queue service honors and drops filters and field selection", async () => {
+    apiMock.mockResolvedValue({ data: {} });
+    const store = useDataDocumentStore();
+
+    await store.queueExport("ProductDocument", {
+      format: "csv",
+      query: {
+        selectedFields: ["productId"],
+        filters: [{ fieldNameAlias: "facilityId", operator: "equals", value: "WH1" }],
+        sort: [{ fieldNameAlias: "productId", direction: "DESC" }],
+        pageSize: 250
+      }
+    });
+
+    const data = apiMock.mock.calls[0][0].data;
+    expect(data).toEqual({
+      dataDocumentId: "ProductDocument",
+      orderByField: "-productId",
+      pageSize: 250
+    });
+    // The export service ignores these, so we must not pretend they were applied.
+    expect(data).not.toHaveProperty("fieldsToSelect");
+    expect(data).not.toHaveProperty("customParametersMap");
+    expect(data).not.toHaveProperty("filters");
+    expect(data).not.toHaveProperty("format");
   });
 });

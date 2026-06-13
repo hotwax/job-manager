@@ -1,7 +1,7 @@
 <template>
-  <ion-content v-if="graph">
+  <div v-if="graph" class="dd-form-view">
     <main>
-      <ion-card>
+      <ion-card v-if="!embedded">
         <ion-list class="graph-metadata-list">
           <ion-item detail button @click="openEntityModal">
             <ion-label>
@@ -69,6 +69,7 @@
                 </ion-label>
               </ion-chip>
               <ion-input
+                class="field-alias"
                 :value="field.fieldNameAlias"
                 :label="translate('Alias')"
                 label-placement="floating"
@@ -76,6 +77,7 @@
                 @ionInput="updateField(field, { fieldNameAlias: $event.detail.value || '' })"
               />
               <ion-input
+                class="field-sequence"
                 :value="field.sequenceNum"
                 type="number"
                 :label="translate('Sequence')"
@@ -84,7 +86,9 @@
                 @ionInput="updateField(field, { sequenceNum: Number($event.detail.value || 0) })"
               />
               <ion-toggle
+                class="field-display"
                 :checked="field.defaultDisplay === 'Y'"
+                label-placement="stacked"
                 @ionChange="updateField(field, { defaultDisplay: $event.detail.checked ? 'Y' : 'N' })"
               >
                 {{ translate("Display") }}
@@ -96,15 +100,14 @@
                 :aria-label="translate('Remove field')"
                 @click="graphStore.removeField(field.fieldSeqId || field.fieldPath)"
               >
-                <ion-icon slot="start" :icon="trashOutline" />
-                {{ translate("Remove") }}
+                <ion-icon slot="icon-only" :icon="trashOutline" />
               </ion-button>
             </div>
           </ion-item>
         </ion-list>
       </ion-card>
 
-      <ion-card>
+      <ion-card v-if="!embedded">
         <ion-card-header>
           <ion-card-title>{{ translate("Conditions") }}</ion-card-title>
           <ion-card-subtitle>{{ translate("Add conditions that always apply to this document.") }}</ion-card-subtitle>
@@ -361,7 +364,7 @@
         </ion-list>
       </ion-content>
     </ion-modal>
-  </ion-content>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -396,7 +399,7 @@ import {
 } from "@ionic/vue";
 import { addOutline, arrowBackOutline, chevronForwardOutline, closeOutline, gitBranchOutline, optionsOutline, refreshOutline, trashOutline } from "ionicons/icons";
 import { computed, ref, watch } from "vue";
-import { useRoute } from "vue-router";
+import router from "@/router";
 
 import { translate } from "@common";
 import { useDataDocumentGraphStore } from "@/store/dataDocumentGraph";
@@ -406,8 +409,9 @@ import { getEntityLabel, getEntitySearchText, getEntityValue, groupEntityOptions
 import type { EntityOption } from "@/utils/entityOptions";
 import { useKeyboardListNavigation } from "@/utils/keyboardListNavigation";
 
-const route = useRoute();
-const isNew = computed(() => route.name === "CreateDataDocument");
+defineProps<{ embedded?: boolean }>();
+// id === "new" drives create mode (mirrors the graph page); unlocks the dataDocumentId field.
+const isNew = computed(() => router.currentRoute.value.params.id === "new");
 
 const operators = [
   { value: "equals", label: "Equals" },
@@ -812,6 +816,14 @@ const closeFieldModal = () => {
 </script>
 
 <style scoped>
+/* Embedded in the graph page's Fields segment, this view's <main> sits inside the page's own
+   <main>; drop the redundant max-width + horizontal padding so the field rows get the full
+   segment width instead of a double inset (which was clipping the Remove button). */
+.dd-form-view > main {
+  max-width: none;
+  padding-inline: 0;
+}
+
 .graph-metadata-list {
   display: grid;
   grid-template-columns: 1fr auto auto min-content;
@@ -845,19 +857,14 @@ ion-card-header ion-buttons {
   --inner-padding-bottom: var(--spacer-sm);
 }
 
+/* All field controls on one horizontal row, vertically centered: chip | alias | sequence |
+   display | remove. Alias grows; the rest size to content so the row stays compact. */
 .field-controls {
+  display: flex;
   align-items: center;
-  display: grid;
-  gap: var(--spacer-sm);
-  grid-template-columns: minmax(14rem, 1.4fr) minmax(10rem, 1fr) minmax(7rem, 0.55fr) minmax(8rem, 0.65fr) minmax(6.5rem, max-content);
+  gap: var(--spacer-base);
   padding: var(--spacer-sm) 0;
   width: 100%;
-}
-
-.field-controls ion-input,
-.field-controls ion-toggle,
-.field-selector {
-  min-width: 0;
 }
 
 .field-controls ion-button {
@@ -865,21 +872,38 @@ ion-card-header ion-buttons {
 }
 
 .field-selector {
-  justify-self: start;
-  max-width: 100%;
+  flex: 0 0 auto;
+  max-width: 11rem;
   margin: 0;
   cursor: pointer;
-}
-
-.field-remove-button {
-  justify-self: end;
-  min-height: 44px;
 }
 
 .field-selector ion-label {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.field-alias {
+  flex: 1 1 8rem;
+  min-width: 6rem;
+}
+
+.field-sequence {
+  flex: 0 0 6rem;
+}
+
+/* "Display" label sits stacked above its toggle (label-placement="stacked"), vertically
+   aligned. Fixed basis so the toggle can't stretch to its full intrinsic width and push the
+   row into overflow. */
+.field-display {
+  flex: 0 0 6.5rem;
+  text-align: center;
+}
+
+.field-remove-button {
+  flex: 0 0 auto;
+  min-height: 44px;
 }
 
 .condition-controls {
@@ -896,7 +920,10 @@ ion-card-header ion-buttons {
 }
 
 @media (max-width: 768px) {
-  .field-controls,
+  /* Let the single field row wrap (rather than overflow) on small screens. */
+  .field-controls {
+    flex-wrap: wrap;
+  }
   .condition-controls {
     grid-template-columns: 1fr;
   }

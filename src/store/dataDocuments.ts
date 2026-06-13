@@ -3,12 +3,18 @@ import { DateTime } from "luxon";
 import { defineStore } from "pinia";
 
 import logger from "@/logger";
+import { buildCustomParametersMap } from "@/utils/dataDocumentGraph";
 
 const API_ENDPOINTS = {
   dataDocuments: "moqui/dataDocuments",
   exports: "admin/dataDocuments",
-  preview: "oms/dataDocumentView"
+  preview: "oms/dataDocumentView",
+  serviceJobs: "admin/serviceJobs"
 };
+
+// The Moqui service a scheduled export ServiceJob invokes. With a toEmailAddress parameter it
+// exports the document AND emails the CSV (see hotwax-maarg-util queue#DocumentDataToExport).
+const EXPORT_SERVICE_NAME = "co.hotwax.util.UtilityServices.queue#DocumentDataToExport";
 
 const getCollection = (response: any, fallbackKey?: string) => {
   const data = response?.data;
@@ -145,20 +151,29 @@ const stripUiFields = (payload: Record<string, any>) => {
   return apiPayload;
 };
 
+// An export send never reaches SmsgError; a failure is a message stuck in SmsgProduced with
+// failCount > 0. Success is SmsgSent. Anything else is still in progress.
+const isExportTerminalMessage = (message: any) => {
+  const statusId = message?.statusId;
+  return statusId === "SmsgSent" || statusId === "SmsgError" || (statusId === "SmsgProduced" && Number(message?.failCount) > 0);
+};
+
 const toDataDocumentRunPayload = (dataDocumentId: string, payload: Record<string, any>) => {
   const query = payload.query || payload;
   const filters = query.filters || [];
-  const customParametersMap = filters.reduce((parameters: Record<string, any>, filter: any) => {
-    if (filter.fieldNameAlias && filter.value !== undefined && filter.value !== "") {
-      parameters[filter.fieldNameAlias] = filter.value;
-    }
-    return parameters;
-  }, {});
+  // Encode each filter's operator into Moqui search-form-inputs suffixes (_op/_not/_from/_thru)
+  // so operators actually apply, instead of dropping them and treating every filter as equals.
+  const customParametersMap = buildCustomParametersMap(filters);
+
+  // dataDocumentView only honors fieldsToSelect as a comma-separated STRING (a JSON array is
+  // silently ignored, returning all columns). Join it so field selection actually restricts output.
+  const selectedFields = query.selectedFields || payload.fieldsToSelect || [];
+  const fieldsToSelect = Array.isArray(selectedFields) ? selectedFields.join(",") : selectedFields;
 
   return {
     dataDocumentId,
     format: payload.format,
-    fieldsToSelect: query.selectedFields || payload.fieldsToSelect || [],
+    fieldsToSelect,
     customParametersMap,
     orderByField: query.sort?.[0]
       ? `${query.sort[0].direction === "DESC" ? "-" : ""}${query.sort[0].fieldNameAlias}`
@@ -180,10 +195,12 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
     currentFeed: undefined as any,
     feedDocuments: [] as any[],
     relatedJobs: [] as any[],
-    presets: [] as any[],
+    scheduledExports: [] as any[],
     exportHistory: [] as any[],
     previewRows: [] as any[],
     previewTotal: 0,
+    previewStatus: "idle" as "idle" | "loading" | "success" | "error",
+    previewError: "",
     total: 0,
     loading: false
   }),
@@ -196,10 +213,12 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
     getCurrentFeed: (state) => state.currentFeed,
     getFeedDocuments: (state) => state.feedDocuments,
     getRelatedJobs: (state) => state.relatedJobs,
-    getPresets: (state) => state.presets,
+    getScheduledExports: (state) => state.scheduledExports,
     getExportHistory: (state) => state.exportHistory,
     getPreviewRows: (state) => state.previewRows,
     getPreviewTotal: (state) => state.previewTotal,
+    getPreviewStatus: (state) => state.previewStatus,
+    getPreviewError: (state) => state.previewError,
     getTotal: (state) => state.total,
     isLoading: (state) => state.loading,
     getDataFeeds: (state) => normalizeDataFeeds(state.dataDocuments),
@@ -347,7 +366,7 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
             ? `admin/dataDocuments/${encodeURIComponent(dataDocumentId)}/conditions`
             : `admin/dataDocuments/${encodeURIComponent(dataDocumentId)}/conditions/${encodeURIComponent(condition.conditionSeqId)}`,
           method: isNew ? "POST" : "PUT",
-          data: condition
+          data: payload
         });
         return getEntity(response) || payload;
       } catch (error) {
@@ -355,8 +374,32 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
         throw error;
       }
     },
+    async deleteField(dataDocumentId: string, fieldSeqId: string) {
+      try {
+        await api({
+          url: `admin/dataDocuments/${encodeURIComponent(dataDocumentId)}/fields/${encodeURIComponent(fieldSeqId)}`,
+          method: "DELETE"
+        });
+      } catch (error) {
+        logger.error(`Failed to delete field ${fieldSeqId} for ${dataDocumentId}`, error);
+        throw error;
+      }
+    },
+    async deleteCondition(dataDocumentId: string, conditionSeqId: string) {
+      try {
+        await api({
+          url: `admin/dataDocuments/${encodeURIComponent(dataDocumentId)}/conditions/${encodeURIComponent(conditionSeqId)}`,
+          method: "DELETE"
+        });
+      } catch (error) {
+        logger.error(`Failed to delete condition ${conditionSeqId} for ${dataDocumentId}`, error);
+        throw error;
+      }
+    },
     async runPreview(dataDocumentId: string, query: Record<string, any>) {
       this.loading = true;
+      this.previewStatus = "loading";
+      this.previewError = "";
       try {
         const response = await api({
           url: API_ENDPOINTS.preview,
@@ -366,46 +409,134 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
         const rows = getCollection(response, "rows");
         this.previewRows = rows;
         this.previewTotal = getCount(response, rows);
-      } catch (error) {
+        this.previewStatus = "success";
+      } catch (error: any) {
         logger.error(`Failed to preview data document ${dataDocumentId}`, error);
         this.previewRows = [];
         this.previewTotal = 0;
+        this.previewStatus = "error";
+        // Surface a useful message: Moqui's error envelope, else the HTTP/network error.
+        this.previewError = error?.response?.data?.errors
+          || error?.message
+          || "The preview request failed. Please try again.";
       } finally {
         this.loading = false;
       }
     },
-    async savePreset(dataDocumentId: string, payload: Record<string, any>) {
-      const isNew = !payload.presetId;
-      let preset;
-      try {
-        const response = await api({
-          url: isNew
-            ? `${API_ENDPOINTS.dataDocuments}/${encodeURIComponent(dataDocumentId)}/presets`
-            : `${API_ENDPOINTS.dataDocuments}/${encodeURIComponent(dataDocumentId)}/presets/${encodeURIComponent(payload.presetId)}`,
-          method: isNew ? "POST" : "PUT",
-          data: { ...payload, dataDocumentId }
-        });
-        preset = getEntity(response) || payload;
-      } catch (error) {
-        logger.error(`Failed to save query preset for ${dataDocumentId}`, error);
-        throw error;
+    async queueExport(dataDocumentId: string, options: Record<string, any> = {}) {
+      // The export service (queue#DocumentDataToExport) only honors dataDocumentId,
+      // pageIndex, pageSize (default cap 10000) and orderByField. Field selection and
+      // filters are NOT applied server-side — the CSV is always the full document with
+      // its baked-in conditions. We forward only the supported params and drop the rest
+      // rather than silently pretending the query applied.
+      const query = options.query || {};
+      const sort = Array.isArray(query.sort) ? query.sort[0] : undefined;
+      const data: Record<string, any> = { dataDocumentId };
+      if (sort?.fieldNameAlias) {
+        data.orderByField = `${sort.direction === "DESC" ? "-" : ""}${sort.fieldNameAlias}`;
       }
-      this.presets = this.presets.filter((item: any) => item.presetId !== preset.presetId).concat(preset);
-      return preset;
-    },
-    async queueExport(dataDocumentId: string) {
+      if (query.pageSize) data.pageSize = Number(query.pageSize);
+      if (options.pageIndex !== undefined) data.pageIndex = Number(options.pageIndex);
       try {
         await api({
           url: "admin/dataDocuments/export",
           method: "POST",
-          data: {
-            dataDocumentId
-          }
+          data
         });
+        // Surface the queued export immediately (it appears as a new SystemMessage).
+        await this.fetchExportHistory({ dataDocumentId });
       } catch (error) {
         logger.error(`Failed to queue data document export for ${dataDocumentId}`, error);
         throw error;
       }
+    },
+    // List the scheduled email-export ServiceJobs for a document. The serviceJobs list endpoint
+    // supports a serviceName filter and returns each job's serviceJobParameters, so we filter the
+    // export-service jobs down to the ones whose dataDocumentId parameter matches.
+    async fetchScheduledExports(dataDocumentId: string) {
+      try {
+        const response = await api({
+          url: API_ENDPOINTS.serviceJobs,
+          method: "GET",
+          params: { serviceName: EXPORT_SERVICE_NAME, pageSize: 200 }
+        });
+        const jobs = response?.data?.serviceJobList || [];
+        const paramValue = (job: any, name: string) =>
+          (job.serviceJobParameters || []).find((param: any) => param.parameterName === name)?.parameterValue;
+        this.scheduledExports = jobs
+          .filter((job: any) => paramValue(job, "dataDocumentId") === dataDocumentId)
+          .map((job: any) => ({
+            ...job,
+            toEmailAddress: paramValue(job, "toEmailAddress"),
+            ccAddresses: paramValue(job, "ccAddresses")
+          }));
+      } catch (error) {
+        logger.error(`Failed to fetch scheduled exports for ${dataDocumentId}`, error);
+        this.scheduledExports = [];
+      }
+      return this.scheduledExports;
+    },
+    // Create a cron ServiceJob that exports the document and emails the CSV. Done in two calls
+    // because create (POST) registers the job + service, and the cron expression and parameters
+    // are applied via update (PUT) — mirrors the verified admin/serviceJobs contract.
+    async scheduleEmailExport(payload: Record<string, any>) {
+      const { dataDocumentId, toEmailAddress, ccAddresses, cronExpression, orderByField, pageSize } = payload;
+      // jobName must be unique and stable; encode the document + a timestamp suffix.
+      const safeDoc = String(dataDocumentId).replace(/[^A-Za-z0-9]/g, "").slice(0, 60);
+      const jobName = payload.jobName || `EXP_EMAIL_${safeDoc}_${DateTime.now().toFormat("yyyyMMddHHmmss")}`;
+      const description = payload.description
+        || `Email export of ${dataDocumentId} to ${toEmailAddress}`;
+      try {
+        await api({
+          url: API_ENDPOINTS.serviceJobs,
+          method: "POST",
+          data: { jobName, description, serviceName: EXPORT_SERVICE_NAME, paused: "N" }
+        });
+        const serviceJobParameters = [{ parameterName: "dataDocumentId", parameterValue: dataDocumentId }];
+        if (toEmailAddress) serviceJobParameters.push({ parameterName: "toEmailAddress", parameterValue: toEmailAddress });
+        if (ccAddresses) serviceJobParameters.push({ parameterName: "ccAddresses", parameterValue: ccAddresses });
+        if (orderByField) serviceJobParameters.push({ parameterName: "orderByField", parameterValue: orderByField });
+        if (pageSize) serviceJobParameters.push({ parameterName: "pageSize", parameterValue: String(pageSize) });
+        await api({
+          url: `${API_ENDPOINTS.serviceJobs}/${encodeURIComponent(jobName)}`,
+          method: "PUT",
+          data: { jobName, cronExpression, serviceJobParameters }
+        });
+      } catch (error) {
+        logger.error(`Failed to schedule email export for ${dataDocumentId}`, error);
+        throw error;
+      }
+      await this.fetchScheduledExports(dataDocumentId);
+      return jobName;
+    },
+    // Pause/resume a scheduled export. The admin REST API has no delete for serviceJobs, so
+    // "remove a schedule" is modeled as pausing it (paused = Y).
+    async setExportSchedulePaused(jobName: string, paused: boolean, dataDocumentId?: string) {
+      try {
+        await api({
+          url: `${API_ENDPOINTS.serviceJobs}/${encodeURIComponent(jobName)}`,
+          method: "PUT",
+          data: { jobName, paused: paused ? "Y" : "N" }
+        });
+      } catch (error) {
+        logger.error(`Failed to update schedule ${jobName}`, error);
+        throw error;
+      }
+      if (dataDocumentId) await this.fetchScheduledExports(dataDocumentId);
+    },
+    // Poll the export history until the newest export for this document reaches a terminal
+    // state (Ready = SmsgSent, or Failed = SmsgProduced with failCount > 0). Bounded so it
+    // never polls forever. The reactive exportHistory updates live as the status changes.
+    async pollExportHistory(dataDocumentId: string, options: { attempts?: number; intervalMs?: number } = {}) {
+      const attempts = options.attempts ?? 12;
+      const intervalMs = options.intervalMs ?? 2500;
+      for (let attempt = 0; attempt < attempts; attempt++) {
+        await new Promise((resolve) => setTimeout(resolve, intervalMs));
+        await this.fetchExportHistory({ dataDocumentId });
+        const newest = this.exportHistory[0];
+        if (newest && isExportTerminalMessage(newest)) return newest;
+      }
+      return this.exportHistory[0];
     },
     async fetchExportHistory(payload: Record<string, any> = {}) {
       this.loading = true;
@@ -446,7 +577,8 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
             return initTime && initTime <= thruTime;
           });
         }
-        this.exportHistory = messages;
+        // admin/systemMessages ignores the orderBy param, so sort newest-first client-side.
+        this.exportHistory = messages.sort((a: any, b: any) => toMillis(b.initDate) - toMillis(a.initDate));
       } catch (error) {
         logger.error("Failed to fetch data document export history", error);
       } finally {
