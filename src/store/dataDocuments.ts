@@ -8,8 +8,13 @@ import { buildCustomParametersMap } from "@/utils/dataDocumentGraph";
 const API_ENDPOINTS = {
   dataDocuments: "moqui/dataDocuments",
   exports: "admin/dataDocuments",
-  preview: "oms/dataDocumentView"
+  preview: "oms/dataDocumentView",
+  serviceJobs: "admin/serviceJobs"
 };
+
+// The Moqui service a scheduled export ServiceJob invokes. With a toEmailAddress parameter it
+// exports the document AND emails the CSV (see hotwax-maarg-util queue#DocumentDataToExport).
+const EXPORT_SERVICE_NAME = "co.hotwax.util.UtilityServices.queue#DocumentDataToExport";
 
 const getCollection = (response: any, fallbackKey?: string) => {
   const data = response?.data;
@@ -190,6 +195,7 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
     currentFeed: undefined as any,
     feedDocuments: [] as any[],
     relatedJobs: [] as any[],
+    scheduledExports: [] as any[],
     exportHistory: [] as any[],
     previewRows: [] as any[],
     previewTotal: 0,
@@ -207,6 +213,7 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
     getCurrentFeed: (state) => state.currentFeed,
     getFeedDocuments: (state) => state.feedDocuments,
     getRelatedJobs: (state) => state.relatedJobs,
+    getScheduledExports: (state) => state.scheduledExports,
     getExportHistory: (state) => state.exportHistory,
     getPreviewRows: (state) => state.previewRows,
     getPreviewTotal: (state) => state.previewTotal,
@@ -442,6 +449,80 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
         logger.error(`Failed to queue data document export for ${dataDocumentId}`, error);
         throw error;
       }
+    },
+    // List the scheduled email-export ServiceJobs for a document. The serviceJobs list endpoint
+    // supports a serviceName filter and returns each job's serviceJobParameters, so we filter the
+    // export-service jobs down to the ones whose dataDocumentId parameter matches.
+    async fetchScheduledExports(dataDocumentId: string) {
+      try {
+        const response = await api({
+          url: API_ENDPOINTS.serviceJobs,
+          method: "GET",
+          params: { serviceName: EXPORT_SERVICE_NAME, pageSize: 200 }
+        });
+        const jobs = response?.data?.serviceJobList || [];
+        const paramValue = (job: any, name: string) =>
+          (job.serviceJobParameters || []).find((param: any) => param.parameterName === name)?.parameterValue;
+        this.scheduledExports = jobs
+          .filter((job: any) => paramValue(job, "dataDocumentId") === dataDocumentId)
+          .map((job: any) => ({
+            ...job,
+            toEmailAddress: paramValue(job, "toEmailAddress"),
+            ccAddresses: paramValue(job, "ccAddresses")
+          }));
+      } catch (error) {
+        logger.error(`Failed to fetch scheduled exports for ${dataDocumentId}`, error);
+        this.scheduledExports = [];
+      }
+      return this.scheduledExports;
+    },
+    // Create a cron ServiceJob that exports the document and emails the CSV. Done in two calls
+    // because create (POST) registers the job + service, and the cron expression and parameters
+    // are applied via update (PUT) — mirrors the verified admin/serviceJobs contract.
+    async scheduleEmailExport(payload: Record<string, any>) {
+      const { dataDocumentId, toEmailAddress, ccAddresses, cronExpression, orderByField, pageSize } = payload;
+      // jobName must be unique and stable; encode the document + a timestamp suffix.
+      const safeDoc = String(dataDocumentId).replace(/[^A-Za-z0-9]/g, "").slice(0, 60);
+      const jobName = payload.jobName || `EXP_EMAIL_${safeDoc}_${DateTime.now().toFormat("yyyyMMddHHmmss")}`;
+      const description = payload.description
+        || `Email export of ${dataDocumentId} to ${toEmailAddress}`;
+      try {
+        await api({
+          url: API_ENDPOINTS.serviceJobs,
+          method: "POST",
+          data: { jobName, description, serviceName: EXPORT_SERVICE_NAME, paused: "N" }
+        });
+        const serviceJobParameters = [{ parameterName: "dataDocumentId", parameterValue: dataDocumentId }];
+        if (toEmailAddress) serviceJobParameters.push({ parameterName: "toEmailAddress", parameterValue: toEmailAddress });
+        if (ccAddresses) serviceJobParameters.push({ parameterName: "ccAddresses", parameterValue: ccAddresses });
+        if (orderByField) serviceJobParameters.push({ parameterName: "orderByField", parameterValue: orderByField });
+        if (pageSize) serviceJobParameters.push({ parameterName: "pageSize", parameterValue: String(pageSize) });
+        await api({
+          url: `${API_ENDPOINTS.serviceJobs}/${encodeURIComponent(jobName)}`,
+          method: "PUT",
+          data: { jobName, cronExpression, serviceJobParameters }
+        });
+      } catch (error) {
+        logger.error(`Failed to schedule email export for ${dataDocumentId}`, error);
+        throw error;
+      }
+      await this.fetchScheduledExports(dataDocumentId);
+      return jobName;
+    },
+    // Pause/resume a scheduled export. The admin REST API has no delete for serviceJobs, so
+    // "remove a schedule" is modeled as pausing it (paused = Y).
+    async setExportSchedulePaused(jobName: string, paused: boolean, dataDocumentId?: string) {
+      try {
+        await api({
+          url: `${API_ENDPOINTS.serviceJobs}/${encodeURIComponent(jobName)}`,
+          method: "PUT",
+          data: { jobName, paused: paused ? "Y" : "N" }
+        });
+      } catch (error) {
+        logger.error(`Failed to update schedule ${jobName}`, error);
+        throw error;
+      }
+      if (dataDocumentId) await this.fetchScheduledExports(dataDocumentId);
     },
     // Poll the export history until the newest export for this document reaches a terminal
     // state (Ready = SmsgSent, or Failed = SmsgProduced with failCount > 0). Bounded so it
