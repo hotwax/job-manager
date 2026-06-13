@@ -11,6 +11,7 @@ The primary goal of code review for the Job Manager Application is to ensure the
 *   **String Formatting:** Verify that **double quotes** (`"`) are used for strings. Check that template literals are used only when string interpolation is required.
 *   **Reactivity:** Ensure primitive values use `ref()` and objects/arrays use `reactive()`. Verify that all variables driving UI updates are properly reactive.
 *   **Modern JavaScript:** Look for modern methods like `.includes()`, `.find()`, and `.some()` instead of older alternatives like `.indexOf()`.
+*   **Common Utilities:** Always prioritize using utilities from the top-level `common/utils/commonUtil.ts` (imported via `@common`). Avoid implementing logic locally if a standardized version exists in the common library (e.g., `showToast`, `getDateAndTime`, `copyToClipboard`).
 *   **Asynchronous Code:** Ensure `async/await` is used for all asynchronous operations and that `try...catch` blocks are implemented for error handling.
 
 ### Naming Conventions
@@ -48,6 +49,29 @@ The primary goal of code review for the Job Manager Application is to ensure the
 ### Internationalization (i18n)
 *   **Translation Usage:** Ensure all user-facing text is wrapped in the `translate()` function.
 *   **Key Validation:** Verify that all keys used in `translate()` exist in the appropriate `[locale].json` files. While the linter provides automated checks, reviewers should ensure the keys are descriptive and correctly placed.
+
+## Review Checklist: API, Date & Performance
+
+### API Response Handling
+*   **Validation:** When making API calls, if the response is not a success status or if data is null/undefined, prioritize checking the data and specific values within the data map. You can exclude explicit status code checks if the data structure itself indicates the result.
+*   **Layered Handling:** Review the error handling logic across the **caller** (UI), **callee** (Store/Service), and **orchestrator** to ensure errors are managed at the appropriate level and not redundant.
+
+### Date and Time (Luxon)
+*   **Library:** Always use the **Luxon** library for all date and time logic.
+*   **Standard Utilities:** Prioritize the following utilities from `@common/utils/commonUtil.ts` (imported via `@common`):
+    *   `getCurrentTime`: Get formatted time for a specific time zone.
+    *   `formatDate` / `formatUtcDate`: Standardized date formatting.
+    *   `getDateAndTime` / `getDateAndTimeShort`: Formatted date and time strings.
+    *   `getTime` / `getDate`: Extracting time or date components.
+    *   `getRelativeTime`: For human-friendly relative time (e.g., "2 hours ago").
+    *   `formatDateTime`: ISO to custom format conversions.
+    *   `getDateWithOrdinalSuffix` / `getDateTimeWithOrdinalSuffix`: Human-readable dates with suffixes (e.g., "1st", "2nd").
+
+### Performance & Patterns
+*   **Pagination:** Strictly verify that API calls fetching large datasets implement pagination (typically using `viewIndex` and `viewSize`).
+*   **Asynchronous Execution:**
+    *   **Parallel:** Use `Promise.all()` or `Promise.allSettled()` for independent API requests to minimize total wait time.
+    *   **Sequential:** Use sequential `await` only when a request depends on the result of a previous one.
 
 ## Review Checklist: Documentation & Imports
 
