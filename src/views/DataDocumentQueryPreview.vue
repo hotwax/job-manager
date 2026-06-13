@@ -30,14 +30,16 @@
           <ion-list>
             <ion-item v-for="field in fields" :key="field.fieldSeqId || fieldAlias(field)">
               <ion-checkbox
-                slot="start"
+                label-placement="end"
+                justify="start"
                 :checked="selectedFields.includes(fieldAlias(field))"
                 @ionChange="toggleField(fieldAlias(field), $event.detail.checked)"
-              />
-              <ion-label>
-                <h2>{{ fieldAlias(field) }}</h2>
-                <p>{{ field.fieldPath }}</p>
-              </ion-label>
+              >
+                <ion-label>
+                  <h2>{{ fieldAlias(field) }}</h2>
+                  <p>{{ field.fieldPath }}</p>
+                </ion-label>
+              </ion-checkbox>
             </ion-item>
           </ion-list>
         </ion-card>
