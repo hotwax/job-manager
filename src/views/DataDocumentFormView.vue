@@ -813,6 +813,14 @@ const closeFieldModal = () => {
 </script>
 
 <style scoped>
+/* Embedded in the graph page's Fields segment, this view's <main> sits inside the page's own
+   <main>; drop the redundant max-width + horizontal padding so the field rows get the full
+   segment width instead of a double inset (which was clipping the Remove button). */
+.dd-form-view > main {
+  max-width: none;
+  padding-inline: 0;
+}
+
 .graph-metadata-list {
   display: grid;
   grid-template-columns: 1fr auto auto min-content;
@@ -850,7 +858,10 @@ ion-card-header ion-buttons {
   align-items: center;
   display: grid;
   gap: var(--spacer-sm);
-  grid-template-columns: minmax(14rem, 1.4fr) minmax(10rem, 1fr) minmax(7rem, 0.55fr) minmax(8rem, 0.65fr) minmax(6.5rem, max-content);
+  /* Smaller minimums so the row fits the embedded (Fields-segment) width — with the side menu
+     docked the container is much narrower than a full page, and the old minimums overflowed and
+     clipped the Remove button. The fr units still let columns grow on wider screens. */
+  grid-template-columns: minmax(9rem, 1.4fr) minmax(7rem, 1fr) minmax(4.5rem, 0.5fr) minmax(5.5rem, 0.6fr) max-content;
   padding: var(--spacer-sm) 0;
   width: 100%;
 }
