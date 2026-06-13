@@ -29,6 +29,8 @@ import DataDocumentExportHistory from '@/views/DataDocumentExportHistory.vue';
 import DataDocumentFeeds from '@/views/DataDocumentFeeds.vue';
 import DataDocumentFeedDetail from '@/views/DataDocumentFeedDetail.vue';
 
+import Pipeline from '@/views/Pipeline.vue';
+
 // Defining types for the meta values
 declare module 'vue-router' {
   interface RouteMeta {
@@ -45,7 +47,13 @@ const authGuard = async () => {
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
-    redirect: '/catalog'
+    redirect: '/pipeline'
+  },
+  {
+    path: '/pipeline',
+    name: 'Pipeline',
+    component: Pipeline,
+    beforeEnter: authGuard
   },
   {
     path: '/catalog',

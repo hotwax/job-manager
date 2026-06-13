@@ -11,91 +11,106 @@
       <main v-if="log">
         <div class="header-section">
           <h2>{{ log.fileName }}</h2>
-          <p class="subtitle">{{ log.logId }} &bull; {{ getFileSize(log.fileSize) }}</p>
+          <p class="subtitle">
+            {{ log.logId }} &bull; {{ getFileSize(log.fileSize) }}
+            <span v-if="log.totalRecordCount != null">
+              &bull; {{ translate("Failed") }}: {{ log.failedRecordCount || 0 }} / {{ translate("Total") }}: {{ log.totalRecordCount }}
+            </span>
+          </p>
         </div>
 
         <div class="meta-cards">
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>{{ translate("Execution Details") }}</ion-card-title>
-          </ion-card-header>
-          <ion-list>
-            <ion-item>
-              <ion-label class="ion-text-wrap">
-                <p>{{ translate("Log ID") }}</p>
-                {{ log.logId }}
-              </ion-label>
-            </ion-item>
-            <ion-item>
-              <ion-label class="ion-text-wrap">
-                <p>{{ translate("Config ID") }}</p>
-                {{ log.configId || "-" }}
-              </ion-label>
-            </ion-item>
-            <ion-item>
-              <ion-label class="ion-text-wrap">
-                <p>{{ translate("Execution Mode") }}</p>
-                {{ log.executionModeId || "N/A" }}
-              </ion-label>
-            </ion-item>
-            <ion-item>
-              <ion-label class="ion-text-wrap">
-                <p>{{ translate("Log Type") }}</p>
-                {{ log.logTypeEnumId || log.logContentTypeEnumId || "N/A" }}
-              </ion-label>
-            </ion-item>
-            <ion-item v-if="log.runByInstanceId">
-              <ion-label class="ion-text-wrap">
-                <p>{{ translate("Run Instance") }}</p>
-                {{ log.runByInstanceId }}
-              </ion-label>
-            </ion-item>
-            <ion-item v-if="log.importServiceName">
-              <ion-label class="ion-text-wrap">
-                <p>{{ translate("Service Name") }}</p>
-                {{ log.importServiceName }}
-              </ion-label>
-            </ion-item>
-          </ion-list>
-        </ion-card>
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>{{ translate("Execution Details") }}</ion-card-title>
+            </ion-card-header>
+            <ion-list>
+              <ion-item>
+                <ion-label class="ion-text-wrap">
+                  <p>{{ translate("Log ID") }}</p>
+                  {{ log.logId }}
+                </ion-label>
+              </ion-item>
+              <ion-item>
+                <ion-label class="ion-text-wrap">
+                  <p>{{ translate("Status") }}</p>
+                  <ion-badge :color="getLogStatusColor(log)" style="display: inline-flex; align-items: center; gap: 4px; margin-top: 4px;">
+                    <ion-icon v-if="log.statusId === 'DmlsFinished' && failedRecordCount > 0" :icon="warningOutline" />
+                    <ion-icon v-else-if="['DmlsFailed', 'DmlsCrashed'].includes(log.statusId)" :icon="alertCircleOutline" />
+                    {{ translate(getLogStatusLabel(log)) }}
+                  </ion-badge>
+                </ion-label>
+              </ion-item>
+              <ion-item>
+                <ion-label class="ion-text-wrap">
+                  <p>{{ translate("Config ID") }}</p>
+                  {{ log.configId || "-" }}
+                </ion-label>
+              </ion-item>
+              <ion-item>
+                <ion-label class="ion-text-wrap">
+                  <p>{{ translate("Execution Mode") }}</p>
+                  {{ log.executionModeId || "N/A" }}
+                </ion-label>
+              </ion-item>
+              <ion-item>
+                <ion-label class="ion-text-wrap">
+                  <p>{{ translate("Log Type") }}</p>
+                  {{ log.logTypeEnumId || log.logContentTypeEnumId || "N/A" }}
+                </ion-label>
+              </ion-item>
+              <ion-item v-if="log.runByInstanceId">
+                <ion-label class="ion-text-wrap">
+                  <p>{{ translate("Run Instance") }}</p>
+                  {{ log.runByInstanceId }}
+                </ion-label>
+              </ion-item>
+              <ion-item v-if="log.importServiceName">
+                <ion-label class="ion-text-wrap">
+                  <p>{{ translate("Service Name") }}</p>
+                  {{ log.importServiceName }}
+                </ion-label>
+              </ion-item>
+            </ion-list>
+          </ion-card>
 
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>{{ translate("Timeline") }}</ion-card-title>
-          </ion-card-header>
-          <ion-list>
-            <ion-item>
-              <ion-label class="ion-text-wrap">
-                <p>{{ translate("Created At") }}</p>
-                {{ log.createdDate ? commonUtil.getDateTimeWithOrdinalSuffix(log.createdDate) : "-" }}
-              </ion-label>
-            </ion-item>
-            <ion-item>
-              <ion-label class="ion-text-wrap">
-                <p>{{ translate("Started At") }}</p>
-                {{ log.startDateTime ? commonUtil.getDateTimeWithOrdinalSuffix(log.startDateTime) : "-" }}
-              </ion-label>
-            </ion-item>
-            <ion-item>
-              <ion-label class="ion-text-wrap">
-                <p>{{ translate("Finished At") }}</p>
-                {{ (log.finishDateTime || log.lastUpdatedTxStamp) ? commonUtil.getDateTimeWithOrdinalSuffix(log.finishDateTime || log.lastUpdatedTxStamp) : "-" }}
-              </ion-label>
-            </ion-item>
-            <ion-item v-if="log.createdDate && (log.finishDateTime || log.lastUpdatedTxStamp)">
-              <ion-label class="ion-text-wrap">
-                <p>{{ translate("Duration") }}</p>
-                {{ getDuration(log.createdDate, log.finishDateTime || log.lastUpdatedTxStamp) }}
-              </ion-label>
-            </ion-item>
-            <ion-item v-if="log.runThread">
-              <ion-label class="ion-text-wrap">
-                <p>{{ translate("Run Thread") }}</p>
-                {{ log.runThread }}
-              </ion-label>
-            </ion-item>
-          </ion-list>
-        </ion-card>
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>{{ translate("Timeline") }}</ion-card-title>
+            </ion-card-header>
+            <ion-list>
+              <ion-item>
+                <ion-label class="ion-text-wrap">
+                  <p>{{ translate("Created At") }}</p>
+                  {{ log.createdDate ? commonUtil.getDateTimeWithOrdinalSuffix(log.createdDate) : "-" }}
+                </ion-label>
+              </ion-item>
+              <ion-item>
+                <ion-label class="ion-text-wrap">
+                  <p>{{ translate("Started At") }}</p>
+                  {{ log.startDateTime ? commonUtil.getDateTimeWithOrdinalSuffix(log.startDateTime) : "-" }}
+                </ion-label>
+              </ion-item>
+              <ion-item>
+                <ion-label class="ion-text-wrap">
+                  <p>{{ translate("Finished At") }}</p>
+                  {{ (log.finishDateTime || log.lastUpdatedTxStamp) ? commonUtil.getDateTimeWithOrdinalSuffix(log.finishDateTime || log.lastUpdatedTxStamp) : "-" }}
+                </ion-label>
+              </ion-item>
+              <ion-item v-if="log.createdDate && (log.finishDateTime || log.lastUpdatedTxStamp)">
+                <ion-label class="ion-text-wrap">
+                  <p>{{ translate("Duration") }}</p>
+                  {{ getDuration(log.createdDate, log.finishDateTime || log.lastUpdatedTxStamp) }}
+                </ion-label>
+              </ion-item>
+              <ion-item v-if="log.runThread">
+                <ion-label class="ion-text-wrap">
+                  <p>{{ translate("Run Thread") }}</p>
+                  {{ log.runThread }}
+                </ion-label>
+              </ion-item>
+            </ion-list>
+          </ion-card>
         </div>
 
         <section class="payload">
@@ -195,9 +210,10 @@ import { computed, ref } from 'vue';
 import { translate, commonUtil } from '@common';
 import { useMdmConfigStore } from '@/store/mdmConfig';
 import { getFileSize, showToast, getDuration } from '@/utils';
-import { codeWorkingOutline, copyOutline, downloadOutline } from 'ionicons/icons';
+import { codeWorkingOutline, copyOutline, downloadOutline, warningOutline, alertCircleOutline } from 'ionicons/icons';
 import JsonViewer from '@/components/JsonViewer.vue';
 import { saveAs } from 'file-saver';
+import { getStatusDesc } from '@/utils/config';
 
 const props = defineProps({
   id: {
@@ -242,6 +258,22 @@ const payloadTabs = computed(() => {
   }
   return tabs;
 });
+
+const getLogStatusLabel = (logVal: any) => {
+  if (!logVal) return "";
+  if (logVal.statusId === "DmlsFinished" && failedRecordCount.value > 0) {
+    return "Finished with errors";
+  }
+  return getStatusDesc(logVal.statusId);
+};
+
+const getLogStatusColor = (logVal: any) => {
+  if (!logVal) return "medium";
+  if (logVal.statusId === "DmlsFinished" && failedRecordCount.value > 0) {
+    return "warning";
+  }
+  return commonUtil.getStatusColor(logVal.statusId);
+};
 const showPayloadControls = computed(() => payloadTabs.value.length > 1 || !!contentType.value);
 const csvColumns = computed(() => (csvRows.value.length ? Object.keys(csvRows.value[0]) : []));
 const filteredCsvRows = computed(() => {
@@ -388,11 +420,11 @@ main {
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--spacer-base);
+  align-items: start;
 }
 
 .meta-cards ion-card {
   margin: 0;
-  height: 100%;
 }
 
 @media (min-width: 768px) {

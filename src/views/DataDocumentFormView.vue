@@ -33,8 +33,6 @@
         </ion-list>
       </ion-card>
 
-      <h2>{{ translate("Fields") }}</h2>
-      <p>{{ translate("Use direct fields or relation paths such as product:internalName.") }}</p>
       <ion-card v-for="group in fieldGroups" :key="group.entityPath">
         <ion-card-header>
           <ion-card-title>{{ group.entityLabel }}</ion-card-title>

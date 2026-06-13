@@ -86,10 +86,7 @@ let appPages = [
     title: "Dashboard",
     url: "/pipeline",
     iosIcon: pulseOutline,
-    mdIcon: pulseOutline,
-    meta: {
-      permissionId: "HIDDEN"
-    }
+    mdIcon: pulseOutline
   },
   {
     title: "Jobs"

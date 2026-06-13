@@ -160,8 +160,9 @@
             </ion-item>
 
             <div v-if="log.totalRecordCount" class="log-result-stack">
-              <ion-badge color="success">{{ getSuccessRecordCount(log) }} {{ translate("success") }}</ion-badge>
-              <ion-badge color="danger">{{ getFailedRecordCount(log) }} {{ translate("failed") }}</ion-badge>
+              <ion-badge :color="getFailedRecordCount(log) > 0 ? 'warning' : 'success'">
+                {{ getFailedRecordCount(log) }} / {{ log.totalRecordCount }} {{ translate("failed") }}
+              </ion-badge>
             </div>
 
             <ion-label class="log-cell-stack">
@@ -170,7 +171,9 @@
             </ion-label>
 
             <ion-label class="log-cell-stack log-meta">
-              <ion-badge :color="getLogStatusColor(log)">
+              <ion-badge :color="getLogStatusColor(log)" style="display: inline-flex; align-items: center; gap: 4px;">
+                <ion-icon v-if="log.statusId === 'DmlsFinished' && getFailedRecordCount(log) > 0" :icon="warningOutline" />
+                <ion-icon v-else-if="['DmlsFailed', 'DmlsCrashed'].includes(log.statusId)" :icon="alertCircleOutline" />
                 {{ translate(getLogStatusLabel(log)) }}
               </ion-badge>
               <p>{{ getFileSize(log.fileSize) }}</p>
@@ -257,8 +260,9 @@ import {
   onIonViewWillEnter,
 } from '@ionic/vue';
 import { translate, commonUtil } from '@common';
-import { closeOutline, closeCircleOutline } from 'ionicons/icons';
+import { closeOutline, closeCircleOutline, warningOutline, alertCircleOutline } from 'ionicons/icons';
 import { computed, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import { useMdmConfigStore } from '@/store/mdmConfig';
 import { getFileSize, getDuration } from '@/utils';
 import { getStatusDesc } from '@/utils/config';
@@ -267,6 +271,7 @@ import router from '@/router';
 
 const PAGE_SIZE = 10;
 
+const route = useRoute();
 const mdmStore = useMdmConfigStore();
 const utilStore = useUtilStore();
 
@@ -493,6 +498,11 @@ watch(pageIndex, () => {
 });
 
 onIonViewWillEnter(async () => {
+  if (route.query.statusId) {
+    await mdmStore.updateAppliedFilters("statusId", (route.query.statusId as string).split(","));
+  } else {
+    await mdmStore.updateAppliedFilters("statusId", []);
+  }
   await fetchLogs();
   mdmStore.fetchConfigs();
   await utilStore.fetchStatusItemsByType("DataManagerLog");
