@@ -102,7 +102,6 @@ import {
   constructOutline,
   documentTextOutline,
   fileTrayStackedOutline,
-  gitNetworkOutline,
   globeOutline,
   pulseOutline,
   searchCircleOutline,
@@ -122,7 +121,6 @@ const userProfile = computed(() => userStore.getUserProfile);
 
 const browserTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-// Filtering array of app pages, retaining only those elements (pages) that have the necessary permissions for display.
 const getValidMenuItems = (appPages: any) => {
   return appPages.filter(
     (appPage: any) =>
@@ -203,13 +201,7 @@ let appPages = [
     mdIcon: documentTextOutline,
     childRoutes: ["/data-documents/"],
   },
-  // {
-  //   title: "Feeds",
-  //   url: "/data-document-feeds",
-  //   iosIcon: gitNetworkOutline,
-  //   mdIcon: gitNetworkOutline,
-  //   childRoutes: ["/data-document-feeds/"]
-  // },
+
   {
     title: "Export History",
     url: "/data-document-export-history",
