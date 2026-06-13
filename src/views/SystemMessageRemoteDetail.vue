@@ -94,7 +94,7 @@
               <div class="pagination">
                 <div class="limit-container">
                   <ion-select
-                    :label="translate('Limit')"
+                    :label="translate('pageSize')"
                     label-placement="start"
                     interface="popover"
                     :value="pageSize"
@@ -169,7 +169,7 @@ import { caretBackOutline, caretForwardOutline } from "ionicons/icons";
 // Type based declaration
 const props = defineProps<{ id?: string }>();
 
-const pageSize = ref(25);
+const pageSize = ref(20);
 const pageIndex = ref(0);
 
 const systemMessageStore = useSystemMessageStore();
@@ -293,7 +293,7 @@ const fetchRelatedMessages = async () => {
     payload["statusId"] = selectedStatusId.value;
   }
 
-  await systemMessageStore.fetchSystemMessages(payload)
+  await systemMessageStore.fetchSystemMessages(payload);
 };
 
 watch([queryString, selectedStatusId, pageSize], async () => {

@@ -100,7 +100,7 @@
         <div class="pagination">
           <div class="limit-container">
             <ion-select
-              :label="translate('Limit')"
+              :label="translate('pageSize')"
               label-placement="start"
               interface="popover"
               :value="pageSize"
@@ -158,7 +158,7 @@ import SystemMessageList from "@/components/SystemMessageList.vue";
 import { useSystemMessageStore } from "@/store/systemMessage";
 import { useUtilStore } from "@/store/util";
 
-const pageSize = ref(25);
+const pageSize = ref(20);
 
 const store = useSystemMessageStore();
 const utilStore = useUtilStore();
