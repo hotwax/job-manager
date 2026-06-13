@@ -58,16 +58,27 @@
             class="field-row"
           >
             <div class="field-controls">
-              <ion-chip
-                outline
-                color="primary"
-                class="field-selector"
-                @click="openFieldModal(getFieldIndex(field))"
-              >
-                <ion-label>
-                  {{ field.fieldPath || translate("Select Field") }}
-                </ion-label>
-              </ion-chip>
+              <div class="field-row-top">
+                <ion-chip
+                  outline
+                  color="primary"
+                  class="field-selector"
+                  @click="openFieldModal(getFieldIndex(field))"
+                >
+                  <ion-label>
+                    {{ field.fieldPath || translate("Select Field") }}
+                  </ion-label>
+                </ion-chip>
+                <ion-button
+                  class="field-remove-button"
+                  fill="clear"
+                  color="danger"
+                  :aria-label="translate('Remove field')"
+                  @click="graphStore.removeField(field.fieldSeqId || field.fieldPath)"
+                >
+                  <ion-icon slot="icon-only" :icon="trashOutline" />
+                </ion-button>
+              </div>
               <ion-input
                 :value="field.fieldNameAlias"
                 :label="translate('Alias')"
@@ -89,16 +100,6 @@
               >
                 {{ translate("Display") }}
               </ion-toggle>
-              <ion-button
-                class="field-remove-button"
-                fill="clear"
-                color="danger"
-                :aria-label="translate('Remove field')"
-                @click="graphStore.removeField(field.fieldSeqId || field.fieldPath)"
-              >
-                <ion-icon slot="start" :icon="trashOutline" />
-                {{ translate("Remove") }}
-              </ion-button>
             </div>
           </ion-item>
         </ion-list>
@@ -854,22 +855,26 @@ ion-card-header ion-buttons {
   --inner-padding-bottom: var(--spacer-sm);
 }
 
+/* Stack the field controls vertically (chip + remove on a top row, then alias / sequence /
+   display) so the row never overflows horizontally regardless of the embedded segment width. */
 .field-controls {
-  align-items: center;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: var(--spacer-sm);
-  /* Smaller minimums so the row fits the embedded (Fields-segment) width — with the side menu
-     docked the container is much narrower than a full page, and the old minimums overflowed and
-     clipped the Remove button. The fr units still let columns grow on wider screens. */
-  grid-template-columns: minmax(9rem, 1.4fr) minmax(7rem, 1fr) minmax(4.5rem, 0.5fr) minmax(5.5rem, 0.6fr) max-content;
   padding: var(--spacer-sm) 0;
   width: 100%;
 }
 
+.field-row-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacer-sm);
+}
+
 .field-controls ion-input,
-.field-controls ion-toggle,
-.field-selector {
-  min-width: 0;
+.field-controls ion-toggle {
+  width: 100%;
 }
 
 .field-controls ion-button {
@@ -877,14 +882,13 @@ ion-card-header ion-buttons {
 }
 
 .field-selector {
-  justify-self: start;
   max-width: 100%;
   margin: 0;
   cursor: pointer;
 }
 
 .field-remove-button {
-  justify-self: end;
+  flex: none;
   min-height: 44px;
 }
 
