@@ -127,6 +127,7 @@ const highlight = (text: string) => {
 }
 
 .jt-clickable:hover {
+  background: var(--ion-color-step-100, #f0f0f0);
 }
 
 .jt-toggle {
@@ -135,6 +136,11 @@ const highlight = (text: string) => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  color: var(--ion-color-medium);
+}
+
+.jt-toggle ion-icon {
+  font-size: 0.85rem;
 }
 
 .jt-children {
@@ -144,10 +150,61 @@ const highlight = (text: string) => {
 }
 
 .jt-summary {
+  color: #57606a;
+  font-style: italic;
   margin: 0 6px;
 }
 
+.jt-key {
+  color: var(--ion-color-dark);
+  font-weight: 600;
+}
+
+.jt-punct {
+  color: #57606a;
+}
+
+.jt-string {
+  color: #0a7d2e;
+}
+
+.jt-number {
+  color: #0b5cad;
+}
+
+.jt-boolean {
+  color: #6f42c1;
+  font-weight: 600;
+}
+
+.jt-null {
+  color: #57606a;
+  font-style: italic;
+}
+
+@media (prefers-color-scheme: dark) {
+  .jt-punct,
+  .jt-summary,
+  .jt-null {
+    color: #9aa4b2;
+  }
+
+  .jt-string {
+    color: #7ee787;
+  }
+
+  .jt-number {
+    color: #79c0ff;
+  }
+
+  .jt-boolean {
+    color: #d2a8ff;
+  }
+}
+
 :deep(mark) {
+  background: var(--ion-color-warning, #ffc409);
+  color: var(--ion-color-dark);
   border-radius: 2px;
   padding: 0 1px;
 }
