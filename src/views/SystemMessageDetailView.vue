@@ -262,7 +262,7 @@
                     v-if="formattedContent && !isEditing"
                     fill="clear"
                     size="small"
-                    @click="commonUtil.copyToClipboard(message?.messageText)"
+                    @click="commonUtil.copyToClipboard(formattedContent)"
                   >
                     {{ translate("Copy") }}
                     <ion-icon slot="start" :icon="copyOutline" />
@@ -406,8 +406,8 @@ import {
   chevronForwardOutline,
   chevronUpOutline,
   checkmarkCircleOutline,
-  documentAttachOutline,
   copyOutline,
+  documentAttachOutline,
   downloadOutline,
   globeOutline,
   hourglassOutline,

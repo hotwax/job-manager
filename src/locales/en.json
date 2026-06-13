@@ -35,6 +35,7 @@
   "Consume Service": "Consume Service",
   "Consumed": "Consumed",
   "Consumed messages are read-only in this mock implementation.": "Consumed messages are read-only in this mock implementation.",
+  "Copy": "Copy",
   "Copied": "Copied",
   "Create": "Create",
   "Create Job": "Create Job",
