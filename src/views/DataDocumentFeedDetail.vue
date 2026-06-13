@@ -167,7 +167,7 @@ const getDocumentId = (document: any) => document.dataDocumentId || document.doc
 
 const openDocument = (document: any) => {
   const dataDocumentId = getDocumentId(document);
-  if (dataDocumentId) router.push(`/data-documents/${dataDocumentId}`);
+  if (dataDocumentId) router.push(`/data-documents/${dataDocumentId}/graph`);
 };
 
 onIonViewWillEnter(async () => {

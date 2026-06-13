@@ -22,10 +22,7 @@ import Login from '@common/components/Login.vue';
 import { useUserStore } from '@/store/user';
 import { useDataDocumentGraphStore } from '@/store/dataDocumentGraph';
 import DataDocumentCatalog from '@/views/DataDocumentCatalog.vue';
-import DataDocumentDetail from '@/views/DataDocumentDetail.vue';
-import DataDocumentBuilder from '@/views/DataDocumentBuilder.vue';
 import DataDocumentGraphBuilder from '@/views/DataDocumentGraphBuilder.vue';
-import DataDocumentQueryPreview from '@/views/DataDocumentQueryPreview.vue';
 import DataDocumentExportHistory from '@/views/DataDocumentExportHistory.vue';
 import DataDocumentFeeds from '@/views/DataDocumentFeeds.vue';
 import DataDocumentFeedDetail from '@/views/DataDocumentFeedDetail.vue';
@@ -171,36 +168,12 @@ const routes: Array<RouteRecordRaw> = [
   //   props: true
   // },
   {
-    path: '/data-documents/new',
-    name: 'CreateDataDocument',
-    component: DataDocumentBuilder,
-    beforeEnter: authGuard
-  },
-  {
-    path: '/data-documents/:id',
-    name: 'DataDocumentDetail',
-    component: DataDocumentDetail,
-    beforeEnter: authGuard,
-    props: true
-  },
-  {
-    path: '/data-documents/:id/edit',
-    name: 'EditDataDocument',
-    component: DataDocumentBuilder,
-    beforeEnter: authGuard,
-    props: true
-  },
-  {
+    // Single detail page for a data document (also create via id="new"). Absorbs the former
+    // detail / edit / run pages as in-page segments (Fields / Conditions / Preview / Usage /
+    // Export History) reachable via ?segment=.
     path: '/data-documents/:id/graph',
     name: 'DataDocumentGraphBuilder',
     component: DataDocumentGraphBuilder,
-    beforeEnter: authGuard,
-    props: true
-  },
-  {
-    path: '/data-documents/:id/run',
-    name: 'RunDataDocument',
-    component: DataDocumentQueryPreview,
     beforeEnter: authGuard,
     props: true
   },

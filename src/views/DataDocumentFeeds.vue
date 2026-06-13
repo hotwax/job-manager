@@ -59,7 +59,7 @@
                     :key="document.dataDocumentId"
                     button
                     lines="none"
-                    @click="router.push(`/data-documents/${document.dataDocumentId}`)"
+                    @click="router.push(`/data-documents/${document.dataDocumentId}/graph`)"
                   >
                     <ion-icon slot="start" :icon="documentTextOutline" />
                     <ion-label>

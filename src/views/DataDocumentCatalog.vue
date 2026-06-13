@@ -6,10 +6,6 @@
         <ion-title>{{ translate("Data Documents") }}</ion-title>
         <ion-buttons slot="end">
           <ion-button @click="router.push('/data-documents/new/graph')">
-            <ion-icon slot="start" :icon="gitBranchOutline" />
-            {{ translate("Graph") }}
-          </ion-button>
-          <ion-button @click="router.push('/data-documents/new')">
             <ion-icon slot="start" :icon="addOutline" />
             {{ translate("Create") }}
           </ion-button>
@@ -68,7 +64,7 @@
         <div v-if="documents.length" class="catalog-grid">
           <div v-for="document in documents" :key="document.dataDocumentId">
             <ion-card>
-              <ion-item lines="none" detail button @click="router.push(`/data-documents/${document.dataDocumentId}`)">
+              <ion-item lines="none" detail button @click="router.push(`/data-documents/${document.dataDocumentId}/graph`)">
                 <ion-icon slot="start" :icon="documentTextOutline" />
                 <ion-label>
                   <h2>{{ document.documentName || document.dataDocumentId }}</h2>
@@ -98,13 +94,13 @@
                 </ion-item>
               </ion-list>
               <ion-card-content>
-                <ion-button fill="clear" @click="router.push(`/data-documents/${document.dataDocumentId}/run`)">
+                <ion-button fill="clear" @click="router.push(`/data-documents/${document.dataDocumentId}/graph?segment=preview`)">
                   <ion-icon slot="start" :icon="playOutline" />
                   {{ translate("Run") }}
                 </ion-button>
-                <ion-button fill="clear" @click="router.push(`/data-documents/${document.dataDocumentId}/graph`)">
-                  <ion-icon slot="start" :icon="gitBranchOutline" />
-                  {{ translate("Graph") }}
+                <ion-button fill="clear" @click="router.push(`/data-documents/${document.dataDocumentId}/graph?segment=exports`)">
+                  <ion-icon slot="start" :icon="timeOutline" />
+                  {{ translate("History") }}
                 </ion-button>
               </ion-card-content>
             </ion-card>
@@ -143,7 +139,7 @@ import {
   IonToolbar,
   onIonViewWillEnter
 } from "@ionic/vue";
-import { addOutline, documentTextOutline, gitBranchOutline, playOutline } from "ionicons/icons";
+import { addOutline, documentTextOutline, playOutline, timeOutline } from "ionicons/icons";
 import { computed, ref, watch } from "vue";
 import router from "../router"
 
