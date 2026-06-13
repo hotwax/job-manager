@@ -1,7 +1,7 @@
 <template>
-  <ion-content v-if="graph">
+  <div v-if="graph" class="dd-form-view">
     <main>
-      <ion-card>
+      <ion-card v-if="!embedded">
         <ion-list class="graph-metadata-list">
           <ion-item detail button @click="openEntityModal">
             <ion-label>
@@ -104,7 +104,7 @@
         </ion-list>
       </ion-card>
 
-      <ion-card>
+      <ion-card v-if="!embedded">
         <ion-card-header>
           <ion-card-title>{{ translate("Conditions") }}</ion-card-title>
           <ion-card-subtitle>{{ translate("Add conditions that always apply to this document.") }}</ion-card-subtitle>
@@ -361,7 +361,7 @@
         </ion-list>
       </ion-content>
     </ion-modal>
-  </ion-content>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -396,7 +396,7 @@ import {
 } from "@ionic/vue";
 import { addOutline, arrowBackOutline, chevronForwardOutline, closeOutline, gitBranchOutline, optionsOutline, refreshOutline, trashOutline } from "ionicons/icons";
 import { computed, ref, watch } from "vue";
-import { useRoute } from "vue-router";
+import router from "@/router";
 
 import { translate } from "@common";
 import { useDataDocumentGraphStore } from "@/store/dataDocumentGraph";
@@ -406,8 +406,9 @@ import { getEntityLabel, getEntitySearchText, getEntityValue, groupEntityOptions
 import type { EntityOption } from "@/utils/entityOptions";
 import { useKeyboardListNavigation } from "@/utils/keyboardListNavigation";
 
-const route = useRoute();
-const isNew = computed(() => route.name === "CreateDataDocument");
+defineProps<{ embedded?: boolean }>();
+// id === "new" drives create mode (mirrors the graph page); unlocks the dataDocumentId field.
+const isNew = computed(() => router.currentRoute.value.params.id === "new");
 
 const operators = [
   { value: "equals", label: "Equals" },

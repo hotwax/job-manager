@@ -254,7 +254,7 @@
         </section>
 
         <section class="graph-bottom">
-          <ion-segment scrollable :value="bottomPanel" @ionChange="bottomPanel = String($event.detail.value || 'issues')">
+          <ion-segment scrollable :value="bottomPanel" @ionChange="setSegment(String($event.detail.value || 'issues'))">
             <ion-segment-button value="issues" layout="icon-start">
               <ion-icon :icon="warningOutline" />
               <ion-label>{{ translate("Issues") }} ({{ graph.validationIssues.length }})</ion-label>
@@ -293,30 +293,9 @@
             </ion-item>
           </ion-list>
 
-          <ion-list v-else-if="bottomPanel === 'fields'">
-            <ion-item v-if="measureCount" lines="full" color="light">
-              <ion-icon slot="start" :icon="statsChartOutline" />
-              <ion-label class="ion-text-wrap">
-                <p>{{ translate("Aggregated report") }}: {{ measureCount }} {{ translate("measure(s)") }} grouped by {{ dimensionCount }} {{ translate("dimension(s)") }}.</p>
-              </ion-label>
-            </ion-item>
-            <ion-item v-for="field in graph.fields" :key="field.fieldSeqId || field.fieldPath" button @click="selectField(field.fieldSeqId || field.fieldPath)">
-              <ion-checkbox
-                slot="start"
-                :checked="selectedFields.includes(field.outputName)"
-                @ionChange="toggleSelectedField(field.outputName, $event.detail.checked)"
-              />
-              <ion-label>
-                <h2>{{ field.outputName }}</h2>
-                <p>{{ field.fieldPath }}</p>
-              </ion-label>
-              <ion-badge v-if="field.functionName" slot="end" color="tertiary">{{ functionLabel(field.functionName) }}</ion-badge>
-              <ion-badge v-if="getFieldConditionCount(field)" slot="end" color="warning">
-                <ion-icon :icon="filterOutline" />
-                {{ getFieldConditionCount(field) }}
-              </ion-badge>
-            </ion-item>
-          </ion-list>
+          <div v-else-if="bottomPanel === 'fields'" class="fields-form">
+            <DataDocumentFormView embedded />
+          </div>
 
           <ion-list v-else-if="bottomPanel === 'conditions'">
             <ion-item
@@ -388,6 +367,27 @@
               can-export
               @run-export="queueExport"
             />
+
+            <div class="schedule-section">
+              <ion-button expand="block" fill="outline" :disabled="!graph?.dataDocumentId" @click="openScheduleModal">
+                <ion-icon slot="start" :icon="timeOutline" />
+                {{ translate("Schedule email export") }}
+              </ion-button>
+              <ion-list v-if="scheduledExports.length">
+                <ion-list-header>{{ translate("Scheduled email exports") }}</ion-list-header>
+                <ion-item v-for="job in scheduledExports" :key="job.jobName">
+                  <ion-label>
+                    <h2>{{ job.toEmailAddress || job.jobName }}</h2>
+                    <p>{{ job.cronDescription || job.cronExpression }}</p>
+                    <p v-if="job.nextExecutionDateTime">{{ translate("Next") }}: {{ getDateAndTime(job.nextExecutionDateTime) }}</p>
+                    <p v-if="job.paused === 'Y'"><ion-text color="warning">{{ translate("Paused") }}</ion-text></p>
+                  </ion-label>
+                  <ion-button slot="end" fill="clear" :aria-label="translate('Pause or resume schedule')" @click="togglePause(job)">
+                    <ion-icon slot="icon-only" :icon="job.paused === 'Y' ? playOutline : pauseOutline" />
+                  </ion-button>
+                </ion-item>
+              </ion-list>
+            </div>
           </div>
 
           <ion-list v-else-if="bottomPanel === 'usage'">
@@ -881,13 +881,15 @@ import {
   IonSelect,
   IonSelectOption,
   IonSpinner,
+  IonListHeader,
   IonText,
   IonTitle,
   IonToggle,
   IonToolbar,
+  modalController,
   onIonViewWillEnter
 } from "@ionic/vue";
-import { addOutline, alertCircleOutline, arrowBackOutline, checkmarkCircleOutline, closeOutline, cloudDownloadOutline, cloudUploadOutline, filterOutline, gitBranchOutline, informationCircleOutline, listOutline, optionsOutline, playOutline, saveOutline, statsChartOutline, warningOutline } from "ionicons/icons";
+import { addOutline, alertCircleOutline, arrowBackOutline, checkmarkCircleOutline, closeOutline, cloudDownloadOutline, cloudUploadOutline, filterOutline, gitBranchOutline, informationCircleOutline, listOutline, optionsOutline, pauseOutline, playOutline, saveOutline, statsChartOutline, timeOutline, warningOutline } from "ionicons/icons";
 import { computed, ref, watch } from "vue";
 import router from "../router"
 
@@ -896,7 +898,9 @@ import { useDataDocumentGraphStore } from "@/store/dataDocumentGraph";
 import { useDataDocumentStore } from "@/store/dataDocuments";
 import DataDocumentExportList from "@/components/DataDocumentExportList.vue";
 import DataDocumentPreviewTable from "@/components/DataDocumentPreviewTable.vue";
-import { showToast } from "@/utils";
+import ScheduleEmailExportModal from "@/components/ScheduleEmailExportModal.vue";
+import DataDocumentFormView from "@/views/DataDocumentFormView.vue";
+import { getDateAndTime, showToast } from "@/utils";
 import { useUtilStore } from "@/store/util";
 import type { GraphCondition, GraphEdge, GraphField } from "@/utils/dataDocumentGraph";
 import { DATA_DOCUMENT_FUNCTIONS, getDataDocumentFunctionLabel } from "@/utils/dataDocumentGraph";
@@ -912,8 +916,17 @@ const utilStore = useUtilStore();
 
 const selectedTarget = ref<{ kind: "node" | "edge" | "field"; id: string }>({ kind: "node", id: "node:root" });
 const selectedFields = ref<string[]>([]);
+const SEGMENT_VALUES = ["issues", "fields", "conditions", "preview", "usage", "exports"];
 const bottomPanel = ref("issues");
 const pageSize = ref(25);
+
+// Switch the active segment and reflect it in the URL (?segment=) so the catalog deep-links
+// (Run→preview, History→exports), refresh, and the post-save redirect stay in sync. A
+// query-only replace does not re-run onIonViewWillEnter, so it won't refetch the graph.
+const setSegment = (segment: string) => {
+  bottomPanel.value = SEGMENT_VALUES.includes(segment) ? segment : "issues";
+  router.replace({ query: { ...router.currentRoute.value.query, segment: bottomPanel.value } });
+};
 const entityModal = ref();
 const entitySearchbar = ref();
 const entityQueryString = ref("");
@@ -969,6 +982,7 @@ const previewError = computed(() => dataDocumentStore.getPreviewError);
 const relatedFeeds = computed(() => dataDocumentStore.getRelatedFeeds);
 const relatedJobs = computed(() => dataDocumentStore.getRelatedJobs);
 const exportHistory = computed(() => dataDocumentStore.getExportHistory);
+const scheduledExports = computed(() => dataDocumentStore.getScheduledExports);
 const graphHasErrors = computed(() => graph.value?.validationIssues.some((issue) => issue.severity === "error"));
 const canvasSize = computed(() => ({
   width: Math.max(980, 360 + (graph.value?.nodes.length || 1) * 220),
@@ -1477,7 +1491,7 @@ const saveGraph = async () => {
     await graphStore.saveGraph();
     showToast(translate("Data document graph saved."));
     if (isNew.value && graph.value?.dataDocumentId) {
-      router.replace(`/data-documents/${graph.value.dataDocumentId}/graph`);
+      router.replace(`/data-documents/${graph.value.dataDocumentId}/graph?segment=${bottomPanel.value}`);
     }
   } catch (error) {
     showToast(translate("Failed to save data document graph."));
@@ -1486,6 +1500,36 @@ const saveGraph = async () => {
 
 const runPreview = async () => {
   await dataDocumentStore.runPreview(graph.value?.dataDocumentId as string, buildQuery());
+};
+
+const openScheduleModal = async () => {
+  const dataDocumentId = graph.value?.dataDocumentId as string;
+  if (!dataDocumentId) return;
+  const modal = await modalController.create({ component: ScheduleEmailExportModal });
+  modal.present();
+  const { data, role } = await modal.onDidDismiss();
+  if (role !== "confirm" || !data) return;
+  try {
+    await dataDocumentStore.scheduleEmailExport({
+      dataDocumentId,
+      toEmailAddress: data.toEmailAddress,
+      ccAddresses: data.ccAddresses,
+      cronExpression: data.cronExpression
+    });
+    showToast(translate("Email export scheduled."));
+  } catch (error) {
+    showToast(translate("Failed to schedule the email export."));
+  }
+};
+
+const togglePause = async (job: any) => {
+  const dataDocumentId = graph.value?.dataDocumentId as string;
+  try {
+    await dataDocumentStore.setExportSchedulePaused(job.jobName, job.paused !== "Y", dataDocumentId);
+    showToast(job.paused === "Y" ? translate("Schedule resumed.") : translate("Schedule paused."));
+  } catch (error) {
+    showToast(translate("Failed to update the schedule."));
+  }
 };
 
 const queueExport = async () => {
@@ -1520,6 +1564,10 @@ watch([relatedFieldQueryString, relatedFieldStep, relatedEntityName, activeRelat
 });
 
 onIonViewWillEnter(async () => {
+  // Deep-link the active segment from ?segment= (catalog Run→preview, History→exports).
+  // Done here, not at ref init, because Ionic caches/reuses the page across navigations.
+  const segment = router.currentRoute.value.query.segment as string;
+  if (SEGMENT_VALUES.includes(segment)) bottomPanel.value = segment;
   utilStore.fetchEnumerations();
   utilStore.fetchStatuses();
   // Read the LIVE route id (not the captured snapshot) so a cached re-enter after the
@@ -1532,6 +1580,8 @@ onIonViewWillEnter(async () => {
     if (graph.value?.metadata.primaryEntityName) {
       await utilStore.fetchEntityFields(graph.value.metadata.primaryEntityName);
     }
+    // Surface scheduled email exports for this document in the Preview segment.
+    dataDocumentStore.fetchScheduledExports(currentId);
   }
 });
 </script>
