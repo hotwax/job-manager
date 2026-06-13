@@ -3,6 +3,7 @@
 import legacy from '@vitejs/plugin-legacy'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
+import { ideTraceVue } from 'chrome-ide-trace/vite'
 import { defineConfig } from 'vite'
 import { versionInfoUtil } from '../../common/utils/versionInfoUtil'
 import pkg from './package.json'
@@ -10,6 +11,7 @@ import pkg from './package.json'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
+    ideTraceVue(),
     vue(),
     legacy()
   ],
