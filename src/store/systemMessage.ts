@@ -119,38 +119,79 @@ export const useSystemMessageStore = defineStore("systemMessage", {
         const pageSize = Number(payload.pageSize ?? 25);
         const pageIndex = Number(payload.pageIndex ?? 0);
 
-        // Strip pagination params for the API call
+        // Strip pagination params for API calls
         const requestPayload = { ...payload };
         delete requestPayload.pageIndex;
         delete requestPayload.pageSize;
 
-        const response = await api({
-          url: "admin/systemMessages",
-          method: "GET",
-          params: {
-            ...requestPayload,
-            pageSize: 500 // Generous pageSize per review feedback
-          }
-        });
-
-        if (response.data?.systemMessages) {
-          // Sort client-side by initDate descending
-          const sortedMessages = response.data.systemMessages.sort((a: any, b: any) => {
-            const dateA = typeof a.initDate === 'number' ? a.initDate : (a.initDate ? DateTime.fromISO(a.initDate).toMillis() : 0);
-            const dateB = typeof b.initDate === 'number' ? b.initDate : (b.initDate ? DateTime.fromISO(b.initDate).toMillis() : 0);
-            return dateB - dateA;
+        // 1. Get total count (using a 1-item request, only if pageIndex is 0 or total unknown)
+        let totalCount = this.systemMessageTotal;
+        if (pageIndex === 0 || !totalCount) {
+          const countResponse = await api({
+            url: "admin/systemMessages",
+            method: "GET",
+            params: { ...requestPayload, pageSize: 1, pageIndex: 0 }
           });
+          totalCount = countResponse.data?.systemMessagesCount || 0;
+          this.systemMessageTotal = totalCount;
+        }
 
-          // Paginate the sorted array
-          const startIndex = pageIndex * pageSize;
-          const endIndex = startIndex + pageSize;
-          
-          this.systemMessages = sortedMessages.slice(startIndex, endIndex);
-          this.systemMessageTotal = sortedMessages.length;
+        if (totalCount === 0) {
+          this.systemMessages = [];
           return;
         }
 
-        throw new Error(response.data);
+        // 2. Calculate which backend items we need
+        // Frontend wants: newest first. Item 0 is the absolute newest in the DB.
+        // Backend provides: oldest first. Item 0 is the absolute oldest.
+        let frontendStart = pageIndex * pageSize;
+        let frontendEnd = frontendStart + pageSize;
+        if (frontendEnd > totalCount) frontendEnd = totalCount;
+        
+        if (frontendStart >= totalCount) {
+          this.systemMessages = [];
+          return;
+        }
+
+        const backendStart = totalCount - frontendEnd; // Inclusive start index in DB
+        const backendEnd = totalCount - 1 - frontendStart; // Inclusive end index in DB
+        
+        const startServerPage = Math.floor(backendStart / pageSize);
+        const endServerPage = Math.floor(backendEnd / pageSize);
+
+        // 3. Fetch the required server pages
+        const serverPagePromises = [];
+        for (let p = startServerPage; p <= endServerPage; p++) {
+          serverPagePromises.push(
+            api({
+              url: "admin/systemMessages",
+              method: "GET",
+              params: { ...requestPayload, pageSize, pageIndex: p }
+            })
+          );
+        }
+        
+        const responses = await Promise.all(serverPagePromises);
+        let combined: any[] = [];
+        responses.forEach(res => {
+          if (res.data?.systemMessages) {
+            combined = combined.concat(res.data.systemMessages);
+          }
+        });
+
+        // 4. Extract the exact window and reverse it for the UI
+        const firstFetchedIndex = startServerPage * pageSize;
+        const sliceStart = backendStart - firstFetchedIndex;
+        const sliceEnd = sliceStart + (backendEnd - backendStart + 1);
+        
+        const exactMessages = combined.slice(sliceStart, sliceEnd);
+        
+        // Sort/Reverse so newest is first
+        this.systemMessages = exactMessages.sort((a: any, b: any) => {
+          const dateA = typeof a.initDate === 'number' ? a.initDate : (a.initDate ? DateTime.fromISO(a.initDate).toMillis() : 0);
+          const dateB = typeof b.initDate === 'number' ? b.initDate : (b.initDate ? DateTime.fromISO(b.initDate).toMillis() : 0);
+          return dateB - dateA;
+        });
       } catch (err) {
         logger.error("Failed to fetch system messages", err);
         this.systemMessages = [];
