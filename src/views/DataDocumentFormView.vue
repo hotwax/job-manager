@@ -58,28 +58,18 @@
             class="field-row"
           >
             <div class="field-controls">
-              <div class="field-row-top">
-                <ion-chip
-                  outline
-                  color="primary"
-                  class="field-selector"
-                  @click="openFieldModal(getFieldIndex(field))"
-                >
-                  <ion-label>
-                    {{ field.fieldPath || translate("Select Field") }}
-                  </ion-label>
-                </ion-chip>
-                <ion-button
-                  class="field-remove-button"
-                  fill="clear"
-                  color="danger"
-                  :aria-label="translate('Remove field')"
-                  @click="graphStore.removeField(field.fieldSeqId || field.fieldPath)"
-                >
-                  <ion-icon slot="icon-only" :icon="trashOutline" />
-                </ion-button>
-              </div>
+              <ion-chip
+                outline
+                color="primary"
+                class="field-selector"
+                @click="openFieldModal(getFieldIndex(field))"
+              >
+                <ion-label>
+                  {{ field.fieldPath || translate("Select Field") }}
+                </ion-label>
+              </ion-chip>
               <ion-input
+                class="field-alias"
                 :value="field.fieldNameAlias"
                 :label="translate('Alias')"
                 label-placement="floating"
@@ -87,6 +77,7 @@
                 @ionInput="updateField(field, { fieldNameAlias: $event.detail.value || '' })"
               />
               <ion-input
+                class="field-sequence"
                 :value="field.sequenceNum"
                 type="number"
                 :label="translate('Sequence')"
@@ -95,11 +86,22 @@
                 @ionInput="updateField(field, { sequenceNum: Number($event.detail.value || 0) })"
               />
               <ion-toggle
+                class="field-display"
                 :checked="field.defaultDisplay === 'Y'"
+                label-placement="stacked"
                 @ionChange="updateField(field, { defaultDisplay: $event.detail.checked ? 'Y' : 'N' })"
               >
                 {{ translate("Display") }}
               </ion-toggle>
+              <ion-button
+                class="field-remove-button"
+                fill="clear"
+                color="danger"
+                :aria-label="translate('Remove field')"
+                @click="graphStore.removeField(field.fieldSeqId || field.fieldPath)"
+              >
+                <ion-icon slot="icon-only" :icon="trashOutline" />
+              </ion-button>
             </div>
           </ion-item>
         </ion-list>
@@ -855,25 +857,13 @@ ion-card-header ion-buttons {
   --inner-padding-bottom: var(--spacer-sm);
 }
 
-/* Stack the field controls vertically (chip + remove on a top row, then alias / sequence /
-   display) so the row never overflows horizontally regardless of the embedded segment width. */
+/* All field controls on one horizontal row, vertically centered: chip | alias | sequence |
+   display | remove. Alias grows; the rest size to content so the row stays compact. */
 .field-controls {
   display: flex;
-  flex-direction: column;
-  gap: var(--spacer-sm);
-  padding: var(--spacer-sm) 0;
-  width: 100%;
-}
-
-.field-row-top {
-  display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--spacer-sm);
-}
-
-.field-controls ion-input,
-.field-controls ion-toggle {
+  gap: var(--spacer-base);
+  padding: var(--spacer-sm) 0;
   width: 100%;
 }
 
@@ -882,20 +872,38 @@ ion-card-header ion-buttons {
 }
 
 .field-selector {
-  max-width: 100%;
+  flex: 0 0 auto;
+  max-width: 11rem;
   margin: 0;
   cursor: pointer;
-}
-
-.field-remove-button {
-  flex: none;
-  min-height: 44px;
 }
 
 .field-selector ion-label {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.field-alias {
+  flex: 1 1 8rem;
+  min-width: 6rem;
+}
+
+.field-sequence {
+  flex: 0 0 6rem;
+}
+
+/* "Display" label sits stacked above its toggle (label-placement="stacked"), vertically
+   aligned. Fixed basis so the toggle can't stretch to its full intrinsic width and push the
+   row into overflow. */
+.field-display {
+  flex: 0 0 6.5rem;
+  text-align: center;
+}
+
+.field-remove-button {
+  flex: 0 0 auto;
+  min-height: 44px;
 }
 
 .condition-controls {
@@ -912,7 +920,10 @@ ion-card-header ion-buttons {
 }
 
 @media (max-width: 768px) {
-  .field-controls,
+  /* Let the single field row wrap (rather than overflow) on small screens. */
+  .field-controls {
+    flex-wrap: wrap;
+  }
   .condition-controls {
     grid-template-columns: 1fr;
   }
