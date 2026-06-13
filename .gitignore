@@ -38,3 +38,4 @@ npm-debug.log*
 .gradle
 /src/mock/*
 !/src/mock/dataDocuments.ts
+/.claude

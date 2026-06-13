@@ -3,69 +3,85 @@
     <ion-card
       v-for="message in messages"
       :key="message.systemMessageId"
-      class="list-item export"
+      class="list-item"
       @click="router.push(`/system-messages/${message.systemMessageId}`)"
     >
-      <div>
-        <p>{{ translate("File") }}</p>
-        <h2>{{ message.fileName || message.systemMessageId }}</h2>
-        <p>{{ message.systemMessageId }}</p>
-      </div>
-      <div>
-        <p>{{ translate("Status") }}</p>
-        <h2>{{ message.statusId || "-" }}</h2>
-        <p v-if="message.errorSummary">{{ message.errorSummary }}</p>
-      </div>
-      <div>
-        <p>{{ translate("Started") }}</p>
-        <h2>{{ getDateAndTime(message.initDate) }}</h2>
+      <ion-item lines="none">
+        <ion-icon slot="start" :icon="cloudDownloadOutline" />
+        <ion-label>
+          <h2>{{ message.fileName || message.systemMessageId }}</h2>
+          <p>
+            {{ translate("System Message") }}: {{ message.systemMessageId }}
+            <template v-if="message.dataDocumentId"> · {{ message.dataDocumentId }}</template>
+          </p>
+        </ion-label>
+        <ion-button
+          slot="end"
+          fill="clear"
+          :aria-label="translate('Download export')"
+          :disabled="!canDownload(message)"
+          @click.stop="downloadDataDocumentExport(message)"
+        >
+          <ion-icon slot="icon-only" :icon="downloadOutline" />
+        </ion-button>
+      </ion-item>
+
+      <div class="meta">
+        <p>{{ translate("Started") }}: {{ getDateAndTime(message.initDate) }}</p>
         <p v-if="message.processedDate">{{ translate("Processed") }}: {{ getDateAndTime(message.processedDate) }}</p>
-      </div>
-      <div>
-        <p>{{ translate("Records") }}</p>
-        <h2>{{ message.recordCount ?? "-" }}</h2>
         <p v-if="message.startedBy">{{ translate("Started By") }}: {{ message.startedBy }}</p>
+        <p v-if="message.recordCount != null">{{ message.recordCount }} {{ translate("records") }}</p>
+        <p v-if="message.errorSummary" class="error-text">{{ message.errorSummary }}</p>
       </div>
-      <ion-button fill="clear" :disabled="!canDownload(message)" @click.stop="downloadDataDocumentExport(message)">
-        <ion-icon slot="icon-only" :icon="downloadOutline" />
-      </ion-button>
+
+      <div class="status">
+        <ion-badge :color="getExportStatus(message).color">{{ translate(getExportStatus(message).label) }}</ion-badge>
+      </div>
     </ion-card>
   </ion-list>
-  <p v-else class="empty-state">{{ emptyMessage }}</p>
+  <div v-else class="empty-state">
+    <p>{{ emptyMessage }}</p>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonCard, IonIcon, IonList } from "@ionic/vue";
-import { downloadOutline } from "ionicons/icons";
-import { useRouter } from "vue-router";
+import { IonBadge, IonButton, IonCard, IonIcon, IonItem, IonLabel, IonList } from "@ionic/vue";
+import { cloudDownloadOutline, downloadOutline } from "ionicons/icons";
 
 import { translate } from "@common";
-import { downloadDataDocumentExport, getDateAndTime } from "@/utils";
+import router from "@/router";
+import { downloadDataDocumentExport, getDateAndTime, getExportStatus } from "@/utils";
 
 defineProps<{
   messages: Record<string, any>[];
   emptyMessage: string;
 }>();
 
-const router = useRouter();
-
 const canDownload = (message: any) => message.statusId === "SmsgSent" && message.messageText;
 </script>
 
 <style scoped>
-.list-item.export {
-  --columns-desktop: 5;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: var(--spacer-base);
-  align-items: center;
-  padding: var(--spacer-sm) var(--spacer-base);
-  cursor: pointer;
+/* Mirror the System Message Monitor list: a responsive row-grid card (.list-item) with the
+   primary info on the left, supporting detail in the middle, and a status pill on the right. */
+.list-item {
+  --columns-desktop: 3;
+  padding-inline-end: var(--spacer-sm);
 }
 
-@media (min-width: 992px) {
-  .list-item.export {
-    grid-template-columns: repeat(var(--columns-desktop), 1fr);
-  }
+ion-card {
+  padding-block: var(--spacer-base);
+}
+
+.list-item .meta p {
+  margin: 2px 0;
+}
+
+.list-item .meta .error-text {
+  color: var(--ion-color-danger);
+}
+
+.list-item .status {
+  width: 15ch;
+  text-align: end;
 }
 </style>

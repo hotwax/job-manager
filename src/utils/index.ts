@@ -139,6 +139,24 @@ const downloadDataDocumentExport = async (message: any) => {
   }
 }
 
+// Map a Data Document export SystemMessage to a friendly status. The export send never
+// reaches SmsgError — a failure is a message stuck in SmsgProduced with failCount > 0
+// (no errorSummary/recordCount are populated). Success is SmsgSent with a .csv messageText.
+const getExportStatus = (message: any) => {
+  const statusId = message?.statusId;
+  const failed = statusId === "SmsgError" || (statusId === "SmsgProduced" && Number(message?.failCount) > 0);
+  if (failed) return { key: "failed", label: "Failed", color: "danger" };
+  if (statusId === "SmsgSent") return { key: "ready", label: "Ready", color: "success" };
+  if (statusId === "SmsgSending") return { key: "sending", label: "Sending", color: "warning" };
+  if (statusId === "SmsgProduced" || statusId === "SmsgCreated") return { key: "processing", label: "Processing", color: "warning" };
+  return { key: "unknown", label: statusId || "-", color: "medium" };
+};
+
+const isExportTerminal = (message: any) => {
+  const key = getExportStatus(message).key;
+  return key === "ready" || key === "failed";
+};
+
 function getDateAndTime(time: any) {
   if (!time) return "-";
   
@@ -212,6 +230,8 @@ const redirectToLegacyApp = () => {
 
 export {
   downloadDataDocumentExport,
+  getExportStatus,
+  isExportTerminal,
   getCronString,
   getDateAndTime,
   handleDateTimeInput,

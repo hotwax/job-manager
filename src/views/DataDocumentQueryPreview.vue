@@ -6,12 +6,6 @@
           <ion-back-button :default-href="`/data-documents/${dataDocumentId}`" />
         </ion-buttons>
         <ion-title>{{ translate("Run Data Document") }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button @click="savePreset">
-            <ion-icon slot="start" :icon="bookmarkOutline" />
-            {{ translate("Save Preset") }}
-          </ion-button>
-        </ion-buttons>
       </ion-toolbar>
     </ion-header>
 
@@ -34,14 +28,14 @@
             <ion-card-title>{{ translate("Output Fields") }}</ion-card-title>
           </ion-card-header>
           <ion-list>
-            <ion-item v-for="field in fields" :key="field.fieldSeqId || field.fieldNameAlias">
+            <ion-item v-for="field in fields" :key="field.fieldSeqId || fieldAlias(field)">
               <ion-checkbox
                 slot="start"
-                :checked="selectedFields.includes(field.fieldNameAlias)"
-                @ionChange="toggleField(field.fieldNameAlias, $event.detail.checked)"
+                :checked="selectedFields.includes(fieldAlias(field))"
+                @ionChange="toggleField(fieldAlias(field), $event.detail.checked)"
               />
               <ion-label>
-                <h2>{{ field.fieldNameAlias }}</h2>
+                <h2>{{ fieldAlias(field) }}</h2>
                 <p>{{ field.fieldPath }}</p>
               </ion-label>
             </ion-item>
@@ -56,8 +50,8 @@
             <ion-item v-for="(filter, index) in filters" :key="filter.localId">
               <ion-label>
                 <ion-select v-model="filter.fieldNameAlias" :label="translate('Field')" label-placement="stacked" interface="popover">
-                  <ion-select-option v-for="field in fields" :key="field.fieldNameAlias" :value="field.fieldNameAlias">
-                    {{ field.fieldNameAlias }}
+                  <ion-select-option v-for="field in fields" :key="fieldAlias(field)" :value="fieldAlias(field)">
+                    {{ fieldAlias(field) }}
                   </ion-select-option>
                 </ion-select>
                 <ion-select v-model="filter.operator" :label="translate('Operator')" label-placement="stacked" interface="popover">
@@ -65,7 +59,8 @@
                     {{ translate(operator.label) }}
                   </ion-select-option>
                 </ion-select>
-                <ion-input v-model="filter.value" :label="translate('Value')" label-placement="stacked" />
+                <ion-input v-if="operatorNeedsValue(filter.operator)" v-model="filter.value" :label="operatorNeedsToValue(filter.operator) ? translate('From value') : translate('Value')" label-placement="stacked" />
+                <ion-input v-if="operatorNeedsToValue(filter.operator)" v-model="filter.toValue" :label="translate('To value')" label-placement="stacked" />
               </ion-label>
               <ion-button fill="clear" color="danger" slot="end" @click="filters.splice(index, 1)">
                 <ion-icon slot="icon-only" :icon="trashOutline" />
@@ -86,8 +81,8 @@
             <ion-item>
               <ion-select v-model="sortField" :label="translate('Sort Field')" label-placement="stacked" interface="popover">
                 <ion-select-option value="">{{ translate("No sort") }}</ion-select-option>
-                <ion-select-option v-for="field in fields" :key="field.fieldNameAlias" :value="field.fieldNameAlias">
-                  {{ field.fieldNameAlias }}
+                <ion-select-option v-for="field in fields" :key="fieldAlias(field)" :value="fieldAlias(field)">
+                  {{ fieldAlias(field) }}
                 </ion-select-option>
               </ion-select>
             </ion-item>
@@ -115,26 +110,30 @@
             </ion-button>
             <ion-button expand="block" fill="outline" @click="queueExport">
               <ion-icon slot="start" :icon="cloudUploadOutline" />
-              {{ translate("Schedule Export") }}
+              {{ translate("Export now") }}
             </ion-button>
+            <ion-note class="ion-text-wrap ion-padding-top">
+              {{ translate("Exports run the full document (with its conditions) and include up to 10,000 rows. Field selection and runtime filters apply to preview only.") }}
+            </ion-note>
           </ion-card-content>
         </ion-card>
 
         <ion-card>
           <ion-card-header>
             <ion-card-title>{{ translate("Preview") }}</ion-card-title>
-            <ion-card-subtitle>{{ previewTotal }} {{ translate("records") }}</ion-card-subtitle>
+            <ion-card-subtitle>
+              <template v-if="previewCapped">{{ translate("Showing the first") }} {{ previewRows.length }} {{ translate("rows (capped at the page size) — run an export for the full result.") }}</template>
+              <template v-else>{{ previewRows.length }} {{ translate("records") }}</template>
+            </ion-card-subtitle>
           </ion-card-header>
-          <ion-list v-if="previewRows.length">
-            <ion-item v-for="(row, index) in previewRows" :key="index">
-              <ion-label>
-                <h2>{{ translate("Record") }} {{ index + 1 }}</h2>
-                <p v-for="field in previewFields" :key="field">
-                  <strong>{{ field }}:</strong> {{ row[field] }}
-                </p>
-              </ion-label>
-            </ion-item>
-          </ion-list>
+          <ion-card-content v-if="previewRows.length">
+            <DataDocumentPreviewTable
+              :rows="previewRows"
+              :file-name="dataDocumentId"
+              can-export
+              @run-export="queueExport"
+            />
+          </ion-card-content>
           <ion-card-content v-else>
             <ion-text color="medium">{{ translate("Run a preview to see sample results.") }}</ion-text>
           </ion-card-content>
@@ -174,32 +173,27 @@ import {
   IonToolbar,
   onIonViewWillEnter
 } from "@ionic/vue";
-import { addOutline, bookmarkOutline, cloudUploadOutline, playOutline, trashOutline } from "ionicons/icons";
+import { addOutline, cloudUploadOutline, playOutline, trashOutline } from "ionicons/icons";
 import { computed, ref } from "vue";
-import { useRoute } from "vue-router";
+import router from "../router";
 
 import { translate } from "@common";
 import { showToast } from "@/utils";
+import { RUNTIME_FILTER_OPERATORS } from "@/utils/dataDocumentGraph";
 import { useDataDocumentStore } from "@/store/dataDocuments";
+import DataDocumentPreviewTable from "@/components/DataDocumentPreviewTable.vue";
 
-const route = useRoute();
 const store = useDataDocumentStore();
-const dataDocumentId = computed(() => route.params.id as string);
+// Read from the router singleton (always resolved post router.isReady), not useRoute() which
+// can be transiently undefined on a deep-link/refresh and made the view fetch "/undefined".
+const dataDocumentId = computed(() => (router.currentRoute.value.params.id as string) || "");
 
-const operators = [
-  { value: "equals", label: "Equals" },
-  { value: "not-equals", label: "Not equals" },
-  { value: "contains", label: "Contains" },
-  { value: "starts-with", label: "Starts with" },
-  { value: "in", label: "In list" },
-  { value: "empty", label: "Is empty" },
-  { value: "not-empty", label: "Is not empty" },
-  { value: "greater", label: "Greater than" },
-  { value: "greater-equals", label: "Greater than or equal" },
-  { value: "less", label: "Less than" },
-  { value: "less-equals", label: "Less than or equal" },
-  { value: "between", label: "Between" }
-];
+const operators = RUNTIME_FILTER_OPERATORS;
+// Fields without an explicit alias are keyed by their terminal field name (the alias Moqui
+// uses by default), so fall back to that — otherwise the field/sort pickers render empty.
+const fieldAlias = (field: any) => field.fieldNameAlias || String(field.fieldPath || "").split(":").pop() || "";
+const operatorNeedsValue = (value: string) => RUNTIME_FILTER_OPERATORS.find((op) => op.value === value)?.needsValue !== false;
+const operatorNeedsToValue = (value: string) => !!RUNTIME_FILTER_OPERATORS.find((op) => op.value === value)?.needsToValue;
 
 const selectedFields = ref<string[]>([]);
 const filters = ref<any[]>([]);
@@ -210,10 +204,9 @@ const pageSize = ref(25);
 
 const document = computed(() => store.getCurrentDocument);
 const fields = computed(() => store.getFields);
-const presets = computed(() => store.getPresets);
 const previewRows = computed(() => store.getPreviewRows);
-const previewTotal = computed(() => store.getPreviewTotal);
-const previewFields = computed(() => selectedFields.value.length ? selectedFields.value : Object.keys(previewRows.value[0] || {}));
+// dataDocumentView returns no total — a full page back means the result is capped at pageSize.
+const previewCapped = computed(() => previewRows.value.length >= Number(pageSize.value || 25));
 const isBroadQuery = computed(() => !filters.value.length);
 
 const getLocalId = () => `${Date.now()}-${Math.random()}`;
@@ -245,17 +238,6 @@ const runPreview = async () => {
   await store.runPreview(dataDocumentId.value, buildQuery());
 };
 
-const savePreset = async () => {
-  const presetName = window.prompt(translate("Preset name"));
-  if (!presetName) return;
-  await store.savePreset(dataDocumentId.value, {
-    presetId: route.params.presetId === "new" ? undefined : route.params.presetId,
-    presetName,
-    query: buildQuery()
-  });
-  showToast(translate("Query preset saved."));
-};
-
 const queueExport = async () => {
   await store.queueExport(dataDocumentId.value, {
     query: buildQuery(),
@@ -264,22 +246,11 @@ const queueExport = async () => {
   showToast(translate("Data document export queued."));
 };
 
-const hydratePreset = () => {
-  const presetId = route.params.presetId as string;
-  if (!presetId || presetId === "new") return;
-  const preset = presets.value.find((item: any) => item.presetId === presetId);
-  if (!preset?.query) return;
-  selectedFields.value = preset.query.selectedFields || selectedFields.value;
-  filters.value = (preset.query.filters || []).map((filter: any) => ({ ...filter, localId: getLocalId() }));
-  sortField.value = preset.query.sort?.[0]?.fieldNameAlias || "";
-  sortDirection.value = preset.query.sort?.[0]?.direction || "ASC";
-  distinct.value = !!preset.query.distinct;
-  pageSize.value = preset.query.pageSize || 25;
+const loadDocument = async () => {
+  if (!dataDocumentId.value) return;
+  await store.fetchDataDocument(dataDocumentId.value);
+  selectedFields.value = fields.value.filter((field: any) => field.defaultDisplay === "Y").map((field: any) => fieldAlias(field));
 };
 
-onIonViewWillEnter(async () => {
-  await store.fetchDataDocument(dataDocumentId.value);
-  selectedFields.value = fields.value.filter((field: any) => field.defaultDisplay === "Y").map((field: any) => field.fieldNameAlias);
-  hydratePreset();
-});
+onIonViewWillEnter(loadDocument);
 </script>

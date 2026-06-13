@@ -188,6 +188,125 @@ export const normalizeDataDocumentOperator = (operator?: string) => {
   return operatorAliases[normalizedOperator] || normalizedOperator;
 };
 
+// Aggregate functions Moqui supports on a DataDocumentField (FieldInfo.aggFunctionArray).
+// A field with one of these is a MEASURE (aggregated); a field with none is a DIMENSION
+// (a group-by key). `numericOnly` marks functions that only yield a value on numeric
+// columns — sum/avg silently return null on text/date fields.
+export type DataDocumentFunction = {
+  value: string;
+  label: string;
+  shortLabel: string;
+  numericOnly: boolean;
+};
+
+export const DATA_DOCUMENT_FUNCTIONS: DataDocumentFunction[] = [
+  { value: "count", label: "Count", shortLabel: "COUNT", numericOnly: false },
+  { value: "count-distinct", label: "Count distinct", shortLabel: "DISTINCT", numericOnly: false },
+  { value: "sum", label: "Sum", shortLabel: "SUM", numericOnly: true },
+  { value: "avg", label: "Average", shortLabel: "AVG", numericOnly: true },
+  { value: "min", label: "Minimum", shortLabel: "MIN", numericOnly: false },
+  { value: "max", label: "Maximum", shortLabel: "MAX", numericOnly: false }
+];
+
+export const isMeasureField = (field?: { functionName?: string }) => !!field?.functionName;
+
+// Runtime filter operators offered to the user. These map onto Moqui's search-form-inputs
+// vocabulary (EntityFindBase): _op equals|contains|begins|empty|in, _not to negate, and
+// _from/_thru for ranges. There is no strict greater/less in search-form-inputs, so the
+// comparison operators map to >= (_from) and <= (_thru).
+export const RUNTIME_FILTER_OPERATORS = [
+  { value: "equals", label: "Equals", needsValue: true },
+  { value: "not-equals", label: "Not equals", needsValue: true },
+  { value: "contains", label: "Contains", needsValue: true },
+  { value: "starts-with", label: "Starts with", needsValue: true },
+  { value: "in", label: "In list (comma-separated)", needsValue: true },
+  { value: "empty", label: "Is empty", needsValue: false },
+  { value: "not-empty", label: "Is not empty", needsValue: false },
+  { value: "greater-equals", label: "Greater than or equal (≥)", needsValue: true },
+  { value: "less-equals", label: "Less than or equal (≤)", needsValue: true },
+  { value: "between", label: "Between", needsValue: true, needsToValue: true }
+];
+
+const hasFilterValue = (value: any) => value !== undefined && value !== null && value !== "";
+
+// Encode UI filters into a Moqui search-form-inputs customParametersMap for oms/dataDocumentView.
+// Accepts both the runtime operator set above and the stored DataDocumentCondition operators
+// (greater/less/greater-equals/less-equals/in-list/is-empty/...), so the same encoder serves
+// runtime parameters AND previewing a document's baked-in conditions.
+export const buildCustomParametersMap = (
+  filters: Array<{ fieldNameAlias?: string; operator?: string; value?: any; toValue?: any }> = []
+) => {
+  const map: Record<string, any> = {};
+  for (const filter of filters) {
+    const field = filter.fieldNameAlias;
+    if (!field) continue;
+    const op = filter.operator || "equals";
+    const value = filter.value;
+    switch (op) {
+      case "equals":
+        if (hasFilterValue(value)) map[field] = value;
+        break;
+      case "not-equals":
+        if (hasFilterValue(value)) { map[field] = value; map[`${field}_op`] = "equals"; map[`${field}_not`] = "Y"; }
+        break;
+      case "contains":
+        if (hasFilterValue(value)) { map[field] = value; map[`${field}_op`] = "contains"; }
+        break;
+      case "starts-with":
+      case "begins":
+        if (hasFilterValue(value)) { map[field] = value; map[`${field}_op`] = "begins"; }
+        break;
+      case "in":
+      case "in-list":
+        if (hasFilterValue(value)) { map[field] = value; map[`${field}_op`] = "in"; }
+        break;
+      case "empty":
+      case "is-empty":
+        map[`${field}_op`] = "empty";
+        break;
+      case "not-empty":
+      case "is-not-empty":
+        map[`${field}_op`] = "empty"; map[`${field}_not`] = "Y";
+        break;
+      case "greater":
+      case "greater-equals":
+      case "from":
+        if (hasFilterValue(value)) map[`${field}_from`] = value;
+        break;
+      case "less":
+      case "less-equals":
+      case "thru":
+        if (hasFilterValue(value)) map[`${field}_thru`] = value;
+        break;
+      case "between":
+        if (hasFilterValue(value)) map[`${field}_from`] = value;
+        if (hasFilterValue(filter.toValue)) map[`${field}_thru`] = filter.toValue;
+        break;
+      default:
+        if (hasFilterValue(value)) map[field] = value;
+    }
+  }
+  return map;
+};
+
+// Derive a readable PascalCase dataDocumentId from the document name (e.g. "Order Export
+// Report" -> "OrderExportReport"), matching Moqui's data document id convention. Returns ""
+// for an empty name, in which case the backend auto-generates an id on save.
+export const deriveDataDocumentId = (name?: string) =>
+  String(name || "")
+    .replace(/[^a-zA-Z0-9 ]+/g, " ")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join("");
+
+export const getDataDocumentFunctionLabel = (functionName?: string, short = false) => {
+  if (!functionName) return "";
+  const fn = DATA_DOCUMENT_FUNCTIONS.find((item) => item.value === functionName);
+  if (!fn) return functionName;
+  return short ? fn.shortLabel : fn.label;
+};
+
 const getDataDocumentId = (document: DataDocumentRecord, fields: DataDocumentFieldRecord[]) => {
   return String(document.dataDocumentId || fields.find((field) => field.dataDocumentId)?.dataDocumentId || "");
 };
@@ -466,7 +585,9 @@ export const serializeGraphFields = (graph: Pick<DataDocumentGraph, "dataDocumen
   return graph.fields.map((field) => compact({
     ...(field.sourceRecord || {}),
     dataDocumentId: field.dataDocumentId || graph.dataDocumentId,
-    fieldSeqId: field.fieldSeqId,
+    // Persisted seq id (empty for unsaved fields), never the synthetic id that graph
+    // projection assigns for UI keying — otherwise new fields PUT to a nonexistent id.
+    fieldSeqId: field.sourceRecord?.fieldSeqId ?? field.fieldSeqId,
     fieldPath: field.fieldPath,
     fieldNameAlias: field.fieldNameAlias,
     sequenceNum: field.sequenceNum,
