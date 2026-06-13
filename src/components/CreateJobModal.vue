@@ -15,7 +15,7 @@
     <form ref="jobForm" @submit.prevent="saveJob">
       <!-- Step 1: Core Details -->
       <div v-if="currentStep === 1">
-        <ion-list>
+        <ion-list class="job-detail-fields">
           <ion-input
             id="job-name-input"
             v-model="jobData.name"
@@ -26,7 +26,6 @@
             :error-text="isNameUnique ? translate('Field is required') : translate('Job name must be unique')"
             :class="{ 'ion-invalid': !isNameUnique && jobData.name }"
           ></ion-input>
-          <br />
           <ion-textarea
             v-model="jobData.description"
             :label="translate('Description')"
@@ -34,7 +33,6 @@
             fill="outline"
             :auto-grow="true"
           ></ion-textarea>
-          <br />
           <ion-select
             interface="popover"
             v-model="jobData.primaryCategory"
@@ -48,7 +46,6 @@
               {{ category.categoryName }}
             </ion-select-option>
           </ion-select>
-          <br />
           <ion-input
             v-model="jobData.service"
             :label="translate('Service')"
@@ -58,7 +55,6 @@
             :required="true"
             :error-text="translate('Field is required')"
           ></ion-input>
-          <br />
           <ion-input
             v-model="jobData.cronExpression"
             :label="translate('Cron Expression')"
@@ -261,6 +257,12 @@ const saveJob = () => {
 </script>
 
 <style scoped>
+.job-detail-fields > ion-input,
+.job-detail-fields > ion-textarea,
+.job-detail-fields > ion-select {
+  margin-block-end: var(--spacer-sm);
+}
+
 .parameter-inputs {
   display: flex;
   gap: 8px;
