@@ -1,6 +1,7 @@
 import { api, translate } from "@common";
 import { defineStore } from "pinia";
 import { getDateAndTime, showToast } from "@/utils";
+import { DateTime } from "luxon";
 import logger from "@/logger";
 import { useUtilStore } from "./util";
 
@@ -116,58 +117,43 @@ export const useSystemMessageStore = defineStore("systemMessage", {
 
       try {
         const pageSize = Number(payload.pageSize ?? 25);
-        let frontendPageIndex = Number(payload.pageIndex ?? 0);
-        let fetchPageIndex = frontendPageIndex;
-        let isReversed = false;
+        const pageIndex = Number(payload.pageIndex ?? 0);
 
-        // Safely attempt reverse pagination hack
-        try {
-          const countPayload = { ...payload };
-          delete countPayload.pageIndex;
-          delete countPayload.pageSize;
-          
-          const countResponse = await api({
-            url: "admin/systemMessages",
-            method: "GET",
-            params: { pageSize: 1, pageIndex: 0, ...countPayload }
-          });
-          
-          const totalCount = countResponse.data?.systemMessagesCount;
-          if (totalCount > 0) {
-            const totalPages = Math.ceil(totalCount / pageSize);
-            fetchPageIndex = totalPages - 1 - frontendPageIndex;
-            if (fetchPageIndex < 0) fetchPageIndex = 0;
-            isReversed = true;
-          }
-        } catch (countErr) {
-          logger.warn("Failed to fetch system messages count for reverse pagination, falling back to normal pagination.", countErr);
-        }
+        // Strip pagination params for the API call
+        const requestPayload = { ...payload };
+        delete requestPayload.pageIndex;
+        delete requestPayload.pageSize;
 
         const response = await api({
           url: "admin/systemMessages",
           method: "GET",
           params: {
-            ...payload,
-            pageSize,
-            pageIndex: fetchPageIndex,
-            orderByField: "-initDate"
+            ...requestPayload,
+            pageSize: 500 // Generous pageSize per review feedback
           }
         });
 
-        if(response.data?.systemMessagesCount) {
-          if (isReversed) {
-            this.systemMessages = response.data.systemMessages.reverse();
-          } else {
-            this.systemMessages = response.data.systemMessages;
-          }
-          this.systemMessageTotal = response.data.systemMessagesCount;
+        if (response.data?.systemMessages) {
+          // Sort client-side by initDate descending
+          const sortedMessages = response.data.systemMessages.sort((a: any, b: any) => {
+            const dateA = typeof a.initDate === 'number' ? a.initDate : (a.initDate ? DateTime.fromISO(a.initDate).toMillis() : 0);
+            const dateB = typeof b.initDate === 'number' ? b.initDate : (b.initDate ? DateTime.fromISO(b.initDate).toMillis() : 0);
+            return dateB - dateA;
+          });
+
+          // Paginate the sorted array
+          const startIndex = pageIndex * pageSize;
+          const endIndex = startIndex + pageSize;
+          
+          this.systemMessages = sortedMessages.slice(startIndex, endIndex);
+          this.systemMessageTotal = response.data.systemMessagesCount ?? sortedMessages.length;
           return;
         }
 
         throw new Error(response.data);
       } catch (err) {
         logger.error("Failed to fetch system messages", err);
-        this.systemMessages = []
+        this.systemMessages = [];
         this.systemMessageTotal = 0;
       } finally {
         this.loading = false;
