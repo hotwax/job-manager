@@ -2,17 +2,17 @@ name: Verify build
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
     # The branches below must be a subset of the branches above
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   call-workflow-in-another-repo:
     uses: hotwax/accxui/.github/workflows/common-pull-request.yml@main
     with:
       config-path: .github/labeler.yml
-    secrets:
-      envPAT: ${{ secrets.envPAT }}
       app: hotwax/job-manager
       appDir: job-manager
+    secrets:
+      envPAT: ${{ secrets.envPAT }}
