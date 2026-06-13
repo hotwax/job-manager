@@ -246,11 +246,6 @@ const selectedIndex = computed(() => {
 });
 
 const setProductStore = async (value: string) => {
-  // If the value is same, no need to update
-  // Handled case for programmatical changes
-  // https://github.com/ionic-team/ionic-framework/discussions/25532
-  // https://github.com/ionic-team/ionic-framework/issues/20106
-  // https://github.com/ionic-team/ionic-framework/pull/25858
   if (userStore.current && currentProductStore?.productStoreId !== value) {
     await userStore.setCurrentProductStore({ productStoreId: value });
     emitter.emit("productStoreUpdated");
