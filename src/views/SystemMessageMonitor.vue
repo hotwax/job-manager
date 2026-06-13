@@ -18,78 +18,40 @@
 
         <ion-card>
           <ion-card-content>
-            <ion-searchbar
-              :value="queryString"
-              @ionInput="handleQueryInput"
-              :debounce="300"
-              :placeholder="translate('Search by message or parent type')"
-            />
+            <ion-searchbar :value="queryString" @ionInput="handleQueryInput" :debounce="300"
+              :placeholder="translate('Search by message or parent type')" />
 
             <div class="filter-grid">
-              <ion-select
-                :label="translate('Status')"
-                label-placement="stacked"
-                interface="popover"
-                :value="selectedStatusId"
-                @ionChange="selectedStatusId = $event.detail.value"
-              >
+              <ion-select :label="translate('Status')" label-placement="stacked" interface="popover"
+                :value="selectedStatusId" @ionChange="selectedStatusId = $event.detail.value">
                 <ion-select-option value="">{{ translate("All") }}</ion-select-option>
-                <ion-select-option
-                  v-for="status in statuses"
-                  :key="status.statusId"
-                  :value="status.statusId"
-                >
+                <ion-select-option v-for="status in statuses" :key="status.statusId" :value="status.statusId">
                   {{ status.description }}
                 </ion-select-option>
               </ion-select>
 
-              <ion-select
-                :label="translate('Parent Type')"
-                label-placement="stacked"
-                interface="popover"
-                :value="selectedParentTypeId"
-                @ionChange="handleParentTypeChange($event)"
-              >
+              <ion-select :label="translate('Parent Type')" label-placement="stacked" interface="popover"
+                :value="selectedParentTypeId" @ionChange="handleParentTypeChange($event)">
                 <ion-select-option value="">{{ translate("All") }}</ion-select-option>
-                <ion-select-option
-                  v-for="parent in parentTypes"
-                  :key="parent.id"
-                  :value="parent.id"
-                >
+                <ion-select-option v-for="parent in parentTypes" :key="parent.id" :value="parent.id">
                   {{ parent.description }}
                 </ion-select-option>
               </ion-select>
 
-              <ion-select
-                :label="translate('Message Type')"
-                label-placement="stacked"
-                interface="popover"
-                :value="selectedTypeId"
-                @ionChange="selectedTypeId = $event.detail.value"
-              >
+              <ion-select :label="translate('Message Type')" label-placement="stacked" interface="popover"
+                :value="selectedTypeId" @ionChange="selectedTypeId = $event.detail.value">
                 <ion-select-option value="">{{ translate("All") }}</ion-select-option>
-                <ion-select-option
-                  v-for="type in filteredTypes"
-                  :key="type.systemMessageTypeId"
-                  :value="type.systemMessageTypeId"
-                >
+                <ion-select-option v-for="type in filteredTypes" :key="type.systemMessageTypeId"
+                  :value="type.systemMessageTypeId">
                   {{ type.description || type.systemMessageTypeId }}
                 </ion-select-option>
               </ion-select>
 
-              <ion-select
-                :label="translate('Remote System')"
-                label-placement="stacked"
-                interface="popover"
-                :value="selectedRemoteId"
-                @ionChange="selectedRemoteId = $event.detail.value"
-              >
+              <ion-select :label="translate('Remote System')" label-placement="stacked" interface="popover"
+                :value="selectedRemoteId" @ionChange="selectedRemoteId = $event.detail.value">
                 <ion-select-option value="">{{ translate("All") }}</ion-select-option>
-                <ion-select-option
-                  v-for="remote in remotes"
-                  :key="remote.systemMessageRemoteId"
-                  :value="remote.systemMessageRemoteId"
-                >
+                <ion-select-option v-for="remote in remotes" :key="remote.systemMessageRemoteId"
+                  :value="remote.systemMessageRemoteId">
                   {{ remote.description || remote.systemMessageRemoteId }}
                 </ion-select-option>
               </ion-select>
@@ -98,14 +60,9 @@
         </ion-card>
 
         <div class="pagination">
-          <div class="limit-container">
-            <ion-select
-              :label="translate('pageSize')"
-              label-placement="start"
-              interface="popover"
-              :value="pageSize"
-              @ionChange="pageSize = $event.detail.value"
-            >
+          <!-- <div class="pagination-buttons"> -->
+            <ion-select :label="translate('pageSize')" label-placement="start" interface="popover" :value="pageSize"
+              @ionChange="pageSize = $event.detail.value">
               <ion-select-option :value="10">10</ion-select-option>
               <ion-select-option :value="20">20</ion-select-option>
               <ion-select-option :value="50">50</ion-select-option>
@@ -113,7 +70,7 @@
               <ion-select-option :value="200">200</ion-select-option>
               <ion-select-option :value="500">500</ion-select-option>
             </ion-select>
-          </div>
+          <!-- </div> -->
           <div class="pagination-buttons">
             <ion-button fill="outline" :disabled="pageIndex === 0" @click="goToPreviousPage">
               {{ translate("Previous") }}
@@ -124,10 +81,8 @@
             </ion-button>
           </div>
         </div>
-        <SystemMessageList
-          :messages="messages"
-          :empty-message="translate('No system messages found for the selected filters.')"
-        />
+        <SystemMessageList :messages="messages"
+          :empty-message="translate('No system messages found for the selected filters.')" />
       </main>
     </ion-content>
   </ion-page>
@@ -188,23 +143,23 @@ const loadMessages = async () => {
     pageSize: pageSize.value,
   } as Record<string, any>
 
-  if(queryString.value.trim()) {
+  if (queryString.value.trim()) {
     payload["queryString"] = queryString.value.trim()
   }
 
-  if(selectedStatusId.value) {
+  if (selectedStatusId.value) {
     payload["statusId"] = selectedStatusId.value
   }
 
-  if(selectedTypeId.value) {
+  if (selectedTypeId.value) {
     payload["systemMessageTypeId"] = selectedTypeId.value
   }
 
-  if(selectedParentTypeId.value) {
+  if (selectedParentTypeId.value) {
     payload["parentTypeId"] = selectedParentTypeId.value
   }
 
-  if(selectedRemoteId.value) {
+  if (selectedRemoteId.value) {
     payload["systemMessageRemoteId"] = selectedRemoteId.value
   }
 
@@ -267,23 +222,22 @@ onIonViewWillEnter(async () => {
   flex-wrap: wrap;
 }
 
+
 .pagination {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  padding: 16px;
+  gap: 10px;
+}
+
+.paginatio ion-select
+{
+  max-width: 150px;
 }
 
 .pagination-buttons {
   display: flex;
   align-items: center;
-  gap: 12px;
-}
-
-.limit-container {
-  display: flex;
-  align-items: center;
-  max-width: 150px;
+  gap: 10px;
 }
 </style>

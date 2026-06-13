@@ -14,16 +14,12 @@
         <div class="header">
           <div class="title">
             <h1>{{ form.systemMessageRemoteId.value || translate("New Remote System") }}</h1>
-            <p>{{ form.description.value || translate("Configure remote system connectivity and inspect related messages.") }}</p>
+            <p>{{ form.description.value || translate("Configure remote system connectivity and inspect related
+              messages.") }}</p>
           </div>
           <div class="header-actions">
             <ion-button fill="outline" @click="saveRemote">{{ translate("Save") }}</ion-button>
-            <ion-button
-              v-if="!isCreateMode"
-              color="danger"
-              fill="outline"
-              @click="deleteRemote"
-            >
+            <ion-button v-if="!isCreateMode" color="danger" fill="outline" @click="deleteRemote">
               {{ translate("Delete") }}
             </ion-button>
           </div>
@@ -36,25 +32,13 @@
           <ion-card-content>
             <div class="form-grid">
               <template v-for="[key, field] of Object.entries(form)" :key="key">
-                <ion-textarea
-                  v-if="field.type === 'textarea'"
-                  :label="translate(field.label)"
-                  label-placement="stacked"
-                  fill="outline"
-                  auto-grow
-                  :value="field.value || ''"
-                  @ionInput="updateField(key, $event.detail.value || '')"
-                />
-                <ion-input
-                  v-else
-                  :type="field.type === 'password' ? 'password' : 'text'"
-                  :label="translate(field.label)"
-                  label-placement="stacked"
-                  fill="outline"
-                  :readonly="!isCreateMode && key === 'systemMessageRemoteId'"
-                  :value="field.value || ''"
-                  @ionInput="updateField(key, $event.detail.value || '')"
-                />
+                <ion-textarea v-if="field.type === 'textarea'" :label="translate(field.label)" label-placement="stacked"
+                  fill="outline" auto-grow :value="field.value || ''"
+                  @ionInput="updateField(key, $event.detail.value || '')" />
+                <ion-input v-else :type="field.type === 'password' ? 'password' : 'text'"
+                  :label="translate(field.label)" label-placement="stacked" fill="outline"
+                  :readonly="!isCreateMode && key === 'systemMessageRemoteId'" :value="field.value || ''"
+                  @ionInput="updateField(key, $event.detail.value || '')" />
               </template>
             </div>
           </ion-card-content>
@@ -67,25 +51,12 @@
             </ion-card-header>
             <ion-card-content>
               <div class="filter-grid">
-                <ion-searchbar
-                  :value="queryString"
-                  @ionInput="queryString = $event.detail.value || ''"
-                  :debounce="300"
-                  :placeholder="translate('Search messages by id')"
-                />
-                <ion-select
-                  :label="translate('Status')"
-                  label-placement="stacked"
-                  interface="popover"
-                  :value="selectedStatusId"
-                  @ionChange="selectedStatusId = $event.detail.value"
-                >
+                <ion-searchbar :value="queryString" @ionInput="queryString = $event.detail.value || ''" :debounce="300"
+                  :placeholder="translate('Search messages by id')" />
+                <ion-select :label="translate('Status')" label-placement="stacked" interface="popover"
+                  :value="selectedStatusId" @ionChange="selectedStatusId = $event.detail.value">
                   <ion-select-option value="">{{ translate("All statuses") }}</ion-select-option>
-                  <ion-select-option
-                    v-for="status in statuses"
-                    :key="status.statusId"
-                    :value="status.statusId"
-                  >
+                  <ion-select-option v-for="status in statuses" :key="status.statusId" :value="status.statusId">
                     {{ status.description }}
                   </ion-select-option>
                 </ion-select>
@@ -93,13 +64,8 @@
 
               <div class="pagination">
                 <div class="limit-container">
-                  <ion-select
-                    :label="translate('pageSize')"
-                    label-placement="start"
-                    interface="popover"
-                    :value="pageSize"
-                    @ionChange="pageSize = $event.detail.value"
-                  >
+                  <ion-select :label="translate('Page Size')" label-placement="start" interface="popover"
+                    :value="pageSize" @ionChange="pageSize = $event.detail.value">
                     <ion-select-option :value="10">10</ion-select-option>
                     <ion-select-option :value="20">20</ion-select-option>
                     <ion-select-option :value="50">50</ion-select-option>
@@ -113,17 +79,15 @@
                     <ion-icon :icon="caretBackOutline" />
                   </ion-button>
                   <ion-note color="medium">{{ pageIndex + 1 }} / {{ pageCount }}</ion-note>
-                  <ion-button fill="clear" slot="icon-only" :disabled="pageIndex >= pageCount - 1" @click="goToNextPage">
+                  <ion-button fill="clear" slot="icon-only" :disabled="pageIndex >= pageCount - 1"
+                    @click="goToNextPage">
                     <ion-icon :icon="caretForwardOutline" />
                   </ion-button>
                 </div>
               </div>
 
-              <SystemMessageList
-                :messages="relatedMessages"
-                :show-remote="false"
-                :empty-message="translate('No related messages found.')"
-              />
+              <SystemMessageList :messages="relatedMessages" :show-remote="false"
+                :empty-message="translate('No related messages found.')" />
             </ion-card-content>
           </ion-card>
         </section>
@@ -241,7 +205,7 @@ const saveRemote = async () => {
 
   // TODO: check do we need this, as the form fields will always be a string
   const payload = Object.entries(form).reduce((params: Record<string, any>, [key, field]) => {
-    if(field.value !== null || field.value !== undefined) {
+    if (field.value !== null || field.value !== undefined) {
       params[key] = field.value
     }
     return params
