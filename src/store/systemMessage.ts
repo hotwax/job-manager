@@ -119,7 +119,7 @@ export const useSystemMessageStore = defineStore("systemMessage", {
         const pageSize = Number(payload.pageSize ?? 25);
         const pageIndex = Number(payload.pageIndex ?? 0);
 
-        // Strip pagination params for the API call
+        // Strip pagination params for API calls
         const requestPayload = { ...payload };
         delete requestPayload.pageIndex;
         delete requestPayload.pageSize;
@@ -146,7 +146,8 @@ export const useSystemMessageStore = defineStore("systemMessage", {
           const endIndex = startIndex + pageSize;
           
           this.systemMessages = sortedMessages.slice(startIndex, endIndex);
-          this.systemMessageTotal = response.data.systemMessagesCount ?? sortedMessages.length;
+          // Set total to the length of our local sorted array so pagination doesn't break
+          this.systemMessageTotal = sortedMessages.length;
           return;
         }
 

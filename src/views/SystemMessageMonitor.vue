@@ -101,7 +101,18 @@
           <ion-button fill="outline" :disabled="pageIndex === 0" @click="goToPreviousPage">
             {{ translate("Previous") }}
           </ion-button>
-          <ion-note color="medium">{{ translate("Page") }} {{ pageIndex + 1 }} / {{ pageCount }}</ion-note>
+          <div class="page-jump">
+            <ion-note color="medium">{{ translate("Page") }}</ion-note>
+            <ion-input
+              type="number"
+              min="1"
+              :max="pageCount"
+              :value="pageIndex + 1"
+              @ionChange="handlePageJump"
+              class="page-input"
+            ></ion-input>
+            <ion-note color="medium">/ {{ pageCount }}</ion-note>
+          </div>
           <ion-button fill="outline" :disabled="pageIndex >= pageCount - 1" @click="goToNextPage">
             {{ translate("Next") }}
           </ion-button>
@@ -122,6 +133,7 @@ import {
   IonCardContent,
   IonContent,
   IonHeader,
+  IonInput,
   IonMenuButton,
   IonNote,
   IonPage,
@@ -214,6 +226,19 @@ const goToNextPage = () => {
   pageIndex.value += 1;
 };
 
+const handlePageJump = (event: CustomEvent) => {
+  const value = parseInt(event.detail.value, 10);
+  if (!isNaN(value)) {
+    if (value < 1) {
+      pageIndex.value = 0;
+    } else if (value > pageCount.value) {
+      pageIndex.value = pageCount.value - 1;
+    } else {
+      pageIndex.value = value - 1;
+    }
+  }
+};
+
 watch([queryString, selectedStatusId, selectedTypeId, selectedParentTypeId, selectedRemoteId], async () => {
   resetToFirstPage();
   await loadMessages();
@@ -247,5 +272,20 @@ onIonViewWillEnter(async () => {
   align-items: center;
   gap: 12px;
   padding: 16px;
+}
+
+.page-jump {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.page-input {
+  width: 60px;
+  text-align: center;
+  --padding-start: 8px;
+  --padding-end: 8px;
+  border: 1px solid var(--ion-color-medium-shade, #989aa2);
+  border-radius: 4px;
 }
 </style>
