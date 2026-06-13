@@ -1,7 +1,7 @@
 import saveAs from "file-saver";
 import { toastController } from '@ionic/vue';
 import Papa from 'papaparse'
-import { DateTime } from "luxon";
+import { DateTime, Duration } from "luxon";
 import logger from "@/logger";
 import { cookieHelper, translate } from "@common";
 import {Clipboard} from "@capacitor/clipboard";
@@ -185,9 +185,20 @@ const redirectToLegacyApp = () => {
   window.location.href = link.replace("{oms}", oms).replace("{token}", token).replace("{expirationTime}", expirationTime).replace("{omsRedirectionUrl}", maarg)
 }
 
+const getDuration = (start: number, end: number) => {
+  const diff = end - start;
+  if (diff < 0) return "-";
+  const duration = Duration.fromMillis(diff).shiftTo('minutes', 'seconds');
+  const minutes = duration.minutes;
+  const seconds = Math.floor(duration.seconds);
+  if (minutes === 0) return `${seconds}s`;
+  return `${minutes}m ${seconds}s`;
+}
+
 export {
   getCronString,
   getDateAndTime,
+  getDuration,
   handleDateTimeInput,
   hasJobDataError,
   isAppCompatible,

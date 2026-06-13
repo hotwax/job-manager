@@ -22,7 +22,7 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
   actions: {
     async fetchConfigs() {
       try {
-        let resp = await api({
+        const resp = await api({
           url: "admin/dataManager",
           method: "get",
           params: {
@@ -44,7 +44,7 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
       }
 
       try {
-        let resp = await api({
+        const resp = await api({
           url: `admin/dataManager/${configId}`,
           method: "get"
         })
@@ -89,7 +89,7 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
           payload["statusId_op"] = "in"
         }
 
-        let resp = await api({
+        const resp = await api({
           url: "admin/dataManager/details",
           method: "get",
           params: payload
@@ -108,7 +108,7 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
     },
     async fetchDataManagerLogById(logId: string) {
       try {
-        let resp = await api({
+        const resp = await api({
           url: "admin/dataManager/details",
           method: "get",
           params: { logId }

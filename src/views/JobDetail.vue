@@ -724,7 +724,7 @@ const saveSchedule = async () => {
 };
 
 const goToLogDetail = (logId: string | number) => {
-  router.push({ name: "FileDetail", params: { id: logId } });
+  router.push({ name: "FileHistoryDetail", params: { id: logId } });
 };
 
 const loadJob = async () => {

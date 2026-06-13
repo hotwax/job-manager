@@ -115,8 +115,7 @@ import {
 import { ref } from 'vue';
 import { translate, commonUtil } from '@common';
 import { useMdmConfigStore } from '@/store/mdmConfig';
-import { getFileSize, showToast } from '@/utils';
-import { Clipboard } from '@capacitor/clipboard';
+import { getFileSize, showToast, getDuration } from '@/utils';
 import { hardwareChipOutline, timeOutline, codeWorkingOutline, copyOutline } from 'ionicons/icons';
 
 const props = defineProps({
@@ -142,26 +141,9 @@ onIonViewWillEnter(async () => {
   }
 });
 
-const getDuration = (start: number, end: number) => {
-  const diff = end - start;
-  if (diff < 0) return "-";
-  const seconds = Math.floor(diff / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  if (minutes === 0) return `${remainingSeconds}s`;
-  return `${minutes}m ${remainingSeconds}s`;
-};
 
 const copyToClipboard = async (logData: any) => {
-  try {
-    await Clipboard.write({
-      string: JSON.stringify(logData, null, 2)
-    });
-    showToast(translate("Copied to clipboard"));
-  } catch (error) {
-    console.error('Error copying to clipboard', error);
-    showToast(translate("Failed to copy"));
-  }
+  commonUtil.copyToClipboard(JSON.stringify(logData, null, 2), "Copied to clipboard");
 };
 </script>
 

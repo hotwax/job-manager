@@ -148,7 +148,7 @@
             />
             <span>/ {{ pageCount }}</span>
           </div>
-          <ion-button fill="outline" :disabled="!isScrollable" @click="goToNextPage">
+          <ion-button fill="outline" :disabled="pageIndex + 1 >= pageCount" @click="goToNextPage">
             {{ translate("Next") }}
           </ion-button>
         </div>
@@ -242,7 +242,7 @@ import {
 } from 'ionicons/icons';
 import { computed, ref, watch } from 'vue';
 import { useMdmConfigStore } from '@/store/mdmConfig';
-import { getFileSize, showToast } from '@/utils';
+import { getFileSize, showToast, getDuration } from '@/utils';
 import { Clipboard } from '@capacitor/clipboard';
 import { getStatusDesc } from '@/utils/config';
 import { useUtilStore } from '@/store/util';
@@ -329,13 +329,6 @@ const logs = computed(() => {
   return filteredLogs.value;
 });
 
-const isScrollable = computed(() => {
-  if (!isServerSideSearch.value) {
-    return (pageIndex.value + 1) * PAGE_SIZE < filteredLogs.value.length;
-  }
-  return mdmStore.islogsScrollable;
-});
-
 const pageCount = computed(() => {
   if (isServerSideSearch.value) {
     return Math.max(Math.ceil(mdmStore.getLogsCount / PAGE_SIZE), 1);
@@ -348,15 +341,6 @@ const handleQueryInput = (event: CustomEvent) => {
   queryString.value = (event as any).detail.value || "";
 };
 
-const getDuration = (start: number, end: number) => {
-  const diff = end - start;
-  if (diff < 0) return "-";
-  const seconds = Math.floor(diff / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  if (minutes === 0) return `${remainingSeconds}s`;
-  return `${minutes}m ${remainingSeconds}s`;
-};
 
 async function fetchLogs() {
   const filters: Record<string, any> = {};
@@ -471,61 +455,6 @@ onIonViewWillEnter(async () => {
   grid-column: span 4;
   --padding-start: 0;
   --inner-padding-end: 0;
-}
-
-.legacy-card {
-  border-left: 4px solid var(--ion-color-warning, #ffc409);
-  background: linear-gradient(135deg,
-    var(--ion-color-step-50, rgba(255,196,9,0.05)) 0%,
-    var(--ion-background-color, #fff) 60%
-  );
-}
-
-.legacy-inner {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.legacy-icon-wrap {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: rgba(255, 196, 9, 0.15);
-  flex-shrink: 0;
-}
-
-.legacy-icon {
-  font-size: 28px;
-  color: var(--ion-color-warning-shade, #e0ac08);
-}
-
-.legacy-text {
-  flex: 1;
-  min-width: 200px;
-}
-
-.legacy-text h3 {
-  margin: 0 0 6px;
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--ion-color-dark);
-}
-
-.legacy-text p {
-  margin: 0;
-  font-size: 0.875rem;
-  color: var(--ion-color-medium);
-  line-height: 1.5;
-}
-
-.legacy-btn {
-  flex-shrink: 0;
-  align-self: center;
 }
 
 .filter-grid {
@@ -667,107 +596,4 @@ onIonViewWillEnter(async () => {
   color: var(--ion-color-warning);
 }
 
-.expanded-details {
-  background: var(--ion-color-step-50, #fafafa);
-  padding: 24px;
-  border-bottom: 1px solid var(--ion-color-step-150, #e2e2e2);
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  box-shadow: inset 0 8px 8px -8px rgba(0, 0, 0, 0.05);
-}
-
-.details-section {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.details-section h4 {
-  margin: 0;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--ion-color-medium);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.section-icon {
-  font-size: 1.1rem;
-}
-
-.json-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.json-header h4 {
-  margin: 0;
-}
-
-.json-header ion-button {
-  margin: 0;
-  --padding-top: 4px;
-  --padding-bottom: 4px;
-}
-
-.raw-json-container {
-  background: var(--ion-color-step-100, #f4f5f8);
-  border-radius: 8px;
-  padding: 16px;
-  overflow-x: auto;
-  border: 1px solid var(--ion-color-step-150, #e2e2e2);
-}
-
-.raw-json-container pre {
-  margin: 0;
-  font-size: 0.85rem;
-  line-height: 1.4;
-  color: var(--ion-color-dark);
-  font-family: 'Courier New', Courier, monospace;
-}
-
-.details-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px 24px;
-}
-
-.detail-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.detail-label {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--ion-color-medium);
-}
-
-.detail-value {
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: var(--ion-color-dark);
-}
-
-.detail-value.service-name {
-  word-break: break-all;
-}
-
-.small-chip {
-  min-height: 24px;
-  font-size: 0.75rem;
-  margin: 0;
-  padding: 0 8px;
-}
-
-.list-item.log.is-expanded {
-  border-bottom: none;
-  background: var(--ion-color-step-50, #fafafa);
-}
 </style>
