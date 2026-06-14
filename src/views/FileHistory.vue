@@ -14,36 +14,33 @@
         <div class="title">
           <div class="title-header">
             <h1>{{ translate("Processed Files") }}</h1>
-            <ion-chip color="medium" class="limit-chip">
-              <ion-label>{{ translate("Latest 1000 records") }}</ion-label>
-            </ion-chip>
           </div>
-          <p>{{ translate("View history of processed files. The display is limited to the most recent 1000 records for performance.") }}</p>
+          <p>{{ translate("Stats from the last 1000 log files processed") }}</p>
         </div>
 
         <div class="kpi-grid">
           <ion-card class="kpi-card">
             <ion-card-header>
               <ion-card-subtitle>{{ translate("Total Files") }}</ion-card-subtitle>
-              <ion-card-title>{{ totalFilesCount }}</ion-card-title>
+              <ion-card-title><AnimatedNumber :value="totalFilesCount" /></ion-card-title>
             </ion-card-header>
           </ion-card>
           <ion-card class="kpi-card success">
             <ion-card-header>
               <ion-card-subtitle>{{ translate("Successful") }}</ion-card-subtitle>
-              <ion-card-title>{{ successFilesCount }}</ion-card-title>
+              <ion-card-title><AnimatedNumber :value="successFilesCount" /></ion-card-title>
             </ion-card-header>
           </ion-card>
           <ion-card class="kpi-card failed">
             <ion-card-header>
               <ion-card-subtitle>{{ translate("Failed") }}</ion-card-subtitle>
-              <ion-card-title>{{ failedFilesCount }}</ion-card-title>
+              <ion-card-title><AnimatedNumber :value="failedFilesCount" /></ion-card-title>
             </ion-card-header>
           </ion-card>
           <ion-card class="kpi-card rate">
             <ion-card-header>
               <ion-card-subtitle>{{ translate("Success Rate") }}</ion-card-subtitle>
-              <ion-card-title>{{ successRate }}%</ion-card-title>
+              <ion-card-title><AnimatedNumber :value="Number(successRate)" />%</ion-card-title>
             </ion-card-header>
           </ion-card>
           <ion-card class="kpi-card avg-time">
@@ -290,6 +287,7 @@ import logger from '@/logger';
 import { getStatusDesc } from '@/utils/config';
 import { useUtilStore } from '@/store/util';
 import router from '@/router';
+import AnimatedNumber from '@/components/AnimatedNumber.vue';
 
 const PAGE_SIZE = 10;
 
