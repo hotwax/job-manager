@@ -170,6 +170,9 @@
               <ion-label class="ion-text-wrap">
                 <p class="overline">{{ log.logId }}</p>
                 {{ getConfigName(log.configId) || "-" }}
+                <ion-button v-if="log.configId && isConfigNameMissing(log.configId)" size="small" fill="clear" @click.stop="showAddConfigNameAlert(log.configId)">
+                  {{ translate("Add name") }}
+                </ion-button>
                 <p class="log-file-name" :title="log.fileName || ''">
                   <span class="tm-start">{{ splitFileName(log.fileName)[0] }}</span><span class="tm-end">{{ splitFileName(log.fileName)[1] }}</span>
                 </p>
@@ -275,13 +278,15 @@ import {
   IonBadge,
   modalController,
   onIonViewWillEnter,
+  alertController,
 } from '@ionic/vue';
-import { translate, commonUtil } from '@common';
+import { translate, commonUtil, api } from '@common';
 import { closeOutline, closeCircleOutline, warningOutline, alertCircleOutline } from 'ionicons/icons';
 import { computed, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useMdmConfigStore } from '@/store/mdmConfig';
-import { getFileSize, getDuration } from '@/utils';
+import { getFileSize, getDuration, showToast } from '@/utils';
+import logger from '@/logger';
 import { getStatusDesc } from '@/utils/config';
 import { useUtilStore } from '@/store/util';
 import router from '@/router';
@@ -443,6 +448,65 @@ const getConfigDisplayName = (config: any) => config.scriptTitle || config.descr
 const getConfigName = (configId: string) => {
   const config = configs.value.find((c: any) => c.configId === configId);
   return config ? getConfigDisplayName(config) : configId;
+};
+
+const isConfigNameMissing = (configId: string) => {
+  if (!configId) return false;
+  const config = configs.value.find((c: any) => c.configId === configId);
+  return !config || (!config.scriptTitle && !config.description);
+};
+
+const showAddConfigNameAlert = async (configId: string) => {
+  const alert = await alertController.create({
+    header: translate('Add configuration name'),
+    inputs: [
+      {
+        name: 'configName',
+        type: 'text',
+        placeholder: translate('Configuration name')
+      }
+    ],
+    buttons: [
+      {
+        text: translate('Cancel'),
+        role: 'cancel'
+      },
+      {
+        text: translate('Save'),
+        handler: async (data) => {
+          const name = data.configName?.trim();
+          if (!name) {
+            showToast(translate("Configuration name cannot be empty"));
+            return false;
+          }
+          try {
+            await api({
+              url: `admin/dataManager/${configId}`,
+              method: "post",
+              data: {
+                configId,
+                scriptTitle: name
+              }
+            });
+            const config = configs.value.find((c: any) => c.configId === configId);
+            if (config) {
+              config.scriptTitle = name;
+            } else {
+              mdmStore.configs.push({
+                configId,
+                scriptTitle: name
+              });
+            }
+            showToast(translate("Configuration name updated successfully"));
+          } catch (err) {
+            logger.error("Failed to update config name", err);
+            showToast(translate("Failed to update configuration name"));
+          }
+        }
+      }
+    ]
+  });
+  await alert.present();
 };
 
 const handleConfigModalWillPresent = async () => {
