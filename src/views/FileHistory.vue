@@ -106,6 +106,23 @@
               </div>
 
               <div class="filter-item">
+                <ion-select
+                  :label="translate('Has Error')"
+                  label-placement="stacked"
+                  interface="popover"
+                  :placeholder="translate('All')"
+                  :value="hasErrorFilter"
+                  @ionChange="hasErrorFilter = $event.detail.value"
+                >
+                  <ion-select-option value="Y">{{ translate("Yes") }}</ion-select-option>
+                  <ion-select-option value="N">{{ translate("No") }}</ion-select-option>
+                </ion-select>
+                <ion-button v-if="hasErrorFilter" fill="clear" class="clear-filter-btn" @click="hasErrorFilter = ''" :title="translate('Clear')">
+                  <ion-icon slot="icon-only" :icon="closeCircleOutline" />
+                </ion-button>
+              </div>
+
+              <div class="filter-item">
                 <ion-item id="config-filter-trigger" button lines="none" class="config-filter-trigger">
                   <ion-label>
                     <p>{{ translate("Config") }}</p>
@@ -279,6 +296,7 @@ const queryString = ref("");
 const selectedStatus = ref<string[]>([]);
 const selectedPriority = ref<string[]>([]);
 const selectedConfig = ref<string[]>([]);
+const hasErrorFilter = ref("");
 const configQuery = ref("");
 const pageIndex = ref(0);
 
@@ -290,7 +308,8 @@ const isServerSideSearch = computed(() => {
   const q = queryString.value.trim();
   const isServerSideQ = !q || q.startsWith("M") || !isNaN(Number(q));
   const hasPriorityFilter = selectedPriority.value.length > 0;
-  return isServerSideQ && !hasPriorityFilter;
+  const hasErrorFilterActive = !!hasErrorFilter.value;
+  return isServerSideQ && !hasPriorityFilter && !hasErrorFilterActive;
 });
 
 const filteredLogs = computed(() => {
@@ -310,6 +329,13 @@ const filteredLogs = computed(() => {
       if (!config) return false;
       const isHigh = config.priority > 6;
       return selectedPriority.value.includes(isHigh ? "HIGH" : "NORMAL");
+    });
+  }
+
+  if (hasErrorFilter.value) {
+    result = result.filter((log: any) => {
+      const hasError = (Number(log.failedRecordCount) || 0) > 0 || ['DmlsFailed', 'DmlsCrashed'].includes(log.statusId);
+      return hasErrorFilter.value === "Y" ? hasError : !hasError;
     });
   }
 
@@ -487,7 +513,7 @@ const goToLogDetails = (logId: string) => {
 };
 
 // Filters trigger a fresh fetch from page 0
-watch([queryString, selectedStatus, selectedPriority, selectedConfig], async () => {
+watch([queryString, selectedStatus, selectedPriority, selectedConfig, hasErrorFilter], async () => {
   pageIndex.value = 0;
   await fetchLogs();
 });
@@ -554,7 +580,7 @@ onIonViewWillEnter(async () => {
 
 .filter-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: var(--spacer-lg);
 }
 
