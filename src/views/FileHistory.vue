@@ -169,7 +169,7 @@
             <ion-item lines="none" class="log-file-info">
               <ion-label class="ion-text-wrap">
                 <p class="overline">{{ log.logId }}</p>
-                {{ log.configId || "-" }}
+                {{ getConfigName(log.configId) || "-" }}
                 <p class="log-file-name" :title="log.fileName || ''">
                   <span class="tm-start">{{ splitFileName(log.fileName)[0] }}</span><span class="tm-end">{{ splitFileName(log.fileName)[1] }}</span>
                 </p>
@@ -439,6 +439,11 @@ const splitFileName = (name?: string): [string, string] => {
 };
 
 const getConfigDisplayName = (config: any) => config.scriptTitle || config.description || config.configId;
+
+const getConfigName = (configId: string) => {
+  const config = configs.value.find((c: any) => c.configId === configId);
+  return config ? getConfigDisplayName(config) : configId;
+};
 
 const handleConfigModalWillPresent = async () => {
   if (!configs.value.length) {
