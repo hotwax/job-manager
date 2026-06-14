@@ -187,43 +187,16 @@
             </div>
           </ion-card-header>
           <ion-list lines="none">
-            <ion-item>
-              <ion-icon slot="start" :icon="getStatusIcon(userFetchStatus.profile)" :color="getStatusColor(userFetchStatus.profile)" />
+            <ion-item v-for="item in seedDataList" :key="item.key">
+              <ion-icon slot="start" :icon="getStatusIcon(item.status)" :color="getStatusColor(item.status)" />
               <ion-label>
-                {{ translate("User Profile") }}
-                <p>{{ translate(getStatusLabel(userFetchStatus.profile)) }}</p>
+                {{ item.name }}
+                <p>
+                  {{ translate(getStatusLabel(item.status)) }}
+                  <span v-if="item.status === 'success' && item.count !== undefined"> &bull; {{ item.count }} {{ translate(item.count === 1 ? 'record' : 'records') }}</span>
+                </p>
               </ion-label>
-              <ion-button slot="end" fill="clear" @click="userStore.fetchUserProfile()">
-                <ion-icon slot="icon-only" :icon="syncOutline" />
-              </ion-button>
-            </ion-item>
-            <ion-item>
-              <ion-icon slot="start" :icon="getStatusIcon(userFetchStatus.permissions)" :color="getStatusColor(userFetchStatus.permissions)" />
-              <ion-label>
-                {{ translate("Permissions") }}
-                <p>{{ translate(getStatusLabel(userFetchStatus.permissions)) }}</p>
-              </ion-label>
-              <ion-button slot="end" fill="clear" @click="userStore.fetchPermissions()">
-                <ion-icon slot="icon-only" :icon="syncOutline" />
-              </ion-button>
-            </ion-item>
-            <ion-item>
-              <ion-icon slot="start" :icon="getStatusIcon(utilFetchStatus.entities)" :color="getStatusColor(utilFetchStatus.entities)" />
-              <ion-label>
-                {{ translate("Entities") }}
-                <p>{{ translate(getStatusLabel(utilFetchStatus.entities)) }}</p>
-              </ion-label>
-              <ion-button slot="end" fill="clear" @click="utilStore.fetchEntities(true)">
-                <ion-icon slot="icon-only" :icon="syncOutline" />
-              </ion-button>
-            </ion-item>
-            <ion-item>
-              <ion-icon slot="start" :icon="getStatusIcon(utilFetchStatus.statusFlowTransitions)" :color="getStatusColor(utilFetchStatus.statusFlowTransitions)" />
-              <ion-label>
-                {{ translate("Status Transitions") }}
-                <p>{{ translate(getStatusLabel(utilFetchStatus.statusFlowTransitions)) }}</p>
-              </ion-label>
-              <ion-button slot="end" fill="clear" @click="utilStore.fetchStatusFlowTransitions()">
+              <ion-button slot="end" fill="clear" @click="item.refresh()" :disabled="item.status === 'pending'">
                 <ion-icon slot="icon-only" :icon="syncOutline" />
               </ion-button>
             </ion-item>
@@ -240,6 +213,7 @@ import { computed, onBeforeMount, ref } from 'vue';
 import { closeOutline, openOutline, saveOutline, checkmarkCircle, closeCircle, syncOutline } from 'ionicons/icons'
 import { useUserStore } from '@/store/user';
 import { useUtilStore } from '@/store/util';
+import { useMdmConfigStore } from '@/store/mdmConfig';
 import Image from '@/components/Image.vue'
 import { cookieHelper, commonUtil, translate } from '@common';
 import { useAuth } from '@common/composables/useAuth';
@@ -247,12 +221,66 @@ import { DateTime } from 'luxon';
 
 const userStore = useUserStore();
 const utilStore = useUtilStore();
+const mdmStore = useMdmConfigStore();
 const userProfile = computed(() => userStore.getUserProfile)
 const currentProductStore = userStore.getCurrentProductStore
 const hasPermission = computed(() => (permissionId: string) =>  userStore.hasPermission(permissionId));
 
 const userFetchStatus = computed(() => userStore.getFetchStatus)
 const utilFetchStatus = computed(() => utilStore.getFetchStatus)
+const mdmFetchStatus = computed(() => mdmStore.getFetchStatus)
+
+const seedDataList = computed(() => [
+  {
+    key: 'profile',
+    name: translate('User Profile'),
+    status: userFetchStatus.value.profile,
+    count: userProfile.value?.userId ? 1 : 0,
+    refresh: () => userStore.fetchUserProfile()
+  },
+  {
+    key: 'permissions',
+    name: translate('Permissions'),
+    status: userFetchStatus.value.permissions,
+    count: userStore.getPermissions?.length || 0,
+    refresh: () => userStore.fetchPermissions()
+  },
+  {
+    key: 'entities',
+    name: translate('Entities'),
+    status: utilFetchStatus.value.entities,
+    count: utilStore.getEntities?.length || 0,
+    refresh: () => utilStore.fetchEntities(true)
+  },
+  {
+    key: 'statusFlowTransitions',
+    name: translate('Status Transitions'),
+    status: utilFetchStatus.value.statusFlowTransitions,
+    count: utilStore.statusFlowTransitions instanceof Map ? utilStore.statusFlowTransitions.size : (utilStore.statusFlowTransitions?.length || 0),
+    refresh: () => utilStore.fetchStatusFlowTransitions()
+  },
+  {
+    key: 'enumerations',
+    name: translate('Enumerations'),
+    status: utilFetchStatus.value.enumerations,
+    count: utilStore.getEnumerations?.length || 0,
+    refresh: () => utilStore.fetchEnumerations(true)
+  },
+  {
+    key: 'statuses',
+    name: translate('Statuses'),
+    status: utilFetchStatus.value.statuses,
+    count: utilStore.getStatuses?.length || 0,
+    refresh: () => utilStore.fetchStatuses(true)
+  },
+  {
+    key: 'configs',
+    name: translate('Data Manager Configs'),
+    status: mdmFetchStatus.value.configs,
+    count: mdmStore.getConfigs?.length || 0,
+    refresh: () => mdmStore.fetchConfigs()
+  }
+])
 
 const getStatusIcon = (status: string) => {
   switch (status) {
@@ -281,8 +309,11 @@ const getStatusLabel = (status: string) => {
   }
 }
 
-const refreshAll = () => {
-  userStore.postLogin();
+const refreshAll = async () => {
+  await Promise.allSettled([
+    userStore.postLogin(),
+    mdmStore.fetchConfigs()
+  ]);
 }
 
 const appInfo = (import.meta.env.VITE_APP_VERSION_INFO ? JSON.parse(import.meta.env.VITE_APP_VERSION_INFO) : {}) as any;

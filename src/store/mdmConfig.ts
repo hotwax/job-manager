@@ -8,7 +8,10 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
     logs: [] as Array<any>,
     logsCount: 0,
     filters: {} as Record<string, any>,
-    globalStats: { total: 0, successful: 0, failed: 0 }
+    globalStats: { total: 0, successful: 0, failed: 0 },
+    fetchStatus: {
+      configs: 'none'
+    } as any
   }),
   getters: {
     getConfigs: (state: any) => state.configs,
@@ -16,10 +19,12 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
     getLogs: (state: any) => state.logs,
     getLogsCount: (state: any) => state.logsCount,
     getAppliedFilters: (state: any) => JSON.parse(JSON.stringify(state.filters)),
-    getGlobalStats: (state: any) => state.globalStats
+    getGlobalStats: (state: any) => state.globalStats,
+    getFetchStatus: (state: any) => state.fetchStatus
   },
   actions: {
     async fetchConfigs() {
+      this.fetchStatus.configs = 'pending'
       try {
         const resp = await api({
           url: "admin/dataManager",
@@ -32,8 +37,10 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
         if (resp.data?.length) {
           this.configs = resp.data
         }
+        this.fetchStatus.configs = 'success'
       } catch (err) {
         logger.error("Failed to fetch configs", err)
+        this.fetchStatus.configs = 'error'
       }
     },
     async fetchConfigById(configId: string) {
