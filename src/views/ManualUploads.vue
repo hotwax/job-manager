@@ -16,7 +16,7 @@
           <p>{{ translate("Ingest CSV or JSON files manually for processing.") }}</p>
         </div>
 
-        <ion-searchbar :value="queryString" @ionInput="queryString = ($event as any).detail.value || ''" :placeholder="translate('Search uploads')"></ion-searchbar>
+        <ion-searchbar :value="queryString" @ionInput="queryString = ($event as any).detail.value || ''" :placeholder="translate(&quot;Search uploads&quot;)"></ion-searchbar>
 
         <div class="empty-state" v-if="isLoading">
           <ion-item lines="none">
@@ -53,18 +53,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { IonSpinner, IonPage, IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonCard, IonCardContent, IonIcon, IonButton, IonSearchbar, IonLabel, IonItem, onIonViewWillEnter } from '@ionic/vue';
-import { arrowForwardOutline } from 'ionicons/icons';
-import router from '@/router';
-import { translate } from '@common';
-import { useMdmConfigStore } from '@/store/mdmConfig';
+import { computed, ref } from "vue";
+import { IonSpinner, IonPage, IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonCard, IonCardContent, IonIcon, IonButton, IonSearchbar, IonLabel, IonItem, onIonViewWillEnter } from "@ionic/vue";
+import { arrowForwardOutline } from "ionicons/icons";
+import router from "@/router";
+import { translate } from "@common";
+import { useMdmConfigStore } from "@/store/mdmConfig";
 
 const queryString = ref("");
 const mdmStore = useMdmConfigStore();
 
 const configs = computed(() => mdmStore.getConfigs);
-const isLoading = computed(() => mdmStore.getFetchStatus.configs === 'pending');
+const isLoading = computed(() => mdmStore.getFetchStatus.configs === "pending");
 
 const importConfigs = computed(() => {
   const q = queryString.value.trim().toLowerCase();

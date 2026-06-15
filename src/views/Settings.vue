@@ -193,7 +193,7 @@
                 {{ item.name }}
                 <p>
                   {{ translate(getStatusLabel(item.status)) }}
-                  <span v-if="item.status === 'success' && item.count !== undefined"> &bull; {{ item.count }} {{ translate(item.count === 1 ? 'record' : 'records') }}</span>
+                  <span v-if="item.status === 'success' && item.count !== undefined"> &bull; {{ item.count }} {{ translate(item.count === 1 ? "record" : "records") }}</span>
                 </p>
               </ion-label>
               <ion-button slot="end" fill="clear" @click="item.refresh()" :disabled="item.status === 'pending'">
@@ -213,7 +213,7 @@ import { computed, onBeforeMount, ref } from 'vue';
 import { closeOutline, openOutline, saveOutline, checkmarkCircle, closeCircle, syncOutline } from 'ionicons/icons'
 import { useUserStore } from '@/store/user';
 import { useUtilStore } from '@/store/util';
-import { useMdmConfigStore } from '@/store/mdmConfig';
+import { useMdmConfigStore } from "@/store/mdmConfig";
 import Image from '@/components/Image.vue'
 import { cookieHelper, commonUtil, translate } from '@common';
 import { useAuth } from '@common/composables/useAuth';
@@ -232,50 +232,50 @@ const mdmFetchStatus = computed(() => mdmStore.getFetchStatus)
 
 const seedDataList = computed(() => [
   {
-    key: 'profile',
-    name: translate('User Profile'),
+    key: "profile",
+    name: translate("User Profile"),
     status: userFetchStatus.value.profile,
     count: userProfile.value?.userId ? 1 : 0,
     refresh: () => userStore.fetchUserProfile()
   },
   {
-    key: 'permissions',
-    name: translate('Permissions'),
+    key: "permissions",
+    name: translate("Permissions"),
     status: userFetchStatus.value.permissions,
     count: userStore.getPermissions?.length || 0,
     refresh: () => userStore.fetchPermissions()
   },
   {
-    key: 'entities',
-    name: translate('Entities'),
+    key: "entities",
+    name: translate("Entities"),
     status: utilFetchStatus.value.entities,
     count: utilStore.getEntities?.length || 0,
     refresh: () => utilStore.fetchEntities(true)
   },
   {
-    key: 'statusFlowTransitions',
-    name: translate('Status Transitions'),
+    key: "statusFlowTransitions",
+    name: translate("Status Transitions"),
     status: utilFetchStatus.value.statusFlowTransitions,
     count: utilStore.statusFlowTransitions instanceof Map ? utilStore.statusFlowTransitions.size : (utilStore.statusFlowTransitions?.length || 0),
     refresh: () => utilStore.fetchStatusFlowTransitions()
   },
   {
-    key: 'enumerations',
-    name: translate('Enumerations'),
+    key: "enumerations",
+    name: translate("Enumerations"),
     status: utilFetchStatus.value.enumerations,
     count: utilStore.getEnumerations?.length || 0,
     refresh: () => utilStore.fetchEnumerations(true)
   },
   {
-    key: 'statuses',
-    name: translate('Statuses'),
+    key: "statuses",
+    name: translate("Statuses"),
     status: utilFetchStatus.value.statuses,
     count: utilStore.getStatuses?.length || 0,
     refresh: () => utilStore.fetchStatuses(true)
   },
   {
-    key: 'configs',
-    name: translate('Data Manager Configs'),
+    key: "configs",
+    name: translate("Data Manager Configs"),
     status: mdmFetchStatus.value.configs,
     count: mdmStore.getConfigs?.length || 0,
     refresh: () => mdmStore.fetchConfigs()

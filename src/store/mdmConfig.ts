@@ -10,7 +10,7 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
     filters: {} as Record<string, any>,
     globalStats: { total: 0, successful: 0, failed: 0 },
     fetchStatus: {
-      configs: 'none'
+      configs: "none"
     } as any
   }),
   getters: {
@@ -24,7 +24,7 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
   },
   actions: {
     async fetchConfigs() {
-      this.fetchStatus.configs = 'pending'
+      this.fetchStatus.configs = "pending"
       try {
         const resp = await api({
           url: "admin/dataManager",
@@ -37,10 +37,10 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
         if (resp.data?.length) {
           this.configs = resp.data
         }
-        this.fetchStatus.configs = 'success'
+        this.fetchStatus.configs = "success"
       } catch (err) {
         logger.error("Failed to fetch configs", err)
-        this.fetchStatus.configs = 'error'
+        this.fetchStatus.configs = "error"
       }
     },
     async fetchConfigById(configId: string) {

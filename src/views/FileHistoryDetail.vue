@@ -208,7 +208,7 @@ import {
   onIonViewWillEnter
 } from '@ionic/vue';
 import { computed, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter } from "vue-router";
 import { translate, commonUtil } from '@common';
 import { useMdmConfigStore } from '@/store/mdmConfig';
 import { getFileSize, showToast, getDuration } from '@/utils';
@@ -239,7 +239,7 @@ const getConfigName = (configId: string) => {
 
 const goToConfigDetail = (configId: string) => {
   if (!configId) return;
-  router.push({ name: 'ImportDetail', params: { type: configId } });
+  router.push({ name: "ImportDetail", params: { type: configId } });
 };
 
 type PayloadKey = "original" | "errors";

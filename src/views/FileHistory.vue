@@ -104,17 +104,17 @@
 
               <div class="filter-item">
                 <ion-select
-                  :label="translate('Has Error')"
+                  :label="translate(&quot;Has Error&quot;)"
                   label-placement="stacked"
                   interface="popover"
-                  :placeholder="translate('All')"
+                  :placeholder="translate(&quot;All&quot;)"
                   :value="hasErrorFilter"
                   @ionChange="hasErrorFilter = $event.detail.value"
                 >
                   <ion-select-option value="Y">{{ translate("Yes") }}</ion-select-option>
                   <ion-select-option value="N">{{ translate("No") }}</ion-select-option>
                 </ion-select>
-                <ion-button v-if="hasErrorFilter" fill="clear" class="clear-filter-btn" @click="hasErrorFilter = ''" :title="translate('Clear')">
+                <ion-button v-if="hasErrorFilter" fill="clear" class="clear-filter-btn" @click="hasErrorFilter = &quot;&quot;" :title="translate(&quot;Clear&quot;)">
                   <ion-icon slot="icon-only" :icon="closeCircleOutline" />
                 </ion-button>
               </div>
@@ -277,17 +277,17 @@ import {
   onIonViewWillEnter,
   alertController,
 } from '@ionic/vue';
-import { translate, commonUtil, api } from '@common';
-import { closeOutline, closeCircleOutline, warningOutline, alertCircleOutline } from 'ionicons/icons';
-import { computed, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
-import { useMdmConfigStore } from '@/store/mdmConfig';
-import { getFileSize, getDuration, showToast } from '@/utils';
-import logger from '@/logger';
-import { getStatusDesc } from '@/utils/config';
-import { useUtilStore } from '@/store/util';
-import router from '@/router';
-import AnimatedNumber from '@/components/AnimatedNumber.vue';
+import { translate, commonUtil, api } from "@common";
+import { closeOutline, closeCircleOutline, warningOutline, alertCircleOutline } from "ionicons/icons";
+import { computed, ref, watch } from "vue";
+import { useRoute } from "vue-router";
+import { useMdmConfigStore } from "@/store/mdmConfig";
+import { getFileSize, getDuration, showToast } from "@/utils";
+import logger from "@/logger";
+import { getStatusDesc } from "@/utils/config";
+import { useUtilStore } from "@/store/util";
+import router from "@/router";
+import AnimatedNumber from "@/components/AnimatedNumber.vue";
 
 const PAGE_SIZE = 10;
 
@@ -337,7 +337,7 @@ const filteredLogs = computed(() => {
 
   if (hasErrorFilter.value) {
     result = result.filter((log: any) => {
-      const hasError = (Number(log.failedRecordCount) || 0) > 0 || ['DmlsFailed', 'DmlsCrashed'].includes(log.statusId);
+      const hasError = (Number(log.failedRecordCount) || 0) > 0 || ["DmlsFailed", "DmlsCrashed"].includes(log.statusId);
       return hasErrorFilter.value === "Y" ? hasError : !hasError;
     });
   }
@@ -456,21 +456,21 @@ const isConfigNameMissing = (configId: string) => {
 
 const showAddConfigNameAlert = async (configId: string) => {
   const alert = await alertController.create({
-    header: translate('Add configuration name'),
+    header: translate("Add configuration name"),
     inputs: [
       {
-        name: 'configName',
-        type: 'text',
-        placeholder: translate('Configuration name')
+        name: "configName",
+        type: "text",
+        placeholder: translate("Configuration name")
       }
     ],
     buttons: [
       {
-        text: translate('Cancel'),
-        role: 'cancel'
+        text: translate("Cancel"),
+        role: "cancel"
       },
       {
-        text: translate('Save'),
+        text: translate("Save"),
         handler: async (data) => {
           const name = data.configName?.trim();
           if (!name) {
