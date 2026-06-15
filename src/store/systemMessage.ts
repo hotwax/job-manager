@@ -32,6 +32,7 @@ export const useSystemMessageStore = defineStore("systemMessage", {
     relatedMessages: [] as any[],
     linkedMessages: [] as any[],
     systemMessageTotal: 0,
+    lastFilters: "",
     loading: false,
     enums: [] as any[],
     currentSystemMessageStatusHistory: []
@@ -123,10 +124,19 @@ export const useSystemMessageStore = defineStore("systemMessage", {
         const requestPayload = { ...payload };
         delete requestPayload.pageIndex;
         delete requestPayload.pageSize;
+        delete requestPayload.orderBy;
+        delete requestPayload.orderByField;
 
-        // 1. Get total count (using a 1-item request, only if pageIndex is 0 or total unknown)
+        // Check if filters changed to avoid redundant count requests
+        const currentFilters = JSON.stringify(requestPayload);
+        if (this.lastFilters !== currentFilters) {
+          this.systemMessageTotal = 0; // reset total on filter change
+          this.lastFilters = currentFilters;
+        }
+
+        // 1. Get total count only when necessary (first load or filter change)
         let totalCount = this.systemMessageTotal;
-        if (pageIndex === 0 || !totalCount) {
+        if (!totalCount) {
           const countResponse = await api({
             url: "admin/systemMessages",
             method: "GET",
