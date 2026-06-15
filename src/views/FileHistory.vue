@@ -104,17 +104,17 @@
 
               <div class="filter-item">
                 <ion-select
-                  :label="translate(&quot;Has Error&quot;)"
+                  :label="translate('Has Error')"
                   label-placement="stacked"
                   interface="popover"
-                  :placeholder="translate(&quot;All&quot;)"
+                  :placeholder="translate('All')"
                   :value="hasErrorFilter"
                   @ionChange="hasErrorFilter = $event.detail.value"
                 >
                   <ion-select-option value="Y">{{ translate("Yes") }}</ion-select-option>
                   <ion-select-option value="N">{{ translate("No") }}</ion-select-option>
                 </ion-select>
-                <ion-button v-if="hasErrorFilter" fill="clear" class="clear-filter-btn" @click="hasErrorFilter = &quot;&quot;" :title="translate(&quot;Clear&quot;)">
+                <ion-button v-if="hasErrorFilter" fill="clear" class="clear-filter-btn" @click="hasErrorFilter = ''" :title="translate('Clear')">
                   <ion-icon slot="icon-only" :icon="closeCircleOutline" />
                 </ion-button>
               </div>

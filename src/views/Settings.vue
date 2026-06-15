@@ -193,7 +193,7 @@
                 {{ item.name }}
                 <p>
                   {{ translate(getStatusLabel(item.status)) }}
-                  <span v-if="item.status === 'success' && item.count !== undefined"> &bull; {{ item.count }} {{ translate(item.count === 1 ? "record" : "records") }}</span>
+                  <span v-if="item.status === 'success' && item.count !== undefined"> &bull; {{ item.count }} {{ translate(item.count === 1 ? 'record' : 'records') }}</span>
                 </p>
               </ion-label>
               <ion-button slot="end" fill="clear" @click="item.refresh()" :disabled="item.status === 'pending'">

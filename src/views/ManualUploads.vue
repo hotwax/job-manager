@@ -16,7 +16,7 @@
           <p>{{ translate("Ingest CSV or JSON files manually for processing.") }}</p>
         </div>
 
-        <ion-searchbar :value="queryString" @ionInput="queryString = ($event as any).detail.value || ''" :placeholder="translate(&quot;Search uploads&quot;)"></ion-searchbar>
+        <ion-searchbar :value="queryString" @ionInput="queryString = ($event as any).detail.value || ''" :placeholder="translate('Search uploads')"></ion-searchbar>
 
         <div class="empty-state" v-if="isLoading">
           <ion-item lines="none">
