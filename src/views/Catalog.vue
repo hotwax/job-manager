@@ -56,14 +56,16 @@
 
           <!-- Sub Categories (Row 2) - Visible only if children exist -->
           <div v-if="subCategories.length > 0" class="sub-categories">
+            <span class="sub-categories-label">{{ translate("Sub-options") }}:</span>
             <ion-chip
               v-for="sub in subCategories"
               :key="sub.productCategoryId"
-              @click="selectedSubCategoryId = sub.productCategoryId"
+              @click="selectSubCategory(sub.productCategoryId)"
               :outline="selectedSubCategoryId !== sub.productCategoryId"
               :color="
                 selectedSubCategoryId === sub.productCategoryId ? 'primary' : ''
               "
+              class="sub-category-chip"
             >
               <ion-label>{{ sub.categoryName }}</ion-label>
             </ion-chip>
@@ -283,11 +285,14 @@ const selectedSubCategoryId = ref("");
 const queryString = ref("");
 const selectedStatus = ref("ALL");
 
-const primaryCategories = computed(() =>
-  categories.value.filter(
-    (category: any) => category.primaryParentCategoryId === "SYSTEM_JOB",
-  ),
-);
+const primaryCategories = computed(() => {
+  const rollupChildIds = categoryRollups.value.map((rollup: any) => rollup.productCategoryId);
+  return categories.value.filter(
+    (category: any) =>
+      category.primaryParentCategoryId === "SYSTEM_JOB" &&
+      !rollupChildIds.includes(category.productCategoryId),
+  );
+});
 
 const subCategories = computed(() => {
   if (selectedParentCategoryId.value === "ALL") return [];
@@ -309,28 +314,30 @@ const selectParentCategory = (productCategoryId: string) => {
   selectedSubCategoryId.value = ""; // Reset sub-category on parent change
 };
 
+const selectSubCategory = (subCategoryId: string) => {
+  selectedSubCategoryId.value = selectedSubCategoryId.value === subCategoryId ? "" : subCategoryId;
+};
+
 const filteredJobs = computed(() => {
   let filtered = jobs.value;
   if (selectedParentCategoryId.value !== "ALL") {
-    const parentCategoryJobIds: Array<string> = [];
-    const subCategoryJobIds: Array<string> = [];
+    const targetCategoryIds = [selectedParentCategoryId.value];
+    if (!selectedSubCategoryId.value) {
+      // Add all subcategories of this parent
+      const subCategoryIds = categoryRollups.value
+        .filter((rollup: any) => rollup.parentProductCategoryId === selectedParentCategoryId.value)
+        .map((rollup: any) => rollup.productCategoryId);
+      targetCategoryIds.push(...subCategoryIds);
+    } else {
+      targetCategoryIds.length = 0;
+      targetCategoryIds.push(selectedSubCategoryId.value);
+    }
 
-    categoryMembers.value.map((member: any) => {
-      if (member.productCategoryId === selectedParentCategoryId.value) {
-        parentCategoryJobIds.push(member.productId);
-      }
+    const matchingProductIds = categoryMembers.value
+      .filter((member: any) => targetCategoryIds.includes(member.productCategoryId))
+      .map((member: any) => member.productId);
 
-      if (member.productCategoryId === selectedSubCategoryId.value) {
-        subCategoryJobIds.push(member.productId);
-      }
-    });
-
-    filtered = filtered.filter(
-      (job: any) =>
-        parentCategoryJobIds.includes(job.instanceOfProductId) &&
-        (!subCategoryJobIds.length ||
-          subCategoryJobIds.includes(job.instanceOfProductId)),
-    );
+    filtered = filtered.filter((job: any) => matchingProductIds.includes(job.instanceOfProductId));
   }
 
   if (selectedStatus.value !== "ALL") {
@@ -408,11 +415,33 @@ const openCreateJobModal = async () => {
 }
 
 .categories,
-.sub-categories,
 .status-filters {
   padding: 0 8px 8px;
   display: flex;
   flex-wrap: wrap;
+}
+
+.sub-categories {
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  background-color: var(--ion-color-light);
+  border-radius: 8px;
+  margin: 0 16px 16px;
+}
+
+.sub-categories-label {
+  font-size: 0.85em;
+  color: var(--ion-color-medium);
+  font-weight: 500;
+  margin-right: 4px;
+}
+
+.sub-category-chip {
+  --background: var(--ion-card-background);
+  margin: 0;
 }
 
 .status-filters {
