@@ -68,8 +68,10 @@
             <ion-card v-for="i in 6" :key="i">
               <ion-card-header>
                 <ion-card-title><ion-skeleton-text animated style="width: 60%" /></ion-card-title>
-                <ion-skeleton-text animated style="width: 40%" /><br>
-                <ion-skeleton-text animated style="width: 80%" />
+                <div class="job-card-metadata">
+                  <ion-skeleton-text animated style="width: 40%" />
+                  <ion-skeleton-text animated style="width: 80%" />
+                </div>
               </ion-card-header>
               <ion-item lines="none">
                 <ion-label>
@@ -85,8 +87,10 @@
                 <div class="job-card-header">
                   <ion-card-title v-html="highlightText(job.jobName, queryString)"></ion-card-title>
                 </div>
-                <code>ID: <span v-html="highlightText(job.instanceOfProductId, queryString)"></span></code><br>
-                <code v-html="highlightText(job.serviceName, queryString)"></code>
+                <div class="job-card-metadata">
+                  <code>ID: <span v-html="highlightText(job.instanceOfProductId, queryString)"></span></code>
+                  <code v-html="highlightText(job.serviceName, queryString)"></code>
+                </div>
               </ion-card-header>
               <ion-item lines="none" detail button @click="router.push(`/job/${job.jobName}`)">
                 <template v-if="job.isDraftJob">
@@ -149,9 +153,11 @@ import { ref, computed } from 'vue';
 import router from '@/router';
 import { ellipseOutline, lockClosedOutline, pauseCircleOutline, playCircleOutline } from 'ionicons/icons';
 import { emitter, translate } from '@common';
+import { useRoute } from 'vue-router';
 import CreateJobModal from '@/components/CreateJobModal.vue';
 import { useJobStore } from '@/store/jobs';
 
+const route = useRoute();
 const jobStore = useJobStore();
 
 const jobs = computed(() => jobStore.getJobs)
@@ -161,6 +167,11 @@ const categoryRollups = computed(() => jobStore.getCategoryRollups)
 
 onIonViewWillEnter(async () => {
   emitter.on("productStoreUpdated", jobStore.fetchJobs)
+  if (route.query.status) {
+    selectedStatus.value = route.query.status as string;
+  } else {
+    selectedStatus.value = 'ALL';
+  }
   await Promise.allSettled([jobStore.fetchJobs(), jobStore.fetchCategories(), jobStore.fetchCategoryRollup()])
 })
 
@@ -310,6 +321,12 @@ ion-card ion-item {
   justify-content: space-between;
   align-items: flex-start;
   word-break: break-all;
+}
+
+.job-card-metadata {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacer-xs);
 }
 
 .paused-job {

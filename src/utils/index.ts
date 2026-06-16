@@ -1,13 +1,14 @@
 import saveAs from "file-saver";
 import { toastController } from '@ionic/vue';
 import Papa from 'papaparse'
-import { DateTime } from "luxon";
+import { DateTime, Duration } from "luxon";
 import logger from "@/logger";
 import { cookieHelper, translate } from "@common";
 import {Clipboard} from "@capacitor/clipboard";
 import cronstrue from "cronstrue"
 import { useUtilStore } from "@/store/util";
 import { useUserStore } from "@/store/user";
+import { useDataDocumentStore } from "@/store/dataDocuments";
 
 const showToast = async (message: string) => {
   const toast = await toastController
@@ -114,6 +115,48 @@ const saveDataFile = async (response: any, fileName: string) => {
   saveAs(blob, fileName);
 }
 
+const extractExportFilename = (message: any) => {
+  if(message?.messageText) {
+    const parts = message.messageText.split("/")
+    return parts[parts.length - 1] || ""
+  }
+  return ""
+}
+
+// The export endpoint returns JSON shaped as { csvData: "..." }, not a file stream
+const downloadDataDocumentExport = async (message: any) => {
+  try {
+    const resp = await useDataDocumentStore().downloadExport(message.systemMessageId);
+    const csvData = resp?.data?.csvData;
+    if(!csvData) {
+      showToast(translate("Failed to download linked file."));
+      return;
+    }
+    const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
+    saveAs(blob, extractExportFilename(message) || `${message.systemMessageId}.csv`);
+  } catch (error) {
+    showToast(translate("Failed to download linked file."));
+  }
+}
+
+// Map a Data Document export SystemMessage to a friendly status. The export send never
+// reaches SmsgError — a failure is a message stuck in SmsgProduced with failCount > 0
+// (no errorSummary/recordCount are populated). Success is SmsgSent with a .csv messageText.
+const getExportStatus = (message: any) => {
+  const statusId = message?.statusId;
+  const failed = statusId === "SmsgError" || (statusId === "SmsgProduced" && Number(message?.failCount) > 0);
+  if (failed) return { key: "failed", label: "Failed", color: "danger" };
+  if (statusId === "SmsgSent") return { key: "ready", label: "Ready", color: "success" };
+  if (statusId === "SmsgSending") return { key: "sending", label: "Sending", color: "warning" };
+  if (statusId === "SmsgProduced" || statusId === "SmsgCreated") return { key: "processing", label: "Processing", color: "warning" };
+  return { key: "unknown", label: statusId || "-", color: "medium" };
+};
+
+const isExportTerminal = (message: any) => {
+  const key = getExportStatus(message).key;
+  return key === "ready" || key === "failed";
+};
+
 function getDateAndTime(time: any) {
   if (!time) return "-";
   
@@ -150,20 +193,36 @@ const getFileSize = (size: string) => {
   return size ? `${(Number(size) / (1024 * 1024)).toFixed(3)} MB` : "-"
 }
 
+const getDuration = (start: number, end: number) => {
+  const diff = end - start;
+  if (diff < 0) return "-";
+  const duration = Duration.fromMillis(diff).shiftTo("minutes", "seconds");
+  const minutes = duration.minutes;
+  const seconds = Math.floor(duration.seconds);
+  if (minutes === 0) return `${seconds}s`;
+  return `${minutes}m ${seconds}s`;
+}
+
 const isAppCompatible = () => {
   const currentVersion = useUtilStore().systemInformation?.instanceInfo?.componentRelease;
   const requiredVersion = import.meta.env.VITE_MAARG_COMPATIBLE_VERSION;
   
   if(!currentVersion || !requiredVersion) return false;
   
-  if(currentVersion === "main") return true;
-  
-  const currentParts = currentVersion.split('.').map(Number);
-  const requiredParts = requiredVersion.split('.').map(Number);
+  const currentParts = currentVersion.split('.');
+  const requiredParts = requiredVersion.split('.');
+
+  // In all the cases the release will have a version split in 3 parts, and if instance is on some
+  // custom branch then in that case it will have a single part and thus assuming
+  // its on custom branch and allow accessing new app
+  if(currentParts.length < 3) return true;
+
+  // There might be cases when the version in api has a `v` prefixed with it
+  currentParts[0] = currentParts[0].replace("v", "")
   
   for(let i = 0; i < 3; i++) {
-    const part1 = currentParts[i] || 0;
-    const part2 = requiredParts[i] || 0;
+    const part1 = Number(currentParts[i]) || 0;
+    const part2 = Number(requiredParts[i]) || 0;
     if(part1 >= part2) return true;
     if(part1 < part2) return false;
   }
@@ -180,6 +239,9 @@ const redirectToLegacyApp = () => {
 }
 
 export {
+  downloadDataDocumentExport,
+  getExportStatus,
+  isExportTerminal,
   getCronString,
   getDateAndTime,
   handleDateTimeInput,
@@ -189,5 +251,6 @@ export {
   showToast,
   saveDataFile,
   timeTillRun,
+  getDuration,
   getFileSize
 }

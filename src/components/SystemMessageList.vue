@@ -5,7 +5,8 @@
       <ion-item lines="none">
         <ion-icon slot="start" :icon="message.isOutgoing === 'Y' ? sendOutline : downloadOutline" />
         <ion-label>
-          {{ getTypeName(message.systemMessageTypeId) }} #{{ message.systemMessageId }}
+          {{ getTypeName(message.systemMessageTypeId) }} 
+          <p>#{{ message.systemMessageId }}</p>
         </ion-label>
       </ion-item>
       <p v-if="showRemote">{{ translate("Remote") }}: {{ message.systemMessageRemoteId }}</p>

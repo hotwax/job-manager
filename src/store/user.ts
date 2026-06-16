@@ -22,6 +22,10 @@ export const useUserStore = defineStore("user", {
     },
     timeZones: [] as any,
     oms: "",
+    fetchStatus: {
+      profile: 'none',
+      permissions: 'none'
+    } as any,
     selectedSystemMessageRemoteId: ""
   }),
   getters: {
@@ -33,6 +37,7 @@ export const useUserStore = defineStore("user", {
     getCurrentProductStore: (state: any) => state.currentProductStore,
     getUserTimeZone: (state: any) => state.current.timeZone,
     getAvailableTimeZones: (state: any) => state.timeZones,
+    getFetchStatus: (state: any) => state.fetchStatus,
     getSelectedSystemMessageRemoteId: (state: any) => state.selectedSystemMessageRemoteId,
     hasPermission: (state: any) => (permissionId: string): boolean => {
       const permissions = state.permissions;
@@ -56,6 +61,7 @@ export const useUserStore = defineStore("user", {
   },
   actions: {
     async fetchUserProfile() {
+      this.fetchStatus.profile = 'pending'
       try {
         const userProfileResp = await api({
           url: "admin/user/profile",
@@ -68,10 +74,12 @@ export const useUserStore = defineStore("user", {
         if (this.current.timeZone) {
           Settings.defaultZone = this.current.timeZone;
         }
+        this.fetchStatus.profile = 'success'
       } catch(error: any) {
         showToast(translate("Failed to fetch user profile information"));
         console.error("error", error);
         useAuth().clearAuth();
+        this.fetchStatus.profile = 'error'
         return Promise.reject(new Error(error));
       }
     },
@@ -122,6 +130,7 @@ export const useUserStore = defineStore("user", {
       }
     },
     async fetchPermissions() {
+      this.fetchStatus.permissions = 'pending'
       const permissionId = import.meta.env.VITE_APP_PERMISSION_ID;
       const serverPermissions = [] as any;
       const viewSize = 200;
@@ -130,11 +139,13 @@ export const useUserStore = defineStore("user", {
       try {
         let resp;
         do {
+          // Permissions are always sourced from the Moqui/Maarg instance, regardless of
+          // the configured OMS mode (mirrors how fetchUserProfile reads admin/user/profile).
           resp = await api({
-            url: "getPermissions",
-            method: "post",
-            baseURL: commonUtil.getOmsURL(),
-            data: { viewIndex, viewSize }
+            url: "admin/user/permissions",
+            method: "get",
+            baseURL: commonUtil.getMaargURL(),
+            params: { viewIndex, viewSize }
           }) as any
 
           if (resp.status === 200 && resp.data.docs?.length && !commonUtil.hasError(resp)) {
@@ -153,13 +164,16 @@ export const useUserStore = defineStore("user", {
             const permissionError = "You do not have permission to access the app.";
             commonUtil.showToast(translate(permissionError));
             logger.error("error", permissionError);
+            this.fetchStatus.permissions = 'error'
             return Promise.reject(new Error(permissionError));
           }
         }
 
         // Update the state with the fetched permissions
         this.permissions = serverPermissions;
+        this.fetchStatus.permissions = 'success'
       } catch (error: any) {
+        this.fetchStatus.permissions = 'error'
         return Promise.reject(error);
       }
     },
@@ -273,21 +287,29 @@ export const useUserStore = defineStore("user", {
     },
     async postLogin() {
       try {
-        await this.fetchUserProfile()
-        await this.fetchPermissions()
-        await this.fetchProductStores()
+        await this.fetchUserProfile();
+        await this.fetchPermissions();
         await useUtilStore().fetchSystemInformation()
         // If the oms version is not compatible with the app, redirecting the user to the legacy app
         if(!(isAppCompatible())) {
           commonUtil.showToast(translate("App is not compatible with oms version and will not work as expected, redirecting to legacy app"));
           redirectToLegacyApp();
+          useAuth().clearAuth();
         }
+        await this.fetchProductStores()
+        await Promise.allSettled([
+          useUtilStore().fetchEntities(),
+          useUtilStore().fetchEnumerations(),
+          useUtilStore().fetchStatuses(),
+          useUtilStore().fetchStatusFlowTransitions()
+        ]);
       } catch(error: any) {
         return Promise.reject(new Error(error));
       }
     },
     async postLogout() {
       this.$reset();
+      useUtilStore().$reset();
     }
   },
   persist: true,
