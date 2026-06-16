@@ -150,13 +150,13 @@ import {
 } from "@ionic/vue";
 import { documentTextOutline, gitNetworkOutline, optionsOutline } from "ionicons/icons";
 import { computed, ref } from "vue";
-import { useRouter } from "vue-router";
+import router from "@/router";
 
 import { translate } from "@common";
 import { useDataDocumentStore } from "@/store/dataDocuments";
 
 
-const router = useRouter();
+
 const store = useDataDocumentStore();
 const activeSection = ref("documents");
 
