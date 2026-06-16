@@ -285,14 +285,11 @@ const selectedSubCategoryId = ref("");
 const queryString = ref("");
 const selectedStatus = ref("ALL");
 
-const primaryCategories = computed(() => {
-  const rollupChildIds = categoryRollups.value.map((rollup: any) => rollup.productCategoryId);
-  return categories.value.filter(
-    (category: any) =>
-      category.primaryParentCategoryId === "SYSTEM_JOB" &&
-      !rollupChildIds.includes(category.productCategoryId),
-  );
-});
+const primaryCategories = computed(() =>
+  categories.value.filter(
+    (category: any) => category.primaryParentCategoryId === "SYSTEM_JOB",
+  ),
+);
 
 const subCategories = computed(() => {
   if (selectedParentCategoryId.value === "ALL") return [];
@@ -322,15 +319,15 @@ const filteredJobs = computed(() => {
   let filtered = jobs.value;
   if (selectedParentCategoryId.value !== "ALL") {
     const targetCategoryIds = [selectedParentCategoryId.value];
-    if (!selectedSubCategoryId.value) {
+    if (selectedSubCategoryId.value) {
+      targetCategoryIds.length = 0;
+      targetCategoryIds.push(selectedSubCategoryId.value);
+    } else {
       // Add all subcategories of this parent
       const subCategoryIds = categoryRollups.value
         .filter((rollup: any) => rollup.parentProductCategoryId === selectedParentCategoryId.value)
         .map((rollup: any) => rollup.productCategoryId);
       targetCategoryIds.push(...subCategoryIds);
-    } else {
-      targetCategoryIds.length = 0;
-      targetCategoryIds.push(selectedSubCategoryId.value);
     }
 
     const matchingProductIds = categoryMembers.value
