@@ -62,7 +62,6 @@
           <!-- Sub Categories (Row 2) - Visible only if children exist -->
           <transition name="slide-fade">
             <div v-if="subCategories.length > 0" class="sub-categories">
-              <span class="sub-categories-label">{{ translate("Sub-options") }}:</span>
               <ion-chip
                 v-for="sub in subCategories"
                 :key="sub.productCategoryId"
