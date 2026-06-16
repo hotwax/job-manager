@@ -4,204 +4,268 @@
       <ion-toolbar>
         <ion-menu-button slot="start" />
         <ion-title>{{ translate("Catalog") }}</ion-title>
-        <!-- <ion-buttons slot="end">
-          <ion-button color="primary" @click="openCreateJobModal()">
-            <ion-icon slot="end" :icon="addOutline"></ion-icon>
-            {{ translate("Add job") }}
-          </ion-button>
-        </ion-buttons> -->
       </ion-toolbar>
     </ion-header>
 
     <ion-content>
-      <main>
+      <main class="catalog-container">
+        <!-- Modernized Header -->
         <div class="header">
           <div class="title">
-            <h1>Job catalog</h1>
-            <p>Manage and configure integration tasks.</p>
+            <h1>{{ translate("Job catalog") }}</h1>
+            <p>{{ translate("Manage and configure integration tasks.") }}</p>
           </div>
         </div>
 
-        <ion-card>
-          <ion-searchbar
-            :value="queryString"
-            @ionInput="queryString = $event.detail.value || ''"
-            :debounce="300"
-            :placeholder="translate('Search jobs')"
-          ></ion-searchbar>
-
-          <!-- Primary Categories (Row 1) -->
-          <div class="categories">
-            <ion-chip
-              @click="selectParentCategory('ALL')"
-              :outline="selectedParentCategoryId !== 'ALL'"
-              :color="selectedParentCategoryId === 'ALL' ? 'primary' : ''"
-            >
-              <ion-label>{{ translate("All") }}</ion-label>
-            </ion-chip>
-            <ion-chip
-              v-for="category in primaryCategories"
-              :key="category.productCategoryId"
-              @click="selectParentCategory(category.productCategoryId)"
-              :outline="selectedParentCategoryId !== category.productCategoryId"
-              :color="
-                selectedParentCategoryId === category.productCategoryId
-                  ? 'primary'
-                  : ''
-              "
-            >
-              <ion-label>{{ category.categoryName }}</ion-label>
-              <ion-icon
-                v-if="hasSubCategories(category.productCategoryId)"
-                :icon="selectedParentCategoryId === category.productCategoryId ? chevronDownOutline : chevronForwardOutline"
-                style="font-size: 14px; margin-left: 4px;"
-              />
-            </ion-chip>
+        <!-- Glassmorphic Filter & Search Panel -->
+        <div class="filter-panel">
+          <!-- Search Section -->
+          <div class="search-section">
+            <ion-searchbar
+              :value="queryString"
+              @ionInput="queryString = $event.detail.value || ''"
+              :debounce="300"
+              :placeholder="translate('Search jobs')"
+            ></ion-searchbar>
           </div>
 
-          <!-- Sub Categories (Row 2) - Visible only if children exist -->
-          <transition name="slide-fade">
-            <div v-if="subCategories.length > 0" class="sub-categories">
+          <!-- Primary Options Row -->
+          <div class="filter-row">
+            <div class="filter-row-title">
+              {{ translate("Classification") }}
+            </div>
+            <div class="chips-container">
               <ion-chip
-                v-for="sub in subCategories"
-                :key="sub.productCategoryId"
-                @click="selectSubCategory(sub.productCategoryId)"
-                :outline="selectedSubCategoryId !== sub.productCategoryId"
-                :color="
-                  selectedSubCategoryId === sub.productCategoryId ? 'primary' : ''
-                "
-                class="sub-category-chip"
+                class="custom-chip"
+                :class="{ active: selectedParentCategoryId === 'ALL' }"
+                @click="selectParentCategory('ALL')"
               >
-                <ion-label>{{ sub.categoryName }}</ion-label>
+                <ion-label>{{ translate("All") }}</ion-label>
               </ion-chip>
+              <ion-chip
+                v-for="category in primaryCategories"
+                :key="category.productCategoryId"
+                class="custom-chip"
+                :class="{
+                  active:
+                    selectedParentCategoryId === category.productCategoryId,
+                }"
+                @click="selectParentCategory(category.productCategoryId)"
+              >
+                <ion-label>{{ category.categoryName }}</ion-label>
+                <ion-icon
+                  v-if="hasSubCategories(category.productCategoryId)"
+                  :icon="
+                    selectedParentCategoryId === category.productCategoryId
+                      ? chevronDownOutline
+                      : chevronForwardOutline
+                  "
+                  style="font-size: 14px; margin-left: 4px"
+                />
+              </ion-chip>
+            </div>
+          </div>
+
+          <!-- Sub-Options Panel (Row 2) -->
+          <transition name="slide-fade">
+            <div v-if="subCategories.length > 0" class="sub-options-panel">
+              <div class="chips-container">
+                <ion-chip
+                  v-for="sub in subCategories"
+                  :key="sub.productCategoryId"
+                  class="custom-chip"
+                  :class="{
+                    active: selectedSubCategoryId === sub.productCategoryId,
+                  }"
+                  @click="selectSubCategory(sub.productCategoryId)"
+                >
+                  <ion-label>{{ sub.categoryName }}</ion-label>
+                </ion-chip>
+              </div>
             </div>
           </transition>
 
-          <!-- Status Filters (Row 3) -->
-          <div class="status-filters">
-            <ion-chip
-              @click="selectedStatus = 'ALL'"
-              :outline="selectedStatus !== 'ALL'"
-              :color="selectedStatus === 'ALL' ? 'primary' : ''"
-            >
-              <ion-label>{{ translate("All") }}</ion-label>
-            </ion-chip>
-            <ion-chip
-              @click="selectedStatus = 'SCHEDULED'"
-              :outline="selectedStatus !== 'SCHEDULED'"
-              :color="selectedStatus === 'SCHEDULED' ? 'primary' : ''"
-            >
-              <ion-label>{{ translate("Scheduled") }}</ion-label>
-            </ion-chip>
-            <ion-chip
-              @click="selectedStatus = 'PAUSED'"
-              :outline="selectedStatus !== 'PAUSED'"
-              :color="selectedStatus === 'PAUSED' ? 'primary' : ''"
-            >
-              <ion-label>{{ translate("Paused") }}</ion-label>
-            </ion-chip>
-            <ion-chip
-              @click="selectedStatus = 'NO_SCHEDULE'"
-              :outline="selectedStatus !== 'NO_SCHEDULE'"
-              :color="selectedStatus === 'NO_SCHEDULE' ? 'primary' : ''"
-            >
-              <ion-label>{{ translate("No schedule") }}</ion-label>
-            </ion-chip>
+          <!-- Status Filters Row -->
+          <div
+            class="filter-row"
+            style="
+              margin-bottom: 0;
+              border-top: 1px solid var(--ion-color-step-100, #eee);
+              padding-top: 12px;
+            "
+          >
+            <div class="filter-row-title">{{ translate("Status") }}</div>
+            <div class="chips-container">
+              <ion-chip
+                class="custom-chip"
+                :class="{ active: selectedStatus === 'ALL' }"
+                @click="selectedStatus = 'ALL'"
+              >
+                <ion-label>{{ translate("All") }}</ion-label>
+              </ion-chip>
+              <ion-chip
+                class="custom-chip"
+                :class="{ active: selectedStatus === 'SCHEDULED' }"
+                @click="selectedStatus = 'SCHEDULED'"
+              >
+                <ion-label>{{ translate("Scheduled") }}</ion-label>
+              </ion-chip>
+              <ion-chip
+                class="custom-chip"
+                :class="{ active: selectedStatus === 'PAUSED' }"
+                @click="selectedStatus = 'PAUSED'"
+              >
+                <ion-label>{{ translate("Paused") }}</ion-label>
+              </ion-chip>
+              <ion-chip
+                class="custom-chip"
+                :class="{ active: selectedStatus === 'NO_SCHEDULE' }"
+                @click="selectedStatus = 'NO_SCHEDULE'"
+              >
+                <ion-label>{{ translate("No schedule") }}</ion-label>
+              </ion-chip>
+            </div>
           </div>
-        </ion-card>
+        </div>
 
-        <div class="jobs">
+        <!-- Jobs List / Grid Section -->
+        <div class="jobs-wrapper">
+          <!-- Skeleton Loading State -->
           <template v-if="jobStore.isLoading">
-            <ion-card v-for="i in 6" :key="i">
-              <ion-card-header>
-                <ion-card-title
-                  ><ion-skeleton-text animated style="width: 60%"
-                /></ion-card-title>
-                <div class="job-card-metadata">
-                  <ion-skeleton-text animated style="width: 40%" />
-                  <ion-skeleton-text animated style="width: 80%" />
+            <div class="jobs-grid">
+              <div
+                class="job-card"
+                v-for="i in 6"
+                :key="i"
+                style="pointer-events: none"
+              >
+                <div class="card-header-row">
+                  <ion-skeleton-text
+                    animated
+                    style="width: 70%; height: 20px; border-radius: 4px"
+                  />
+                  <ion-skeleton-text
+                    animated
+                    style="width: 22%; height: 20px; border-radius: 10px"
+                  />
                 </div>
-              </ion-card-header>
-              <ion-item lines="none">
-                <ion-label>
-                  <ion-skeleton-text animated style="width: 30%" />
-                  <p><ion-skeleton-text animated style="width: 50%" /></p>
-                </ion-label>
-              </ion-item>
-            </ion-card>
+                <div class="card-body">
+                  <div class="meta-item">
+                    <ion-skeleton-text
+                      animated
+                      style="width: 30%; height: 10px"
+                    />
+                    <ion-skeleton-text
+                      animated
+                      style="width: 50%; height: 16px; margin-top: 4px"
+                    />
+                  </div>
+                  <div class="meta-item">
+                    <ion-skeleton-text
+                      animated
+                      style="width: 25%; height: 10px"
+                    />
+                    <ion-skeleton-text
+                      animated
+                      style="width: 80%; height: 16px; margin-top: 4px"
+                    />
+                  </div>
+                </div>
+                <div class="card-footer-row">
+                  <ion-skeleton-text
+                    animated
+                    style="width: 40%; height: 14px"
+                  />
+                  <ion-skeleton-text
+                    animated
+                    style="width: 16px; height: 16px"
+                  />
+                </div>
+              </div>
+            </div>
           </template>
+
+          <!-- Actual Loaded Jobs -->
           <template v-else>
-            <ion-card
-              v-for="(job, index) in filteredJobs"
-              :key="job.jobId ? job.jobId : `${job.jobName}-${index}`"
-              :class="{ 'paused-job': job.paused === 'Y' }"
-              :color="job.isDraftJob ? 'light' : ''"
-            >
-              <ion-card-header>
-                <div class="job-card-header">
-                  <ion-card-title
+            <transition-group name="list" tag="div" class="jobs-grid">
+              <div
+                v-for="(job, index) in filteredJobs"
+                :key="job.jobId ? job.jobId : `${job.jobName}-${index}`"
+                class="job-card"
+                :class="{
+                  'status-enabled': job.paused !== 'Y' && !job.isDraftJob,
+                  'status-paused': job.paused === 'Y' && !job.isDraftJob,
+                  'status-draft': job.isDraftJob,
+                }"
+                @click="router.push(`/job/${job.jobName}`)"
+              >
+                <!-- Card Header -->
+                <div class="card-header-row">
+                  <h3
+                    class="job-title"
                     v-html="highlightText(job.jobName, queryString)"
-                  ></ion-card-title>
+                  ></h3>
+
+                  <!-- Status Badge -->
+                  <div
+                    class="status-badge-container"
+                    :class="{
+                      enabled: job.paused !== 'Y' && !job.isDraftJob,
+                      paused: job.paused === 'Y' && !job.isDraftJob,
+                      draft: job.isDraftJob,
+                    }"
+                  >
+                    <span class="status-dot"></span>
+                    <span>
+                      {{
+                        job.isDraftJob
+                          ? translate("Draft")
+                          : job.paused === "Y"
+                            ? translate("Paused")
+                            : translate("Enabled")
+                      }}
+                    </span>
+                  </div>
                 </div>
-                <div class="job-card-metadata">
-                  <code
-                    >ID:
+
+                <!-- Card Body (Metadata) -->
+                <div class="card-body">
+                  <div class="meta-item" v-if="job.instanceOfProductId">
+                    <span class="meta-label">{{
+                      translate("Template ID")
+                    }}</span>
                     <span
+                      class="meta-value"
                       v-html="
                         highlightText(job.instanceOfProductId, queryString)
                       "
-                    ></span
-                  ></code>
-                  <code
-                    v-html="highlightText(job.serviceName, queryString)"
-                  ></code>
+                    ></span>
+                  </div>
+                  <div class="meta-item" v-if="job.serviceName">
+                    <span class="meta-label">{{ translate("Service") }}</span>
+                    <span
+                      class="meta-value"
+                      v-html="highlightText(job.serviceName, queryString)"
+                    ></span>
+                  </div>
                 </div>
-              </ion-card-header>
-              <ion-item
-                lines="none"
-                detail
-                button
-                @click="router.push(`/job/${job.jobName}`)"
-              >
-                <template v-if="job.isDraftJob">
-                  <ion-icon slot="start" :icon="lockClosedOutline" />
-                  <ion-label>
-                    {{ translate("Draft") }}
-                  </ion-label>
-                </template>
-                <template v-else>
-                  <ion-icon
-                    v-if="job.paused === 'Y'"
-                    slot="start"
-                    :icon="pauseCircleOutline"
-                    color="warning"
-                  />
-                  <ion-icon
-                    v-else-if="job.cronExpression"
-                    slot="start"
-                    :icon="playCircleOutline"
-                    color="success"
-                  />
-                  <ion-icon
-                    v-else
-                    slot="start"
-                    :icon="ellipseOutline"
-                    color="medium"
-                  />
-                  <ion-label>
-                    {{
-                      job.paused === "Y"
-                        ? translate("Paused")
-                        : translate("Enabled")
-                    }}
-                    <p v-if="job.cronString">{{ job.cronString }}</p>
-                  </ion-label>
-                </template>
-              </ion-item>
-            </ion-card>
+
+                <!-- Card Footer -->
+                <div class="card-footer-row">
+                  <span class="schedule-text">
+                    <ion-icon :icon="timeOutline" style="font-size: 14px" />
+                    <span>{{
+                      job.cronString || translate("No schedule")
+                    }}</span>
+                  </span>
+                  <ion-icon class="arrow-icon" :icon="chevronForwardOutline" />
+                </div>
+              </div>
+            </transition-group>
           </template>
         </div>
 
+        <!-- Empty State -->
         <div
           class="empty-state"
           v-if="!jobStore.isLoading && !filteredJobs.length"
@@ -258,6 +322,7 @@ import {
   playCircleOutline,
   chevronDownOutline,
   chevronForwardOutline,
+  timeOutline,
 } from "ionicons/icons";
 import { emitter, translate } from "@common";
 import CreateJobModal from "@/components/CreateJobModal.vue";
@@ -320,7 +385,8 @@ const selectParentCategory = (productCategoryId: string) => {
 };
 
 const selectSubCategory = (subCategoryId: string) => {
-  selectedSubCategoryId.value = selectedSubCategoryId.value === subCategoryId ? "" : subCategoryId;
+  selectedSubCategoryId.value =
+    selectedSubCategoryId.value === subCategoryId ? "" : subCategoryId;
 };
 
 const hasSubCategories = (productCategoryId: string) => {
@@ -339,16 +405,23 @@ const filteredJobs = computed(() => {
     } else {
       // Add all subcategories of this parent
       const subCategoryIds = categoryRollups.value
-        .filter((rollup: any) => rollup.parentProductCategoryId === selectedParentCategoryId.value)
+        .filter(
+          (rollup: any) =>
+            rollup.parentProductCategoryId === selectedParentCategoryId.value,
+        )
         .map((rollup: any) => rollup.productCategoryId);
       targetCategoryIds.push(...subCategoryIds);
     }
 
     const matchingProductIds = categoryMembers.value
-      .filter((member: any) => targetCategoryIds.includes(member.productCategoryId))
+      .filter((member: any) =>
+        targetCategoryIds.includes(member.productCategoryId),
+      )
       .map((member: any) => member.productId);
 
-    filtered = filtered.filter((job: any) => matchingProductIds.includes(job.instanceOfProductId));
+    filtered = filtered.filter((job: any) =>
+      matchingProductIds.includes(job.instanceOfProductId),
+    );
   }
 
   if (selectedStatus.value !== "ALL") {
@@ -419,111 +492,271 @@ const openCreateJobModal = async () => {
 </script>
 
 <style scoped>
+.catalog-container {
+  padding: 16px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
 .header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  margin-bottom: 24px;
+  padding: 0 8px;
 }
 
-.categories,
-.status-filters {
-  padding: 0 8px 8px;
-  display: flex;
-  flex-wrap: wrap;
+.header h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--ion-color-step-900, #111);
+  margin: 0 0 4px 0;
+  letter-spacing: -0.02em;
 }
 
-.sub-categories {
-  padding: 10px 16px;
+.header p {
+  font-size: 0.95rem;
+  color: var(--ion-color-step-500, #666);
+  margin: 0;
+}
+
+.filter-panel {
+  background: var(--ion-card-background, #ffffff);
+  border-radius: 16px;
+  border: 1px solid var(--ion-color-step-100, #e0e0e0);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  margin-bottom: 24px;
+  padding: 16px;
+}
+
+.search-section {
+  margin-bottom: 16px;
+}
+
+.search-section ion-searchbar {
+  --border-radius: 12px;
+  --box-shadow: none;
+  border: 1px solid var(--ion-color-step-150, #e0e0e0);
+  border-radius: 12px;
+  padding: 0;
+}
+
+.filter-row {
+  margin-bottom: 12px;
+}
+
+.filter-row-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ion-color-step-500, #666);
+  margin-bottom: 8px;
+  padding-left: 8px;
+}
+
+.chips-container {
   display: flex;
-  align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  background-color: var(--ion-color-step-50, #f2f2f2);
-  border-radius: 12px;
-  margin: 4px 16px 16px;
-  border: 1px solid var(--ion-color-step-100, #e0e0e0);
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.03);
+  padding: 4px 8px;
 }
 
-.sub-categories-label {
+.custom-chip {
+  --background: transparent;
+  --color: var(--ion-color-step-700, #333);
+  border: 1px solid var(--ion-color-step-200, #ccc);
+  border-radius: 20px;
+  font-weight: 500;
   font-size: 0.85rem;
-  color: var(--ion-color-step-600, #666);
-  font-weight: 600;
-  margin-right: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.sub-category-chip {
-  --background: var(--ion-card-background, #fff);
   margin: 0;
-  border: 1px solid var(--ion-color-step-150, #dcdcdc);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.status-filters {
-  border-top: 1px solid var(--ion-color-light);
-  padding-top: 8px;
-}
-
-.categories ion-chip,
-.sub-categories ion-chip,
-.status-filters ion-chip {
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.categories ion-chip:hover,
-.sub-categories ion-chip:hover,
-.status-filters ion-chip:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+.custom-chip.active {
+  --background: var(--ion-color-primary, #3880ff);
+  --color: var(--ion-color-primary-contrast, #fff);
+  border-color: var(--ion-color-primary, #3880ff);
+  box-shadow: 0 4px 10px rgba(56, 128, 255, 0.15);
 }
 
-.categories ion-chip:active,
-.sub-categories ion-chip:active,
-.status-filters ion-chip:active {
-  transform: translateY(0);
+.custom-chip:hover {
+  transform: translateY(-1.5px);
+  border-color: var(--ion-color-primary, #3880ff);
 }
 
-/* Slide-fade transition */
-.slide-fade-enter-active {
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-}
-.slide-fade-leave-active {
-  transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
-}
-.slide-fade-enter-from,
-.slide-fade-leave-to {
-  transform: translateY(-8px);
-  opacity: 0;
+.sub-options-panel {
+  background: var(--ion-color-step-50, #f8f9fa);
+  border: 1px solid var(--ion-color-step-150, #e9ecef);
+  border-radius: 12px;
+  padding: 12px;
+  margin: 8px 8px 16px;
 }
 
-.jobs {
+.jobs-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 350px), 1fr));
-  align-items: start;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr));
+  gap: 20px;
+  margin-top: 16px;
 }
 
-ion-card ion-item {
-  --background: var(--ion-color-light);
+.job-card {
+  background: var(--ion-card-background, #ffffff);
+  border-radius: 14px;
+  border: 1px solid var(--ion-color-step-100, #e0e0e0);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.01);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  padding: 18px;
 }
 
-.job-card-header {
+.job-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--job-status-color, #6b7280);
+  transition: width 0.2s ease;
+}
+
+.job-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  border-color: var(--ion-color-step-300, #b0b0b0);
+}
+
+.job-card:hover::before {
+  width: 6px;
+}
+
+.job-card.status-enabled {
+  --job-status-color: var(--ion-color-success, #10b981);
+}
+.job-card.status-paused {
+  --job-status-color: var(--ion-color-warning, #f59e0b);
+}
+.job-card.status-draft {
+  --job-status-color: var(--ion-color-tertiary, #6366f1);
+}
+
+.card-header-row {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  word-break: break-all;
+  margin-bottom: 12px;
+  gap: 12px;
 }
 
-.job-card-metadata {
+.job-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ion-color-step-900, #111);
+  line-height: 1.3;
+  margin: 0;
+  flex: 1;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+}
+
+.status-badge-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: var(--status-badge-bg, #f3f4f6);
+  color: var(--status-badge-color, #374151);
+  white-space: nowrap;
+}
+
+.status-badge-container.enabled {
+  --status-badge-bg: rgba(16, 185, 129, 0.1);
+  --status-badge-color: var(--ion-color-success, #10b981);
+}
+.status-badge-container.paused {
+  --status-badge-bg: rgba(245, 158, 11, 0.1);
+  --status-badge-color: var(--ion-color-warning, #f59e0b);
+}
+.status-badge-container.draft {
+  --status-badge-bg: rgba(99, 102, 241, 0.1);
+  --status-badge-color: var(--ion-color-tertiary, #6366f1);
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.card-body {
   display: flex;
   flex-direction: column;
-  gap: var(--spacer-xs);
+  gap: 8px;
+  margin-bottom: 14px;
+  flex: 1;
 }
 
-.paused-job {
-  opacity: 0.8;
+.meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.meta-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--ion-color-step-400, #999);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.meta-value {
+  font-family: monospace;
+  font-size: 0.78rem;
+  color: var(--ion-color-step-700, #444);
+  word-break: break-all;
+  background: var(--ion-color-step-50, #f8f9fa);
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--ion-color-step-100, #eee);
+  display: inline-block;
+}
+
+.card-footer-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--ion-color-step-100, #eee);
+  padding-top: 10px;
+  margin-top: auto;
+}
+
+.schedule-text {
+  font-size: 0.78rem;
+  color: var(--ion-color-step-600, #555);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.arrow-icon {
+  font-size: 1.1rem;
+  color: var(--ion-color-step-400, #888);
+  transition: transform 0.2s ease;
+}
+
+.job-card:hover .arrow-icon {
+  transform: translateX(3px);
+  color: var(--ion-color-primary, #3880ff);
 }
 
 .empty-state {
@@ -543,5 +776,32 @@ ion-card ion-item {
   border-radius: 2px;
   padding: 0 2px;
   font-weight: bold;
+}
+
+/* Slide-fade transition */
+.slide-fade-enter-active {
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.slide-fade-leave-active {
+  transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+  transform: translateY(-8px);
+  opacity: 0;
+}
+
+/* List Transitions */
+.list-enter-active,
+.list-leave-active {
+  transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+.list-enter-from,
+.list-leave-to {
+  opacity: 0;
+  transform: translateY(20px) scale(0.95);
+}
+.list-move {
+  transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
 }
 </style>
