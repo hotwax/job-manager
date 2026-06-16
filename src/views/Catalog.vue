@@ -41,7 +41,8 @@
 
           <!-- Sub Categories (Row 2) - Visible only if children exist -->
           <div v-if="subCategories.length > 0" class="sub-categories">
-            <ion-chip v-for="sub in subCategories" :key="sub.productCategoryId" @click="selectedSubCategoryId = sub.productCategoryId" :outline="selectedSubCategoryId !== sub.productCategoryId" :color="selectedSubCategoryId === sub.productCategoryId ? 'primary' : ''">
+            <span class="sub-categories-label">{{ translate("Sub-options") }}:</span>
+            <ion-chip v-for="sub in subCategories" :key="sub.productCategoryId" @click="selectSubCategory(sub.productCategoryId)" :outline="selectedSubCategoryId !== sub.productCategoryId" :color="selectedSubCategoryId === sub.productCategoryId ? 'primary' : ''" class="sub-category-chip">
               <ion-label>{{ sub.categoryName }}</ion-label>
             </ion-chip>
           </div>
@@ -201,6 +202,10 @@ const selectParentCategory = (productCategoryId: string) => {
   selectedSubCategoryId.value = ""; // Reset sub-category on parent change
 };
 
+const selectSubCategory = (subCategoryId: string) => {
+  selectedSubCategoryId.value = selectedSubCategoryId.value === subCategoryId ? "" : subCategoryId;
+};
+
 const filteredJobs = computed(() => {
   let filtered = jobs.value;
   if (selectedParentCategoryId.value !== "ALL") {
@@ -291,10 +296,33 @@ const openCreateJobModal = async () => {
   justify-content: space-between;
 }
 
-.categories, .sub-categories, .status-filters {
+.categories, .status-filters {
   padding: 0 8px 8px;
   display: flex;
   flex-wrap: wrap;
+}
+
+.sub-categories {
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  background-color: var(--ion-color-light);
+  border-radius: 8px;
+  margin: 0 16px 16px;
+}
+
+.sub-categories-label {
+  font-size: 0.85em;
+  color: var(--ion-color-medium);
+  font-weight: 500;
+  margin-right: 4px;
+}
+
+.sub-category-chip {
+  --background: var(--ion-card-background);
+  margin: 0;
 }
 
 .status-filters {
