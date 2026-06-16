@@ -51,25 +51,32 @@
               "
             >
               <ion-label>{{ category.categoryName }}</ion-label>
+              <ion-icon
+                v-if="hasSubCategories(category.productCategoryId)"
+                :icon="selectedParentCategoryId === category.productCategoryId ? chevronDownOutline : chevronForwardOutline"
+                style="font-size: 14px; margin-left: 4px;"
+              />
             </ion-chip>
           </div>
 
           <!-- Sub Categories (Row 2) - Visible only if children exist -->
-          <div v-if="subCategories.length > 0" class="sub-categories">
-            <span class="sub-categories-label">{{ translate("Sub-options") }}:</span>
-            <ion-chip
-              v-for="sub in subCategories"
-              :key="sub.productCategoryId"
-              @click="selectSubCategory(sub.productCategoryId)"
-              :outline="selectedSubCategoryId !== sub.productCategoryId"
-              :color="
-                selectedSubCategoryId === sub.productCategoryId ? 'primary' : ''
-              "
-              class="sub-category-chip"
-            >
-              <ion-label>{{ sub.categoryName }}</ion-label>
-            </ion-chip>
-          </div>
+          <transition name="slide-fade">
+            <div v-if="subCategories.length > 0" class="sub-categories">
+              <span class="sub-categories-label">{{ translate("Sub-options") }}:</span>
+              <ion-chip
+                v-for="sub in subCategories"
+                :key="sub.productCategoryId"
+                @click="selectSubCategory(sub.productCategoryId)"
+                :outline="selectedSubCategoryId !== sub.productCategoryId"
+                :color="
+                  selectedSubCategoryId === sub.productCategoryId ? 'primary' : ''
+                "
+                class="sub-category-chip"
+              >
+                <ion-label>{{ sub.categoryName }}</ion-label>
+              </ion-chip>
+            </div>
+          </transition>
 
           <!-- Status Filters (Row 3) -->
           <div class="status-filters">
@@ -250,6 +257,8 @@ import {
   lockClosedOutline,
   pauseCircleOutline,
   playCircleOutline,
+  chevronDownOutline,
+  chevronForwardOutline,
 } from "ionicons/icons";
 import { emitter, translate } from "@common";
 import CreateJobModal from "@/components/CreateJobModal.vue";
@@ -313,6 +322,12 @@ const selectParentCategory = (productCategoryId: string) => {
 
 const selectSubCategory = (subCategoryId: string) => {
   selectedSubCategoryId.value = selectedSubCategoryId.value === subCategoryId ? "" : subCategoryId;
+};
+
+const hasSubCategories = (productCategoryId: string) => {
+  return categoryRollups.value.some(
+    (rollup: any) => rollup.parentProductCategoryId === productCategoryId,
+  );
 };
 
 const filteredJobs = computed(() => {
@@ -419,26 +434,32 @@ const openCreateJobModal = async () => {
 }
 
 .sub-categories {
-  padding: 8px 12px;
+  padding: 10px 16px;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  background-color: var(--ion-color-light);
-  border-radius: 8px;
-  margin: 0 16px 16px;
+  background-color: var(--ion-color-step-50, #f2f2f2);
+  border-radius: 12px;
+  margin: 4px 16px 16px;
+  border: 1px solid var(--ion-color-step-100, #e0e0e0);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
 .sub-categories-label {
-  font-size: 0.85em;
-  color: var(--ion-color-medium);
-  font-weight: 500;
-  margin-right: 4px;
+  font-size: 0.85rem;
+  color: var(--ion-color-step-600, #666);
+  font-weight: 600;
+  margin-right: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .sub-category-chip {
-  --background: var(--ion-card-background);
+  --background: var(--ion-card-background, #fff);
   margin: 0;
+  border: 1px solid var(--ion-color-step-150, #dcdcdc);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .status-filters {
@@ -450,6 +471,33 @@ const openCreateJobModal = async () => {
 .sub-categories ion-chip,
 .status-filters ion-chip {
   cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.categories ion-chip:hover,
+.sub-categories ion-chip:hover,
+.status-filters ion-chip:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.categories ion-chip:active,
+.sub-categories ion-chip:active,
+.status-filters ion-chip:active {
+  transform: translateY(0);
+}
+
+/* Slide-fade transition */
+.slide-fade-enter-active {
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.slide-fade-leave-active {
+  transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+  transform: translateY(-8px);
+  opacity: 0;
 }
 
 .jobs {
