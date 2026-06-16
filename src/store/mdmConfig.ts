@@ -28,14 +28,14 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
           }
         })
 
-        if (resp.data?.length) {
+        if (Array.isArray(resp.data)) {
           // Filter out legacy OFBiz-migrated DataManagerConfig records.
           // Only Moqui-native configs are valid for the Manual Uploads screen.
           // Moqui services follow the verb#Noun convention (e.g. update#ProductFacility),
           // so we check for the presence of '#' in importServiceName.
           // Configs with plain camelCase OFBiz service names or no importServiceName are excluded.
           this.configs = resp.data.filter((config: any) =>
-            config.importServiceName?.includes("#")
+            config?.importServiceName?.includes("#")
           )
         }
       } catch(err) {
