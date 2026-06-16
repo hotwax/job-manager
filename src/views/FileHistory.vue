@@ -262,7 +262,6 @@ import {
 import { translate, commonUtil } from '@common';
 import { closeOutline, closeCircleOutline, warningOutline, alertCircleOutline } from 'ionicons/icons';
 import { computed, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
 import { useMdmConfigStore } from '@/store/mdmConfig';
 import { getFileSize, getDuration } from '@/utils';
 import { getStatusDesc } from '@/utils/config';
@@ -271,7 +270,6 @@ import router from '@/router';
 
 const PAGE_SIZE = 10;
 
-const route = useRoute();
 const mdmStore = useMdmConfigStore();
 const utilStore = useUtilStore();
 
@@ -498,8 +496,8 @@ watch(pageIndex, () => {
 });
 
 onIonViewWillEnter(async () => {
-  if (route.query.statusId) {
-    await mdmStore.updateAppliedFilters("statusId", (route.query.statusId as string).split(","));
+  if (router.currentRoute.value.query?.statusId) {
+    await mdmStore.updateAppliedFilters("statusId", (router.currentRoute.value.query.statusId as string).split(","));
   } else {
     await mdmStore.updateAppliedFilters("statusId", []);
   }

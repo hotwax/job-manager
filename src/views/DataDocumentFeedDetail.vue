@@ -150,12 +150,11 @@ import {
 } from "@ionic/vue";
 import { documentTextOutline, gitNetworkOutline, optionsOutline } from "ionicons/icons";
 import { computed, ref } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { useRouter } from "vue-router";
 
 import { translate } from "@common";
 import { useDataDocumentStore } from "@/store/dataDocuments";
 
-const route = useRoute();
 const router = useRouter();
 const store = useDataDocumentStore();
 const activeSection = ref("documents");
@@ -171,6 +170,6 @@ const openDocument = (document: any) => {
 };
 
 onIonViewWillEnter(async () => {
-  await store.fetchDataFeed(route.params.id as string);
+  await store.fetchDataFeed(router.currentRoute.value.params.id as string);
 });
 </script>
