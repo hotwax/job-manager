@@ -8,7 +8,7 @@ The primary goal of code review for the Job Manager Application is to ensure the
 
 ### General Standards
 *   **Variable Declarations:** Ensure `const` is used for all variables that are not reassigned. `var` must never be used.
-*   **String Formatting:** Verify that **double quotes** (`"`) are used for strings. Check that template literals are used only when string interpolation is required.
+*   **String Formatting:** Verify that **double quotes** (`"`) are used for JavaScript string literals, except within Vue HTML template double-quoted attributes where single quotes (`'`) must be used for nested strings. Check that template literals are used only when string interpolation is required.
 *   **Reactivity:** Ensure primitive values use `ref()` and objects/arrays use `reactive()`. Verify that all variables driving UI updates are properly reactive.
 *   **Modern JavaScript:** Look for modern methods like `.includes()`, `.find()`, and `.some()` instead of older alternatives like `.indexOf()`.
 *   **Common Utilities:** Always prioritize using utilities from the top-level `common/utils/commonUtil.ts` (imported via `@common`). Avoid implementing logic locally if a standardized version exists in the common library (e.g., `showToast`, `getDateAndTime`, `copyToClipboard`).

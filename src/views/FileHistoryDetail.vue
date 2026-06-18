@@ -41,10 +41,11 @@
                   </ion-badge>
                 </ion-label>
               </ion-item>
-              <ion-item>
+              <ion-item button detail="true" @click="goToConfigDetail(log.configId)">
                 <ion-label class="ion-text-wrap">
-                  <p>{{ translate("Config ID") }}</p>
-                  {{ log.configId || "-" }}
+                  <p>{{ translate("Config") }}</p>
+                  {{ getConfigName(log.configId) }}
+                  <p>{{ log.configId }}</p>
                 </ion-label>
               </ion-item>
               <ion-item>
@@ -207,6 +208,7 @@ import {
   onIonViewWillEnter
 } from '@ionic/vue';
 import { computed, ref } from 'vue';
+import { useRouter } from "vue-router";
 import { translate, commonUtil } from '@common';
 import { useMdmConfigStore } from '@/store/mdmConfig';
 import { getFileSize, showToast, getDuration } from '@/utils';
@@ -222,8 +224,23 @@ const props = defineProps({
   }
 });
 
+const router = useRouter();
 const mdmStore = useMdmConfigStore();
 const logId = props.id;
+
+const getConfigName = (configId: string) => {
+  if (!configId) return "";
+  const config = mdmStore.getConfigById(configId);
+  if (config && Object.keys(config).length > 0) {
+    return config.scriptTitle || config.description || configId;
+  }
+  return configId;
+};
+
+const goToConfigDetail = (configId: string) => {
+  if (!configId) return;
+  router.push({ name: "ImportDetail", params: { type: configId } });
+};
 
 type PayloadKey = "original" | "errors";
 type ContentType = "" | "json" | "csv" | "text";
@@ -294,6 +311,9 @@ onIonViewWillEnter(async () => {
   }
   log.value = fetchedLog;
   await loadPayloads(fetchedLog);
+  if (!mdmStore.getConfigs.length) {
+    await mdmStore.fetchConfigs();
+  }
 });
 
 function createPayload(fileName?: string): ParsedPayload {
