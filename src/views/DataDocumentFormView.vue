@@ -318,6 +318,7 @@
               v-bind="fieldPickerNavigation.getItemAttributes(getFieldPickerOption('field', field.fieldName), getFieldPickerIndex('field', field.fieldName))"
               :ref="(element) => fieldPickerNavigation.setItemRef(getFieldPickerIndex('field', field.fieldName), element)"
               button
+              :disabled="isFieldSelected(field.fieldName)"
               @click="selectField(field)"
               @keydown="fieldPickerNavigation.handleItemKeydown($event, getFieldPickerIndex('field', field.fieldName))"
             >
@@ -512,6 +513,20 @@ const filteredEntityFields = computed(() => {
     field.description?.toLowerCase().includes(query)
   );
 });
+
+const existingFieldPaths = computed(() => new Set(graph.value?.fields.map((f: any) => f.fieldPath) || []));
+
+const isFieldSelected = (fieldName: string) => {
+  const pathSegments = modalEntityPath.value.map(r => r.relationshipName);
+  const fullPath = pathSegments.length ? `${pathSegments.join(":")}:${fieldName}` : fieldName;
+  
+  if (activeFieldIndex.value !== -1 && graph.value) {
+    const currentFieldPath = graph.value.fields[activeFieldIndex.value]?.fieldPath;
+    if (currentFieldPath === fullPath) return false;
+  }
+  
+  return existingFieldPaths.value.has(fullPath);
+};
 
 const filteredEntityRelations = computed(() => {
   const query = fieldQueryString.value.trim().toLowerCase();

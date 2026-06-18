@@ -515,6 +515,7 @@
             <ion-item
               v-for="field in filteredEntityFields"
               :key="field.name"
+              :disabled="isGraphFieldSelected(field.name)"
               v-bind="fieldPickerNavigation.getItemAttributes(field, getGraphFieldPickerIndex(field))"
               :ref="(element) => fieldPickerNavigation.setItemRef(getGraphFieldPickerIndex(field), element)"
               @keydown="fieldPickerNavigation.handleItemKeydown($event, getGraphFieldPickerIndex(field))"
@@ -672,6 +673,7 @@
             <ion-item
               v-for="field in filteredRelatedEntityFields"
               :key="field.fieldName"
+              :disabled="isRelatedFieldSelected(field.fieldName)"
               v-bind="relatedFieldPickerNavigation.getItemAttributes(getRelatedFieldPickerOption('field', field.fieldName), getRelatedFieldPickerIndex('field', field.fieldName))"
               :ref="(element) => relatedFieldPickerNavigation.setItemRef(getRelatedFieldPickerIndex('field', field.fieldName), element)"
               @keydown="relatedFieldPickerNavigation.handleItemKeydown($event, getRelatedFieldPickerIndex('field', field.fieldName))"
@@ -1062,17 +1064,35 @@ const activeFieldEntityName = computed(() => selectedNode.value?.entityName || g
 const entityFields = computed(() => activeFieldEntityName.value ? utilStore.getEntityFields(activeFieldEntityName.value) : []);
 const filteredEntityFields = computed(() => {
   const query = fieldQueryString.value.trim().toLowerCase();
-  console.log('entityFields', entityFields.value)
   if (!query) return entityFields.value;
   return entityFields.value.filter((field: any) => field.name.toLowerCase().includes(query));
 });
+
+const existingFieldPaths = computed(() => new Set(graph.value?.fields.map((f: any) => f.fieldPath) || []));
+
+const isGraphFieldSelected = (fieldName: string) => {
+  const pathSegments = selectedNode.value?.relationshipPath || [];
+  const fullPath = pathSegments.length ? `${pathSegments.join(":")}:${fieldName}` : fieldName;
+  return existingFieldPaths.value.has(fullPath);
+};
+
+const isRelatedFieldSelected = (fieldName: string) => {
+  const relationshipPath = relatedRelationshipPath.value.trim().replace(/^:+|:+$/g, "");
+  const fullPath = relationshipPath ? `${relationshipPath}:${fieldName}` : fieldName;
+  return existingFieldPaths.value.has(fullPath);
+};
+
 const getGraphFieldPickerIndex = (field: any) => filteredEntityFields.value.findIndex((item: any) => item.name === field.name);
 const fieldPickerNavigation = useKeyboardListNavigation<any>({
   items: filteredEntityFields,
   inputRef: fieldSearchbar,
   listId: "data-document-graph-field-picker",
   getItemId: (field) => `data-document-graph-field-option-${getSafeDomId(field.name)}`,
-  onSelect: (field) => toggleGraphField(field.name, !selectedGraphFieldNames.value.includes(field.name))
+  onSelect: (field) => {
+    if (!isGraphFieldSelected(field.name)) {
+      toggleGraphField(field.name, !selectedGraphFieldNames.value.includes(field.name));
+    }
+  }
 });
 const relatedEntityFields = computed(() => relatedEntityName.value ? utilStore.getEntityFields(relatedEntityName.value) : []);
 const activeRelationshipEntityName = computed(() => selectedNode.value?.entityName || graph.value?.metadata.primaryEntityName || "");
@@ -1138,7 +1158,9 @@ const relatedFieldPickerNavigation = useKeyboardListNavigation<RelatedFieldPicke
     if (option.kind === "relationship") {
       selectRelationship(option.item);
     } else {
-      toggleRelatedField(option.item.fieldName, !selectedRelatedFieldNames.value.includes(option.item.fieldName));
+      if (!isRelatedFieldSelected(option.item.fieldName)) {
+        toggleRelatedField(option.item.fieldName, !selectedRelatedFieldNames.value.includes(option.item.fieldName));
+      }
     }
   }
 });
@@ -1218,13 +1240,30 @@ const getRelationshipSegments = (fieldPath: string) => {
   return segments.filter(Boolean);
 };
 
-const getRelationship = (entityName: string, relationshipName: string) => (
-  utilStore.getEntityRelationships(entityName).find((relationship: any) => (
-    relationship.relationshipName === relationshipName ||
-    relationship.shortAlias === relationshipName ||
-    relationship.title === relationshipName
-  ))
-);
+const getRelationship = (entityName: string, relationshipName: string) => {
+  const relations = utilStore.getEntityRelationships(entityName);
+  const lowerName = relationshipName.toLowerCase();
+  
+  const hashIndex = relationshipName.indexOf("#");
+  if (hashIndex > -1) {
+    const title = relationshipName.slice(0, hashIndex).toLowerCase();
+    const nameOrEntity = relationshipName.slice(hashIndex + 1).toLowerCase();
+    return relations.find((r: any) => 
+      (r.title || "").toLowerCase() === title && (
+        (r.relationshipName || "").toLowerCase() === nameOrEntity ||
+        (r.relatedEntityName || "").toLowerCase() === nameOrEntity ||
+        (r.shortAlias || "").toLowerCase() === nameOrEntity
+      )
+    );
+  }
+
+  return relations.find((relationship: any) => (
+    (relationship.relationshipName || "").toLowerCase() === lowerName ||
+    (relationship.shortAlias || "").toLowerCase() === lowerName ||
+    (relationship.title || "").toLowerCase() === lowerName ||
+    (relationship.relatedEntityName || "").toLowerCase() === lowerName
+  ));
+};
 
 const getFieldEntityName = (field: any) => {
   let entityName = graph.value?.metadata.primaryEntityName || "";
@@ -1232,8 +1271,13 @@ const getFieldEntityName = (field: any) => {
 
   for (const segment of getRelationshipSegments(field.fieldPath)) {
     const relationship = getRelationship(entityName, segment);
-    if (!relationship?.relatedEntityName) return entityName;
-    entityName = relationship.relatedEntityName;
+    if (relationship?.relatedEntityName) {
+      entityName = relationship.relatedEntityName;
+    } else if (segment.includes('#')) {
+      entityName = segment.split('#')[1];
+    } else {
+      return entityName;
+    }
   }
 
   return entityName;
