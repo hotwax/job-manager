@@ -212,9 +212,16 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
       const removed = this.graph.fields.find((f) => f.fieldSeqId === fieldSeqIdOrPath || f.fieldPath === fieldSeqIdOrPath);
       const persistedSeqId = removed?.sourceRecord?.fieldSeqId;
       if (persistedSeqId) this.removedFieldSeqIds.push(persistedSeqId);
+
+      const sortedSurvivors = [...survivors].sort((a, b) => Number(a.sequenceNum || 0) - Number(b.sequenceNum || 0));
+      const resequencedSurvivors = sortedSurvivors.map((f, index) => ({
+        ...f,
+        sequenceNum: (index + 1) * 10
+      }));
+
       this.graph = projectDataDocumentGraph({
         document: this.graph.metadata,
-        fields: serializeGraphFields({ dataDocumentId: this.graph.dataDocumentId, fields: survivors }),
+        fields: serializeGraphFields({ dataDocumentId: this.graph.dataDocumentId, fields: resequencedSurvivors }),
         conditions: serializeGraphConditions(this.graph),
         relAliases: this.relAliases,
         links: this.links
