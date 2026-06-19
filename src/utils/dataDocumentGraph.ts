@@ -6,6 +6,7 @@ export type DataDocumentRecord = Record<string, any> & {
 export type DataDocumentFieldRecord = Record<string, any> & {
   dataDocumentId?: string;
   fieldSeqId?: string;
+  localId?: string;
   fieldPath?: string;
   fieldNameAlias?: string;
   sequenceNum?: number | string;
@@ -78,6 +79,7 @@ export type GraphEdge = {
 export type GraphField = {
   dataDocumentId: string;
   fieldSeqId?: string;
+  localId?: string;
   nodeId: string;
   fieldPath: string;
   fieldName: string;
@@ -479,6 +481,7 @@ export const projectDataDocumentGraph = ({
     const graphField: GraphField = {
       dataDocumentId,
       fieldSeqId: field.fieldSeqId,
+      localId: field.localId || field.sourceRecord?.localId,
       nodeId,
       fieldPath,
       fieldName,
@@ -593,7 +596,8 @@ export const serializeGraphFields = (graph: Pick<DataDocumentGraph, "dataDocumen
     sequenceNum: field.sequenceNum,
     defaultDisplay: field.defaultDisplay,
     sortable: field.sortable,
-    functionName: field.functionName
+    functionName: field.functionName,
+    localId: field.localId || field.sourceRecord?.localId
   }));
 };
 

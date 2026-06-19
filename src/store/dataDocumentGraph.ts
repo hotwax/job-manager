@@ -173,6 +173,22 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
         links: this.links
       });
     },
+    reorderFields(oldIndex: number, newIndex: number) {
+      if (!this.graph || oldIndex < 0 || newIndex < 0) return;
+      const fields = serializeGraphFields(this.graph);
+      const movedField = fields.splice(oldIndex, 1)[0];
+      fields.splice(newIndex, 0, movedField);
+      fields.forEach((field, index) => {
+        field.sequenceNum = (index + 1) * 10;
+      });
+      this.graph = projectDataDocumentGraph({
+        document: this.graph.metadata,
+        fields,
+        conditions: serializeGraphConditions(this.graph),
+        relAliases: this.relAliases,
+        links: this.links
+      });
+    },
     addField(nodeId: string, fieldName = "newField") {
       if (!this.graph) return;
       const node = this.graph.nodes.find((item) => item.nodeId === nodeId);
@@ -187,6 +203,7 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
         dataDocumentId: this.graph.dataDocumentId,
         // Empty until the server assigns one on save; mirrors how new conditions work.
         fieldSeqId: "",
+        localId: `field-${Date.now()}-${this.graph.fields.length}`,
         fieldPath,
         fieldNameAlias: alias || (fieldPath ? fieldName : ""),
         defaultDisplay: "Y",

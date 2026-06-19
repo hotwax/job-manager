@@ -49,59 +49,62 @@
           </ion-buttons>
         </ion-card-header>
         <ion-list>
-          <ion-item
-            v-for="field in group.fields"
-            :key="field.fieldSeqId || field.fieldPath"
-            lines="none"
-            class="field-row"
-          >
-            <div class="field-controls">
-              <ion-chip
-                outline
-                color="primary"
-                class="field-selector"
-                @click="openFieldModal(getFieldIndex(field))"
-              >
-                <ion-label>
-                  {{ field.fieldPath || translate("Select Field") }}
-                </ion-label>
-              </ion-chip>
-              <ion-input
-                class="field-alias"
-                :value="field.fieldNameAlias"
-                :label="translate('Alias')"
-                label-placement="floating"
-                fill="outline"
-                @ionInput="updateField(field, { fieldNameAlias: $event.detail.value || '' })"
-              />
-              <ion-input
-                class="field-sequence"
-                :value="field.sequenceNum"
-                type="number"
-                :label="translate('Sequence')"
-                label-placement="floating"
-                fill="outline"
-                @ionInput="updateField(field, { sequenceNum: Number($event.detail.value || 0) })"
-              />
-              <ion-toggle
-                class="field-display"
-                :checked="field.defaultDisplay === 'Y'"
-                label-placement="stacked"
-                @ionChange="updateField(field, { defaultDisplay: $event.detail.checked ? 'Y' : 'N' })"
-              >
-                {{ translate("Display") }}
-              </ion-toggle>
-              <ion-button
-                class="field-remove-button"
-                fill="clear"
-                color="danger"
-                :aria-label="translate('Remove field')"
-                @click="graphStore.removeField(field.fieldSeqId || field.fieldPath)"
-              >
-                <ion-icon slot="icon-only" :icon="trashOutline" />
-              </ion-button>
-            </div>
-          </ion-item>
+          <ion-reorder-group :disabled="false" @ionItemReorder="handleReorder(group, $event)">
+            <ion-item
+              v-for="field in group.fields"
+              :key="field.localId || field.fieldSeqId || field.fieldPath"
+              lines="none"
+              class="field-row"
+            >
+              <ion-reorder slot="start" />
+              <div class="field-controls">
+                <ion-chip
+                  outline
+                  color="primary"
+                  class="field-selector"
+                  @click="openFieldModal(getFieldIndex(field))"
+                >
+                  <ion-label>
+                    {{ field.fieldPath || translate("Select Field") }}
+                  </ion-label>
+                </ion-chip>
+                <ion-input
+                  class="field-alias"
+                  :value="field.fieldNameAlias"
+                  :label="translate('Alias')"
+                  label-placement="floating"
+                  fill="outline"
+                  @ionInput="updateField(field, { fieldNameAlias: $event.detail.value || '' })"
+                />
+                <ion-input
+                  class="field-sequence"
+                  :value="field.sequenceNum"
+                  type="number"
+                  :label="translate('Sequence')"
+                  label-placement="floating"
+                  fill="outline"
+                  readonly
+                />
+                <ion-toggle
+                  class="field-display"
+                  :checked="field.defaultDisplay === 'Y'"
+                  label-placement="stacked"
+                  @ionChange="updateField(field, { defaultDisplay: $event.detail.checked ? 'Y' : 'N' })"
+                >
+                  {{ translate("Display") }}
+                </ion-toggle>
+                <ion-button
+                  class="field-remove-button"
+                  fill="clear"
+                  color="danger"
+                  :aria-label="translate('Remove field')"
+                  @click="graphStore.removeField(field.fieldSeqId || field.fieldPath)"
+                >
+                  <ion-icon slot="icon-only" :icon="trashOutline" />
+                </ion-button>
+              </div>
+            </ion-item>
+          </ion-reorder-group>
         </ion-list>
       </ion-card>
 
@@ -387,6 +390,8 @@ import {
   IonModal,
   IonRadio,
   IonRadioGroup,
+  IonReorder,
+  IonReorderGroup,
   IonSearchbar,
   IonSelect,
   IonSelectOption,
@@ -693,6 +698,35 @@ const updateMetadata = (key: string, value: string) => {
 
 const updateField = (field: any, patch: any) => {
   graphStore.updateField(field.fieldSeqId, field.fieldPath, patch);
+};
+
+const handleReorder = (group: any, event: any) => {
+  const { from, to } = event.detail;
+  if (from === to) {
+    event.detail.complete();
+    return;
+  }
+
+  const sourceField = group.fields[from];
+  const targetField = group.fields[to];
+
+  const globalFields = graph.value?.fields || [];
+  const oldIndex = globalFields.findIndex((f: any) => 
+    (f.localId && f.localId === sourceField.localId) || 
+    (f.fieldSeqId && f.fieldSeqId === sourceField.fieldSeqId) || 
+    (f.fieldPath === sourceField.fieldPath)
+  );
+  const newIndex = globalFields.findIndex((f: any) => 
+    (f.localId && f.localId === targetField.localId) || 
+    (f.fieldSeqId && f.fieldSeqId === targetField.fieldSeqId) || 
+    (f.fieldPath === targetField.fieldPath)
+  );
+
+  event.detail.complete();
+
+  if (oldIndex !== -1 && newIndex !== -1) {
+    graphStore.reorderFields(oldIndex, newIndex);
+  }
 };
 
 const updateCondition = (condition: any, patch: any) => {

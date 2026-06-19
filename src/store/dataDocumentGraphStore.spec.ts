@@ -83,4 +83,26 @@ describe("data document graph store", () => {
     store.updateMetadata({ documentName: "Renamed Again" });
     expect(store.getGraph?.metadata.dataDocumentId).toBe("MyCustomId");
   });
+
+  it("physically reorders fields and recalculates their sequence numbers correctly", () => {
+    const store = useDataDocumentGraphStore();
+    store.startNewGraph();
+
+    const f1 = store.addFieldPath("field1");
+    const f2 = store.addFieldPath("field2");
+
+    expect(store.getGraph?.fields).toHaveLength(2);
+    expect(store.getGraph?.fields[0].fieldPath).toBe("field1");
+    expect(store.getGraph?.fields[0].sequenceNum).toBe(10);
+    expect(store.getGraph?.fields[1].fieldPath).toBe("field2");
+    expect(store.getGraph?.fields[1].sequenceNum).toBe(20);
+
+    // Drag field2 (index 1) to the first position (index 0)
+    store.reorderFields(1, 0);
+
+    expect(store.getGraph?.fields[0].fieldPath).toBe("field2");
+    expect(store.getGraph?.fields[0].sequenceNum).toBe(10);
+    expect(store.getGraph?.fields[1].fieldPath).toBe("field1");
+    expect(store.getGraph?.fields[1].sequenceNum).toBe(20);
+  });
 });
