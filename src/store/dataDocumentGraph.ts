@@ -213,11 +213,15 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
       const persistedSeqId = removed?.sourceRecord?.fieldSeqId;
       if (persistedSeqId) this.removedFieldSeqIds.push(persistedSeqId);
 
-      const sortedSurvivors = [...survivors].sort((a, b) => Number(a.sequenceNum || 0) - Number(b.sequenceNum || 0));
-      const resequencedSurvivors = sortedSurvivors.map((f, index) => ({
-        ...f,
-        sequenceNum: (index + 1) * 10
-      }));
+      const sortedSurvivors = [...survivors].sort((a, b) => (Number(a.sequenceNum) || 0) - (Number(b.sequenceNum) || 0));
+      const resequencedSurvivors = sortedSurvivors.map((field, index) => {
+        const sequenceNum = (index + 1) * 10;
+        return {
+          ...field,
+          sequenceNum,
+          sourceRecord: field.sourceRecord ? { ...field.sourceRecord, sequenceNum } : undefined
+        };
+      });
 
       this.graph = projectDataDocumentGraph({
         document: this.graph.metadata,
