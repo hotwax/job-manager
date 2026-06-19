@@ -522,7 +522,7 @@
             >
               <ion-checkbox
                 :checked="selectedGraphFieldNames.includes(field.name)"
-                @ionChange="toggleGraphField(field.name, $event.detail.checked)"
+                @ionChange="!isGraphFieldSelected(field.name) && toggleGraphField(field.name, $event.detail.checked)"
               >
                 {{ field.name }}
               </ion-checkbox>
@@ -680,7 +680,7 @@
             >
               <ion-checkbox
                 :checked="selectedRelatedFieldNames.includes(field.fieldName)"
-                @ionChange="toggleRelatedField(field.fieldName, $event.detail.checked)"
+                @ionChange="!isRelatedFieldSelected(field.fieldName) && toggleRelatedField(field.fieldName, $event.detail.checked)"
               >
                 <ion-label>
                   <h2>{{ field.fieldName }}</h2>
@@ -1244,10 +1244,8 @@ const getRelationship = (entityName: string, relationshipName: string) => {
   const relations = utilStore.getEntityRelationships(entityName);
   const lowerName = relationshipName.toLowerCase();
   
-  const hashIndex = relationshipName.indexOf("#");
-  if (hashIndex > -1) {
-    const title = relationshipName.slice(0, hashIndex).toLowerCase();
-    const nameOrEntity = relationshipName.slice(hashIndex + 1).toLowerCase();
+  if (relationshipName.includes("#")) {
+    const [title = "", nameOrEntity = ""] = relationshipName.split("#").map((part) => part.toLowerCase());
     return relations.find((r: any) => 
       (r.title || "").toLowerCase() === title && (
         (r.relationshipName || "").toLowerCase() === nameOrEntity ||
@@ -1273,8 +1271,8 @@ const getFieldEntityName = (field: any) => {
     const relationship = getRelationship(entityName, segment);
     if (relationship?.relatedEntityName) {
       entityName = relationship.relatedEntityName;
-    } else if (segment.includes('#')) {
-      entityName = segment.split('#')[1];
+    } else if (segment.includes("#")) {
+      entityName = segment.split("#")[1];
     } else {
       return entityName;
     }
