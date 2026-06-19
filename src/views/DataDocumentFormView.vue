@@ -687,7 +687,7 @@ watch(entityQueryString, () => {
 });
 
 watch([fieldQueryString, modalCurrentEntity], () => {
-  entityPickerNavigation.resetNavigation();
+  fieldPickerNavigation.resetNavigation();
 });
 
 const updateMetadata = (key: string, value: string) => {
