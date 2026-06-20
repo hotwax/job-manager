@@ -407,7 +407,21 @@ export const projectDataDocumentGraph = ({
     });
   }
 
-  const graphFields = fields.map((field, index) => {
+  const sortedFields = fields
+    .map((field, index) => ({ field, index }))
+    .sort((a, b) => {
+      const seqA = Number(a.field.sequenceNum);
+      const seqB = Number(b.field.sequenceNum);
+      const valA = isNaN(seqA) ? 0 : seqA;
+      const valB = isNaN(seqB) ? 0 : seqB;
+      if (valA !== valB) {
+        return valA - valB;
+      }
+      return a.index - b.index;
+    })
+    .map((item) => item.field);
+
+  const graphFields = sortedFields.map((field, index) => {
     const fieldPath = String(field.fieldPath || "");
     const { relationshipSegments, fieldName } = splitFieldPath(fieldPath);
 
@@ -478,6 +492,7 @@ export const projectDataDocumentGraph = ({
 
     const nodeId = toNodeId(relationshipSegments);
     const outputName = getOutputName(field, fieldName);
+    const sequenceNum = (index + 1) * 10;
     const graphField: GraphField = {
       dataDocumentId,
       fieldSeqId: field.fieldSeqId,
@@ -487,7 +502,7 @@ export const projectDataDocumentGraph = ({
       fieldName,
       outputName,
       fieldNameAlias: field.fieldNameAlias,
-      sequenceNum: field.sequenceNum,
+      sequenceNum,
       defaultDisplay: field.defaultDisplay,
       sortable: field.sortable,
       functionName: field.functionName,
@@ -495,13 +510,16 @@ export const projectDataDocumentGraph = ({
         const pathText = relationshipSegments.slice(0, segmentIndex + 1).join(":");
         return !resolveRelationshipMetadata(relationshipMetadata, pathText, segment);
       }),
-      sourceRecord: field
+      sourceRecord: {
+        ...(field.sourceRecord || field),
+        sequenceNum
+      }
     };
 
     const targetNode = nodesById.get(nodeId);
     if (targetNode) targetNode.fieldCount += 1;
 
-    if (!field.fieldSeqId) graphField.fieldSeqId = String((index + 1) * 10);
+    if (!field.fieldSeqId) graphField.fieldSeqId = String(sequenceNum);
 
     return graphField;
   });

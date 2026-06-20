@@ -175,15 +175,20 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
     },
     reorderFields(oldIndex: number, newIndex: number) {
       if (!this.graph || oldIndex < 0 || newIndex < 0) return;
-      const fields = serializeGraphFields(this.graph);
+      const fields = [...this.graph.fields];
       const movedField = fields.splice(oldIndex, 1)[0];
       fields.splice(newIndex, 0, movedField);
-      fields.forEach((field, index) => {
-        field.sequenceNum = (index + 1) * 10;
+      const resequencedFields = fields.map((field, index) => {
+        const sequenceNum = (index + 1) * 10;
+        return {
+          ...field,
+          sequenceNum,
+          sourceRecord: field.sourceRecord ? { ...field.sourceRecord, sequenceNum } : undefined
+        };
       });
       this.graph = projectDataDocumentGraph({
         document: this.graph.metadata,
-        fields,
+        fields: serializeGraphFields({ dataDocumentId: this.graph.dataDocumentId, fields: resequencedFields }),
         conditions: serializeGraphConditions(this.graph),
         relAliases: this.relAliases,
         links: this.links
@@ -229,9 +234,20 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
       const removed = this.graph.fields.find((f) => f.fieldSeqId === fieldSeqIdOrPath || f.fieldPath === fieldSeqIdOrPath);
       const persistedSeqId = removed?.sourceRecord?.fieldSeqId;
       if (persistedSeqId) this.removedFieldSeqIds.push(persistedSeqId);
+
+      const sortedSurvivors = [...survivors].sort((a, b) => (Number(a.sequenceNum) || 0) - (Number(b.sequenceNum) || 0));
+      const resequencedSurvivors = sortedSurvivors.map((field, index) => {
+        const sequenceNum = (index + 1) * 10;
+        return {
+          ...field,
+          sequenceNum,
+          sourceRecord: field.sourceRecord ? { ...field.sourceRecord, sequenceNum } : undefined
+        };
+      });
+
       this.graph = projectDataDocumentGraph({
         document: this.graph.metadata,
-        fields: serializeGraphFields({ dataDocumentId: this.graph.dataDocumentId, fields: survivors }),
+        fields: serializeGraphFields({ dataDocumentId: this.graph.dataDocumentId, fields: resequencedSurvivors }),
         conditions: serializeGraphConditions(this.graph),
         relAliases: this.relAliases,
         links: this.links

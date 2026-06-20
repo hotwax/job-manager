@@ -102,7 +102,9 @@ describe("data document graph store", () => {
 
     expect(store.getGraph?.fields[0].fieldPath).toBe("field2");
     expect(store.getGraph?.fields[0].sequenceNum).toBe(10);
+    expect(store.getGraph?.fields[0].sourceRecord?.sequenceNum).toBe(10);
     expect(store.getGraph?.fields[1].fieldPath).toBe("field1");
     expect(store.getGraph?.fields[1].sequenceNum).toBe(20);
+    expect(store.getGraph?.fields[1].sourceRecord?.sequenceNum).toBe(20);
   });
 });
