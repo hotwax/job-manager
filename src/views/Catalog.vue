@@ -165,8 +165,9 @@ const categoryRollups = computed(() => jobStore.getCategoryRollups)
 
 onIonViewWillEnter(async () => {
   emitter.on("productStoreUpdated", jobStore.fetchJobs)
-  if (router.currentRoute.value.query?.status) {
-    selectedStatus.value = router.currentRoute.value.query.status as string;
+  const route = router.currentRoute.value;
+  if (route.query?.status) {
+    selectedStatus.value = route.query.status as string;
   } else {
     selectedStatus.value = 'ALL';
   }

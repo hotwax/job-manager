@@ -223,8 +223,9 @@ watch([queryString, selectedStatusId, selectedTypeId, selectedParentTypeId, sele
 watch(pageIndex, loadMessages);
 
 onIonViewWillEnter(async () => {
-  if (router.currentRoute.value.query?.statusId) {
-    selectedStatusId.value = router.currentRoute.value.query.statusId as string;
+  const route = router.currentRoute.value;
+  if (route.query?.statusId) {
+    selectedStatusId.value = route.query.statusId as string;
   } else {
     selectedStatusId.value = "";
   }

@@ -498,8 +498,9 @@ watch(pageIndex, () => {
 });
 
 onIonViewWillEnter(async () => {
-  if (router.currentRoute.value.query?.statusId) {
-    await mdmStore.updateAppliedFilters("statusId", (router.currentRoute.value.query.statusId as string).split(","));
+  const route = router.currentRoute.value;
+  if (route.query?.statusId) {
+    await mdmStore.updateAppliedFilters("statusId", (route.query.statusId as string).split(","));
   } else {
     await mdmStore.updateAppliedFilters("statusId", []);
   }
