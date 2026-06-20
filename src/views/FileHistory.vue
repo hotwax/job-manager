@@ -274,6 +274,8 @@ const PAGE_SIZE = 10;
 
 const mdmStore = useMdmConfigStore();
 const utilStore = useUtilStore();
+const route = router.currentRoute.value;
+
 
 const queryString = ref("");
 const selectedStatus = ref<string[]>([]);
@@ -498,7 +500,6 @@ watch(pageIndex, () => {
 });
 
 onIonViewWillEnter(async () => {
-  const route = router.currentRoute.value;
   if (route.query?.statusId) {
     await mdmStore.updateAppliedFilters("statusId", (route.query.statusId as string).split(","));
   } else {

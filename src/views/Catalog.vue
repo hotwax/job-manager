@@ -157,6 +157,7 @@ import CreateJobModal from '@/components/CreateJobModal.vue';
 import { useJobStore } from '@/store/jobs';
 
 const jobStore = useJobStore();
+const route = router.currentRoute.value;
 
 const jobs = computed(() => jobStore.getJobs)
 const categories = computed(() => jobStore.getCategories)
@@ -165,7 +166,6 @@ const categoryRollups = computed(() => jobStore.getCategoryRollups)
 
 onIonViewWillEnter(async () => {
   emitter.on("productStoreUpdated", jobStore.fetchJobs)
-  const route = router.currentRoute.value;
   if (route.query?.status) {
     selectedStatus.value = route.query.status as string;
   } else {

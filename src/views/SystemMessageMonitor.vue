@@ -145,6 +145,8 @@ const PAGE_SIZE = 25;
 
 const store = useSystemMessageStore();
 const utilStore = useUtilStore();
+const route = router.currentRoute.value;
+
 const queryString = ref("");
 const selectedStatusId = ref("");
 const selectedTypeId = ref("");
@@ -223,7 +225,6 @@ watch([queryString, selectedStatusId, selectedTypeId, selectedParentTypeId, sele
 watch(pageIndex, loadMessages);
 
 onIonViewWillEnter(async () => {
-  const route = router.currentRoute.value;
   if (route.query?.statusId) {
     selectedStatusId.value = route.query.statusId as string;
   } else {
