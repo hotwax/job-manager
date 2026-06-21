@@ -45,9 +45,9 @@ export const useSystemMessageStore = defineStore("systemMessage", {
       return parentTypeIds.map(id => ({
         id,
         description: id
-            .replace(/([a-z\d])([A-Z])/g, '$1 $2')
-            .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
-            .trim()
+          .replace(/([a-z\d])([A-Z])/g, "$1 $2")
+          .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
+          .trim()
       })).sort((a, b) => a.description.localeCompare(b.description));
     },
     getCurrentSystemMessage: (state: any) => state.currentSystemMessage,
