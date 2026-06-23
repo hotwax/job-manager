@@ -320,7 +320,7 @@
 
           <div v-else-if="bottomPanel === 'preview'" class="preview-panel">
             <ion-list>
-              <ion-item lines="none">
+              <ion-item lines="none" class="preview-controls-item">
                 <ion-button @click="runPreview" :disabled="!graph?.dataDocumentId || previewStatus === 'loading'">
                   <ion-spinner v-if="previewStatus === 'loading'" slot="start" name="crescent" />
                   <ion-icon v-else slot="start" :icon="playOutline" />
@@ -1583,8 +1583,14 @@ onIonViewWillEnter(async () => {
   min-height: 100%;
 }
 
+.preview-controls-item {
+  --overflow: visible;
+}
+
 .preview-rows-input {
   max-width: 110px;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
 .graph-metadata-list {
