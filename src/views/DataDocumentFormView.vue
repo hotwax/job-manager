@@ -151,6 +151,8 @@
                 label-placement="floating"
                 fill="outline"
                 interface="popover"
+                :class="{ 'ion-invalid ion-touched': isFormConditionValueInvalid(condition) }"
+                :error-text="translate('Value is required')"
                 @ionChange="updateCondition(condition, { fieldValue: $event.detail.value ?? '' })"
               >
                 <ion-select-option
@@ -167,6 +169,8 @@
                 :label="translate('Value')"
                 label-placement="floating"
                 fill="outline"
+                :class="{ 'ion-invalid ion-touched': isFormConditionValueInvalid(condition) }"
+                :error-text="translate('Value is required')"
                 @ionInput="updateCondition(condition, { fieldValue: $event.detail.value || '' })"
               />
             </div>
@@ -406,6 +410,7 @@ import { getConditionValueOptionSource } from "@/utils/conditionValueOptions";
 import { getEntityLabel, getEntitySearchText, getEntityValue, groupEntityOptions } from "@/utils/entityOptions";
 import type { EntityOption } from "@/utils/entityOptions";
 import { useKeyboardListNavigation } from "@/utils/keyboardListNavigation";
+import { normalizeDataDocumentOperator } from "@/utils/dataDocumentGraph";
 
 defineProps<{ embedded?: boolean }>();
 // id === "new" drives create mode (mirrors the graph page); unlocks the dataDocumentId field.
@@ -626,6 +631,16 @@ const getConditionAliasOptions = (condition: any) => {
 };
 
 const getConditionKey = (condition: any, index: number) => condition.localId || condition.conditionSeqId || `condition-${index}`;
+
+const isFormConditionValueInvalid = (condition: any) => {
+  if (!condition.fieldNameAlias || !condition.operator) return false;
+  const op = normalizeDataDocumentOperator(condition.operator);
+  if (op === "empty" || op === "not-empty") return false;
+  const val = condition.fieldValue;
+  if (val === undefined || val === null) return true;
+  if (typeof val === "string") return val.trim() === "";
+  return false;
+};
 
 const getConditionField = (condition: any) => graph.value?.fields.find((field: any) => (
   field.fieldNameAlias === condition.fieldNameAlias ||

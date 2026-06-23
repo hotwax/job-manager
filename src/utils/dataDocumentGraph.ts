@@ -549,8 +549,22 @@ export const projectDataDocumentGraph = ({
         severity: "error",
         message: `Condition references missing field alias "${fieldNameAlias}".`,
         targetKind: "condition",
-        targetId: condition.conditionSeqId
+        targetId: condition.conditionSeqId || condition.localId
       });
+    }
+
+    if (graphCondition.operator && graphCondition.operator !== "empty" && graphCondition.operator !== "not-empty") {
+      const val = graphCondition.fieldValue;
+      const isValEmpty = val === undefined || val === null || (typeof val === "string" && val.trim() === "");
+      if (isValEmpty) {
+        addValidationIssue(validationIssues, {
+          code: "missing_condition_value",
+          severity: "error",
+          message: `Value is required for operator "${condition.operator}" on field "${fieldNameAlias}".`,
+          targetKind: "condition",
+          targetId: condition.conditionSeqId || condition.localId
+        });
+      }
     }
 
     return graphCondition;
