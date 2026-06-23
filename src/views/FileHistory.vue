@@ -159,29 +159,34 @@
               </ion-label>
             </ion-item>
 
-            <div v-if="log.totalRecordCount" class="log-result-stack">
-              <ion-badge :color="getFailedRecordCount(log) > 0 ? 'warning' : 'success'">
+            <!-- Column 2: Failed Status -->
+            <div class="log-result-stack">
+              <ion-badge v-if="log.totalRecordCount" :color="getFailedRecordCount(log) > 0 ? 'warning' : 'success'">
                 {{ getFailedRecordCount(log) }} / {{ log.totalRecordCount }} {{ translate("failed") }}
               </ion-badge>
             </div>
 
-            <ion-label class="log-cell-stack">
+            <!-- Column 3: Uploaded Timestamp / Uploaded By -->
+            <div class="log-upload-stack">
               <p>{{ translate("Uploaded") }}: {{ commonUtil.getDateTimeWithOrdinalSuffix(log.createdDate) }}</p>
               <p>{{ translate("By") }}: {{ log.createdByUserLogin || "-" }}</p>
-            </ion-label>
+            </div>
 
-            <ion-label class="log-cell-stack log-meta">
-              <ion-badge :color="getLogStatusColor(log)" style="display: inline-flex; align-items: center; gap: 4px;">
-                <ion-icon v-if="log.statusId === 'DmlsFinished' && getFailedRecordCount(log) > 0" :icon="warningOutline" />
-                <ion-icon v-else-if="['DmlsFailed', 'DmlsCrashed'].includes(log.statusId)" :icon="alertCircleOutline" />
-                {{ translate(getLogStatusLabel(log)) }}
-              </ion-badge>
+            <!-- Column 4: Status + File Size + Duration Stack -->
+            <div class="log-meta-stack">
+              <div class="log-status">
+                <ion-badge :color="getLogStatusColor(log)" style="display: inline-flex; align-items: center; gap: 4px;">
+                  <ion-icon v-if="log.statusId === 'DmlsFinished' && getFailedRecordCount(log) > 0" :icon="warningOutline" />
+                  <ion-icon v-else-if="['DmlsFailed', 'DmlsCrashed'].includes(log.statusId)" :icon="alertCircleOutline" />
+                  {{ translate(getLogStatusLabel(log)) }}
+                </ion-badge>
+                <ion-button v-if="log.statusId === 'DmlsPending'" color="danger" fill="clear" @click.stop="mdmStore.cancelDataManagerLog(log.configId, log.logId)">
+                  <ion-icon slot="icon-only" :icon="closeOutline" />
+                </ion-button>
+              </div>
               <p>{{ getFileSize(log.fileSize) }}</p>
               <p>{{ log.createdDate && (log.finishDateTime || log.lastUpdatedTxStamp) ? getDuration(log.createdDate, log.finishDateTime || log.lastUpdatedTxStamp) : '-' }}</p>
-              <ion-button v-if="log.statusId === 'DmlsPending'" color="danger" fill="clear" @click.stop="mdmStore.cancelDataManagerLog(log.configId, log.logId)">
-                <ion-icon slot="icon-only" :icon="closeOutline" />
-              </ion-button>
-            </ion-label>
+            </div>
           </ion-card>
           <p class="empty-state" v-if="!logs.length">{{ translate("No logs found") }}</p>
         </ion-list>
@@ -678,31 +683,99 @@ onIonViewWillEnter(async () => {
 }
 
 .list-item.log.log-card-layout {
-  --columns-desktop: 5;
   padding-block: var(--spacer-sm);
   padding-inline-start: 0;
   padding-inline-end: var(--spacer-sm);
 }
 
-.log-file-info {
-  grid-column: span 2;
-  --inner-padding-end: 0;
+@media (max-width: 990px) {
+  .list-item.log.log-card-layout {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .log-result-stack,
+  .log-upload-stack {
+    display: none;
+  }
+
+  .log-meta-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    text-align: right;
+  }
+
+  .log-meta-stack p,
+  .log-meta-stack span {
+    margin: 0;
+    font-size: 14px;
+    color: var(--ion-color-medium);
+  }
 }
 
-.list-item.log > .log-result-stack {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacer-2xs);
-}
+@media (min-width: 991px) {
+  .list-item.log.log-card-layout {
+    display: grid;
+    grid-template-columns: 45% 15% 25% 15%;
+    align-items: center;
+    width: 100%;
+  }
 
-.log-cell-stack p {
-  margin: 2px 0;
-}
+  .log-file-info {
+    --inner-padding-end: 0;
+    width: 100%;
+  }
 
-.log-meta {
-  justify-self: end;
-  text-align: end;
+  .log-result-stack {
+    padding-left: 35%;
+  }
+
+  .log-upload-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .log-upload-stack p {
+    margin: 2px 0;
+    font-size: 14px;
+    color: var(--ion-color-medium);
+  }
+
+  .log-meta-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    width: 100%;
+  }
+
+  .log-meta-stack ion-badge {
+    max-width: none !important;
+    width: auto !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+
+  .log-meta-stack p {
+    margin: 2px 0;
+    font-size: 14px;
+    color: var(--ion-color-medium);
+  }
+
+  .log-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacer-2xs);
+    width: 100%;
+  }
 }
 
 .log-file-name {
