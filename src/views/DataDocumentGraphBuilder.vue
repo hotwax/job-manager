@@ -1453,6 +1453,23 @@ const closeConditionModal = (save = false) => {
   if(save) {
     const condition = { ...activeCondition.value };
     const existingId = condition.conditionSeqId || condition.localId;
+
+    const duplicateExists = (graph.value?.conditions || []).some((item: any) => {
+      const isSelf = existingId && (item.conditionSeqId === existingId || item.localId === existingId);
+      if (isSelf) return false;
+
+      return item.fieldNameAlias === condition.fieldNameAlias &&
+        item.operator === condition.operator &&
+        (item.fieldValue || '') === (condition.fieldValue || '') &&
+        (item.toFieldNameAlias || '') === (condition.toFieldNameAlias || '') &&
+        item.postQuery === condition.postQuery;
+    });
+
+    if (duplicateExists) {
+      showToast(translate("Condition already exists"));
+      return;
+    }
+
     const isExisting = !!existingId && (graph.value?.conditions || []).some((item: any) => (
       item.conditionSeqId === existingId || item.localId === existingId
     ));
