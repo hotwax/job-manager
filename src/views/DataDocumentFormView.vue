@@ -76,15 +76,6 @@
                   fill="outline"
                   @ionInput="updateField(field, { fieldNameAlias: $event.detail.value || '' })"
                 />
-                <ion-input
-                  class="field-sequence"
-                  :value="field.sequenceNum"
-                  type="number"
-                  :label="translate('Sequence')"
-                  label-placement="floating"
-                  fill="outline"
-                  readonly
-                />
                 <ion-toggle
                   class="field-display"
                   :checked="field.defaultDisplay === 'Y'"
@@ -401,7 +392,7 @@ import {
   IonToolbar
 } from "@ionic/vue";
 import { addOutline, arrowBackOutline, chevronForwardOutline, closeOutline, gitBranchOutline, optionsOutline, refreshOutline, trashOutline } from "ionicons/icons";
-import { computed, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import router from "@/router";
 
 import { translate } from "@common";
@@ -713,20 +704,20 @@ const handleReorder = (group: any, event: any) => {
   const globalFields = graph.value?.fields || [];
   const oldIndex = globalFields.findIndex((f: any) => 
     (f.localId && f.localId === sourceField.localId) || 
-    (f.fieldSeqId && f.fieldSeqId === sourceField.fieldSeqId) || 
-    (f.fieldPath === sourceField.fieldPath)
+    (f.fieldSeqId && f.fieldSeqId === sourceField.fieldSeqId)
   );
   const newIndex = globalFields.findIndex((f: any) => 
     (f.localId && f.localId === targetField.localId) || 
-    (f.fieldSeqId && f.fieldSeqId === targetField.fieldSeqId) || 
-    (f.fieldPath === targetField.fieldPath)
+    (f.fieldSeqId && f.fieldSeqId === targetField.fieldSeqId)
   );
-
-  event.detail.complete();
 
   if (oldIndex !== -1 && newIndex !== -1) {
     graphStore.reorderFields(oldIndex, newIndex);
   }
+
+  nextTick(() => {
+    event.detail.complete();
+  });
 };
 
 const updateCondition = (condition: any, patch: any) => {
@@ -889,7 +880,7 @@ ion-card-header ion-buttons {
   --inner-padding-bottom: var(--spacer-sm);
 }
 
-/* All field controls on one horizontal row, vertically centered: chip | alias | sequence |
+/* All field controls on one horizontal row, vertically centered: chip | alias |
    display | remove. Alias grows; the rest size to content so the row stays compact. */
 .field-controls {
   display: flex;
@@ -919,10 +910,6 @@ ion-card-header ion-buttons {
 .field-alias {
   flex: 1 1 8rem;
   min-width: 6rem;
-}
-
-.field-sequence {
-  flex: 0 0 6rem;
 }
 
 /* "Display" label sits stacked above its toggle (label-placement="stacked"), vertically

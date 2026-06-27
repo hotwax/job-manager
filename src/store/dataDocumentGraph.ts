@@ -174,8 +174,10 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
       });
     },
     reorderFields(oldIndex: number, newIndex: number) {
-      if (!this.graph || oldIndex < 0 || newIndex < 0) return;
+      if (!this.graph) return;
       const fields = [...this.graph.fields];
+      if (oldIndex === newIndex) return;
+      if (oldIndex < 0 || oldIndex >= fields.length || newIndex < 0 || newIndex >= fields.length) return;
       const movedField = fields.splice(oldIndex, 1)[0];
       fields.splice(newIndex, 0, movedField);
       const resequencedFields = fields.map((field, index) => {
@@ -235,8 +237,7 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
       const persistedSeqId = removed?.sourceRecord?.fieldSeqId;
       if (persistedSeqId) this.removedFieldSeqIds.push(persistedSeqId);
 
-      const sortedSurvivors = [...survivors].sort((a, b) => (Number(a.sequenceNum) || 0) - (Number(b.sequenceNum) || 0));
-      const resequencedSurvivors = sortedSurvivors.map((field, index) => {
+      const resequencedSurvivors = survivors.map((field, index) => {
         const sequenceNum = (index + 1) * 10;
         return {
           ...field,
