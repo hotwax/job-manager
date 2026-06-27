@@ -104,11 +104,12 @@ const hasJobDataError = (job: any) => {
 
 const saveDataFile = async (response: any, fileName: string) => {
   let data;
+
   if (response instanceof Blob) {
     saveAs(response, fileName);
     return;
   }
-  
+
   if (typeof response === 'object') {
     data = JSON.stringify(response)
   } else {
