@@ -188,6 +188,16 @@ export const normalizeDataDocumentOperator = (operator?: string) => {
   return operatorAliases[normalizedOperator] || normalizedOperator;
 };
 
+export const isConditionValueMissing = (operator: string | undefined, fieldValue: any) => {
+  if (!operator) return false;
+  const op = normalizeDataDocumentOperator(operator);
+  if (op === "empty" || op === "not-empty") return false;
+  const val = fieldValue;
+  if (val === undefined || val === null) return true;
+  if (typeof val === "string") return val.trim() === "";
+  return false;
+};
+
 // Aggregate functions Moqui supports on a DataDocumentField (FieldInfo.aggFunctionArray).
 // A field with one of these is a MEASURE (aggregated); a field with none is a DIMENSION
 // (a group-by key). `numericOnly` marks functions that only yield a value on numeric
@@ -553,18 +563,14 @@ export const projectDataDocumentGraph = ({
       });
     }
 
-    if (graphCondition.operator && graphCondition.operator !== "empty" && graphCondition.operator !== "not-empty") {
-      const val = graphCondition.fieldValue;
-      const isValEmpty = val === undefined || val === null || (typeof val === "string" && val.trim() === "");
-      if (isValEmpty) {
-        addValidationIssue(validationIssues, {
-          code: "missing_condition_value",
-          severity: "error",
-          message: `Value is required for operator "${condition.operator}" on field "${fieldNameAlias}".`,
-          targetKind: "condition",
-          targetId: condition.conditionSeqId || condition.localId
-        });
-      }
+    if (isConditionValueMissing(graphCondition.operator, graphCondition.fieldValue)) {
+      addValidationIssue(validationIssues, {
+        code: "missing_condition_value",
+        severity: "error",
+        message: `Value is required for operator "${condition.operator}" on field "${fieldNameAlias}".`,
+        targetKind: "condition",
+        targetId: condition.conditionSeqId || condition.localId
+      });
     }
 
     return graphCondition;

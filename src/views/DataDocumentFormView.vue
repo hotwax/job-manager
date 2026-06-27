@@ -407,10 +407,10 @@ import { translate } from "@common";
 import { useDataDocumentGraphStore } from "@/store/dataDocumentGraph";
 import { useUtilStore } from "@/store/util";
 import { getConditionValueOptionSource } from "@/utils/conditionValueOptions";
+import { isConditionValueMissing } from "@/utils/dataDocumentGraph";
 import { getEntityLabel, getEntitySearchText, getEntityValue, groupEntityOptions } from "@/utils/entityOptions";
 import type { EntityOption } from "@/utils/entityOptions";
 import { useKeyboardListNavigation } from "@/utils/keyboardListNavigation";
-import { normalizeDataDocumentOperator } from "@/utils/dataDocumentGraph";
 
 defineProps<{ embedded?: boolean }>();
 // id === "new" drives create mode (mirrors the graph page); unlocks the dataDocumentId field.
@@ -634,12 +634,7 @@ const getConditionKey = (condition: any, index: number) => condition.localId || 
 
 const isFormConditionValueInvalid = (condition: any) => {
   if (!condition.fieldNameAlias || !condition.operator) return false;
-  const op = normalizeDataDocumentOperator(condition.operator);
-  if (op === "empty" || op === "not-empty") return false;
-  const val = condition.fieldValue;
-  if (val === undefined || val === null) return true;
-  if (typeof val === "string") return val.trim() === "";
-  return false;
+  return isConditionValueMissing(condition.operator, condition.fieldValue);
 };
 
 const getConditionField = (condition: any) => graph.value?.fields.find((field: any) => (

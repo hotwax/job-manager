@@ -744,13 +744,14 @@
             <ion-item>
               <ion-select
                 v-if="activeConditionValueOptions"
-                v-model="activeCondition.fieldValue"
+                :value="activeCondition.fieldValue"
                 :label="translate('Value')"
                 :placeholder="activeConditionValueOptions.label || translate('Select value')"
                 label-placement="stacked"
                 interface="popover"
                 :class="{ 'ion-invalid ion-touched': conditionSubmitted && isOperatorValueInvalid }"
                 :error-text="translate('Value is required')"
+                @ionChange="activeCondition.fieldValue = $event.detail.value ?? ''"
               >
                 <ion-select-option
                   v-for="option in activeConditionValueOptions.options"
@@ -762,11 +763,12 @@
               </ion-select>
               <ion-input
                 v-else
-                v-model="activeCondition.fieldValue"
+                :value="activeCondition.fieldValue"
                 :label="translate('Value')"
                 label-placement="stacked"
                 :class="{ 'ion-invalid ion-touched': conditionSubmitted && isOperatorValueInvalid }"
                 :error-text="translate('Value is required')"
+                @ionInput="activeCondition.fieldValue = $event.detail.value || ''"
               />
             </ion-item>
             <ion-item>
@@ -907,7 +909,7 @@ import DataDocumentFormView from "@/views/DataDocumentFormView.vue";
 import { getDateAndTime, showToast } from "@/utils";
 import { useUtilStore } from "@/store/util";
 import type { GraphCondition, GraphEdge, GraphField } from "@/utils/dataDocumentGraph";
-import { DATA_DOCUMENT_FUNCTIONS, getDataDocumentFunctionLabel, normalizeDataDocumentOperator } from "@/utils/dataDocumentGraph";
+import { DATA_DOCUMENT_FUNCTIONS, getDataDocumentFunctionLabel, isConditionValueMissing } from "@/utils/dataDocumentGraph";
 import { getConditionValueOptionSource } from "@/utils/conditionValueOptions";
 import { getEntityLabel, getEntitySearchText, getEntityValue, groupEntityOptions } from "@/utils/entityOptions";
 import type { EntityOption } from "@/utils/entityOptions";
@@ -1262,19 +1264,7 @@ const activeConditionValueOptions = computed(() => getConditionValueOptions(acti
 
 const isOperatorValueInvalid = computed(() => {
   if (!activeCondition.value?.fieldNameAlias || !activeCondition.value?.operator) return false;
-  const op = normalizeDataDocumentOperator(activeCondition.value.operator);
-  if (op === "empty" || op === "not-empty") return false;
-  const val = activeCondition.value.fieldValue;
-  if (val === undefined || val === null) return true;
-  if (typeof val === "string") return val.trim() === "";
-  return false;
-});
-
-const isConditionValid = computed(() => {
-  if (!activeCondition.value?.fieldNameAlias || !activeCondition.value?.operator) {
-    return false;
-  }
-  return !isOperatorValueInvalid.value;
+  return isConditionValueMissing(activeCondition.value.operator, activeCondition.value.fieldValue);
 });
 
 const conditionSubmitted = ref(false);
@@ -1474,8 +1464,8 @@ const removeActiveCondition = () => {
   closeConditionModal();
 };
 
-const closeConditionModal = (save: any = false) => {
-  if (save === true) {
+const closeConditionModal = (save: boolean = false) => {
+  if (save) {
     conditionSubmitted.value = true;
     if (isOperatorValueInvalid.value) {
       return;
