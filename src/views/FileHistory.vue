@@ -161,7 +161,7 @@
 
             <!-- Column 2: Failed Status -->
             <div class="log-result-stack">
-              <ion-badge v-if="log.totalRecordCount" :color="getFailedRecordCount(log) > 0 ? 'warning' : 'success'">
+              <ion-badge v-if="log.totalRecordCount" :color='getFailedRecordCount(log) > 0 ? "warning" : "success"'>
                 {{ getFailedRecordCount(log) }} / {{ log.totalRecordCount }} {{ translate("failed") }}
               </ion-badge>
             </div>
@@ -175,17 +175,17 @@
             <!-- Column 4: Status + File Size + Duration Stack -->
             <div class="log-meta-stack">
               <div class="log-status">
-                <ion-badge :color="getLogStatusColor(log)" style="display: inline-flex; align-items: center; gap: 4px;">
-                  <ion-icon v-if="log.statusId === 'DmlsFinished' && getFailedRecordCount(log) > 0" :icon="warningOutline" />
-                  <ion-icon v-else-if="['DmlsFailed', 'DmlsCrashed'].includes(log.statusId)" :icon="alertCircleOutline" />
+                <ion-badge :color="getLogStatusColor(log)">
+                  <ion-icon v-if='log.statusId === "DmlsFinished" && getFailedRecordCount(log) > 0' :icon="warningOutline" />
+                  <ion-icon v-else-if='["DmlsFailed", "DmlsCrashed"].includes(log.statusId)' :icon="alertCircleOutline" />
                   {{ translate(getLogStatusLabel(log)) }}
                 </ion-badge>
-                <ion-button v-if="log.statusId === 'DmlsPending'" color="danger" fill="clear" @click.stop="mdmStore.cancelDataManagerLog(log.configId, log.logId)">
+                <ion-button v-if='log.statusId === "DmlsPending"' color="danger" fill="clear" @click.stop="mdmStore.cancelDataManagerLog(log.configId, log.logId)">
                   <ion-icon slot="icon-only" :icon="closeOutline" />
                 </ion-button>
               </div>
               <p>{{ getFileSize(log.fileSize) }}</p>
-              <p>{{ log.createdDate && (log.finishDateTime || log.lastUpdatedTxStamp) ? getDuration(log.createdDate, log.finishDateTime || log.lastUpdatedTxStamp) : '-' }}</p>
+              <p>{{ log.createdDate && (log.finishDateTime || log.lastUpdatedTxStamp) ? getDuration(log.createdDate, log.finishDateTime || log.lastUpdatedTxStamp) : "-" }}</p>
             </div>
           </ion-card>
           <p class="empty-state" v-if="!logs.length">{{ translate("No logs found") }}</p>
@@ -730,7 +730,10 @@ onIonViewWillEnter(async () => {
   }
 
   .log-result-stack {
-    padding-left: 35%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
   }
 
   .log-upload-stack {
@@ -795,5 +798,11 @@ onIonViewWillEnter(async () => {
 .log-file-name .tm-end {
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+.log-status ion-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 </style>
