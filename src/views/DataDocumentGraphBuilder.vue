@@ -1589,8 +1589,8 @@ onIonViewWillEnter(async () => {
 
 .preview-rows-input {
   max-width: 110px;
-  margin-top: 10px;
-  margin-bottom: 10px;
+  margin-top: var(--spacer-xs);
+  margin-bottom: var(--spacer-xs);
 }
 
 .graph-metadata-list {
