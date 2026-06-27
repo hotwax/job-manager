@@ -1460,9 +1460,9 @@ const closeConditionModal = (save = false) => {
 
       return item.fieldNameAlias === condition.fieldNameAlias &&
         item.operator === condition.operator &&
-        (item.fieldValue || "") === (condition.fieldValue || "") &&
-        (item.toFieldNameAlias || "") === (condition.toFieldNameAlias || "") &&
-        (item.postQuery || "N") === (condition.postQuery || "N");
+        (item.fieldValue || '') === (condition.fieldValue || '') &&
+        (item.toFieldNameAlias || '') === (condition.toFieldNameAlias || '') &&
+        (item.postQuery || 'N') === (condition.postQuery || 'N');
     });
 
     if (duplicateExists) {
