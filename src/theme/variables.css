@@ -337,3 +337,19 @@ ion-select {
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
   gap: 16px;
 }
+
+ion-select::part(text) {
+  white-space: normal;
+}
+
+ion-select-popover ion-item {
+  --min-height: auto;
+  --padding-top: 10px;
+  --padding-bottom: 10px;
+}
+
+ion-select-popover ion-radio::part(label),
+ion-select-popover ion-checkbox::part(label) {
+  white-space: normal;
+  line-height: 1.4;
+}

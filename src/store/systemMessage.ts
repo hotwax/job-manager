@@ -42,13 +42,13 @@ export const useSystemMessageStore = defineStore("systemMessage", {
     getSystemMessageErrors: (state: any) => state.systemMessageErrors,
     getSystemMessageParentTypes: (state: any) => {
       const parentTypeIds = [...new Set(state.systemMessageTypes.map((type: any) => type.parentTypeId).filter(Boolean))] as string[];
-      return parentTypeIds.map(id => ({
-        id,
-        description: id
-          .replace(/([a-z\d])([A-Z])/g, "$1 $2")
-          .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
-          .trim()
-      })).sort((a, b) => a.description.localeCompare(b.description));
+      return parentTypeIds.map(id => {
+        const type = state.systemMessageTypes.find((t: any) => t.systemMessageTypeId === id);
+        return {
+          id,
+          description: type?.description || id
+        };
+      }).sort((a, b) => a.description.localeCompare(b.description));
     },
     getCurrentSystemMessage: (state: any) => state.currentSystemMessage,
     getCurrentSystemMessageType: (state: any) => state.currentSystemMessageType,
