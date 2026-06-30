@@ -1,0 +1,12 @@
+name: Update open PRs on merge
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  update-prs:
+    uses: hotwax/accxui/.github/workflows/common-update-prs-merge.yml@main
+    secrets:
+      envPAT: ${{ secrets.envPAT }}
+
