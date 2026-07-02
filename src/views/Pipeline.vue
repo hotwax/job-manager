@@ -993,6 +993,12 @@ onIonViewWillLeave(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--spacer-2xs);
+  gap: var(--spacer-xs);
+}
+
+.kpi-header ion-badge {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .kpi-subtext {
