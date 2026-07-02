@@ -169,7 +169,7 @@
                   type="number"
                   :label="translate('Sequence')"
                   label-placement="stacked"
-                  @ionInput="updateSelectedField({ sequenceNum: Number($event.detail.value || 0) })"
+                  readonly
                 />
               </ion-item>
               <ion-item>
