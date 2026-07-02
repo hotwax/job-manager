@@ -153,12 +153,11 @@ import { ref, computed } from 'vue';
 import router from '@/router';
 import { ellipseOutline, lockClosedOutline, pauseCircleOutline, playCircleOutline } from 'ionicons/icons';
 import { emitter, translate } from '@common';
-import { useRoute } from 'vue-router';
 import CreateJobModal from '@/components/CreateJobModal.vue';
 import { useJobStore } from '@/store/jobs';
 
-const route = useRoute();
 const jobStore = useJobStore();
+const route = router.currentRoute.value;
 
 const jobs = computed(() => jobStore.getJobs)
 const categories = computed(() => jobStore.getCategories)
@@ -167,7 +166,7 @@ const categoryRollups = computed(() => jobStore.getCategoryRollups)
 
 onIonViewWillEnter(async () => {
   emitter.on("productStoreUpdated", jobStore.fetchJobs)
-  if (route.query.status) {
+  if (route.query?.status) {
     selectedStatus.value = route.query.status as string;
   } else {
     selectedStatus.value = 'ALL';
