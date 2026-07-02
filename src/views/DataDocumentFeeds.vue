@@ -104,13 +104,13 @@ import {
 } from "@ionic/vue";
 import { documentTextOutline, gitNetworkOutline } from "ionicons/icons";
 import { computed, onMounted, ref } from "vue";
-import { useRouter } from "vue-router";
+import router from "@/router";
 
 import { translate } from "@common";
 import { useDataDocumentStore } from "@/store/dataDocuments";
 
 const store = useDataDocumentStore();
-const router = useRouter();
+
 const queryString = ref("");
 
 const feeds = computed(() => store.getDataFeeds);
