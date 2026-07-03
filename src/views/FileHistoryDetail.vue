@@ -186,6 +186,7 @@
 
 <script setup lang="ts">
 import {
+  IonBadge,
   IonPage,
   IonHeader,
   IonToolbar,
