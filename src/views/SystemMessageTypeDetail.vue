@@ -299,6 +299,7 @@ onIonViewWillEnter(() => {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+  align-self: center;
 }
 
 
