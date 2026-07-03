@@ -419,7 +419,7 @@
                       <ion-icon :icon="personOutline" color="medium"></ion-icon>
                       <ion-label>
                         <p>{{ translate("User") }}</p>
-                        <strong>{{ run.userId || "N/A" }}</strong>
+                        <strong>{{ getRunUserName(run.userId) }}</strong>
                       </ion-label>
                     </div>
                     <div class="stat-item">
@@ -789,6 +789,9 @@ const loadJob = async () => {
   }
 }
 
+// Show the resolved full name for run users, falling back to the raw user id.
+const getRunUserName = (userId: string) => userStore.getUserFullName(userId) || userId || "N/A";
+
 const loadRuns = async () => {
   if (!job.value?.jobName) {
     return
@@ -806,6 +809,7 @@ const loadRuns = async () => {
     runs.value = Array.isArray(resp) ? resp : []
     hasMoreRuns.value = Array.isArray(resp) && resp.length === pageSize.value
     hasLoadedRuns.value = true
+    await userStore.resolveUserFullNames(runs.value.map((run: any) => run.userId))
   } catch (err) {
     console.error(err)
   } finally {
@@ -857,6 +861,7 @@ const loadMoreRuns = async (event: any) => {
     const resp = await jobStore.fetchJobRuns(route.params.jobName as string, payload)
     if (Array.isArray(resp) && resp.length > 0) {
       runs.value.push(...resp)
+      await userStore.resolveUserFullNames(resp.map((run: any) => run.userId))
     }
     hasMoreRuns.value = Array.isArray(resp) && resp.length === pageSize.value
   } catch (err) {

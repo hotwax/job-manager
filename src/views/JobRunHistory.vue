@@ -163,7 +163,7 @@
                   <ion-icon slot="start" :icon="personOutline" color="medium" />
                   <ion-label>
                     <p>{{ translate("User") }}</p>
-                    {{ run.userId || "-" }}
+                    {{ getRunUserName(run.userId) }}
                   </ion-label>
                 </ion-item>
               </div>
@@ -289,6 +289,7 @@ import { translate } from "@common";
 import AnimatedNumber from "@/components/AnimatedNumber.vue";
 import router from "@/router";
 import { useJobStore } from "@/store/jobs";
+import { useUserStore } from "@/store/user";
 import { getDateAndTime } from "@/utils";
 
 const PAGE_SIZE = 25;
@@ -303,6 +304,8 @@ const selectedJobName = ref("");
 const selectedUserId = ref("");
 const hasDataLogs = ref("");
 const pageIndex = ref(0);
+
+const userStore = useUserStore();
 
 const runs = computed(() => jobStore.getJobRunHistory);
 const total = computed(() => jobStore.getJobRunHistoryTotal);
@@ -402,7 +405,11 @@ const getPayload = () => {
 
 const loadRuns = async () => {
   await jobStore.fetchJobRunHistory(getPayload());
+  await userStore.resolveUserFullNames(runs.value.map((run: any) => run.userId));
 };
+
+// Show the resolved full name in run cards, falling back to the raw user id.
+const getRunUserName = (userId: string) => userStore.getUserFullName(userId) || userId || "-";
 
 const goToPreviousPage = () => {
   pageIndex.value -= 1;

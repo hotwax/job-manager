@@ -26,7 +26,8 @@ export const useUserStore = defineStore("user", {
       profile: 'none',
       permissions: 'none'
     } as any,
-    selectedSystemMessageRemoteId: ""
+    selectedSystemMessageRemoteId: "",
+    userFullNames: {} as Record<string, string>
   }),
   getters: {
     getPermissions: (state: any) => state.permissions,
@@ -39,6 +40,7 @@ export const useUserStore = defineStore("user", {
     getAvailableTimeZones: (state: any) => state.timeZones,
     getFetchStatus: (state: any) => state.fetchStatus,
     getSelectedSystemMessageRemoteId: (state: any) => state.selectedSystemMessageRemoteId,
+    getUserFullName: (state: any) => (userId: string) => state.userFullNames[userId],
     hasPermission: (state: any) => (permissionId: string): boolean => {
       const permissions = state.permissions;
 
@@ -176,6 +178,28 @@ export const useUserStore = defineStore("user", {
         this.fetchStatus.permissions = 'error'
         return Promise.reject(error);
       }
+    },
+    async resolveUserFullNames(userIds: Array<string>) {
+      const unresolvedUserIds = [...new Set(userIds)].filter((userId: any) => userId && !(userId in this.userFullNames))
+      if (!unresolvedUserIds.length) {
+        return;
+      }
+
+      // Cache an empty entry up front so repeated or concurrent callers never
+      // trigger another lookup for the same user id in this session.
+      unresolvedUserIds.forEach((userId: string) => { this.userFullNames[userId] = "" })
+
+      await Promise.allSettled(unresolvedUserIds.map(async (userId: string) => {
+        try {
+          const resp = await api({
+            url: `admin/users/${encodeURIComponent(userId)}`,
+            method: "get"
+          })
+          this.userFullNames[userId] = resp.data?.userFullName || resp.data?.username || ""
+        } catch (err) {
+          logger.error(`Failed to resolve full name for user ${userId}`, err)
+        }
+      }))
     },
     async setCurrentProductStore(productStoreInfo: any) {
       let productStore = productStoreInfo
