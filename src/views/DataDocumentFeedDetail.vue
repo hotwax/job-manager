@@ -76,7 +76,7 @@
           >
             <ion-icon slot="start" :icon="documentTextOutline" />
             <ion-label>
-              <h2>{{ document.documentName || getDocumentId(document) || translate("Document") }}</h2>
+              {{ document.documentName || getDocumentId(document) || translate("Document") }}
               <p>{{ getDocumentId(document) }}</p>
               <p v-if="document.primaryEntityName">{{ document.primaryEntityName }}</p>
               <p v-if="document.indexName">{{ translate("Index") }}: {{ document.indexName }}</p>

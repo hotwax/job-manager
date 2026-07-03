@@ -23,7 +23,7 @@
           <ion-card>
             <ion-card-header>
               <div class="kpi-header">
-                <ion-card-subtitle class="ion-text-uppercase">{{ translate("Job Schedules") }}</ion-card-subtitle>
+                <ion-card-subtitle>{{ translate("Job Schedules") }}</ion-card-subtitle>
                 <ion-badge color="primary">{{ translate("Active") }}</ion-badge>
               </div>
               <ion-card-title>{{ scheduledJobsCount }} / {{ totalJobsCount }}</ion-card-title>
@@ -53,7 +53,7 @@
           <ion-card>
             <ion-card-header>
               <div class="kpi-header">
-                <ion-card-subtitle class="ion-text-uppercase">
+                <ion-card-subtitle>
                   {{ translate("High-Priority Ingestion") }}
                   <span v-if="highPriorityLogsTimeSpan">
                     ({{ translate("Latest") }}<span v-if="highPriorityLogsTimeSpan">, {{ translate("since") }} {{ highPriorityLogsTimeSpan }}</span>)
@@ -85,7 +85,7 @@
           <ion-card>
             <ion-card-header>
               <div class="kpi-header">
-                <ion-card-subtitle class="ion-text-uppercase">
+                <ion-card-subtitle>
                   {{ translate("Standard Ingestion") }}
                   <span v-if="standardLogsTimeSpan">
                     ({{ translate("Latest") }}<span v-if="standardLogsTimeSpan">, {{ translate("since") }} {{ standardLogsTimeSpan }}</span>)
@@ -117,7 +117,7 @@
           <ion-card>
             <ion-card-header>
               <div class="kpi-header">
-                <ion-card-subtitle class="ion-text-uppercase">
+                <ion-card-subtitle>
                   {{ translate("Incoming Messages") }}
                   <span v-if="incomingTimeSpan">
                     ({{ translate("Latest") }}<span v-if="incomingTimeSpan">, {{ translate("since") }} {{ incomingTimeSpan }}</span>)
@@ -149,7 +149,7 @@
           <ion-card>
             <ion-card-header>
               <div class="kpi-header">
-                <ion-card-subtitle class="ion-text-uppercase">
+                <ion-card-subtitle>
                   {{ translate("Outgoing Payloads") }}
                   <span v-if="outgoingTimeSpan">
                     ({{ translate("Latest") }}<span v-if="outgoingTimeSpan">, {{ translate("since") }} {{ outgoingTimeSpan }}</span>)
@@ -195,7 +195,7 @@
                       <ion-item button detail @click="router.push('/file-history?priority=HIGH')" lines="none" class="visualizer-item">
                         <ion-icon slot="start" :icon="cloudUploadOutline" color="secondary" />
                         <ion-label>
-                          <h3>{{ translate("High-Priority Queue") }}</h3>
+                          {{ translate("High-Priority Queue") }}
                           <p>{{ highPriorityPendingCount }} {{ translate("Pending Files") }}</p>
                         </ion-label>
                       </ion-item>
@@ -205,7 +205,7 @@
                       <ion-item button detail @click="router.push('/file-history?priority=NORMAL')" lines="none" class="visualizer-item">
                         <ion-icon slot="start" :icon="cloudUploadOutline" color="medium" />
                         <ion-label>
-                          <h3>{{ translate("Standard Queue") }}</h3>
+                          {{ translate("Standard Queue") }}
                           <p>{{ standardPendingCount }} {{ translate("Pending Files") }}</p>
                         </ion-label>
                       </ion-item>
@@ -221,7 +221,7 @@
                       <ion-item button detail @click="router.push('/system-messages?isOutgoing=N')" lines="none" class="visualizer-item">
                         <ion-icon slot="start" :icon="documentOutline" color="success" />
                         <ion-label>
-                          <h3>{{ translate("Inbound Queue") }}</h3>
+                          {{ translate("Inbound Queue") }}
                           <p>{{ incomingPendingCount }} {{ translate("Queued Inbound") }}</p>
                         </ion-label>
                       </ion-item>
@@ -231,7 +231,7 @@
                       <ion-item button detail @click="router.push('/system-messages?isOutgoing=Y')" lines="none" class="visualizer-item">
                         <ion-icon slot="start" :icon="cloudDownloadOutline" color="primary" />
                         <ion-label>
-                          <h3>{{ translate("Outbound Queue") }}</h3>
+                          {{ translate("Outbound Queue") }}
                           <p>{{ outgoingPendingCount }} {{ translate("Queued Outbound") }}</p>
                         </ion-label>
                       </ion-item>
@@ -262,7 +262,7 @@
                   <ion-item v-for="job in stuckJobs" :key="job.jobName">
                     <ion-icon slot="start" :icon="alertCircleOutline" color="danger" />
                     <ion-label class="ion-text-wrap">
-                      <h3>{{ job.jobName }}</h3>
+                      {{ job.jobName }}
                       <p>{{ translate("Service") }}: {{ job.serviceName }}</p>
                       <p>
                         <ion-badge color="danger">
@@ -291,7 +291,7 @@
                   <ion-item v-for="job in failedRunJobs" :key="job.jobName">
                     <ion-icon slot="start" :icon="alertCircleOutline" color="danger" />
                     <ion-label class="ion-text-wrap">
-                      <h3>{{ job.jobName }}</h3>
+                      {{ job.jobName }}
                       <p>{{ translate("Service") }}: {{ job.serviceName }}</p>
                       <p class="error-text ion-text-wrap" v-if="job.runMessage">{{ translate("Message") }}: {{ job.runMessage }}</p>
                       <p class="result-text ion-text-wrap" v-if="job.runResults">{{ translate("Results") }}: {{ formatJobResult(job.runResults) }}</p>
@@ -315,7 +315,7 @@
                   <ion-item v-for="job in slowJobs" :key="job.jobName">
                     <ion-icon slot="start" :icon="timeOutline" color="warning" />
                     <ion-label class="ion-text-wrap">
-                      <h3>{{ job.jobName }}</h3>
+                      {{ job.jobName }}
                       <p>{{ translate("Service") }}: {{ job.serviceName }}</p>
                       <p>
                         <ion-badge color="warning">
@@ -343,7 +343,7 @@
                   <ion-item v-for="job in configErrorJobs" :key="job.jobName">
                     <ion-icon slot="start" :icon="alertCircleOutline" color="danger" />
                     <ion-label class="ion-text-wrap">
-                      <h3>{{ job.jobName }}</h3>
+                      {{ job.jobName }}
                       <p>{{ translate("Service") }}: {{ job.serviceName }}</p>
                       <p class="error-text ion-text-wrap" v-if="job.runtimeData?._ERROR_MESSAGE_">{{ translate("Runtime Error") }}: {{ job.runtimeData._ERROR_MESSAGE_ }}</p>
                     </ion-label>
@@ -366,7 +366,7 @@
                 <ion-item v-for="msg in erroredMessages" :key="msg.systemMessageId">
                   <ion-icon slot="start" :icon="alertCircleOutline" color="danger" />
                   <ion-label class="ion-text-wrap">
-                    <h3>{{ getSystemMessageTypeName(msg.systemMessageTypeId) }}</h3>
+                    {{ getSystemMessageTypeName(msg.systemMessageTypeId) }}
                     <p>#{{ msg.systemMessageId }} | {{ translate("Remote") }}: {{ msg.systemMessageRemoteId || "-" }}</p>
                     <p class="error-text ion-text-wrap" v-if="msg.errorSummary">{{ msg.errorSummary }}</p>
                   </ion-label>
@@ -392,7 +392,7 @@
                     :color="log.statusId === 'DmlsFinished' && Number(log.failedRecordCount || 0) > 0 ? 'warning' : 'danger'"
                   />
                   <ion-label class="ion-text-wrap">
-                    <h3>{{ log.fileName }}</h3>
+                    {{ log.fileName }}
                     <p>ID: {{ log.logId }} | {{ translate("Uploaded By") }}: {{ log.createdByUserLogin || "-" }}</p>
                     <p>
                       <span class="size-text">{{ getFileSize(log.fileSize) }}</span>

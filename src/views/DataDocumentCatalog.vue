@@ -60,7 +60,7 @@
               <ion-item lines="none" detail button @click="router.push(`/data-documents/${document.dataDocumentId}/graph`)">
                 <ion-icon slot="start" :icon="documentTextOutline" />
                 <ion-label>
-                  <h2>{{ document.documentName || document.dataDocumentId }}</h2>
+                  {{ document.documentName || document.dataDocumentId }}
                   <p>{{ document.dataDocumentId }}</p>
                   <p>{{ document.primaryEntityName }}</p>
                 </ion-label>
