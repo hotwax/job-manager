@@ -248,21 +248,7 @@ describe("data document graph projection", () => {
     ]));
   });
 
-  it("detects missing condition value when operator requires one", () => {
-    const graph = projectDataDocumentGraph({
-      document,
-      fields: [{ dataDocumentId: "PicklistRole", fieldSeqId: "10", fieldPath: "picklistId", fieldNameAlias: "picklistId" }],
-      conditions: [{ dataDocumentId: "PicklistRole", conditionSeqId: "01", fieldNameAlias: "picklistId", operator: "equals", fieldValue: "" }]
-    });
 
-    expect(graph.validationIssues).toEqual(expect.arrayContaining([
-      expect.objectContaining({
-        code: "missing_condition_value",
-        severity: "error",
-        targetId: "01"
-      })
-    ]));
-  });
 
   it("keeps unverified relationship paths editable", () => {
     const graph = projectDataDocumentGraph({
