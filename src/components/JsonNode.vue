@@ -118,7 +118,6 @@ const highlight = (text: string) => {
 
 .jt-row {
   display: flex;
-  align-items: flex-start;
   flex-wrap: wrap;
   border-radius: 4px;
 }
