@@ -398,7 +398,7 @@ const getSuccessRecordCount = (log: any) => {
 
 const getLogStatusLabel = (log: any) => {
   if (log.statusId === "DmlsFinished" && getFailedRecordCount(log) > 0) {
-    return "Finished with errors";
+    return translate("Finished with errors");
   }
   return getStatusDesc(log.statusId);
 };
