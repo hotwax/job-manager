@@ -91,6 +91,13 @@ let appPages = [
     childRoutes: ["/job/"]
   },
   {
+    title: "Run history",
+    url: "/job-run-history",
+    iosIcon: timeOutline,
+    mdIcon: timeOutline,
+    childRoutes: ["/job-run-history"]
+  },
+  {
     title: "MDM"
   },
   {

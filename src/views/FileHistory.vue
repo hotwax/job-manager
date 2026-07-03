@@ -41,7 +41,7 @@
           <ion-card class="kpi-card avg-time">
             <ion-card-header>
               <ion-card-subtitle>{{ translate("Avg Time") }}</ion-card-subtitle>
-              <ion-card-title>{{ avgProcessingTime }}</ion-card-title>
+              <ion-card-title><AnimatedNumber :value="avgProcessingTime" />s</ion-card-title>
             </ion-card-header>
           </ion-card>
         </div>
@@ -345,28 +345,10 @@ const globalStats = computed(() => mdmStore.getGlobalStats);
 const totalFilesCount = computed(() => globalStats.value.total);
 const successFilesCount = computed(() => globalStats.value.successful);
 const failedFilesCount = computed(() => globalStats.value.failed);
+const avgProcessingTime = computed(() => Number(globalStats.value.avgProcessingTime) || 0);
 const successRate = computed(() => {
   if (totalFilesCount.value === 0) return 0;
   return ((successFilesCount.value / totalFilesCount.value) * 100).toFixed(1);
-});
-
-const avgProcessingTime = computed(() => {
-  const finishedLogs = rawLogs.value.filter((log: any) => log.createdDate && (log.finishDateTime || log.lastUpdatedTxStamp));
-  if (finishedLogs.length === 0) return "-";
-  
-  const totalDuration = finishedLogs.reduce((sum: number, log: any) => {
-    const end = log.finishDateTime || log.lastUpdatedTxStamp;
-    const diff = end - log.createdDate;
-    return sum + (diff > 0 ? diff : 0);
-  }, 0);
-  
-  const avgDuration = totalDuration / finishedLogs.length;
-  
-  const seconds = Math.floor(avgDuration / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  if (minutes === 0) return `${remainingSeconds}s`;
-  return `${minutes}m ${remainingSeconds}s`;
 });
 
 const selectedConfigText = computed(() => {
