@@ -8,13 +8,6 @@
 
     <ion-content>
       <ion-list>
-        <ion-item
-          button
-          @click="redirectToLegacyApp()"
-        >
-          <ion-icon slot="start" :icon="openOutline" />
-          <ion-label>{{ translate("Legacy App") }}</ion-label>
-        </ion-item>
         <ion-menu-toggle :auto-hide="false" v-for="(page, index) in getValidMenuItems(appPages)" :key="index">
           <ion-item
             v-if="page.url"
@@ -66,7 +59,6 @@ import { translate, commonUtil, emitter } from "@common";
 import { useAuth } from "@common/composables/useAuth";
 import router from "../router";
 import { useUserStore } from "@/store/user";
-import { redirectToLegacyApp } from "@/utils";
 
 const { isAuthenticated } = useAuth();
 const userStore = useUserStore();
