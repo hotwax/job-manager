@@ -171,17 +171,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive } from 'vue';
-import router from '@/router';
-import { IonPage, IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonBadge, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonInput, IonList, IonRadioGroup, IonRadio, IonItem, IonLabel, IonSelect, IonSelectOption, IonSpinner, onIonViewWillEnter} from '@ionic/vue';
-import { downloadOutline, cloudUploadOutline, createOutline, documentTextOutline, trashOutline, sendOutline, cartOutline, cubeOutline, shapesOutline, peopleOutline, arrowUndoOutline } from 'ionicons/icons';
-import { api, translate } from '@common';
-import { saveDataFile, showToast } from '@/utils';
-import { useMdmConfigStore } from '@/store/mdmConfig';
-import { useJobStore } from '@/store/jobs';
-import logger from '@/logger';
-import { getQueueType } from '@/utils/config';
-import { saveAs } from 'file-saver';
+import { ref, computed, reactive } from "vue";
+import router from "@/router";
+import { IonPage, IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonBadge, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonInput, IonList, IonRadioGroup, IonRadio, IonItem, IonLabel, IonSelect, IonSelectOption, IonSpinner, onIonViewWillEnter } from "@ionic/vue";
+import { downloadOutline, cloudUploadOutline, createOutline, documentTextOutline, trashOutline, sendOutline, cartOutline, cubeOutline, shapesOutline, peopleOutline, arrowUndoOutline } from "ionicons/icons";
+import { api, translate } from "@common";
+import { saveDataFile, showToast } from "@/utils";
+import { useMdmConfigStore } from "@/store/mdmConfig";
+import { useJobStore } from "@/store/jobs";
+import logger from "@/logger";
+import { getQueueType } from "@/utils/config";
+import { saveAs } from "file-saver";
 
 const route = router.currentRoute.value;
 const typeId = route.params.type as string; // 'sales-orders', etc.
@@ -192,8 +192,8 @@ const acceptTypes = ".csv, .json";
 const mdmStore = useMdmConfigStore();
 const jobStore = useJobStore();
 
-const config = computed(() => mdmStore.getConfigById(typeId))
-const executionModes = computed(() => mdmStore.getExecutionModes)
+const config = computed(() => mdmStore.getConfigById(typeId));
+const executionModes = computed(() => mdmStore.getExecutionModes);
 
 const isEditing = ref(false);
 const isSaving = ref(false);
@@ -206,7 +206,7 @@ const serviceParameters = ref<Array<any>>([]);
 const areParamsLoading = ref(false);
 // Parameters prefixed with an underscore (e.g. _importId, _recordNumber) are
 // injected by the data manager framework and are not operator inputs.
-const serviceInParameters = computed(() => serviceParameters.value.filter((parameter: any) => !parameter.name?.startsWith("_")));
+const serviceInParameters = computed(() => serviceParameters.value.filter((parameter: any) => !parameter?.name?.startsWith("_")));
 
 const getExecutionModeLabel = (enumId: string) => {
   const mode = executionModes.value.find((mode: any) => mode.enumId === enumId);

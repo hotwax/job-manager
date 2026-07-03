@@ -66,7 +66,7 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
 
         // The endpoint returns the single config as an object
         if (resp.data?.configId) {
-          this.configs.push(resp.data)
+          this.configs.push(resp.data);
         }
       } catch (err) {
         logger.error(`Failed to fetch config with id ${configId}`, err)
@@ -80,13 +80,13 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
           url: "admin/enums",
           method: "get",
           params: { enumTypeId: "DMC_EXEC_MODE", pageSize: 20 }
-        })
+        });
 
         if (Array.isArray(resp.data)) {
-          this.executionModes = resp.data
+          this.executionModes = resp.data;
         }
       } catch (err) {
-        logger.error("Failed to fetch execution modes", err)
+        logger.error("Failed to fetch execution modes", err);
       }
     },
     async updateConfig(configId: string, updates: Record<string, any>) {
@@ -95,14 +95,14 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
           url: `admin/dataManager/${configId}`,
           method: "PUT",
           data: { configId, ...updates }
-        })
+        });
 
-        const config = this.configs.find((config: any) => config.configId === configId)
-        if (config) Object.assign(config, updates)
-        return true
+        const config = this.configs.find((config: any) => config.configId === configId);
+        if (config) Object.assign(config, updates);
+        return true;
       } catch (err) {
-        logger.error(`Failed to update config with id ${configId}`, err)
-        return false
+        logger.error(`Failed to update config with id ${configId}`, err);
+        return false;
       }
     },
     async fetchDataManagerLogs(params = { pageSize: 10, pageIndex: 0 }) {
