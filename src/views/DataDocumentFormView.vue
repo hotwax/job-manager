@@ -451,6 +451,9 @@ const fieldModalMode = ref<"field" | "relation" | "both">("both");
 // Relationship-path depth the modal opened at, so "relation" mode can keep showing
 // only relations at the starting level and reveal fields once the user drills in.
 const modalBaseDepth = ref(0);
+// In "relation" mode, stores the base relationship path segments of the originating group
+// so selectField can build the correct full path for the new related-entity field.
+const modalBaseRelPath = ref<string[]>([]);
 
 const showFieldSection = computed(() => (
   fieldModalMode.value !== "relation" || modalEntityPath.value.length > modalBaseDepth.value
@@ -782,14 +785,14 @@ const openFieldModal = (index: number) => {
 };
 
 const openNewFieldModal = (group: any, mode: "field" | "relation" = "field") => {
-  const fieldPath = group.relationshipPath.length ? `${group.relationshipPath.join(":")}:` : "";
-  const field = graphStore.addFieldPath(fieldPath, "");
-  const nextIndex = graph.value?.fields.findIndex((item: any) => item.fieldSeqId === field?.fieldSeqId) ?? -1;
-  activeFieldIndex.value = nextIndex;
+  // Always defer creation until the user actually picks a field.
+  // No placeholder is added here — avoids blank ghost entries on cancel.
+  activeFieldIndex.value = -1;
+  modalBaseRelPath.value = [...group.relationshipPath];
+  modalEntityPath.value = toModalPath(group.relationshipPath);
   fieldModalMode.value = mode;
   fieldQueryString.value = "";
   fieldPickerNavigation.resetNavigation();
-  modalEntityPath.value = toModalPath(group.relationshipPath);
   modalBaseDepth.value = modalEntityPath.value.length;
   if (modalCurrentEntity.value) {
     utilStore.fetchEntityFields(modalCurrentEntity.value);
@@ -813,17 +816,24 @@ const navigateUp = () => {
 };
 
 const selectField = (field: any) => {
-  if (activeFieldIndex.value !== -1 && graph.value) {
+  if (fieldModalMode.value === "both" && activeFieldIndex.value !== -1 && graph.value) {
+    // Editing an existing field — update it in-place.
     const targetField = graph.value.fields[activeFieldIndex.value];
     const path = modalEntityPath.value.map(r => r.relationshipName).join(":");
     const fullPath = path ? `${path}:${field.fieldName}` : field.fieldName;
-    
     updateField(targetField, { fieldPath: fullPath });
+  } else {
+    // "field" or "relation" mode: deferred creation — build the full path and add a new field.
+    const drilledSegments = modalEntityPath.value.slice(modalBaseDepth.value).map(r => r.relationshipName);
+    const allSegments = [...modalBaseRelPath.value, ...drilledSegments, field.fieldName];
+    const fullPath = allSegments.join(":");
+    graphStore.addFieldPath(fullPath, field.fieldName);
   }
   closeFieldModal();
 };
 
 const closeFieldModal = () => {
+  activeFieldIndex.value = -1;
   fieldModal.value.$el.dismiss();
 };
 </script>
