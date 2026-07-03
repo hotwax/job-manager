@@ -9,12 +9,7 @@
 
     <ion-content>
       <main>
-        <div class="header">
-          <div class="title">
-            <h1>{{ translate("Feeds") }}</h1>
-            <p>{{ translate("Browse Moqui Data Feeds and their attached documents.") }}</p>
-          </div>
-        </div>
+
 
         <ion-card>
           <ion-card-content>
