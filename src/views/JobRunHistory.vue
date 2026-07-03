@@ -275,14 +275,13 @@ import {
   playOutline,
   timeOutline
 } from "ionicons/icons";
-import { DateTime } from "luxon";
 import { computed, ref, watch } from "vue";
 import { commonUtil, translate } from "@common";
 import AnimatedNumber from "@/components/AnimatedNumber.vue";
 import router from "@/router";
 import { useJobStore } from "@/store/jobs";
 import { useUserStore } from "@/store/user";
-import { getDateAndTime } from "@/utils";
+import { getDateAndTime, getTimeInMillis } from "@/utils";
 
 const PAGE_SIZE = 25;
 const RUNS_PER_JOB = 25;
@@ -311,15 +310,6 @@ const jobOptions = computed(() => {
 });
 
 const getRunProductLabel = (run: any) => run.productName || run.instanceOfProductId || "";
-
-const getTimeInMillis = (value: any) => {
-  if (!value) return 0;
-  if (typeof value === "number") return value;
-  const isoDateTime = DateTime.fromISO(value);
-  if (isoDateTime.isValid) return isoDateTime.toMillis();
-  const sqlDateTime = DateTime.fromSQL(value);
-  return sqlDateTime.isValid ? sqlDateTime.toMillis() : 0;
-};
 
 const formatDuration = (milliseconds: number) => {
   if (!milliseconds || milliseconds < 0) return "-";

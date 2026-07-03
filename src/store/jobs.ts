@@ -1,18 +1,8 @@
 import logger from "@/logger";
-import { getCronString } from "@/utils";
+import { getCronString, getTimeInMillis } from "@/utils";
 import { api } from "@common";
-import { DateTime } from "luxon";
 import { defineStore } from "pinia";
 import { useUserStore } from "./user";
-
-const getTimeInMillis = (value: any) => {
-  if (!value) return 0;
-  if (typeof value === "number") return value;
-  const isoDateTime = DateTime.fromISO(value);
-  if (isoDateTime.isValid) return isoDateTime.toMillis();
-  const sqlDateTime = DateTime.fromSQL(value);
-  return sqlDateTime.isValid ? sqlDateTime.toMillis() : 0;
-};
 
 const getRunTime = (run: any) => getTimeInMillis(run.startTime || run.lastUpdatedStamp || run.endTime);
 
