@@ -275,9 +275,10 @@ import {
   IonBadge,
   modalController,
   onIonViewWillEnter,
+  onIonViewWillLeave,
   alertController,
 } from '@ionic/vue';
-import { translate, commonUtil, api } from "@common";
+import { translate, commonUtil, api, emitter } from "@common";
 import { closeOutline, closeCircleOutline, warningOutline, alertCircleOutline } from "ionicons/icons";
 import { computed, ref, watch } from "vue";
 import { useMdmConfigStore } from "@/store/mdmConfig";
@@ -591,7 +592,20 @@ watch(pageIndex, () => {
   fetchLogs();
 });
 
+// Re-run the current query in the new product store context: filters stay as
+// they are and pagination restarts from the first page.
+const handleProductStoreUpdated = async () => {
+  if (isServerSideSearch.value && pageIndex.value !== 0) {
+    pageIndex.value = 0; // the pageIndex watcher refetches
+  } else {
+    pageIndex.value = 0;
+    await fetchLogs();
+  }
+  mdmStore.fetchGlobalStats();
+};
+
 onIonViewWillEnter(async () => {
+  emitter.on("productStoreUpdated", handleProductStoreUpdated);
   if (route.query?.statusId) {
     await mdmStore.updateAppliedFilters("statusId", (route.query.statusId as string).split(","));
   } else {
@@ -601,6 +615,10 @@ onIonViewWillEnter(async () => {
   mdmStore.fetchConfigs();
   await utilStore.fetchStatusItemsByType("DataManagerLog");
   mdmStore.fetchGlobalStats();
+});
+
+onIonViewWillLeave(() => {
+  emitter.off("productStoreUpdated", handleProductStoreUpdated);
 });
 </script>
 

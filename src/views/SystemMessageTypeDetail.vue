@@ -132,12 +132,13 @@ import {
   IonTextarea,
   IonTitle,
   IonToolbar,
-  onIonViewWillEnter
+  onIonViewWillEnter,
+  onIonViewWillLeave
 } from "@ionic/vue";
 import { computed, reactive, ref, watch } from "vue";
 import router from "../router";
 
-import { translate } from "@common";
+import { emitter, translate } from "@common";
 
 import SystemMessageList from "@/components/SystemMessageList.vue";
 import { useSystemMessageStore } from "@/store/systemMessage";
@@ -272,11 +273,23 @@ watch([queryString, selectedStatusId, pageIndex], async (newValue, oldValue) => 
   await store.fetchSystemMessages(payload)
 });
 
+// Reload the entity and its related messages for the new product store
+// context; search and status filters are kept.
+const handleProductStoreUpdated = async () => {
+  pageIndex.value = 0;
+  await loadType();
+};
+
 onIonViewWillEnter(() => {
+  emitter.on("productStoreUpdated", handleProductStoreUpdated);
   pageIndex.value = 0
   queryString.value = ""
   selectedStatusId.value = ""
   loadType()
+});
+
+onIonViewWillLeave(() => {
+  emitter.off("productStoreUpdated", handleProductStoreUpdated);
 });
 </script>
 

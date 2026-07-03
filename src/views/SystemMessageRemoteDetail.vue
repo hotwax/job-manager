@@ -135,12 +135,13 @@ import {
   IonTextarea,
   IonTitle,
   IonToolbar,
-  onIonViewWillEnter
+  onIonViewWillEnter,
+  onIonViewWillLeave
 } from "@ionic/vue";
 import { computed, reactive, ref, watch } from "vue";
 import router from "../router";
 
-import { translate } from "@common";
+import { emitter, translate } from "@common";
 
 import SystemMessageList from "@/components/SystemMessageList.vue";
 import { useSystemMessageStore } from "@/store/systemMessage";
@@ -291,11 +292,23 @@ watch(pageIndex, () => {
   fetchRelatedMessages();
 });
 
+// Reload the remote and its related messages for the new product store
+// context; search and status filters are kept.
+const handleProductStoreUpdated = async () => {
+  pageIndex.value = 0;
+  await loadRemote();
+};
+
 onIonViewWillEnter(() => {
+  emitter.on("productStoreUpdated", handleProductStoreUpdated);
   pageIndex.value = 0
   queryString.value = ""
   selectedStatusId.value = ""
   loadRemote()
+});
+
+onIonViewWillLeave(() => {
+  emitter.off("productStoreUpdated", handleProductStoreUpdated);
 });
 </script>
 

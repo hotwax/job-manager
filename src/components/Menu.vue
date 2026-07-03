@@ -55,7 +55,7 @@
 import { IonContent, IonFooter, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenu, IonMenuToggle, IonNote, IonSelect, IonSelectOption, IonTitle, IonToolbar } from "@ionic/vue";
 import { computed } from "vue";
 import { albumsOutline, cloudDownloadOutline, cloudUploadOutline, constructOutline, documentTextOutline, fileTrayStackedOutline, gitNetworkOutline, globeOutline, openOutline, pulseOutline, searchCircleOutline, settingsOutline, timeOutline } from "ionicons/icons";
-import { translate, commonUtil, emitter } from "@common";
+import { translate, commonUtil } from "@common";
 import { useAuth } from "@common/composables/useAuth";
 import router from "../router";
 import { useUserStore } from "@/store/user";
@@ -194,7 +194,6 @@ const setProductStore = async (value: string) => {
   // https://github.com/ionic-team/ionic-framework/pull/25858
   if(userStore.current && currentProductStore?.productStoreId !== value) {
     await userStore.setCurrentProductStore({ "productStoreId": value })
-    emitter.emit("productStoreUpdated")
   }
 }
 </script>

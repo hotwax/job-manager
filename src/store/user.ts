@@ -1,7 +1,7 @@
 import { DateTime, Settings } from "luxon";
 import { defineStore } from "pinia";
 import { isAppCompatible, redirectToLegacyApp, showToast } from "@/utils";
-import { api, commonUtil, translate } from "@common";
+import { api, commonUtil, emitter, translate } from "@common";
 import logger from "@/logger";
 import { useAuth } from "@common/composables/useAuth";
 import { useUtilStore } from "./util";
@@ -184,6 +184,10 @@ export const useUserStore = defineStore("user", {
       }
       this.currentProductStore = productStore;
       await this.fetchShopifyConfig(productStore.productStoreId);
+      // Notify after the full store context (product store, Shopify config and
+      // selected system message remote) is in place, so listening pages re-run
+      // their current query against the complete new context.
+      emitter.emit("productStoreUpdated");
     },
 
     updatePwaState(payload: any) {

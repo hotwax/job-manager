@@ -130,10 +130,11 @@ import {
   IonSelectOption,
   IonTitle,
   IonToolbar,
-  onIonViewWillEnter
+  onIonViewWillEnter,
+  onIonViewWillLeave
 } from "@ionic/vue";
 import { computed, ref, watch } from "vue";
-import { translate } from "@common";
+import { emitter, translate } from "@common";
 import SystemMessageList from "@/components/SystemMessageList.vue";
 import { useSystemMessageStore } from "@/store/systemMessage";
 import { useUtilStore } from "@/store/util";
@@ -222,7 +223,18 @@ watch([queryString, selectedStatusId, selectedTypeId, selectedParentTypeId, sele
 
 watch(pageIndex, loadMessages);
 
+// Reload the message list for the new product store context, keeping the
+// user's filters and restarting from the first page.
+const handleProductStoreUpdated = async () => {
+  if (pageIndex.value !== 0) {
+    pageIndex.value = 0; // the pageIndex watcher reloads
+    return;
+  }
+  await loadMessages();
+};
+
 onIonViewWillEnter(async () => {
+  emitter.on("productStoreUpdated", handleProductStoreUpdated);
   if (route.query?.statusId) {
     selectedStatusId.value = route.query.statusId as string;
   } else {
@@ -234,6 +246,10 @@ onIonViewWillEnter(async () => {
     store.fetchSystemMessageStatusMetadata()
   ]);
   await loadMessages();
+});
+
+onIonViewWillLeave(() => {
+  emitter.off("productStoreUpdated", handleProductStoreUpdated);
 });
 </script>
 

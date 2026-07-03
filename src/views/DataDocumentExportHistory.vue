@@ -115,11 +115,12 @@ import {
   IonSelectOption,
   IonTitle,
   IonToolbar,
-  onIonViewWillEnter
+  onIonViewWillEnter,
+  onIonViewWillLeave
 } from "@ionic/vue";
 import { computed, ref, watch } from "vue";
 
-import { translate } from "@common";
+import { emitter, translate } from "@common";
 import { getExportStatus } from "@/utils";
 import { useDataDocumentStore } from "@/store/dataDocuments";
 import DataDocumentExportList from "@/components/DataDocumentExportList.vue";
@@ -177,9 +178,21 @@ watch(pageCount, (count) => {
   if (pageIndex.value > count - 1) pageIndex.value = Math.max(0, count - 1);
 });
 
+// Refresh the history for the new product store context; filters are kept and
+// pagination restarts from the first page.
+const handleProductStoreUpdated = async () => {
+  pageIndex.value = 0;
+  await loadHistory();
+};
+
 onIonViewWillEnter(async () => {
+  emitter.on("productStoreUpdated", handleProductStoreUpdated);
   await store.fetchDataDocuments();
   await loadHistory();
+});
+
+onIonViewWillLeave(() => {
+  emitter.off("productStoreUpdated", handleProductStoreUpdated);
 });
 </script>
 
