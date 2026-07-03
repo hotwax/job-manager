@@ -16,7 +16,7 @@
           <p>{{ translate("Ingest CSV or JSON files manually for processing.") }}</p>
         </div>
 
-        <ion-searchbar v-model="queryString" @ionInput="searchConfig" :placeholder="translate('Search uploads')"></ion-searchbar>
+        <ion-searchbar :value="queryString" @ionInput="queryString = ($event as any).detail.value || ''" :placeholder="translate('Search uploads')"></ion-searchbar>
 
         <div class="empty-state" v-if="isLoading">
           <ion-item lines="none">
@@ -53,40 +53,38 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { IonSpinner, IonPage, IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonCard, IonCardContent, IonIcon, IonButton, IonSearchbar, IonLabel, IonItem, onIonViewWillEnter } from '@ionic/vue';
-import { arrowForwardOutline } from 'ionicons/icons';
-import router from '@/router';
-import { translate } from '@common';
-import { useMdmConfigStore } from '@/store/mdmConfig';
+import { computed, ref } from "vue";
+import { IonSpinner, IonPage, IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonCard, IonCardContent, IonIcon, IonButton, IonSearchbar, IonLabel, IonItem, onIonViewWillEnter } from "@ionic/vue";
+import { arrowForwardOutline } from "ionicons/icons";
+import router from "@/router";
+import { translate } from "@common";
+import { useMdmConfigStore } from "@/store/mdmConfig";
 
 const queryString = ref("");
 const mdmStore = useMdmConfigStore();
 
-const configs = computed(() => mdmStore.getConfigs)
-let importConfigs = ref([]) as any
-let isLoading = ref(true)
+const configs = computed(() => mdmStore.getConfigs);
+const isLoading = computed(() => mdmStore.getFetchStatus.configs === "pending");
+
+const importConfigs = computed(() => {
+  const q = queryString.value.trim().toLowerCase();
+  if (!q) return configs.value;
+  return configs.value.filter((config: any) =>
+    config.configId.toLowerCase().includes(q) ||
+    config.scriptTitle?.toLowerCase().includes(q) ||
+    config.description?.toLowerCase().includes(q)
+  );
+});
 
 onIonViewWillEnter(async () => {
-  await mdmStore.fetchConfigs();
-  searchConfig()
-  isLoading.value = false
-})
+  if (!mdmStore.getConfigs.length) {
+    await mdmStore.fetchConfigs();
+  }
+});
 
 const startImport = (typeId: string) => {
   router.push({ name: "ImportDetail", params: { type: typeId }});
-}
-
-const searchConfig = () => {
-  if(!queryString.value.trim()) {
-    importConfigs.value = configs.value
-  }
-  importConfigs.value = configs.value.filter((config: any) =>
-    config.configId.toLowerCase().includes(queryString.value.toLowerCase()) ||
-    config.scriptTitle?.toLowerCase().includes(queryString.value.toLowerCase()) ||
-    config.description?.toLowerCase().includes(queryString.value.toLowerCase())
-  )
-}
+};
 </script>
 
 <style scoped>
