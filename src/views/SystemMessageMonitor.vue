@@ -133,9 +133,7 @@ import {
   onIonViewWillEnter
 } from "@ionic/vue";
 import { computed, ref, watch } from "vue";
-
 import { translate } from "@common";
-
 import SystemMessageList from "@/components/SystemMessageList.vue";
 import { useSystemMessageStore } from "@/store/systemMessage";
 import { useUtilStore } from "@/store/util";

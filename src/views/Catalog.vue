@@ -127,9 +127,6 @@
 
 <script setup lang="ts">
 import {
-  IonBadge,
-  IonButton,
-  IonButtons,
   IonCard,
   IonCardHeader,
   IonCardTitle,
