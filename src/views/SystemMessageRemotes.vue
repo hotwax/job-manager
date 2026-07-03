@@ -14,13 +14,6 @@
 
     <ion-content>
       <main>
-        <div class="header">
-          <div class="title">
-            <h1>{{ translate("Remote Systems") }}</h1>
-            <p>{{ translate("Manage remote endpoints, credentials, and related message traffic.") }}</p>
-          </div>
-        </div>
-
         <ion-searchbar
           :value="queryString"
           @ionInput="queryString = $event.detail.value || ''"
