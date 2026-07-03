@@ -9,13 +9,6 @@
 
     <ion-content>
       <main>
-        <div class="header">
-          <div class="title">
-            <h1>{{ translate("Monitor") }}</h1>
-            <p>{{ translate("Track individual system messages across all types and remote systems.") }}</p>
-          </div>
-        </div>
-
         <ion-card>
           <ion-card-content>
             <ion-searchbar
