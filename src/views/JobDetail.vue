@@ -6,11 +6,6 @@
           <ion-back-button default-href="/catalog"></ion-back-button>
         </ion-buttons>
         <ion-title>{{ job?.jobName || translate('Job Details') }}</ion-title>
-        <ion-buttons v-if="job.paused" slot="end">
-          <ion-button @click="togglePause" :color="job.paused === 'Y' ? 'warning' : 'success'">
-            <ion-icon :icon="job.paused === 'Y' ? playOutline : pauseOutline"></ion-icon>
-          </ion-button>
-        </ion-buttons>
       </ion-toolbar>
     </ion-header>
 
@@ -273,7 +268,13 @@
               <ion-card-header>
                 <ion-card-title class="header-with-action">
                   {{ translate("Schedule") }}
-                  <ion-button fill="clear" @click="editSchedule()">{{ translate("EDIT") }}</ion-button>
+                  <div class="action-buttons">
+                    <ion-button v-if="job.paused" fill="clear" @click="togglePause" :color="job.paused === 'Y' ? 'warning' : 'success'">
+                      <ion-icon slot="start" :icon="job.paused === 'Y' ? playOutline : pauseOutline"></ion-icon>
+                      {{ translate(job.paused === "Y" ? "Resume" : "Pause") }}
+                    </ion-button>
+                    <ion-button fill="clear" @click="editSchedule()">{{ translate("EDIT") }}</ion-button>
+                  </div>
                 </ion-card-title>
               </ion-card-header>
               <ion-card-content>
@@ -398,7 +399,7 @@
                 <ion-item lines="none">
                   <ion-icon slot="start" :icon="run.hasError === 'Y' ? closeCircleOutline : checkmarkCircleOutline" :color="run.hasError === 'Y' ? 'danger' : (run.startTime ? 'success' : 'warning')"></ion-icon>
                   <ion-label>
-                    <h2>#{{ run.jobRunId }}</h2>
+                    #{{ run.jobRunId }}
                     <p>{{ getDateAndTime(run.startTime || run.lastUpdatedStamp) }}</p>
                   </ion-label>
                   <ion-badge slot="end" :color="run.hasError === 'Y' ? 'danger' : (run.startTime ? 'success' : 'warning')">
@@ -418,7 +419,7 @@
                       <ion-icon :icon="personOutline" color="medium"></ion-icon>
                       <ion-label>
                         <p>{{ translate("User") }}</p>
-                        <strong>{{ run.userId || "N/A" }}</strong>
+                        <strong>{{ getRunUserName(run.userId) }}</strong>
                       </ion-label>
                     </div>
                     <div class="stat-item">
@@ -704,6 +705,29 @@ const cancelEditParameters = () => {
 };
 
 async function togglePause() {
+  if (job.value.paused === "N") {
+    const pauseAlert = await alertController.create({
+      header: translate("Pause schedule"),
+      message: translate("Pausing this job will stop future scheduled runs until it is resumed."),
+      buttons: [
+        {
+          text: translate("Cancel"),
+          role: "cancel"
+        },
+        {
+          text: translate("Pause"),
+          handler: async () => {
+            job.value.paused = "Y";
+            await scheduleJob();
+          }
+        }
+      ]
+    });
+
+    await pauseAlert.present();
+    return;
+  }
+
   job.value.paused = job.value.paused === "N" ? "Y" : "N";
   await scheduleJob()
 };
@@ -765,6 +789,9 @@ const loadJob = async () => {
   }
 }
 
+// Show the resolved full name for run users, falling back to the raw user id.
+const getRunUserName = (userId: string) => userStore.getUserFullName(userId) || userId || "N/A";
+
 const loadRuns = async () => {
   if (!job.value?.jobName) {
     return
@@ -782,6 +809,7 @@ const loadRuns = async () => {
     runs.value = Array.isArray(resp) ? resp : []
     hasMoreRuns.value = Array.isArray(resp) && resp.length === pageSize.value
     hasLoadedRuns.value = true
+    await userStore.resolveUserFullNames(runs.value.map((run: any) => run.userId));
   } catch (err) {
     console.error(err)
   } finally {
@@ -833,6 +861,7 @@ const loadMoreRuns = async (event: any) => {
     const resp = await jobStore.fetchJobRuns(route.params.jobName as string, payload)
     if (Array.isArray(resp) && resp.length > 0) {
       runs.value.push(...resp)
+      await userStore.resolveUserFullNames(resp.map((run: any) => run.userId));
     }
     hasMoreRuns.value = Array.isArray(resp) && resp.length === pageSize.value
   } catch (err) {

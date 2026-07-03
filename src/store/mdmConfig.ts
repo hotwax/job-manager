@@ -1,4 +1,5 @@
 import logger from "@/logger";
+import { getTimeInMillis } from "@/utils";
 import { api } from "@common";
 import { defineStore } from "pinia";
 
@@ -9,7 +10,7 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
     logs: [] as Array<any>,
     logsCount: 0,
     filters: {} as Record<string, any>,
-    globalStats: { total: 0, successful: 0, failed: 0 },
+    globalStats: { total: 0, successful: 0, failed: 0, avgProcessingTime: 0 },
     fetchStatus: {
       configs: "none"
     } as any
@@ -213,16 +214,33 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
     },
     async fetchGlobalStats() {
       const moquiStatuses = "DmlsCancelled,DmlsCrashed,DmlsFailed,DmlsFinished,DmlsPending,DmlsQueued,DmlsRunning"
+
+      const getAverageProcessingTime = (logs: Array<any>) => {
+        const finishedLogs = logs.filter((log: any) => log.createdDate && (log.finishDateTime || log.lastUpdatedTxStamp));
+        if (!finishedLogs.length) return 0;
+
+        const totalDuration = finishedLogs.reduce((sum: number, log: any) => {
+          const start = getTimeInMillis(log.createdDate);
+          const end = getTimeInMillis(log.finishDateTime || log.lastUpdatedTxStamp);
+          const diff = end - start;
+          return sum + (diff > 0 ? diff : 0);
+        }, 0);
+
+        return Math.floor(totalDuration / finishedLogs.length / 1000);
+      };
+
       try {
-        const [totalResp, successResp, failedResp] = await Promise.all([
+        const [totalResp, successResp, failedResp, logsResp] = await Promise.all([
           api({ url: "admin/dataManager/details", method: "get", params: { pageSize: 1, pageIndex: 0, statusId: moquiStatuses, statusId_op: "in" } }),
           api({ url: "admin/dataManager/details", method: "get", params: { pageSize: 1, pageIndex: 0, statusId: "DmlsFinished" } }),
-          api({ url: "admin/dataManager/details", method: "get", params: { pageSize: 1, pageIndex: 0, statusId: "DmlsFailed,DmlsCrashed", statusId_op: "in" } })
+          api({ url: "admin/dataManager/details", method: "get", params: { pageSize: 1, pageIndex: 0, statusId: "DmlsFailed,DmlsCrashed", statusId_op: "in" } }),
+          api({ url: "admin/dataManager/details", method: "get", params: { pageSize: 1000, pageIndex: 0, statusId: moquiStatuses, statusId_op: "in" } })
         ])
         this.globalStats = {
           total: totalResp.data?.dataManagerLogsCount || 0,
           successful: successResp.data?.dataManagerLogsCount || 0,
-          failed: failedResp.data?.dataManagerLogsCount || 0
+          failed: failedResp.data?.dataManagerLogsCount || 0,
+          avgProcessingTime: getAverageProcessingTime(logsResp.data?.dataManagerLogs || [])
         }
       } catch (err) {
         logger.error("Failed to fetch global stats", err)

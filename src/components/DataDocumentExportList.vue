@@ -9,7 +9,7 @@
       <ion-item lines="none">
         <ion-icon slot="start" :icon="cloudDownloadOutline" />
         <ion-label>
-          <h2>{{ message.fileName || message.systemMessageId }}</h2>
+          {{ message.fileName || message.systemMessageId }}
           <p>
             {{ translate("System Message") }}: {{ message.systemMessageId }}
             <template v-if="message.dataDocumentId"> · {{ message.dataDocumentId }}</template>

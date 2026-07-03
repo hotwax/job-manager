@@ -83,4 +83,124 @@ describe("job store detail", () => {
 
     expect(jobDetail).toEqual({});
   });
+
+  it("aggregates service job run history across configured jobs", async () => {
+    const store = useJobStore();
+    store.jobs = [
+      { jobName: "syncOrders", serviceName: "co.hotwax.SyncOrders" },
+      { jobName: "indexProducts", serviceName: "co.hotwax.IndexProducts" }
+    ];
+
+    apiMock.mockImplementation(({ url }) => {
+      if (url === "admin/serviceJobs/syncOrders/runs") {
+        return Promise.resolve({
+          data: [
+            {
+              jobRunId: "100",
+              startTime: 1710000000000,
+              endTime: 1710000060000,
+              hasError: "N",
+              userId: "system"
+            },
+            {
+              jobRunId: "101",
+              startTime: 1710000100000,
+              endTime: 1710000120000,
+              hasError: "Y",
+              userId: "system",
+              errors: "Failed to process order"
+            }
+          ]
+        });
+      }
+
+      return Promise.resolve({
+        data: [
+          {
+            jobRunId: "200",
+            startTime: 1710000200000,
+            hasError: "N",
+            userId: "admin",
+            messages: "Running rebuild"
+          }
+        ]
+      });
+    });
+
+    await store.fetchJobRunHistory({ pageSize: 2, pageIndex: 0 });
+
+    expect(apiMock).toHaveBeenCalledTimes(2);
+    expect(store.getJobRunHistoryTotal).toBe(3);
+    expect(store.getJobRunHistoryStats).toEqual({
+      total: 3,
+      successful: 1,
+      failed: 1,
+      running: 1,
+      terminated: 0
+    });
+    expect(store.getJobRunHistory.map((run: any) => run.jobRunId)).toEqual(["200", "101"]);
+    expect(store.getJobRunHistory[0]).toEqual(
+      expect.objectContaining({
+        jobName: "indexProducts",
+        serviceName: "co.hotwax.IndexProducts",
+        runStatus: "running"
+      })
+    );
+  });
+
+  it("filters service job run history by selected job, errors, data logs, user, and query", async () => {
+    const store = useJobStore();
+    store.jobs = [
+      { jobName: "syncOrders", serviceName: "co.hotwax.SyncOrders" },
+      { jobName: "indexProducts", serviceName: "co.hotwax.IndexProducts" }
+    ];
+
+    apiMock.mockResolvedValue({
+      data: [
+        {
+          jobRunId: "300",
+          startTime: 1710000300000,
+          endTime: 1710000310000,
+          hasError: "Y",
+          userId: "system",
+          logs: [{ logId: "M100" }],
+          messages: "Order sync failed"
+        },
+        {
+          jobRunId: "301",
+          startTime: 1710000200000,
+          endTime: 1710000210000,
+          hasError: "N",
+          userId: "system",
+          logs: [{ logId: "M101" }],
+          messages: "Order sync succeeded"
+        }
+      ]
+    });
+
+    await store.fetchJobRunHistory({
+      jobName: "syncOrders",
+      hasError: "Y",
+      hasDataLogs: "Y",
+      userId: "system",
+      queryString: "failed"
+    });
+
+    expect(apiMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: "admin/serviceJobs/syncOrders/runs",
+        params: expect.objectContaining({
+          hasError: "Y"
+        })
+      })
+    );
+    expect(store.getJobRunHistory).toEqual([
+      expect.objectContaining({
+        jobRunId: "300",
+        jobName: "syncOrders",
+        runStatus: "failed"
+      })
+    ]);
+    expect(store.getJobRunHistoryStats.failed).toBe(1);
+  });
 });
