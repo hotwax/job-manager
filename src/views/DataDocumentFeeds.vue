@@ -105,11 +105,11 @@ import {
 import { documentTextOutline, gitNetworkOutline } from "ionicons/icons";
 import { computed, onMounted, ref } from "vue";
 import router from "@/router";
-
 import { translate } from "@common";
 import { useDataDocumentStore } from "@/store/dataDocuments";
 
 const store = useDataDocumentStore();
+
 const queryString = ref("");
 
 const feeds = computed(() => store.getDataFeeds);

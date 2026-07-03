@@ -18,10 +18,10 @@
         <div class="header">
           <div class="title">
             <h1>
-              Job catalog
+              {{ translate("Job catalog") }}
             </h1>
             <p>
-              Manage and configure integration tasks.
+              {{ translate("Manage and configure integration tasks.") }}
             </p>
           </div>
         </div>
@@ -153,8 +153,8 @@ import { emitter, translate } from '@common';
 import CreateJobModal from '@/components/CreateJobModal.vue';
 import { useJobStore } from '@/store/jobs';
 
-const route = router.currentRoute.value;
 const jobStore = useJobStore();
+const route = router.currentRoute.value;
 
 const jobs = computed(() => jobStore.getJobs)
 const categories = computed(() => jobStore.getCategories)
@@ -163,7 +163,7 @@ const categoryRollups = computed(() => jobStore.getCategoryRollups)
 
 onIonViewWillEnter(async () => {
   emitter.on("productStoreUpdated", jobStore.fetchJobs)
-  if (route.query.status) {
+  if (route.query?.status) {
     selectedStatus.value = route.query.status as string;
   } else {
     selectedStatus.value = 'ALL';

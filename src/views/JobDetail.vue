@@ -56,7 +56,7 @@
         <!-- Original Header content -->
         <div class="header-with-action">
           <div class="job-context-header ion-padding">
-            <p class="overline">{{ job.paused === "Y" ? "Paused" : "Enabled" }}</p>
+            <p class="overline">{{ job.paused === "Y" ? translate("Paused") : translate("Enabled") }}</p>
             <h1 class="ion-no-margin">{{ job.jobName }}</h1>
             <p class="ion-text-wrap text-medium ion-margin-bottom">{{ job.description || translate("No description available") }}</p>
             <div class="category-chips">
@@ -158,7 +158,7 @@
                       label-placement="stacked"
                       fill="outline"
                       readonly
-                      :value="job.transactionTimeout ? `${job.transactionTimeout} seconds` : '-'"
+                      :value="job.transactionTimeout ? `${job.transactionTimeout} ${translate('seconds')}` : '-'"
                     />
                   </ion-item>
                   <ion-item>
@@ -169,7 +169,7 @@
                       label-placement="stacked"
                       fill="outline"
                       readonly
-                      :value="job.minRetryTime ? `${job.minRetryTime} min` : '-'"
+                      :value="job.minRetryTime ? `${job.minRetryTime} ${translate('min')}` : '-'"
                     />
                   </ion-item>
                   <ion-item>
@@ -180,7 +180,7 @@
                       label-placement="stacked"
                       fill="outline"
                       readonly
-                      :value="job.expireLockTime ? `${job.expireLockTime} min` : '-'"
+                      :value="job.expireLockTime ? `${job.expireLockTime} ${translate('min')}` : '-'"
                     />
                   </ion-item>
                   <ion-item>
@@ -298,7 +298,7 @@
                       label-placement="stacked"
                       fill="outline"
                       readonly
-                      :value="job.repeatCount === -1 ? 'Infinite' : job.repeatCount || '-'"
+                      :value="job.repeatCount === -1 ? translate('Infinite') : job.repeatCount || '-'"
                     />
                   </ion-item>
                   <ion-item v-if="job.fromDate">

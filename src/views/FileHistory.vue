@@ -283,16 +283,18 @@ import { computed, ref, watch } from "vue";
 import { useMdmConfigStore } from "@/store/mdmConfig";
 import { getFileSize, getDuration, showToast } from "@/utils";
 import logger from "@/logger";
-import { getStatusDesc } from "@/utils/config";
-import { useUtilStore } from "@/store/util";
-import router from "@/router";
 import AnimatedNumber from "@/components/AnimatedNumber.vue";
+import { getStatusDesc } from '@/utils/config';
+import { useUtilStore } from '@/store/util';
+import router from '@/router';
 
 const PAGE_SIZE = 10;
 
-const route = router.currentRoute.value;
+
 const mdmStore = useMdmConfigStore();
 const utilStore = useUtilStore();
+const route = router.currentRoute.value;
+
 
 const queryString = ref("");
 const selectedStatus = ref<string[]>([]);
@@ -419,7 +421,7 @@ const getSuccessRecordCount = (log: any) => {
 
 const getLogStatusLabel = (log: any) => {
   if (log.statusId === "DmlsFinished" && getFailedRecordCount(log) > 0) {
-    return "Finished with errors";
+    return translate("Finished with errors");
   }
   return getStatusDesc(log.statusId);
 };
@@ -590,7 +592,7 @@ watch(pageIndex, () => {
 });
 
 onIonViewWillEnter(async () => {
-  if (route.query.statusId) {
+  if (route.query?.statusId) {
     await mdmStore.updateAppliedFilters("statusId", (route.query.statusId as string).split(","));
   } else {
     await mdmStore.updateAppliedFilters("statusId", []);
