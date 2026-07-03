@@ -333,7 +333,6 @@ export const useJobStore = defineStore("job", {
         const runsPerJob = Number(payload.runsPerJob ?? 25);
         const queryString = (payload.queryString || "").trim().toLowerCase();
         const normalizedQueryString = queryString.replace(/^#/, "");
-        const isRunIdSearch = /^m\d+$/i.test(normalizedQueryString);
         const selectedJobName = payload.jobName || "";
         const selectedUserId = payload.userId || "";
         const selectedStatus = payload.status || "";
@@ -345,20 +344,6 @@ export const useJobStore = defineStore("job", {
         let jobsToLoad = selectedJobName
           ? this.jobs.filter((job: any) => job.jobName === selectedJobName)
           : this.jobs;
-
-        if (queryString && !selectedJobName && !isRunIdSearch && Number.isNaN(Number(queryString))) {
-          jobsToLoad = jobsToLoad.filter((job: any) => {
-            const searchableJobText = [
-              job.jobName,
-              job.serviceName,
-              job.description,
-              job.systemJobEnumId,
-              job.instanceOfProductId,
-              this.products[job.instanceOfProductId]?.productName
-            ].filter(Boolean).join(" ").toLowerCase();
-            return searchableJobText.includes(queryString);
-          });
-        }
 
         const productIds = [...new Set(jobsToLoad.map((job: any) => job.instanceOfProductId).filter(Boolean))] as string[];
         await Promise.all(productIds
@@ -407,7 +392,7 @@ export const useJobStore = defineStore("job", {
               run.results,
               run.errors
             ].filter(Boolean).join(" ").toLowerCase();
-            return searchableRunText.includes(queryString) || (isRunIdSearch && String(run.jobRunId || "").toLowerCase().includes(normalizedQueryString));
+            return searchableRunText.includes(normalizedQueryString);
           });
         }
 
