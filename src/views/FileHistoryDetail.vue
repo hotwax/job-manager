@@ -209,7 +209,7 @@ import {
   onIonViewWillEnter
 } from '@ionic/vue';
 import { computed, ref } from 'vue';
-import { useRouter } from "vue-router";
+import router from "@/router";
 import { translate, commonUtil } from '@common';
 import { useMdmConfigStore } from '@/store/mdmConfig';
 import { getFileSize, showToast, getDuration } from '@/utils';
@@ -225,7 +225,6 @@ const props = defineProps({
   }
 });
 
-const router = useRouter();
 const mdmStore = useMdmConfigStore();
 const logId = props.id;
 
