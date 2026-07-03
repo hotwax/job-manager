@@ -11,10 +11,7 @@
 
     <ion-content>
       <main>
-        <div class="header-section">
-          <h1>{{ translate("Manual Uploads") }}</h1>
-          <p>{{ translate("Ingest CSV or JSON files manually for processing.") }}</p>
-        </div>
+
 
         <ion-searchbar :value="queryString" @ionInput="queryString = ($event as any).detail.value || ''" :placeholder="translate('Search uploads')"></ion-searchbar>
 
@@ -88,10 +85,7 @@ const startImport = (typeId: string) => {
 </script>
 
 <style scoped>
-.header-section {
-  padding: var(--spacer-sm) var(--spacer-xs);
-  margin-bottom: var(--spacer-sm);
-}
+
 
 .imports {
   display: grid;

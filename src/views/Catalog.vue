@@ -15,17 +15,6 @@
 
     <ion-content>
       <main>
-        <div class="header">
-          <div class="title">
-            <h1>
-              {{ translate("Job catalog") }}
-            </h1>
-            <p>
-              {{ translate("Manage and configure integration tasks.") }}
-            </p>
-          </div>
-        </div>
-
         <ion-card>
           <ion-searchbar :value="queryString" @ionInput="queryString = $event.detail.value || ''" :debounce="300" :placeholder="translate('Search jobs')"></ion-searchbar>
           
@@ -280,12 +269,6 @@ const openCreateJobModal = async () => {
 </script>
 
 <style scoped>
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
 
 .categories, .sub-categories, .status-filters {
   padding: 0 8px 8px;
