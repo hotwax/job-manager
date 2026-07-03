@@ -83,14 +83,22 @@
                 fill="outline"
                 @ionInput="updateField(field, { sequenceNum: Number($event.detail.value || 0) })"
               />
-              <ion-toggle
-                class="field-display"
-                :checked="field.defaultDisplay === 'Y'"
-                label-placement="stacked"
-                @ionChange="updateField(field, { defaultDisplay: $event.detail.checked ? 'Y' : 'N' })"
+              <ion-button
+                v-if="field.defaultDisplay === 'Y'"
+                fill="clear"
+                :aria-label="translate('Display toggle')"
+                @click="updateField(field, { defaultDisplay: 'N' })"
               >
-                {{ translate("Display") }}
-              </ion-toggle>
+                <ion-icon slot="icon-only" :icon="eyeOffOutline" />
+              </ion-button>
+              <ion-button
+                v-else
+                fill="clear"
+                :aria-label="translate('Display toggle')"
+                @click="updateField(field, { defaultDisplay: 'Y' })"
+              >
+                <ion-icon slot="icon-only" :icon="eyeOutline" />
+              </ion-button>
               <ion-button
                 class="field-remove-button"
                 fill="clear"
@@ -396,10 +404,9 @@ import {
   IonSelectOption,
   IonSpinner,
   IonTitle,
-  IonToggle,
   IonToolbar
 } from "@ionic/vue";
-import { addOutline, arrowBackOutline, chevronForwardOutline, closeOutline, gitBranchOutline, optionsOutline, refreshOutline, trashOutline } from "ionicons/icons";
+import { addOutline, arrowBackOutline, chevronForwardOutline, closeOutline, eyeOffOutline, eyeOutline, gitBranchOutline, optionsOutline, refreshOutline, trashOutline } from "ionicons/icons";
 import { computed, ref, watch } from "vue";
 import router from "@/router";
 
