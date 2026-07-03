@@ -281,6 +281,20 @@ onIonViewWillEnter(() => {
 </script>
 
 <style scoped>
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.header .title {
+  flex: 1 1 320px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .header-actions {
   display: flex;
   gap: 12px;
