@@ -262,7 +262,7 @@ const payloadTabs = computed(() => {
 const getLogStatusLabel = (logVal: any) => {
   if (!logVal) return "";
   if (logVal.statusId === "DmlsFinished" && failedRecordCount.value > 0) {
-    return "Finished with errors";
+    return translate("Finished with errors");
   }
   return getStatusDesc(logVal.statusId);
 };
