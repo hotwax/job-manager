@@ -156,7 +156,7 @@
                   <ion-icon slot="start" :icon="personOutline" color="medium" />
                   <ion-label>
                     <p>{{ translate("User") }}</p>
-                    {{ run.userId || "-" }}
+                    {{ getRunUserName(run.userId) }}
                   </ion-label>
                 </ion-item>
               </div>
@@ -281,6 +281,7 @@ import { commonUtil, translate } from "@common";
 import AnimatedNumber from "@/components/AnimatedNumber.vue";
 import router from "@/router";
 import { useJobStore } from "@/store/jobs";
+import { useUserStore } from "@/store/user";
 import { getDateAndTime } from "@/utils";
 
 const PAGE_SIZE = 25;
@@ -295,6 +296,8 @@ const selectedJobName = ref("");
 const selectedUserId = ref("");
 const hasDataLogs = ref("");
 const pageIndex = ref(0);
+
+const userStore = useUserStore();
 
 const runs = computed(() => jobStore.getJobRunHistory);
 const total = computed(() => jobStore.getJobRunHistoryTotal);
@@ -383,7 +386,11 @@ const loadRuns = async () => {
   if (hasDataLogs.value) payload.hasDataLogs = hasDataLogs.value;
 
   await jobStore.fetchJobRunHistory(payload);
+  await userStore.resolveUserFullNames(runs.value.map((run: any) => run.userId));
 };
+
+// Show the resolved full name in run cards, falling back to the raw user id.
+const getRunUserName = (userId: string) => userStore.getUserFullName(userId) || userId || "-";
 
 const goToPreviousPage = () => {
   pageIndex.value -= 1;
@@ -414,6 +421,7 @@ watch(pageIndex, async () => {
 });
 
 onIonViewWillEnter(async () => {
+  if (route.query.queryString) queryString.value = route.query.queryString as string;
   if (route.query.status) selectedStatus.value = route.query.status as string;
   if (route.query.jobName) selectedJobName.value = route.query.jobName as string;
   if (route.query.userId) selectedUserId.value = route.query.userId as string;
