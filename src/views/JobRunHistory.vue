@@ -282,13 +282,14 @@ import {
   playOutline,
   timeOutline
 } from "ionicons/icons";
+import { DateTime } from "luxon";
 import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { translate } from "@common";
-import { getDateAndTime } from "@/utils";
-import router from "@/router";
 import AnimatedNumber from "@/components/AnimatedNumber.vue";
+import router from "@/router";
 import { useJobStore } from "@/store/jobs";
+import { getDateAndTime } from "@/utils";
 
 const PAGE_SIZE = 25;
 const RUNS_PER_JOB = 25;
@@ -319,8 +320,10 @@ const getRunProductLabel = (run: any) => run.productName || run.instanceOfProduc
 const getTimeInMillis = (value: any) => {
   if (!value) return 0;
   if (typeof value === "number") return value;
-  const parsed = Date.parse(value);
-  return Number.isNaN(parsed) ? 0 : parsed;
+  const isoDateTime = DateTime.fromISO(value);
+  if (isoDateTime.isValid) return isoDateTime.toMillis();
+  const sqlDateTime = DateTime.fromSQL(value);
+  return sqlDateTime.isValid ? sqlDateTime.toMillis() : 0;
 };
 
 const formatDuration = (milliseconds: number) => {

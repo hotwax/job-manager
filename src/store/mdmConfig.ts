@@ -1,5 +1,6 @@
 import logger from "@/logger";
 import { api } from "@common";
+import { DateTime } from "luxon";
 import { defineStore } from "pinia";
 
 export const useMdmConfigStore = defineStore("mdmConfig", {
@@ -178,25 +179,27 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
     async fetchGlobalStats() {
       const moquiStatuses = "DmlsCancelled,DmlsCrashed,DmlsFailed,DmlsFinished,DmlsPending,DmlsQueued,DmlsRunning"
       const getTimeInMillis = (value: any) => {
-        if (!value) return 0
-        if (typeof value === "number") return value
-        const parsed = Date.parse(value)
-        return Number.isNaN(parsed) ? 0 : parsed
-      }
+        if (!value) return 0;
+        if (typeof value === "number") return value;
+        const isoDateTime = DateTime.fromISO(value);
+        if (isoDateTime.isValid) return isoDateTime.toMillis();
+        const sqlDateTime = DateTime.fromSQL(value);
+        return sqlDateTime.isValid ? sqlDateTime.toMillis() : 0;
+      };
 
       const getAverageProcessingTime = (logs: Array<any>) => {
-        const finishedLogs = logs.filter((log: any) => log.createdDate && (log.finishDateTime || log.lastUpdatedTxStamp))
-        if (!finishedLogs.length) return 0
+        const finishedLogs = logs.filter((log: any) => log.createdDate && (log.finishDateTime || log.lastUpdatedTxStamp));
+        if (!finishedLogs.length) return 0;
 
         const totalDuration = finishedLogs.reduce((sum: number, log: any) => {
-          const start = getTimeInMillis(log.createdDate)
-          const end = getTimeInMillis(log.finishDateTime || log.lastUpdatedTxStamp)
-          const diff = end - start
-          return sum + (diff > 0 ? diff : 0)
-        }, 0)
+          const start = getTimeInMillis(log.createdDate);
+          const end = getTimeInMillis(log.finishDateTime || log.lastUpdatedTxStamp);
+          const diff = end - start;
+          return sum + (diff > 0 ? diff : 0);
+        }, 0);
 
-        return Math.floor(totalDuration / finishedLogs.length / 1000)
-      }
+        return Math.floor(totalDuration / finishedLogs.length / 1000);
+      };
 
       try {
         const [totalResp, successResp, failedResp, logsResp] = await Promise.all([

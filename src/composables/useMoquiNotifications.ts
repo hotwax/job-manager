@@ -93,8 +93,10 @@ export function useMoquiNotifications(options: NotificationOptions = {}) {
     shouldReconnect = true;
     state.value = "connecting";
 
+    let currentSocket: WebSocket;
     try {
-      socket = new WebSocket(socketUrl);
+      currentSocket = new WebSocket(socketUrl);
+      socket = currentSocket;
     } catch (error) {
       logger.error("Failed to create Moqui notification WebSocket", error);
       state.value = "error";
@@ -102,12 +104,14 @@ export function useMoquiNotifications(options: NotificationOptions = {}) {
       return;
     }
 
-    socket.addEventListener("open", () => {
+    currentSocket.addEventListener("open", () => {
+      if (socket !== currentSocket) return;
       state.value = "connected";
       subscribe();
     });
 
-    socket.addEventListener("message", (event) => {
+    currentSocket.addEventListener("message", (event) => {
+      if (socket !== currentSocket) return;
       try {
         const notification = JSON.parse(event.data) as MoquiNotification;
         lastNotification.value = notification;
@@ -117,12 +121,14 @@ export function useMoquiNotifications(options: NotificationOptions = {}) {
       }
     });
 
-    socket.addEventListener("error", (event) => {
+    currentSocket.addEventListener("error", (event) => {
+      if (socket !== currentSocket) return;
       logger.error("Moqui notification WebSocket error", event);
       state.value = "error";
     });
 
-    socket.addEventListener("close", () => {
+    currentSocket.addEventListener("close", () => {
+      if (socket !== currentSocket) return;
       socket = undefined;
       state.value = shouldReconnect ? "disconnected" : "idle";
       scheduleReconnect();

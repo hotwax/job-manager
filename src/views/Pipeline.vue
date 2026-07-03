@@ -562,8 +562,10 @@ let liveRefreshTimeoutId: ReturnType<typeof setTimeout> | undefined;
 const getTimeInMillis = (value: any) => {
   if (!value) return 0;
   if (typeof value === "number") return value;
-  const parsed = Date.parse(value);
-  return Number.isNaN(parsed) ? 0 : parsed;
+  const isoDateTime = DateTime.fromISO(value);
+  if (isoDateTime.isValid) return isoDateTime.toMillis();
+  const sqlDateTime = DateTime.fromSQL(value);
+  return sqlDateTime.isValid ? sqlDateTime.toMillis() : 0;
 };
 
 const scheduleLiveRefresh = () => {
