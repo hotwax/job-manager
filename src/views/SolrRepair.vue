@@ -18,10 +18,7 @@
 
     <ion-content>
       <main>
-        <div class="ion-padding">
-          <h1>{{ translate("Data correction") }}</h1>
-          <p>{{ translate("Rebuild and repair Solr documents to resolve search inconsistencies.") }}</p>
-        </div>
+
 
         <ion-card>
           <ion-card-header>
