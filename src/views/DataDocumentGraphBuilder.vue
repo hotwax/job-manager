@@ -1611,8 +1611,11 @@ onIonViewWillEnter(async () => {
   min-height: 100%;
 }
 
+
 .preview-rows-input {
   max-width: 110px;
+  margin-top: var(--spacer-xs);
+  margin-bottom: var(--spacer-xs);
 }
 
 .graph-metadata-list {
