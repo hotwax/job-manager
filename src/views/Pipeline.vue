@@ -18,13 +18,7 @@
 
     <ion-content>
       <main>
-        <!-- Header Page Title -->
-        <div class="header ion-margin-bottom">
-          <div class="title">
-            <h1>{{ translate("Integration Dashboard") }}</h1>
-            <p>{{ translate("Real-time overview of integration tasks, system messages, and data pipeline health.") }}</p>
-          </div>
-        </div>
+
 
         <!-- KPI Metrics Grid -->
         <div class="metrics-grid ion-margin-bottom">
@@ -522,6 +516,7 @@ import {
 } from "ionicons/icons";
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { DateTime } from "luxon";
+import { useMoquiNotifications } from "@/composables/useMoquiNotifications";
 import router from "@/router";
 import { translate, emitter } from "@common";
 import { useJobStore } from "@/store/jobs";
@@ -529,7 +524,6 @@ import { useSystemMessageStore } from "@/store/systemMessage";
 import { useMdmConfigStore } from "@/store/mdmConfig";
 import { useUtilStore } from "@/store/util";
 import { getFileSize, showToast } from "@/utils";
-import { useMoquiNotifications } from "@/composables/useMoquiNotifications";
 
 const jobStore = useJobStore();
 const systemMessageStore = useSystemMessageStore();
@@ -596,21 +590,33 @@ const upsertById = (items: any[], item: any, idField: string, limit = 50) => {
 };
 
 const applyLiveJobRunDocuments = (documents: Array<Record<string, any>>) => {
+  const validJobNames = new Set(jobs.value.map((job: any) => job.jobName));
   const nextJobRunsMap = { ...jobRunsMap.value };
+  let updated = false;
+
   documents.forEach((document: any) => {
-    if (!document.jobName || !document.jobRunId) return;
+    if (!document.jobName || !document.jobRunId || !validJobNames.has(document.jobName)) return;
     const runs = upsertById(nextJobRunsMap[document.jobName] || [], document, "jobRunId", 15)
       .sort((first: any, second: any) => getTimeInMillis(second.startTime || second.lastUpdatedStamp) - getTimeInMillis(first.startTime || first.lastUpdatedStamp));
     nextJobRunsMap[document.jobName] = runs;
+    updated = true;
   });
-  jobRunsMap.value = nextJobRunsMap;
+
+  if (updated) {
+    jobRunsMap.value = nextJobRunsMap;
+  }
 };
 
 const applyLiveDataManagerDocuments = (documents: Array<Record<string, any>>) => {
-  const logs = documents.map((document: any) => ({
-    ...document,
-    statusId: document.statusId || document.logStatusId
-  }));
+  const validConfigIds = new Set(mdmStore.configs.map((config: any) => config.configId));
+  const logs = documents
+    .filter((document: any) => validConfigIds.has(document.configId))
+    .map((document: any) => ({
+      ...document,
+      statusId: document.statusId || document.logStatusId
+    }));
+
+  if (!logs.length) return;
 
   mdmStore.$patch((state: any) => {
     state.logs = logs.reduce((items: any[], log: any) => upsertById(items, log, "logId", 50), state.logs);
@@ -658,7 +664,7 @@ const liveNotifications = useMoquiNotifications({
   }
 });
 
-const liveNotificationsConnected = computed(() => liveNotifications.isConnected.value);
+const liveNotificationsConnected = liveNotifications.isConnected;
 
 onMounted(() => {
   refreshIntervalId = setInterval(() => {
@@ -1086,11 +1092,7 @@ onIonViewWillLeave(() => {
 </script>
 
 <style scoped>
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
+
 
 .metrics-grid {
   display: grid;

@@ -50,6 +50,12 @@ const getNotificationSocketUrl = () => {
   }
 };
 
+/**
+ * Opens a Moqui notification WebSocket and exposes reactive connection state.
+ *
+ * @param options - Topics, callbacks, and reconnect timing for the connection.
+ * @returns Reactive state plus connect and disconnect controls.
+ */
 export function useMoquiNotifications(options: NotificationOptions = {}) {
   const topics = options.topics || JOB_MANAGER_NOTIFICATION_TOPICS;
   const reconnectDelayMs = options.reconnectDelayMs ?? 5000;
