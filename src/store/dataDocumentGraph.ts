@@ -112,6 +112,35 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
     },
     updateMetadata(patch: Record<string, any>) {
       if (!this.graph) return;
+      
+      if (patch.primaryEntityName && patch.primaryEntityName !== this.graph.metadata.primaryEntityName) {
+        for (const field of this.graph.fields) {
+          const persistedSeqId = field.sourceRecord?.fieldSeqId;
+          if (persistedSeqId && !this.removedFieldSeqIds.includes(persistedSeqId)) {
+            this.removedFieldSeqIds.push(persistedSeqId);
+          }
+        }
+        for (const condition of this.graph.conditions) {
+          const persistedSeqId = condition.sourceRecord?.conditionSeqId;
+          if (persistedSeqId && !this.removedConditionSeqIds.includes(persistedSeqId)) {
+            this.removedConditionSeqIds.push(persistedSeqId);
+          }
+        }
+        this.relAliases = [];
+        this.links = [];
+        this.graph = projectDataDocumentGraph({
+          document: {
+            ...this.graph.metadata,
+            ...patch
+          },
+          fields: [],
+          conditions: [],
+          relAliases: [],
+          links: []
+        });
+        return;
+      }
+      
       const nextMetadata = { ...this.graph.metadata, ...patch };
       if ("dataDocumentId" in patch) {
         // User set the id by hand — stop deriving it from the name.
