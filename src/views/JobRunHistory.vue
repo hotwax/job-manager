@@ -284,7 +284,6 @@ import {
 } from "ionicons/icons";
 import { DateTime } from "luxon";
 import { computed, ref, watch } from "vue";
-import { useRoute } from "vue-router";
 import { translate } from "@common";
 import AnimatedNumber from "@/components/AnimatedNumber.vue";
 import router from "@/router";
@@ -294,7 +293,7 @@ import { getDateAndTime } from "@/utils";
 const PAGE_SIZE = 25;
 const RUNS_PER_JOB = 25;
 
-const route = useRoute();
+const route = router.currentRoute.value;
 const jobStore = useJobStore();
 
 const queryString = ref("");
