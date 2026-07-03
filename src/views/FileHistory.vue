@@ -5,7 +5,7 @@
         <ion-buttons slot="start">
           <ion-menu-button />
         </ion-buttons>
-        <ion-title>{{ translate("File History") }}</ion-title>
+        <ion-title>{{ translate("File history") }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
