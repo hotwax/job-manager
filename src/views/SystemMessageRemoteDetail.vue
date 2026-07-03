@@ -261,11 +261,7 @@ const goToNextPage = () => {
   pageIndex.value += 1;
 };
 
-watch([queryString, selectedStatusId], () => {
-  pageIndex.value = 0
-})
-
-watch([pageIndex], async () => {
+const fetchRelatedMessages = async () => {
   const payload = {
     systemMessageRemoteId: props.id,
     pageIndex: pageIndex.value,
@@ -281,6 +277,18 @@ watch([pageIndex], async () => {
   }
 
   await systemMessageStore.fetchSystemMessages(payload)
+}
+
+watch([queryString, selectedStatusId], () => {
+  if (pageIndex.value !== 0) {
+    pageIndex.value = 0;
+  } else {
+    fetchRelatedMessages();
+  }
+})
+
+watch(pageIndex, () => {
+  fetchRelatedMessages();
 });
 
 onIonViewWillEnter(() => {
