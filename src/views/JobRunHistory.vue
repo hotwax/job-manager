@@ -11,13 +11,6 @@
 
     <ion-content>
       <main>
-        <div class="header">
-          <div>
-            <h1>{{ translate("Service job runs") }}</h1>
-            <p>{{ translate("Review recent service job executions across configured jobs.") }}</p>
-          </div>
-        </div>
-
         <div class="kpi-grid">
           <ion-card>
             <ion-card-header>
@@ -437,14 +430,6 @@ onIonViewWillEnter(async () => {
 </script>
 
 <style scoped>
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--spacer-base);
-  flex-wrap: wrap;
-}
-
 .kpi-grid,
 .filter-grid,
 .run-metrics {
@@ -506,7 +491,6 @@ onIonViewWillEnter(async () => {
 }
 
 @media (max-width: 600px) {
-  .header ion-button,
   .pagination ion-button {
     width: 100%;
   }
