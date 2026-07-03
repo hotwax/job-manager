@@ -22,10 +22,7 @@
       </ion-refresher>
 
       <main>
-        <div class="ion-padding">
-          <h1>{{ translate("Solr Monitoring") }}</h1>
-          <p>{{ translate("Track search service health, collection statistics, core ping latencies, and performance metrics.") }}</p>
-        </div>
+
 
         <ion-card>
           <ion-card-header>

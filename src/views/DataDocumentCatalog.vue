@@ -15,13 +15,6 @@
 
     <ion-content>
       <main>
-        <div class="header">
-          <div class="title">
-            <h1>{{ translate("Documents") }}</h1>
-            <p>{{ translate("Browse saved Moqui Data Document definitions.") }}</p>
-          </div>
-        </div>
-
         <ion-card>
           <ion-card-content>
             <ion-searchbar
