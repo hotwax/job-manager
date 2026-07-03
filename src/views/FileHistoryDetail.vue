@@ -331,9 +331,11 @@ const failureSummary = computed(() => {
   return translate("records failed to import.", { failed: failedRecordCount.value, total: log.value.totalRecordCount ?? "-" });
 });
 
-// The failed records file tags every record with an _ERROR_MESSAGE_. Group the
-// messages after masking record-specific ids/numbers so operators see each
-// distinct reason once, with the first raw message of the group as the example.
+// The failed records file tags every record with the failure message: JSON
+// error files carry an _ERROR_MESSAGE_ key while CSV error files add an
+// ErrorMessage column (MaargDataLoaderImpl). Group the messages after masking
+// record-specific ids/numbers so operators see each distinct reason once, with
+// the first raw message of the group as the example.
 const failureReasons = computed(() => {
   const errorPayload = payloads.value.errors;
   const records: any[] = errorPayload.contentType === "csv"
@@ -342,9 +344,9 @@ const failureReasons = computed(() => {
 
   const groups = new Map<string, { message: string; count: number }>();
   records.forEach((record: any) => {
-    const message = String(record?.["_ERROR_MESSAGE_"] || "").trim();
+    const message = String(record?.["_ERROR_MESSAGE_"] ?? record?.["ErrorMessage"] ?? "").trim();
     if (!message) return;
-    const groupKey = message.replace(/\[[^\]]*\]/g, "[…]").replace(/'[^']*'/g, "'…'").replace(/\d+/g, "#");
+    const groupKey = message.replace(/\[[^\]]*\]/g, "[…]").replace(/'[^']*'/g, "'…'").replace(/"[^"]*"/g, "\"…\"").replace(/\d+/g, "#");
     const group = groups.get(groupKey);
     if (group) {
       group.count++;
@@ -403,7 +405,11 @@ async function loadRetryLog(logData: any) {
   if (logData.statusId !== "DmlsCrashed") return;
   const retryLogs = await mdmStore.fetchRetryLogs(logData.logId);
   if (retryLogs.length) {
-    retryLog.value = retryLogs.sort((logA: any, logB: any) => (logB.createdDate || 0) - (logA.createdDate || 0))[0];
+    retryLog.value = retryLogs.sort((logA: any, logB: any) => {
+      const dateA = logA.createdDate ?? 0;
+      const dateB = logB.createdDate ?? 0;
+      return dateA < dateB ? 1 : (dateA > dateB ? -1 : 0);
+    })[0];
   }
 }
 

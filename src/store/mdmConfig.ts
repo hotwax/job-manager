@@ -149,7 +149,7 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
         // content record; collapse the rows back to unique logs.
         const logsById = new Map<string, any>()
         resp.data.forEach((row: any) => {
-          if (!logsById.has(row.logId)) logsById.set(row.logId, row)
+          if (row?.logId && !logsById.has(row.logId)) logsById.set(row.logId, row)
         })
         return Array.from(logsById.values())
       } catch (err) {
