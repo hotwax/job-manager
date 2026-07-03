@@ -21,12 +21,16 @@
           </div>
         </div>
 
-        <ion-searchbar
-          :value="queryString"
-          @ionInput="queryString = $event.detail.value || ''"
-          :debounce="300"
-          :placeholder="translate('Search by type ID or description')"
-        />
+        <ion-card>
+          <ion-card-content>
+            <ion-searchbar
+              :value="queryString"
+              @ionInput="queryString = $event.detail.value || ''"
+              :debounce="300"
+              :placeholder="translate('Search by type ID or description')"
+            />
+          </ion-card-content>
+        </ion-card>
 
         <div class="catalog-grid">
           <div v-for="type in filteredTypes" :key="type.systemMessageTypeId">
