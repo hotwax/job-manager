@@ -95,7 +95,7 @@
               </ion-item-divider>
               <ion-item>
                 <ion-label>
-                  <h2>{{ selectedNode.label }}</h2>
+                  {{ selectedNode.label }}
                   <p>{{ selectedNode.entityName }}</p>
                   <p>{{ selectedNode.relationshipType || translate("unknown") }}</p>
                 </ion-label>
@@ -119,7 +119,7 @@
               </ion-item-divider>
               <ion-item v-for="field in selectedNodeFields" :key="field.fieldSeqId || field.fieldPath" button @click="selectField(field.fieldSeqId || field.fieldPath)">
                 <ion-label>
-                  <h2>{{ field.outputName }}</h2>
+                  {{ field.outputName }}
                   <p>{{ field.fieldPath }}</p>
                 </ion-label>
                 <ion-badge v-if="field.functionName" slot="end" color="tertiary">{{ functionLabel(field.functionName) }}</ion-badge>
@@ -136,7 +136,7 @@
               </ion-item-divider>
               <ion-item>
                 <ion-label>
-                  <h2>{{ selectedEdge.alias || selectedEdge.relationshipName }}</h2>
+                  {{ selectedEdge.alias || selectedEdge.relationshipName }}
                   <p>{{ selectedEdge.pathText }}</p>
                   <p>{{ selectedEdge.relationshipType }}</p>
                 </ion-label>
@@ -231,7 +231,7 @@
               >
                 <ion-icon slot="start" :icon="filterOutline" color="warning" />
                 <ion-label>
-                  <h2>{{ getConditionExpression(condition) }}</h2>
+                  {{ getConditionExpression(condition) }}
                   <p v-if="getConditionValue(condition) !== ''">{{ translate("Field Value") }}: {{ getConditionValue(condition) }}</p>
                   <p v-if="condition.toFieldNameAlias">{{ translate("To Field") }}: {{ condition.toFieldNameAlias }}</p>
                   <p v-if="condition.postQuery">{{ translate("Post Query") }}: {{ condition.postQuery }}</p>
@@ -245,7 +245,7 @@
             <ion-list v-else>
               <ion-item>
                 <ion-label>
-                  <h2>{{ translate("Select a node, edge, or field") }}</h2>
+                  {{ translate("Select a node, edge, or field") }}
                   <p>{{ translate("The inspector edits the selected graph element.") }}</p>
                 </ion-label>
               </ion-item>
@@ -284,7 +284,7 @@
           <ion-list v-if="bottomPanel === 'issues'">
             <ion-item v-for="issue in graph.validationIssues" :key="issue.code + issue.targetId">
               <ion-label>
-                <h2>{{ issue.severity }}</h2>
+                {{ issue.severity }}
                 <p>{{ issue.message }}</p>
               </ion-label>
             </ion-item>
@@ -306,7 +306,7 @@
             >
               <ion-icon slot="start" :icon="filterOutline" />
               <ion-label>
-                <h2>{{ getConditionExpression(condition) }}</h2>
+                {{ getConditionExpression(condition) }}
                 <p>{{ translate("Target") }}: {{ getConditionTargetLabel(condition) }}</p>
                 <p v-if="getConditionValue(condition) !== ''">{{ translate("Field Value") }}: {{ getConditionValue(condition) }}</p>
                 <p v-if="condition.toFieldNameAlias">{{ translate("To Field") }}: {{ condition.toFieldNameAlias }}</p>
@@ -346,7 +346,7 @@
               <ion-item v-else-if="previewStatus === 'error'" lines="none">
                 <ion-icon slot="start" :icon="alertCircleOutline" color="danger" />
                 <ion-label class="ion-text-wrap">
-                  <h2>{{ translate("Preview failed") }}</h2>
+                  {{ translate("Preview failed") }}
                   <p>{{ previewError }}</p>
                 </ion-label>
               </ion-item>
@@ -377,7 +377,7 @@
                 <ion-list-header>{{ translate("Scheduled email exports") }}</ion-list-header>
                 <ion-item v-for="job in scheduledExports" :key="job.jobName">
                   <ion-label>
-                    <h2>{{ job.toEmailAddress || job.jobName }}</h2>
+                    {{ job.toEmailAddress || job.jobName }}
                     <p>{{ job.cronDescription || job.cronExpression }}</p>
                     <p v-if="job.nextExecutionDateTime">{{ translate("Next") }}: {{ getDateAndTime(job.nextExecutionDateTime) }}</p>
                     <p v-if="job.paused === 'Y'"><ion-text color="warning">{{ translate("Paused") }}</ion-text></p>
@@ -586,14 +586,14 @@
               @keydown="relatedFieldPickerNavigation.handleItemKeydown($event, getRelatedFieldPickerIndex('relationship', relationship.relationshipName))"
             >
               <ion-label>
-                <h2>{{ relationship.title || relationship.relationshipName }}</h2>
+                {{ relationship.title || relationship.relationshipName }}
                 <p>{{ relationship.relationshipName }}</p>
                 <p>{{ relationship.relatedEntityName }} · {{ relationship.type || translate("unknown") }}</p>
               </ion-label>
             </ion-item>
             <ion-item v-if="!filteredActiveEntityRelationships.length">
               <ion-label>
-                <h2>{{ translate("No relationships loaded") }}</h2>
+                {{ translate("No relationships loaded") }}
                 <p>{{ translate("No relationship metadata is available for this entity.") }}</p>
               </ion-label>
             </ion-item>
@@ -608,7 +608,7 @@
             </ion-item-divider>
             <ion-item v-if="selectedRelationship">
               <ion-label>
-                <h2>{{ selectedRelationship.title || selectedRelationship.relationshipName }}</h2>
+                {{ selectedRelationship.title || selectedRelationship.relationshipName }}
                 <p>{{ selectedRelationship.relationshipName }}</p>
                 <p>{{ selectedRelationship.relatedEntityName }} · {{ selectedRelationship.type || translate("unknown") }}</p>
               </ion-label>
@@ -632,13 +632,13 @@
             </ion-item>
             <ion-item>
               <ion-label>
-                <h2>{{ translate("Generated path") }}</h2>
+                {{ translate("Generated path") }}
                 <p>{{ relatedRelationshipPath || translate("Enter a relationship path, then choose a field.") }}</p>
               </ion-label>
             </ion-item>
             <ion-item v-if="selectedRelationship">
               <ion-label>
-                <h2>{{ translate("Join") }}</h2>
+                {{ translate("Join") }}
                 <p>{{ selectedRelationshipJoinSummary }}</p>
               </ion-label>
             </ion-item>
@@ -658,7 +658,7 @@
             <ion-item button lines="full" @click="relatedFieldStep = 'confirm'">
               <ion-icon slot="start" :icon="arrowBackOutline" />
               <ion-label>
-                <h2>{{ relatedEntityName }}</h2>
+                {{ relatedEntityName }}
                 <p>{{ relatedRelationshipPath }}</p>
               </ion-label>
             </ion-item>
@@ -681,7 +681,7 @@
                 @ionChange="toggleRelatedField(field.fieldName, $event.detail.checked)"
               >
                 <ion-label>
-                  <h2>{{ field.fieldName }}</h2>
+                  {{ field.fieldName }}
                   <p>{{ [relatedRelationshipPath, field.fieldName].filter(Boolean).join(":") }}</p>
                   <p v-if="field.description">{{ field.description }}</p>
                 </ion-label>
