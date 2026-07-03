@@ -108,7 +108,7 @@ let appPages = [
     childRoutes: ["/manual-uploads/"]
   },
   {
-    title: "System Messages"
+    title: "System messages"
   },
   {
     title: "Message history",
@@ -132,7 +132,7 @@ let appPages = [
     childRoutes: ["/system-message-remotes/"]
   },
   {
-    title: "Data Documents"
+    title: "Data documents"
   },
   {
     title: "Documents",
@@ -156,7 +156,7 @@ let appPages = [
     childRoutes: ["/data-document-export-history/"]
   },
   {
-    title: "System Health"
+    title: "System health"
   },
   {
     title: "Solr Monitoring",
