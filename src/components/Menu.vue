@@ -94,7 +94,7 @@ let appPages = [
     title: "MDM"
   },
   {
-    title: "File history",
+    title: "File History",
     url: "/file-history",
     iosIcon: timeOutline,
     mdIcon: timeOutline,
@@ -111,7 +111,7 @@ let appPages = [
     title: "System Messages"
   },
   {
-    title: "Monitor",
+    title: "Message History",
     url: "/system-messages",
     iosIcon: pulseOutline,
     mdIcon: pulseOutline,
