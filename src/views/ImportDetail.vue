@@ -344,18 +344,6 @@ onIonViewWillEnter(async () => {
   justify-content: space-between;
 }
 
-.queue-selection ion-radio-group {
- display: flex; 
- gap: var(--spacer-base);
- flex-wrap: wrap;
-}
-
-.queue-item {
-  border: 1px solid var(--ion-color-light);
-  border-radius: 8px;
-  flex: 1;
-}
-
 .upload-area {
   border: 2px dashed var(--ion-color-medium);
   border-radius: 12px;
@@ -374,30 +362,17 @@ onIonViewWillEnter(async () => {
   text-decoration: none;
 }
 
-.selected-file {
-  border: 1px solid var(--ion-color-light);
-  border-radius: 8px;
-  margin-top: var(--spacer-base);
-}
-
 .footer-actions {
   display: flex;
   justify-content: flex-end;
-  gap: var(--spacer-sm);
-  padding-top: var(--spacer-sm);
 }
 
-/* Configuration + Import Service Parameters side by side on desktop */
 .meta-cards {
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--spacer-base);
   align-items: start;
   margin-top: var(--spacer-lg);
-}
-
-.meta-cards ion-card {
-  margin: 0;
 }
 
 @media (min-width: 992px) {
