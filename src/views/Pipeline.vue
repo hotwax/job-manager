@@ -5,9 +5,6 @@
         <ion-menu-button slot="start" />
         <ion-title>{{ translate("Dashboard") }}</ion-title>
         <ion-buttons slot="end">
-          <ion-badge :color="liveNotificationsConnected ? 'success' : 'medium'">
-            {{ liveNotificationsConnected ? translate("Live Updates Active") : translate("Live Updates Offline") }}
-          </ion-badge>
           <ion-button :disabled="isLoading" @click="refreshData">
             <ion-spinner v-if="isLoading" name="crescent" slot="icon-only" />
             <ion-icon v-else slot="icon-only" :icon="syncOutline" />
@@ -529,7 +526,6 @@ import { useSystemMessageStore } from "@/store/systemMessage";
 import { useMdmConfigStore } from "@/store/mdmConfig";
 import { useUtilStore } from "@/store/util";
 import { getFileSize, showToast } from "@/utils";
-import { useMoquiNotifications } from "@/composables/useMoquiNotifications";
 
 const jobStore = useJobStore();
 const systemMessageStore = useSystemMessageStore();
@@ -557,108 +553,6 @@ const lastRefreshedRelative = computed(() => {
 });
 
 let refreshIntervalId: any = null;
-let liveRefreshTimeoutId: ReturnType<typeof setTimeout> | undefined;
-
-const getTimeInMillis = (value: any) => {
-  if (!value) return 0;
-  if (typeof value === "number") return value;
-  const isoDateTime = DateTime.fromISO(value);
-  if (isoDateTime.isValid) return isoDateTime.toMillis();
-  const sqlDateTime = DateTime.fromSQL(value);
-  return sqlDateTime.isValid ? sqlDateTime.toMillis() : 0;
-};
-
-const scheduleLiveRefresh = () => {
-  if (liveRefreshTimeoutId) clearTimeout(liveRefreshTimeoutId);
-  liveRefreshTimeoutId = setTimeout(() => {
-    refreshData();
-  }, 5000);
-};
-
-const getLiveNotificationLabel = (notification: any) => {
-  if (notification.title) return notification.title;
-  if (notification.topic === "JobManagerServiceJobRun") return translate("Service job run updated");
-  if (notification.topic === "JobManagerDataManagerLog") return translate("Data manager log updated");
-  if (notification.topic === "JobManagerSystemMessage") return translate("System message updated");
-  return translate("Dashboard updated");
-};
-
-const upsertById = (items: any[], item: any, idField: string, limit = 50) => {
-  if (!item?.[idField]) return items;
-  const nextItems = [...items];
-  const index = nextItems.findIndex((existing: any) => existing[idField] === item[idField]);
-  if (index >= 0) {
-    nextItems[index] = { ...nextItems[index], ...item };
-  } else {
-    nextItems.unshift(item);
-  }
-  return nextItems.slice(0, limit);
-};
-
-const applyLiveJobRunDocuments = (documents: Array<Record<string, any>>) => {
-  const nextJobRunsMap = { ...jobRunsMap.value };
-  documents.forEach((document: any) => {
-    if (!document.jobName || !document.jobRunId) return;
-    const runs = upsertById(nextJobRunsMap[document.jobName] || [], document, "jobRunId", 15)
-      .sort((first: any, second: any) => getTimeInMillis(second.startTime || second.lastUpdatedStamp) - getTimeInMillis(first.startTime || first.lastUpdatedStamp));
-    nextJobRunsMap[document.jobName] = runs;
-  });
-  jobRunsMap.value = nextJobRunsMap;
-};
-
-const applyLiveDataManagerDocuments = (documents: Array<Record<string, any>>) => {
-  const logs = documents.map((document: any) => ({
-    ...document,
-    statusId: document.statusId || document.logStatusId
-  }));
-
-  mdmStore.$patch((state: any) => {
-    state.logs = logs.reduce((items: any[], log: any) => upsertById(items, log, "logId", 50), state.logs);
-    state.logsCount = Math.max(state.logsCount || 0, state.logs.length);
-  });
-};
-
-const applyLiveSystemMessageDocuments = (documents: Array<Record<string, any>>) => {
-  systemMessageStore.$patch((state: any) => {
-    state.systemMessages = documents.reduce((items: any[], message: any) => upsertById(items, message, "systemMessageId", 50), state.systemMessages);
-    state.systemMessageTotal = Math.max(state.systemMessageTotal || 0, state.systemMessages.length);
-  });
-};
-
-const applyLiveDocuments = (notification: any) => {
-  const documents = notification.message?.documents;
-  const dataDocumentId = notification.message?.dataDocumentId;
-  if (!Array.isArray(documents) || !dataDocumentId) return false;
-
-  if (dataDocumentId === "JOB_MANAGER_SERVICE_JOB_RUN") {
-    applyLiveJobRunDocuments(documents);
-    return true;
-  }
-
-  if (dataDocumentId === "JOB_MANAGER_DATA_MANAGER_LOG") {
-    applyLiveDataManagerDocuments(documents);
-    return true;
-  }
-
-  if (dataDocumentId === "SYSTEM_MESSAGE_DATA_MANAGER_LOG") {
-    applyLiveSystemMessageDocuments(documents);
-    return true;
-  }
-
-  return false;
-};
-
-const liveNotifications = useMoquiNotifications({
-  onNotification: (notification) => {
-    applyLiveDocuments(notification);
-    scheduleLiveRefresh();
-    if (notification.showAlert !== false) {
-      showToast(getLiveNotificationLabel(notification));
-    }
-  }
-});
-
-const liveNotificationsConnected = computed(() => liveNotifications.isConnected.value);
 
 onMounted(() => {
   refreshIntervalId = setInterval(() => {
@@ -668,7 +562,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (refreshIntervalId) clearInterval(refreshIntervalId);
-  if (liveRefreshTimeoutId) clearTimeout(liveRefreshTimeoutId);
 });
 
 // Helper to calculate run duration in seconds
@@ -1074,14 +967,11 @@ const refreshData = async () => {
 
 onIonViewWillEnter(async () => {
   emitter.on("productStoreUpdated", refreshData);
-  liveNotifications.connect();
   await refreshData();
 });
 
 onIonViewWillLeave(() => {
   emitter.off("productStoreUpdated", refreshData);
-  liveNotifications.disconnect();
-  if (liveRefreshTimeoutId) clearTimeout(liveRefreshTimeoutId);
 });
 </script>
 
