@@ -243,6 +243,15 @@ const redirectToLegacyApp = () => {
   window.location.href = link.replace("{oms}", oms).replace("{token}", token).replace("{expirationTime}", expirationTime).replace("{omsRedirectionUrl}", maarg)
 }
 
+const getTimeInMillis = (value: any) => {
+  if (!value) return 0;
+  if (typeof value === "number") return value;
+  const isoDateTime = DateTime.fromISO(value);
+  if (isoDateTime.isValid) return isoDateTime.toMillis();
+  const sqlDateTime = DateTime.fromSQL(value);
+  return sqlDateTime.isValid ? sqlDateTime.toMillis() : 0;
+};
+
 export {
   downloadDataDocumentExport,
   getExportStatus,
@@ -257,5 +266,6 @@ export {
   saveDataFile,
   timeTillRun,
   getDuration,
-  getFileSize
+  getFileSize,
+  getTimeInMillis
 }
