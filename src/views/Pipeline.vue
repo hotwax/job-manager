@@ -15,13 +15,7 @@
 
     <ion-content>
       <main>
-        <!-- Header Page Title -->
-        <div class="header ion-margin-bottom">
-          <div class="title">
-            <h1>{{ translate("Integration Dashboard") }}</h1>
-            <p>{{ translate("Real-time overview of integration tasks, system messages, and data pipeline health.") }}</p>
-          </div>
-        </div>
+
 
         <!-- KPI Metrics Grid -->
         <div class="metrics-grid ion-margin-bottom">
@@ -976,11 +970,7 @@ onIonViewWillLeave(() => {
 </script>
 
 <style scoped>
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
+
 
 .metrics-grid {
   display: grid;
