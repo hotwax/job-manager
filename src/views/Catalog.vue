@@ -18,10 +18,10 @@
         <div class="header">
           <div class="title">
             <h1>
-              Job catalog
+              {{ translate("Job catalog") }}
             </h1>
             <p>
-              Manage and configure integration tasks.
+              {{ translate("Manage and configure integration tasks.") }}
             </p>
           </div>
         </div>
