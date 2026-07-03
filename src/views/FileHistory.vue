@@ -14,36 +14,33 @@
         <div class="title">
           <div class="title-header">
             <h1>{{ translate("Processed Files") }}</h1>
-            <ion-chip color="medium" class="limit-chip">
-              <ion-label>{{ translate("Latest 1000 records") }}</ion-label>
-            </ion-chip>
           </div>
-          <p>{{ translate("View history of processed files. The display is limited to the most recent 1000 records for performance.") }}</p>
+          <p>{{ translate("Stats from the last 1000 log files processed") }}</p>
         </div>
 
         <div class="kpi-grid">
           <ion-card class="kpi-card">
             <ion-card-header>
               <ion-card-subtitle>{{ translate("Total Files") }}</ion-card-subtitle>
-              <ion-card-title>{{ totalFilesCount }}</ion-card-title>
+              <ion-card-title><AnimatedNumber :value="totalFilesCount" /></ion-card-title>
             </ion-card-header>
           </ion-card>
           <ion-card class="kpi-card success">
             <ion-card-header>
               <ion-card-subtitle>{{ translate("Successful") }}</ion-card-subtitle>
-              <ion-card-title>{{ successFilesCount }}</ion-card-title>
+              <ion-card-title><AnimatedNumber :value="successFilesCount" /></ion-card-title>
             </ion-card-header>
           </ion-card>
           <ion-card class="kpi-card failed">
             <ion-card-header>
               <ion-card-subtitle>{{ translate("Failed") }}</ion-card-subtitle>
-              <ion-card-title>{{ failedFilesCount }}</ion-card-title>
+              <ion-card-title><AnimatedNumber :value="failedFilesCount" /></ion-card-title>
             </ion-card-header>
           </ion-card>
           <ion-card class="kpi-card rate">
             <ion-card-header>
               <ion-card-subtitle>{{ translate("Success Rate") }}</ion-card-subtitle>
-              <ion-card-title>{{ successRate }}%</ion-card-title>
+              <ion-card-title><AnimatedNumber :value="Number(successRate)" />%</ion-card-title>
             </ion-card-header>
           </ion-card>
           <ion-card class="kpi-card avg-time">
@@ -106,6 +103,23 @@
               </div>
 
               <div class="filter-item">
+                <ion-select
+                  :label="translate('Has Error')"
+                  label-placement="stacked"
+                  interface="popover"
+                  :placeholder="translate('All')"
+                  :value="hasErrorFilter"
+                  @ionChange="hasErrorFilter = $event.detail.value"
+                >
+                  <ion-select-option value="Y">{{ translate("Yes") }}</ion-select-option>
+                  <ion-select-option value="N">{{ translate("No") }}</ion-select-option>
+                </ion-select>
+                <ion-button v-if="hasErrorFilter" fill="clear" class="clear-filter-btn" @click="hasErrorFilter = ''" :title="translate('Clear')">
+                  <ion-icon slot="icon-only" :icon="closeCircleOutline" />
+                </ion-button>
+              </div>
+
+              <div class="filter-item">
                 <ion-item id="config-filter-trigger" button lines="none" class="config-filter-trigger">
                   <ion-label>
                     <p>{{ translate("Config") }}</p>
@@ -152,7 +166,10 @@
             <ion-item lines="none" class="log-file-info">
               <ion-label class="ion-text-wrap">
                 <p class="overline">{{ log.logId }}</p>
-                {{ log.configId || "-" }}
+                {{ getConfigName(log.configId) || "-" }}
+                <ion-button v-if="log.configId && isConfigNameMissing(log.configId)" size="small" fill="clear" @click.stop="showAddConfigNameAlert(log.configId)">
+                  {{ translate("Add name") }}
+                </ion-button>
                 <p class="log-file-name" :title="log.fileName || ''">
                   <span class="tm-start">{{ splitFileName(log.fileName)[0] }}</span><span class="tm-end">{{ splitFileName(log.fileName)[1] }}</span>
                 </p>
@@ -263,13 +280,15 @@ import {
   IonBadge,
   modalController,
   onIonViewWillEnter,
+  alertController,
 } from '@ionic/vue';
-import { translate, commonUtil } from '@common';
-import { closeOutline, closeCircleOutline, warningOutline, alertCircleOutline } from 'ionicons/icons';
-import { computed, ref, watch } from 'vue';
-
-import { useMdmConfigStore } from '@/store/mdmConfig';
-import { getFileSize, getDuration } from '@/utils';
+import { translate, commonUtil, api } from "@common";
+import { closeOutline, closeCircleOutline, warningOutline, alertCircleOutline } from "ionicons/icons";
+import { computed, ref, watch } from "vue";
+import { useMdmConfigStore } from "@/store/mdmConfig";
+import { getFileSize, getDuration, showToast } from "@/utils";
+import logger from "@/logger";
+import AnimatedNumber from "@/components/AnimatedNumber.vue";
 import { getStatusDesc } from '@/utils/config';
 import { useUtilStore } from '@/store/util';
 import router from '@/router';
@@ -286,6 +305,7 @@ const queryString = ref("");
 const selectedStatus = ref<string[]>([]);
 const selectedPriority = ref<string[]>([]);
 const selectedConfig = ref<string[]>([]);
+const hasErrorFilter = ref("");
 const configQuery = ref("");
 const pageIndex = ref(0);
 
@@ -297,7 +317,8 @@ const isServerSideSearch = computed(() => {
   const q = queryString.value.trim();
   const isServerSideQ = !q || q.startsWith("M") || !isNaN(Number(q));
   const hasPriorityFilter = selectedPriority.value.length > 0;
-  return isServerSideQ && !hasPriorityFilter;
+  const hasErrorFilterActive = !!hasErrorFilter.value;
+  return isServerSideQ && !hasPriorityFilter && !hasErrorFilterActive;
 });
 
 const filteredLogs = computed(() => {
@@ -317,6 +338,13 @@ const filteredLogs = computed(() => {
       if (!config) return false;
       const isHigh = config.priority > 6;
       return selectedPriority.value.includes(isHigh ? "HIGH" : "NORMAL");
+    });
+  }
+
+  if (hasErrorFilter.value) {
+    result = result.filter((log: any) => {
+      const hasError = (Number(log.failedRecordCount) || 0) > 0 || ["DmlsFailed", "DmlsCrashed"].includes(log.statusId);
+      return hasErrorFilter.value === "Y" ? hasError : !hasError;
     });
   }
 
@@ -421,6 +449,70 @@ const splitFileName = (name?: string): [string, string] => {
 
 const getConfigDisplayName = (config: any) => config.scriptTitle || config.description || config.configId;
 
+const getConfigName = (configId: string) => {
+  const config = configs.value.find((c: any) => c.configId === configId);
+  return config ? getConfigDisplayName(config) : configId;
+};
+
+const isConfigNameMissing = (configId: string) => {
+  if (!configId) return false;
+  const config = configs.value.find((c: any) => c.configId === configId);
+  return !config || (!config.scriptTitle && !config.description);
+};
+
+const showAddConfigNameAlert = async (configId: string) => {
+  const alert = await alertController.create({
+    header: translate("Add configuration name"),
+    inputs: [
+      {
+        name: "configName",
+        type: "text",
+        placeholder: translate("Configuration name")
+      }
+    ],
+    buttons: [
+      {
+        text: translate("Cancel"),
+        role: "cancel"
+      },
+      {
+        text: translate("Save"),
+        handler: async (data) => {
+          const name = data.configName?.trim();
+          if (!name) {
+            showToast(translate("Configuration name cannot be empty"));
+            return false;
+          }
+          try {
+            await api({
+              url: `admin/dataManager/${configId}`,
+              method: "post",
+              data: {
+                configId,
+                scriptTitle: name
+              }
+            });
+            const config = configs.value.find((c: any) => c.configId === configId);
+            if (config) {
+              config.scriptTitle = name;
+            } else {
+              mdmStore.configs.push({
+                configId,
+                scriptTitle: name
+              });
+            }
+            showToast(translate("Configuration name updated successfully"));
+          } catch (err) {
+            logger.error("Failed to update config name", err);
+            showToast(translate("Failed to update configuration name"));
+          }
+        }
+      }
+    ]
+  });
+  await alert.present();
+};
+
 const handleConfigModalWillPresent = async () => {
   if (!configs.value.length) {
     await mdmStore.fetchConfigs();
@@ -494,7 +586,7 @@ const goToLogDetails = (logId: string) => {
 };
 
 // Filters trigger a fresh fetch from page 0
-watch([queryString, selectedStatus, selectedPriority, selectedConfig], async () => {
+watch([queryString, selectedStatus, selectedPriority, selectedConfig, hasErrorFilter], async () => {
   pageIndex.value = 0;
   await fetchLogs();
 });
@@ -561,7 +653,7 @@ onIonViewWillEnter(async () => {
 
 .filter-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: var(--spacer-lg);
 }
 

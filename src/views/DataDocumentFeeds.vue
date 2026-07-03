@@ -105,7 +105,6 @@ import {
 import { documentTextOutline, gitNetworkOutline } from "ionicons/icons";
 import { computed, onMounted, ref } from "vue";
 import router from "@/router";
-
 import { translate } from "@common";
 import { useDataDocumentStore } from "@/store/dataDocuments";
 
