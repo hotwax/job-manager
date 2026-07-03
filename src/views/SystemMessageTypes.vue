@@ -14,13 +14,6 @@
 
     <ion-content>
       <main>
-        <div class="header">
-          <div class="title">
-            <h1>{{ translate("Message Types") }}</h1>
-            <p>{{ translate("Manage system message type configuration and inspect related traffic.") }}</p>
-          </div>
-        </div>
-
         <ion-card>
           <ion-card-content>
             <ion-searchbar
