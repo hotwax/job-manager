@@ -179,27 +179,33 @@ export const useUserStore = defineStore("user", {
         return Promise.reject(error);
       }
     },
+    /**
+     * Resolves and caches full names for user IDs.
+     *
+     * @param userIds - User IDs to resolve.
+     * @returns Promise that settles after unresolved names are fetched.
+     */
     async resolveUserFullNames(userIds: Array<string>) {
-      const unresolvedUserIds = [...new Set(userIds)].filter((userId: any) => userId && !(userId in this.userFullNames))
+      const unresolvedUserIds = [...new Set(userIds)].filter((userId: string) => userId && !(userId in this.userFullNames));
       if (!unresolvedUserIds.length) {
         return;
       }
 
       // Cache an empty entry up front so repeated or concurrent callers never
       // trigger another lookup for the same user id in this session.
-      unresolvedUserIds.forEach((userId: string) => { this.userFullNames[userId] = "" })
+      unresolvedUserIds.forEach((userId: string) => { this.userFullNames[userId] = ""; });
 
       await Promise.allSettled(unresolvedUserIds.map(async (userId: string) => {
         try {
           const resp = await api({
             url: `admin/users/${encodeURIComponent(userId)}`,
             method: "get"
-          })
-          this.userFullNames[userId] = resp.data?.userFullName || resp.data?.username || ""
+          });
+          this.userFullNames[userId] = resp.data?.userFullName || resp.data?.username || "";
         } catch (err) {
-          logger.error(`Failed to resolve full name for user ${userId}`, err)
+          logger.error(`Failed to resolve full name for user ${userId}`, err);
         }
-      }))
+      }));
     },
     async setCurrentProductStore(productStoreInfo: any) {
       let productStore = productStoreInfo

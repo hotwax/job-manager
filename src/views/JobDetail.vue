@@ -809,7 +809,7 @@ const loadRuns = async () => {
     runs.value = Array.isArray(resp) ? resp : []
     hasMoreRuns.value = Array.isArray(resp) && resp.length === pageSize.value
     hasLoadedRuns.value = true
-    await userStore.resolveUserFullNames(runs.value.map((run: any) => run.userId))
+    await userStore.resolveUserFullNames(runs.value.map((run: any) => run.userId));
   } catch (err) {
     console.error(err)
   } finally {
@@ -861,7 +861,7 @@ const loadMoreRuns = async (event: any) => {
     const resp = await jobStore.fetchJobRuns(route.params.jobName as string, payload)
     if (Array.isArray(resp) && resp.length > 0) {
       runs.value.push(...resp)
-      await userStore.resolveUserFullNames(resp.map((run: any) => run.userId))
+      await userStore.resolveUserFullNames(resp.map((run: any) => run.userId));
     }
     hasMoreRuns.value = Array.isArray(resp) && resp.length === pageSize.value
   } catch (err) {
