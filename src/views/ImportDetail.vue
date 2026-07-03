@@ -5,7 +5,7 @@
         <ion-buttons slot="start">
           <ion-back-button default-href="/manual-uploads"></ion-back-button>
         </ion-buttons>
-        <ion-title>{{ config.scriptTitle || config.configId || typeId }}</ion-title>
+        <ion-title>{{ displayTitle }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -15,8 +15,8 @@
           <div class="header">
             <ion-label class="title">
               <p class="outline">{{ getQueueType(config.priority) }}</p>
-              <h1>{{ config.scriptTitle || config.configId }}</h1>
-              <p>{{ translate("Upload a file to queue it for processing.") }}</p>
+              <h1>{{ displayTitle }}</h1>
+              <p>{{ config.scriptTitle || config.configId || translate("Upload a file to queue it for processing.") }}</p>
             </ion-label>
             <ion-button fill="outline" @click="downloadTemplate">
               <ion-icon slot="start" :icon="downloadOutline" />
@@ -76,16 +76,16 @@
                     {{ config.importServiceName }}
                   </ion-label>
                 </ion-item>
+                <ion-item>
+                  <ion-label class="ion-text-wrap">
+                    <p>{{ translate("Name") }}</p>
+                    {{ config.scriptTitle || "-" }}
+                  </ion-label>
+                </ion-item>
                 <ion-item v-if="config.description">
                   <ion-label class="ion-text-wrap">
                     <p>{{ translate("Description") }}</p>
                     {{ config.description }}
-                  </ion-label>
-                </ion-item>
-                <ion-item v-if="config.scriptTitle">
-                  <ion-label class="ion-text-wrap">
-                    <p>{{ translate("Script Title") }}</p>
-                    {{ config.scriptTitle }}
                   </ion-label>
                 </ion-item>
                 <ion-item>
@@ -122,7 +122,7 @@
 
               <ion-card-content v-else class="form-grid">
                 <ion-input :label="translate('Description')" label-placement="stacked" fill="outline" :value="editForm.description" @ionInput="editForm.description = $event.detail.value || ''" />
-                <ion-input :label="translate('Script Title')" label-placement="stacked" fill="outline" :value="editForm.scriptTitle" @ionInput="editForm.scriptTitle = $event.detail.value || ''" />
+                <ion-input :label="translate('Name')" label-placement="stacked" fill="outline" :value="editForm.scriptTitle" @ionInput="editForm.scriptTitle = $event.detail.value || ''" />
                 <ion-input :label="translate('Priority')" label-placement="stacked" fill="outline" type="number" :value="editForm.priority" @ionInput="editForm.priority = $event.detail.value || ''" :helper-text="translate('Above 6 runs on the priority queue.')" />
                 <ion-select :label="translate('Execution Mode')" label-placement="stacked" fill="outline" interface="popover" :value="editForm.executionModeId" @ionChange="editForm.executionModeId = $event.detail.value">
                   <ion-select-option v-for="mode in executionModes" :key="mode.enumId" :value="mode.enumId">{{ mode.description || mode.enumId }}</ion-select-option>
@@ -194,6 +194,7 @@ const jobStore = useJobStore();
 
 const config = computed(() => mdmStore.getConfigById(typeId));
 const executionModes = computed(() => mdmStore.getExecutionModes);
+const displayTitle = computed(() => config.value.description || config.value.scriptTitle || config.value.configId || typeId);
 
 const isEditing = ref(false);
 const isSaving = ref(false);
