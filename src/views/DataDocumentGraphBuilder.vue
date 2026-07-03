@@ -892,6 +892,7 @@ import {
   IonTitle,
   IonToggle,
   IonToolbar,
+  alertController,
   modalController,
   onIonViewWillEnter
 } from "@ionic/vue";
@@ -1292,11 +1293,38 @@ const openEntityModal = async () => {
   entityModal.value.$el.present();
 };
 
-const selectEntity = (entity: string) => {
-  updateMetadata("primaryEntityName", entity);
-  utilStore.fetchEntityFields(entity);
-  selectedTarget.value = { kind: "node", id: "node:root" };
-  closeEntityModal();
+const selectEntity = async (entity: string) => {
+  if (graph.value && (graph.value.fields.length > 0 || graph.value.conditions.length > 0)) {
+    const alert = await alertController.create({
+      header: translate("Change Primary Entity?"),
+      message: translate("You already have fields and conditions defined. Changing the primary entity will clear the current configuration. Do you wish to proceed?"),
+      buttons: [
+        {
+          text: translate("Keep Configuration"),
+          role: "cancel",
+          handler: () => {
+            closeEntityModal();
+          }
+        },
+        {
+          text: translate("Clear Configuration"),
+          role: "confirm",
+          handler: () => {
+            updateMetadata("primaryEntityName", entity);
+            utilStore.fetchEntityFields(entity);
+            selectedTarget.value = { kind: "node", id: "node:root" };
+            closeEntityModal();
+          }
+        }
+      ]
+    });
+    await alert.present();
+  } else {
+    updateMetadata("primaryEntityName", entity);
+    utilStore.fetchEntityFields(entity);
+    selectedTarget.value = { kind: "node", id: "node:root" };
+    closeEntityModal();
+  }
 };
 
 const closeEntityModal = () => {
