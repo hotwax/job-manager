@@ -19,10 +19,10 @@
           </p>
         </div>
 
-        <ion-card v-if="isFailedRun || failedRecordCount > 0" class="failure-card">
+        <ion-card v-if="isFailedRun" class="failure-card">
           <ion-card-header>
-            <ion-card-title :color="isFailedRun ? 'danger' : 'warning'" class="failure-title">
-              <ion-icon :icon="isFailedRun ? alertCircleOutline : warningOutline" />
+            <ion-card-title color="danger" class="failure-title">
+              <ion-icon :icon="alertCircleOutline" />
               {{ translate("Failure Details") }}
             </ion-card-title>
           </ion-card-header>
@@ -38,7 +38,7 @@
             <p v-if="topFailureReasons.length && hiddenReasonCount > 0" class="failure-note">
               {{ translate("more distinct reasons are in the failed records file.", { count: hiddenReasonCount }) }}
             </p>
-            <p v-if="!payloadLoading && !topFailureReasons.length && isFailedRun" class="failure-note">
+            <p v-if="!payloadLoading && !topFailureReasons.length" class="failure-note">
               {{ translate("No failure reason was recorded for this run. The application log of the run instance may have more detail.") }}
             </p>
 
@@ -328,7 +328,7 @@ const failureSummary = computed(() => {
   if (log.value.statusId === "DmlsFailed") {
     return translate("This import stopped with an unhandled error before it could complete.");
   }
-  return translate("records failed to import.", { failed: failedRecordCount.value, total: log.value.totalRecordCount ?? "-" });
+  return "";
 });
 
 // The failed records file tags every record with the failure message: JSON
