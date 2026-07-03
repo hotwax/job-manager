@@ -235,6 +235,20 @@ export const useJobStore = defineStore("job", {
         logger.error("Failed to fetch product detail", err)
       }
     },
+    async fetchJobRunById(jobRunId: string) {
+      try {
+        // jobRunId is ServiceJobRun's only primary key, so the jobName path
+        // segment is not part of the lookup; "-" only satisfies the route shape.
+        const resp = await api({
+          url: `admin/serviceJobs/-/runs/${jobRunId}`,
+          method: "GET"
+        })
+        return resp.data?.jobRunId ? resp.data : null
+      } catch(err) {
+        logger.error(`Failed to fetch job run with id ${jobRunId}`, err)
+        return null
+      }
+    },
     async fetchJobRuns(jobName: string, payload = { pageSize: 250, pageIndex: 0 }) {
       let jobRuns = [] as any
       try {

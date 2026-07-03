@@ -168,6 +168,23 @@ export const useSystemMessageStore = defineStore("systemMessage", {
         this.loading = false;
       }
     },
+    async fetchSystemMessageErrors(systemMessageId: string) {
+      try {
+        const response = await api({
+          url: `admin/systemMessages/${encodeURIComponent(systemMessageId)}/errors`,
+          method: "GET",
+          params: {
+            orderByField: "-errorDate",
+            pageSize: 5
+          }
+        });
+
+        return Array.isArray(response.data) ? response.data : [];
+      } catch (err) {
+        logger.error(`Failed to fetch errors for system message ${systemMessageId}`, err);
+        return [];
+      }
+    },
     async fetchSystemMessageRemotes() {
       this.loading = true;
 

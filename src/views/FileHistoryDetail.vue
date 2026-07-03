@@ -42,6 +42,30 @@
               {{ translate("No failure reason was recorded for this run. The application log of the run instance may have more detail.") }}
             </p>
 
+            <ion-list v-if="log.createdByJobRunId || log.systemMessageId" lines="none">
+              <ion-item v-if="originJobRun" button detail="true" @click="goToJobDetail(originJobRun.jobName)">
+                <ion-label class="ion-text-wrap">
+                  <p>{{ translate("Created by job run") }}</p>
+                  {{ originJobRun.jobName || log.createdByJobRunId }}
+                  <p>{{ log.createdByJobRunId }}</p>
+                  <p v-if="originJobRunError" class="origin-error">{{ originJobRunError }}</p>
+                </ion-label>
+              </ion-item>
+              <ion-item v-else-if="log.createdByJobRunId">
+                <ion-label class="ion-text-wrap">
+                  <p>{{ translate("Created by job run") }}</p>
+                  {{ log.createdByJobRunId }}
+                </ion-label>
+              </ion-item>
+              <ion-item v-if="log.systemMessageId" button detail="true" @click="goToSystemMessage(log.systemMessageId)">
+                <ion-label class="ion-text-wrap">
+                  <p>{{ translate("Source system message") }}</p>
+                  {{ log.systemMessageId }}
+                  <p v-for="error in messageErrors" :key="error.errorDate" class="origin-error">{{ (error.errorText || "").slice(0, 300) }}</p>
+                </ion-label>
+              </ion-item>
+            </ion-list>
+
             <div class="failure-actions">
               <ion-button v-if="hasErrorPayload" size="small" fill="outline" color="danger" @click="viewFailedRecords">
                 {{ translate("View failed records") }}
@@ -249,6 +273,8 @@ import { computed, ref } from 'vue';
 import router from "@/router";
 import { translate, commonUtil } from '@common';
 import { useMdmConfigStore } from '@/store/mdmConfig';
+import { useJobStore } from '@/store/jobs';
+import { useSystemMessageStore } from '@/store/systemMessage';
 import { getFileSize, showToast, getDuration } from '@/utils';
 import { codeWorkingOutline, copyOutline, downloadOutline, warningOutline, alertCircleOutline } from 'ionicons/icons';
 import JsonViewer from '@/components/JsonViewer.vue';
@@ -263,6 +289,8 @@ const props = defineProps({
 });
 
 const mdmStore = useMdmConfigStore();
+const jobStore = useJobStore();
+const systemMessageStore = useSystemMessageStore();
 const logId = props.id;
 
 const getConfigName = (configId: string) => {
@@ -291,6 +319,8 @@ type ParsedPayload = {
 
 const log = ref<any>(null);
 const retryLog = ref<any>(null);
+const originJobRun = ref<any>(null);
+const messageErrors = ref<Array<any>>([]);
 const payloadLoading = ref(true);
 const selectedPayload = ref<PayloadKey>("original");
 const payloads = ref<Record<PayloadKey, ParsedPayload>>({
@@ -357,6 +387,10 @@ const failureReasons = computed(() => {
   return Array.from(groups.values()).sort((reasonA, reasonB) => reasonB.count - reasonA.count);
 });
 const topFailureReasons = computed(() => failureReasons.value.slice(0, 3));
+const originJobRunError = computed(() => {
+  if (originJobRun.value?.hasError !== "Y") return "";
+  return String(originJobRun.value.errors || "").slice(0, 600);
+});
 const hiddenReasonCount = computed(() => failureReasons.value.length - topFailureReasons.value.length);
 
 const getLogStatusLabel = (logVal: any) => {
@@ -396,9 +430,25 @@ onIonViewWillEnter(async () => {
   await Promise.all([
     loadPayloads(fetchedLog),
     loadRetryLog(fetchedLog),
+    loadFailureContext(fetchedLog),
     mdmStore.getConfigs.length ? Promise.resolve() : mdmStore.fetchConfigs()
   ]);
 });
+
+// For failed runs, pull in where the file came from: the job run that queued
+// the import and the source system message, including any recorded errors.
+async function loadFailureContext(logData: any) {
+  originJobRun.value = null;
+  messageErrors.value = [];
+  if (!["DmlsFailed", "DmlsCrashed"].includes(logData.statusId)) return;
+
+  const [jobRun, errors] = await Promise.all([
+    logData.createdByJobRunId ? jobStore.fetchJobRunById(logData.createdByJobRunId) : Promise.resolve(null),
+    logData.systemMessageId ? systemMessageStore.fetchSystemMessageErrors(logData.systemMessageId) : Promise.resolve([])
+  ]);
+  originJobRun.value = jobRun;
+  messageErrors.value = errors;
+}
 
 async function loadRetryLog(logData: any) {
   retryLog.value = null;
@@ -421,6 +471,16 @@ const viewFailedRecords = () => {
 const goToLog = (targetLogId: string) => {
   if (!targetLogId) return;
   router.push(`/file-history/${targetLogId}`);
+};
+
+const goToJobDetail = (jobName: string) => {
+  if (!jobName) return;
+  router.push(`/job/${jobName}`);
+};
+
+const goToSystemMessage = (systemMessageId: string) => {
+  if (!systemMessageId) return;
+  router.push(`/system-messages/${systemMessageId}`);
 };
 
 function createPayload(fileName?: string): ParsedPayload {
@@ -555,6 +615,10 @@ main {
 .failure-note {
   margin: var(--spacer-sm) 0 0;
   color: var(--ion-color-medium);
+}
+
+.origin-error {
+  color: var(--ion-color-danger);
 }
 
 .failure-actions {
