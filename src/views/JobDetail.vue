@@ -6,11 +6,6 @@
           <ion-back-button default-href="/catalog"></ion-back-button>
         </ion-buttons>
         <ion-title>{{ job?.jobName || translate('Job Details') }}</ion-title>
-        <ion-buttons v-if="job.paused" slot="end">
-          <ion-button @click="togglePause" :color="job.paused === 'Y' ? 'warning' : 'success'">
-            <ion-icon :icon="job.paused === 'Y' ? playOutline : pauseOutline"></ion-icon>
-          </ion-button>
-        </ion-buttons>
       </ion-toolbar>
     </ion-header>
 
@@ -273,7 +268,13 @@
               <ion-card-header>
                 <ion-card-title class="header-with-action">
                   {{ translate("Schedule") }}
-                  <ion-button fill="clear" @click="editSchedule()">{{ translate("EDIT") }}</ion-button>
+                  <div class="action-buttons">
+                    <ion-button v-if="job.paused" fill="clear" @click="togglePause" :color="job.paused === 'Y' ? 'warning' : 'success'">
+                      <ion-icon slot="start" :icon="job.paused === 'Y' ? playOutline : pauseOutline"></ion-icon>
+                      {{ translate(job.paused === "Y" ? "Resume" : "Pause") }}
+                    </ion-button>
+                    <ion-button fill="clear" @click="editSchedule()">{{ translate("EDIT") }}</ion-button>
+                  </div>
                 </ion-card-title>
               </ion-card-header>
               <ion-card-content>
@@ -704,6 +705,29 @@ const cancelEditParameters = () => {
 };
 
 async function togglePause() {
+  if (job.value.paused === "N") {
+    const pauseAlert = await alertController.create({
+      header: translate("Pause schedule"),
+      message: translate("Pausing this job will stop future scheduled runs until it is resumed."),
+      buttons: [
+        {
+          text: translate("Cancel"),
+          role: "cancel"
+        },
+        {
+          text: translate("Pause"),
+          handler: async () => {
+            job.value.paused = "Y";
+            await scheduleJob();
+          }
+        }
+      ]
+    });
+
+    await pauseAlert.present();
+    return;
+  }
+
   job.value.paused = job.value.paused === "N" ? "Y" : "N";
   await scheduleJob()
 };
