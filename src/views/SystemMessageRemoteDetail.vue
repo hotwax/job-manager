@@ -295,8 +295,17 @@ watch(pageIndex, () => {
 // Reload the remote and its related messages for the new product store
 // context; search and status filters are kept.
 const handleProductStoreUpdated = async () => {
-  pageIndex.value = 0;
-  await loadRemote();
+  if (pageIndex.value !== 0) {
+    pageIndex.value = 0;
+    if (props.id) {
+      const entity = await systemMessageStore.fetchSystemMessageRemoteById(props.id);
+      setForm(entity);
+    } else {
+      setForm();
+    }
+  } else {
+    await loadRemote();
+  }
 };
 
 onIonViewWillEnter(() => {

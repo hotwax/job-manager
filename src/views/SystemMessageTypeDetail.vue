@@ -276,8 +276,17 @@ watch([queryString, selectedStatusId, pageIndex], async (newValue, oldValue) => 
 // Reload the entity and its related messages for the new product store
 // context; search and status filters are kept.
 const handleProductStoreUpdated = async () => {
-  pageIndex.value = 0;
-  await loadType();
+  if (pageIndex.value !== 0) {
+    pageIndex.value = 0;
+    if (props.id) {
+      const entity = await store.fetchSystemMessageTypeById(props.id);
+      setForm(entity);
+    } else {
+      setForm();
+    }
+  } else {
+    await loadType();
+  }
 };
 
 onIonViewWillEnter(() => {
