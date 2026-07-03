@@ -3,7 +3,7 @@
     <ion-header>
       <ion-toolbar>
         <ion-menu-button slot="start" />
-        <ion-title>{{ translate("System Message Monitor") }}</ion-title>
+        <ion-title>{{ translate("Message History") }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -11,7 +11,7 @@
       <main>
         <div class="header">
           <div class="title">
-            <h1>{{ translate("Monitor") }}</h1>
+            <h1>{{ translate("Message History") }}</h1>
             <p>{{ translate("Track individual system messages across all types and remote systems.") }}</p>
           </div>
         </div>

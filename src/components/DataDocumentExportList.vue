@@ -61,7 +61,7 @@ const canDownload = (message: any) => message.statusId === "SmsgSent" && message
 </script>
 
 <style scoped>
-/* Mirror the System Message Monitor list: a responsive row-grid card (.list-item) with the
+/* Mirror the Message History list: a responsive row-grid card (.list-item) with the
    primary info on the left, supporting detail in the middle, and a status pill on the right. */
 .list-item {
   --columns-desktop: 3;
