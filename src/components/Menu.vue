@@ -111,7 +111,7 @@ let appPages = [
     title: "System Messages"
   },
   {
-    title: "Monitor",
+    title: "Message history",
     url: "/system-messages",
     iosIcon: pulseOutline,
     mdIcon: pulseOutline,

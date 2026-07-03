@@ -11,12 +11,7 @@
 
     <ion-content>
       <main>
-        <div class="title">
-          <div class="title-header">
-            <h1>{{ translate("Processed Files") }}</h1>
-          </div>
-          <p>{{ translate("Stats from the last 1000 log files processed") }}</p>
-        </div>
+
 
         <div class="kpi-grid">
           <ion-card class="kpi-card">
@@ -623,12 +618,7 @@ onIonViewWillLeave(() => {
 </script>
 
 <style scoped>
-.title-header {
-  display: flex;
-  align-items: center;
-  gap: var(--spacer-sm);
-  flex-wrap: wrap;
-}
+
 
 .limit-chip {
   height: 24px;

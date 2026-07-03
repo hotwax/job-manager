@@ -9,13 +9,6 @@
 
     <ion-content>
       <main>
-        <div class="header">
-          <div class="title">
-            <h1>{{ translate("Export History") }}</h1>
-            <p>{{ translate("Review and download Data Document export System Messages.") }}</p>
-          </div>
-        </div>
-
         <ion-card>
           <ion-card-content>
             <ion-searchbar
