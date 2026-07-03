@@ -133,15 +133,13 @@ import {
   onIonViewWillEnter
 } from "@ionic/vue";
 import { computed, ref, watch } from "vue";
-
 import { translate } from "@common";
-
-import { useRoute } from "vue-router";
 import SystemMessageList from "@/components/SystemMessageList.vue";
 import { useSystemMessageStore } from "@/store/systemMessage";
 import { useUtilStore } from "@/store/util";
+import router from "@/router";
 
-const route = useRoute();
+const route = router.currentRoute.value;
 const PAGE_SIZE = 25;
 
 const store = useSystemMessageStore();

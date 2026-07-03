@@ -280,7 +280,6 @@ import {
 import { translate, commonUtil, api } from "@common";
 import { closeOutline, closeCircleOutline, warningOutline, alertCircleOutline } from "ionicons/icons";
 import { computed, ref, watch } from "vue";
-import { useRoute } from "vue-router";
 import { useMdmConfigStore } from "@/store/mdmConfig";
 import { getFileSize, getDuration, showToast } from "@/utils";
 import logger from "@/logger";
@@ -291,7 +290,7 @@ import AnimatedNumber from "@/components/AnimatedNumber.vue";
 
 const PAGE_SIZE = 10;
 
-const route = useRoute();
+const route = router.currentRoute.value;
 const mdmStore = useMdmConfigStore();
 const utilStore = useUtilStore();
 
