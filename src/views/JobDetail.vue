@@ -398,7 +398,7 @@
                 <ion-item lines="none">
                   <ion-icon slot="start" :icon="run.hasError === 'Y' ? closeCircleOutline : checkmarkCircleOutline" :color="run.hasError === 'Y' ? 'danger' : (run.startTime ? 'success' : 'warning')"></ion-icon>
                   <ion-label>
-                    <h2>#{{ run.jobRunId }}</h2>
+                    #{{ run.jobRunId }}
                     <p>{{ getDateAndTime(run.startTime || run.lastUpdatedStamp) }}</p>
                   </ion-label>
                   <ion-badge slot="end" :color="run.hasError === 'Y' ? 'danger' : (run.startTime ? 'success' : 'warning')">

@@ -322,7 +322,7 @@
               @keydown="fieldPickerNavigation.handleItemKeydown($event, getFieldPickerIndex('field', field.fieldName))"
             >
               <ion-label>
-                <h2>{{ field.fieldName }}</h2>
+                {{ field.fieldName }}
                 <p v-if="field.description">{{ field.description }}</p>
               </ion-label>
               <ion-radio slot="end" :checked="graph.fields[activeFieldIndex]?.fieldPath.endsWith(field.fieldName)" :value="field.fieldName" />
@@ -348,7 +348,7 @@
               @keydown="fieldPickerNavigation.handleItemKeydown($event, getFieldPickerIndex('relation', relation.relationshipName))"
             >
               <ion-label>
-                <h2>{{ relation.relationshipName }}</h2>
+                {{ relation.relationshipName }}
                 <p>{{ relation.title || relation.relatedEntityName }}</p>
               </ion-label>
               <ion-icon slot="end" :icon="chevronForwardOutline" />
