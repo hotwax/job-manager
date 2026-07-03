@@ -19,6 +19,43 @@
           </p>
         </div>
 
+        <ion-card v-if="isFailedRun || failedRecordCount > 0" class="failure-card">
+          <ion-card-header>
+            <ion-card-title :color="isFailedRun ? 'danger' : 'warning'" class="failure-title">
+              <ion-icon :icon="isFailedRun ? alertCircleOutline : warningOutline" />
+              {{ translate("Failure Details") }}
+            </ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <p>{{ failureSummary }}</p>
+
+            <ion-list v-if="topFailureReasons.length" lines="none">
+              <ion-item v-for="reason in topFailureReasons" :key="reason.message">
+                <ion-badge slot="start" color="danger">{{ reason.count }}</ion-badge>
+                <ion-label class="ion-text-wrap">{{ reason.message }}</ion-label>
+              </ion-item>
+            </ion-list>
+            <p v-if="topFailureReasons.length && hiddenReasonCount > 0" class="failure-note">
+              {{ translate("more distinct reasons are in the failed records file.", { count: hiddenReasonCount }) }}
+            </p>
+            <p v-if="!payloadLoading && !topFailureReasons.length && isFailedRun" class="failure-note">
+              {{ translate("No failure reason was recorded for this run. The application log of the run instance may have more detail.") }}
+            </p>
+
+            <div class="failure-actions">
+              <ion-button v-if="hasErrorPayload" size="small" fill="outline" color="danger" @click="viewFailedRecords">
+                {{ translate("View failed records") }}
+              </ion-button>
+              <ion-button v-if="retryLog" size="small" fill="outline" @click="goToLog(retryLog.logId)">
+                {{ translate("View requeued run") }}
+              </ion-button>
+              <ion-button v-if="log.parentLogId" size="small" fill="outline" @click="goToLog(log.parentLogId)">
+                {{ translate("View original run") }}
+              </ion-button>
+            </div>
+          </ion-card-content>
+        </ion-card>
+
         <div class="meta-cards">
           <ion-card>
             <ion-card-header>
@@ -114,7 +151,7 @@
           </ion-card>
         </div>
 
-        <section class="payload">
+        <section class="payload" ref="payloadSection">
           <div class="payload-header">
             <h3><ion-icon :icon="codeWorkingOutline" /> {{ translate("Payload") }}
               <ion-chip v-if="contentType" class="type-chip" outline>{{ contentType.toUpperCase() }}</ion-chip>
@@ -253,6 +290,7 @@ type ParsedPayload = {
 };
 
 const log = ref<any>(null);
+const retryLog = ref<any>(null);
 const payloadLoading = ref(true);
 const selectedPayload = ref<PayloadKey>("original");
 const payloads = ref<Record<PayloadKey, ParsedPayload>>({
@@ -260,6 +298,7 @@ const payloads = ref<Record<PayloadKey, ParsedPayload>>({
   errors: createPayload()
 });
 const payloadSearch = ref("");
+const payloadSection = ref<HTMLElement | null>(null);
 
 const activePayload = computed(() => payloads.value[selectedPayload.value]);
 const contentType = computed(() => activePayload.value.contentType);
@@ -267,14 +306,56 @@ const parsedJson = computed(() => activePayload.value.parsedJson);
 const csvRows = computed(() => activePayload.value.csvRows);
 const rawText = computed(() => activePayload.value.rawText);
 const failedRecordCount = computed(() => Number(log.value?.failedRecordCount) || 0);
-const hasErrorPayload = computed(() => !!log.value?.errorLogContentId && failedRecordCount.value > 0);
+const isFailedRun = computed(() => ["DmlsFailed", "DmlsCrashed"].includes(log.value?.statusId));
+// A failed run can leave an error file behind even when record counts were never
+// written, so the error artifact is offered for failed statuses too.
+const hasErrorPayload = computed(() => !!log.value?.errorLogContentId && (failedRecordCount.value > 0 || isFailedRun.value));
 const payloadTabs = computed(() => {
   const tabs = [{ key: "original" as PayloadKey, label: translate("Original") }];
   if (hasErrorPayload.value) {
-    tabs.push({ key: "errors" as PayloadKey, label: `${translate("Errors")} (${failedRecordCount.value})` });
+    tabs.push({ key: "errors" as PayloadKey, label: failedRecordCount.value > 0 ? `${translate("Errors")} (${failedRecordCount.value})` : translate("Errors") });
   }
   return tabs;
 });
+
+const failureSummary = computed(() => {
+  if (!log.value) return "";
+  if (log.value.statusId === "DmlsCrashed") {
+    return retryLog.value
+      ? translate("This run was interrupted while it was queued or running, most likely by an instance restart, and was automatically requeued as a new run.")
+      : translate("This run was interrupted while it was queued or running, most likely by an instance restart.");
+  }
+  if (log.value.statusId === "DmlsFailed") {
+    return translate("This import stopped with an unhandled error before it could complete.");
+  }
+  return translate("records failed to import.", { failed: failedRecordCount.value, total: log.value.totalRecordCount ?? "-" });
+});
+
+// The failed records file tags every record with an _ERROR_MESSAGE_. Group the
+// messages after masking record-specific ids/numbers so operators see each
+// distinct reason once, with the first raw message of the group as the example.
+const failureReasons = computed(() => {
+  const errorPayload = payloads.value.errors;
+  const records: any[] = errorPayload.contentType === "csv"
+    ? errorPayload.csvRows
+    : (errorPayload.contentType === "json" && Array.isArray(errorPayload.parsedJson)) ? errorPayload.parsedJson : [];
+
+  const groups = new Map<string, { message: string; count: number }>();
+  records.forEach((record: any) => {
+    const message = String(record?.["_ERROR_MESSAGE_"] || "").trim();
+    if (!message) return;
+    const groupKey = message.replace(/\[[^\]]*\]/g, "[…]").replace(/'[^']*'/g, "'…'").replace(/\d+/g, "#");
+    const group = groups.get(groupKey);
+    if (group) {
+      group.count++;
+    } else {
+      groups.set(groupKey, { message, count: 1 });
+    }
+  });
+  return Array.from(groups.values()).sort((reasonA, reasonB) => reasonB.count - reasonA.count);
+});
+const topFailureReasons = computed(() => failureReasons.value.slice(0, 3));
+const hiddenReasonCount = computed(() => failureReasons.value.length - topFailureReasons.value.length);
 
 const getLogStatusLabel = (logVal: any) => {
   if (!logVal) return "";
@@ -310,11 +391,31 @@ onIonViewWillEnter(async () => {
     return;
   }
   log.value = fetchedLog;
-  await loadPayloads(fetchedLog);
-  if (!mdmStore.getConfigs.length) {
-    await mdmStore.fetchConfigs();
-  }
+  await Promise.all([
+    loadPayloads(fetchedLog),
+    loadRetryLog(fetchedLog),
+    mdmStore.getConfigs.length ? Promise.resolve() : mdmStore.fetchConfigs()
+  ]);
 });
+
+async function loadRetryLog(logData: any) {
+  retryLog.value = null;
+  if (logData.statusId !== "DmlsCrashed") return;
+  const retryLogs = await mdmStore.fetchRetryLogs(logData.logId);
+  if (retryLogs.length) {
+    retryLog.value = retryLogs.sort((logA: any, logB: any) => (logB.createdDate || 0) - (logA.createdDate || 0))[0];
+  }
+}
+
+const viewFailedRecords = () => {
+  selectedPayload.value = "errors";
+  payloadSection.value?.scrollIntoView({ behavior: "smooth", block: "start" });
+};
+
+const goToLog = (targetLogId: string) => {
+  if (!targetLogId) return;
+  router.push(`/file-history/${targetLogId}`);
+};
 
 function createPayload(fileName?: string): ParsedPayload {
   return {
@@ -433,6 +534,28 @@ main {
 
 .header-section .subtitle {
   margin: 8px 0 0;
+}
+
+.failure-card {
+  margin: 0 0 var(--spacer-base);
+}
+
+.failure-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.failure-note {
+  margin: var(--spacer-sm) 0 0;
+  color: var(--ion-color-medium);
+}
+
+.failure-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacer-sm);
+  margin-top: var(--spacer-sm);
 }
 
 /* Execution Details + Timeline side by side on desktop, stacked on narrow screens */

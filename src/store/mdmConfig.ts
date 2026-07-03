@@ -136,6 +136,27 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
         return null
       }
     },
+    async fetchRetryLogs(parentLogId: string) {
+      try {
+        const resp = await api({
+          url: "admin/dataManager/logs",
+          method: "get",
+          params: { parentLogId, pageSize: 20 }
+        })
+
+        if (!Array.isArray(resp.data)) return []
+        // The logs endpoint joins content rows, so a single log can appear once per
+        // content record; collapse the rows back to unique logs.
+        const logsById = new Map<string, any>()
+        resp.data.forEach((row: any) => {
+          if (!logsById.has(row.logId)) logsById.set(row.logId, row)
+        })
+        return Array.from(logsById.values())
+      } catch (err) {
+        logger.error(`Failed to fetch retry logs for parent log ${parentLogId}`, err)
+        return []
+      }
+    },
     async fetchDataManagerFileContent(configId: string, logContentId: string) {
       try {
         const resp = await api({
