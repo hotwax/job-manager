@@ -17,10 +17,10 @@ const getTimeInMillis = (value: any) => {
 const getRunTime = (run: any) => getTimeInMillis(run.startTime || run.lastUpdatedStamp || run.endTime);
 
 const getRunStatus = (run: any) => {
-  if (run.hasError === "Y") return "failed";
-  if (run.startTime && !run.endTime) return "running";
-  if (run.startTime && run.endTime) return "successful";
-  return "terminated";
+  if (run.hasError === "Y") return "FAILED";
+  if (run.startTime && !run.endTime) return "RUNNING";
+  if (run.startTime && run.endTime) return "SUCCESSFUL";
+  return "TERMINATED";
 };
 
 const getRunHistoryStats = (runs: Array<any>) => runs.reduce((stats: any, run: any) => {

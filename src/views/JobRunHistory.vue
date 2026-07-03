@@ -11,13 +11,6 @@
 
     <ion-content>
       <main>
-        <div class="header">
-          <div>
-            <h1>{{ translate("Service job runs") }}</h1>
-            <p>{{ translate("Review recent service job executions across configured jobs.") }}</p>
-          </div>
-        </div>
-
         <div class="kpi-grid">
           <ion-card>
             <ion-card-header>
@@ -63,10 +56,10 @@
                 @ionChange="selectedStatus = $event.detail.value"
               >
                 <ion-select-option value="">{{ translate("All") }}</ion-select-option>
-                <ion-select-option value="running">{{ translate("Running") }}</ion-select-option>
-                <ion-select-option value="successful">{{ translate("Successful") }}</ion-select-option>
-                <ion-select-option value="failed">{{ translate("Failed") }}</ion-select-option>
-                <ion-select-option value="terminated">{{ translate("Terminated") }}</ion-select-option>
+                <ion-select-option value="RUNNING">{{ translate("Running") }}</ion-select-option>
+                <ion-select-option value="SUCCESSFUL">{{ translate("Successful") }}</ion-select-option>
+                <ion-select-option value="FAILED">{{ translate("Failed") }}</ion-select-option>
+                <ion-select-option value="TERMINATED">{{ translate("Terminated") }}</ion-select-option>
               </ion-select>
 
               <ion-select
@@ -124,14 +117,14 @@
         <ion-list v-else-if="runs.length">
           <ion-card v-for="run in runs" :key="`${run.jobName}-${run.jobRunId}`" class="run-card" button @click="goToJob(run.jobName)">
             <ion-item lines="none">
-              <ion-icon slot="start" :icon="getStatusIcon(run)" :color="getStatusColor(run)" />
+              <ion-icon slot="start" :icon="getStatusIcon(run)" :color="commonUtil.getStatusColor(run.runStatus)" />
               <ion-label class="ion-text-wrap">
                 <p class="overline">#{{ run.jobRunId }}</p>
                 <h2>{{ run.jobName }}</h2>
                 <p>{{ run.serviceName || translate("Service unavailable") }}</p>
                 <p v-if="getRunProductLabel(run)">{{ translate("Product") }}: {{ getRunProductLabel(run) }}</p>
               </ion-label>
-              <ion-badge slot="end" :color="getStatusColor(run)">
+              <ion-badge slot="end" :color="commonUtil.getStatusColor(run.runStatus)">
                 {{ translate(getStatusLabel(run)) }}
               </ion-badge>
             </ion-item>
@@ -284,8 +277,7 @@ import {
 } from "ionicons/icons";
 import { DateTime } from "luxon";
 import { computed, ref, watch } from "vue";
-import { useRoute } from "vue-router";
-import { translate } from "@common";
+import { commonUtil, translate } from "@common";
 import AnimatedNumber from "@/components/AnimatedNumber.vue";
 import router from "@/router";
 import { useJobStore } from "@/store/jobs";
@@ -295,7 +287,7 @@ import { getDateAndTime } from "@/utils";
 const PAGE_SIZE = 25;
 const RUNS_PER_JOB = 25;
 
-const route = useRoute();
+const route = router.currentRoute.value;
 const jobStore = useJobStore();
 
 const queryString = ref("");
@@ -363,23 +355,16 @@ const hasResults = (run: any) => {
 };
 
 const getStatusLabel = (run: any) => {
-  if (run.runStatus === "failed") return "Failed";
-  if (run.runStatus === "running") return "Running";
-  if (run.runStatus === "successful") return "Successful";
-  return "Terminated";
-};
-
-const getStatusColor = (run: any) => {
-  if (run.runStatus === "failed") return "danger";
-  if (run.runStatus === "running") return "warning";
-  if (run.runStatus === "successful") return "success";
-  return "medium";
+  if (run.runStatus === "FAILED") return "Failed";
+  if (run.runStatus === "RUNNING") return "Running";
+  if (run.runStatus === "SUCCESSFUL") return "Successful";
+  return "TERMINATED";
 };
 
 const getStatusIcon = (run: any) => {
-  if (run.runStatus === "failed") return closeCircleOutline;
-  if (run.runStatus === "running") return timeOutline;
-  if (run.runStatus === "successful") return checkmarkCircleOutline;
+  if (run.runStatus === "FAILED") return closeCircleOutline;
+  if (run.runStatus === "RUNNING") return timeOutline;
+  if (run.runStatus === "SUCCESSFUL") return checkmarkCircleOutline;
   return alertCircleOutline;
 };
 
@@ -387,7 +372,7 @@ const handleQueryInput = (event: CustomEvent) => {
   queryString.value = (event as any).detail.value || "";
 };
 
-const getPayload = () => {
+const loadRuns = async () => {
   const payload = {
     pageIndex: pageIndex.value,
     pageSize: PAGE_SIZE,
@@ -400,11 +385,7 @@ const getPayload = () => {
   if (selectedUserId.value.trim()) payload.userId = selectedUserId.value.trim();
   if (hasDataLogs.value) payload.hasDataLogs = hasDataLogs.value;
 
-  return payload;
-};
-
-const loadRuns = async () => {
-  await jobStore.fetchJobRunHistory(getPayload());
+  await jobStore.fetchJobRunHistory(payload);
   await userStore.resolveUserFullNames(runs.value.map((run: any) => run.userId));
 };
 
@@ -428,11 +409,16 @@ const goToLog = (logId: string | number) => {
 };
 
 watch([queryString, selectedStatus, selectedJobName, selectedUserId, hasDataLogs], async () => {
-  pageIndex.value = 0;
+  if (pageIndex.value !== 0) {
+    pageIndex.value = 0;
+  } else {
+    await loadRuns();
+  }
+})
+
+watch(pageIndex, async () => {
   await loadRuns();
 });
-
-watch(pageIndex, loadRuns);
 
 onIonViewWillEnter(async () => {
   if (route.query.queryString) queryString.value = route.query.queryString as string;
@@ -446,14 +432,6 @@ onIonViewWillEnter(async () => {
 </script>
 
 <style scoped>
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--spacer-base);
-  flex-wrap: wrap;
-}
-
 .kpi-grid,
 .filter-grid,
 .run-metrics {
@@ -515,7 +493,6 @@ onIonViewWillEnter(async () => {
 }
 
 @media (max-width: 600px) {
-  .header ion-button,
   .pagination ion-button {
     width: 100%;
   }
