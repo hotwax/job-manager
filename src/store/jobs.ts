@@ -1,8 +1,58 @@
 import logger from "@/logger";
-import { getCronString } from "@/utils";
+import { getCronString, getTimeInMillis } from "@/utils";
 import { api } from "@common";
 import { defineStore } from "pinia";
 import { useUserStore } from "./user";
+
+const getRunTime = (run: any) => getTimeInMillis(run.startTime || run.lastUpdatedStamp || run.endTime);
+
+const getRunStatus = (run: any) => {
+  if (run.hasError === "Y") return "FAILED";
+  if (run.startTime && !run.endTime) return "RUNNING";
+  if (run.startTime && run.endTime) return "SUCCESSFUL";
+  return "TERMINATED";
+};
+
+const getRunHistoryStats = (runs: Array<any>) => runs.reduce((stats: any, run: any) => {
+  stats.total += 1;
+  stats[run.runStatus] += 1;
+  return stats;
+}, {
+  total: 0,
+  successful: 0,
+  failed: 0,
+  running: 0,
+  terminated: 0
+});
+
+const parseParameterPayload = (parameters: any) => {
+  if (!parameters) return parameters;
+  if (typeof parameters !== "string") return parameters;
+
+  try {
+    return JSON.parse(parameters);
+  } catch (err) {
+    return parameters;
+  }
+};
+
+const getProductStoreIdFromParameters = (parameters: any) => {
+  const parsedParameters = parseParameterPayload(parameters);
+
+  if (Array.isArray(parsedParameters)) {
+    const productStoreParameter = parsedParameters.find((parameter: any) =>
+      parameter?.parameterName === "productStoreId" || parameter?.productStoreId
+    );
+
+    return productStoreParameter?.parameterValue || productStoreParameter?.productStoreId || "";
+  }
+
+  if (parsedParameters && typeof parsedParameters === "object") {
+    return parsedParameters.productStoreId || "";
+  }
+
+  return "";
+};
 
 export const useJobStore = defineStore("job", {
   state: () => ({
@@ -11,6 +61,15 @@ export const useJobStore = defineStore("job", {
     categoryMembers: [] as Array<any>,
     categoryRollups: [] as Array<any>,
     products: {} as any,
+    jobRunHistory: [] as Array<any>,
+    jobRunHistoryTotal: 0,
+    jobRunHistoryStats: {
+      total: 0,
+      successful: 0,
+      failed: 0,
+      running: 0,
+      terminated: 0
+    },
     loading: false
   }),
   getters: {
@@ -19,6 +78,9 @@ export const useJobStore = defineStore("job", {
     getCategoryMembers: (state: any) => state.categoryMembers,
     getCategoryRollups: (state: any) => state.categoryRollups,
     getProducts: (state: any) => state.products,
+    getJobRunHistory: (state: any) => state.jobRunHistory,
+    getJobRunHistoryTotal: (state: any) => state.jobRunHistoryTotal,
+    getJobRunHistoryStats: (state: any) => state.jobRunHistoryStats,
     isLoading: (state: any) => state.loading
   },
   actions: {
@@ -250,6 +312,125 @@ export const useJobStore = defineStore("job", {
         logger.error("Failed to fetch jobs", err)
       }
       return Array.isArray(jobRuns) ? jobRuns : []
+    },
+    async fetchJobRunHistory(payload: Record<string, any> = {}) {
+      this.loading = true;
+      try {
+        if (!this.jobs.length) await this.fetchJobs();
+
+        const pageSize = Number(payload.pageSize ?? 25);
+        const pageIndex = Number(payload.pageIndex ?? 0);
+        const runsPerJob = Number(payload.runsPerJob ?? 25);
+        const queryString = (payload.queryString || "").trim().toLowerCase();
+        const normalizedQueryString = queryString.replace(/^#/, "");
+        const selectedJobName = payload.jobName || "";
+        const selectedUserId = payload.userId || "";
+        const selectedStatus = payload.status || "";
+        const hasDataLogs = payload.hasDataLogs || "";
+        const hasMessages = payload.hasMessages || "";
+        const hasErrors = payload.hasError || "";
+        const selectedProductStoreId = useUserStore().getCurrentProductStore?.productStoreId || "";
+
+        let jobsToLoad = selectedJobName
+          ? this.jobs.filter((job: any) => job.jobName === selectedJobName)
+          : this.jobs;
+
+        const productIds = [...new Set(jobsToLoad.map((job: any) => job.instanceOfProductId).filter(Boolean))] as string[];
+        await Promise.all(productIds
+          .filter((productId: string) => !this.products[productId])
+          .map((productId: string) => this.fetchProductDetail(productId))
+        );
+
+        const runResponses = await Promise.allSettled(
+          jobsToLoad.map(async (job: any) => {
+            const params = { pageSize: runsPerJob, pageIndex: 0 } as any;
+            if (hasErrors === "Y") params.hasError = "Y";
+            const runs = await this.fetchJobRuns(job.jobName, params);
+            return runs.map((run: any) => ({
+              ...run,
+              jobName: job.jobName,
+              serviceName: job.serviceName,
+              jobDescription: job.description,
+              systemJobEnumId: job.systemJobEnumId,
+              instanceOfProductId: job.instanceOfProductId,
+              jobProductStoreId: getProductStoreIdFromParameters(job.serviceJobParameters),
+              productName: this.products[job.instanceOfProductId]?.productName,
+              paused: job.paused,
+              cronExpression: job.cronExpression,
+              runStatus: getRunStatus(run)
+            }));
+          })
+        );
+
+        let runs = runResponses.flatMap((result: any) => result.status === "fulfilled" ? result.value : []);
+
+        if (selectedProductStoreId) {
+          runs = runs.filter((run: any) => {
+            const runProductStoreId = getProductStoreIdFromParameters(run.parameters) || run.jobProductStoreId;
+            return !runProductStoreId || runProductStoreId === selectedProductStoreId;
+          });
+        }
+
+        if (queryString) {
+          runs = runs.filter((run: any) => {
+            const searchableRunText = [
+              run.jobRunId,
+              run.jobName,
+              run.serviceName,
+              run.userId,
+              run.messages,
+              run.results,
+              run.errors
+            ].filter(Boolean).join(" ").toLowerCase();
+            return searchableRunText.includes(normalizedQueryString);
+          });
+        }
+
+        if (selectedStatus) {
+          runs = runs.filter((run: any) => run.runStatus === selectedStatus);
+        }
+
+        if (selectedUserId) {
+          runs = runs.filter((run: any) => String(run.userId || "").toLowerCase().includes(String(selectedUserId).toLowerCase()));
+        }
+
+        if (hasErrors === "Y") {
+          runs = runs.filter((run: any) => run.hasError === "Y");
+        }
+
+        if (hasErrors === "N") {
+          runs = runs.filter((run: any) => run.hasError !== "Y");
+        }
+
+        if (hasDataLogs) {
+          runs = runs.filter((run: any) => hasDataLogs === "Y" ? !!run.logs?.length : !run.logs?.length);
+        }
+
+        if (hasMessages) {
+          runs = runs.filter((run: any) => hasMessages === "Y" ? !!run.messages : !run.messages);
+        }
+
+        runs = runs.sort((first: any, second: any) => getRunTime(second) - getRunTime(first));
+
+        this.jobRunHistoryTotal = runs.length;
+        this.jobRunHistoryStats = getRunHistoryStats(runs);
+
+        const start = pageIndex * pageSize;
+        this.jobRunHistory = runs.slice(start, start + pageSize);
+      } catch(err) {
+        logger.error("Failed to fetch job run history", err);
+        this.jobRunHistory = [];
+        this.jobRunHistoryTotal = 0;
+        this.jobRunHistoryStats = {
+          total: 0,
+          successful: 0,
+          failed: 0,
+          running: 0,
+          terminated: 0
+        };
+      } finally {
+        this.loading = false;
+      }
     },
     async cloneMaargJob(payload: any) {
       return await api({
