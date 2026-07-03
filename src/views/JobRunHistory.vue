@@ -435,6 +435,7 @@ watch([queryString, selectedStatus, selectedJobName, selectedUserId, hasDataLogs
 watch(pageIndex, loadRuns);
 
 onIonViewWillEnter(async () => {
+  if (route.query.queryString) queryString.value = route.query.queryString as string;
   if (route.query.status) selectedStatus.value = route.query.status as string;
   if (route.query.jobName) selectedJobName.value = route.query.jobName as string;
   if (route.query.userId) selectedUserId.value = route.query.userId as string;

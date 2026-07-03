@@ -332,6 +332,8 @@ export const useJobStore = defineStore("job", {
         const pageIndex = Number(payload.pageIndex ?? 0);
         const runsPerJob = Number(payload.runsPerJob ?? 25);
         const queryString = (payload.queryString || "").trim().toLowerCase();
+        const normalizedQueryString = queryString.replace(/^#/, "");
+        const isRunIdSearch = /^m\d+$/i.test(normalizedQueryString);
         const selectedJobName = payload.jobName || "";
         const selectedUserId = payload.userId || "";
         const selectedStatus = payload.status || "";
@@ -344,7 +346,7 @@ export const useJobStore = defineStore("job", {
           ? this.jobs.filter((job: any) => job.jobName === selectedJobName)
           : this.jobs;
 
-        if (queryString && !selectedJobName && Number.isNaN(Number(queryString))) {
+        if (queryString && !selectedJobName && !isRunIdSearch && Number.isNaN(Number(queryString))) {
           jobsToLoad = jobsToLoad.filter((job: any) => {
             const searchableJobText = [
               job.jobName,
@@ -405,7 +407,7 @@ export const useJobStore = defineStore("job", {
               run.results,
               run.errors
             ].filter(Boolean).join(" ").toLowerCase();
-            return searchableRunText.includes(queryString);
+            return searchableRunText.includes(queryString) || (isRunIdSearch && String(run.jobRunId || "").toLowerCase().includes(normalizedQueryString));
           });
         }
 
