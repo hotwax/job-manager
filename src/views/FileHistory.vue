@@ -61,7 +61,7 @@
                   :label="translate('Status')"
                   label-placement="stacked"
                   interface="popover"
-                  multiple="true"
+                  :multiple="true"
                   :placeholder="translate('All')"
                   :value="selectedStatus"
                   @ionChange="selectedStatus = $event.detail.value"
@@ -84,7 +84,7 @@
                   :label="translate('Priority')"
                   label-placement="stacked"
                   interface="popover"
-                  multiple="true"
+                  :multiple="true"
                   :placeholder="translate('All')"
                   :value="selectedPriority"
                   @ionChange="selectedPriority = $event.detail.value"
@@ -171,8 +171,8 @@
               </ion-label>
             </ion-item>
 
-            <div v-if="log.totalRecordCount" class="log-result-stack">
-              <ion-badge :color="getFailedRecordCount(log) > 0 ? 'warning' : 'success'">
+            <div class="log-result-stack">
+              <ion-badge v-if="log.totalRecordCount" :color="getFailedRecordCount(log) > 0 ? 'warning' : 'success'">
                 {{ getFailedRecordCount(log) }} / {{ log.totalRecordCount }} {{ translate("failed") }}
               </ion-badge>
             </div>
@@ -745,6 +745,9 @@ onIonViewWillEnter(async () => {
 
 .list-item.log.log-card-layout {
   --columns-desktop: 5;
+  --leading-columns: 3;
+  --trailing-columns: calc(var(--col-calc) - var(--leading-columns) - 1);
+  grid-template-columns: repeat(var(--leading-columns), 1fr) max-content repeat(var(--trailing-columns), 1fr);
   padding-block: var(--spacer-sm);
   padding-inline-start: 0;
   padding-inline-end: var(--spacer-sm);
