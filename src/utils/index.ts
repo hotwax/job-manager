@@ -212,7 +212,10 @@ const isAppCompatible = () => {
   const currentVersion = useUtilStore().systemInformation?.instanceInfo?.componentRelease;
   const requiredVersion = import.meta.env.VITE_MAARG_COMPATIBLE_VERSION;
   
-  if(!currentVersion || !requiredVersion) return false;
+  // If no compatibility requirement is configured, allow access by default
+  if(!requiredVersion) return true;
+
+  if(!currentVersion) return false;
   
   const currentParts = currentVersion.split('.');
   const requiredParts = requiredVersion.split('.');
