@@ -1,7 +1,7 @@
 HotWax Commerce Job Manager App
 
 # Prerequisite
-- [accxui](https://github.com/hotwax/accxui) workspace `v1.0.0` or higher - Job Manager is developed and built from within an accxui workspace, not standalone. Refer to accxui's README for workspace setup.
+- [accxui](https://github.com/hotwax/accxui) workspace `v1.0.1` or higher - Job Manager is developed and built from within an accxui workspace, not standalone. Refer to accxui's README for workspace setup.
 
 # Build Notes (Users)
 
