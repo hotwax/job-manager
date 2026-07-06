@@ -189,7 +189,7 @@
                 </ion-toggle>
               </ion-item>
               <ion-item lines="none">
-                <ion-segment :value="fieldRole(selectedField)" @ionChange="setFieldRole($event.detail.value)">
+                <ion-segment :value="fieldRole(selectedField)" @ionChange="setFieldRole($event.detail.value?.toString())">
                   <ion-segment-button value="dimension">
                     <ion-label>{{ translate("Dimension") }}</ion-label>
                   </ion-segment-button>
@@ -821,7 +821,7 @@
           <ion-list>
             <ion-item>
               <ion-input
-                :value="graph.metadata.dataDocumentId"
+                :value="graph?.metadata?.dataDocumentId"
                 :readonly="!isNew"
                 :label="translate('Data Document ID')"
                 label-placement="stacked"
@@ -830,7 +830,7 @@
             </ion-item>
             <ion-item>
               <ion-input
-                :value="graph.metadata.indexName"
+                :value="graph?.metadata?.indexName"
                 :label="translate('Index Name')"
                 label-placement="stacked"
                 @ionInput="updateMetadata('indexName', $event.detail.value || '')"
@@ -838,7 +838,7 @@
             </ion-item>
             <ion-item>
               <ion-input
-                :value="graph.metadata.manualDataServiceName"
+                :value="graph?.metadata?.manualDataServiceName"
                 :label="translate('Manual Data Service')"
                 label-placement="stacked"
                 @ionInput="updateMetadata('manualDataServiceName', $event.detail.value || '')"
@@ -1313,7 +1313,7 @@ const confirmGraphFieldSelection = () => {
     addedField = graphStore.addField(nodeId, fieldName);
   }
   if (addedField) {
-    selectedTarget.value = { kind: "field", id: addedField.fieldSeqId || addedField.fieldPath };
+    selectedTarget.value = { kind: "field", id: addedField.fieldSeqId || addedField.fieldPath || "" };
   }
   closeFieldModal();
 };
@@ -1380,7 +1380,7 @@ const confirmRelatedFieldSelection = () => {
     addedField = graphStore.addFieldPath(`${relationshipPath}:${fieldName}`, fieldName);
   }
   if (addedField) {
-    selectedTarget.value = { kind: "field", id: addedField.fieldSeqId || addedField.fieldPath };
+    selectedTarget.value = { kind: "field", id: addedField.fieldSeqId || addedField.fieldPath || "" };
   }
   closeRelatedFieldModal();
 };

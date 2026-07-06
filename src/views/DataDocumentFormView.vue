@@ -56,7 +56,7 @@
               lines="none"
               class="field-row"
             >
-              <ion-reorder slot="start" />
+              <ion-reorder slot="end" />
               <div class="field-controls">
                 <ion-chip
                   outline

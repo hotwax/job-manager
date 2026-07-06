@@ -178,16 +178,24 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
       const fields = [...this.graph.fields];
       if (oldIndex === newIndex) return;
       if (oldIndex < 0 || oldIndex >= fields.length || newIndex < 0 || newIndex >= fields.length) return;
+
+      const sortedSeqs = fields
+        .map(f => f.sequenceNum)
+        .filter((seq): seq is number => typeof seq === "number" && !isNaN(seq))
+        .sort((a, b) => a - b);
+
       const movedField = fields.splice(oldIndex, 1)[0];
       fields.splice(newIndex, 0, movedField);
+
       const resequencedFields = fields.map((field, index) => {
-        const sequenceNum = (index + 1) * 10;
+        const sequenceNum = index < sortedSeqs.length ? sortedSeqs[index] : (index + 1) * 10;
         return {
           ...field,
           sequenceNum,
           sourceRecord: field.sourceRecord ? { ...field.sourceRecord, sequenceNum } : undefined
         };
       });
+
       this.graph = projectDataDocumentGraph({
         document: this.graph.metadata,
         fields: serializeGraphFields({ dataDocumentId: this.graph.dataDocumentId, fields: resequencedFields }),
@@ -237,18 +245,9 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
       const persistedSeqId = removed?.sourceRecord?.fieldSeqId;
       if (persistedSeqId) this.removedFieldSeqIds.push(persistedSeqId);
 
-      const resequencedSurvivors = survivors.map((field, index) => {
-        const sequenceNum = (index + 1) * 10;
-        return {
-          ...field,
-          sequenceNum,
-          sourceRecord: field.sourceRecord ? { ...field.sourceRecord, sequenceNum } : undefined
-        };
-      });
-
       this.graph = projectDataDocumentGraph({
         document: this.graph.metadata,
-        fields: serializeGraphFields({ dataDocumentId: this.graph.dataDocumentId, fields: resequencedSurvivors }),
+        fields: serializeGraphFields({ dataDocumentId: this.graph.dataDocumentId, fields: survivors }),
         conditions: serializeGraphConditions(this.graph),
         relAliases: this.relAliases,
         links: this.links
