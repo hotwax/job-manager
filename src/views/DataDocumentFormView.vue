@@ -388,6 +388,7 @@ import {
   IonSelectOption,
   IonSpinner,
   IonTitle,
+  IonToggle,
   IonToolbar
 } from "@ionic/vue";
   
@@ -735,7 +736,7 @@ const selectEntity = async (entity: string) => {
   if (graph.value && (graph.value.fields.length > 0 || graph.value.conditions.length > 0)) {
     const alert = await alertController.create({
       header: translate("Change Primary Entity?"),
-      message: translate("You already have fields and conditions defined. Changing the primary entity will clear the current configuration. Do you wish to proceed?"),
+      message: translate("Changing the Primary Entity will affect your current configuration. What would you like to do?"),
       buttons: [
         {
           text: translate("Keep Configuration"),
