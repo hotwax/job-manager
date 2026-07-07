@@ -107,7 +107,7 @@ describe("data document graph store", () => {
     expect(store.getGraph?.fields[1].sequenceNum).toBe(20);
     expect(store.getGraph?.fields[1].sourceRecord?.sequenceNum).toBe(20);
   });
-
+  
   it("clears fields, conditions, relAliases, and links when primaryEntityName changes, and queues old ones for deletion", () => {
     const store = useDataDocumentGraphStore();
     store.startNewGraph();

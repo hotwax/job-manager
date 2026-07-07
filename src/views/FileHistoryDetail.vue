@@ -41,10 +41,11 @@
                   </ion-badge>
                 </ion-label>
               </ion-item>
-              <ion-item>
+              <ion-item button detail="true" @click="goToConfigDetail(log.configId)">
                 <ion-label class="ion-text-wrap">
-                  <p>{{ translate("Config ID") }}</p>
-                  {{ log.configId || "-" }}
+                  <p>{{ translate("Config") }}</p>
+                  {{ getConfigName(log.configId) }}
+                  <p>{{ log.configId }}</p>
                 </ion-label>
               </ion-item>
               <ion-item>
@@ -185,6 +186,7 @@
 
 <script setup lang="ts">
 import {
+  IonBadge,
   IonPage,
   IonHeader,
   IonToolbar,
@@ -207,6 +209,7 @@ import {
   onIonViewWillEnter
 } from '@ionic/vue';
 import { computed, ref } from 'vue';
+import router from "@/router";
 import { translate, commonUtil } from '@common';
 import { useMdmConfigStore } from '@/store/mdmConfig';
 import { getFileSize, showToast, getDuration } from '@/utils';
@@ -224,6 +227,20 @@ const props = defineProps({
 
 const mdmStore = useMdmConfigStore();
 const logId = props.id;
+
+const getConfigName = (configId: string) => {
+  if (!configId) return "";
+  const config = mdmStore.getConfigById(configId);
+  if (config && Object.keys(config).length > 0) {
+    return config.scriptTitle || config.description || configId;
+  }
+  return configId;
+};
+
+const goToConfigDetail = (configId: string) => {
+  if (!configId) return;
+  router.push({ name: "ImportDetail", params: { type: configId } });
+};
 
 type PayloadKey = "original" | "errors";
 type ContentType = "" | "json" | "csv" | "text";
@@ -262,7 +279,7 @@ const payloadTabs = computed(() => {
 const getLogStatusLabel = (logVal: any) => {
   if (!logVal) return "";
   if (logVal.statusId === "DmlsFinished" && failedRecordCount.value > 0) {
-    return "Finished with errors";
+    return translate("Finished with errors");
   }
   return getStatusDesc(logVal.statusId);
 };
@@ -294,6 +311,9 @@ onIonViewWillEnter(async () => {
   }
   log.value = fetchedLog;
   await loadPayloads(fetchedLog);
+  if (!mdmStore.getConfigs.length) {
+    await mdmStore.fetchConfigs();
+  }
 });
 
 function createPayload(fileName?: string): ParsedPayload {

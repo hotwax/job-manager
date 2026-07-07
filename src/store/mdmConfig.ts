@@ -1,25 +1,33 @@
 import logger from "@/logger";
+import { getTimeInMillis } from "@/utils";
 import { api } from "@common";
 import { defineStore } from "pinia";
 
 export const useMdmConfigStore = defineStore("mdmConfig", {
   state: () => ({
     configs: [] as Array<any>,
+    executionModes: [] as Array<any>,
     logs: [] as Array<any>,
     logsCount: 0,
     filters: {} as Record<string, any>,
-    globalStats: { total: 0, successful: 0, failed: 0 }
+    globalStats: { total: 0, successful: 0, failed: 0, avgProcessingTime: 0 },
+    fetchStatus: {
+      configs: "none"
+    } as any
   }),
   getters: {
     getConfigs: (state: any) => state.configs,
     getConfigById: (state: any) => (configId: string) => state.configs.find((config: any) => config.configId === configId) || {},
+    getExecutionModes: (state: any) => state.executionModes,
     getLogs: (state: any) => state.logs,
     getLogsCount: (state: any) => state.logsCount,
     getAppliedFilters: (state: any) => JSON.parse(JSON.stringify(state.filters)),
-    getGlobalStats: (state: any) => state.globalStats
+    getGlobalStats: (state: any) => state.globalStats,
+    getFetchStatus: (state: any) => state.fetchStatus
   },
   actions: {
     async fetchConfigs() {
+      this.fetchStatus.configs = "pending"
       try {
         const resp = await api({
           url: "admin/dataManager",
@@ -39,8 +47,10 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
             config?.importServiceName?.includes("#")
           )
         }
+        this.fetchStatus.configs = "success"
       } catch (err) {
         logger.error("Failed to fetch configs", err)
+        this.fetchStatus.configs = "error"
       }
     },
     async fetchConfigById(configId: string) {
@@ -55,11 +65,45 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
           method: "get"
         })
 
-        if (resp.data?.length) {
-          this.configs.push(resp.data)
+        // The endpoint returns the single config as an object
+        if (resp.data?.configId) {
+          this.configs.push(resp.data);
         }
       } catch (err) {
         logger.error(`Failed to fetch config with id ${configId}`, err)
+      }
+    },
+    async fetchExecutionModes() {
+      if (this.executionModes.length) return;
+
+      try {
+        const resp = await api({
+          url: "admin/enums",
+          method: "get",
+          params: { enumTypeId: "DMC_EXEC_MODE", pageSize: 20 }
+        });
+
+        if (Array.isArray(resp.data)) {
+          this.executionModes = resp.data;
+        }
+      } catch (err) {
+        logger.error("Failed to fetch execution modes", err);
+      }
+    },
+    async updateConfig(configId: string, updates: Record<string, any>) {
+      try {
+        await api({
+          url: `admin/dataManager/${configId}`,
+          method: "PUT",
+          data: { configId, ...updates }
+        });
+
+        const config = this.configs.find((config: any) => config.configId === configId);
+        if (config) Object.assign(config, updates);
+        return true;
+      } catch (err) {
+        logger.error(`Failed to update config with id ${configId}`, err);
+        return false;
       }
     },
     async fetchDataManagerLogs(params = { pageSize: 10, pageIndex: 0 }) {
@@ -170,16 +214,33 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
     },
     async fetchGlobalStats() {
       const moquiStatuses = "DmlsCancelled,DmlsCrashed,DmlsFailed,DmlsFinished,DmlsPending,DmlsQueued,DmlsRunning"
+
+      const getAverageProcessingTime = (logs: Array<any>) => {
+        const finishedLogs = logs.filter((log: any) => log.createdDate && (log.finishDateTime || log.lastUpdatedTxStamp));
+        if (!finishedLogs.length) return 0;
+
+        const totalDuration = finishedLogs.reduce((sum: number, log: any) => {
+          const start = getTimeInMillis(log.createdDate);
+          const end = getTimeInMillis(log.finishDateTime || log.lastUpdatedTxStamp);
+          const diff = end - start;
+          return sum + (diff > 0 ? diff : 0);
+        }, 0);
+
+        return Math.floor(totalDuration / finishedLogs.length / 1000);
+      };
+
       try {
-        const [totalResp, successResp, failedResp] = await Promise.all([
+        const [totalResp, successResp, failedResp, logsResp] = await Promise.all([
           api({ url: "admin/dataManager/details", method: "get", params: { pageSize: 1, pageIndex: 0, statusId: moquiStatuses, statusId_op: "in" } }),
           api({ url: "admin/dataManager/details", method: "get", params: { pageSize: 1, pageIndex: 0, statusId: "DmlsFinished" } }),
-          api({ url: "admin/dataManager/details", method: "get", params: { pageSize: 1, pageIndex: 0, statusId: "DmlsFailed,DmlsCrashed", statusId_op: "in" } })
+          api({ url: "admin/dataManager/details", method: "get", params: { pageSize: 1, pageIndex: 0, statusId: "DmlsFailed,DmlsCrashed", statusId_op: "in" } }),
+          api({ url: "admin/dataManager/details", method: "get", params: { pageSize: 1000, pageIndex: 0, statusId: moquiStatuses, statusId_op: "in" } })
         ])
         this.globalStats = {
           total: totalResp.data?.dataManagerLogsCount || 0,
           successful: successResp.data?.dataManagerLogsCount || 0,
-          failed: failedResp.data?.dataManagerLogsCount || 0
+          failed: failedResp.data?.dataManagerLogsCount || 0,
+          avgProcessingTime: getAverageProcessingTime(logsResp.data?.dataManagerLogs || [])
         }
       } catch (err) {
         logger.error("Failed to fetch global stats", err)

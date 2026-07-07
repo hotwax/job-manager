@@ -9,7 +9,7 @@
       <ion-item lines="none">
         <ion-icon slot="start" :icon="cloudDownloadOutline" />
         <ion-label>
-          <h2>{{ message.fileName || message.systemMessageId }}</h2>
+          {{ message.fileName || message.systemMessageId }}
           <p>
             {{ translate("System Message") }}: {{ message.systemMessageId }}
             <template v-if="message.dataDocumentId"> · {{ message.dataDocumentId }}</template>
@@ -61,7 +61,7 @@ const canDownload = (message: any) => message.statusId === "SmsgSent" && message
 </script>
 
 <style scoped>
-/* Mirror the System Message Monitor list: a responsive row-grid card (.list-item) with the
+/* Mirror the Message history list: a responsive row-grid card (.list-item) with the
    primary info on the left, supporting detail in the middle, and a status pill on the right. */
 .list-item {
   --columns-desktop: 3;

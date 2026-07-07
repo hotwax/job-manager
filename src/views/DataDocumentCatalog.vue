@@ -15,13 +15,6 @@
 
     <ion-content>
       <main>
-        <div class="header">
-          <div class="title">
-            <h1>{{ translate("Documents") }}</h1>
-            <p>{{ translate("Browse saved Moqui Data Document definitions.") }}</p>
-          </div>
-        </div>
-
         <ion-card>
           <ion-card-content>
             <ion-searchbar
@@ -67,7 +60,7 @@
               <ion-item lines="none" detail button @click="router.push(`/data-documents/${document.dataDocumentId}/graph`)">
                 <ion-icon slot="start" :icon="documentTextOutline" />
                 <ion-label>
-                  <h2>{{ document.documentName || document.dataDocumentId }}</h2>
+                  {{ document.documentName || document.dataDocumentId }}
                   <p>{{ document.dataDocumentId }}</p>
                   <p>{{ document.primaryEntityName }}</p>
                 </ion-label>

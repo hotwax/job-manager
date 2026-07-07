@@ -9,7 +9,7 @@
         <span class="jt-punct">{{ openBracket }}</span>
         <span v-if="!entries.length" class="jt-punct">{{ closeBracket }}</span>
         <template v-else-if="!isOpen">
-          <span class="jt-summary">{{ entries.length }} {{ isArray ? "items" : "keys" }}</span>
+          <span class="jt-summary">{{ entries.length }} {{ isArray ? translate("items") : translate("keys") }}</span>
           <span class="jt-punct">{{ closeBracket }}</span>
         </template>
       </template>
@@ -36,6 +36,7 @@
 import { IonIcon } from "@ionic/vue";
 import { chevronDownOutline, chevronForwardOutline } from "ionicons/icons";
 import { computed, ref, watch } from "vue";
+import { translate } from "@common";
 
 const props = defineProps<{
   name?: string | number;
@@ -117,7 +118,7 @@ const highlight = (text: string) => {
 
 .jt-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   flex-wrap: wrap;
   border-radius: 4px;
 }

@@ -15,17 +15,6 @@
 
     <ion-content>
       <main>
-        <div class="header">
-          <div class="title">
-            <h1>
-              Job catalog
-            </h1>
-            <p>
-              Manage and configure integration tasks.
-            </p>
-          </div>
-        </div>
-
         <ion-card>
           <ion-searchbar :value="queryString" @ionInput="queryString = $event.detail.value || ''" :debounce="300" :placeholder="translate('Search jobs')"></ion-searchbar>
           
@@ -127,9 +116,6 @@
 
 <script setup lang="ts">
 import {
-  IonBadge,
-  IonButton,
-  IonButtons,
   IonCard,
   IonCardHeader,
   IonCardTitle,
@@ -153,12 +139,11 @@ import { ref, computed } from 'vue';
 import router from '@/router';
 import { ellipseOutline, lockClosedOutline, pauseCircleOutline, playCircleOutline } from 'ionicons/icons';
 import { emitter, translate } from '@common';
-import { useRoute } from 'vue-router';
 import CreateJobModal from '@/components/CreateJobModal.vue';
 import { useJobStore } from '@/store/jobs';
 
-const route = useRoute();
 const jobStore = useJobStore();
+const route = router.currentRoute.value;
 
 const jobs = computed(() => jobStore.getJobs)
 const categories = computed(() => jobStore.getCategories)
@@ -167,7 +152,7 @@ const categoryRollups = computed(() => jobStore.getCategoryRollups)
 
 onIonViewWillEnter(async () => {
   emitter.on("productStoreUpdated", jobStore.fetchJobs)
-  if (route.query.status) {
+  if (route.query?.status) {
     selectedStatus.value = route.query.status as string;
   } else {
     selectedStatus.value = 'ALL';
@@ -284,12 +269,6 @@ const openCreateJobModal = async () => {
 </script>
 
 <style scoped>
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
 
 .categories, .sub-categories, .status-filters {
   padding: 0 8px 8px;

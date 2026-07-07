@@ -3,19 +3,12 @@
     <ion-header>
       <ion-toolbar>
         <ion-menu-button slot="start" />
-        <ion-title>{{ translate("System Message Monitor") }}</ion-title>
+        <ion-title>{{ translate("Message history") }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
     <ion-content>
       <main>
-        <div class="header">
-          <div class="title">
-            <h1>{{ translate("Monitor") }}</h1>
-            <p>{{ translate("Track individual system messages across all types and remote systems.") }}</p>
-          </div>
-        </div>
-
         <ion-card>
           <ion-card-content>
             <ion-searchbar
@@ -133,19 +126,18 @@ import {
   onIonViewWillEnter
 } from "@ionic/vue";
 import { computed, ref, watch } from "vue";
-
 import { translate } from "@common";
-
-import { useRoute } from "vue-router";
 import SystemMessageList from "@/components/SystemMessageList.vue";
 import { useSystemMessageStore } from "@/store/systemMessage";
 import { useUtilStore } from "@/store/util";
+import router from "@/router";
 
-const route = useRoute();
 const PAGE_SIZE = 25;
 
 const store = useSystemMessageStore();
 const utilStore = useUtilStore();
+const route = router.currentRoute.value;
+
 const queryString = ref("");
 const selectedStatusId = ref("");
 const selectedTypeId = ref("");
@@ -224,7 +216,7 @@ watch([queryString, selectedStatusId, selectedTypeId, selectedParentTypeId, sele
 watch(pageIndex, loadMessages);
 
 onIonViewWillEnter(async () => {
-  if (route.query.statusId) {
+  if (route.query?.statusId) {
     selectedStatusId.value = route.query.statusId as string;
   } else {
     selectedStatusId.value = "";

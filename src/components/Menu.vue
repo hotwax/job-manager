@@ -8,13 +8,6 @@
 
     <ion-content>
       <ion-list>
-        <ion-item
-          button
-          @click="redirectToLegacyApp()"
-        >
-          <ion-icon slot="start" :icon="openOutline" />
-          <ion-label>{{ translate("Legacy App") }}</ion-label>
-        </ion-item>
         <ion-menu-toggle :auto-hide="false" v-for="(page, index) in getValidMenuItems(appPages)" :key="index">
           <ion-item
             v-if="page.url"
@@ -66,7 +59,6 @@ import { translate, commonUtil, emitter } from "@common";
 import { useAuth } from "@common/composables/useAuth";
 import router from "../router";
 import { useUserStore } from "@/store/user";
-import { redirectToLegacyApp } from "@/utils";
 
 const { isAuthenticated } = useAuth();
 const userStore = useUserStore();
@@ -99,6 +91,13 @@ let appPages = [
     childRoutes: ["/job/"]
   },
   {
+    title: "Run history",
+    url: "/job-run-history",
+    iosIcon: timeOutline,
+    mdIcon: timeOutline,
+    childRoutes: ["/job-run-history"]
+  },
+  {
     title: "MDM"
   },
   {
@@ -116,10 +115,10 @@ let appPages = [
     childRoutes: ["/manual-uploads/"]
   },
   {
-    title: "System Messages"
+    title: "System messages"
   },
   {
-    title: "Monitor",
+    title: "Message history",
     url: "/system-messages",
     iosIcon: pulseOutline,
     mdIcon: pulseOutline,
@@ -140,7 +139,7 @@ let appPages = [
     childRoutes: ["/system-message-remotes/"]
   },
   {
-    title: "Data Documents"
+    title: "Data documents"
   },
   {
     title: "Documents",
@@ -164,7 +163,7 @@ let appPages = [
     childRoutes: ["/data-document-export-history/"]
   },
   {
-    title: "System Health"
+    title: "System health"
   },
   {
     title: "Solr Monitoring",

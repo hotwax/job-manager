@@ -9,12 +9,7 @@
 
     <ion-content>
       <main>
-        <div class="header">
-          <div class="title">
-            <h1>{{ translate("Feeds") }}</h1>
-            <p>{{ translate("Browse Moqui Data Feeds and their attached documents.") }}</p>
-          </div>
-        </div>
+
 
         <ion-card>
           <ion-card-content>
@@ -33,7 +28,7 @@
               <ion-item lines="none" button @click="openFeed(feed)">
                 <ion-icon slot="start" :icon="gitNetworkOutline" />
                 <ion-label>
-                  <h2>{{ feed.feedName || feed.dataFeedId }}</h2>
+                  {{ feed.feedName || feed.dataFeedId }}
                   <p>{{ feed.dataFeedId }}</p>
                   <p v-if="feed.dataFeedTypeEnumId">{{ feed.dataFeedTypeEnumId }}</p>
                 </ion-label>
@@ -63,7 +58,7 @@
                   >
                     <ion-icon slot="start" :icon="documentTextOutline" />
                     <ion-label>
-                      <h3>{{ document.documentName || document.dataDocumentId }}</h3>
+                      {{ document.documentName || document.dataDocumentId }}
                       <p>{{ document.dataDocumentId }}</p>
                       <p>{{ document.primaryEntityName }}</p>
                     </ion-label>
@@ -104,13 +99,12 @@ import {
 } from "@ionic/vue";
 import { documentTextOutline, gitNetworkOutline } from "ionicons/icons";
 import { computed, onMounted, ref } from "vue";
-import { useRouter } from "vue-router";
-
+import router from "@/router";
 import { translate } from "@common";
 import { useDataDocumentStore } from "@/store/dataDocuments";
 
 const store = useDataDocumentStore();
-const router = useRouter();
+
 const queryString = ref("");
 
 const feeds = computed(() => store.getDataFeeds);
