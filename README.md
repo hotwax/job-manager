@@ -1,8 +1,7 @@
 HotWax Commerce Job Manager App
 
 # Prerequisite
-Ionic CLI - If you don't have the ionic CLI installed refer [official documentation](https://ionicframework.com/docs/intro/cli) for the installation instructions.
-
+- [accxui](https://github.com/hotwax/accxui) workspace `v1.0.1` or higher - Job Manager is developed and built from within an accxui workspace, not standalone. Refer to accxui's README for workspace setup.
 
 # Build Notes (Users)
 
@@ -17,12 +16,12 @@ Ionic CLI - If you don't have the ionic CLI installed refer [official documentat
 # Build Notes (Contributors)
 
 1. Open a Terminal window
-2. Clone app using the command: `git clone https://github.com/hotwax/job-manager.git <repository-name>`
-3. Go to the <repository-name> directory using command: `cd <repository-name>`
-4. Run following command to download dependencies
-    `npm i`
-5. Create a `.env` file by taking reference from the `.env.example`
-6. To run the app in browser use the command: `ionic serve`
+2. Clone the accxui workspace: `git clone https://github.com/hotwax/accxui.git`
+3. Go to the apps folder inside the workspace: `cd accxui/apps`
+4. Clone this app into the apps folder: `git clone https://github.com/hotwax/job-manager.git`
+5. Create a `.env` file inside `apps/job-manager` by taking reference from the `.env.example`
+6. Install dependencies once from the accxui root: `pnpm install`
+7. Start the app from the accxui root: `pnpm --filter job-manager dev`
 
 
 # Contribution Guideline
