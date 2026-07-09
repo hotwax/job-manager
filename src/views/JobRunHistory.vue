@@ -103,7 +103,20 @@
           <ion-button fill="outline" :disabled="pageIndex === 0 || isLoading" @click="goToPreviousPage">
             {{ translate("Previous") }}
           </ion-button>
-          <ion-note color="medium">{{ translate("Page") }} {{ pageIndex + 1 }} / {{ pageCount }}</ion-note>
+          <div class="page-input">
+            <span>{{ translate("Page") }}</span>
+            <input
+              type="number"
+              min="1"
+              :max="pageCount"
+              :value="pageIndex + 1"
+              @keyup="validatePageInput($event)"
+              @change="goToPage($event)"
+              class="page-number-input"
+              :disabled="isLoading"
+            />
+            <span>/ {{ pageCount }}</span>
+          </div>
           <ion-button fill="outline" :disabled="pageIndex >= pageCount - 1 || isLoading" @click="goToNextPage">
             {{ translate("Next") }}
           </ion-button>
@@ -362,11 +375,12 @@ const handleQueryInput = (event: CustomEvent) => {
   queryString.value = (event as any).detail.value || "";
 };
 
-const loadRuns = async () => {
+const loadRuns = async (fetchFromServer = true) => {
   const payload = {
     pageIndex: pageIndex.value,
     pageSize: PAGE_SIZE,
-    runsPerJob: RUNS_PER_JOB
+    runsPerJob: RUNS_PER_JOB,
+    fetchFromServer
   } as Record<string, any>;
 
   if (queryString.value.trim()) payload.queryString = queryString.value.trim();
@@ -390,6 +404,22 @@ const goToNextPage = () => {
   pageIndex.value += 1;
 };
 
+const validatePageInput = (event: any) => {
+  const value = parseInt(event.target.value, 10);
+  if (value > pageCount.value) {
+    event.target.value = pageCount.value;
+  }
+};
+
+const goToPage = (event: any) => {
+  const newPage = parseInt(event.target.value, 10);
+  if (newPage && newPage > 0 && newPage <= pageCount.value) {
+    pageIndex.value = newPage - 1;
+  } else {
+    event.target.value = pageIndex.value + 1;
+  }
+};
+
 const goToJob = (jobName: string) => {
   router.push({ name: "JobDetail", params: { jobName } });
 };
@@ -398,16 +428,22 @@ const goToLog = (logId: string | number) => {
   router.push({ name: "FileHistoryDetail", params: { id: logId } });
 };
 
+let isFilterResetting = false;
+
 watch([queryString, selectedStatus, selectedJobName, selectedUserId, hasDataLogs], async () => {
   if (pageIndex.value !== 0) {
+    isFilterResetting = true;
     pageIndex.value = 0;
-  } else {
-    await loadRuns();
   }
-})
+  await loadRuns(true);
+});
 
 watch(pageIndex, async () => {
-  await loadRuns();
+  if (isFilterResetting) {
+    isFilterResetting = false;
+    return;
+  }
+  await loadRuns(false);
 });
 
 onIonViewWillEnter(async () => {
@@ -490,5 +526,27 @@ onIonViewWillEnter(async () => {
   .pagination {
     justify-content: stretch;
   }
+}
+.page-input {
+  display: flex;
+  align-items: center;
+  gap: var(--spacer-sm);
+}
+
+.page-number-input {
+  width: 50px;
+  text-align: center;
+  border: 1px solid var(--ion-color-medium);
+  border-radius: 4px;
+  padding: 4px;
+}
+
+.page-number-input::-webkit-outer-spin-button,
+.page-number-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.page-number-input[type=number] {
+  -moz-appearance: textfield;
 }
 </style>
