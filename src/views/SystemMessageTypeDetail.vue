@@ -211,7 +211,7 @@ const saveType = async () => {
 
   // TODO: check do we need this, as the form fields will always be a string
   const payload = Object.entries(form).reduce((params: Record<string, any>, [key, field]) => {
-    if(field.value !== null || field.value !== undefined) {
+    if(field.value.trim()) {
       params[key] = field.value
     }
     return params
