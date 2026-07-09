@@ -576,10 +576,10 @@ onIonViewWillEnter(async () => {
   } else {
     await mdmStore.updateAppliedFilters("statusId", []);
   }
-  if(currentQuery?.priority){
+  if (currentQuery?.priority) {
     selectedPriority.value = [(currentQuery.priority as string)];
-  }else{
-      selectedPriority.value = [];
+  } else {
+    selectedPriority.value = [];
   }
   await fetchLogs();
   mdmStore.fetchConfigs();

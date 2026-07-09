@@ -235,7 +235,7 @@ const loadMessages = async () => {
   const payload = {
     pageIndex: isDirectionFiltered ? 0 : pageIndex.value,
     pageSize: isDirectionFiltered ? 500 : PAGE_SIZE,
-  } as Record<string, any>
+  } as Record<string, any>;
 
   if(queryString.value.trim()) {
     payload["queryString"] = queryString.value.trim()
@@ -302,7 +302,11 @@ watch([queryString, selectedStatusId, selectedTypeId, selectedParentTypeId, sele
   await loadMessages();
 });
 
-watch(pageIndex, loadMessages);
+watch(pageIndex, () => {
+  if (!selectedIsOutgoing.value) {
+    loadMessages();
+  }
+});
 
 onIonViewWillEnter(async () => {
   await Promise.all([
