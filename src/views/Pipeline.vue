@@ -720,7 +720,7 @@ const getAvgProcessingTime = (logsList: any[]) => {
   if (finishedLogs.length === 0) return 0;
   const totalSeconds = finishedLogs.reduce((acc, log) => {
     const start = log.createdDate;
-    const end = log.lastUpdatedStamp;
+    const end = log.finishDateTime || log.lastUpdatedTxStamp;
     if (!start || !end) return acc;
     const startDt = typeof start === 'number' ? DateTime.fromMillis(start) : DateTime.fromISO(start);
     const endDt = typeof end === 'number' ? DateTime.fromMillis(end) : DateTime.fromISO(end);
@@ -769,21 +769,24 @@ const pendingMessagesCount = computed(() => systemMessages.value.filter((msg: an
 const successMessagesCount = computed(() => systemMessages.value.filter((msg: any) => msg.statusId === 'SmsgSent' || msg.statusId === 'SmsgConsumed' || msg.statusId === 'SmsgConfirmed').length);
 
 // Inbound/Outbound Message Average Processing Time
+// Inbound/Outbound Message Average Processing Time
 const getAvgMessageProcessingTime = (messagesList: any[]) => {
   const finishedMessages = messagesList.filter((msg: any) => ['SmsgSent', 'SmsgConsumed', 'SmsgConfirmed'].includes(msg.statusId));
   if (finishedMessages.length === 0) return 0;
-  const totalSeconds = finishedMessages.reduce((acc, msg) => {
+  const measurableMessages = finishedMessages.filter((msg: any) => msg.initDate && msg.processedDate);
+  if (measurableMessages.length === 0) return 0;
+  const totalSeconds = measurableMessages.reduce((acc, msg) => {
     const start = msg.initDate;
     const end = msg.processedDate;
-    if (!start || !end) return acc;
     const startDt = typeof start === 'number' ? DateTime.fromMillis(start) : DateTime.fromISO(start);
     const endDt = typeof end === 'number' ? DateTime.fromMillis(end) : DateTime.fromISO(end);
     if (!startDt.isValid || !endDt.isValid) return acc;
     const diff = endDt.diff(startDt, 'seconds').seconds;
     return acc + (diff > 0 ? diff : 0);
   }, 0);
-  return totalSeconds / finishedMessages.length;
+  return totalSeconds / measurableMessages.length;
 };
+
 
 const incomingAvgTime = computed(() => formatDuration(getAvgMessageProcessingTime(incomingMessages.value)));
 const outgoingAvgTime = computed(() => formatDuration(getAvgMessageProcessingTime(outgoingMessages.value)));
