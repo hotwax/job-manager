@@ -36,6 +36,9 @@
                 <ion-chip outline button @click="router.push('/catalog?status=NO_SCHEDULE')">
                   <ion-label>{{ noScheduleJobsCount }} {{ translate("No Schedule") }}</ion-label>
                 </ion-chip>
+                <ion-chip outline button @click="router.push('/catalog?status=DRAFT')">
+                  <ion-label>{{ draftJobsCount }} {{ translate("Draft") }}</ion-label>
+                </ion-chip>
                 <ion-chip v-if="stuckJobsCount > 0" outline color="danger">
                   <ion-label>{{ stuckJobsCount }} {{ translate("Stuck") }}</ion-label>
                 </ion-chip>
@@ -532,8 +535,9 @@ const isLoading = ref(false);
 const jobs = computed(() => jobStore.getJobs);
 const totalJobsCount = computed(() => jobs.value.length);
 const scheduledJobsCount = computed(() => jobs.value.filter((job: any) => job.paused === 'N' && !!job.cronExpression).length);
-const pausedJobsCount = computed(() => jobs.value.filter((job: any) => job.paused === 'Y').length);
-const noScheduleJobsCount = computed(() => jobs.value.filter((job: any) => !job.cronExpression).length);
+const pausedJobsCount = computed(() => jobs.value.filter((job: any) => job.paused === 'Y' && !job.isDraftJob).length);
+const noScheduleJobsCount = computed(() => jobs.value.filter((job: any) => !job.cronExpression && !job.isDraftJob).length);
+const draftJobsCount = computed(() => jobs.value.filter((job: any) => job.isDraftJob).length);
 
 // Detailed run-based jobs diagnostics
 const jobRunsMap = ref<Record<string, any[]>>({});
