@@ -720,7 +720,7 @@ const getAvgProcessingTime = (logsList: any[]) => {
   if (finishedLogs.length === 0) return 0;
   const totalSeconds = finishedLogs.reduce((acc, log) => {
     const start = log.createdDate;
-    const end = log.finishDateTime || log.lastUpdatedTxStamp;
+    const end = log.finishDateTime || log.lastUpdatedStamp;
     if (!start || !end) return acc;
     const startDt = typeof start === 'number' ? DateTime.fromMillis(start) : DateTime.fromISO(start);
     const endDt = typeof end === 'number' ? DateTime.fromMillis(end) : DateTime.fromISO(end);
@@ -768,7 +768,6 @@ const erroredMessagesCount = computed(() => erroredMessages.value.length);
 const pendingMessagesCount = computed(() => systemMessages.value.filter((msg: any) => ['SmsgProduced', 'SmsgCreated', 'SmsgSending'].includes(msg.statusId) && !(msg.statusId === 'SmsgProduced' && Number(msg.failCount) > 0)).length);
 const successMessagesCount = computed(() => systemMessages.value.filter((msg: any) => msg.statusId === 'SmsgSent' || msg.statusId === 'SmsgConsumed' || msg.statusId === 'SmsgConfirmed').length);
 
-// Inbound/Outbound Message Average Processing Time
 // Inbound/Outbound Message Average Processing Time
 const getAvgMessageProcessingTime = (messagesList: any[]) => {
   const finishedMessages = messagesList.filter((msg: any) => ['SmsgSent', 'SmsgConsumed', 'SmsgConfirmed'].includes(msg.statusId));
