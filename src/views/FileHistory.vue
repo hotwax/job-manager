@@ -189,7 +189,7 @@
                 {{ translate(getLogStatusLabel(log)) }}
               </ion-badge>
               <p>{{ getFileSize(log.fileSize) }}</p>
-              <p>{{ log.createdDate && (log.finishDateTime || log.lastUpdatedTxStamp) ? getDuration(log.createdDate, log.finishDateTime || log.lastUpdatedTxStamp) : '-' }}</p>
+              <p>{{ log.createdDate && log.finishDateTime ? getDuration(log.createdDate, log.finishDateTime) : '-' }}</p>
               <ion-button v-if="log.statusId === 'DmlsPending'" color="danger" fill="clear" @click.stop="mdmStore.cancelDataManagerLog(log.configId, log.logId)">
                 <ion-icon slot="icon-only" :icon="closeOutline" />
               </ion-button>
@@ -721,7 +721,7 @@ onIonViewWillEnter(async () => {
   flex-direction: column;
   gap: 4px;
 }
-
+ 
 .detail-value.service-name {
   word-break: break-all;
 }
