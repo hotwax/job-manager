@@ -624,24 +624,6 @@ onIonViewWillEnter(async () => {
   gap: var(--spacer-lg);
 }
 
-.filter-item {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.filter-item ion-select {
-  flex: 1;
-}
-
-.clear-filter-btn {
-  --padding-start: 6px;
-  --padding-end: 6px;
-  flex-shrink: 0;
-  margin-inline-start: 4px;
-  height: 36px;
-  width: 36px;
-}
 
 .pagination {
   display: flex;
