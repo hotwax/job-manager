@@ -179,14 +179,6 @@ const form = reactive<Record<string, any>>({
   "sendServiceName": { label: "Send Service", type: "textarea" }
 });
 
-const CREDENTIAL_FIELDS = new Set([
-  "password",
-  "privateKey",
-  "sharedSecret",
-  "sendSharedSecret",
-  "oldSharedSecret"
-]);
-
 const isCreateMode = computed(() => !props.id);
 const pageTitle = computed(() => isCreateMode.value ? translate("Create Remote System") : translate("Remote System Detail"));
 const statuses = computed(() => utilStore.getStatusItemsByType("SystemMessage"));
@@ -196,7 +188,7 @@ const pageCount = computed(() => Math.max(Math.ceil(total.value / PAGE_SIZE), 1)
 
 const setForm = (payload?: Record<string, any>) => {
   for (const key of Object.keys(form)) {
-    form[key].value = payload?.[key] ?? (CREDENTIAL_FIELDS.has(key) ? null : "");
+    form[key].value = payload?.[key] ?? (form[key].type === "password" ? null : "");
   }
 };
 
@@ -231,7 +223,7 @@ const saveRemote = async () => {
 
   // TODO: check do we need this, as the form fields will always be a string
   const payload = Object.entries(form).reduce((params: Record<string, any>, [key, field]) => {
-    if(CREDENTIAL_FIELDS.has(key) && field.value === null){
+    if(field.type === "password" && field.value === null){
       return params;
     }
     if(field.value !== null && field.value !== undefined) {
