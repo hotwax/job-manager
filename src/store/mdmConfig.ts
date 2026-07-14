@@ -230,17 +230,39 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
       };
 
       try {
-        const [totalResp, successResp, failedResp, logsResp] = await Promise.all([
+        // Use server-side counts for total and explicitly failed/crashed logs so that KPI
+        // values are accurate regardless of the total number of records in the database.
+        // DmlsFinished logs are fetched separately to:
+        //   1. Identify "Finished with errors" records (DmlsFinished + failedRecordCount > 0)
+        //      which must be counted as failed, not successful.
+        //   2. Calculate the average processing time.
+        const [totalResp, failedCrashedResp, finishedCountResp, finishedLogsResp] = await Promise.all([
+          // Accurate server-side count of all moqui-managed logs
           api({ url: "admin/dataManager/details", method: "get", params: { pageSize: 1, pageIndex: 0, statusId: moquiStatuses, statusId_op: "in" } }),
-          api({ url: "admin/dataManager/details", method: "get", params: { pageSize: 1, pageIndex: 0, statusId: "DmlsFinished" } }),
+          // Accurate server-side count of explicitly failed/crashed logs
           api({ url: "admin/dataManager/details", method: "get", params: { pageSize: 1, pageIndex: 0, statusId: "DmlsFailed,DmlsCrashed", statusId_op: "in" } }),
-          api({ url: "admin/dataManager/details", method: "get", params: { pageSize: 1000, pageIndex: 0, statusId: moquiStatuses, statusId_op: "in" } })
+          // Accurate server-side count of all DmlsFinished logs (includes "finished with errors")
+          api({ url: "admin/dataManager/details", method: "get", params: { pageSize: 1, pageIndex: 0, statusId: "DmlsFinished" } }),
+          // Fetch DmlsFinished records to detect "finished with errors" and compute avg processing time
+          api({ url: "admin/dataManager/details", method: "get", params: { pageSize: 1000, pageIndex: 0, statusId: "DmlsFinished" } })
         ])
+
+        const finishedLogs = finishedLogsResp.data?.dataManagerLogs || []
+        const finishedTotalCount = finishedCountResp.data?.dataManagerLogsCount || 0
+        const failedCrashedCount = failedCrashedResp.data?.dataManagerLogsCount || 0
+
+        // Count "Finished with errors" records from the fetched DmlsFinished sample
+        const finishedWithErrorsCount = finishedLogs.filter((log: any) =>
+          Number(log.failedRecordCount || 0) > 0
+        ).length
+
         this.globalStats = {
           total: totalResp.data?.dataManagerLogsCount || 0,
-          successful: successResp.data?.dataManagerLogsCount || 0,
-          failed: failedResp.data?.dataManagerLogsCount || 0,
-          avgProcessingTime: getAverageProcessingTime(logsResp.data?.dataManagerLogs || [])
+          // Server DmlsFinished count minus "finished with errors" detected in the fetched sample
+          successful: finishedTotalCount - finishedWithErrorsCount,
+          // Server failed/crashed count plus "finished with errors" from the fetched sample
+          failed: failedCrashedCount + finishedWithErrorsCount,
+          avgProcessingTime: getAverageProcessingTime(finishedLogs)
         }
       } catch (err) {
         logger.error("Failed to fetch global stats", err)
