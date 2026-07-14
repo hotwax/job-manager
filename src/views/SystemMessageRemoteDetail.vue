@@ -53,7 +53,7 @@
                   fill="outline"
                   :readonly="!isCreateMode && key === 'systemMessageRemoteId'"
                   :value="field.value || ''"
-                  @ionInput="updateField(key, $event.detail.value || '')"
+                  @ionInput="updateField(key, $event.detail.value)"
                 />
               </template>
             </div>
@@ -192,8 +192,12 @@ const setForm = (payload?: Record<string, any>) => {
   }
 };
 
-const updateField = (key: string, value: string) => {
-  form[key].value = value;
+const updateField = (key: string, value: string | null | undefined) => {
+  if (form[key].type === "password" && !value) {
+    form[key].value = null;
+  } else {
+    form[key].value = value ?? "";
+  }
 };
 
 const loadRemote = async () => {
