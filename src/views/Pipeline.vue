@@ -199,7 +199,7 @@
                         <ion-icon slot="start" :icon="cloudUploadOutline" color="secondary" />
                         <ion-label>
                           {{ translate("High-Priority Queue") }}
-                          <p>{{ highPriorityPendingCount }} {{ translate("Pending Files") }}</p>
+                          <p>{{ mapHighPriorityCount }} {{ translate("Total Files") }}</p>
                         </ion-label>
                       </ion-item>
                       <div class="arrow-container">
@@ -209,7 +209,7 @@
                         <ion-icon slot="start" :icon="cloudUploadOutline" color="medium" />
                         <ion-label>
                           {{ translate("Standard Queue") }}
-                          <p>{{ standardPendingCount }} {{ translate("Pending Files") }}</p>
+                          <p>{{ mapStandardCount }} {{ translate("Total Files") }}</p>
                         </ion-label>
                       </ion-item>
                     </div>
@@ -225,7 +225,7 @@
                         <ion-icon slot="start" :icon="documentOutline" color="success" />
                         <ion-label>
                           {{ translate("Inbound Queue") }}
-                          <p>{{ incomingPendingCount }} {{ translate("Queued Inbound") }}</p>
+                          <p>{{ mapInboundCount }} {{ translate("Total Inbound") }}</p>
                         </ion-label>
                       </ion-item>
                       <div class="arrow-container">
@@ -235,7 +235,7 @@
                         <ion-icon slot="start" :icon="cloudDownloadOutline" color="primary" />
                         <ion-label>
                           {{ translate("Outbound Queue") }}
-                          <p>{{ outgoingPendingCount }} {{ translate("Queued Outbound") }}</p>
+                          <p>{{ mapOutboundCount }} {{ translate("Total Outbound") }}</p>
                         </ion-label>
                       </ion-item>
                     </div>
@@ -517,7 +517,7 @@ import {
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { DateTime } from "luxon";
 import router from "@/router";
-import { translate, emitter } from "@common";
+import { translate, emitter, api } from "@common";
 import { useJobStore } from "@/store/jobs";
 import { useSystemMessageStore } from "@/store/systemMessage";
 import { useMdmConfigStore } from "@/store/mdmConfig";
@@ -708,15 +708,28 @@ const getLogPriority = (log: any) => {
 const highPriorityLogs = computed(() => logs.value.filter((log: any) => getLogPriority(log) > 6));
 const standardLogs = computed(() => logs.value.filter((log: any) => getLogPriority(log) <= 6));
 
-// Queue Depths (Pending / Queued / Running)
-const highPriorityPendingCount = computed(() => highPriorityLogs.value.filter((log: any) => ['DmlsPending', 'DmlsQueued', 'DmlsRunning'].includes(log.statusId)).length);
-const standardPendingCount = computed(() => standardLogs.value.filter((log: any) => ['DmlsPending', 'DmlsQueued', 'DmlsRunning'].includes(log.statusId)).length);
+// KPI chip counts — pending/queued status only, match what linked pages show
+const highPriorityPendingCount = ref(0);
+const standardPendingCount = ref(0);
+const incomingPendingCount = ref(0);
+const outgoingPendingCount = ref(0);
 
-// Ingestion throughput in latest 50
-const highPrioritySuccessCount = computed(() => highPriorityLogs.value.filter((log: any) => log.statusId === 'DmlsFinished').length);
-const standardSuccessCount = computed(() => standardLogs.value.filter((log: any) => log.statusId === 'DmlsFinished').length);
+// Queue Operations Map totals — read from store (matches what the linked pages show as their top-level count)
+// Note: the backend does not support priority or isOutgoing as server-side filters, so
+// we fetch a large batch and filter client-side just like the detail pages do.
+const mapHighPriorityCount = ref(0);
+const mapStandardCount = ref(0);
+const mapInboundCount = ref(0);
+const mapOutboundCount = ref(0);
+
+// KPI chip counts — finished status, fetched from API
+const highPrioritySuccessCount = ref(0);
+const standardSuccessCount = ref(0);
 const highPriorityFailedCount = computed(() => highPriorityLogs.value.filter((log: any) => ['DmlsCrashed', 'DmlsFailed'].includes(log.statusId) || (log.statusId === 'DmlsFinished' && Number(log.failedRecordCount || 0) > 0)).length);
 const standardFailedCount = computed(() => standardLogs.value.filter((log: any) => ['DmlsCrashed', 'DmlsFailed'].includes(log.statusId) || (log.statusId === 'DmlsFinished' && Number(log.failedRecordCount || 0) > 0)).length);
+// KPI chip counts — consumed/sent messages, fetched from API
+const incomingSuccessCount = ref(0);
+const outgoingSuccessCount = ref(0);
 
 // Ingestion Average Processing Time (Luxon end date - start date)
 const getAvgProcessingTime = (logsList: any[]) => {
@@ -757,14 +770,10 @@ const systemMessages = computed(() => systemMessageStore.getSystemMessages);
 const incomingMessages = computed(() => systemMessages.value.filter((msg: any) => msg.isOutgoing !== 'Y'));
 const outgoingMessages = computed(() => systemMessages.value.filter((msg: any) => msg.isOutgoing === 'Y'));
 
-// Incoming Stats
-const incomingPendingCount = computed(() => incomingMessages.value.filter((msg: any) => ['SmsgProduced', 'SmsgCreated', 'SmsgSending'].includes(msg.statusId) && !(msg.statusId === 'SmsgProduced' && Number(msg.failCount) > 0)).length);
-const incomingSuccessCount = computed(() => incomingMessages.value.filter((msg: any) => ['SmsgSent', 'SmsgConsumed', 'SmsgConfirmed'].includes(msg.statusId)).length);
+// Incoming Stats (error count from local 50-item page)
 const incomingErrorCount = computed(() => incomingMessages.value.filter((msg: any) => msg.statusId === 'SmsgError' || (msg.statusId === 'SmsgProduced' && Number(msg.failCount) > 0)).length);
 
-// Outgoing Stats
-const outgoingPendingCount = computed(() => outgoingMessages.value.filter((msg: any) => ['SmsgProduced', 'SmsgCreated', 'SmsgSending'].includes(msg.statusId) && !(msg.statusId === 'SmsgProduced' && Number(msg.failCount) > 0)).length);
-const outgoingSuccessCount = computed(() => outgoingMessages.value.filter((msg: any) => ['SmsgSent', 'SmsgConsumed', 'SmsgConfirmed'].includes(msg.statusId)).length);
+// Outgoing Stats (error count from local 50-item page)
 const outgoingErrorCount = computed(() => outgoingMessages.value.filter((msg: any) => msg.statusId === 'SmsgError' || (msg.statusId === 'SmsgProduced' && Number(msg.failCount) > 0)).length);
 
 const erroredMessages = computed(() => systemMessages.value.filter((msg: any) => msg.statusId === 'SmsgError' || (msg.statusId === 'SmsgProduced' && Number(msg.failCount) > 0)));
@@ -927,6 +936,65 @@ const cancelDataManagerLog = async (configId: string, logId: string) => {
   }
 };
 
+const fetchQueueCounts = async () => {
+  const pendingStatuses = "DmlsPending,DmlsQueued,DmlsRunning";
+  const moquiStatuses = "DmlsCancelled,DmlsCrashed,DmlsFailed,DmlsFinished,DmlsPending,DmlsQueued,DmlsRunning";
+  
+  try {
+    const [
+      pendingLogsResp,
+      finishedLogsResp,
+      allLogsResp,
+      producedMsgsResp,
+      consumedMsgsResp,
+      sentMsgsResp,
+      allMsgsResp
+    ] = await Promise.all([
+      api({ url: "admin/dataManager/details", method: "get", params: { pageSize: 1000, pageIndex: 0, statusId: pendingStatuses, statusId_op: "in" } }),
+      api({ url: "admin/dataManager/details", method: "get", params: { pageSize: 1000, pageIndex: 0, statusId: "DmlsFinished" } }),
+      api({ url: "admin/dataManager/details", method: "get", params: { pageSize: 1000, pageIndex: 0, statusId: moquiStatuses, statusId_op: "in" } }),
+      api({ url: "admin/systemMessages", method: "get", params: { pageSize: 500, pageIndex: 0, statusId: "SmsgProduced" } }),
+      api({ url: "admin/systemMessages", method: "get", params: { pageSize: 500, pageIndex: 0, statusId: "SmsgConsumed" } }),
+      api({ url: "admin/systemMessages", method: "get", params: { pageSize: 500, pageIndex: 0, statusId: "SmsgSent" } }),
+      api({ url: "admin/systemMessages", method: "get", params: { pageSize: 500, pageIndex: 0 } })
+    ]);
+
+    const getLogPriority = (log: any) => {
+      const config = mdmStore.getConfigs.find((c: any) => c.configId === log.configId);
+      return config?.priority ? Number(config.priority) : 0;
+    };
+
+    const pendingLogs = pendingLogsResp.data?.dataManagerLogs || [];
+    highPriorityPendingCount.value = pendingLogs.filter((log: any) => getLogPriority(log) > 6).length;
+    standardPendingCount.value = pendingLogs.filter((log: any) => getLogPriority(log) <= 6).length;
+
+    const finishedLogs = finishedLogsResp.data?.dataManagerLogs || [];
+    highPrioritySuccessCount.value = finishedLogs.filter((log: any) => getLogPriority(log) > 6).length;
+    standardSuccessCount.value = finishedLogs.filter((log: any) => getLogPriority(log) <= 6).length;
+
+    const allLogs = allLogsResp.data?.dataManagerLogs || [];
+    mapHighPriorityCount.value = allLogs.filter((log: any) => getLogPriority(log) > 6).length;
+    mapStandardCount.value = allLogs.filter((log: any) => getLogPriority(log) <= 6).length;
+
+    const producedMsgs = producedMsgsResp.data?.systemMessages || [];
+    incomingPendingCount.value = producedMsgs.filter((msg: any) => msg.isOutgoing === 'N').length;
+    outgoingPendingCount.value = producedMsgs.filter((msg: any) => msg.isOutgoing === 'Y').length;
+
+    const consumedMsgs = consumedMsgsResp.data?.systemMessages || [];
+    incomingSuccessCount.value = consumedMsgs.filter((msg: any) => msg.isOutgoing === 'N').length;
+
+    const sentMsgs = sentMsgsResp.data?.systemMessages || [];
+    outgoingSuccessCount.value = sentMsgs.filter((msg: any) => msg.isOutgoing === 'Y').length;
+
+    const allMsgs = allMsgsResp.data?.systemMessages || [];
+    mapInboundCount.value = allMsgs.filter((msg: any) => msg.isOutgoing === 'N').length;
+    mapOutboundCount.value = allMsgs.filter((msg: any) => msg.isOutgoing === 'Y').length;
+
+  } catch (err) {
+    console.error("Failed to fetch queue counts", err);
+  }
+};
+
 const refreshData = async () => {
   isLoading.value = true;
   try {
@@ -937,7 +1005,8 @@ const refreshData = async () => {
       mdmStore.fetchDataManagerLogs({ pageSize: 50 }),
       mdmStore.fetchConfigs(),
       utilStore.fetchStatusItemsByType("SystemMessage"),
-      utilStore.fetchStatusItemsByType("DataManagerLog")
+      utilStore.fetchStatusItemsByType("DataManagerLog"),
+      fetchQueueCounts()
     ]);
 
     // Fetch run history for active scheduled jobs in parallel to diagnose stuck/slow run anomalies
