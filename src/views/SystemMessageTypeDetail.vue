@@ -17,9 +17,9 @@
             <p>{{ form.description.value || translate("Configure a system message type and inspect related messages.") }}</p>
           </div>
           <div class="header-actions">
-            <ion-button fill="outline" @click="saveType">{{ translate("Save") }}</ion-button>
+            <ion-button v-if="hasPermission('SETUP_ADMIN OR COMMON_ADMIN')" fill="outline" @click="saveType">{{ translate("Save") }}</ion-button>
             <ion-button
-              v-if="!isCreateMode"
+              v-if="!isCreateMode && hasPermission('SETUP_ADMIN OR COMMON_ADMIN')"
               color="danger"
               fill="outline"
               @click="deleteType"
@@ -42,6 +42,7 @@
                   label-placement="stacked"
                   fill="outline"
                   auto-grow
+                  :readonly="!hasPermission('SETUP_ADMIN OR COMMON_ADMIN')"
                   :value="field.value || ''"
                   @ionInput="updateField(key, $event.detail.value || '')"
                 />
@@ -50,7 +51,7 @@
                   :label="translate(field.label)"
                   label-placement="stacked"
                   fill="outline"
-                  :readonly="!isCreateMode && key === 'systemMessageTypeId'"
+                  :readonly="(!isCreateMode && key === 'systemMessageTypeId') || !hasPermission('SETUP_ADMIN OR COMMON_ADMIN')"
                   :value="field.value || ''"
                   @ionInput="updateField(key, $event.detail.value || '')"
                 />
@@ -143,6 +144,7 @@ import SystemMessageList from "@/components/SystemMessageList.vue";
 import { useSystemMessageStore } from "@/store/systemMessage";
 import { showToast } from "@/utils";
 import { useUtilStore } from "@/store/util";
+import { useUserStore } from "@/store/user";
 import { caretBackOutline, caretForwardOutline } from "ionicons/icons";
 
 const props = defineProps<{ id?: string }>();
@@ -152,6 +154,8 @@ const pageIndex = ref(0);
 
 const store = useSystemMessageStore();
 const utilStore = useUtilStore();
+const userStore = useUserStore();
+const hasPermission = computed(() => (permissionId: string) => userStore.hasPermission(permissionId));
 const queryString = ref("");
 const selectedStatusId = ref("");
 const form = reactive<Record<string, any>>({
@@ -204,6 +208,11 @@ const loadType = async() => {
 };
 
 const saveType = async () => {
+  if (!hasPermission.value('SETUP_ADMIN OR COMMON_ADMIN')) {
+    await showToast(translate("You do not have permission to save this config."));
+    return;
+  }
+
   if (!form.systemMessageTypeId?.value.trim()) {
     await showToast(translate("Type ID is required."));
     return;
@@ -231,6 +240,11 @@ const saveType = async () => {
 };
 
 const deleteType = async () => {
+  if (!hasPermission.value('SETUP_ADMIN OR COMMON_ADMIN')) {
+    await showToast(translate("You do not have permission to delete this config."));
+    return;
+  }
+
   const result = await store.deleteSystemMessageType(props.id);
   if (result.error) {
     await showToast(translate("This message type cannot be deleted while messages still reference it."));
