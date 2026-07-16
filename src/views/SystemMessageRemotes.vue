@@ -5,7 +5,7 @@
         <ion-menu-button slot="start" />
         <ion-title>{{ translate("Remote Systems") }}</ion-title>
         <ion-buttons slot="end">
-          <ion-button v-if="hasPermission('SETUP_ADMIN OR COMMON_ADMIN')" @click="router.push('/system-message-remotes/new')">
+          <ion-button v-if="hasPermission('COMMON_ADMIN')" @click="router.push('/system-message-remotes/new')">
             {{ translate("Create") }}
           </ion-button>
         </ion-buttons>

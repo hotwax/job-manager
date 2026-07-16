@@ -5,7 +5,7 @@
         <ion-menu-button slot="start" />
         <ion-title>{{ translate("Message Types") }}</ion-title>
         <ion-buttons slot="end">
-          <ion-button v-if="hasPermission('SETUP_ADMIN OR COMMON_ADMIN')" @click="router.push('/system-message-types/new')">
+          <ion-button v-if="hasPermission('COMMON_ADMIN')" @click="router.push('/system-message-types/new')">
             {{ translate("Create") }}
           </ion-button>
         </ion-buttons>

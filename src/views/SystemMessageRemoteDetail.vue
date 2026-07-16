@@ -17,9 +17,9 @@
             <p>{{ form.description.value || translate("Configure remote system connectivity and inspect related messages.") }}</p>
           </div>
           <div class="header-actions">
-            <ion-button v-if="hasPermission('SETUP_ADMIN OR COMMON_ADMIN')" fill="outline" @click="saveRemote">{{ translate("Save") }}</ion-button>
+            <ion-button v-if="hasPermission('COMMON_ADMIN')" fill="outline" @click="saveRemote">{{ translate("Save") }}</ion-button>
             <ion-button
-              v-if="!isCreateMode && hasPermission('SETUP_ADMIN OR COMMON_ADMIN')"
+              v-if="!isCreateMode && hasPermission('COMMON_ADMIN')"
               color="danger"
               fill="outline"
               @click="deleteRemote"
@@ -42,7 +42,7 @@
                   label-placement="stacked"
                   fill="outline"
                   auto-grow
-                  :readonly="!hasPermission('SETUP_ADMIN OR COMMON_ADMIN')"
+                  :readonly="!hasPermission('COMMON_ADMIN')"
                   :value="field.value || ''"
                   @ionInput="updateField(key, $event.detail.value || '')"
                 />
@@ -52,7 +52,7 @@
                   :label="translate(field.label)"
                   label-placement="stacked"
                   fill="outline"
-                  :readonly="(!isCreateMode && key === 'systemMessageRemoteId') || !hasPermission('SETUP_ADMIN OR COMMON_ADMIN')"
+                  :readonly="(!isCreateMode && key === 'systemMessageRemoteId') || !hasPermission('COMMON_ADMIN')"
                   :value="field.value || ''"
                   @ionInput="updateField(key, $event.detail.value || '')"
                 />
@@ -220,11 +220,6 @@ const loadRemote = async () => {
 };
 
 const saveRemote = async () => {
-  if (!hasPermission.value('SETUP_ADMIN OR COMMON_ADMIN')) {
-    await showToast(translate("You do not have permission to save this config."));
-    return;
-  }
-
   if (!form.systemMessageRemoteId?.value.trim()) {
     await showToast(translate("Remote ID is required."));
     return;
@@ -252,11 +247,6 @@ const saveRemote = async () => {
 };
 
 const deleteRemote = async () => {
-  if (!hasPermission.value('SETUP_ADMIN OR COMMON_ADMIN')) {
-    await showToast(translate("You do not have permission to delete this config."));
-    return;
-  }
-
   const result = await systemMessageStore.deleteSystemMessageRemote(props.id as string);
   if (result.error) {
     await showToast(translate("This remote system cannot be deleted while messages still reference it."));
