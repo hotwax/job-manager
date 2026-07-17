@@ -43,6 +43,6 @@
     "@types/luxon": "catalog:",
     "@types/papaparse": "catalog:",
     "eslint": "catalog:",
-    "typescript": "~4.7.4"
+    "typescript": "catalog:"
   }
 }
