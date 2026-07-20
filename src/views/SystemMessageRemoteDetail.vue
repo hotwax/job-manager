@@ -54,7 +54,7 @@
                   fill="outline"
                   :readonly="(!isCreateMode && key === 'systemMessageRemoteId') || !hasPermission('COMMON_ADMIN')"
                   :value="field.value || ''"
-                  @ionInput="updateField(key, $event.detail.value || '')"
+                  @ionInput="updateField(key, $event.detail.value)"
                 />
               </template>
             </div>
@@ -192,12 +192,16 @@ const pageCount = computed(() => Math.max(Math.ceil(total.value / PAGE_SIZE), 1)
 
 const setForm = (payload?: Record<string, any>) => {
   for (const key of Object.keys(form)) {
-    form[key].value = payload?.[key] || "";
+    form[key].value = payload?.[key] ?? (form[key].type === "password" ? null : "");
   }
 };
 
-const updateField = (key: string, value: string) => {
-  form[key].value = value;
+const updateField = (key: string, value: string | null | undefined) => {
+  if (form[key].type === "password" && !value) {
+    form[key].value = null;
+  } else {
+    form[key].value = value ?? "";
+  }
 };
 
 const loadRemote = async () => {
@@ -227,7 +231,10 @@ const saveRemote = async () => {
 
   // TODO: check do we need this, as the form fields will always be a string
   const payload = Object.entries(form).reduce((params: Record<string, any>, [key, field]) => {
-    if(field.value !== null || field.value !== undefined) {
+    if(field.type === "password" && field.value === null){
+      return params;
+    }
+    if(field.value !== null && field.value !== undefined) {
       params[key] = field.value
     }
     return params
