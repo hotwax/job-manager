@@ -4,6 +4,7 @@
       <Menu v-if="router && router.currentRoute.value.name !== 'Login'" />
       <ion-router-outlet id="main-content" />
     </IonSplitPane>
+    <FastTravel current-app="job-manager" />
   </ion-app>
 </template>
 
@@ -15,7 +16,7 @@ import { loadingController } from '@ionic/vue';
 import emitter from "@/event-bus"
 import { Settings } from 'luxon'
 import router from './router';
-import { translate } from '@common';
+import { FastTravel, translate } from '@common';
 import { useUserStore } from '@/store/user';
 
 const loader = ref(null) as any
