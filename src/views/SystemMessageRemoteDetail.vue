@@ -17,9 +17,9 @@
             <p>{{ form.description.value || translate("Configure remote system connectivity and inspect related messages.") }}</p>
           </div>
           <div class="header-actions">
-            <ion-button fill="outline" @click="saveRemote">{{ translate("Save") }}</ion-button>
+            <ion-button v-if="hasPermission('COMMON_ADMIN')" fill="outline" @click="saveRemote">{{ translate("Save") }}</ion-button>
             <ion-button
-              v-if="!isCreateMode"
+              v-if="!isCreateMode && hasPermission('COMMON_ADMIN')"
               color="danger"
               fill="outline"
               @click="deleteRemote"
@@ -42,6 +42,7 @@
                   label-placement="stacked"
                   fill="outline"
                   auto-grow
+                  :readonly="!hasPermission('COMMON_ADMIN')"
                   :value="field.value || ''"
                   @ionInput="updateField(key, $event.detail.value || '')"
                 />
@@ -51,7 +52,7 @@
                   :label="translate(field.label)"
                   label-placement="stacked"
                   fill="outline"
-                  :readonly="!isCreateMode && key === 'systemMessageRemoteId'"
+                  :readonly="(!isCreateMode && key === 'systemMessageRemoteId') || !hasPermission('COMMON_ADMIN')"
                   :value="field.value || ''"
                   @ionInput="updateField(key, $event.detail.value || '')"
                 />
@@ -146,6 +147,7 @@ import SystemMessageList from "@/components/SystemMessageList.vue";
 import { useSystemMessageStore } from "@/store/systemMessage";
 import { showToast } from "@/utils";
 import { useUtilStore } from "@/store/util";
+import { useUserStore } from "@/store/user";
 import { caretBackOutline, caretForwardOutline } from "ionicons/icons";
 
 // Type based declaration
@@ -156,6 +158,8 @@ const pageIndex = ref(0);
 
 const systemMessageStore = useSystemMessageStore();
 const utilStore = useUtilStore();
+const userStore = useUserStore();
+const hasPermission = computed(() => (permissionId: string) => userStore.hasPermission(permissionId));
 const queryString = ref("");
 const selectedStatusId = ref("");
 const form = reactive<Record<string, any>>({
