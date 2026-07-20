@@ -5,7 +5,7 @@
         <ion-menu-button slot="start" />
         <ion-title>{{ translate("Remote Systems") }}</ion-title>
         <ion-buttons slot="end">
-          <ion-button @click="router.push('/system-message-remotes/new')">
+          <ion-button v-if="hasPermission('COMMON_ADMIN')" @click="router.push('/system-message-remotes/new')">
             {{ translate("Create") }}
           </ion-button>
         </ion-buttons>
@@ -73,8 +73,11 @@ import router from "../router";
 import { translate } from "@common";
 
 import { useSystemMessageStore } from "@/store/systemMessage";
+import { useUserStore } from "@/store/user";
 
 const systemMessageStore = useSystemMessageStore();
+const userStore = useUserStore();
+const hasPermission = computed(() => (permissionId: string) => userStore.hasPermission(permissionId));
 const queryString = ref("");
 
 const remotes = computed(() => systemMessageStore.getSystemMessageRemotes);
