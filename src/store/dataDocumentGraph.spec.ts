@@ -248,8 +248,6 @@ describe("data document graph projection", () => {
     ]));
   });
 
-
-
   it("keeps unverified relationship paths editable", () => {
     const graph = projectDataDocumentGraph({
       document,
