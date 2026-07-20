@@ -417,9 +417,13 @@
           </ion-list>
 
           <template v-else>
-            <ion-item lines="none">
-              <ion-note class="ion-text-wrap">{{ translate("Exports run the full document (with its conditions) and include up to 10,000 rows.") }}</ion-note>
-            </ion-item>
+            <ion-list>
+              <ion-item lines="none">
+                <ion-label class="ion-text-center ion-text-wrap" color="medium">
+                  {{ translate("Exports run the full document (with its conditions) and include up to 10,000 rows.") }}
+                </ion-label>
+              </ion-item>
+            </ion-list>
             <DataDocumentExportList :messages="exportHistory" :empty-message="translate('No recent exports.')" />
             <ion-list>
               <ion-item button @click="router.push('/data-document-export-history')">
