@@ -86,18 +86,6 @@
                   {{ remote.description || remote.systemMessageRemoteId }}
                 </ion-select-option>
               </ion-select>
-
-              <ion-select
-                :label="translate('Direction')"
-                label-placement="stacked"
-                interface="popover"
-                :value="selectedIsOutgoing"
-                @ionChange="selectedIsOutgoing = $event.detail.value"
-              >
-                <ion-select-option value="">{{ translate("All") }}</ion-select-option>
-                <ion-select-option value="N">{{ translate("Inbound") }}</ion-select-option>
-                <ion-select-option value="Y">{{ translate("Outbound") }}</ion-select-option>
-              </ion-select>
             </div>
           </ion-card-content>
         </ion-card>
@@ -148,7 +136,6 @@ const PAGE_SIZE = 25;
 
 const store = useSystemMessageStore();
 const utilStore = useUtilStore();
-const route = router.currentRoute.value;
 
 const queryString = ref("");
 const selectedStatusId = ref("");
