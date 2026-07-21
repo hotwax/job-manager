@@ -101,6 +101,7 @@
         </div>
         <SystemMessageList
           :messages="messages"
+          :is-loading="store.isLoading"
           :empty-message="translate('No system messages found for the selected filters.')"
         />
       </main>
