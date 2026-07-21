@@ -521,12 +521,7 @@ async function fetchLogs() {
   const filters: Record<string, any> = {};
 
   if (selectedStatus.value.length > 0) {
-    // When DmlsFailed is selected, also fetch DmlsFinished records from the server
-    // so the client-side filter can identify "Finished with errors" records among them.
-    const serverStatuses = [...new Set(selectedStatus.value.flatMap((s) =>
-      s === "DmlsFailed" ? ["DmlsFailed", "DmlsFinished"] : [s]
-    ))];
-    filters["statusId"] = serverStatuses;
+    filters["statusId"] = selectedStatus.value;
   }
   // Priority is handled entirely client-side
   if (selectedConfig.value.length > 0) filters["configId"] = selectedConfig.value;
