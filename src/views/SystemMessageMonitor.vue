@@ -86,6 +86,18 @@
                   {{ remote.description || remote.systemMessageRemoteId }}
                 </ion-select-option>
               </ion-select>
+
+              <ion-select
+                :label="translate('Direction')"
+                label-placement="stacked"
+                interface="popover"
+                :value="selectedIsOutgoing"
+                @ionChange="selectedIsOutgoing = $event.detail.value"
+              >
+                <ion-select-option value="">{{ translate("All") }}</ion-select-option>
+                <ion-select-option value="N">{{ translate("Inbound") }}</ion-select-option>
+                <ion-select-option value="Y">{{ translate("Outbound") }}</ion-select-option>
+              </ion-select>
             </div>
           </ion-card-content>
         </ion-card>
@@ -143,15 +155,34 @@ const selectedStatusId = ref("");
 const selectedTypeId = ref("");
 const selectedParentTypeId = ref("");
 const selectedRemoteId = ref("");
+const selectedIsOutgoing = ref("");
 const pageIndex = ref(0);
 
-const messages = computed(() => store.getSystemMessages);
+// When direction filter is active, all fetched records are filtered client-side
+const filteredMessages = computed(() => {
+  const all = store.getSystemMessages;
+  if (!selectedIsOutgoing.value) return all;
+  return all.filter((msg: any) => msg.isOutgoing === selectedIsOutgoing.value);
+});
+
+// Paginated slice of filteredMessages
+const messages = computed(() => {
+  if (!selectedIsOutgoing.value) return filteredMessages.value; // server already paginates
+  const start = pageIndex.value * PAGE_SIZE;
+  return filteredMessages.value.slice(start, start + PAGE_SIZE);
+});
+
 const total = computed(() => store.getSystemMessageTotal);
 const types = computed(() => store.getSystemMessageTypes);
 const parentTypes = computed(() => store.getSystemMessageParentTypes);
 const remotes = computed(() => store.getSystemMessageRemotes);
 const statuses = computed(() => utilStore.getStatusItemsByType("SystemMessage"));
-const pageCount = computed(() => Math.max(Math.ceil(total.value / PAGE_SIZE), 1));
+const pageCount = computed(() => {
+  if (selectedIsOutgoing.value) {
+    return Math.max(Math.ceil(filteredMessages.value.length / PAGE_SIZE), 1);
+  }
+  return Math.max(Math.ceil(total.value / PAGE_SIZE), 1);
+});
 
 const filteredTypes = computed(() => {
   if (!selectedParentTypeId.value) return types.value;
@@ -159,10 +190,13 @@ const filteredTypes = computed(() => {
 });
 
 const loadMessages = async () => {
+  // When direction filter is active, fetch a large batch for client-side pagination
+  // (the API does not support isOutgoing as a server-side filter)
+  const isDirectionFiltered = !!selectedIsOutgoing.value;
   const payload = {
-    pageIndex: pageIndex.value,
-    pageSize: PAGE_SIZE,
-  } as Record<string, any>
+    pageIndex: isDirectionFiltered ? 0 : pageIndex.value,
+    pageSize: isDirectionFiltered ? 500 : PAGE_SIZE,
+  } as Record<string, any>;
 
   if(queryString.value.trim()) {
     payload["queryString"] = queryString.value.trim()
@@ -208,19 +242,37 @@ const goToNextPage = () => {
   pageIndex.value += 1;
 };
 
-watch([queryString, selectedStatusId, selectedTypeId, selectedParentTypeId, selectedRemoteId], async () => {
+const validatePageInput = (event: any) => {
+  const value = parseInt(event.target.value);
+  if (value > pageCount.value) {
+    event.target.value = pageCount.value;
+  }
+};
+
+const goToPage = (event: any) => {
+  const newPage = parseInt(event.target.value);
+  if (newPage && newPage > 0 && newPage <= pageCount.value) {
+    pageIndex.value = newPage - 1;
+  } else {
+    event.target.value = pageIndex.value + 1;
+  }
+};
+
+watch([queryString, selectedStatusId, selectedTypeId, selectedParentTypeId, selectedRemoteId, selectedIsOutgoing], async () => {
   resetToFirstPage();
   await loadMessages();
 });
 
-watch(pageIndex, loadMessages);
+watch(pageIndex, () => {
+  if (!selectedIsOutgoing.value) {
+    loadMessages();
+  }
+});
 
 onIonViewWillEnter(async () => {
-  if (route.query?.statusId) {
-    selectedStatusId.value = route.query.statusId as string;
-  } else {
-    selectedStatusId.value = "";
-  }
+  const currentQuery = router.currentRoute.value.query;
+  selectedStatusId.value = (currentQuery?.statusId as string) ?? "";
+  selectedIsOutgoing.value = (currentQuery?.isOutgoing as string) ?? "";
   await Promise.all([
     store.fetchSystemMessageTypes(),
     store.fetchSystemMessageRemotes(),

@@ -574,6 +574,9 @@ onIonViewWillEnter(async () => {
   } else {
     await mdmStore.updateAppliedFilters("statusId", []);
   }
+  if (route.query?.priority) {
+    selectedPriority.value = [(route.query.priority as string)];
+  }
   await fetchLogs();
   mdmStore.fetchConfigs();
   await utilStore.fetchStatusItemsByType("DataManagerLog");
