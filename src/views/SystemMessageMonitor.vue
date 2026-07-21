@@ -242,22 +242,6 @@ const goToNextPage = () => {
   pageIndex.value += 1;
 };
 
-const validatePageInput = (event: any) => {
-  const value = parseInt(event.target.value);
-  if (value > pageCount.value) {
-    event.target.value = pageCount.value;
-  }
-};
-
-const goToPage = (event: any) => {
-  const newPage = parseInt(event.target.value);
-  if (newPage && newPage > 0 && newPage <= pageCount.value) {
-    pageIndex.value = newPage - 1;
-  } else {
-    event.target.value = pageIndex.value + 1;
-  }
-};
-
 watch([queryString, selectedStatusId, selectedTypeId, selectedParentTypeId, selectedRemoteId, selectedIsOutgoing], async () => {
   resetToFirstPage();
   await loadMessages();
