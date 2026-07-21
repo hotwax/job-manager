@@ -15,7 +15,10 @@ const getRunStatus = (run: any) => {
 
 const getRunHistoryStats = (runs: Array<any>) => runs.reduce((stats: any, run: any) => {
   stats.total += 1;
-  stats[run.runStatus] += 1;
+  const statusKey = (run.runStatus || "").toLowerCase();
+  if (statusKey && stats[statusKey] !== undefined) {
+    stats[statusKey] += 1;
+  }
   return stats;
 }, {
   total: 0,
@@ -304,10 +307,14 @@ export const useJobStore = defineStore("job", {
           url: `admin/serviceJobs/${jobName}/runs`,
           method: "GET",
           params: {
+            orderByField: "-jobRunId",
             ...payload
           }
         })
         jobRuns = resp.data || []
+        if (Array.isArray(jobRuns)) {
+          jobRuns.sort((a: any, b: any) => getRunTime(b) - getRunTime(a));
+        }
       } catch(err) {
         logger.error("Failed to fetch jobs", err)
       }

@@ -800,7 +800,7 @@ const loadRuns = async () => {
   isRunsLoading.value = true
   pageIndex.value = 0
   hasMoreRuns.value = true
-  pageSize.value = 10
+  pageSize.value = 20
   try {
     const payload = { pageSize: pageSize.value, pageIndex: pageIndex.value } as any
     if (runsFilter.value === 'error') payload.hasError = 'Y'
@@ -814,7 +814,6 @@ const loadRuns = async () => {
     console.error(err)
   } finally {
     isRunsLoading.value = false
-    pageSize.value = 20
   }
 }
 
