@@ -569,10 +569,17 @@ watch(pageIndex, () => {
 });
 
 onIonViewWillEnter(async () => {
-  if (route.query?.statusId) {
-    await mdmStore.updateAppliedFilters("statusId", (route.query.statusId as string).split(","));
+  const currentQuery = router.currentRoute.value.query;
+
+  if (currentQuery?.statusId) {
+    await mdmStore.updateAppliedFilters("statusId", (currentQuery.statusId as string).split(","));
   } else {
     await mdmStore.updateAppliedFilters("statusId", []);
+  }
+  if (currentQuery?.priority) {
+    selectedPriority.value = [(currentQuery.priority as string)];
+  } else {
+    selectedPriority.value = [];
   }
   await fetchLogs();
   mdmStore.fetchConfigs();
