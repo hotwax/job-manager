@@ -417,7 +417,7 @@
           </ion-list>
 
           <template v-else>
-            <ion-item lines="none" class="ion-text-center">
+            <ion-item lines="none">
               <ion-note class="ion-padding-top ion-text-wrap">
                 {{ translate("Exports run the full document (with its conditions) and include up to 10,000 rows.") }}
               </ion-note>
