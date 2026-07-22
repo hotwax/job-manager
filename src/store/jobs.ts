@@ -15,7 +15,10 @@ const getRunStatus = (run: any) => {
 
 const getRunHistoryStats = (runs: Array<any>) => runs.reduce((stats: any, run: any) => {
   stats.total += 1;
-  stats[run.runStatus] += 1;
+  const statusKey = String(run.runStatus || "").toLowerCase();
+  if (statusKey in stats) {
+    stats[statusKey] += 1;
+  }
   return stats;
 }, {
   total: 0,
@@ -70,6 +73,7 @@ export const useJobStore = defineStore("job", {
       running: 0,
       terminated: 0
     },
+    allJobRuns: [] as Array<any>,
     loading: false
   }),
   getters: {
@@ -331,38 +335,45 @@ export const useJobStore = defineStore("job", {
         const hasErrors = payload.hasError || "";
         const selectedProductStoreId = useUserStore().getCurrentProductStore?.productStoreId || "";
 
-        let jobsToLoad = selectedJobName
-          ? this.jobs.filter((job: any) => job.jobName === selectedJobName)
-          : this.jobs;
+        let runs = [] as any;
 
-        const productIds = [...new Set(jobsToLoad.map((job: any) => job.instanceOfProductId).filter(Boolean))] as string[];
-        await Promise.all(productIds
-          .filter((productId: string) => !this.products[productId])
-          .map((productId: string) => this.fetchProductDetail(productId))
-        );
+        if (payload.fetchFromServer !== false) {
+          const jobsToLoad = selectedJobName
+            ? this.jobs.filter((job: any) => job.jobName === selectedJobName)
+            : this.jobs;
 
-        const runResponses = await Promise.allSettled(
-          jobsToLoad.map(async (job: any) => {
-            const params = { pageSize: runsPerJob, pageIndex: 0 } as any;
-            if (hasErrors === "Y") params.hasError = "Y";
-            const runs = await this.fetchJobRuns(job.jobName, params);
-            return runs.map((run: any) => ({
-              ...run,
-              jobName: job.jobName,
-              serviceName: job.serviceName,
-              jobDescription: job.description,
-              systemJobEnumId: job.systemJobEnumId,
-              instanceOfProductId: job.instanceOfProductId,
-              jobProductStoreId: getProductStoreIdFromParameters(job.serviceJobParameters),
-              productName: this.products[job.instanceOfProductId]?.productName,
-              paused: job.paused,
-              cronExpression: job.cronExpression,
-              runStatus: getRunStatus(run)
-            }));
-          })
-        );
+          const productIds = [...new Set(jobsToLoad.map((job: any) => job.instanceOfProductId).filter(Boolean))] as string[];
+          await Promise.all(productIds
+            .filter((productId: string) => !this.products[productId])
+            .map((productId: string) => this.fetchProductDetail(productId))
+          );
 
-        let runs = runResponses.flatMap((result: any) => result.status === "fulfilled" ? result.value : []);
+          const runResponses = await Promise.allSettled(
+            jobsToLoad.map(async (job: any) => {
+              const params = { pageSize: runsPerJob, pageIndex: 0 } as any;
+              if (hasErrors === "Y") params.hasError = "Y";
+              const runs = await this.fetchJobRuns(job.jobName, params);
+              return runs.map((run: any) => ({
+                ...run,
+                jobName: job.jobName,
+                serviceName: job.serviceName,
+                jobDescription: job.description,
+                systemJobEnumId: job.systemJobEnumId,
+                instanceOfProductId: job.instanceOfProductId,
+                jobProductStoreId: getProductStoreIdFromParameters(job.serviceJobParameters),
+                productName: this.products[job.instanceOfProductId]?.productName,
+                paused: job.paused,
+                cronExpression: job.cronExpression,
+                runStatus: getRunStatus(run)
+              }));
+            })
+          );
+
+          runs = runResponses.flatMap((result: any) => result.status === "fulfilled" ? result.value : []);
+          this.allJobRuns = runs;
+        } else {
+          runs = [...this.allJobRuns];
+        }
 
         if (selectedProductStoreId) {
           runs = runs.filter((run: any) => {
@@ -391,7 +402,12 @@ export const useJobStore = defineStore("job", {
         }
 
         if (selectedUserId) {
-          runs = runs.filter((run: any) => String(run.userId || "").toLowerCase().includes(String(selectedUserId).toLowerCase()));
+          const userStore = useUserStore();
+          const searchVal = String(selectedUserId).toLowerCase();
+          runs = runs.filter((run: any) =>
+            String(run.userId || "").toLowerCase().includes(searchVal) ||
+            String(userStore.getUserFullName(run.userId) || "").toLowerCase().includes(searchVal)
+          );
         }
 
         if (hasErrors === "Y") {
