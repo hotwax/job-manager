@@ -181,8 +181,8 @@ const loadMessages = async () => {
   // (the API does not support isOutgoing as a server-side filter)
   const isDirectionFiltered = !!selectedIsOutgoing.value;
   const payload = {
-    pageIndex: isDirectionFiltered ? 0 : pageIndex.value,
-    pageSize: isDirectionFiltered ? 500 : PAGE_SIZE,
+    pageIndex: pageIndex.value,
+    pageSize: PAGE_SIZE,
   } as Record<string, any>;
 
   if(queryString.value.trim()) {
