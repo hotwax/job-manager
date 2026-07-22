@@ -91,17 +91,17 @@
         </ion-card>
 
         <div class="pagination">
-          <ion-button fill="outline" :disabled="pageIndex === 0" @click="goToPreviousPage">
+          <ion-button fill="outline" :disabled="pageIndex === 0 || isLoading" @click="goToPreviousPage">
             {{ translate("Previous") }}
           </ion-button>
           <ion-note color="medium">{{ translate("Page") }} {{ pageIndex + 1 }} / {{ pageCount }}</ion-note>
-          <ion-button fill="outline" :disabled="pageIndex >= pageCount - 1" @click="goToNextPage">
+          <ion-button fill="outline" :disabled="pageIndex >= pageCount - 1 || isLoading" @click="goToNextPage">
             {{ translate("Next") }}
           </ion-button>
         </div>
         <SystemMessageList
           :messages="messages"
-          :is-loading="store.isLoading"
+          :is-loading="isLoading"
           :empty-message="translate('No system messages found for the selected filters.')"
         />
       </main>
@@ -145,6 +145,7 @@ const selectedTypeId = ref("");
 const selectedParentTypeId = ref("");
 const selectedRemoteId = ref("");
 const pageIndex = ref(0);
+const isInitialLoading = ref(true);
 
 const messages = computed(() => store.getSystemMessages);
 const total = computed(() => store.getSystemMessageTotal);
@@ -153,6 +154,7 @@ const parentTypes = computed(() => store.getSystemMessageParentTypes);
 const remotes = computed(() => store.getSystemMessageRemotes);
 const statuses = computed(() => utilStore.getStatusItemsByType("SystemMessage"));
 const pageCount = computed(() => Math.max(Math.ceil(total.value / PAGE_SIZE), 1));
+const isLoading = computed(() => isInitialLoading.value || store.isFetchingMessages);
 
 const filteredTypes = computed(() => {
   if (!selectedParentTypeId.value) return types.value;
@@ -217,17 +219,22 @@ watch([queryString, selectedStatusId, selectedTypeId, selectedParentTypeId, sele
 watch(pageIndex, loadMessages);
 
 onIonViewWillEnter(async () => {
+  isInitialLoading.value = true;
   if (route.query?.statusId) {
     selectedStatusId.value = route.query.statusId as string;
   } else {
     selectedStatusId.value = "";
   }
-  await Promise.all([
-    store.fetchSystemMessageTypes(),
-    store.fetchSystemMessageRemotes(),
-    store.fetchSystemMessageStatusMetadata()
-  ]);
-  await loadMessages();
+  try {
+    await Promise.all([
+      store.fetchSystemMessageTypes(),
+      store.fetchSystemMessageRemotes(),
+      store.fetchSystemMessageStatusMetadata()
+    ]);
+    await loadMessages();
+  } finally {
+    isInitialLoading.value = false;
+  }
 });
 </script>
 

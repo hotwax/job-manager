@@ -142,6 +142,7 @@
               :value="pageIndex + 1"
               @keyup="validatePageInput($event)"
               @change="goToPage($event)"
+              :disabled="isFetchingLogs"
               class="page-number-input"
             />
             <span>/ {{ pageCount }}</span>
