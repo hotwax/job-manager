@@ -92,6 +92,7 @@
                   label-placement="stacked"
                   fill="outline"
                   :placeholder="translate('Any user')"
+                  :debounce="300"
                   @ionInput="selectedUserId = $event.detail.value || ''"
                 />
                 <ion-button v-if="selectedUserId" fill="clear" class="clear-filter-btn" @click="selectedUserId = ''" :title="translate('Clear')">

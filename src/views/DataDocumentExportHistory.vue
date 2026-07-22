@@ -63,6 +63,7 @@
                 <ion-input
                   :value="startedBy"
                   @ionInput="startedBy = $event.detail.value || ''"
+                  :debounce="300"
                   :label="translate('Started By')"
                   label-placement="stacked"
                 />
