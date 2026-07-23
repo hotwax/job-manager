@@ -202,6 +202,37 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
         links: this.links
       });
     },
+    reorderFields(oldIndex: number, newIndex: number) {
+      if (!this.graph) return;
+      const fields = [...this.graph.fields];
+      if (oldIndex === newIndex) return;
+      if (oldIndex < 0 || oldIndex >= fields.length || newIndex < 0 || newIndex >= fields.length) return;
+
+      const sortedSeqs = fields
+        .map(f => f.sequenceNum)
+        .filter((seq): seq is number => typeof seq === "number" && !isNaN(seq))
+        .sort((a, b) => a - b);
+
+      const movedField = fields.splice(oldIndex, 1)[0];
+      fields.splice(newIndex, 0, movedField);
+
+      const resequencedFields = fields.map((field, index) => {
+        const sequenceNum = index < sortedSeqs.length ? sortedSeqs[index] : (index + 1) * 10;
+        return {
+          ...field,
+          sequenceNum,
+          sourceRecord: field.sourceRecord ? { ...field.sourceRecord, sequenceNum } : undefined
+        };
+      });
+
+      this.graph = projectDataDocumentGraph({
+        document: this.graph.metadata,
+        fields: serializeGraphFields({ dataDocumentId: this.graph.dataDocumentId, fields: resequencedFields }),
+        conditions: serializeGraphConditions(this.graph),
+        relAliases: this.relAliases,
+        links: this.links
+      });
+    },
     addField(nodeId: string, fieldName = "newField") {
       if (!this.graph) return;
       const node = this.graph.nodes.find((item) => item.nodeId === nodeId);
@@ -216,6 +247,7 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
         dataDocumentId: this.graph.dataDocumentId,
         // Empty until the server assigns one on save; mirrors how new conditions work.
         fieldSeqId: "",
+        localId: `field-${Date.now()}-${this.graph.fields.length}`,
         fieldPath,
         fieldNameAlias: alias || (fieldPath ? fieldName : ""),
         defaultDisplay: "Y",
@@ -241,6 +273,7 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
       const removed = this.graph.fields.find((f) => f.fieldSeqId === fieldSeqIdOrPath || f.fieldPath === fieldSeqIdOrPath);
       const persistedSeqId = removed?.sourceRecord?.fieldSeqId;
       if (persistedSeqId) this.removedFieldSeqIds.push(persistedSeqId);
+
       this.graph = projectDataDocumentGraph({
         document: this.graph.metadata,
         fields: serializeGraphFields({ dataDocumentId: this.graph.dataDocumentId, fields: survivors }),

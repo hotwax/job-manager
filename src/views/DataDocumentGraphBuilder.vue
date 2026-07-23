@@ -169,7 +169,7 @@
                   type="number"
                   :label="translate('Sequence')"
                   label-placement="stacked"
-                  @ionInput="updateSelectedField({ sequenceNum: Number($event.detail.value || 0) })"
+                  readonly
                 />
               </ion-item>
               <ion-item>
@@ -189,7 +189,7 @@
                 </ion-toggle>
               </ion-item>
               <ion-item lines="none">
-                <ion-segment :value="fieldRole(selectedField)" @ionChange="setFieldRole($event.detail.value)">
+                <ion-segment :value="fieldRole(selectedField)" @ionChange="setFieldRole($event.detail.value?.toString())">
                   <ion-segment-button value="dimension">
                     <ion-label>{{ translate("Dimension") }}</ion-label>
                   </ion-segment-button>
@@ -823,7 +823,7 @@
           <ion-list>
             <ion-item>
               <ion-input
-                :value="graph.metadata.dataDocumentId"
+                :value="graph?.metadata?.dataDocumentId"
                 :readonly="!isNew"
                 :label="translate('Data Document ID')"
                 label-placement="stacked"
@@ -832,7 +832,7 @@
             </ion-item>
             <ion-item>
               <ion-input
-                :value="graph.metadata.indexName"
+                :value="graph?.metadata?.indexName"
                 :label="translate('Index Name')"
                 label-placement="stacked"
                 @ionInput="updateMetadata('indexName', $event.detail.value || '')"
@@ -840,7 +840,7 @@
             </ion-item>
             <ion-item>
               <ion-input
-                :value="graph.metadata.manualDataServiceName"
+                :value="graph?.metadata?.manualDataServiceName"
                 :label="translate('Manual Data Service')"
                 label-placement="stacked"
                 @ionInput="updateMetadata('manualDataServiceName', $event.detail.value || '')"
@@ -1285,7 +1285,7 @@ const selectEntity = async (entity: string) => {
   if (graph.value && (graph.value.fields.length > 0 || graph.value.conditions.length > 0)) {
     const alert = await alertController.create({
       header: translate("Change Primary Entity?"),
-      message: translate("You already have fields and conditions defined. Changing the primary entity will clear the current configuration. Do you wish to proceed?"),
+      message: translate("Changing the Primary Entity will affect your current configuration. What would you like to do?"),
       buttons: [
         {
           text: translate("Keep Configuration"),
@@ -1343,7 +1343,7 @@ const confirmGraphFieldSelection = () => {
     addedField = graphStore.addField(nodeId, fieldName);
   }
   if (addedField) {
-    selectedTarget.value = { kind: "field", id: addedField.fieldSeqId || addedField.fieldPath };
+    selectedTarget.value = { kind: "field", id: addedField.fieldSeqId || addedField.fieldPath || "" };
   }
   closeFieldModal();
 };
@@ -1410,7 +1410,7 @@ const confirmRelatedFieldSelection = () => {
     addedField = graphStore.addFieldPath(`${relationshipPath}:${fieldName}`, fieldName);
   }
   if (addedField) {
-    selectedTarget.value = { kind: "field", id: addedField.fieldSeqId || addedField.fieldPath };
+    selectedTarget.value = { kind: "field", id: addedField.fieldSeqId || addedField.fieldPath || "" };
   }
   closeRelatedFieldModal();
 };
