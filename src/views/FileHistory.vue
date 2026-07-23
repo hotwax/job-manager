@@ -130,7 +130,7 @@
         </ion-card>
 
         <div class="pagination">
-          <ion-button fill="outline" :disabled="pageIndex === 0" @click="goToPreviousPage">
+          <ion-button fill="outline" :disabled="pageIndex === 0 || isFetchingLogs" @click="goToPreviousPage">
             {{ translate("Previous") }}
           </ion-button>
           <div class="page-input">
@@ -142,16 +142,22 @@
               :value="pageIndex + 1"
               @keyup="validatePageInput($event)"
               @change="goToPage($event)"
+              :disabled="isFetchingLogs"
               class="page-number-input"
             />
             <span>/ {{ pageCount }}</span>
           </div>
-          <ion-button fill="outline" :disabled="pageIndex + 1 >= pageCount" @click="goToNextPage">
+          <ion-button fill="outline" :disabled="pageIndex + 1 >= pageCount || isFetchingLogs" @click="goToNextPage">
             {{ translate("Next") }}
           </ion-button>
         </div>
 
-        <ion-list>
+        <div v-if="isFetchingLogs" class="loading-state">
+          <ion-spinner name="crescent" />
+          <p>{{ translate("Loading") }}</p>
+        </div>
+
+        <ion-list v-else-if="logs.length">
           <ion-card
             v-for="log in logs"
             :key="log.logId"
@@ -195,8 +201,8 @@
               </ion-button>
             </ion-label>
           </ion-card>
-          <p class="empty-state" v-if="!logs.length">{{ translate("No logs found") }}</p>
         </ion-list>
+        <p class="empty-state" v-else>{{ translate("No logs found") }}</p>
       </main>
 
       <ion-modal trigger="config-filter-trigger" @willPresent="handleConfigModalWillPresent" @didDismiss="clearConfigModal">
@@ -262,6 +268,7 @@ import {
   IonSearchbar,
   IonSelect,
   IonSelectOption,
+  IonSpinner,
   IonTitle,
   IonToolbar,
   IonMenuButton,
@@ -300,6 +307,7 @@ const configQuery = ref("");
 const pageIndex = ref(0);
 
 const rawLogs = computed(() => mdmStore.getLogs);
+const isFetchingLogs = computed(() => mdmStore.isFetchingLogs);
 const configs = computed(() => mdmStore.getConfigs);
 const statusItems = computed(() => utilStore.getStatusItemsByType("DataManagerLog"));
 
@@ -582,6 +590,12 @@ onIonViewWillEnter(async () => {
 </script>
 
 <style scoped>
+.loading-state,
+.empty-state {
+  text-align: center;
+  padding: var(--spacer-lg);
+  color: var(--ion-color-medium);
+}
 
 
 .limit-chip {
