@@ -316,7 +316,8 @@ const isServerSideSearch = computed(() => {
   const isServerSideQ = !q || q.startsWith("M") || !isNaN(Number(q));
   const hasPriorityFilter = selectedPriority.value.length > 0;
   const hasErrorFilterActive = !!hasErrorFilter.value;
-  return isServerSideQ && !hasPriorityFilter && !hasErrorFilterActive;
+  const hasFailedFilter = selectedStatus.value.includes("DmlsFailed");
+  return isServerSideQ && !hasPriorityFilter && !hasErrorFilterActive && !hasFailedFilter;
 });
 
 const filteredLogs = computed(() => {
@@ -344,6 +345,15 @@ const filteredLogs = computed(() => {
       const hasError = (Number(log.failedRecordCount) || 0) > 0 || ["DmlsFailed", "DmlsCrashed"].includes(log.statusId);
       return hasErrorFilter.value === "Y" ? hasError : !hasError;
     });
+  }
+
+
+  // When DmlsFailed is selected without an explicit DmlsFinished selection,
+  // keep only DmlsFinished records that actually have errors (failedRecordCount > 0).
+  if (selectedStatus.value.includes("DmlsFailed") && !selectedStatus.value.includes("DmlsFinished")) {
+    result = result.filter((log: any) =>
+      log.statusId !== "DmlsFinished" || Number(log.failedRecordCount || 0) > 0
+    );
   }
 
   return result;
@@ -518,7 +528,9 @@ const toggleConfig = (configId: string, checked: boolean) => {
 async function fetchLogs() {
   const filters: Record<string, any> = {};
 
-  if (selectedStatus.value.length > 0) filters["statusId"] = selectedStatus.value;
+  if (selectedStatus.value.length > 0) {
+    filters["statusId"] = selectedStatus.value;
+  }
   // Priority is handled entirely client-side
   if (selectedConfig.value.length > 0) filters["configId"] = selectedConfig.value;
 

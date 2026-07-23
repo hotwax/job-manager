@@ -141,18 +141,63 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
           payload["statusId_op"] = "in"
         }
 
-        const resp = await api({
-          url: "admin/dataManager/details",
-          method: "get",
-          params: payload
-        })
+        const statusIds = payload.statusId ? payload.statusId.split(",") : [];
+        if (statusIds.includes("DmlsFailed") && !statusIds.includes("DmlsFinished")) {
+          // Splitting queries to fetch only explicitly failed/crashed logs and finished logs with errors
+          const statusList1 = [...new Set(statusIds.flatMap((s: string) => s === "DmlsFailed" ? ["DmlsFailed", "DmlsCrashed"] : [s]))].filter(s => s !== "DmlsFinished");
 
-        if (resp.data?.dataManagerLogsCount) {
-          this.logs = resp.data.dataManagerLogs
-          this.logsCount = resp.data.dataManagerLogsCount
+          const payload1 = { ...payload };
+          if (statusList1.length > 0) {
+            payload1.statusId = statusList1.join(",");
+            payload1.statusId_op = "in";
+          } else {
+            delete payload1.statusId;
+            delete payload1.statusId_op;
+          }
+
+          const payload2 = {
+            ...payload,
+            statusId: "DmlsFinished"
+          };
+          delete payload2.statusId_op;
+
+          // Fetch maximum possible logs for both requests as we combine and sort them client-side
+          payload1.pageSize = 1000;
+          payload1.pageIndex = 0;
+          payload2.pageSize = 1000;
+          payload2.pageIndex = 0;
+
+          const [resp1, resp2] = await Promise.all([
+            api({ url: "admin/dataManager/details", method: "get", params: payload1 }),
+            api({ url: "admin/dataManager/details", method: "get", params: payload2 })
+          ]);
+
+          const logs1 = resp1.data?.dataManagerLogs || [];
+          const logs2 = resp2.data?.dataManagerLogs || [];
+          
+          // Client-side filter finished logs that have actual errors
+          const finishedWithErrors = logs2.filter((log: any) => Number(log.failedRecordCount || 0) > 0);
+
+          const combinedLogs = [...logs1, ...finishedWithErrors].sort((a: any, b: any) => {
+            return (b.logId || "").toString().localeCompare((a.logId || "").toString());
+          });
+
+          this.logs = combinedLogs;
+          this.logsCount = combinedLogs.length;
         } else {
-          this.logs = []
-          this.logsCount = 0
+          const resp = await api({
+            url: "admin/dataManager/details",
+            method: "get",
+            params: payload
+          });
+
+          if (resp.data?.dataManagerLogsCount) {
+            this.logs = resp.data.dataManagerLogs;
+            this.logsCount = resp.data.dataManagerLogsCount;
+          } else {
+            this.logs = [];
+            this.logsCount = 0;
+          }
         }
       } catch (err) {
         logger.error("Failed to fetch logs", err)
@@ -234,17 +279,26 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
       };
 
       try {
-        const [totalResp, successResp, failedResp, logsResp] = await Promise.all([
+        const [totalResp, failedCrashedResp, finishedCountResp, finishedLogsResp] = await Promise.all([
           api({ url: "admin/dataManager/details", method: "get", params: { pageSize: 1, pageIndex: 0, statusId: moquiStatuses, statusId_op: "in" } }),
-          api({ url: "admin/dataManager/details", method: "get", params: { pageSize: 1, pageIndex: 0, statusId: "DmlsFinished" } }),
           api({ url: "admin/dataManager/details", method: "get", params: { pageSize: 1, pageIndex: 0, statusId: "DmlsFailed,DmlsCrashed", statusId_op: "in" } }),
-          api({ url: "admin/dataManager/details", method: "get", params: { pageSize: 1000, pageIndex: 0, statusId: moquiStatuses, statusId_op: "in" } })
+          api({ url: "admin/dataManager/details", method: "get", params: { pageSize: 1, pageIndex: 0, statusId: "DmlsFinished" } }),
+          api({ url: "admin/dataManager/details", method: "get", params: { pageSize: 1000, pageIndex: 0, statusId: "DmlsFinished" } })
         ])
+
+        const finishedTotalCount = finishedCountResp.data?.dataManagerLogsCount || 0
+        const failedCrashedCount = failedCrashedResp.data?.dataManagerLogsCount || 0
+        const finishedLogs = finishedLogsResp.data?.dataManagerLogs || []
+
+        const finishedWithErrorsCount = finishedLogs.filter((log: any) =>
+          Number(log.failedRecordCount || 0) > 0
+        ).length
+
         this.globalStats = {
           total: totalResp.data?.dataManagerLogsCount || 0,
-          successful: successResp.data?.dataManagerLogsCount || 0,
-          failed: failedResp.data?.dataManagerLogsCount || 0,
-          avgProcessingTime: getAverageProcessingTime(logsResp.data?.dataManagerLogs || [])
+          successful: finishedTotalCount - finishedWithErrorsCount,
+          failed: failedCrashedCount + finishedWithErrorsCount,
+          avgProcessingTime: getAverageProcessingTime(finishedLogs)
         }
       } catch (err) {
         logger.error("Failed to fetch global stats", err)
