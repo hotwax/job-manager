@@ -1761,10 +1761,4 @@ onIonViewWillEnter(async () => {
   }
 }
 
-ion-item.ion-invalid.ion-touched,
-ion-item:has(.ion-invalid.ion-touched) {
-  --border-style: none;
-  --inner-border-width: 0;
-  --border-width: 0;
-}
 </style>
