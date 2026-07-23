@@ -633,7 +633,7 @@ const isLoading = ref(true)
 const isRunsLoading = ref(false)
 const hasLoadedRuns = ref(false)
 const pageIndex = ref(0)
-const pageSize = ref(10)
+const pageSize = ref(20)
 const hasMoreRuns = ref(true)
 
 let optionalParams = ref([]) as any
@@ -777,9 +777,6 @@ const loadJob = async () => {
   isLoading.value = true
   runs.value = []
   hasLoadedRuns.value = false
-  pageIndex.value = 0
-  hasMoreRuns.value = true
-  pageSize.value = 10
   try {
     job.value = await jobStore.fetchJobDetail(route.params.jobName as string)
   } catch (err) {
