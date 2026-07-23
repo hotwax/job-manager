@@ -19,56 +19,84 @@
             />
 
             <div class="filter-grid">
-              <ion-select
-                :label="translate('Document')"
-                label-placement="stacked"
-                interface="popover"
-                :value="selectedDocumentId"
-                @ionChange="selectedDocumentId = $event.detail.value"
-              >
-                <ion-select-option value="">{{ translate("All documents") }}</ion-select-option>
-                <ion-select-option v-for="document in documents" :key="document.dataDocumentId" :value="document.dataDocumentId">
-                  {{ document.documentName || document.dataDocumentId }}
-                </ion-select-option>
-              </ion-select>
+              <div class="filter-item">
+                <ion-select
+                  :label="translate('Document')"
+                  label-placement="stacked"
+                  interface="popover"
+                  :value="selectedDocumentId"
+                  @ionChange="selectedDocumentId = $event.detail.value"
+                >
+                  <ion-select-option value="">{{ translate("All documents") }}</ion-select-option>
+                  <ion-select-option v-for="document in documents" :key="document.dataDocumentId" :value="document.dataDocumentId">
+                    {{ document.documentName || document.dataDocumentId }}
+                  </ion-select-option>
+                </ion-select>
+                <ion-button v-if="selectedDocumentId" fill="clear" class="clear-filter-btn" @click="selectedDocumentId = ''" :title="translate('Clear')">
+                  <ion-icon slot="icon-only" :icon="closeCircleOutline" />
+                </ion-button>
+              </div>
 
               <!-- Status is filtered client-side using the same getExportStatus vocabulary the
                    badges render, so the options match what's shown on each row (and "Failed",
                    which is SmsgProduced + failCount > 0, can actually be isolated). -->
-              <ion-select
-                :label="translate('Status')"
-                label-placement="stacked"
-                interface="popover"
-                :value="selectedStatus"
-                @ionChange="selectedStatus = $event.detail.value"
-              >
-                <ion-select-option value="">{{ translate("All statuses") }}</ion-select-option>
-                <ion-select-option value="ready">{{ translate("Ready") }}</ion-select-option>
-                <ion-select-option value="processing">{{ translate("Processing") }}</ion-select-option>
-                <ion-select-option value="sending">{{ translate("Sending") }}</ion-select-option>
-                <ion-select-option value="failed">{{ translate("Failed") }}</ion-select-option>
-              </ion-select>
+              <div class="filter-item">
+                <ion-select
+                  :label="translate('Status')"
+                  label-placement="stacked"
+                  interface="popover"
+                  :value="selectedStatus"
+                  @ionChange="selectedStatus = $event.detail.value"
+                >
+                  <ion-select-option value="">{{ translate("All statuses") }}</ion-select-option>
+                  <ion-select-option value="ready">{{ translate("Ready") }}</ion-select-option>
+                  <ion-select-option value="processing">{{ translate("Processing") }}</ion-select-option>
+                  <ion-select-option value="sending">{{ translate("Sending") }}</ion-select-option>
+                  <ion-select-option value="failed">{{ translate("Failed") }}</ion-select-option>
+                </ion-select>
+                <ion-button v-if="selectedStatus" fill="clear" class="clear-filter-btn" @click="selectedStatus = ''" :title="translate('Clear')">
+                  <ion-icon slot="icon-only" :icon="closeCircleOutline" />
+                </ion-button>
+              </div>
 
-              <ion-input
-                :value="startedBy"
-                @ionInput="startedBy = $event.detail.value || ''"
-                :label="translate('Started By')"
-                label-placement="stacked"
-              />
-              <ion-input
-                :value="fromDate"
-                @ionInput="fromDate = $event.detail.value || ''"
-                type="date"
-                :label="translate('From Date')"
-                label-placement="stacked"
-              />
-              <ion-input
-                :value="thruDate"
-                @ionInput="thruDate = $event.detail.value || ''"
-                type="date"
-                :label="translate('Thru Date')"
-                label-placement="stacked"
-              />
+              <div class="filter-item">
+                <ion-input
+                  :value="startedBy"
+                  @ionInput="startedBy = $event.detail.value || ''"
+                  :debounce="300"
+                  :label="translate('Started By')"
+                  label-placement="stacked"
+                />
+                <ion-button v-if="startedBy" fill="clear" class="clear-filter-btn" @click="startedBy = ''" :title="translate('Clear')">
+                  <ion-icon slot="icon-only" :icon="closeCircleOutline" />
+                </ion-button>
+              </div>
+
+              <div class="filter-item">
+                <ion-input
+                  :value="fromDate"
+                  @ionInput="fromDate = $event.detail.value || ''"
+                  type="date"
+                  :label="translate('From Date')"
+                  label-placement="stacked"
+                />
+                <ion-button v-if="fromDate" fill="clear" class="clear-filter-btn" @click="fromDate = ''" :title="translate('Clear')">
+                  <ion-icon slot="icon-only" :icon="closeCircleOutline" />
+                </ion-button>
+              </div>
+
+              <div class="filter-item">
+                <ion-input
+                  :value="thruDate"
+                  @ionInput="thruDate = $event.detail.value || ''"
+                  type="date"
+                  :label="translate('Thru Date')"
+                  label-placement="stacked"
+                />
+                <ion-button v-if="thruDate" fill="clear" class="clear-filter-btn" @click="thruDate = ''" :title="translate('Clear')">
+                  <ion-icon slot="icon-only" :icon="closeCircleOutline" />
+                </ion-button>
+              </div>
             </div>
           </ion-card-content>
         </ion-card>
@@ -99,6 +127,7 @@ import {
   IonCardContent,
   IonContent,
   IonHeader,
+  IonIcon,
   IonInput,
   IonMenuButton,
   IonNote,
@@ -110,6 +139,7 @@ import {
   IonToolbar,
   onIonViewWillEnter
 } from "@ionic/vue";
+import { closeCircleOutline } from "ionicons/icons";
 import { computed, ref, watch } from "vue";
 
 import { translate } from "@common";

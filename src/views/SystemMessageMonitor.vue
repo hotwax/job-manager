@@ -19,73 +19,93 @@
             />
 
             <div class="filter-grid">
-              <ion-select
-                :label="translate('Status')"
-                label-placement="stacked"
-                interface="popover"
-                :value="selectedStatusId"
-                @ionChange="selectedStatusId = $event.detail.value"
-              >
-                <ion-select-option value="">{{ translate("All") }}</ion-select-option>
-                <ion-select-option
-                  v-for="status in statuses"
-                  :key="status.statusId"
-                  :value="status.statusId"
+              <div class="filter-item">
+                <ion-select
+                  :label="translate('Status')"
+                  label-placement="stacked"
+                  interface="popover"
+                  :value="selectedStatusId"
+                  @ionChange="selectedStatusId = $event.detail.value"
                 >
-                  {{ status.description }}
-                </ion-select-option>
-              </ion-select>
+                  <ion-select-option value="">{{ translate("All") }}</ion-select-option>
+                  <ion-select-option
+                    v-for="status in statuses"
+                    :key="status.statusId"
+                    :value="status.statusId"
+                  >
+                    {{ status.description }}
+                  </ion-select-option>
+                </ion-select>
+                <ion-button v-if="selectedStatusId" fill="clear" class="clear-filter-btn" @click="selectedStatusId = ''" :title="translate('Clear')">
+                  <ion-icon slot="icon-only" :icon="closeCircleOutline" />
+                </ion-button>
+              </div>
 
-              <ion-select
-                :label="translate('Parent Type')"
-                label-placement="stacked"
-                interface="popover"
-                :value="selectedParentTypeId"
-                @ionChange="handleParentTypeChange($event)"
-              >
-                <ion-select-option value="">{{ translate("All") }}</ion-select-option>
-                <ion-select-option
-                  v-for="parent in parentTypes"
-                  :key="parent.id"
-                  :value="parent.id"
+              <div class="filter-item">
+                <ion-select
+                  :label="translate('Parent Type')"
+                  label-placement="stacked"
+                  interface="popover"
+                  :value="selectedParentTypeId"
+                  @ionChange="handleParentTypeChange($event)"
                 >
-                  {{ parent.description }}
-                </ion-select-option>
-              </ion-select>
+                  <ion-select-option value="">{{ translate("All") }}</ion-select-option>
+                  <ion-select-option
+                    v-for="parent in parentTypes"
+                    :key="parent.id"
+                    :value="parent.id"
+                  >
+                    {{ parent.description }}
+                  </ion-select-option>
+                </ion-select>
+                <ion-button v-if="selectedParentTypeId" fill="clear" class="clear-filter-btn" @click="selectedParentTypeId = ''; selectedTypeId = ''" :title="translate('Clear')">
+                  <ion-icon slot="icon-only" :icon="closeCircleOutline" />
+                </ion-button>
+              </div>
 
-              <ion-select
-                :label="translate('Message Type')"
-                label-placement="stacked"
-                interface="popover"
-                :value="selectedTypeId"
-                @ionChange="selectedTypeId = $event.detail.value"
-              >
-                <ion-select-option value="">{{ translate("All") }}</ion-select-option>
-                <ion-select-option
-                  v-for="type in filteredTypes"
-                  :key="type.systemMessageTypeId"
-                  :value="type.systemMessageTypeId"
+              <div class="filter-item">
+                <ion-select
+                  :label="translate('Message Type')"
+                  label-placement="stacked"
+                  interface="popover"
+                  :value="selectedTypeId"
+                  @ionChange="selectedTypeId = $event.detail.value"
                 >
-                  {{ type.description || type.systemMessageTypeId }}
-                </ion-select-option>
-              </ion-select>
+                  <ion-select-option value="">{{ translate("All") }}</ion-select-option>
+                  <ion-select-option
+                    v-for="type in filteredTypes"
+                    :key="type.systemMessageTypeId"
+                    :value="type.systemMessageTypeId"
+                  >
+                    {{ type.description || type.systemMessageTypeId }}
+                  </ion-select-option>
+                </ion-select>
+                <ion-button v-if="selectedTypeId" fill="clear" class="clear-filter-btn" @click="selectedTypeId = ''" :title="translate('Clear')">
+                  <ion-icon slot="icon-only" :icon="closeCircleOutline" />
+                </ion-button>
+              </div>
 
-              <ion-select
-                :label="translate('Remote System')"
-                label-placement="stacked"
-                interface="popover"
-                :value="selectedRemoteId"
-                @ionChange="selectedRemoteId = $event.detail.value"
-              >
-                <ion-select-option value="">{{ translate("All") }}</ion-select-option>
-                <ion-select-option
-                  v-for="remote in remotes"
-                  :key="remote.systemMessageRemoteId"
-                  :value="remote.systemMessageRemoteId"
+              <div class="filter-item">
+                <ion-select
+                  :label="translate('Remote System')"
+                  label-placement="stacked"
+                  interface="popover"
+                  :value="selectedRemoteId"
+                  @ionChange="selectedRemoteId = $event.detail.value"
                 >
-                  {{ remote.description || remote.systemMessageRemoteId }}
-                </ion-select-option>
-              </ion-select>
+                  <ion-select-option value="">{{ translate("All") }}</ion-select-option>
+                  <ion-select-option
+                    v-for="remote in remotes"
+                    :key="remote.systemMessageRemoteId"
+                    :value="remote.systemMessageRemoteId"
+                  >
+                    {{ remote.description || remote.systemMessageRemoteId }}
+                  </ion-select-option>
+                </ion-select>
+                <ion-button v-if="selectedRemoteId" fill="clear" class="clear-filter-btn" @click="selectedRemoteId = ''" :title="translate('Clear')">
+                  <ion-icon slot="icon-only" :icon="closeCircleOutline" />
+                </ion-button>
+              </div>
             </div>
           </ion-card-content>
         </ion-card>
@@ -115,6 +135,7 @@ import {
   IonCardContent,
   IonContent,
   IonHeader,
+  IonIcon,
   IonMenuButton,
   IonNote,
   IonPage,
@@ -125,6 +146,7 @@ import {
   IonToolbar,
   onIonViewWillEnter
 } from "@ionic/vue";
+import { closeCircleOutline } from "ionicons/icons";
 import { computed, ref, watch } from "vue";
 import { translate } from "@common";
 import SystemMessageList from "@/components/SystemMessageList.vue";
