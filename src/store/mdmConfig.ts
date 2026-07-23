@@ -9,6 +9,7 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
     executionModes: [] as Array<any>,
     logs: [] as Array<any>,
     logsCount: 0,
+    isFetchingLogs: false,
     filters: {} as Record<string, any>,
     globalStats: { total: 0, successful: 0, failed: 0, avgProcessingTime: 0 },
     fetchStatus: {
@@ -107,6 +108,7 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
       }
     },
     async fetchDataManagerLogs(params = { pageSize: 10, pageIndex: 0 }) {
+      this.isFetchingLogs = true;
       try {
         const payload = {
           ...params
@@ -154,6 +156,8 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
         }
       } catch (err) {
         logger.error("Failed to fetch logs", err)
+      } finally {
+        this.isFetchingLogs = false;
       }
     },
     async fetchDataManagerLogById(logId: string) {

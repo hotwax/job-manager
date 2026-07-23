@@ -249,10 +249,11 @@ watch(pageIndex, () => {
 
 onIonViewWillEnter(async () => {
   isInitialLoading.value = true;
-  const currentQuery = router.currentRoute.value.query;
-  selectedStatusId.value = (currentQuery?.statusId as string) ?? "";
-  selectedIsOutgoing.value = (currentQuery?.isOutgoing as string) ?? "";
-  
+  if (route.query?.statusId) {
+    selectedStatusId.value = route.query.statusId as string;
+  } else {
+    selectedStatusId.value = "";
+  }
   try {
     await Promise.all([
       store.fetchSystemMessageTypes(),
