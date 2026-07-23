@@ -802,7 +802,7 @@ const loadRuns = async () => {
   hasMoreRuns.value = true
   pageSize.value = 20
   try {
-    const payload = { pageSize: pageSize.value, pageIndex: pageIndex.value } as any
+    const payload = { pageSize: pageSize.value, pageIndex: pageIndex.value, orderByField: "-jobRunId" } as any
     if (runsFilter.value === 'error') payload.hasError = 'Y'
 
     const resp = await jobStore.fetchJobRuns(route.params.jobName as string, payload)
@@ -854,12 +854,14 @@ watch(activeTab, async (tab) => {
 const loadMoreRuns = async (event: any) => {
   pageIndex.value++
   try {
-    const payload = { pageSize: pageSize.value, pageIndex: pageIndex.value } as any
+    const payload = { pageSize: pageSize.value, pageIndex: pageIndex.value, orderByField: "-jobRunId" } as any
     if (runsFilter.value === 'error') payload.hasError = 'Y'
 
     const resp = await jobStore.fetchJobRuns(route.params.jobName as string, payload)
     if (Array.isArray(resp) && resp.length > 0) {
-      runs.value.push(...resp)
+      const existingIds = new Set(runs.value.map((run: any) => run.jobRunId));
+      const uniqueNewRuns = resp.filter((run: any) => !existingIds.has(run.jobRunId));
+      runs.value.push(...uniqueNewRuns)
       await userStore.resolveUserFullNames(resp.map((run: any) => run.userId));
     }
     hasMoreRuns.value = Array.isArray(resp) && resp.length === pageSize.value

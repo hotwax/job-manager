@@ -312,9 +312,6 @@ export const useJobStore = defineStore("job", {
           }
         })
         jobRuns = resp.data || []
-        if (Array.isArray(jobRuns)) {
-          jobRuns.sort((a: any, b: any) => getRunTime(b) - getRunTime(a));
-        }
       } catch(err) {
         logger.error("Failed to fetch jobs", err)
       }
