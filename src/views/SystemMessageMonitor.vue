@@ -285,5 +285,3 @@ onIonViewWillEnter(async () => {
   padding: 16px;
 }
 </style>
-
-  
