@@ -295,7 +295,6 @@ const PAGE_SIZE = 10;
 
 const mdmStore = useMdmConfigStore();
 const utilStore = useUtilStore();
-const route = router.currentRoute.value;
 
 
 const queryString = ref("");
@@ -577,11 +576,13 @@ watch(pageIndex, () => {
 });
 
 onIonViewWillEnter(async () => {
-  if (route.query?.statusId) {
-    await mdmStore.updateAppliedFilters("statusId", (route.query.statusId as string).split(","));
+  const currentQuery = router.currentRoute.value.query;
+  if (currentQuery?.statusId) {
+    await mdmStore.updateAppliedFilters("statusId", (currentQuery.statusId as string).split(","));
   } else {
     await mdmStore.updateAppliedFilters("statusId", []);
   }
+  selectedPriority.value = currentQuery?.priority ? [(currentQuery.priority as string)] : [];
   await fetchLogs();
   mdmStore.fetchConfigs();
   await utilStore.fetchStatusItemsByType("DataManagerLog");

@@ -159,17 +159,18 @@ const PAGE_SIZE = 25;
 
 const store = useSystemMessageStore();
 const utilStore = useUtilStore();
-const route = router.currentRoute.value;
 
 const queryString = ref("");
 const selectedStatusId = ref("");
 const selectedTypeId = ref("");
 const selectedParentTypeId = ref("");
 const selectedRemoteId = ref("");
+const selectedIsOutgoing = ref("");
 const pageIndex = ref(0);
 const isInitialLoading = ref(true);
 
 const messages = computed(() => store.getSystemMessages);
+
 const total = computed(() => store.getSystemMessageTotal);
 const types = computed(() => store.getSystemMessageTypes);
 const parentTypes = computed(() => store.getSystemMessageParentTypes);
@@ -187,7 +188,7 @@ const loadMessages = async () => {
   const payload = {
     pageIndex: pageIndex.value,
     pageSize: PAGE_SIZE,
-  } as Record<string, any>
+  } as Record<string, any>;
 
   if(queryString.value.trim()) {
     payload["queryString"] = queryString.value.trim()
@@ -207,6 +208,10 @@ const loadMessages = async () => {
 
   if(selectedRemoteId.value) {
     payload["systemMessageRemoteId"] = selectedRemoteId.value
+  }
+
+  if(selectedIsOutgoing.value) {
+    payload["isOutgoing"] = selectedIsOutgoing.value
   }
 
   await store.fetchSystemMessages(payload);
@@ -233,12 +238,14 @@ const goToNextPage = () => {
   pageIndex.value += 1;
 };
 
-watch([queryString, selectedStatusId, selectedTypeId, selectedParentTypeId, selectedRemoteId], async () => {
+watch([queryString, selectedStatusId, selectedTypeId, selectedParentTypeId, selectedRemoteId, selectedIsOutgoing], async () => {
   resetToFirstPage();
   await loadMessages();
 });
 
-watch(pageIndex, loadMessages);
+watch(pageIndex, () => {
+  loadMessages();
+});
 
 onIonViewWillEnter(async () => {
   isInitialLoading.value = true;
