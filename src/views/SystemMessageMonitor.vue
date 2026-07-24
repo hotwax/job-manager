@@ -149,6 +149,7 @@ import {
 } from "@ionic/vue";
 import { closeCircleOutline } from "ionicons/icons";
 import { computed, ref, watch } from "vue";
+import { useRoute } from "vue-router";
 import { translate } from "@common";
 import SystemMessageList from "@/components/SystemMessageList.vue";
 import { useSystemMessageStore } from "@/store/systemMessage";
@@ -157,6 +158,7 @@ import router from "@/router";
 
 const PAGE_SIZE = 25;
 
+const route = useRoute();
 const store = useSystemMessageStore();
 const utilStore = useUtilStore();
 
