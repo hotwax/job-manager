@@ -65,6 +65,7 @@ export const useJobStore = defineStore("job", {
     categoryRollups: [] as Array<any>,
     products: {} as any,
     jobRunHistory: [] as Array<any>,
+    allJobRunHistory: [] as Array<any>,
     jobRunHistoryTotal: 0,
     jobRunHistoryStats: {
       total: 0,
@@ -318,12 +319,20 @@ export const useJobStore = defineStore("job", {
       return Array.isArray(jobRuns) ? jobRuns : []
     },
     async fetchJobRunHistory(payload: Record<string, any> = {}) {
+      const isRefetch = payload.isRefetch ?? true;
+      const pageSize = Number(payload.pageSize ?? 25);
+      const pageIndex = Number(payload.pageIndex ?? 0);
+
+      if (!isRefetch && this.allJobRunHistory.length > 0) {
+        const start = pageIndex * pageSize;
+        this.jobRunHistory = this.allJobRunHistory.slice(start, start + pageSize);
+        return;
+      }
+
       this.loading = true;
       try {
         if (!this.jobs.length) await this.fetchJobs();
 
-        const pageSize = Number(payload.pageSize ?? 25);
-        const pageIndex = Number(payload.pageIndex ?? 0);
         const runsPerJob = Number(payload.runsPerJob ?? 25);
         const queryString = (payload.queryString || "").trim().toLowerCase();
         const normalizedQueryString = queryString.replace(/^#/, "");
@@ -416,6 +425,7 @@ export const useJobStore = defineStore("job", {
 
         runs = runs.sort((first: any, second: any) => getRunTime(second) - getRunTime(first));
 
+        this.allJobRunHistory = runs;
         this.jobRunHistoryTotal = runs.length;
         this.jobRunHistoryStats = getRunHistoryStats(runs);
 
@@ -423,6 +433,7 @@ export const useJobStore = defineStore("job", {
         this.jobRunHistory = runs.slice(start, start + pageSize);
       } catch(err) {
         logger.error("Failed to fetch job run history", err);
+        this.allJobRunHistory = [];
         this.jobRunHistory = [];
         this.jobRunHistoryTotal = 0;
         this.jobRunHistoryStats = {

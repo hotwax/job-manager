@@ -383,11 +383,14 @@ const handleQueryInput = (event: CustomEvent) => {
   queryString.value = (event as any).detail.value || "";
 };
 
-const loadRuns = async () => {
+let isFilterResetting = false;
+
+const loadRuns = async (isRefetch = true) => {
   const payload = {
     pageIndex: pageIndex.value,
     pageSize: PAGE_SIZE,
-    runsPerJob: RUNS_PER_JOB
+    runsPerJob: RUNS_PER_JOB,
+    isRefetch
   } as Record<string, any>;
 
   if (queryString.value.trim()) payload.queryString = queryString.value.trim();
@@ -421,14 +424,18 @@ const goToLog = (logId: string | number) => {
 
 watch([queryString, selectedStatus, selectedJobName, selectedUserId, hasDataLogs], async () => {
   if (pageIndex.value !== 0) {
+    isFilterResetting = true;
     pageIndex.value = 0;
-  } else {
-    await loadRuns();
   }
-})
+  await loadRuns(true);
+});
 
 watch(pageIndex, async () => {
-  await loadRuns();
+  if (isFilterResetting) {
+    isFilterResetting = false;
+    return;
+  }
+  await loadRuns(false);
 });
 
 onIonViewWillEnter(async () => {
@@ -438,7 +445,7 @@ onIonViewWillEnter(async () => {
   if (route.query.userId) selectedUserId.value = route.query.userId as string;
 
   await jobStore.fetchJobs();
-  await loadRuns();
+  await loadRuns(true);
 });
 </script>
 
