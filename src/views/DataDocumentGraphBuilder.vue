@@ -711,11 +711,11 @@
         </ion-footer>
       </ion-modal>
 
-      <ion-modal ref="conditionModal">
+      <ion-modal ref="conditionModal" @willDismiss="conditionSubmitted = false">
         <ion-header>
           <ion-toolbar>
             <ion-buttons slot="start">
-              <ion-button @click="closeConditionModal">
+              <ion-button @click="closeConditionModal()">
                 <ion-icon slot="icon-only" :icon="closeOutline" />
               </ion-button>
             </ion-buttons>
@@ -746,11 +746,14 @@
             <ion-item>
               <ion-select
                 v-if="activeConditionValueOptions"
-                v-model="activeCondition.fieldValue"
+                :value="activeCondition.fieldValue"
                 :label="translate('Value')"
                 :placeholder="activeConditionValueOptions.label || translate('Select value')"
                 label-placement="stacked"
                 interface="popover"
+                :class="{ 'ion-invalid ion-touched': conditionSubmitted && isOperatorValueInvalid }"
+                :error-text="translate('Value is required')"
+                @ionChange="activeCondition.fieldValue = $event.detail.value ?? ''"
               >
                 <ion-select-option
                   v-for="option in activeConditionValueOptions.options"
@@ -762,9 +765,12 @@
               </ion-select>
               <ion-input
                 v-else
-                v-model="activeCondition.fieldValue"
+                :value="activeCondition.fieldValue"
                 :label="translate('Value')"
                 label-placement="stacked"
+                :class="{ 'ion-invalid ion-touched': conditionSubmitted && isOperatorValueInvalid }"
+                :error-text="translate('Value is required')"
+                @ionInput="activeCondition.fieldValue = $event.detail.value || ''"
               />
             </ion-item>
             <ion-item>
@@ -906,7 +912,7 @@ import DataDocumentFormView from "@/views/DataDocumentFormView.vue";
 import { getDateAndTime, showToast } from "@/utils";
 import { useUtilStore } from "@/store/util";
 import type { GraphCondition, GraphEdge, GraphField } from "@/utils/dataDocumentGraph";
-import { DATA_DOCUMENT_FUNCTIONS, getDataDocumentFunctionLabel } from "@/utils/dataDocumentGraph";
+import { DATA_DOCUMENT_FUNCTIONS, getDataDocumentFunctionLabel, isConditionValueMissing } from "@/utils/dataDocumentGraph";
 import { getConditionValueOptionSource } from "@/utils/conditionValueOptions";
 import { getEntityLabel, getEntitySearchText, getEntityValue, groupEntityOptions } from "@/utils/entityOptions";
 import type { EntityOption } from "@/utils/entityOptions";
@@ -1259,8 +1265,16 @@ const getConditionValueOptions = (condition: any) => {
 
 const activeConditionValueOptions = computed(() => getConditionValueOptions(activeCondition.value));
 
+const isOperatorValueInvalid = computed(() => {
+  if (!activeCondition.value?.fieldNameAlias || !activeCondition.value?.operator) return false;
+  return isConditionValueMissing(activeCondition.value.operator, activeCondition.value.fieldValue);
+});
+
+const conditionSubmitted = ref(false);
+
 const openCondition = (condition: any) => {
   // Edit a copy so changes only apply to the graph when the user saves the modal.
+  conditionSubmitted.value = false;
   activeCondition.value = { ...blankCondition(), ...condition };
   conditionModal.value.$el.present();
 };
@@ -1466,6 +1480,7 @@ const blankCondition = () => ({
 
 const openConditionModal = () => {
   if(!selectedField.value) return;
+  conditionSubmitted.value = false;
   // Fresh object (no id) so this is treated as a new condition, with no stale carry-over.
   activeCondition.value = { ...blankCondition(), fieldNameAlias: selectedField.value.outputName };
   conditionModal.value.$el.present();
@@ -1479,8 +1494,12 @@ const removeActiveCondition = () => {
   closeConditionModal();
 };
 
-const closeConditionModal = (save = false) => {
-  if(save) {
+const closeConditionModal = (save: boolean = false) => {
+  if (save) {
+    conditionSubmitted.value = true;
+    if (isOperatorValueInvalid.value) {
+      return;
+    }
     const condition = { ...activeCondition.value };
     const existingId = condition.conditionSeqId || condition.localId;
     const isExisting = !!existingId && (graph.value?.conditions || []).some((item: any) => (
@@ -1492,6 +1511,7 @@ const closeConditionModal = (save = false) => {
       graphStore.addCondition(condition);
     }
   }
+  conditionSubmitted.value = false;
   conditionModal.value.$el.dismiss();
 };
 
@@ -1740,4 +1760,5 @@ onIonViewWillEnter(async () => {
     min-height: 520px;
   }
 }
+
 </style>

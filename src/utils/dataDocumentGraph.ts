@@ -188,6 +188,16 @@ export const normalizeDataDocumentOperator = (operator?: string) => {
   return operatorAliases[normalizedOperator] || normalizedOperator;
 };
 
+export const isConditionValueMissing = (operator: string | undefined, fieldValue: any) => {
+  if (!operator) return false;
+  const op = normalizeDataDocumentOperator(operator);
+  if (op === "empty" || op === "not-empty") return false;
+  const val = fieldValue;
+  if (val === undefined || val === null) return true;
+  if (typeof val === "string") return val.trim() === "";
+  return false;
+};
+
 // Aggregate functions Moqui supports on a DataDocumentField (FieldInfo.aggFunctionArray).
 // A field with one of these is a MEASURE (aggregated); a field with none is a DIMENSION
 // (a group-by key). `numericOnly` marks functions that only yield a value on numeric
@@ -549,10 +559,9 @@ export const projectDataDocumentGraph = ({
         severity: "error",
         message: `Condition references missing field alias "${fieldNameAlias}".`,
         targetKind: "condition",
-        targetId: condition.conditionSeqId
+        targetId: condition.conditionSeqId || condition.localId
       });
     }
-
     return graphCondition;
   });
 

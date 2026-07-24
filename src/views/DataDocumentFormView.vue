@@ -159,6 +159,8 @@
                 label-placement="floating"
                 fill="outline"
                 interface="popover"
+                :class="{ 'ion-invalid ion-touched': isFormConditionValueInvalid(condition) }"
+                :error-text="translate('Value is required')"
                 @ionChange="updateCondition(condition, { fieldValue: $event.detail.value ?? '' })"
               >
                 <ion-select-option
@@ -175,6 +177,8 @@
                 :label="translate('Value')"
                 label-placement="floating"
                 fill="outline"
+                :class="{ 'ion-invalid ion-touched': isFormConditionValueInvalid(condition) }"
+                :error-text="translate('Value is required')"
                 @ionInput="updateCondition(condition, { fieldValue: $event.detail.value || '' })"
               />
             </div>
@@ -410,6 +414,7 @@ import { translate } from "@common";
 import { useDataDocumentGraphStore } from "@/store/dataDocumentGraph";
 import { useUtilStore } from "@/store/util";
 import { getConditionValueOptionSource } from "@/utils/conditionValueOptions";
+import { isConditionValueMissing } from "@/utils/dataDocumentGraph";
 import { getEntityLabel, getEntitySearchText, getEntityValue, groupEntityOptions } from "@/utils/entityOptions";
 import type { EntityOption } from "@/utils/entityOptions";
 import { useKeyboardListNavigation } from "@/utils/keyboardListNavigation";
@@ -636,6 +641,11 @@ const getConditionAliasOptions = (condition: any) => {
 };
 
 const getConditionKey = (condition: any, index: number) => condition.localId || condition.conditionSeqId || `condition-${index}`;
+
+const isFormConditionValueInvalid = (condition: any) => {
+  if (!condition.fieldNameAlias || !condition.operator) return false;
+  return isConditionValueMissing(condition.operator, condition.fieldValue);
+};
 
 const getConditionField = (condition: any) => graph.value?.fields.find((field: any) => (
   field.fieldNameAlias === condition.fieldNameAlias ||
