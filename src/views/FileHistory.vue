@@ -295,6 +295,7 @@ const PAGE_SIZE = 10;
 
 const mdmStore = useMdmConfigStore();
 const utilStore = useUtilStore();
+const route = router.currentRoute.value;
 
 
 const queryString = ref("");

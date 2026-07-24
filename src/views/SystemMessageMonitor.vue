@@ -159,6 +159,7 @@ const PAGE_SIZE = 25;
 
 const store = useSystemMessageStore();
 const utilStore = useUtilStore();
+const route = router.currentRoute.value;
 
 const queryString = ref("");
 const selectedStatusId = ref("");
