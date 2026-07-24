@@ -203,4 +203,35 @@ describe("job store detail", () => {
     ]);
     expect(store.getJobRunHistoryStats.failed).toBe(1);
   });
+
+  it("paginates client-side without making additional network calls when isRefetch is false", async () => {
+    const store = useJobStore();
+    store.jobs = [{ jobName: "syncOrders", serviceName: "co.hotwax.SyncOrders" }];
+
+    apiMock.mockResolvedValue({
+      data: Array.from({ length: 30 }, (_, i) => ({
+        jobRunId: String(i + 1),
+        startTime: 1710000000000 + i * 1000,
+        endTime: 1710000005000 + i * 1000,
+        hasError: "N",
+        userId: "system"
+      }))
+    });
+
+    // Initial fetch (isRefetch: true)
+    await store.fetchJobRunHistory({ pageSize: 10, pageIndex: 0, isRefetch: true });
+    expect(apiMock).toHaveBeenCalledTimes(1);
+    expect(store.getJobRunHistory.length).toBe(10);
+    expect(store.getJobRunHistoryTotal).toBe(30);
+
+    apiMock.mockClear();
+
+    // Paginate to pageIndex: 1 with isRefetch: false
+    await store.fetchJobRunHistory({ pageSize: 10, pageIndex: 1, isRefetch: false });
+
+    // Verify zero API calls were made and page 2 items were returned
+    expect(apiMock).not.toHaveBeenCalled();
+    expect(store.getJobRunHistory.length).toBe(10);
+    expect(store.getJobRunHistory[0].jobRunId).toBe("20");
+  });
 });
