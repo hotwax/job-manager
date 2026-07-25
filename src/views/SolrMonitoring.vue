@@ -5,10 +5,6 @@
         <ion-menu-button slot="start" />
         <ion-title>{{ translate("Solr Monitoring") }}</ion-title>
         <ion-buttons slot="end">
-          <ion-button fill="clear" router-link="/solr-repair">
-            <ion-icon slot="start" :icon="constructOutline" />
-            <ion-label>{{ translate("Go to Repair") }}</ion-label>
-          </ion-button>
           <ion-button fill="clear" @click="loadSummary">
             <ion-icon slot="icon-only" :icon="refreshOutline" />
           </ion-button>
@@ -110,6 +106,34 @@
 
         <ion-card>
           <ion-card-header>
+            <ion-card-title>{{ translate("ZooKeeper") }}</ion-card-title>
+            <ion-card-subtitle>{{ translate("SolrCloud coordination ensemble health") }}</ion-card-subtitle>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-list lines="full">
+              <ion-item>
+                <ion-icon slot="start" :icon="gitNetworkOutline" />
+                <ion-label>
+                  {{ translate("Ensemble status") }}
+                  <p v-if="zookeeper.zkHost">{{ zookeeper.zkHost }}</p>
+                  <p v-else-if="zookeeper.errorMessage">{{ zookeeper.errorMessage }}</p>
+                </ion-label>
+                <ion-badge slot="end" :color="zkColor(zookeeper.status)">{{ zookeeper.status || translate("Unknown") }}</ion-badge>
+              </ion-item>
+              <ion-item v-for="(node, index) in zookeeper.details" :key="index" lines="none">
+                <ion-icon slot="start" :icon="serverOutline" />
+                <ion-label>
+                  {{ node.host || node.zkHost || translate("Node") }}
+                  <p>{{ node.role || node.mode }}</p>
+                </ion-label>
+                <ion-badge slot="end" :color="node.ok === false ? 'danger' : 'success'">{{ node.ok === false ? translate("Down") : translate("Up") }}</ion-badge>
+              </ion-item>
+            </ion-list>
+          </ion-card-content>
+        </ion-card>
+
+        <ion-card>
+          <ion-card-header>
             <ion-card-title>{{ translate("API coverage") }}</ion-card-title>
             <ion-card-subtitle>{{ translate("Solr APIs used by this monitor") }}</ion-card-subtitle>
           </ion-card-header>
@@ -183,7 +207,7 @@ import {
   onIonViewWillEnter
 } from "@ionic/vue";
 import { computed } from "vue";
-import { albumsOutline, analyticsOutline, checkmarkCircleOutline, constructOutline, hardwareChipOutline, pulseOutline, radioOutline, refreshOutline, serverOutline, warningOutline } from "ionicons/icons";
+import { albumsOutline, analyticsOutline, checkmarkCircleOutline, gitNetworkOutline, hardwareChipOutline, pulseOutline, radioOutline, refreshOutline, serverOutline, warningOutline } from "ionicons/icons";
 
 import { translate } from "@common";
 import { useSolrMonitoringStore } from "@/store/solrMonitoring";
@@ -196,7 +220,8 @@ const system = computed(() => store.getSystem);
 const config = computed(() => store.getConfig);
 const collections = computed(() => store.getCollections);
 const pings = computed(() => store.getPings);
-const checks = computed(() => overview.value.checks || []);
+const zookeeper = computed(() => store.getZookeeper);
+const checks = computed(() => store.getChecks);
 
 const memoryRatio = computed(() => {
   const used = system.value.memory?.used || 0;
@@ -255,6 +280,14 @@ const collectionColor = (collection: any) => {
 const collectionStatus = (collection: any) => {
   if (!collection.exists) return translate("Missing");
   return translate("Available");
+};
+
+const zkColor = (status?: string) => {
+  const normalized = (status || "").toString().toLowerCase();
+  if (normalized === "green") return "success";
+  if (normalized === "yellow") return "warning";
+  if (normalized === "red") return "danger";
+  return "medium";
 };
 
 const formatDate = (value?: string) => {
