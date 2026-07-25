@@ -32,6 +32,7 @@ export const useSystemMessageStore = defineStore("systemMessage", {
     linkedMessages: [] as any[],
     systemMessageTotal: 0,
     loading: false,
+    isFetchingMessages: false,
     enums: [] as any[],
     currentSystemMessageStatusHistory: []
   }),
@@ -113,6 +114,7 @@ export const useSystemMessageStore = defineStore("systemMessage", {
     },
     async fetchSystemMessages(payload: Record<string, any> = {}) {
       this.loading = true;
+      this.isFetchingMessages = true;
 
       try {
         const response = await api({
@@ -139,6 +141,7 @@ export const useSystemMessageStore = defineStore("systemMessage", {
         this.systemMessageTotal = 0;
       } finally {
         this.loading = false;
+        this.isFetchingMessages = false;
       }
     },
     async fetchSystemMessageById(systemMessageId: string, skipSetCurrent = false) {

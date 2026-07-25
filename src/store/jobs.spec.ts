@@ -143,7 +143,7 @@ describe("job store detail", () => {
       expect.objectContaining({
         jobName: "indexProducts",
         serviceName: "co.hotwax.IndexProducts",
-        runStatus: "running"
+        runStatus: "RUNNING"
       })
     );
   });
@@ -198,7 +198,7 @@ describe("job store detail", () => {
       expect.objectContaining({
         jobRunId: "300",
         jobName: "syncOrders",
-        runStatus: "failed"
+        runStatus: "FAILED"
       })
     ]);
     expect(store.getJobRunHistoryStats.failed).toBe(1);

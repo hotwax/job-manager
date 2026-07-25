@@ -1,5 +1,9 @@
 <template>
-  <ion-list v-if="messages.length">
+  <div v-if="isLoading" class="loading-state">
+    <ion-spinner name="crescent" />
+    <p>{{ translate("Loading") }}</p>
+  </div>
+  <ion-list v-else-if="messages.length">
     <ion-card v-for="message in messages" :key="message.systemMessageId" class="list-item"
         @click="router.push(`/system-messages/${message.systemMessageId}`)">
       <ion-item lines="none">
@@ -30,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonBadge, IonCard, IonIcon, IonItem, IonLabel, IonList } from "@ionic/vue";
+import { IonBadge, IonCard, IonIcon, IonItem, IonLabel, IonList, IonSpinner } from "@ionic/vue";
 import { downloadOutline, sendOutline } from "ionicons/icons";
 import { translate } from "@common";
 import { commonUtil } from "@common/utils/commonUtil"
@@ -44,10 +48,12 @@ withDefaults(defineProps<{
   emptyMessage?: string;
   showRemote?: boolean;
   showType?: boolean;
+  isLoading?: boolean;
 }>(), {
   emptyMessage: "No messages found.",
   showRemote: true,
-  showType: true
+  showType: true,
+  isLoading: false
 });
 
 const systemMessageStore = useSystemMessageStore();
@@ -62,6 +68,7 @@ const getTypeName = (typeId: string) => {
 </script>
 
 <style scoped>
+.loading-state,
 .empty-state {
   padding: 24px;
   text-align: center;

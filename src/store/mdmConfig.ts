@@ -6,8 +6,10 @@ import { defineStore } from "pinia";
 export const useMdmConfigStore = defineStore("mdmConfig", {
   state: () => ({
     configs: [] as Array<any>,
+    executionModes: [] as Array<any>,
     logs: [] as Array<any>,
     logsCount: 0,
+    isFetchingLogs: false,
     filters: {} as Record<string, any>,
     globalStats: { total: 0, successful: 0, failed: 0, avgProcessingTime: 0 },
     fetchStatus: {
@@ -17,6 +19,7 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
   getters: {
     getConfigs: (state: any) => state.configs,
     getConfigById: (state: any) => (configId: string) => state.configs.find((config: any) => config.configId === configId) || {},
+    getExecutionModes: (state: any) => state.executionModes,
     getLogs: (state: any) => state.logs,
     getLogsCount: (state: any) => state.logsCount,
     getAppliedFilters: (state: any) => JSON.parse(JSON.stringify(state.filters)),
@@ -63,14 +66,49 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
           method: "get"
         })
 
-        if (resp.data?.length) {
-          this.configs.push(resp.data)
+        // The endpoint returns the single config as an object
+        if (resp.data?.configId) {
+          this.configs.push(resp.data);
         }
       } catch (err) {
         logger.error(`Failed to fetch config with id ${configId}`, err)
       }
     },
+    async fetchExecutionModes() {
+      if (this.executionModes.length) return;
+
+      try {
+        const resp = await api({
+          url: "admin/enums",
+          method: "get",
+          params: { enumTypeId: "DMC_EXEC_MODE", pageSize: 20 }
+        });
+
+        if (Array.isArray(resp.data)) {
+          this.executionModes = resp.data;
+        }
+      } catch (err) {
+        logger.error("Failed to fetch execution modes", err);
+      }
+    },
+    async updateConfig(configId: string, updates: Record<string, any>) {
+      try {
+        await api({
+          url: `admin/dataManager/${configId}`,
+          method: "PUT",
+          data: { configId, ...updates }
+        });
+
+        const config = this.configs.find((config: any) => config.configId === configId);
+        if (config) Object.assign(config, updates);
+        return true;
+      } catch (err) {
+        logger.error(`Failed to update config with id ${configId}`, err);
+        return false;
+      }
+    },
     async fetchDataManagerLogs(params = { pageSize: 10, pageIndex: 0 }) {
+      this.isFetchingLogs = true;
       try {
         const payload = {
           ...params
@@ -118,6 +156,8 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
         }
       } catch (err) {
         logger.error("Failed to fetch logs", err)
+      } finally {
+        this.isFetchingLogs = false;
       }
     },
     async fetchDataManagerLogById(logId: string) {

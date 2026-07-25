@@ -1,6 +1,6 @@
 {
   "name": "job-manager",
-  "version": "2.35.0",
+  "version": "3.0.1",
   "private": true,
   "description": "Job Manager App",
   "type": "module",
@@ -43,6 +43,6 @@
     "@types/luxon": "catalog:",
     "@types/papaparse": "catalog:",
     "eslint": "catalog:",
-    "typescript": "~4.7.4"
+    "typescript": "catalog:"
   }
 }

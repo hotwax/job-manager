@@ -48,53 +48,74 @@
             />
 
             <div class="filter-grid">
-              <ion-select
-                :label="translate('Status')"
-                label-placement="stacked"
-                interface="popover"
-                :value="selectedStatus"
-                @ionChange="selectedStatus = $event.detail.value"
-              >
-                <ion-select-option value="">{{ translate("All") }}</ion-select-option>
-                <ion-select-option value="RUNNING">{{ translate("Running") }}</ion-select-option>
-                <ion-select-option value="SUCCESSFUL">{{ translate("Successful") }}</ion-select-option>
-                <ion-select-option value="FAILED">{{ translate("Failed") }}</ion-select-option>
-                <ion-select-option value="TERMINATED">{{ translate("Terminated") }}</ion-select-option>
-              </ion-select>
+              <div class="filter-item">
+                <ion-select
+                  :label="translate('Status')"
+                  label-placement="stacked"
+                  interface="popover"
+                  :value="selectedStatus"
+                  @ionChange="selectedStatus = $event.detail.value"
+                >
+                  <ion-select-option value="">{{ translate("All") }}</ion-select-option>
+                  <ion-select-option value="RUNNING">{{ translate("Running") }}</ion-select-option>
+                  <ion-select-option value="SUCCESSFUL">{{ translate("Successful") }}</ion-select-option>
+                  <ion-select-option value="FAILED">{{ translate("Failed") }}</ion-select-option>
+                  <ion-select-option value="TERMINATED">{{ translate("Terminated") }}</ion-select-option>
+                </ion-select>
+                <ion-button v-if="selectedStatus" fill="clear" class="clear-filter-btn" @click="selectedStatus = ''" :title="translate('Clear')">
+                  <ion-icon slot="icon-only" :icon="closeCircleOutline" />
+                </ion-button>
+              </div>
 
-              <ion-select
-                :label="translate('Job')"
-                label-placement="stacked"
-                interface="popover"
-                :value="selectedJobName"
-                @ionChange="selectedJobName = $event.detail.value"
-              >
-                <ion-select-option value="">{{ translate("All") }}</ion-select-option>
-                <ion-select-option v-for="job in jobOptions" :key="job.jobName" :value="job.jobName">
-                  {{ job.jobName }}
-                </ion-select-option>
-              </ion-select>
+              <div class="filter-item">
+                <ion-select
+                  :label="translate('Job')"
+                  label-placement="stacked"
+                  interface="popover"
+                  :value="selectedJobName"
+                  @ionChange="selectedJobName = $event.detail.value"
+                >
+                  <ion-select-option value="">{{ translate("All") }}</ion-select-option>
+                  <ion-select-option v-for="job in jobOptions" :key="job.jobName" :value="job.jobName">
+                    {{ job.jobName }}
+                  </ion-select-option>
+                </ion-select>
+                <ion-button v-if="selectedJobName" fill="clear" class="clear-filter-btn" @click="selectedJobName = ''" :title="translate('Clear')">
+                  <ion-icon slot="icon-only" :icon="closeCircleOutline" />
+                </ion-button>
+              </div>
 
-              <ion-input
-                :value="selectedUserId"
-                :label="translate('User')"
-                label-placement="stacked"
-                fill="outline"
-                :placeholder="translate('Any user')"
-                @ionInput="selectedUserId = $event.detail.value || ''"
-              />
+              <div class="filter-item">
+                <ion-input
+                  :value="selectedUserId"
+                  :label="translate('User')"
+                  label-placement="stacked"
+                  fill="outline"
+                  :placeholder="translate('Any user')"
+                  :debounce="300"
+                  @ionInput="selectedUserId = $event.detail.value || ''"
+                />
+                <ion-button v-if="selectedUserId" fill="clear" class="clear-filter-btn" @click="selectedUserId = ''" :title="translate('Clear')">
+                  <ion-icon slot="icon-only" :icon="closeCircleOutline" />
+                </ion-button>
+              </div>
 
-              <ion-select
-                :label="translate('Data logs')"
-                label-placement="stacked"
-                interface="popover"
-                :value="hasDataLogs"
-                @ionChange="hasDataLogs = $event.detail.value"
-              >
-                <ion-select-option value="">{{ translate("All") }}</ion-select-option>
-                <ion-select-option value="Y">{{ translate("Has data logs") }}</ion-select-option>
-                <ion-select-option value="N">{{ translate("No data logs") }}</ion-select-option>
-              </ion-select>
+              <div class="filter-item">
+                <ion-select
+                  :label="translate('Data logs')"
+                  label-placement="stacked"
+                  interface="popover"
+                  :value="hasDataLogs"
+                  @ionChange="hasDataLogs = $event.detail.value"
+                >
+                  <ion-select-option value="">{{ translate("All") }}</ion-select-option>
+                  <ion-select-option value="Y">{{ translate("Has data logs") }}</ion-select-option>
+                  <ion-select-option value="N">{{ translate("No data logs") }}</ion-select-option>
+                </ion-select>
+                <ion-button v-if="hasDataLogs" fill="clear" class="clear-filter-btn" @click="hasDataLogs = ''" :title="translate('Clear')">
+                  <ion-icon slot="icon-only" :icon="closeCircleOutline" />
+                </ion-button>
+              </div>
             </div>
           </ion-card-content>
         </ion-card>

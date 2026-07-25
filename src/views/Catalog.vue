@@ -49,6 +49,9 @@
             <ion-chip @click="selectedStatus = 'NO_SCHEDULE'" :outline="selectedStatus !== 'NO_SCHEDULE'" :color="selectedStatus === 'NO_SCHEDULE' ? 'primary' : ''">
               <ion-label>{{ translate("No schedule") }}</ion-label>
             </ion-chip>
+            <ion-chip @click="selectedStatus = 'DRAFT'" :outline="selectedStatus !== 'DRAFT'" :color="selectedStatus === 'DRAFT' ? 'primary' : ''">
+              <ion-label>{{ translate("Draft") }}</ion-label>
+            </ion-chip>
           </div>
         </ion-card>
 
@@ -208,11 +211,13 @@ const filteredJobs = computed(() => {
 
   if (selectedStatus.value !== 'ALL') {
     if (selectedStatus.value === 'PAUSED') {
-      filtered = filtered.filter((job: any) => job.paused === 'Y');
+      filtered = filtered.filter((job: any) => job.paused === 'Y' && !job.isDraftJob);
     } else if (selectedStatus.value === 'SCHEDULED') {
       filtered = filtered.filter((job: any) => job.paused === 'N' && !!job.cronExpression);
     } else if (selectedStatus.value === 'NO_SCHEDULE') {
-      filtered = filtered.filter((job: any) => !job.cronExpression);
+      filtered = filtered.filter((job: any) => !job.cronExpression && !job.isDraftJob);
+    } else if (selectedStatus.value === 'DRAFT') {
+      filtered = filtered.filter((job: any) => job.isDraftJob);
     }
   }
 

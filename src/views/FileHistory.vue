@@ -130,7 +130,7 @@
         </ion-card>
 
         <div class="pagination">
-          <ion-button fill="outline" :disabled="pageIndex === 0" @click="goToPreviousPage">
+          <ion-button fill="outline" :disabled="pageIndex === 0 || isFetchingLogs" @click="goToPreviousPage">
             {{ translate("Previous") }}
           </ion-button>
           <div class="page-input">
@@ -142,16 +142,22 @@
               :value="pageIndex + 1"
               @keyup="validatePageInput($event)"
               @change="goToPage($event)"
+              :disabled="isFetchingLogs"
               class="page-number-input"
             />
             <span>/ {{ pageCount }}</span>
           </div>
-          <ion-button fill="outline" :disabled="pageIndex + 1 >= pageCount" @click="goToNextPage">
+          <ion-button fill="outline" :disabled="pageIndex + 1 >= pageCount || isFetchingLogs" @click="goToNextPage">
             {{ translate("Next") }}
           </ion-button>
         </div>
 
-        <ion-list>
+        <div v-if="isFetchingLogs" class="loading-state">
+          <ion-spinner name="crescent" />
+          <p>{{ translate("Loading") }}</p>
+        </div>
+
+        <ion-list v-else-if="logs.length">
           <ion-card
             v-for="log in logs"
             :key="log.logId"
@@ -189,14 +195,14 @@
                 {{ translate(getLogStatusLabel(log)) }}
               </ion-badge>
               <p>{{ getFileSize(log.fileSize) }}</p>
-              <p>{{ log.createdDate && (log.finishDateTime || log.lastUpdatedTxStamp) ? getDuration(log.createdDate, log.finishDateTime || log.lastUpdatedTxStamp) : '-' }}</p>
+              <p>{{ log.createdDate && log.finishDateTime ? getDuration(log.createdDate, log.finishDateTime) : '-' }}</p>
               <ion-button v-if="log.statusId === 'DmlsPending'" color="danger" fill="clear" @click.stop="mdmStore.cancelDataManagerLog(log.configId, log.logId)">
                 <ion-icon slot="icon-only" :icon="closeOutline" />
               </ion-button>
             </ion-label>
           </ion-card>
-          <p class="empty-state" v-if="!logs.length">{{ translate("No logs found") }}</p>
         </ion-list>
+        <p class="empty-state" v-else>{{ translate("No logs found") }}</p>
       </main>
 
       <ion-modal trigger="config-filter-trigger" @willPresent="handleConfigModalWillPresent" @didDismiss="clearConfigModal">
@@ -262,6 +268,7 @@ import {
   IonSearchbar,
   IonSelect,
   IonSelectOption,
+  IonSpinner,
   IonTitle,
   IonToolbar,
   IonMenuButton,
@@ -300,6 +307,7 @@ const configQuery = ref("");
 const pageIndex = ref(0);
 
 const rawLogs = computed(() => mdmStore.getLogs);
+const isFetchingLogs = computed(() => mdmStore.isFetchingLogs);
 const configs = computed(() => mdmStore.getConfigs);
 const statusItems = computed(() => utilStore.getStatusItemsByType("DataManagerLog"));
 
@@ -569,11 +577,13 @@ watch(pageIndex, () => {
 });
 
 onIonViewWillEnter(async () => {
-  if (route.query?.statusId) {
-    await mdmStore.updateAppliedFilters("statusId", (route.query.statusId as string).split(","));
+  const currentQuery = router.currentRoute.value.query;
+  if (currentQuery?.statusId) {
+    await mdmStore.updateAppliedFilters("statusId", (currentQuery.statusId as string).split(","));
   } else {
     await mdmStore.updateAppliedFilters("statusId", []);
   }
+  selectedPriority.value = currentQuery?.priority ? [(currentQuery.priority as string)] : [];
   await fetchLogs();
   mdmStore.fetchConfigs();
   await utilStore.fetchStatusItemsByType("DataManagerLog");
@@ -582,6 +592,12 @@ onIonViewWillEnter(async () => {
 </script>
 
 <style scoped>
+.loading-state,
+.empty-state {
+  text-align: center;
+  padding: var(--spacer-lg);
+  color: var(--ion-color-medium);
+}
 
 
 .limit-chip {
@@ -624,24 +640,6 @@ onIonViewWillEnter(async () => {
   gap: var(--spacer-lg);
 }
 
-.filter-item {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.filter-item ion-select {
-  flex: 1;
-}
-
-.clear-filter-btn {
-  --padding-start: 6px;
-  --padding-end: 6px;
-  flex-shrink: 0;
-  margin-inline-start: 4px;
-  height: 36px;
-  width: 36px;
-}
 
 .pagination {
   display: flex;
@@ -721,7 +719,7 @@ onIonViewWillEnter(async () => {
   flex-direction: column;
   gap: 4px;
 }
-
+ 
 .detail-value.service-name {
   word-break: break-all;
 }

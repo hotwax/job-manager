@@ -633,7 +633,7 @@ const isLoading = ref(true)
 const isRunsLoading = ref(false)
 const hasLoadedRuns = ref(false)
 const pageIndex = ref(0)
-const pageSize = ref(10)
+const pageSize = ref(20)
 const hasMoreRuns = ref(true)
 
 let optionalParams = ref([]) as any
@@ -777,9 +777,6 @@ const loadJob = async () => {
   isLoading.value = true
   runs.value = []
   hasLoadedRuns.value = false
-  pageIndex.value = 0
-  hasMoreRuns.value = true
-  pageSize.value = 10
   try {
     job.value = await jobStore.fetchJobDetail(route.params.jobName as string)
   } catch (err) {
@@ -800,9 +797,9 @@ const loadRuns = async () => {
   isRunsLoading.value = true
   pageIndex.value = 0
   hasMoreRuns.value = true
-  pageSize.value = 10
+  pageSize.value = 20
   try {
-    const payload = { pageSize: pageSize.value, pageIndex: pageIndex.value } as any
+    const payload = { pageSize: pageSize.value, pageIndex: pageIndex.value, orderByField: "-jobRunId" } as any
     if (runsFilter.value === 'error') payload.hasError = 'Y'
 
     const resp = await jobStore.fetchJobRuns(route.params.jobName as string, payload)
@@ -814,7 +811,6 @@ const loadRuns = async () => {
     console.error(err)
   } finally {
     isRunsLoading.value = false
-    pageSize.value = 20
   }
 }
 
@@ -855,12 +851,14 @@ watch(activeTab, async (tab) => {
 const loadMoreRuns = async (event: any) => {
   pageIndex.value++
   try {
-    const payload = { pageSize: pageSize.value, pageIndex: pageIndex.value } as any
+    const payload = { pageSize: pageSize.value, pageIndex: pageIndex.value, orderByField: "-jobRunId" } as any
     if (runsFilter.value === 'error') payload.hasError = 'Y'
 
     const resp = await jobStore.fetchJobRuns(route.params.jobName as string, payload)
     if (Array.isArray(resp) && resp.length > 0) {
-      runs.value.push(...resp)
+      const existingIds = new Set(runs.value.map((run: any) => run.jobRunId));
+      const uniqueNewRuns = resp.filter((run: any) => !existingIds.has(run.jobRunId));
+      runs.value.push(...uniqueNewRuns)
       await userStore.resolveUserFullNames(resp.map((run: any) => run.userId));
     }
     hasMoreRuns.value = Array.isArray(resp) && resp.length === pageSize.value

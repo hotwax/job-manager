@@ -25,31 +25,41 @@
             />
 
             <div class="filter-grid">
-              <ion-select
-                :label="translate('Primary Entity')"
-                label-placement="stacked"
-                interface="popover"
-                :value="selectedEntity"
-                @ionChange="selectedEntity = $event.detail.value"
-              >
-                <ion-select-option value="">{{ translate("All entities") }}</ion-select-option>
-                <ion-select-option v-for="entity in primaryEntities" :key="entity" :value="entity">
-                  {{ entity }}
-                </ion-select-option>
-              </ion-select>
+              <div class="filter-item">
+                <ion-select
+                  :label="translate('Primary Entity')"
+                  label-placement="stacked"
+                  interface="popover"
+                  :value="selectedEntity"
+                  @ionChange="selectedEntity = $event.detail.value"
+                >
+                  <ion-select-option value="">{{ translate("All entities") }}</ion-select-option>
+                  <ion-select-option v-for="entity in primaryEntities" :key="entity" :value="entity">
+                    {{ entity }}
+                  </ion-select-option>
+                </ion-select>
+                <ion-button v-if="selectedEntity" fill="clear" class="clear-filter-btn" @click="selectedEntity = ''" :title="translate('Clear')">
+                  <ion-icon slot="icon-only" :icon="closeCircleOutline" />
+                </ion-button>
+              </div>
 
-              <ion-select
-                :label="translate('Related Feed')"
-                label-placement="stacked"
-                interface="popover"
-                :value="selectedFeed"
-                @ionChange="selectedFeed = $event.detail.value"
-              >
-                <ion-select-option value="">{{ translate("All feeds") }}</ion-select-option>
-                <ion-select-option v-for="feed in dataFeeds" :key="feed" :value="feed">
-                  {{ feed }}
-                </ion-select-option>
-              </ion-select>
+              <div class="filter-item">
+                <ion-select
+                  :label="translate('Related Feed')"
+                  label-placement="stacked"
+                  interface="popover"
+                  :value="selectedFeed"
+                  @ionChange="selectedFeed = $event.detail.value"
+                >
+                  <ion-select-option value="">{{ translate("All feeds") }}</ion-select-option>
+                  <ion-select-option v-for="feed in dataFeeds" :key="feed" :value="feed">
+                    {{ feed }}
+                  </ion-select-option>
+                </ion-select>
+                <ion-button v-if="selectedFeed" fill="clear" class="clear-filter-btn" @click="selectedFeed = ''" :title="translate('Clear')">
+                  <ion-icon slot="icon-only" :icon="closeCircleOutline" />
+                </ion-button>
+              </div>
             </div>
           </ion-card-content>
         </ion-card>
@@ -132,7 +142,7 @@ import {
   IonToolbar,
   onIonViewWillEnter
 } from "@ionic/vue";
-import { addOutline, documentTextOutline, playOutline, timeOutline } from "ionicons/icons";
+import { addOutline, closeCircleOutline, documentTextOutline, playOutline, timeOutline } from "ionicons/icons";
 import { computed, ref, watch } from "vue";
 import router from "../router"
 
