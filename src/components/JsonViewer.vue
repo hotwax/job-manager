@@ -17,10 +17,10 @@
 </template>
 
 <script setup lang="ts">
+import { translate } from "@common";
 import { IonButton, IonIcon } from "@ionic/vue";
 import { addCircleOutline, removeCircleOutline } from "ionicons/icons";
 import { ref } from "vue";
-import { translate } from "@common";
 import JsonNode from "@/components/JsonNode.vue";
 
 defineProps<{
@@ -61,7 +61,5 @@ const collapseAll = () => {
 .jv-body {
   padding: 12px 16px;
   overflow-x: auto;
-  max-height: 70vh;
-  overflow-y: auto;
 }
 </style>
