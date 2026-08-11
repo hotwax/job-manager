@@ -152,7 +152,7 @@ describe("job store detail", () => {
     expect(store.getJobRunHistoryError).toBe("");
   });
 
-  it("passes all filters to the server and normalizes the query string", async () => {
+  it("passes all filters to the server with exact matches and a job-name search", async () => {
     const store = useJobStore();
 
     apiMock.mockResolvedValue({
@@ -180,7 +180,7 @@ describe("job store detail", () => {
       hasError: "Y",
       hasDataLogs: "Y",
       userId: "system",
-      queryString: " #300 "
+      queryString: " syncOrd "
     });
 
     expect(apiMock).toHaveBeenCalledTimes(1);
@@ -193,7 +193,7 @@ describe("job store detail", () => {
           hasError: "Y",
           hasDataLogs: "Y",
           userId: "system",
-          queryString: "300"
+          queryString: "syncOrd"
         })
       })
     );

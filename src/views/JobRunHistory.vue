@@ -44,7 +44,7 @@
               :value="queryString"
               @ionInput="handleQueryInput"
               :debounce="300"
-              :placeholder="translate('Search by run, job, service, user, message, or result')"
+              :placeholder="translate('Search by job name')"
             />
 
             <div class="filter-grid">

@@ -290,7 +290,7 @@ export const useJobStore = defineStore("job", {
           orderByField: "-startTime,-jobRunId"
         };
 
-        const queryString = (payload.queryString || "").trim().replace(/^#/, "");
+        const queryString = (payload.queryString || "").trim();
         if (queryString) params.queryString = queryString;
         if (payload.jobName) params.jobName = payload.jobName;
         if (payload.userId) params.userId = payload.userId;
