@@ -135,6 +135,13 @@
           <p>{{ translate("Loading") }}</p>
         </div>
 
+        <div v-else-if="historyError" class="error-state">
+          <ion-icon :icon="alertCircleOutline" color="danger" />
+          <p>{{ translate(historyError) }}</p>
+          <p>{{ translate("The runs shown may be incomplete. Please retry or check the backend logs.") }}</p>
+          <ion-button fill="outline" @click="loadRuns()">{{ translate("Retry") }}</ion-button>
+        </div>
+
         <ion-list v-else-if="runs.length">
           <ion-card v-for="run in runs" :key="`${run.jobName}-${run.jobRunId}`" class="run-card" button @click="goToJob(run.jobName)">
             <ion-item lines="none">
@@ -305,7 +312,6 @@ import { useUserStore } from "@/store/user";
 import { getDateAndTime, getTimeInMillis } from "@/utils";
 
 const PAGE_SIZE = 25;
-const RUNS_PER_JOB = 25;
 
 const route = router.currentRoute.value;
 const jobStore = useJobStore();
@@ -322,6 +328,7 @@ const userStore = useUserStore();
 const runs = computed(() => jobStore.getJobRunHistory);
 const total = computed(() => jobStore.getJobRunHistoryTotal);
 const stats = computed(() => jobStore.getJobRunHistoryStats);
+const historyError = computed(() => jobStore.getJobRunHistoryError);
 const jobs = computed(() => jobStore.getJobs);
 const isLoading = computed(() => jobStore.isLoading);
 const pageCount = computed(() => Math.max(Math.ceil(total.value / PAGE_SIZE), 1));
@@ -385,12 +392,10 @@ const handleQueryInput = (event: CustomEvent) => {
 
 let isFilterResetting = false;
 
-const loadRuns = async (isRefetch = true) => {
+const loadRuns = async () => {
   const payload = {
     pageIndex: pageIndex.value,
-    pageSize: PAGE_SIZE,
-    runsPerJob: RUNS_PER_JOB,
-    isRefetch
+    pageSize: PAGE_SIZE
   } as Record<string, any>;
 
   if (queryString.value.trim()) payload.queryString = queryString.value.trim();
@@ -427,7 +432,7 @@ watch([queryString, selectedStatus, selectedJobName, selectedUserId, hasDataLogs
     isFilterResetting = true;
     pageIndex.value = 0;
   }
-  await loadRuns(true);
+  await loadRuns();
 });
 
 watch(pageIndex, async () => {
@@ -435,7 +440,7 @@ watch(pageIndex, async () => {
     isFilterResetting = false;
     return;
   }
-  await loadRuns(false);
+  await loadRuns();
 });
 
 onIonViewWillEnter(async () => {
@@ -444,8 +449,9 @@ onIonViewWillEnter(async () => {
   if (route.query.jobName) selectedJobName.value = route.query.jobName as string;
   if (route.query.userId) selectedUserId.value = route.query.userId as string;
 
+  // The job catalog only feeds the Job filter options; run history itself is served globally by the backend
   await jobStore.fetchJobs();
-  await loadRuns(true);
+  await loadRuns();
 });
 </script>
 
@@ -505,9 +511,14 @@ onIonViewWillEnter(async () => {
 }
 
 .loading-state,
+.error-state,
 .empty-state {
   text-align: center;
   padding: var(--spacer-lg);
+}
+
+.error-state ion-icon {
+  font-size: 32px;
 }
 
 @media (max-width: 600px) {
