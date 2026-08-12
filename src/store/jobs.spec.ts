@@ -87,35 +87,35 @@ describe("job store detail", () => {
     expect(jobDetail).toEqual({});
   });
 
-  it("fetches global run history from the serviceJobRuns endpoint in a single request", async () => {
+  it("consumes the standard entity-list response and total-count header", async () => {
     const store = useJobStore();
+    store.jobs = [{
+      jobName: "indexProducts",
+      serviceName: "co.hotwax.IndexProducts",
+      productName: "Products"
+    }];
 
     apiMock.mockResolvedValue({
-      data: {
-        jobRunList: [
-          {
-            jobRunId: "200",
-            jobName: "indexProducts",
-            serviceName: "co.hotwax.IndexProducts",
-            startTime: 1710000200000,
-            hasError: "N",
-            userId: "admin",
-            messages: "Running rebuild"
-          },
-          {
-            jobRunId: "101",
-            jobName: "syncOrders",
-            serviceName: "co.hotwax.SyncOrders",
-            startTime: 1710000100000,
-            endTime: 1710000120000,
-            hasError: "Y",
-            userId: "system",
-            errors: "Failed to process order"
-          }
-        ],
-        jobRunCount: 3,
-        statusCounts: { total: 3, successful: 1, failed: 1, running: 1, terminated: 0 }
-      }
+      data: [
+        {
+          jobRunId: "200",
+          jobName: "indexProducts",
+          startTime: 1710000200000,
+          hasError: "N",
+          userId: "admin",
+          messages: "Running rebuild"
+        },
+        {
+          jobRunId: "101",
+          jobName: "syncOrders",
+          startTime: 1710000100000,
+          endTime: 1710000120000,
+          hasError: "Y",
+          userId: "system",
+          errors: "Failed to process order"
+        }
+      ],
+      headers: { "x-total-count": "3" }
     });
 
     await store.fetchJobRunHistory({ pageSize: 2, pageIndex: 0 });
@@ -123,28 +123,22 @@ describe("job store detail", () => {
     expect(apiMock).toHaveBeenCalledTimes(1);
     expect(apiMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        url: "admin/serviceJobRuns",
+        url: "admin/serviceJobs/runs",
         method: "GET",
-        params: expect.objectContaining({
+        params: {
           pageIndex: 0,
           pageSize: 2,
-          orderByField: "-startTime,-jobRunId"
-        })
+          orderByField: "-createdStamp,-jobRunId"
+        }
       })
     );
     expect(store.getJobRunHistoryTotal).toBe(3);
-    expect(store.getJobRunHistoryStats).toEqual({
-      total: 3,
-      successful: 1,
-      failed: 1,
-      running: 1,
-      terminated: 0
-    });
     expect(store.getJobRunHistory.map((run: any) => run.jobRunId)).toEqual(["200", "101"]);
     expect(store.getJobRunHistory[0]).toEqual(
       expect.objectContaining({
         jobName: "indexProducts",
         serviceName: "co.hotwax.IndexProducts",
+        productName: "Products",
         runStatus: "RUNNING"
       })
     );
@@ -152,77 +146,90 @@ describe("job store detail", () => {
     expect(store.getJobRunHistoryError).toBe("");
   });
 
-  it("passes all filters to the server with exact matches and a job-name search", async () => {
+  it("translates job-name search and field filters into entity-list parameters", async () => {
     const store = useJobStore();
-
-    apiMock.mockResolvedValue({
-      data: {
-        jobRunList: [
-          {
-            jobRunId: "300",
-            jobName: "syncOrders",
-            startTime: 1710000300000,
-            endTime: 1710000310000,
-            hasError: "Y",
-            userId: "system",
-            logs: [{ logId: "M100" }],
-            messages: "Order sync failed"
-          }
-        ],
-        jobRunCount: 1,
-        statusCounts: { total: 1, successful: 0, failed: 1, running: 0, terminated: 0 }
-      }
-    });
+    apiMock.mockResolvedValue({ data: [], headers: { "x-total-count": "0" } });
 
     await store.fetchJobRunHistory({
-      jobName: "syncOrders",
-      status: "FAILED",
-      hasError: "Y",
-      hasDataLogs: "Y",
+      queryString: " syncOrd ",
       userId: "system",
-      queryString: " syncOrd "
+      hasMessages: "Y"
     });
 
-    expect(apiMock).toHaveBeenCalledTimes(1);
     expect(apiMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        url: "admin/serviceJobRuns",
         params: expect.objectContaining({
-          jobName: "syncOrders",
-          runStatus: "FAILED",
-          hasError: "Y",
-          hasDataLogs: "Y",
+          jobName: "syncOrd",
+          jobName_op: "contains",
+          jobName_ic: "Y",
           userId: "system",
-          queryString: "syncOrd"
+          messages_op: "empty",
+          messages_not: "Y"
         })
       })
     );
-    expect(store.getJobRunHistory).toEqual([
-      expect.objectContaining({
-        jobRunId: "300",
-        jobName: "syncOrders",
-        runStatus: "FAILED"
-      })
-    ]);
-    expect(store.getJobRunHistoryStats.failed).toBe(1);
+  });
+
+  it("uses the selected job as an exact filter instead of the search query", async () => {
+    const store = useJobStore();
+    apiMock.mockResolvedValue({ data: [], headers: { "x-total-count": "0" } });
+
+    await store.fetchJobRunHistory({ jobName: "syncOrders", queryString: "ignored" });
+
+    const params = apiMock.mock.calls[0][0].params;
+    expect(params.jobName).toBe("syncOrders");
+    expect(params).not.toHaveProperty("jobName_op");
+    expect(params).not.toHaveProperty("jobName_ic");
+    expect(params).not.toHaveProperty("queryString");
+  });
+
+  it("falls back to the returned page length when the total-count header is unavailable", async () => {
+    const store = useJobStore();
+    apiMock.mockResolvedValue({
+      data: [{ jobRunId: "1", jobName: "syncOrders", startTime: 1, endTime: 2, hasError: "N" }],
+      headers: {}
+    });
+
+    await store.fetchJobRunHistory({});
+
+    expect(store.getJobRunHistoryTotal).toBe(1);
+  });
+
+  it.each([
+    ["FAILED", { hasError: "Y" }],
+    ["RUNNING", { startTime_op: "empty", startTime_not: "Y", endTime_op: "empty" }],
+    ["SUCCESSFUL", {
+      startTime_op: "empty",
+      startTime_not: "Y",
+      endTime_op: "empty",
+      endTime_not: "Y",
+      hasError: "N"
+    }],
+    ["TERMINATED", { startTime_op: "empty" }]
+  ])("translates the %s status into entity-list filters", async (status, expectedParams) => {
+    const store = useJobStore();
+    apiMock.mockResolvedValue({ data: [], headers: { "x-total-count": "0" } });
+
+    await store.fetchJobRunHistory({ status });
+
+    expect(apiMock).toHaveBeenCalledWith(
+      expect.objectContaining({ params: expect.objectContaining(expectedParams) })
+    );
   });
 
   it("requests the selected page from the server instead of slicing a client cache", async () => {
     const store = useJobStore();
 
     const buildPage = (start: number, size: number) => ({
-      data: {
-        jobRunList: Array.from({ length: size }, (_, i) => ({
-          jobRunId: String(start + i),
-          jobName: "syncOrders",
-          startTime: 1710000000000 - (start + i) * 1000,
-          endTime: 1710000005000 - (start + i) * 1000,
-          hasError: "N",
-          userId: "system"
-        })),
-        jobRunCount: 30,
-        statusCounts: { total: 30, successful: 30, failed: 0, running: 0, terminated: 0 }
-      }
+      data: Array.from({ length: size }, (_, i) => ({
+        jobRunId: String(start + i),
+        jobName: "syncOrders",
+        startTime: 1710000000000 - (start + i) * 1000,
+        endTime: 1710000005000 - (start + i) * 1000,
+        hasError: "N",
+        userId: "system"
+      })),
+      headers: { "x-total-count": "30" }
     });
 
     apiMock.mockImplementation(({ params }: any) => Promise.resolve(buildPage(params.pageIndex * params.pageSize + 1, params.pageSize)));
@@ -239,7 +246,7 @@ describe("job store detail", () => {
         params: expect.objectContaining({ pageIndex: 1, pageSize: 10 })
       })
     );
-    expect(store.getJobRunHistory.length).toBe(10);
+    expect(store.getJobRunHistory).toHaveLength(10);
     expect(store.getJobRunHistory[0].jobRunId).toBe("11");
   });
 
@@ -252,24 +259,17 @@ describe("job store detail", () => {
     apiMock
       .mockImplementationOnce(() => firstResponse)
       .mockImplementationOnce(() => Promise.resolve({
-        data: {
-          jobRunList: [{ jobRunId: "2", jobName: "newer", startTime: 2, endTime: 3, hasError: "N" }],
-          jobRunCount: 1,
-          statusCounts: { total: 1, successful: 1, failed: 0, running: 0, terminated: 0 }
-        }
+        data: [{ jobRunId: "2", jobName: "newer", startTime: 2, endTime: 3, hasError: "N" }],
+        headers: { "x-total-count": "1" }
       }));
 
     const firstCall = store.fetchJobRunHistory({ queryString: "old" });
     const secondCall = store.fetchJobRunHistory({ queryString: "new" });
     await secondCall;
 
-    // The slower first response arrives after the newer one has already been applied
     resolveFirst({
-      data: {
-        jobRunList: [{ jobRunId: "1", jobName: "stale", startTime: 1, endTime: 2, hasError: "N" }],
-        jobRunCount: 1,
-        statusCounts: { total: 1, successful: 1, failed: 0, running: 0, terminated: 0 }
-      }
+      data: [{ jobRunId: "1", jobName: "stale", startTime: 1, endTime: 2, hasError: "N" }],
+      headers: { "x-total-count": "1" }
     });
     await firstCall;
 
@@ -277,9 +277,8 @@ describe("job store detail", () => {
     expect(store.isLoading).toBe(false);
   });
 
-  it("surfaces an error state instead of silently showing no runs when the request fails", async () => {
+  it("surfaces an error state and clears it after a successful request", async () => {
     const store = useJobStore();
-
     apiMock.mockRejectedValue(new Error("backend unavailable"));
 
     await store.fetchJobRunHistory({});
@@ -288,14 +287,7 @@ describe("job store detail", () => {
     expect(store.getJobRunHistoryTotal).toBe(0);
     expect(store.getJobRunHistoryError).toBe("Failed to load job run history");
 
-    // A later successful fetch clears the error state
-    apiMock.mockResolvedValue({
-      data: {
-        jobRunList: [],
-        jobRunCount: 0,
-        statusCounts: { total: 0, successful: 0, failed: 0, running: 0, terminated: 0 }
-      }
-    });
+    apiMock.mockResolvedValue({ data: [], headers: { "x-total-count": "0" } });
     await store.fetchJobRunHistory({});
     expect(store.getJobRunHistoryError).toBe("");
   });

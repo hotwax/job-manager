@@ -540,7 +540,6 @@
   "Template downloaded successfully": "Template downloaded successfully",
   "Terminated": "Terminated",
   "The inspector edits the selected graph element.": "The inspector edits the selected graph element.",
-  "The runs shown may be incomplete. Please retry or check the backend logs.": "The runs shown may be incomplete. Please retry or check the backend logs.",
   "The timezone you select is used to ensure automations you schedule are always accurate to the time you select.": "The timezone you select is used to ensure automations you schedule are always accurate to the time you select.",
   "There are no errored system messages, failed ingestion logs, or failed integration jobs requiring immediate attention.": "There are no errored system messages, failed ingestion logs, or failed integration jobs requiring immediate attention.",
   "This incoming message was received from": "This incoming message was received from",

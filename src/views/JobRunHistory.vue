@@ -15,25 +15,7 @@
           <ion-card>
             <ion-card-header>
               <ion-card-subtitle>{{ translate("Total runs") }}</ion-card-subtitle>
-              <ion-card-title><AnimatedNumber :value="stats.total" /></ion-card-title>
-            </ion-card-header>
-          </ion-card>
-          <ion-card>
-            <ion-card-header>
-              <ion-card-subtitle>{{ translate("Successful") }}</ion-card-subtitle>
-              <ion-card-title><AnimatedNumber :value="stats.successful" /></ion-card-title>
-            </ion-card-header>
-          </ion-card>
-          <ion-card>
-            <ion-card-header>
-              <ion-card-subtitle>{{ translate("Failed") }}</ion-card-subtitle>
-              <ion-card-title><AnimatedNumber :value="stats.failed" /></ion-card-title>
-            </ion-card-header>
-          </ion-card>
-          <ion-card>
-            <ion-card-header>
-              <ion-card-subtitle>{{ translate("Running") }}</ion-card-subtitle>
-              <ion-card-title><AnimatedNumber :value="stats.running" /></ion-card-title>
+              <ion-card-title><AnimatedNumber :value="total" /></ion-card-title>
             </ion-card-header>
           </ion-card>
         </div>
@@ -100,22 +82,6 @@
                 </ion-button>
               </div>
 
-              <div class="filter-item">
-                <ion-select
-                  :label="translate('Data logs')"
-                  label-placement="stacked"
-                  interface="popover"
-                  :value="hasDataLogs"
-                  @ionChange="hasDataLogs = $event.detail.value"
-                >
-                  <ion-select-option value="">{{ translate("All") }}</ion-select-option>
-                  <ion-select-option value="Y">{{ translate("Has data logs") }}</ion-select-option>
-                  <ion-select-option value="N">{{ translate("No data logs") }}</ion-select-option>
-                </ion-select>
-                <ion-button v-if="hasDataLogs" fill="clear" class="clear-filter-btn" @click="hasDataLogs = ''" :title="translate('Clear')">
-                  <ion-icon slot="icon-only" :icon="closeCircleOutline" />
-                </ion-button>
-              </div>
             </div>
           </ion-card-content>
         </ion-card>
@@ -138,7 +104,6 @@
         <div v-else-if="historyError" class="error-state">
           <ion-icon :icon="alertCircleOutline" color="danger" />
           <p>{{ translate(historyError) }}</p>
-          <p>{{ translate("The runs shown may be incomplete. Please retry or check the backend logs.") }}</p>
           <ion-button fill="outline" @click="loadRuns()">{{ translate("Retry") }}</ion-button>
         </div>
 
@@ -163,7 +128,7 @@
                   <ion-icon slot="start" :icon="playOutline" color="medium" />
                   <ion-label>
                     <p>{{ translate("Started") }}</p>
-                    {{ getRunDate(run.startTime || run.lastUpdatedStamp) }}
+                    {{ getRunDate(run.startTime || run.createdStamp) }}
                   </ion-label>
                 </ion-item>
                 <ion-item lines="none">
@@ -189,39 +154,13 @@
                 </ion-item>
               </div>
 
-              <div class="run-summary">
-                <ion-chip v-if="run.logs?.length" outline>
-                  <ion-icon :icon="documentTextOutline" />
-                  <ion-label>{{ run.logs.length }} {{ translate("data logs") }}</ion-label>
-                </ion-chip>
-              </div>
-
-              <ion-accordion-group v-if="run.messages || hasResults(run) || run.errors || run.parameters || run.logs?.length" @click.stop>
+              <ion-accordion-group v-if="run.messages || hasResults(run) || run.errors || run.parameters" @click.stop>
                 <ion-accordion v-if="run.messages" value="message">
                   <ion-item slot="header">
                     <ion-label>{{ translate("Message") }}</ion-label>
                   </ion-item>
                   <div slot="content" class="accordion-content">
                     <p>{{ run.messages }}</p>
-                  </div>
-                </ion-accordion>
-
-                <ion-accordion v-if="run.logs?.length" value="logs">
-                  <ion-item slot="header">
-                    <ion-label>{{ translate("Linked data logs") }}</ion-label>
-                  </ion-item>
-                  <div slot="content" class="accordion-content">
-                    <div class="log-actions">
-                      <ion-button
-                        v-for="log in run.logs"
-                        :key="log.logId"
-                        size="small"
-                        fill="outline"
-                        @click="goToLog(log.logId)"
-                      >
-                        {{ log.logId }}
-                      </ion-button>
-                    </div>
                   </div>
                 </ion-accordion>
 
@@ -275,7 +214,6 @@ import {
   IonCardHeader,
   IonCardSubtitle,
   IonCardTitle,
-  IonChip,
   IonContent,
   IonHeader,
   IonIcon,
@@ -298,7 +236,6 @@ import {
   alertCircleOutline,
   checkmarkCircleOutline,
   closeCircleOutline,
-  documentTextOutline,
   personOutline,
   playOutline,
   timeOutline
@@ -320,14 +257,12 @@ const queryString = ref("");
 const selectedStatus = ref("");
 const selectedJobName = ref("");
 const selectedUserId = ref("");
-const hasDataLogs = ref("");
 const pageIndex = ref(0);
 
 const userStore = useUserStore();
 
 const runs = computed(() => jobStore.getJobRunHistory);
 const total = computed(() => jobStore.getJobRunHistoryTotal);
-const stats = computed(() => jobStore.getJobRunHistoryStats);
 const historyError = computed(() => jobStore.getJobRunHistoryError);
 const jobs = computed(() => jobStore.getJobs);
 const isLoading = computed(() => jobStore.isLoading);
@@ -402,7 +337,6 @@ const loadRuns = async () => {
   if (selectedStatus.value) payload.status = selectedStatus.value;
   if (selectedJobName.value) payload.jobName = selectedJobName.value;
   if (selectedUserId.value.trim()) payload.userId = selectedUserId.value.trim();
-  if (hasDataLogs.value) payload.hasDataLogs = hasDataLogs.value;
 
   await jobStore.fetchJobRunHistory(payload);
   await userStore.resolveUserFullNames(runs.value.map((run: any) => run.userId));
@@ -423,11 +357,7 @@ const goToJob = (jobName: string) => {
   router.push({ name: "JobDetail", params: { jobName } });
 };
 
-const goToLog = (logId: string | number) => {
-  router.push({ name: "FileHistoryDetail", params: { id: logId } });
-};
-
-watch([queryString, selectedStatus, selectedJobName, selectedUserId, hasDataLogs], async () => {
+watch([queryString, selectedStatus, selectedJobName, selectedUserId], async () => {
   if (pageIndex.value !== 0) {
     isFilterResetting = true;
     pageIndex.value = 0;
@@ -449,7 +379,7 @@ onIonViewWillEnter(async () => {
   if (route.query.jobName) selectedJobName.value = route.query.jobName as string;
   if (route.query.userId) selectedUserId.value = route.query.userId as string;
 
-  // The job catalog only feeds the Job filter options; run history itself is served globally by the backend
+  // The catalog feeds the Job filter and best-effort row metadata; the backend remains the run-history authority.
   await jobStore.fetchJobs();
   await loadRuns();
 });
@@ -472,10 +402,7 @@ onIonViewWillEnter(async () => {
   margin: 0;
 }
 
-.pagination,
-.run-summary,
-.run-actions,
-.log-actions {
+.pagination {
   display: flex;
   align-items: center;
   gap: var(--spacer-sm);
@@ -494,11 +421,6 @@ onIonViewWillEnter(async () => {
 .run-metrics ion-item {
   --padding-start: 0;
   --inner-padding-end: 0;
-}
-
-.run-summary,
-.run-actions {
-  margin-block-start: var(--spacer-base);
 }
 
 .accordion-content {

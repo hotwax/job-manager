@@ -5,10 +5,35 @@ import { defineStore } from "pinia";
 import { useUserStore } from "./user";
 
 const getRunStatus = (run: any) => {
-  if (run.hasError === "Y") return "FAILED";
-  if (run.startTime && !run.endTime) return "RUNNING";
-  if (run.startTime && run.endTime) return "SUCCESSFUL";
+  if(run.hasError === "Y") {
+    return "FAILED";
+  }
+  if(run.startTime && !run.endTime) {
+    return "RUNNING";
+  }
+  if(run.startTime && run.endTime) {
+    return "SUCCESSFUL";
+  }
+
   return "TERMINATED";
+};
+
+const applyRunStatusFilter = (params: Record<string, any>, status: string) => {
+  if(status === "FAILED") {
+    params.hasError = "Y";
+  } else if(status === "RUNNING") {
+    params.startTime_op = "empty";
+    params.startTime_not = "Y";
+    params.endTime_op = "empty";
+  } else if(status === "SUCCESSFUL") {
+    params.startTime_op = "empty";
+    params.startTime_not = "Y";
+    params.endTime_op = "empty";
+    params.endTime_not = "Y";
+    params.hasError = "N";
+  } else if(status === "TERMINATED") {
+    params.startTime_op = "empty";
+  }
 };
 
 // Monotonically increasing token so a slower, stale run-history response can never
@@ -25,13 +50,6 @@ export const useJobStore = defineStore("job", {
     jobRunHistory: [] as Array<any>,
     jobRunHistoryTotal: 0,
     jobRunHistoryError: "",
-    jobRunHistoryStats: {
-      total: 0,
-      successful: 0,
-      failed: 0,
-      running: 0,
-      terminated: 0
-    },
     loading: false
   }),
   getters: {
@@ -42,7 +60,6 @@ export const useJobStore = defineStore("job", {
     getProducts: (state: any) => state.products,
     getJobRunHistory: (state: any) => state.jobRunHistory,
     getJobRunHistoryTotal: (state: any) => state.jobRunHistoryTotal,
-    getJobRunHistoryStats: (state: any) => state.jobRunHistoryStats,
     getJobRunHistoryError: (state: any) => state.jobRunHistoryError,
     isLoading: (state: any) => state.loading
   },
@@ -287,61 +304,84 @@ export const useJobStore = defineStore("job", {
         const params: Record<string, any> = {
           pageIndex,
           pageSize,
-          orderByField: "-startTime,-jobRunId"
+          orderByField: "-createdStamp,-jobRunId"
         };
 
         const queryString = (payload.queryString || "").trim();
-        if (queryString) params.queryString = queryString;
-        if (payload.jobName) params.jobName = payload.jobName;
-        if (payload.userId) params.userId = payload.userId;
-        if (payload.status) params.runStatus = payload.status;
-        if (payload.hasError) params.hasError = payload.hasError;
-        if (payload.hasDataLogs) params.hasDataLogs = payload.hasDataLogs;
-        if (payload.hasMessages) params.hasMessages = payload.hasMessages;
-
-        const selectedProductStoreId = useUserStore().getCurrentProductStore?.productStoreId || "";
-        if (selectedProductStoreId) params.productStoreId = selectedProductStoreId;
+        if(payload.jobName) {
+          params.jobName = payload.jobName;
+        } else if(queryString) {
+          params.jobName = queryString;
+          params.jobName_op = "contains";
+          params.jobName_ic = "Y";
+        }
+        if(payload.userId) {
+          params.userId = payload.userId;
+        }
+        if(payload.status) {
+          applyRunStatusFilter(params, payload.status);
+        }
+        if(payload.hasError) {
+          params.hasError = payload.hasError;
+        }
+        if(payload.hasMessages) {
+          params.messages_op = "empty";
+          if(payload.hasMessages === "Y") {
+            params.messages_not = "Y";
+          }
+        }
 
         const resp = await api({
-          url: "admin/serviceJobRuns",
+          url: "admin/serviceJobs/runs",
           method: "GET",
           params
         });
 
         // A newer request finished (or started) after this one; drop this stale response.
-        if (requestId !== runHistoryRequestId) return;
+        if(requestId !== runHistoryRequestId) {
+          return;
+        }
+        if(!Array.isArray(resp.data)) {
+          throw new TypeError("Unexpected service job run response");
+        }
 
-        const runs = (resp.data?.jobRunList || []).map((run: any) => ({
-          ...run,
-          runStatus: getRunStatus(run)
-        }));
+        const jobByName = new Map(this.jobs.map((job: any) => [job.jobName, job]));
+        const runs = resp.data.map((run: any) => {
+          const job = jobByName.get(run.jobName) as any;
+          return {
+            serviceName: job?.serviceName,
+            jobDescription: job?.description,
+            instanceOfProductId: job?.instanceOfProductId,
+            productName: job?.productName,
+            paused: job?.paused,
+            cronExpression: job?.cronExpression,
+            ...run,
+            runStatus: getRunStatus(run)
+          };
+        });
 
-        const statusCounts = resp.data?.statusCounts || {};
+        const totalHeader = resp.headers?.get?.("x-total-count") ??
+          resp.headers?.["x-total-count"] ??
+          resp.headers?.["X-Total-Count"];
+        const totalCount = totalHeader === undefined || totalHeader === null || totalHeader === ""
+          ? runs.length
+          : Number(totalHeader);
+
         this.jobRunHistory = runs;
-        this.jobRunHistoryTotal = Number(resp.data?.jobRunCount ?? runs.length);
-        this.jobRunHistoryStats = {
-          total: Number(statusCounts.total ?? this.jobRunHistoryTotal),
-          successful: Number(statusCounts.successful ?? 0),
-          failed: Number(statusCounts.failed ?? 0),
-          running: Number(statusCounts.running ?? 0),
-          terminated: Number(statusCounts.terminated ?? 0)
-        };
+        this.jobRunHistoryTotal = Number.isFinite(totalCount) ? totalCount : runs.length;
         this.jobRunHistoryError = "";
       } catch(err) {
-        if (requestId !== runHistoryRequestId) return;
+        if(requestId !== runHistoryRequestId) {
+          return;
+        }
         logger.error("Failed to fetch job run history", err);
         this.jobRunHistory = [];
         this.jobRunHistoryTotal = 0;
-        this.jobRunHistoryStats = {
-          total: 0,
-          successful: 0,
-          failed: 0,
-          running: 0,
-          terminated: 0
-        };
         this.jobRunHistoryError = "Failed to load job run history";
       } finally {
-        if (requestId === runHistoryRequestId) this.loading = false;
+        if(requestId === runHistoryRequestId) {
+          this.loading = false;
+        }
       }
     },
     async cloneMaargJob(payload: any) {
