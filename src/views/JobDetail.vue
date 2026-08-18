@@ -382,21 +382,23 @@
 
           <!-- HISTORY TAB -->
           <div v-if="activeTab === 'history'">
-            <div v-if="pinnedRunId" class="filter-toolbar ion-padding-horizontal">
-              <ion-chip outline color="primary" @click="clearPinnedRun()">
-                <ion-label>{{ translate("Run") }} #{{ pinnedRunId }}</ion-label>
-                <ion-icon :icon="closeCircleOutline" />
-              </ion-chip>
-            </div>
-            <div class="ion-padding-horizontal">
-              <JobRunFilters
-                v-model:queryString="runsQueryString"
-                v-model:status="runsStatus"
-                v-model:userId="runsUserId"
-                v-model:hasDataLogs="runsHasDataLogs"
-                :placeholder="translate('Search by run, user, message, or result')"
-              />
-            </div>
+            <ion-card>
+              <ion-card-content>
+                <div v-if="pinnedRunId" class="filter-toolbar">
+                  <ion-chip outline color="primary" @click="clearPinnedRun()">
+                    <ion-label>{{ translate("Run") }} #{{ pinnedRunId }}</ion-label>
+                    <ion-icon :icon="closeCircleOutline" />
+                  </ion-chip>
+                </div>
+                <JobRunFilters
+                  v-model:queryString="runsQueryString"
+                  v-model:status="runsStatus"
+                  v-model:userId="runsUserId"
+                  v-model:hasDataLogs="runsHasDataLogs"
+                  :placeholder="translate('Search by run, user, message, or result')"
+                />
+              </ion-card-content>
+            </ion-card>
             <div v-if="isRunsLoading" class="runs-state ion-padding ion-text-center">
               <ion-spinner name="crescent" />
               <p>{{ translate("Loading") }}</p>
