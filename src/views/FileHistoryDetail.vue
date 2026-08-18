@@ -120,10 +120,10 @@
               <ion-chip v-if="contentType" class="type-chip" outline>{{ contentType.toUpperCase() }}</ion-chip>
             </h3>
             <div class="payload-actions">
-              <ion-button fill="clear" size="small" :disabled="!rawText" @click="copyContent" :title="translate('Copy')">
+              <ion-button v-if="!isParametersView" fill="clear" size="small" :disabled="!rawText" @click="copyContent" :title="translate('Copy')">
                 <ion-icon slot="icon-only" :icon="copyOutline" />
               </ion-button>
-              <ion-button fill="clear" size="small" :disabled="!rawText" @click="downloadContent" :title="translate('Download')">
+              <ion-button v-if="!isParametersView" fill="clear" size="small" :disabled="!rawText" @click="downloadContent" :title="translate('Download')">
                 <ion-icon slot="icon-only" :icon="downloadOutline" />
               </ion-button>
             </div>
@@ -141,7 +141,7 @@
             </ion-segment>
 
             <ion-searchbar
-              v-if="contentType"
+              v-if="contentType && !isParametersView"
               class="payload-search"
               :value="payloadSearch"
               @ionInput="payloadSearch = ($event as any).detail.value || ''"
@@ -150,7 +150,44 @@
             />
           </div>
 
-          <div v-if="payloadLoading" class="payload-loading">
+          <div v-if="isParametersView">
+            <ion-list v-if="importSettings.length" lines="full">
+              <ion-list-header>
+                <ion-label>{{ translate("Import Settings") }}</ion-label>
+              </ion-list-header>
+              <ion-item v-for="setting in importSettings" :key="setting.label">
+                <ion-label class="ion-text-wrap">
+                  <p>{{ setting.label }}</p>
+                  {{ setting.value }}
+                </ion-label>
+              </ion-item>
+            </ion-list>
+
+            <div v-if="areServiceParamsLoading" class="payload-loading">
+              <ion-spinner name="crescent"></ion-spinner>
+            </div>
+            <ion-list v-else-if="serviceParameters.length" lines="full">
+              <ion-list-header>
+                <ion-label>{{ translate("Import Service Parameters") }}</ion-label>
+              </ion-list-header>
+              <ion-item lines="none">
+                <ion-label class="ion-text-wrap">
+                  <p>{{ translate("Input parameters accepted by the import service. This metadata is read-only.") }}</p>
+                </ion-label>
+              </ion-item>
+              <ion-item v-for="parameter in serviceParameters" :key="parameter.name">
+                <ion-label class="ion-text-wrap">
+                  {{ parameter.name }}
+                  <p v-if="parameter.type">{{ parameter.type }}</p>
+                  <p v-if="parameter.default">{{ translate("Default:") }} {{ parameter.default }}</p>
+                </ion-label>
+                <ion-badge v-if="parameter.required === 'true'" slot="end" color="medium">{{ translate("Required") }}</ion-badge>
+              </ion-item>
+            </ion-list>
+            <p v-else class="payload-empty">{{ translate("No input parameters found for this service.") }}</p>
+          </div>
+
+          <div v-else-if="payloadLoading" class="payload-loading">
             <ion-spinner name="crescent"></ion-spinner>
           </div>
 
@@ -200,6 +237,7 @@ import {
   IonCardTitle,
   IonChip,
   IonList,
+  IonListHeader,
   IonItem,
   IonLabel,
   IonSearchbar,
@@ -208,10 +246,11 @@ import {
   IonSpinner,
   onIonViewWillEnter
 } from '@ionic/vue';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import router from "@/router";
 import { translate, commonUtil } from '@common';
 import { useMdmConfigStore } from '@/store/mdmConfig';
+import { useJobStore } from '@/store/jobs';
 import { getFileSize, showToast, getDuration } from '@/utils';
 import { codeWorkingOutline, copyOutline, downloadOutline, warningOutline, alertCircleOutline } from 'ionicons/icons';
 import JsonViewer from '@/components/JsonViewer.vue';
@@ -226,6 +265,7 @@ const props = defineProps({
 });
 
 const mdmStore = useMdmConfigStore();
+const jobStore = useJobStore();
 const logId = props.id;
 
 const getConfigName = (configId: string) => {
@@ -242,7 +282,10 @@ const goToConfigDetail = (configId: string) => {
   router.push({ name: "ImportDetail", params: { type: configId } });
 };
 
-type PayloadKey = "original" | "errors";
+// "parameters" is a sibling view in the same segment rather than a payload: it renders
+// the import settings this log ran with instead of file content.
+type PayloadKey = "original" | "errors" | "parameters";
+type FilePayloadKey = "original" | "errors";
 type ContentType = "" | "json" | "csv" | "text";
 type ParsedPayload = {
   contentType: ContentType;
@@ -255,13 +298,26 @@ type ParsedPayload = {
 const log = ref<any>(null);
 const payloadLoading = ref(true);
 const selectedPayload = ref<PayloadKey>("original");
-const payloads = ref<Record<PayloadKey, ParsedPayload>>({
+const payloads = ref<Record<FilePayloadKey, ParsedPayload>>({
   original: createPayload(),
   errors: createPayload()
 });
 const payloadSearch = ref("");
+const serviceParameters = ref<Array<any>>([]);
+const areServiceParamsLoading = ref(false);
+const haveLoadedServiceParams = ref(false);
 
-const activePayload = computed(() => payloads.value[selectedPayload.value]);
+// Per-log import settings that the Execution Details card does not already state.
+const importSettings = computed(() => {
+  const logValue = log.value;
+  if (!logValue) return [];
+  return [
+    { label: translate("Import Path"), value: logValue.importPath },
+    { label: translate("Multi Threading"), value: logValue.multiThreading }
+  ].filter((setting: any) => setting.value);
+});
+
+const activePayload = computed(() => payloads.value[selectedPayload.value as FilePayloadKey] || createPayload());
 const contentType = computed(() => activePayload.value.contentType);
 const parsedJson = computed(() => activePayload.value.parsedJson);
 const csvRows = computed(() => activePayload.value.csvRows);
@@ -273,8 +329,35 @@ const payloadTabs = computed(() => {
   if (hasErrorPayload.value) {
     tabs.push({ key: "errors" as PayloadKey, label: `${translate("Errors")} (${failedRecordCount.value})` });
   }
+  tabs.push({ key: "parameters" as PayloadKey, label: translate("Parameters") });
   return tabs;
 });
+
+const isParametersView = computed(() => selectedPayload.value === "parameters");
+
+// The service contract is only worth fetching once the user opens the segment.
+watch(selectedPayload, async (view) => {
+  if (view !== "parameters" || haveLoadedServiceParams.value) return;
+  await loadServiceParameters();
+});
+
+const loadServiceParameters = async () => {
+  const serviceName = log.value?.importServiceName;
+  if (!serviceName) {
+    haveLoadedServiceParams.value = true;
+    return;
+  }
+
+  areServiceParamsLoading.value = true;
+  try {
+    const params = await jobStore.fetchServiceParams(serviceName);
+    // Underscore-prefixed entries are framework internals, not operator input.
+    serviceParameters.value = (params || []).filter((param: any) => !param?.name?.startsWith("_"));
+    haveLoadedServiceParams.value = true;
+  } finally {
+    areServiceParamsLoading.value = false;
+  }
+};
 
 const getLogStatusLabel = (logVal: any) => {
   if (!logVal) return "";

@@ -39,13 +39,13 @@
                 <ion-chip outline button @click="router.push('/catalog?status=DRAFT')">
                   <ion-label>{{ draftJobsCount }} {{ translate("Draft") }}</ion-label>
                 </ion-chip>
-                <ion-chip v-if="stuckJobsCount > 0" outline color="danger">
+                <ion-chip v-if="stuckJobsCount > 0" outline color="danger" :button="stuckJobs.length === 1" @click="openSingleJobRun(stuckJobs, 'activeRunId')">
                   <ion-label>{{ stuckJobsCount }} {{ translate("Stuck") }}</ion-label>
                 </ion-chip>
-                <ion-chip v-if="failedJobsCount > 0" outline color="danger">
+                <ion-chip v-if="failedJobsCount > 0" outline color="danger" :button="failedRunJobs.length === 1" @click="openSingleJobRun(failedRunJobs, 'latestRunId')">
                   <ion-label>{{ failedJobsCount }} {{ translate("Failed Runs") }}</ion-label>
                 </ion-chip>
-                <ion-chip v-if="slowJobsCount > 0" outline color="warning">
+                <ion-chip v-if="slowJobsCount > 0" outline color="warning" :button="slowJobs.length === 1" @click="openSingleJobRun(slowJobs, 'latestRunId')">
                   <ion-label>{{ slowJobsCount }} {{ translate("Slow") }}</ion-label>
                 </ion-chip>
               </div>
@@ -70,10 +70,14 @@
             </ion-card-header>
             <ion-card-content>
               <div class="kpi-subtext">
-                <ion-chip outline button @click="router.push('/file-history?statusId=DmlsPending,DmlsQueued,DmlsRunning&priority=HIGH')">
+                <ion-chip v-if="highPriorityFailedCount > 0" outline button color="warning" @click="openFailedFileHistory('HIGH', highPriorityWindowStart)">
+                  <ion-icon :icon="warningOutline" />
+                  <ion-label>{{ translate("View") }} {{ highPriorityFailedCount }} {{ translate("Failed") }}</ion-label>
+                </ion-chip>
+                <ion-chip outline button @click="openFileHistory({ statusId: MDM_PENDING_STATUSES.join(','), priority: 'HIGH' })">
                   <ion-label>{{ highPriorityPendingCount }} {{ translate("Pending") }}</ion-label>
                 </ion-chip>
-                <ion-chip outline button @click="router.push('/file-history?statusId=DmlsFinished&priority=HIGH')">
+                <ion-chip outline button @click="openFileHistory({ statusId: 'DmlsFinished', priority: 'HIGH' })">
                   <ion-label>{{ highPrioritySuccessCount }} {{ translate("Finished") }}</ion-label>
                 </ion-chip>
               </div>
@@ -102,10 +106,14 @@
             </ion-card-header>
             <ion-card-content>
               <div class="kpi-subtext">
-                <ion-chip outline button @click="router.push('/file-history?statusId=DmlsPending,DmlsQueued,DmlsRunning&priority=NORMAL')">
+                <ion-chip v-if="standardFailedCount > 0" outline button color="warning" @click="openFailedFileHistory('NORMAL', standardWindowStart)">
+                  <ion-icon :icon="warningOutline" />
+                  <ion-label>{{ translate("View") }} {{ standardFailedCount }} {{ translate("Failed") }}</ion-label>
+                </ion-chip>
+                <ion-chip outline button @click="openFileHistory({ statusId: MDM_PENDING_STATUSES.join(','), priority: 'NORMAL' })">
                   <ion-label>{{ standardPendingCount }} {{ translate("Pending") }}</ion-label>
                 </ion-chip>
-                <ion-chip outline button @click="router.push('/file-history?statusId=DmlsFinished&priority=NORMAL')">
+                <ion-chip outline button @click="openFileHistory({ statusId: 'DmlsFinished', priority: 'NORMAL' })">
                   <ion-label>{{ standardSuccessCount }} {{ translate("Finished") }}</ion-label>
                 </ion-chip>
               </div>
@@ -134,10 +142,10 @@
             </ion-card-header>
             <ion-card-content>
               <div class="kpi-subtext">
-                <ion-chip outline button @click="router.push('/system-messages?statusId=SmsgProduced&isOutgoing=N')">
+                <ion-chip outline button @click="openSystemMessages({ statusId: 'SmsgProduced', isOutgoing: 'N' })">
                   <ion-label>{{ incomingPendingCount }} {{ translate("Queued") }}</ion-label>
                 </ion-chip>
-                <ion-chip outline button @click="router.push('/system-messages?statusId=SmsgConsumed&isOutgoing=N')">
+                <ion-chip outline button @click="openSystemMessages({ statusId: 'SmsgConsumed', isOutgoing: 'N' })">
                   <ion-label>{{ incomingSuccessCount }} {{ translate("Consumed") }}</ion-label>
                 </ion-chip>
               </div>
@@ -166,10 +174,10 @@
             </ion-card-header>
             <ion-card-content>
               <div class="kpi-subtext">
-                <ion-chip outline button @click="router.push('/system-messages?statusId=SmsgProduced&isOutgoing=Y')">
+                <ion-chip outline button @click="openSystemMessages({ statusId: 'SmsgProduced', isOutgoing: 'Y' })">
                   <ion-label>{{ outgoingPendingCount }} {{ translate("Queued") }}</ion-label>
                 </ion-chip>
-                <ion-chip outline button @click="router.push('/system-messages?statusId=SmsgSent&isOutgoing=Y')">
+                <ion-chip outline button @click="openSystemMessages({ statusId: 'SmsgSent', isOutgoing: 'Y' })">
                   <ion-label>{{ outgoingSuccessCount }} {{ translate("Sent") }}</ion-label>
                 </ion-chip>
               </div>
@@ -195,7 +203,7 @@
                   <div class="visualizer-section">
                     <h4>{{ translate("Bulk File Ingestion (MDM)") }}</h4>
                     <div class="visualizer-row">
-                      <ion-item button detail @click="router.push('/file-history?priority=HIGH')" lines="none" class="visualizer-item">
+                      <ion-item button detail @click="openFileHistory({ statusId: MDM_PENDING_STATUSES.join(','), priority: 'HIGH' })" lines="none" class="visualizer-item">
                         <ion-icon slot="start" :icon="cloudUploadOutline" color="secondary" />
                         <ion-label>
                           {{ translate("High-Priority Queue") }}
@@ -205,7 +213,7 @@
                       <div class="arrow-container">
                         <ion-icon :icon="arrowForwardOutline" color="medium" />
                       </div>
-                      <ion-item button detail @click="router.push('/file-history?priority=NORMAL')" lines="none" class="visualizer-item">
+                      <ion-item button detail @click="openFileHistory({ statusId: MDM_PENDING_STATUSES.join(','), priority: 'NORMAL' })" lines="none" class="visualizer-item">
                         <ion-icon slot="start" :icon="cloudUploadOutline" color="medium" />
                         <ion-label>
                           {{ translate("Standard Queue") }}
@@ -221,7 +229,7 @@
                   <div class="visualizer-section">
                     <h4>{{ translate("Message Synchronization Queue") }}</h4>
                     <div class="visualizer-row">
-                      <ion-item button detail @click="router.push('/system-messages?isOutgoing=N')" lines="none" class="visualizer-item">
+                      <ion-item button detail @click="openSystemMessages({ statusId: 'SmsgProduced', isOutgoing: 'N' })" lines="none" class="visualizer-item">
                         <ion-icon slot="start" :icon="documentOutline" color="success" />
                         <ion-label>
                           {{ translate("Inbound Queue") }}
@@ -231,7 +239,7 @@
                       <div class="arrow-container">
                         <ion-icon :icon="arrowForwardOutline" color="medium" />
                       </div>
-                      <ion-item button detail @click="router.push('/system-messages?isOutgoing=Y')" lines="none" class="visualizer-item">
+                      <ion-item button detail @click="openSystemMessages({ statusId: 'SmsgProduced', isOutgoing: 'Y' })" lines="none" class="visualizer-item">
                         <ion-icon slot="start" :icon="cloudDownloadOutline" color="primary" />
                         <ion-label>
                           {{ translate("Outbound Queue") }}
@@ -279,6 +287,9 @@
                       <p class="result-text ion-text-wrap" v-if="job.runResults">{{ translate("Run Results") }}: {{ formatJobResult(job.runResults) }}</p>
                     </ion-label>
                     <ion-buttons slot="end">
+                      <ion-button fill="outline" color="primary" size="small" @click="openJobRunHistory(job.jobName, job.activeRunId)">
+                        {{ translate("View run") }}
+                      </ion-button>
                       <ion-button fill="outline" color="primary" size="small" @click="router.push(`/job/${job.jobName}`)">
                         {{ translate("Edit") }}
                       </ion-button>
@@ -300,6 +311,9 @@
                       <p class="result-text ion-text-wrap" v-if="job.runResults">{{ translate("Results") }}: {{ formatJobResult(job.runResults) }}</p>
                     </ion-label>
                     <ion-buttons slot="end">
+                      <ion-button fill="outline" color="primary" size="small" @click="openJobRunHistory(job.jobName, job.latestRunId)">
+                        {{ translate("View run") }}
+                      </ion-button>
                       <ion-button fill="outline" color="primary" size="small" @click="router.push(`/job/${job.jobName}`)">
                         {{ translate("Edit") }}
                       </ion-button>
@@ -331,6 +345,9 @@
                       <p class="result-text ion-text-wrap" v-if="job.runResults">{{ translate("Results") }}: {{ formatJobResult(job.runResults) }}</p>
                     </ion-label>
                     <ion-buttons slot="end">
+                      <ion-button fill="outline" color="primary" size="small" @click="openJobRunHistory(job.jobName, job.latestRunId)">
+                        {{ translate("View run") }}
+                      </ion-button>
                       <ion-button fill="outline" color="primary" size="small" @click="router.push(`/job/${job.jobName}`)">
                         {{ translate("Edit") }}
                       </ion-button>
@@ -395,6 +412,9 @@
                     :color="log.statusId === 'DmlsFinished' && Number(log.failedRecordCount || 0) > 0 ? 'warning' : 'danger'"
                   />
                   <ion-label class="ion-text-wrap">
+                    <p v-if="getLogRunTimeRelative(log)" class="overline" :title="getLogRunTimeExact(log)">
+                      {{ getLogRunTimeLabel(log) }} {{ getLogRunTimeRelative(log) }}
+                    </p>
                     {{ log.fileName }}
                     <p>ID: {{ log.logId }} | {{ translate("Uploaded By") }}: {{ log.createdByUserLogin || "-" }}</p>
                     <p>
@@ -517,12 +537,12 @@ import {
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { DateTime } from "luxon";
 import router from "@/router";
-import { translate, emitter } from "@common";
+import { translate, emitter, commonUtil } from "@common";
 import { useJobStore } from "@/store/jobs";
 import { useSystemMessageStore } from "@/store/systemMessage";
 import { useMdmConfigStore } from "@/store/mdmConfig";
 import { useUtilStore } from "@/store/util";
-import { getFileSize, showToast } from "@/utils";
+import { getFileSize, getTimeInMillis, hasFailedRecords, showToast, MDM_PENDING_STATUSES } from "@/utils";
 
 const jobStore = useJobStore();
 const systemMessageStore = useSystemMessageStore();
@@ -697,6 +717,29 @@ const stuckJobsCount = computed(() => stuckJobs.value.length);
 const slowJobsCount = computed(() => slowJobs.value.length);
 const failedJobsCount = computed(() => failedRunJobs.value.length);
 
+// Every dashboard number is a drill-down: the chip or tile shows a count and the
+// destination list has to answer "which ones?" with the same filter that produced
+// the count. The status groups and route builders below are the single definition
+// both sides use, so a count can never drift from the list it links to.
+const openFileHistory = (query: Record<string, string>) => router.push({ name: "FileHistory", query });
+
+const openSystemMessages = (query: Record<string, string>) => router.push({ name: "SystemMessageMonitor", query });
+
+// A chip counting anomalous jobs can only drill in when it resolves to a single job.
+// With several, the diagnostics list below enumerates them with their own run links.
+const openSingleJobRun = (anomalousJobs: any[], runIdField: string) => {
+  if (anomalousJobs.length !== 1) return;
+  openJobRunHistory(anomalousJobs[0].jobName, anomalousJobs[0][runIdField]);
+};
+
+// Opens the job straight on its run history. A jobRunId narrows that history to
+// the single run behind the count the user clicked.
+const openJobRunHistory = (jobName: string, jobRunId?: string) => router.push({
+  name: "JobDetail",
+  params: { jobName },
+  query: { tab: "history", ...(jobRunId ? { jobRunId } : {}) }
+});
+
 // MDM Logs priority grouping (High priority has config.priority > 6)
 const logs = computed(() => mdmStore.getLogs);
 
@@ -709,14 +752,14 @@ const highPriorityLogs = computed(() => logs.value.filter((log: any) => getLogPr
 const standardLogs = computed(() => logs.value.filter((log: any) => getLogPriority(log) <= 6));
 
 // Queue Depths (Pending / Queued / Running)
-const highPriorityPendingCount = computed(() => highPriorityLogs.value.filter((log: any) => ['DmlsPending', 'DmlsQueued', 'DmlsRunning'].includes(log.statusId)).length);
-const standardPendingCount = computed(() => standardLogs.value.filter((log: any) => ['DmlsPending', 'DmlsQueued', 'DmlsRunning'].includes(log.statusId)).length);
+const highPriorityPendingCount = computed(() => highPriorityLogs.value.filter((log: any) => MDM_PENDING_STATUSES.includes(log.statusId)).length);
+const standardPendingCount = computed(() => standardLogs.value.filter((log: any) => MDM_PENDING_STATUSES.includes(log.statusId)).length);
 
 // Ingestion throughput in latest 50
 const highPrioritySuccessCount = computed(() => highPriorityLogs.value.filter((log: any) => log.statusId === 'DmlsFinished').length);
 const standardSuccessCount = computed(() => standardLogs.value.filter((log: any) => log.statusId === 'DmlsFinished').length);
-const highPriorityFailedCount = computed(() => highPriorityLogs.value.filter((log: any) => ['DmlsCrashed', 'DmlsFailed'].includes(log.statusId) || (log.statusId === 'DmlsFinished' && Number(log.failedRecordCount || 0) > 0)).length);
-const standardFailedCount = computed(() => standardLogs.value.filter((log: any) => ['DmlsCrashed', 'DmlsFailed'].includes(log.statusId) || (log.statusId === 'DmlsFinished' && Number(log.failedRecordCount || 0) > 0)).length);
+const highPriorityFailedCount = computed(() => highPriorityLogs.value.filter(hasFailedRecords).length);
+const standardFailedCount = computed(() => standardLogs.value.filter(hasFailedRecords).length);
 
 // Ingestion Average Processing Time (Luxon end date - start date)
 const getAvgProcessingTime = (logsList: any[]) => {
@@ -747,9 +790,33 @@ const highPriorityAvgTime = computed(() => formatDuration(getAvgProcessingTime(h
 const standardAvgTime = computed(() => formatDuration(getAvgProcessingTime(standardLogs.value)));
 
 // Errored Ingestion Logs checklist
-const erroredLogs = computed(() => logs.value.filter((log: any) => ['DmlsCrashed', 'DmlsFailed'].includes(log.statusId) || (log.statusId === 'DmlsFinished' && Number(log.failedRecordCount || 0) > 0)));
+const erroredLogs = computed(() => logs.value.filter(hasFailedRecords));
 const failedLogsCount = computed(() => erroredLogs.value.length);
-const pendingLogsCount = computed(() => logs.value.filter((log: any) => ['DmlsPending', 'DmlsQueued', 'DmlsRunning'].includes(log.statusId)).length);
+const pendingLogsCount = computed(() => logs.value.filter((log: any) => MDM_PENDING_STATUSES.includes(log.statusId)).length);
+
+// Imports report their run window in millis. The finish stamp is the definitive
+// "when did this run", falling back to the start stamp and then the upload stamp
+// for imports that failed before they began.
+const getLogRunTimeStamp = (log: any) => log.finishDateTime || log.startDateTime || log.createdDate;
+
+const getLogRunTimeLabel = (log: any) => {
+  if (log.finishDateTime) return translate("Finished");
+  if (log.startDateTime) return translate("Started");
+  return translate("Uploaded");
+};
+
+// Based on the ticking `now` so the age stays accurate without a data refetch.
+const getLogRunTimeRelative = (log: any) => {
+  const stamp = getLogRunTimeStamp(log);
+  if (!stamp) return "";
+  const date = typeof stamp === "number" ? DateTime.fromMillis(stamp) : DateTime.fromISO(stamp);
+  return date.isValid ? (date.toRelative({ base: now.value }) || "") : "";
+};
+
+const getLogRunTimeExact = (log: any) => {
+  const stamp = getLogRunTimeStamp(log);
+  return stamp ? commonUtil.getDateTimeWithOrdinalSuffix(stamp) : "";
+};
 
 // System Messages (Incoming vs Outgoing)
 const systemMessages = computed(() => systemMessageStore.getSystemMessages);
@@ -792,22 +859,30 @@ const getAvgMessageProcessingTime = (messagesList: any[]) => {
 const incomingAvgTime = computed(() => formatDuration(getAvgMessageProcessingTime(incomingMessages.value)));
 const outgoingAvgTime = computed(() => formatDuration(getAvgMessageProcessingTime(outgoingMessages.value)));
 
-// Time span bounds helper
+// The dashboard only holds the newest slice of logs and messages, so every count on it
+// is really "within this window". getOldestMillis exposes that boundary once: the card
+// subtitle states it, and the drill-down link carries it as a filter.
+const getOldestMillis = (list: any[], timeFieldGetter: (item: any) => any) => {
+  const stamps = list.map(timeFieldGetter).map(getTimeInMillis).filter(Boolean);
+  return stamps.length ? Math.min(...stamps) : 0;
+};
+
 const getRelativeTimeSpan = (list: any[], timeFieldGetter: (item: any) => any) => {
-  if (list.length === 0) return "";
-  const dates = list
-    .map(timeFieldGetter)
-    .filter(Boolean)
-    .map((time: any) => typeof time === "number" ? DateTime.fromMillis(time) : DateTime.fromISO(time))
-    .filter((dt: DateTime) => dt.isValid);
-  if (dates.length === 0) return "";
-  const oldest = DateTime.min(...dates);
-  return oldest ? oldest.toRelative() : "";
+  const oldest = getOldestMillis(list, timeFieldGetter);
+  return oldest ? (DateTime.fromMillis(oldest).toRelative({ base: now.value }) || "") : "";
 };
 
 const incomingTimeSpan = computed(() => getRelativeTimeSpan(incomingMessages.value, (msg) => msg.initDate));
 const outgoingTimeSpan = computed(() => getRelativeTimeSpan(outgoingMessages.value, (msg) => msg.initDate));
 const highPriorityLogsTimeSpan = computed(() => getRelativeTimeSpan(highPriorityLogs.value, (log) => log.createdDate));
+const highPriorityWindowStart = computed(() => getOldestMillis(highPriorityLogs.value, (log: any) => log.createdDate));
+const standardWindowStart = computed(() => getOldestMillis(standardLogs.value, (log: any) => log.createdDate));
+
+const openFailedFileHistory = (priority: string, windowStart: number) => openFileHistory({
+  hasError: "Y",
+  priority,
+  ...(windowStart ? { createdDateFrom: String(windowStart) } : {})
+});
 const standardLogsTimeSpan = computed(() => getRelativeTimeSpan(standardLogs.value, (log) => log.createdDate));
 
 const getSystemMessageTypeName = (typeId: string) => {
