@@ -41,7 +41,11 @@
             placeholder="com.hotwax.example.Service"
             :required="true"
             :error-text="translate('Field is required')"
-          ></ion-input>
+          >
+            <ion-button slot="end" fill="clear" @click="openServiceLookup()" :title="translate('Browse services')">
+              <ion-icon slot="icon-only" :icon="searchOutline" />
+            </ion-button>
+          </ion-input>
           <ion-input
             v-model="jobData.cronExpression"
             :label="translate('Cron Expression')"
@@ -150,16 +154,21 @@ import {
   modalController
 } from '@ionic/vue';
 import { ref, computed } from 'vue';
-import { addOutline, closeOutline, trashOutline } from 'ionicons/icons';
+import { addOutline, closeOutline, searchOutline, trashOutline } from 'ionicons/icons';
 import { commonUtil, translate } from '@common';
 import logger from '@/logger';
 import { getCronString, showToast } from '@/utils';
 import { useJobStore } from '@/store/jobs';
+import ServiceLookupModal from '@/components/ServiceLookupModal.vue';
 
 const jobStore = useJobStore();
 
 const props = defineProps({
   existingJobNames: {
+    type: Array as () => string[],
+    default: () => []
+  },
+  serviceNames: {
     type: Array as () => string[],
     default: () => []
   }
@@ -202,6 +211,22 @@ const jobData = ref({
 });
 
 const closeModal = () => modalController.dismiss();
+
+const openServiceLookup = async () => {
+  const lookup = await modalController.create({
+    component: ServiceLookupModal,
+    componentProps: {
+      serviceNames: props.serviceNames,
+      currentValue: jobData.value.service
+    }
+  });
+  lookup.present();
+
+  const { data, role } = await lookup.onDidDismiss();
+  if(role === "confirm" && data) {
+    jobData.value.service = data;
+  }
+};
 
 const nextStep = async () => {
   if (validateForm()) {

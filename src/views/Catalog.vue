@@ -262,7 +262,9 @@ const openCreateJobModal = async () => {
   const modal = await modalController.create({
     component: CreateJobModal,
     componentProps: {
-      existingJobNames: jobs.value.map((job: any) => job.jobName)
+      existingJobNames: jobs.value.map((job: any) => job.jobName),
+      // No API lists an instance's services, so offer the ones its jobs already run.
+      serviceNames: [...new Set(jobs.value.map((job: any) => job.serviceName).filter(Boolean))]
     }
   });
   modal.present();
