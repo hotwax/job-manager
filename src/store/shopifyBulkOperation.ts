@@ -1,5 +1,5 @@
 import { api } from "@common";
-import { defineStore, Store } from "pinia";
+import { defineStore } from "pinia";
 import logger from "@/logger";
 
 interface DeferredTask {
@@ -8,8 +8,8 @@ interface DeferredTask {
   reject: (reason?: any) => void;
 }
 
-const probePromises = new WeakMap<Store, Promise<void> | null>();
-const enrichmentLimiters = new WeakMap<Store, {
+const probePromises = new WeakMap<object, Promise<void> | null>();
+const enrichmentLimiters = new WeakMap<object, {
   activeCount: number;
   queue: DeferredTask[];
   inFlight: Map<string, Promise<any>>;
@@ -17,14 +17,14 @@ const enrichmentLimiters = new WeakMap<Store, {
 
 const ENRICHMENT_CONCURRENCY_LIMIT = 5;
 
-function getLimiter(store: Store) {
+function getLimiter(store: object) {
   if (!enrichmentLimiters.has(store)) {
     enrichmentLimiters.set(store, { activeCount: 0, queue: [], inFlight: new Map() });
   }
   return enrichmentLimiters.get(store)!;
 }
 
-function processEnrichmentQueue(store: Store) {
+function processEnrichmentQueue(store: object) {
   const limiter = getLimiter(store);
   while (limiter.activeCount < ENRICHMENT_CONCURRENCY_LIMIT && limiter.queue.length > 0) {
     const task = limiter.queue.shift();
@@ -54,7 +54,7 @@ function processEnrichmentQueue(store: Store) {
   }
 }
 
-function enqueueEnrichment(store: Store, gid: string): Promise<any> {
+function enqueueEnrichment(store: object, gid: string): Promise<any> {
   const limiter = getLimiter(store);
   if (limiter.inFlight.has(gid)) {
     return limiter.inFlight.get(gid)!;

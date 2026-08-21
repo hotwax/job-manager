@@ -228,11 +228,17 @@ describe("Shopify Bulk Operation Store", () => {
     const p1 = store.fetchEnrichmentFor(batch1);
     const p2 = store.fetchEnrichmentFor(batch2);
 
-    // Let microtasks run so the store invokes api
-    await Promise.resolve();
-    await Promise.resolve();
-    await Promise.resolve();
-    await Promise.resolve();
+    const drainMicrotasks = async (condition: () => boolean, maxIter = 50) => {
+      let iters = 0;
+      while (!condition() && iters < maxIter) {
+        await Promise.resolve();
+        iters++;
+      }
+      if (iters >= maxIter) throw new Error("drainMicrotasks timed out waiting for condition");
+    };
+
+    // Wait for the queue to start and fill up to the max concurrency of 5
+    await drainMicrotasks(() => reqs.length === 5);
 
     // We should only see 5 requests in flight due to concurrency limit, even across 2 calls
     expect(reqs.length).toBe(5);
@@ -241,29 +247,22 @@ describe("Shopify Bulk Operation Store", () => {
     // Resolve one
     reqs[0].resolve({ data: { systemMessages: [{ remoteMessageId: "gid://shopify/BulkOperation/0" }] } });
 
-    await Promise.resolve();
-    await Promise.resolve();
-    await Promise.resolve();
-    await Promise.resolve();
+    // Wait for the queue to push the 6th element
+    await drainMicrotasks(() => reqs.length === 6);
 
     // Now the 6th request should be launched
     expect(reqs.length).toBe(6);
 
-    // Deterministic drain
+    // Deterministic drain the rest
     let resolvedCount = 0;
-    while (reqs.length < 8 || resolvedCount < 8) {
-      // Find unresolved reqs and resolve them
+    await drainMicrotasks(() => {
       const currentReqs = reqs.slice(resolvedCount);
       for (const req of currentReqs) {
         req.resolve({ data: { systemMessages: [{ remoteMessageId: (req.promise as any).gid }] } });
         resolvedCount++;
       }
-      // Flush microtasks
-      await Promise.resolve();
-      await Promise.resolve();
-      await Promise.resolve();
-      await Promise.resolve();
-    }
+      return reqs.length === 8 && resolvedCount === 8;
+    });
 
     await Promise.all([p1, p2]);
 
