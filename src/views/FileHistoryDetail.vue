@@ -166,7 +166,23 @@
             <div v-if="areServiceParamsLoading" class="payload-loading">
               <ion-spinner name="crescent"></ion-spinner>
             </div>
-            <ion-list v-else-if="serviceParameters.length" lines="full">
+            <ion-list v-else-if="logParameters.length" lines="full">
+              <ion-list-header>
+                <ion-label>{{ translate("Log Parameters") }}</ion-label>
+              </ion-list-header>
+              <ion-item lines="none">
+                <ion-label class="ion-text-wrap">
+                  <p>{{ translate("Values passed to Data Manager when this log was created.") }}</p>
+                </ion-label>
+              </ion-item>
+              <ion-item v-for="parameter in logParameters" :key="parameter.parameterName">
+                <ion-label class="ion-text-wrap">
+                  {{ parameter.parameterName }}
+                  <p>{{ parameter.parameterValue }}</p>
+                </ion-label>
+              </ion-item>
+            </ion-list>
+            <ion-list v-if="!areServiceParamsLoading && serviceParameters.length" lines="full">
               <ion-list-header>
                 <ion-label>{{ translate("Import Service Parameters") }}</ion-label>
               </ion-list-header>
@@ -184,7 +200,7 @@
                 <ion-badge v-if="parameter.required === 'true'" slot="end" color="medium">{{ translate("Required") }}</ion-badge>
               </ion-item>
             </ion-list>
-            <p v-else class="payload-empty">{{ translate("No input parameters found for this service.") }}</p>
+            <p v-if="!areServiceParamsLoading && !logParameters.length && !serviceParameters.length" class="payload-empty">{{ translate("No parameters found for this log.") }}</p>
           </div>
 
           <div v-else-if="payloadLoading" class="payload-loading">
@@ -308,6 +324,7 @@ const payloadSearch = ref("");
 const serviceParameters = ref<Array<any>>([]);
 const areServiceParamsLoading = ref(false);
 const haveLoadedServiceParams = ref(false);
+const logParameters = ref<Array<any>>([]);
 
 // Per-log import settings that the Execution Details card does not already state.
 const importSettings = computed(() => {
@@ -345,16 +362,20 @@ watch(selectedPayload, async (view) => {
 
 const loadServiceParameters = async () => {
   const serviceName = log.value?.importServiceName;
-  if (!serviceName) {
-    haveLoadedServiceParams.value = true;
-    return;
-  }
-
   areServiceParamsLoading.value = true;
+
   try {
-    const params = await jobStore.fetchServiceParams(serviceName);
-    // Underscore-prefixed entries are framework internals, not operator input.
-    serviceParameters.value = (params || []).filter((param: any) => !param?.name?.startsWith("_"));
+    // What this log was actually given comes first; the service contract is the wider set of
+    // inputs the service accepts, which is context rather than the answer.
+    const logParams = await mdmStore.fetchDataManagerLogParameters(props.id);
+    logParameters.value = logParams || [];
+
+    if (serviceName) {
+      const params = await jobStore.fetchServiceParams(serviceName);
+      // Underscore-prefixed entries are framework internals, not operator input.
+      serviceParameters.value = (params || []).filter((param: any) => !param?.name?.startsWith("_"));
+    }
+
     haveLoadedServiceParams.value = true;
   } finally {
     areServiceParamsLoading.value = false;
