@@ -215,7 +215,7 @@ import {
   closeCircleOutline
 } from "ionicons/icons";
 import { computed, ref, watch } from "vue";
-import { type ShopifyBulkOperation } from "@/store/shopifyBulkOperation";
+import { type ShopifyBulkOperation } from "@/types/ShopifyBulkOperation";
 import AnimatedNumber from "@/components/AnimatedNumber.vue";
 import ShopifyBulkOperationCard from "@/components/ShopifyBulkOperationCard.vue";
 import BulkOperationSortPopover from "@/components/BulkOperationSortPopover.vue";

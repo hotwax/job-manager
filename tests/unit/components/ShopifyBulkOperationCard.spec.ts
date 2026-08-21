@@ -1,11 +1,11 @@
 import { mount } from "@vue/test-utils";
 import { describe, expect, it } from "vitest";
 import ShopifyBulkOperationCard from "@/components/ShopifyBulkOperationCard.vue";
-import { type ShopifyBulkOperation } from "@/store/shopifyBulkOperation";
+import { type ShopifyBulkOperation } from "@/types/ShopifyBulkOperation";
 
 describe("ShopifyBulkOperationCard.vue", () => {
   it("renders a running operation and its HotWax message", async () => {
-    const operation = {
+    const operation: ShopifyBulkOperation = {
       id: "gid://shopify/BulkOperation/123",
       shopifyOperationId: "123",
       status: "RUNNING",
@@ -18,7 +18,7 @@ describe("ShopifyBulkOperationCard.vue", () => {
         jobRunId: "RUN-789",
         statusId: "SmsgProduced"
       }
-    } as unknown as ShopifyBulkOperation;
+    };
 
     const wrapper = mount(ShopifyBulkOperationCard, {
       props: {
@@ -40,13 +40,14 @@ describe("ShopifyBulkOperationCard.vue", () => {
   });
 
   it("handles missing HotWax message correctly", async () => {
-    const operation = {
+    const operation: ShopifyBulkOperation = {
       id: "gid://shopify/BulkOperation/123",
       shopifyOperationId: "123",
       status: "COMPLETED",
       type: "QUERY",
+      createdAt: "2023-10-27T10:00:00Z",
       url: "https://example.com/result.jsonl"
-    } as unknown as ShopifyBulkOperation;
+    };
 
     const wrapper = mount(ShopifyBulkOperationCard, {
       props: {

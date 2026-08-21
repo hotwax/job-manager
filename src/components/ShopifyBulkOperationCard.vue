@@ -151,7 +151,7 @@ import { DateTime } from "luxon";
 import { computed } from "vue";
 import { getDuration, getFileSize } from "@/utils";
 import { getStatusDesc } from "@/utils/config";
-import { type ShopifyBulkOperation } from "@/store/shopifyBulkOperation";
+import { type ShopifyBulkOperation } from "@/types/ShopifyBulkOperation";
 
 export interface OperationDisplayModel {
   id: string;
