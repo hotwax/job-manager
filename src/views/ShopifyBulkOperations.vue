@@ -165,7 +165,7 @@
             />
           </ion-list-header>
 
-                    <ShopifyBulkOperationCard
+          <ShopifyBulkOperationCard
             v-for="operation in visibleOperations"
             :key="operation.id"
             :operation="operation"
@@ -184,15 +184,11 @@
 </template>
 
 <script setup lang="ts">
-import { commonUtil, translate } from "@common";
+import { translate } from "@common";
 import {
-  IonAccordion,
-  IonAccordionGroup,
-  IonBadge,
   IonButton,
   IonButtons,
   IonCard,
-  IonCardContent,
   IonCardHeader,
   IonCardSubtitle,
   IonCardTitle,
@@ -216,22 +212,10 @@ import {
   onIonViewWillEnter
 } from "@ionic/vue";
 import {
-  alertCircleOutline,
-  checkmarkCircleOutline,
-  closeCircleOutline,
-  cloudDownloadOutline,
-  copyOutline,
-  documentTextOutline,
-  gitNetworkOutline,
-  helpCircleOutline,
-  hourglassOutline,
-  layersOutline,
-  playOutline,
-  pulseOutline,
-  timeOutline
+  closeCircleOutline
 } from "ionicons/icons";
-import { DateTime } from "luxon";
 import { computed, ref, watch } from "vue";
+import { type ShopifyBulkOperation } from "@/store/shopifyBulkOperation";
 import AnimatedNumber from "@/components/AnimatedNumber.vue";
 import ShopifyBulkOperationCard from "@/components/ShopifyBulkOperationCard.vue";
 import BulkOperationSortPopover from "@/components/BulkOperationSortPopover.vue";
@@ -244,8 +228,7 @@ import {
   useShopifyBulkOperationStore
 } from "@/store/shopifyBulkOperation";
 import { useUserStore } from "@/store/user";
-import { getDuration, getFileSize, showToast } from "@/utils";
-import { getStatusDesc } from "@/utils/config";
+import { showToast } from "@/utils";
 
 const bulkOperationStore = useShopifyBulkOperationStore();
 const userStore = useUserStore();
@@ -276,10 +259,10 @@ const operations = computed(() => bulkOperationStore.getEnrichedOperations);
 
 // Search and the HotWax-link facet refine the page Shopify already returned. Shopify cannot
 // filter on HotWax fields, so these stay local and the searchbar label says "this page".
-const visibleOperations = computed(() => {
+const visibleOperations = computed<ShopifyBulkOperation[]>(() => {
   const search = queryString.value.trim().toLowerCase();
 
-  return operations.value.filter((operation: any) => {
+  return operations.value.filter((operation: ShopifyBulkOperation) => {
     if(enrichmentAvailable.value && linkFilter.value === "linked" && !operation.hotwaxMessage) {return false;}
     if(enrichmentAvailable.value && linkFilter.value === "unlinked" && operation.hotwaxMessage) {return false;}
     if(!search) {return true;}
@@ -318,8 +301,6 @@ const toTitleCase = (value: string) => {
 
   return value.charAt(0) + value.slice(1).toLowerCase();
 };
-
-/* removed unused helpers */
 
 const copyValue = async (value: string) => {
   await navigator.clipboard.writeText(value);
@@ -384,8 +365,7 @@ onIonViewWillEnter(async () => {
 
 <style scoped>
 .kpi-grid,
-.filter-grid,
-.operation-metrics {
+.filter-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: var(--spacer-base);
@@ -405,8 +385,7 @@ onIonViewWillEnter(async () => {
   padding-block-end: var(--spacer-base);
 }
 
-.pagination,
-.operation-actions {
+.pagination {
   display: flex;
   align-items: center;
   gap: var(--spacer-sm);
@@ -416,29 +395,6 @@ onIonViewWillEnter(async () => {
 .pagination {
   justify-content: flex-end;
   padding: var(--spacer-base);
-}
-
-.operation-card {
-  margin-block-end: var(--spacer-base);
-}
-
-.operation-metrics ion-item,
-.hotwax-link {
-  --padding-start: 0;
-  --inner-padding-end: 0;
-}
-
-.operation-actions {
-  margin-block-start: var(--spacer-base);
-}
-
-.accordion-content {
-  padding: var(--spacer-base);
-}
-
-.accordion-content pre {
-  overflow: auto;
-  white-space: pre-wrap;
 }
 
 .loading-state,

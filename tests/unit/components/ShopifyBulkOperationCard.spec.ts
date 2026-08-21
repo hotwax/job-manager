@@ -1,9 +1,10 @@
 import { mount } from "@vue/test-utils";
 import { describe, expect, it } from "vitest";
 import ShopifyBulkOperationCard from "@/components/ShopifyBulkOperationCard.vue";
+import { type ShopifyBulkOperation } from "@/store/shopifyBulkOperation";
 
 describe("ShopifyBulkOperationCard.vue", () => {
-  it("renders a running operation and its HotWax message", () => {
+  it("renders a running operation and its HotWax message", async () => {
     const operation = {
       id: "gid://shopify/BulkOperation/123",
       shopifyOperationId: "123",
@@ -17,7 +18,7 @@ describe("ShopifyBulkOperationCard.vue", () => {
         jobRunId: "RUN-789",
         statusId: "SmsgProduced"
       }
-    };
+    } as unknown as ShopifyBulkOperation;
 
     const wrapper = mount(ShopifyBulkOperationCard, {
       props: {
@@ -31,23 +32,21 @@ describe("ShopifyBulkOperationCard.vue", () => {
     expect(wrapper.text()).toContain("Running");
     expect(wrapper.text()).toContain("Mutation");
 
-    // The component emits 'view-system-message' when the HotWax message is clicked.
-    // Wait, the hotwax-link is an ion-item.
     const hotwaxItem = wrapper.find(".hotwax-link");
     expect(hotwaxItem.exists()).toBe(true);
-    hotwaxItem.trigger("click");
+    await hotwaxItem.trigger("click");
     expect(wrapper.emitted()["view-system-message"]).toBeTruthy();
     expect(wrapper.emitted()["view-system-message"][0]).toEqual(["MSG-456"]);
   });
 
-  it("handles missing HotWax message correctly", () => {
+  it("handles missing HotWax message correctly", async () => {
     const operation = {
       id: "gid://shopify/BulkOperation/123",
       shopifyOperationId: "123",
       status: "COMPLETED",
       type: "QUERY",
       url: "https://example.com/result.jsonl"
-    };
+    } as unknown as ShopifyBulkOperation;
 
     const wrapper = mount(ShopifyBulkOperationCard, {
       props: {
@@ -59,10 +58,9 @@ describe("ShopifyBulkOperationCard.vue", () => {
     expect(wrapper.text()).toContain("No HotWax message found for this operation");
     expect(wrapper.text()).toContain("Result file");
 
-    // Triggering copy-id
     const copyButton = wrapper.findAll("ion-button").find(btn => btn.text().includes("Copy operation ID"));
     expect(copyButton?.exists()).toBe(true);
-    copyButton?.trigger("click");
+    await copyButton?.trigger("click");
     expect(wrapper.emitted()["copy-id"]).toBeTruthy();
     expect(wrapper.emitted()["copy-id"][0]).toEqual(["gid://shopify/BulkOperation/123"]);
   });

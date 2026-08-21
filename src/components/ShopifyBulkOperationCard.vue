@@ -151,9 +151,36 @@ import { DateTime } from "luxon";
 import { computed } from "vue";
 import { getDuration, getFileSize } from "@/utils";
 import { getStatusDesc } from "@/utils/config";
+import { type ShopifyBulkOperation } from "@/store/shopifyBulkOperation";
+
+export interface OperationDisplayModel {
+  id: string;
+  shopifyOperationId: string;
+  title: string;
+  type: string;
+  statusLabel: string;
+  statusColor: string;
+  statusIcon: string;
+  createdAt: string;
+  completedAt: string;
+  duration: string;
+  objectCount: string;
+  rootObjectCount: string;
+  fileSize: string;
+  hasHotwaxMessage: boolean;
+  systemMessageId?: string;
+  systemMessageTypeId?: string;
+  jobRunId?: string;
+  hotwaxStatusColor: string;
+  hotwaxStatusLabel: string;
+  errorCode?: string;
+  url?: string;
+  partialDataUrl?: string;
+  query?: string;
+}
 
 const props = defineProps<{
-  operation: any;
+  operation: ShopifyBulkOperation;
   enrichmentAvailable: boolean;
 }>();
 
@@ -183,7 +210,7 @@ const getStatusIcon = (status: string) => {
 
 const formatDate = (value: string) => (value ? commonUtil.getDateTimeWithOrdinalSuffix(DateTime.fromISO(value).toMillis()) : "-");
 
-const display = computed(() => {
+const display = computed<OperationDisplayModel>(() => {
   const op = props.operation;
   const status = op.status || "";
   const type = op.type || "";

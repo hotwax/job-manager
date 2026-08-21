@@ -1,5 +1,32 @@
 import { api } from "@common";
 import { defineStore } from "pinia";
+
+export interface HotwaxMessage {
+  systemMessageId: string;
+  systemMessageTypeId: string;
+  description?: string;
+  jobRunId?: string;
+  statusId: string;
+  remoteMessageId?: string;
+}
+
+export interface ShopifyBulkOperation {
+  id: string;
+  shopifyOperationId: string;
+  status: string;
+  type: string;
+  createdAt: string;
+  completedAt?: string;
+  objectCount: number;
+  rootObjectCount: number;
+  fileSize: number;
+  errorCode?: string;
+  url?: string;
+  partialDataUrl?: string;
+  query?: string;
+  hotwaxMessage?: HotwaxMessage;
+}
+
 import logger from "@/logger";
 
 // Shopify is the source of truth for this page: bulkOperations returns every bulk operation
@@ -91,7 +118,7 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
     // One row per Shopify operation, with the HotWax message attached when we have it. An
     // absent match is meaningful rather than an error: the operation ran but no HotWax
     // pipeline record for it survives, so the row is shown and flagged instead of hidden.
-    getEnrichedOperations: (state: any) => state.operations.map((operation: any) => ({
+    getEnrichedOperations: (state: any): ShopifyBulkOperation[] => state.operations.map((operation: any) => ({
       ...operation,
       shopifyOperationId: getShopifyBulkOperationId(operation.id),
       objectCount: Number(operation.objectCount ?? 0),
