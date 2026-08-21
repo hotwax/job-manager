@@ -1120,9 +1120,15 @@ onIonViewWillLeave(() => {
   padding: 0 var(--spacer-2xs);
 }
 
+/* minmax(0, …) rather than a bare fr: a grid item's default min-width is auto, so the
+   track cannot shrink below its content's min-content width. The diagnostics column
+   carries unbreakable strings (service names like
+   co.hotwax.rule.DecisionRuleServices.run#RuleGroup, file names, message ids) whose
+   min-content ran to 691px, which overflowed the row and left ion-content clipping the
+   activity feed off the right edge. */
 .columns-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--spacer-sm);
 }
 
@@ -1132,7 +1138,7 @@ onIonViewWillLeave(() => {
 
 @media (min-width: 991px) {
   .columns-grid {
-    grid-template-columns: 3fr 2fr;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
   }
 }
 </style>
