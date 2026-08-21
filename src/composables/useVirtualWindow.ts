@@ -1,9 +1,9 @@
-import { computed, onBeforeUnmount, onMounted, ref, type Ref } from "vue";
+import { type MaybeRefOrGetter, computed, onBeforeUnmount, onMounted, ref, toValue } from "vue";
 
 export interface VirtualWindowOptions {
   rowHeight: number;
   overscan?: number;
-  totalItems: Ref<number> | (() => number);
+  totalItems: MaybeRefOrGetter<number>;
 }
 
 export function useVirtualWindow(options: VirtualWindowOptions) {
@@ -12,32 +12,24 @@ export function useVirtualWindow(options: VirtualWindowOptions) {
   const viewportHeight = ref(0);
   const overscan = options.overscan ?? 8;
 
-  const total = computed(() => {
-    if (typeof options.totalItems === "function") {
-      return options.totalItems();
-    }
-    return options.totalItems.value;
-  });
-
   const startIndex = computed(() => Math.max(0, Math.floor(scrollTop.value / options.rowHeight) - overscan));
 
   const endIndex = computed(() =>
     Math.min(
-      total.value,
+      toValue(options.totalItems),
       Math.ceil((scrollTop.value + viewportHeight.value) / options.rowHeight) + overscan
-    )
-  );
+    ));
 
   const onScroll = () => {
     const el = scroller.value;
-    if (!el) return;
+    if(!el) {return;}
     scrollTop.value = el.scrollTop;
     viewportHeight.value = el.clientHeight;
   };
 
   const scrollToIndex = (index: number) => {
     scrollTop.value = index * options.rowHeight;
-    if (scroller.value) {
+    if(scroller.value) {
       scroller.value.scrollTop = scrollTop.value;
     }
   };
@@ -45,7 +37,7 @@ export function useVirtualWindow(options: VirtualWindowOptions) {
   let resizeObserver: ResizeObserver | null = null;
 
   onMounted(() => {
-    if (!scroller.value) return;
+    if(!scroller.value) {return;}
     viewportHeight.value = scroller.value.clientHeight;
     resizeObserver = new ResizeObserver(() => {
       viewportHeight.value = scroller.value?.clientHeight ?? 0;
