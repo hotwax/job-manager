@@ -164,6 +164,8 @@ export const useUserStore = defineStore("user", {
           }
         } while (resp);
 
+        console.log('resp', resp, serverPermissions)
+
         // Checking if the user has permission to access the app
         // If there is no configuration, the permission check is not enabled
         if (permissionId) {
