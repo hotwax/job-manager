@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { useJobRuns } from './useJobRuns';
+import { useJobRuns, JobRun } from './useJobRuns';
 import { ref, effectScope, Ref } from 'vue';
 
 const mockFetchJobRuns = vi.fn();
@@ -15,6 +15,16 @@ vi.mock('@/store/user', () => ({
     resolveUserFullNames: mockResolveUserFullNames
   })
 }));
+
+function deferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: any) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
 
 describe('useJobRuns', () => {
   beforeEach(() => {
@@ -37,7 +47,7 @@ describe('useJobRuns', () => {
   });
 
   it('loads initial runs correctly', async () => {
-    const mockRuns = Array(20).fill({}).map((_, i) => ({ jobRunId: i.toString() }));
+    const mockRuns = Array(20).fill({}).map((_, i) => ({ jobRunId: i.toString() } as JobRun));
     mockFetchJobRuns.mockResolvedValueOnce(mockRuns);
 
     const jobNameRef = ref('TestJob');
@@ -61,8 +71,8 @@ describe('useJobRuns', () => {
   });
 
   it('merges load-more runs without duplicates', async () => {
-    const firstPage = [{ jobRunId: '1' }, { jobRunId: '2' }];
-    const secondPage = [{ jobRunId: '2' }, { jobRunId: '3' }]; // 2 is duplicate
+    const firstPage = [{ jobRunId: '1' } as JobRun, { jobRunId: '2' } as JobRun];
+    const secondPage = [{ jobRunId: '2' } as JobRun, { jobRunId: '3' } as JobRun]; // 2 is duplicate
     mockFetchJobRuns
       .mockResolvedValueOnce(firstPage)
       .mockResolvedValueOnce(secondPage);
@@ -104,15 +114,12 @@ describe('useJobRuns', () => {
   });
 
   it('prevents stale updates on overlapping requests', async () => {
-    let resolveFirst: any;
-    let resolveSecond: any;
-
-    const firstPromise = new Promise(r => { resolveFirst = r; });
-    const secondPromise = new Promise(r => { resolveSecond = r; });
+    const dFirst = deferred<JobRun[]>();
+    const dSecond = deferred<JobRun[]>();
 
     mockFetchJobRuns
-      .mockReturnValueOnce(firstPromise)
-      .mockReturnValueOnce(secondPromise);
+      .mockReturnValueOnce(dFirst.promise)
+      .mockReturnValueOnce(dSecond.promise);
 
     const jobNameRef = ref('TestJob');
     const scope = effectScope();
@@ -124,12 +131,12 @@ describe('useJobRuns', () => {
       const req2 = loadRuns();
 
       // Resolve second request first
-      resolveSecond([{ jobRunId: '2' }]);
+      dSecond.resolve([{ jobRunId: '2' } as JobRun]);
       await req2;
       expect(runs.value).toEqual([{ jobRunId: '2' }]);
 
       // Resolve first request later, it should be ignored
-      resolveFirst([{ jobRunId: '1' }]);
+      dFirst.resolve([{ jobRunId: '1' } as JobRun]);
       await req1;
       expect(runs.value).toEqual([{ jobRunId: '2' }]);
     });
@@ -137,14 +144,13 @@ describe('useJobRuns', () => {
   });
 
   it('cancels pending requests on scope dispose', async () => {
-    let resolveReq: any;
-    const reqPromise = new Promise(r => { resolveReq = r; });
-    mockFetchJobRuns.mockReturnValueOnce(reqPromise);
+    const dReq = deferred<JobRun[]>();
+    mockFetchJobRuns.mockReturnValueOnce(dReq.promise);
 
     const jobNameRef = ref('TestJob');
     const scope = effectScope();
 
-    let runsRef: any;
+    let runsRef: Ref<JobRun[]> | undefined;
     const promise = scope.run(async () => {
       const { loadRuns, runs } = useJobRuns(jobNameRef as Ref<string | undefined>);
       runsRef = runs;
@@ -153,10 +159,10 @@ describe('useJobRuns', () => {
 
     // Dispose scope before request resolves
     scope.stop();
-    resolveReq([{ jobRunId: '1' }]);
+    dReq.resolve([{ jobRunId: '1' } as JobRun]);
 
     await promise;
-    expect(runsRef.value).toEqual([]);
+    expect(runsRef?.value).toEqual([]);
   });
 
   it('clears pinned run and reloads', async () => {
@@ -176,15 +182,12 @@ describe('useJobRuns', () => {
   });
 
   it('resets state when job identity changes, resolving only the new job', async () => {
-    let resolveA: any;
-    let resolveB: any;
-
-    const promiseA = new Promise(r => { resolveA = r; });
-    const promiseB = new Promise(r => { resolveB = r; });
+    const dA = deferred<JobRun[]>();
+    const dB = deferred<JobRun[]>();
 
     mockFetchJobRuns
-      .mockReturnValueOnce(promiseA)
-      .mockReturnValueOnce(promiseB);
+      .mockReturnValueOnce(dA.promise)
+      .mockReturnValueOnce(dB.promise);
 
     const jobNameRef = ref('JobA');
     const scope = effectScope();
@@ -205,12 +208,12 @@ describe('useJobRuns', () => {
       const reqB = loadRuns();
 
       // JobB resolves first
-      resolveB([{ jobRunId: 'B-1' }]);
+      dB.resolve([{ jobRunId: 'B-1' } as JobRun]);
       await reqB;
       expect(runs.value).toEqual([{ jobRunId: 'B-1' }]);
 
       // JobA resolves last, should be ignored
-      resolveA([{ jobRunId: 'A-1' }]);
+      dA.resolve([{ jobRunId: 'A-1' } as JobRun]);
       await reqA;
 
       // State should still reflect JobB
@@ -220,10 +223,8 @@ describe('useJobRuns', () => {
   });
 
   it('prevents load-more overlap', async () => {
-    let resolveFirst: any;
-    const promiseFirst = new Promise(r => { resolveFirst = r; });
-
-    mockFetchJobRuns.mockReturnValueOnce(promiseFirst);
+    const dFirst = deferred<JobRun[]>();
+    mockFetchJobRuns.mockReturnValueOnce(dFirst.promise);
 
     const jobNameRef = ref('TestJob');
     const scope = effectScope();
@@ -242,7 +243,7 @@ describe('useJobRuns', () => {
       expect(mockEvent2.target.complete).toHaveBeenCalled();
 
       // Resolve the first request
-      resolveFirst([{ jobRunId: '1' }]);
+      dFirst.resolve([{ jobRunId: '1' } as JobRun]);
       await req1;
       await req2;
 
@@ -250,6 +251,69 @@ describe('useJobRuns', () => {
       expect(mockEvent1.target.complete).toHaveBeenCalled();
 
       // Fetch was only called once
+      expect(mockFetchJobRuns).toHaveBeenCalledTimes(1);
+    });
+    scope.stop();
+  });
+
+  it('preserves pinnedRunId and filters when reset is called', async () => {
+    const dInitial = deferred<JobRun[]>();
+    mockFetchJobRuns.mockReturnValueOnce(dInitial.promise);
+
+    const jobNameRef = ref('TestJob');
+    const scope = effectScope();
+
+    await scope.run(async () => {
+      const { pinnedRunId, runsQueryString, runsStatus, reset, loadRuns } = useJobRuns(jobNameRef as Ref<string | undefined>);
+
+      pinnedRunId.value = 'run123';
+      runsQueryString.value = 'error';
+      runsStatus.value = 'FAILED';
+
+      reset();
+
+      expect(pinnedRunId.value).toBe('run123');
+      expect(runsQueryString.value).toBe('error');
+      expect(runsStatus.value).toBe('FAILED');
+
+      const loadReq = loadRuns();
+      dInitial.resolve([{ jobRunId: 'run123' } as JobRun]);
+      await loadReq;
+
+      expect(mockFetchJobRuns).toHaveBeenCalledWith('TestJob', expect.objectContaining({
+        jobRunId: 'run123'
+      }));
+    });
+    scope.stop();
+  });
+
+  it('prevents load-more when an initial load is in progress', async () => {
+    const dReload = deferred<JobRun[]>();
+    mockFetchJobRuns.mockReturnValueOnce(dReload.promise);
+
+    const jobNameRef = ref('TestJob');
+    const scope = effectScope();
+
+    await scope.run(async () => {
+      const { loadRuns, loadMoreRuns, isRunsLoading, isLoadingMore, runs } = useJobRuns(jobNameRef as Ref<string | undefined>);
+
+      const reqReload = loadRuns();
+      expect(isRunsLoading.value).toBe(true);
+      expect(isLoadingMore.value).toBe(false);
+
+      const mockEvent = { target: { complete: vi.fn() } };
+      const reqLoadMore = loadMoreRuns(mockEvent); // Should be ignored
+
+      expect(mockEvent.target.complete).toHaveBeenCalled();
+      expect(isLoadingMore.value).toBe(false); // Load-more should not have started
+
+      dReload.resolve([{ jobRunId: 'new-run' } as JobRun]);
+      await reqReload;
+      await reqLoadMore;
+
+      expect(runs.value).toEqual([{ jobRunId: 'new-run' }]);
+      expect(isRunsLoading.value).toBe(false);
+      expect(isLoadingMore.value).toBe(false);
       expect(mockFetchJobRuns).toHaveBeenCalledTimes(1);
     });
     scope.stop();

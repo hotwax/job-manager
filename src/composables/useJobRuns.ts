@@ -13,7 +13,10 @@ export interface JobRun {
   runStatus?: string;
   logs?: any[];
   messages?: string;
-  [key: string]: any;
+  results?: string;
+  errors?: string;
+  parameters?: string;
+  lastUpdatedStamp?: string;
 }
 
 export interface FetchJobRunsPayload {
@@ -63,11 +66,9 @@ export function useJobRuns(jobNameRef: Ref<string | undefined>) {
     hasLoadedRuns.value = false;
     hasMoreRuns.value = true;
     pageIndex.value = 0;
-    pinnedRunId.value = '';
-    runsQueryString.value = '';
-    runsStatus.value = '';
-    runsUserId.value = '';
-    runsHasDataLogs.value = '';
+    // We intentionally do not clear pinnedRunId and filter criteria here
+    // because they are populated before the job detail load finishes and
+    // must be preserved for subsequent initial fetch passes.
     currentRequestId++; // Invalidate pending requests for the old job
   };
 
@@ -77,6 +78,7 @@ export function useJobRuns(jobNameRef: Ref<string | undefined>) {
 
     if (!isLoadMore) {
       isRunsLoading.value = true;
+      isLoadingMore.value = false;
       pageIndex.value = 0;
       hasMoreRuns.value = true;
       runs.value = [];
@@ -136,7 +138,7 @@ export function useJobRuns(jobNameRef: Ref<string | undefined>) {
   };
 
   const loadMoreRuns = async (event?: InfiniteScrollEvent) => {
-    if (isLoadingMore.value) {
+    if (isLoadingMore.value || isRunsLoading.value) {
       if (event?.target?.complete) {
         event.target.complete();
       }
