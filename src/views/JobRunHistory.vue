@@ -44,7 +44,7 @@
               :value="queryString"
               @ionInput="handleQueryInput"
               :debounce="300"
-              :placeholder="translate('Search by run, job, service, user, message, or result')"
+              :placeholder="translate('Search by run id, job, service, or user')"
             />
 
             <div class="filter-grid">
@@ -87,32 +87,15 @@
 
               <div class="filter-item">
                 <ion-input
-                  :value="selectedUserId"
+                  :value="selectedUsername"
                   :label="translate('User')"
                   label-placement="stacked"
                   fill="outline"
                   :placeholder="translate('Any user')"
                   :debounce="300"
-                  @ionInput="selectedUserId = $event.detail.value || ''"
+                  @ionInput="selectedUsername = $event.detail.value || ''"
                 />
-                <ion-button v-if="selectedUserId" fill="clear" class="clear-filter-btn" @click="selectedUserId = ''" :title="translate('Clear')">
-                  <ion-icon slot="icon-only" :icon="closeCircleOutline" />
-                </ion-button>
-              </div>
-
-              <div class="filter-item">
-                <ion-select
-                  :label="translate('Data logs')"
-                  label-placement="stacked"
-                  interface="popover"
-                  :value="hasDataLogs"
-                  @ionChange="hasDataLogs = $event.detail.value"
-                >
-                  <ion-select-option value="">{{ translate("All") }}</ion-select-option>
-                  <ion-select-option value="Y">{{ translate("Has data logs") }}</ion-select-option>
-                  <ion-select-option value="N">{{ translate("No data logs") }}</ion-select-option>
-                </ion-select>
-                <ion-button v-if="hasDataLogs" fill="clear" class="clear-filter-btn" @click="hasDataLogs = ''" :title="translate('Clear')">
+                <ion-button v-if="selectedUsername" fill="clear" class="clear-filter-btn" @click="selectedUsername = ''" :title="translate('Clear')">
                   <ion-icon slot="icon-only" :icon="closeCircleOutline" />
                 </ion-button>
               </div>
@@ -177,44 +160,18 @@
                   <ion-icon slot="start" :icon="personOutline" color="medium" />
                   <ion-label>
                     <p>{{ translate("User") }}</p>
-                    {{ getRunUserName(run.userId) }}
+                    {{ getRunUserName(run) }}
                   </ion-label>
                 </ion-item>
               </div>
 
-              <div class="run-summary">
-                <ion-chip v-if="run.logs?.length" outline>
-                  <ion-icon :icon="documentTextOutline" />
-                  <ion-label>{{ run.logs.length }} {{ translate("data logs") }}</ion-label>
-                </ion-chip>
-              </div>
-
-              <ion-accordion-group v-if="run.messages || hasResults(run) || run.errors || run.parameters || run.logs?.length" @click.stop>
+              <ion-accordion-group v-if="run.messages || hasResults(run) || run.errors || run.parameters" @click.stop>
                 <ion-accordion v-if="run.messages" value="message">
                   <ion-item slot="header">
                     <ion-label>{{ translate("Message") }}</ion-label>
                   </ion-item>
                   <div slot="content" class="accordion-content">
                     <p>{{ run.messages }}</p>
-                  </div>
-                </ion-accordion>
-
-                <ion-accordion v-if="run.logs?.length" value="logs">
-                  <ion-item slot="header">
-                    <ion-label>{{ translate("Linked data logs") }}</ion-label>
-                  </ion-item>
-                  <div slot="content" class="accordion-content">
-                    <div class="log-actions">
-                      <ion-button
-                        v-for="log in run.logs"
-                        :key="log.logId"
-                        size="small"
-                        fill="outline"
-                        @click="goToLog(log.logId)"
-                      >
-                        {{ log.logId }}
-                      </ion-button>
-                    </div>
                   </div>
                 </ion-accordion>
 
@@ -268,7 +225,6 @@ import {
   IonCardHeader,
   IonCardSubtitle,
   IonCardTitle,
-  IonChip,
   IonContent,
   IonHeader,
   IonIcon,
@@ -291,7 +247,6 @@ import {
   alertCircleOutline,
   checkmarkCircleOutline,
   closeCircleOutline,
-  documentTextOutline,
   personOutline,
   playOutline,
   timeOutline
@@ -301,11 +256,9 @@ import { commonUtil, translate } from "@common";
 import AnimatedNumber from "@/components/AnimatedNumber.vue";
 import router from "@/router";
 import { useJobStore } from "@/store/jobs";
-import { useUserStore } from "@/store/user";
 import { getDateAndTime, getTimeInMillis } from "@/utils";
 
 const PAGE_SIZE = 25;
-const RUNS_PER_JOB = 25;
 
 const route = router.currentRoute.value;
 const jobStore = useJobStore();
@@ -313,11 +266,8 @@ const jobStore = useJobStore();
 const queryString = ref("");
 const selectedStatus = ref("");
 const selectedJobName = ref("");
-const selectedUserId = ref("");
-const hasDataLogs = ref("");
+const selectedUsername = ref("");
 const pageIndex = ref(0);
-
-const userStore = useUserStore();
 
 const runs = computed(() => jobStore.getJobRunHistory);
 const total = computed(() => jobStore.getJobRunHistoryTotal);
@@ -330,7 +280,12 @@ const jobOptions = computed(() => {
   return [...jobs.value].sort((first: any, second: any) => first.jobName.localeCompare(second.jobName));
 });
 
-const getRunProductLabel = (run: any) => run.productName || run.instanceOfProductId || "";
+// Picks the first candidate with visible text. A stored value can be blank rather than null, and a blank string is
+// truthy, so it would win a plain || chain and then render as nothing.
+const firstNonBlank = (...values: Array<any>) =>
+  values.map((value: any) => String(value ?? "").trim()).find((value: string) => value) || "";
+
+const getRunProductLabel = (run: any) => firstNonBlank(run.productName, run.instanceOfProductId);
 
 const formatDuration = (milliseconds: number) => {
   if (!milliseconds || milliseconds < 0) return "-";
@@ -383,28 +338,27 @@ const handleQueryInput = (event: CustomEvent) => {
   queryString.value = (event as any).detail.value || "";
 };
 
-let isFilterResetting = false;
-
-const loadRuns = async (isRefetch = true) => {
+// The search service takes every filter, so a page change only refetches that page and the status counts stay put.
+const getSearchPayload = () => {
   const payload = {
     pageIndex: pageIndex.value,
-    pageSize: PAGE_SIZE,
-    runsPerJob: RUNS_PER_JOB,
-    isRefetch
+    pageSize: PAGE_SIZE
   } as Record<string, any>;
 
   if (queryString.value.trim()) payload.queryString = queryString.value.trim();
   if (selectedStatus.value) payload.status = selectedStatus.value;
   if (selectedJobName.value) payload.jobName = selectedJobName.value;
-  if (selectedUserId.value.trim()) payload.userId = selectedUserId.value.trim();
-  if (hasDataLogs.value) payload.hasDataLogs = hasDataLogs.value;
+  if (selectedUsername.value.trim()) payload.username = selectedUsername.value.trim();
 
-  await jobStore.fetchJobRunHistory(payload);
-  await userStore.resolveUserFullNames(runs.value.map((run: any) => run.userId));
+  return payload;
 };
 
-// Show the resolved full name in run cards, falling back to the raw user id.
-const getRunUserName = (userId: string) => userStore.getUserFullName(userId) || userId || "-";
+const loadRuns = () => jobStore.fetchJobRunHistory(getSearchPayload());
+
+const loadStats = () => jobStore.fetchJobRunHistoryStats(getSearchPayload());
+
+// The search service joins the user account, so the full name comes with the run itself.
+const getRunUserName = (run: any) => firstNonBlank(run.userFullName, run.username, run.userId) || "-";
 
 const goToPreviousPage = () => {
   pageIndex.value -= 1;
@@ -418,16 +372,16 @@ const goToJob = (jobName: string) => {
   router.push({ name: "JobDetail", params: { jobName } });
 };
 
-const goToLog = (logId: string | number) => {
-  router.push({ name: "FileHistoryDetail", params: { id: logId } });
-};
+let isFilterResetting = false;
 
-watch([queryString, selectedStatus, selectedJobName, selectedUserId, hasDataLogs], async () => {
+// A filter change goes back to the first page and invalidates the status counts, a page change needs neither
+watch([queryString, selectedStatus, selectedJobName, selectedUsername], async () => {
   if (pageIndex.value !== 0) {
+    // The page reset triggers the pageIndex watcher, which must not fire a second fetch for the same filters
     isFilterResetting = true;
     pageIndex.value = 0;
   }
-  await loadRuns(true);
+  await Promise.all([loadRuns(), loadStats()]);
 });
 
 watch(pageIndex, async () => {
@@ -435,17 +389,18 @@ watch(pageIndex, async () => {
     isFilterResetting = false;
     return;
   }
-  await loadRuns(false);
+  await loadRuns();
 });
 
 onIonViewWillEnter(async () => {
   if (route.query.queryString) queryString.value = route.query.queryString as string;
   if (route.query.status) selectedStatus.value = route.query.status as string;
   if (route.query.jobName) selectedJobName.value = route.query.jobName as string;
-  if (route.query.userId) selectedUserId.value = route.query.userId as string;
+  if (route.query.username) selectedUsername.value = route.query.username as string;
 
+  // Only needed to populate the Job filter options
   await jobStore.fetchJobs();
-  await loadRuns(true);
+  await Promise.all([loadRuns(), loadStats()]);
 });
 </script>
 
@@ -466,10 +421,7 @@ onIonViewWillEnter(async () => {
   margin: 0;
 }
 
-.pagination,
-.run-summary,
-.run-actions,
-.log-actions {
+.pagination {
   display: flex;
   align-items: center;
   gap: var(--spacer-sm);
@@ -488,11 +440,6 @@ onIonViewWillEnter(async () => {
 .run-metrics ion-item {
   --padding-start: 0;
   --inner-padding-end: 0;
-}
-
-.run-summary,
-.run-actions {
-  margin-block-start: var(--spacer-base);
 }
 
 .accordion-content {
