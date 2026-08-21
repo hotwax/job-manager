@@ -25,7 +25,7 @@
             :class="{ 'jt-clickable': row.kind === 'node' && row.childCount > 0 }"
             @click="row.kind === 'node' && row.childCount > 0 && toggle(row.path)"
           >
-            <span v-for="guide in row.depth" :key="guide" class="jt-indent"></span>
+            <span v-for="guide in row.depth" :key="guide" class="jt-indent" />
 
             <template v-if="row.kind === 'close'">
               <span class="jt-punct">{{ row.isArray ? "]" : "}" }}</span>
@@ -36,7 +36,7 @@
                 <ion-icon v-if="row.childCount > 0" :icon="row.open ? chevronDownOutline : chevronForwardOutline" />
               </span>
               <template v-if="row.name !== null">
-                <span class="jt-key" v-html="highlight(String(row.name))"></span><span class="jt-punct">:&nbsp;</span>
+                <span class="jt-key" v-html="highlight(String(row.name))" /><span class="jt-punct">:&nbsp;</span>
               </template>
               <template v-if="row.isContainer">
                 <span class="jt-punct">{{ row.isArray ? "[" : "{" }}</span>
@@ -46,7 +46,7 @@
                   <span class="jt-punct">{{ row.isArray ? "]" : "}" }}</span>
                 </template>
               </template>
-              <span v-else class="jt-value" :class="primitiveClass(row.value)" v-html="highlight(primitiveText(row.value))"></span>
+              <span v-else class="jt-value" :class="primitiveClass(row.value)" v-html="highlight(primitiveText(row.value))" />
             </template>
           </div>
         </div>
@@ -56,13 +56,13 @@
 </template>
 
 <script setup lang="ts">
+import { translate } from "@common";
 import { IonButton, IonIcon } from "@ionic/vue";
 import { addCircleOutline, chevronDownOutline, chevronForwardOutline, removeCircleOutline } from "ionicons/icons";
 import { computed, ref, watch } from "vue";
-import { translate } from "@common";
-import { buildJsonSearchIndex } from "@/utils/jsonSearch";
-import { flattenJson, primitiveClass, primitiveText } from "@/utils/jsonRows";
 import { useVirtualWindow } from "@/composables/useVirtualWindow";
+import { flattenJson, primitiveClass, primitiveText } from "@/utils/jsonRows";
+import { buildJsonSearchIndex } from "@/utils/jsonSearch";
 
 const props = defineProps<{
   data: any;
@@ -81,8 +81,7 @@ const isOpen = (path: string) => (defaultOpen.value ? !toggled.value.has(path) :
 
 const searchIndex = computed(() => buildJsonSearchIndex(props.data, props.search));
 const rows = computed(() =>
-  flattenJson(props.data, isOpen, props.search ? searchIndex.value : null)
-);
+  flattenJson(props.data, isOpen, props.search ? searchIndex.value : null));
 
 const { scroller, startIndex, endIndex, onScroll, scrollToIndex } = useVirtualWindow({
   rowHeight: ROW_HEIGHT,
@@ -125,19 +124,21 @@ watch(
 );
 
 const searchRegExp = computed(() => {
-  if (!props.search) return null;
+  if(!props.search) {return null;}
   const safe = props.search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
   return new RegExp(`(${safe})`, "ig");
 });
 
 const escapeHtml = (s: string) =>
-  s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
+  s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c] as string));
 
 const highlight = (text: string) => {
   const escaped = escapeHtml(text);
   const regExp = searchRegExp.value;
-  if (!regExp) return escaped;
+  if(!regExp) {return escaped;}
   regExp.lastIndex = 0;
+
   return escaped.replace(regExp, "<mark>$1</mark>");
 };
 </script>
