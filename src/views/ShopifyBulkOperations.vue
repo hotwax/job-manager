@@ -165,124 +165,14 @@
             />
           </ion-list-header>
 
-          <ion-card v-for="operation in visibleOperations" :key="operation.id" class="operation-card">
-            <ion-item lines="none">
-              <ion-icon slot="start" :icon="getStatusIcon(operation.status)" :color="getShopifyStatusColor(operation.status)" />
-              <ion-label class="ion-text-wrap">
-                <p class="overline">
-                  #{{ operation.shopifyOperationId }}
-                </p>
-                <h2>{{ getOperationTitle(operation) }}</h2>
-                <p>{{ translate(toTitleCase(operation.type)) }}</p>
-              </ion-label>
-              <ion-badge slot="end" :color="getShopifyStatusColor(operation.status)">
-                {{ translate(toTitleCase(operation.status)) }}
-              </ion-badge>
-            </ion-item>
-
-            <ion-card-content>
-              <div class="operation-metrics">
-                <ion-item lines="none">
-                  <ion-icon slot="start" :icon="playOutline" color="medium" />
-                  <ion-label>
-                    <p>{{ translate("Created") }}</p>
-                    {{ formatDate(operation.createdAt) }}
-                  </ion-label>
-                </ion-item>
-                <ion-item lines="none">
-                  <ion-icon slot="start" :icon="checkmarkCircleOutline" color="medium" />
-                  <ion-label>
-                    <p>{{ translate("Completed") }}</p>
-                    {{ formatDate(operation.completedAt) }}
-                  </ion-label>
-                </ion-item>
-                <ion-item lines="none">
-                  <ion-icon slot="start" :icon="timeOutline" color="medium" />
-                  <ion-label>
-                    <p>{{ translate("Duration") }}</p>
-                    {{ getOperationDuration(operation) }}
-                  </ion-label>
-                </ion-item>
-                <ion-item lines="none">
-                  <ion-icon slot="start" :icon="layersOutline" color="medium" />
-                  <ion-label>
-                    <p>{{ translate("Objects") }}</p>
-                    {{ operation.objectCount.toLocaleString() }}
-                  </ion-label>
-                </ion-item>
-                <ion-item lines="none">
-                  <ion-icon slot="start" :icon="gitNetworkOutline" color="medium" />
-                  <ion-label>
-                    <p>{{ translate("Root objects") }}</p>
-                    {{ operation.rootObjectCount.toLocaleString() }}
-                  </ion-label>
-                </ion-item>
-                <ion-item lines="none">
-                  <ion-icon slot="start" :icon="documentTextOutline" color="medium" />
-                  <ion-label>
-                    <p>{{ translate("Result size") }}</p>
-                    {{ operation.fileSize ? getFileSize(String(operation.fileSize)) : "-" }}
-                  </ion-label>
-                </ion-item>
-              </div>
-
-              <!-- The HotWax half of the story: which pipeline asked for this operation. -->
-              <ion-item v-if="operation.hotwaxMessage" lines="none" class="hotwax-link" button :detail="false" @click="goToSystemMessage(operation.hotwaxMessage.systemMessageId)">
-                <ion-icon slot="start" :icon="pulseOutline" color="medium" />
-                <ion-label class="ion-text-wrap">
-                  <p>{{ translate("HotWax job") }}</p>
-                  {{ operation.hotwaxMessage.systemMessageTypeId }}
-                  <p v-if="operation.hotwaxMessage.jobRunId">
-                    {{ translate("Job run") }}: #{{ operation.hotwaxMessage.jobRunId }}
-                  </p>
-                </ion-label>
-                <ion-badge slot="end" :color="commonUtil.getStatusColor(operation.hotwaxMessage.statusId)">
-                  {{ translate(getHotwaxStatusLabel(operation.hotwaxMessage.statusId)) }}
-                </ion-badge>
-              </ion-item>
-              <ion-item v-else-if="enrichmentAvailable" lines="none" class="hotwax-link">
-                <ion-icon slot="start" :icon="helpCircleOutline" color="medium" />
-                <ion-label class="ion-text-wrap">
-                  <p>{{ translate("HotWax job") }}</p>
-                  {{ translate("No HotWax message found for this operation") }}
-                </ion-label>
-              </ion-item>
-
-              <ion-item v-if="operation.errorCode" lines="none">
-                <ion-icon slot="start" :icon="alertCircleOutline" color="danger" />
-                <ion-label class="ion-text-wrap">
-                  <p>{{ translate("Error code") }}</p>
-                  {{ operation.errorCode }}
-                </ion-label>
-              </ion-item>
-
-              <div class="operation-actions">
-                <ion-button v-if="operation.url" fill="outline" size="small" :href="operation.url" target="_blank" rel="noopener">
-                  <ion-icon slot="start" :icon="cloudDownloadOutline" />
-                  {{ translate("Result file") }}
-                </ion-button>
-                <ion-button v-if="operation.partialDataUrl" fill="outline" size="small" color="warning" :href="operation.partialDataUrl" target="_blank" rel="noopener">
-                  <ion-icon slot="start" :icon="cloudDownloadOutline" />
-                  {{ translate("Partial data") }}
-                </ion-button>
-                <ion-button fill="clear" size="small" @click="copyValue(operation.id)">
-                  <ion-icon slot="start" :icon="copyOutline" />
-                  {{ translate("Copy operation ID") }}
-                </ion-button>
-              </div>
-
-              <ion-accordion-group v-if="operation.query">
-                <ion-accordion value="query">
-                  <ion-item slot="header" lines="none">
-                    <ion-label>{{ translate("Query sent to Shopify") }}</ion-label>
-                  </ion-item>
-                  <div slot="content" class="accordion-content">
-                    <pre>{{ operation.query }}</pre>
-                  </div>
-                </ion-accordion>
-              </ion-accordion-group>
-            </ion-card-content>
-          </ion-card>
+                    <ShopifyBulkOperationCard
+            v-for="operation in visibleOperations"
+            :key="operation.id"
+            :operation="operation"
+            :enrichment-available="enrichmentAvailable"
+            @view-system-message="goToSystemMessage"
+            @copy-id="copyValue"
+          />
         </ion-list>
 
         <div v-else class="empty-state">
@@ -343,6 +233,7 @@ import {
 import { DateTime } from "luxon";
 import { computed, ref, watch } from "vue";
 import AnimatedNumber from "@/components/AnimatedNumber.vue";
+import ShopifyBulkOperationCard from "@/components/ShopifyBulkOperationCard.vue";
 import BulkOperationSortPopover from "@/components/BulkOperationSortPopover.vue";
 import router from "@/router";
 import {
@@ -428,34 +319,7 @@ const toTitleCase = (value: string) => {
   return value.charAt(0) + value.slice(1).toLowerCase();
 };
 
-const getShopifyStatusColor = (status: string) => {
-  if(status === "COMPLETED") {return "success";}
-  if(status === "FAILED") {return "danger";}
-  if(status === "CANCELED" || status === "CANCELING") {return "medium";}
-
-  return "primary";
-};
-
-const getStatusIcon = (status: string) => {
-  if(status === "COMPLETED") {return checkmarkCircleOutline;}
-  if(status === "FAILED") {return alertCircleOutline;}
-  if(status === "CANCELED" || status === "CANCELING") {return closeCircleOutline;}
-
-  return hourglassOutline;
-};
-
-const getHotwaxStatusLabel = (statusId: string) => getStatusDesc(statusId) || statusId;
-
-const getOperationTitle = (operation: any) =>
-  operation.hotwaxMessage?.description || operation.hotwaxMessage?.systemMessageTypeId || translate("Bulk operation");
-
-const formatDate = (value: string) => (value ? commonUtil.getDateTimeWithOrdinalSuffix(DateTime.fromISO(value).toMillis()) : "-");
-
-const getOperationDuration = (operation: any) => {
-  if(!operation.createdAt || !operation.completedAt) {return "-";}
-
-  return getDuration(DateTime.fromISO(operation.createdAt).toMillis(), DateTime.fromISO(operation.completedAt).toMillis());
-};
+/* removed unused helpers */
 
 const copyValue = async (value: string) => {
   await navigator.clipboard.writeText(value);
