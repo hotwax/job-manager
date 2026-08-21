@@ -131,11 +131,14 @@ describe("useVirtualWindow", () => {
   it("manages ResizeObserver lifecycle and reacts to resize", async () => {
     const observeMock = vi.fn();
     const disconnectMock = vi.fn();
-    let resizeCallback: any = null;
+    let resizeCallback: globalThis.ResizeObserverCallback | null = null;
+    let observerInstance: globalThis.ResizeObserver | null = null;
 
-    class MockResizeObserver {
-      constructor(callback: any) {
+    class MockResizeObserver implements globalThis.ResizeObserver {
+      constructor(callback: globalThis.ResizeObserverCallback) {
         resizeCallback = callback;
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        observerInstance = this;
       }
       observe = observeMock;
       unobserve = vi.fn();
@@ -144,8 +147,8 @@ describe("useVirtualWindow", () => {
 
     vi.stubGlobal("ResizeObserver", MockResizeObserver);
 
-    let scrollerRef: any;
-    let endIndexRef: any;
+    let scrollerRef: ReturnType<typeof useVirtualWindow>["scroller"] | null = null;
+    let endIndexRef: ReturnType<typeof useVirtualWindow>["endIndex"] | null = null;
 
     const DummyComponent = defineComponent({
       setup() {
@@ -168,23 +171,31 @@ describe("useVirtualWindow", () => {
     const wrapper = mount(DummyComponent);
 
     // Mock elements usually have 0 clientHeight in jsdom unless mocked
-    Object.defineProperty(scrollerRef.value, "clientHeight", { value: 100, writable: true });
+    if(scrollerRef && scrollerRef.value) {
+      Object.defineProperty(scrollerRef.value, "clientHeight", { value: 100, writable: true });
+    }
 
     // Should be observing on mount
-    expect(observeMock).toHaveBeenCalledWith(scrollerRef.value);
+    expect(observeMock).toHaveBeenCalledWith(scrollerRef?.value);
 
     // Trigger resize callback to update viewportHeight
-    resizeCallback!([], this as any);
+    if(resizeCallback && observerInstance) {
+      resizeCallback([], observerInstance);
+    }
 
     // Wait for Vue reactivity
     await wrapper.vm.$nextTick();
 
     // scrollTop is 0. 0 + 100 / 20 = 5 + 0 overscan = 5
-    expect(endIndexRef.value).toBe(5);
+    expect(endIndexRef?.value).toBe(5);
 
     // Manually change client height and trigger resize observer again
-    Object.defineProperty(scrollerRef.value, "clientHeight", { value: 300, writable: true });
-    resizeCallback!([], this as any);
+    if(scrollerRef && scrollerRef.value) {
+      Object.defineProperty(scrollerRef.value, "clientHeight", { value: 300, writable: true });
+    }
+    if(resizeCallback && observerInstance) {
+      resizeCallback([], observerInstance);
+    }
 
     await wrapper.vm.$nextTick();
 
