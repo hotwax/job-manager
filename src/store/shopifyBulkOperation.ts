@@ -1,6 +1,83 @@
 import { api } from "@common";
-import { defineStore } from "pinia";
+import { defineStore, Store } from "pinia";
 import logger from "@/logger";
+
+interface DeferredTask {
+  gid: string;
+  resolve: (value: any) => void;
+  reject: (reason?: any) => void;
+}
+
+const probePromises = new WeakMap<Store, Promise<void> | null>();
+const enrichmentLimiters = new WeakMap<Store, {
+  activeCount: number;
+  queue: DeferredTask[];
+  inFlight: Map<string, Promise<any>>;
+}>();
+
+const ENRICHMENT_CONCURRENCY_LIMIT = 5;
+
+function getLimiter(store: Store) {
+  if (!enrichmentLimiters.has(store)) {
+    enrichmentLimiters.set(store, { activeCount: 0, queue: [], inFlight: new Map() });
+  }
+  return enrichmentLimiters.get(store)!;
+}
+
+function processEnrichmentQueue(store: Store) {
+  const limiter = getLimiter(store);
+  while (limiter.activeCount < ENRICHMENT_CONCURRENCY_LIMIT && limiter.queue.length > 0) {
+    const task = limiter.queue.shift();
+    if (!task) break;
+
+    limiter.activeCount++;
+    const p = (async () => {
+      try {
+        const response = await api({
+          url: ENRICHMENT_ENDPOINT,
+          method: "GET",
+          params: { remoteMessageId: task.gid, pageSize: 1 }
+        });
+        const message = response.data?.systemMessages?.[0];
+        return { gid: task.gid, message: message?.remoteMessageId === task.gid ? message : undefined };
+      } catch (err) {
+        logger.error(`Failed to resolve the HotWax message for ${task.gid}`, err);
+        return { gid: task.gid, message: undefined };
+      } finally {
+        limiter.inFlight.delete(task.gid);
+        limiter.activeCount--;
+        Promise.resolve().then(() => processEnrichmentQueue(store));
+      }
+    })();
+
+    p.then(task.resolve).catch(task.reject);
+  }
+}
+
+function enqueueEnrichment(store: Store, gid: string): Promise<any> {
+  const limiter = getLimiter(store);
+  if (limiter.inFlight.has(gid)) {
+    return limiter.inFlight.get(gid)!;
+  }
+  const existingTask = limiter.queue.find(t => t.gid === gid);
+  if (existingTask) {
+    // If it's in queue, we just need to return a new promise that resolves when that task resolves
+    return new Promise((resolve, reject) => {
+        const origResolve = existingTask.resolve;
+        const origReject = existingTask.reject;
+        existingTask.resolve = (val) => { origResolve(val); resolve(val); };
+        existingTask.reject = (err) => { origReject(err); reject(err); };
+    });
+  }
+
+  const p = new Promise<any>((resolve, reject) => {
+    limiter.queue.push({ gid, resolve, reject });
+  });
+  limiter.inFlight.set(gid, p);
+
+  processEnrichmentQueue(store);
+  return p;
+}
 
 // Shopify is the source of truth for this page: bulkOperations returns every bulk operation
 // the HotWax app has run against the shop, with the live status, counts and signed result
@@ -85,7 +162,9 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
     stats: { total: 0, inFlight: 0, completed: 0, failed: 0, windowSize: 0, truncated: false },
     loading: false,
     isFetchingOperations: false,
-    lastError: ""
+    lastError: "",
+    _fetchOperationsId: 0,
+    _fetchStatsId: 0
   }),
   getters: {
     // One row per Shopify operation, with the HotWax message attached when we have it. An
@@ -135,11 +214,14 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
 
     async fetchOperations(payload: Record<string, any> = {}) {
       const { systemMessageRemoteId, cursor, direction } = payload;
+      const fetchId = ++this._fetchOperationsId;
 
       if(!systemMessageRemoteId) {
         this.lastError = "No Shopify shop is configured for this product store";
         this.operations = [];
-
+        this.pageInfo = { hasNextPage: false, hasPreviousPage: false, startCursor: "", endCursor: "" };
+        this.loading = false;
+        this.isFetchingOperations = false;
         return;
       }
 
@@ -173,6 +255,8 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
 
       try {
         const data = await this.runShopifyQuery(systemMessageRemoteId, queryText, variables);
+        if (fetchId !== this._fetchOperationsId) return;
+
         const connection = data?.bulkOperations;
 
         this.operations = (connection?.edges ?? []).map((edge: any) => edge.node);
@@ -183,13 +267,16 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
           endCursor: connection?.pageInfo?.endCursor ?? ""
         };
       } catch (err: any) {
+        if (fetchId !== this._fetchOperationsId) return;
         logger.error("Failed to fetch Shopify bulk operations", err);
         this.lastError = err?.message || "Failed to load bulk operations from Shopify";
         this.operations = [];
         this.pageInfo = { hasNextPage: false, hasPreviousPage: false, startCursor: "", endCursor: "" };
       } finally {
-        this.loading = false;
-        this.isFetchingOperations = false;
+        if (fetchId === this._fetchOperationsId) {
+          this.loading = false;
+          this.isFetchingOperations = false;
+        }
       }
     },
 
@@ -197,7 +284,12 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
     // instead of pretending to summarise all history.
     async fetchStats(payload: Record<string, any> = {}) {
       const { systemMessageRemoteId } = payload;
-      if(!systemMessageRemoteId) {return;}
+      const fetchId = ++this._fetchStatsId;
+
+      if(!systemMessageRemoteId) {
+        this.stats = { total: 0, inFlight: 0, completed: 0, failed: 0, windowSize: 0, truncated: false };
+        return;
+      }
 
       const shopifyQuery = this.buildShopifyQuery(payload);
       const variables: Record<string, any> = { first: STATS_WINDOW_SIZE };
@@ -214,6 +306,8 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
 
       try {
         const data = await this.runShopifyQuery(systemMessageRemoteId, queryText, variables);
+        if (fetchId !== this._fetchStatsId) return;
+
         const nodes = (data?.bulkOperations?.edges ?? []).map((edge: any) => edge.node);
 
         this.stats = {
@@ -225,6 +319,7 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
           truncated: data?.bulkOperations?.pageInfo?.hasNextPage ?? false
         };
       } catch (err) {
+        if (fetchId !== this._fetchStatsId) return;
         logger.error("Failed to fetch Shopify bulk operation stats", err);
         this.stats = { total: 0, inFlight: 0, completed: 0, failed: 0, windowSize: 0, truncated: false };
       }
@@ -234,30 +329,38 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
     // instance that ignores it would hand back arbitrary messages, so enrichment is switched
     // off entirely rather than attaching a wrong job to a row.
     async ensureEnrichmentSupported() {
-      if(this.enrichmentProbed) {
+      if (this.enrichmentProbed) {
         return;
       }
 
-      this.enrichmentProbed = true;
+      let probePromise = probePromises.get(this as any);
+      if (!probePromise) {
+        probePromise = (async () => {
+          try {
+            const response = await api({
+              url: ENRICHMENT_ENDPOINT,
+              method: "GET",
+              params: { remoteMessageId: ENRICHMENT_PROBE_ID, pageSize: 1 }
+            });
 
-      try {
-        const response = await api({
-          url: ENRICHMENT_ENDPOINT,
-          method: "GET",
-          params: { remoteMessageId: ENRICHMENT_PROBE_ID, pageSize: 1 }
-        });
+            this.enrichmentAvailable = !response.data?.systemMessages?.length;
+          } catch (err: any) {
+            if (err?.response?.status === 404) {
+              this.enrichmentAvailable = false;
+              return;
+            }
 
-        this.enrichmentAvailable = !response.data?.systemMessages?.length;
-      } catch (err: any) {
-        if(err?.response?.status === 404) {
-          this.enrichmentAvailable = false;
-
-          return;
-        }
-
-        logger.error("Failed to check whether this instance filters system messages by remote id", err);
-        this.enrichmentAvailable = false;
+            logger.error("Failed to check whether this instance filters system messages by remote id", err);
+            this.enrichmentAvailable = false;
+          } finally {
+            this.enrichmentProbed = true;
+            probePromises.set(this as any, null);
+          }
+        })();
+        probePromises.set(this as any, probePromise);
       }
+
+      return probePromise;
     },
 
     // Resolves each Shopify operation to the HotWax message that requested it, keyed by the
@@ -275,34 +378,21 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
         .filter((gid: string) => gid?.startsWith(SHOPIFY_BULK_GID_PREFIX))
         .filter((gid: string) => force || !(gid in this.enrichmentIndex));
 
-      if(!pending.length) {
+      const uniquePending = [...new Set(pending)];
+      if(!uniquePending.length) {
         return;
       }
 
-      const results = await Promise.all([...new Set(pending)].map(async (gid: string) => {
-        try {
-          const response = await api({
-            url: ENRICHMENT_ENDPOINT,
-            method: "GET",
-            params: { remoteMessageId: gid, pageSize: 1 }
-          });
-
-          const message = response.data?.systemMessages?.[0];
-
-          // Guards against a filter that is accepted but not applied, so a row never shows
-          // someone else's job.
-          return { gid, message: message?.remoteMessageId === gid ? message : undefined };
-        } catch (err) {
-          logger.error(`Failed to resolve the HotWax message for ${gid}`, err);
-
-          return { gid, message: undefined };
-        }
-      }));
+      const promises = uniquePending.map(gid => enqueueEnrichment(this as any, gid));
+      const results = await Promise.all(promises);
 
       // A miss is cached as null so a Shopify operation with no HotWax record is not looked
       // up again on every revisit.
       results.forEach((result: any) => {
-        this.enrichmentIndex[result.gid] = result.message ?? null;
+        // Only update if it wasn't already populated while we were waiting (if force=false)
+        if (force || !(result.gid in this.enrichmentIndex)) {
+          this.enrichmentIndex[result.gid] = result.message ?? null;
+        }
       });
     },
 
