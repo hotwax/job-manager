@@ -1,21 +1,33 @@
 import { mount } from "@vue/test-utils";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { defineComponent, ref } from "vue";
-import { useVirtualWindow } from "./useVirtualWindow";
+import { type VirtualWindowOptions, useVirtualWindow } from "./useVirtualWindow";
 
 describe("useVirtualWindow", () => {
   const rowHeight = 20;
+  let wrappers: ReturnType<typeof mount>[] = [];
 
   beforeEach(() => {
     vi.restoreAllMocks();
+    wrappers = [];
+
+    class MockResizeObserver implements globalThis.ResizeObserver {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      constructor(callback: globalThis.ResizeObserverCallback) {}
+      observe = vi.fn();
+      unobserve = vi.fn();
+      disconnect = vi.fn();
+    }
+    vi.stubGlobal("ResizeObserver", MockResizeObserver);
   });
 
   afterEach(() => {
+    wrappers.forEach(w => w.unmount());
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
 
-  function setupTestComponent(options: any) {
+  function setupTestComponent(options: VirtualWindowOptions) {
     let scrollerRef: ReturnType<typeof useVirtualWindow>["scroller"] | null = null;
     let startIndexRef: ReturnType<typeof useVirtualWindow>["startIndex"] | null = null;
     let endIndexRef: ReturnType<typeof useVirtualWindow>["endIndex"] | null = null;
@@ -37,6 +49,7 @@ describe("useVirtualWindow", () => {
     });
 
     const wrapper = mount(DummyComponent);
+    wrappers.push(wrapper);
 
     return { wrapper, scrollerRef, startIndexRef, endIndexRef, onScrollFn, scrollToIndexFn };
   }
@@ -161,7 +174,7 @@ describe("useVirtualWindow", () => {
     let resizeCallback: globalThis.ResizeObserverCallback | null = null;
     let observerInstance: globalThis.ResizeObserver | null = null;
 
-    class MockResizeObserver implements globalThis.ResizeObserver {
+    class SpecificMockResizeObserver implements globalThis.ResizeObserver {
       constructor(callback: globalThis.ResizeObserverCallback) {
         resizeCallback = callback;
         // eslint-disable-next-line @typescript-eslint/no-this-alias
@@ -172,7 +185,7 @@ describe("useVirtualWindow", () => {
       disconnect = disconnectMock;
     }
 
-    vi.stubGlobal("ResizeObserver", MockResizeObserver);
+    vi.stubGlobal("ResizeObserver", SpecificMockResizeObserver);
 
     const { wrapper, scrollerRef, endIndexRef } = setupTestComponent({
       rowHeight: 20,
