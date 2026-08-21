@@ -166,41 +166,28 @@
             <div v-if="areServiceParamsLoading" class="payload-loading">
               <ion-spinner name="crescent"></ion-spinner>
             </div>
-            <ion-list v-else-if="logParameters.length" lines="full">
+            <ion-list v-else-if="mergedParameters.length" lines="full">
               <ion-list-header>
-                <ion-label>{{ translate("Log Parameters") }}</ion-label>
+                <ion-label>{{ translate("Parameters") }}</ion-label>
               </ion-list-header>
               <ion-item lines="none">
                 <ion-label class="ion-text-wrap">
-                  <p>{{ translate("Values passed to Data Manager when this log was created.") }}</p>
+                  <p>{{ translate("Parameters the import service accepts, with the values this log was created with.") }}</p>
                 </ion-label>
               </ion-item>
-              <ion-item v-for="parameter in logParameters" :key="parameter.parameterName">
-                <ion-label class="ion-text-wrap">
-                  {{ parameter.parameterName }}
-                  <p>{{ parameter.parameterValue }}</p>
-                </ion-label>
-              </ion-item>
-            </ion-list>
-            <ion-list v-if="!areServiceParamsLoading && serviceParameters.length" lines="full">
-              <ion-list-header>
-                <ion-label>{{ translate("Import Service Parameters") }}</ion-label>
-              </ion-list-header>
-              <ion-item lines="none">
-                <ion-label class="ion-text-wrap">
-                  <p>{{ translate("Input parameters accepted by the import service. This metadata is read-only.") }}</p>
-                </ion-label>
-              </ion-item>
-              <ion-item v-for="parameter in serviceParameters" :key="parameter.name">
+              <ion-item v-for="parameter in mergedParameters" :key="parameter.name">
                 <ion-label class="ion-text-wrap">
                   {{ parameter.name }}
+                  <p v-if="parameter.submitted">{{ parameter.value }}</p>
+                  <p v-else>{{ translate("Not set for this log") }}</p>
                   <p v-if="parameter.type">{{ parameter.type }}</p>
                   <p v-if="parameter.default">{{ translate("Default:") }} {{ parameter.default }}</p>
+                  <p v-if="!parameter.inContract">{{ translate("Not declared by the service") }}</p>
                 </ion-label>
-                <ion-badge v-if="parameter.required === 'true'" slot="end" color="medium">{{ translate("Required") }}</ion-badge>
+                <ion-badge v-if="parameter.required" slot="end" color="medium">{{ translate("Required") }}</ion-badge>
               </ion-item>
             </ion-list>
-            <p v-if="!areServiceParamsLoading && !logParameters.length && !serviceParameters.length" class="payload-empty">{{ translate("No parameters found for this log.") }}</p>
+            <p v-if="!areServiceParamsLoading && !mergedParameters.length" class="payload-empty">{{ translate("No parameters found for this log.") }}</p>
           </div>
 
           <div v-else-if="payloadLoading" class="payload-loading">
@@ -358,6 +345,34 @@ const isParametersView = computed(() => selectedPayload.value === "parameters");
 watch(selectedPayload, async (view) => {
   if (view !== "parameters" || haveLoadedServiceParams.value) return;
   await loadServiceParameters();
+});
+
+// One list: the service contract is the master set of rows, with the values this log was
+// actually created with overlaid onto the ones that match by name. A submitted parameter the
+// service does not declare is still listed rather than dropped, so nothing is hidden.
+const mergedParameters = computed(() => {
+  const submitted = new Map(logParameters.value.map((parameter: any) => [parameter.parameterName, parameter.parameterValue]));
+  const declared = serviceParameters.value.map((parameter: any) => ({
+    name: parameter.name,
+    type: parameter.type,
+    default: parameter.default,
+    required: parameter.required === "true",
+    submitted: submitted.has(parameter.name),
+    value: submitted.get(parameter.name),
+    inContract: true
+  }));
+  const declaredNames = new Set(serviceParameters.value.map((parameter: any) => parameter.name));
+  const extras = logParameters.value
+    .filter((parameter: any) => !declaredNames.has(parameter.parameterName))
+    .map((parameter: any) => ({
+      name: parameter.parameterName,
+      required: false,
+      submitted: true,
+      value: parameter.parameterValue,
+      inContract: false
+    }));
+
+  return [...declared, ...extras];
 });
 
 const loadServiceParameters = async () => {
