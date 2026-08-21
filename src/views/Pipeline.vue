@@ -415,7 +415,7 @@
                     <p v-if="getLogRunTimeRelative(log)" class="overline" :title="getLogRunTimeExact(log)">
                       {{ getLogRunTimeLabel(log) }} {{ getLogRunTimeRelative(log) }}
                     </p>
-                    {{ log.fileName }}
+                    {{ getLogFileName(log) }}
                     <p>ID: {{ log.logId }} | {{ translate("Uploaded By") }}: {{ log.createdByUserLogin || "-" }}</p>
                     <p>
                       <span class="size-text">{{ getFileSize(log.fileSize) }}</span>
@@ -542,7 +542,7 @@ import { useJobStore } from "@/store/jobs";
 import { useSystemMessageStore } from "@/store/systemMessage";
 import { useMdmConfigStore } from "@/store/mdmConfig";
 import { useUtilStore } from "@/store/util";
-import { getFileSize, getTimeInMillis, hasFailedRecords, showToast, MDM_PENDING_STATUSES } from "@/utils";
+import { MDM_PENDING_STATUSES, getFileSize, getLogFileName, getTimeInMillis, hasFailedRecords, showToast } from "@/utils";
 
 const jobStore = useJobStore();
 const systemMessageStore = useSystemMessageStore();
@@ -709,8 +709,10 @@ const failedRunJobs = computed(() => {
 });
 
 // 4. Configuration/Definition Errors
+// A missing service (serviceName '_NA_') is not a fault: it is how a job that is no longer
+// used gets deactivated. Only a runtime data error is a real configuration problem.
 const configErrorJobs = computed(() => {
-  return jobs.value.filter((job: any) => job.runtimeData?._ERROR_MESSAGE_ || job.serviceName === '_NA_');
+  return jobs.value.filter((job: any) => job.runtimeData?._ERROR_MESSAGE_);
 });
 
 const stuckJobsCount = computed(() => stuckJobs.value.length);
