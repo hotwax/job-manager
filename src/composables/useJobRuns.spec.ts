@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useJobRuns } from './useJobRuns';
-import { ref, effectScope } from 'vue';
+import { ref, effectScope, Ref } from 'vue';
 
 const mockFetchJobRuns = vi.fn();
 vi.mock('@/store/jobs', () => ({
@@ -23,11 +23,11 @@ describe('useJobRuns', () => {
     mockResolveUserFullNames.mockResolvedValue(undefined);
   });
 
-  it('initializes with default state', () => {
+  it('initializes with default state', async () => {
     const jobNameRef = ref('TestJob');
     const scope = effectScope();
-    scope.run(() => {
-      const { runs, isRunsLoading, hasLoadedRuns, hasMoreRuns } = useJobRuns(jobNameRef);
+    await scope.run(async () => {
+      const { runs, isRunsLoading, hasLoadedRuns, hasMoreRuns } = useJobRuns(jobNameRef as Ref<string | undefined>);
       expect(runs.value).toEqual([]);
       expect(isRunsLoading.value).toBe(false);
       expect(hasLoadedRuns.value).toBe(false);
@@ -41,26 +41,23 @@ describe('useJobRuns', () => {
     mockFetchJobRuns.mockResolvedValueOnce(mockRuns);
 
     const jobNameRef = ref('TestJob');
+    const scope = effectScope();
 
-    await new Promise<void>((resolve) => {
-      const scope = effectScope();
-      scope.run(async () => {
-        const { loadRuns, runs, isRunsLoading, hasLoadedRuns, hasMoreRuns } = useJobRuns(jobNameRef);
+    await scope.run(async () => {
+      const { loadRuns, runs, isRunsLoading, hasLoadedRuns, hasMoreRuns } = useJobRuns(jobNameRef as Ref<string | undefined>);
 
-        const loadPromise = loadRuns();
-        expect(isRunsLoading.value).toBe(true);
-        expect(hasLoadedRuns.value).toBe(false);
+      const loadPromise = loadRuns();
+      expect(isRunsLoading.value).toBe(true);
+      expect(hasLoadedRuns.value).toBe(false);
 
-        await loadPromise;
+      await loadPromise;
 
-        expect(runs.value.length).toBe(20);
-        expect(isRunsLoading.value).toBe(false);
-        expect(hasLoadedRuns.value).toBe(true);
-        expect(hasMoreRuns.value).toBe(true); // 20 results indicates maybe more
-        resolve();
-      });
-      scope.stop();
+      expect(runs.value.length).toBe(20);
+      expect(isRunsLoading.value).toBe(false);
+      expect(hasLoadedRuns.value).toBe(true);
+      expect(hasMoreRuns.value).toBe(true); // 20 results indicates maybe more
     });
+    scope.stop();
   });
 
   it('merges load-more runs without duplicates', async () => {
@@ -74,7 +71,7 @@ describe('useJobRuns', () => {
     const scope = effectScope();
 
     await scope.run(async () => {
-      const { loadRuns, loadMoreRuns, runs, hasMoreRuns } = useJobRuns(jobNameRef);
+      const { loadRuns, loadMoreRuns, runs, hasMoreRuns } = useJobRuns(jobNameRef as Ref<string | undefined>);
 
       await loadRuns();
       expect(runs.value.map(r => r.jobRunId)).toEqual(['1', '2']);
@@ -96,7 +93,7 @@ describe('useJobRuns', () => {
     const scope = effectScope();
 
     await scope.run(async () => {
-      const { loadRuns, runs, hasMoreRuns } = useJobRuns(jobNameRef);
+      const { loadRuns, runs, hasMoreRuns } = useJobRuns(jobNameRef as Ref<string | undefined>);
 
       await loadRuns();
 
@@ -121,7 +118,7 @@ describe('useJobRuns', () => {
     const scope = effectScope();
 
     await scope.run(async () => {
-      const { loadRuns, runs } = useJobRuns(jobNameRef);
+      const { loadRuns, runs } = useJobRuns(jobNameRef as Ref<string | undefined>);
 
       const req1 = loadRuns();
       const req2 = loadRuns();
@@ -148,19 +145,17 @@ describe('useJobRuns', () => {
     const scope = effectScope();
 
     let runsRef: any;
-    scope.run(() => {
-      const { loadRuns, runs } = useJobRuns(jobNameRef);
+    const promise = scope.run(async () => {
+      const { loadRuns, runs } = useJobRuns(jobNameRef as Ref<string | undefined>);
       runsRef = runs;
-      loadRuns();
+      return loadRuns();
     });
 
     // Dispose scope before request resolves
     scope.stop();
     resolveReq([{ jobRunId: '1' }]);
 
-    // Wait for microtasks
-    await new Promise(r => setTimeout(r, 0));
-
+    await promise;
     expect(runsRef.value).toEqual([]);
   });
 
@@ -169,12 +164,92 @@ describe('useJobRuns', () => {
     const scope = effectScope();
 
     await scope.run(async () => {
-      const { pinnedRunId, clearPinnedRun } = useJobRuns(jobNameRef);
+      const { pinnedRunId, clearPinnedRun } = useJobRuns(jobNameRef as Ref<string | undefined>);
       pinnedRunId.value = '123';
 
       await clearPinnedRun();
 
       expect(pinnedRunId.value).toBe('');
+      expect(mockFetchJobRuns).toHaveBeenCalledTimes(1);
+    });
+    scope.stop();
+  });
+
+  it('resets state when job identity changes, resolving only the new job', async () => {
+    let resolveA: any;
+    let resolveB: any;
+
+    const promiseA = new Promise(r => { resolveA = r; });
+    const promiseB = new Promise(r => { resolveB = r; });
+
+    mockFetchJobRuns
+      .mockReturnValueOnce(promiseA)
+      .mockReturnValueOnce(promiseB);
+
+    const jobNameRef = ref('JobA');
+    const scope = effectScope();
+
+    await scope.run(async () => {
+      const { loadRuns, reset, runs, isRunsLoading } = useJobRuns(jobNameRef as Ref<string | undefined>);
+
+      // Start load for JobA
+      const reqA = loadRuns();
+
+      // Job identity changes
+      jobNameRef.value = 'JobB';
+      reset();
+      expect(runs.value).toEqual([]);
+      expect(isRunsLoading.value).toBe(false);
+
+      // Start load for JobB
+      const reqB = loadRuns();
+
+      // JobB resolves first
+      resolveB([{ jobRunId: 'B-1' }]);
+      await reqB;
+      expect(runs.value).toEqual([{ jobRunId: 'B-1' }]);
+
+      // JobA resolves last, should be ignored
+      resolveA([{ jobRunId: 'A-1' }]);
+      await reqA;
+
+      // State should still reflect JobB
+      expect(runs.value).toEqual([{ jobRunId: 'B-1' }]);
+    });
+    scope.stop();
+  });
+
+  it('prevents load-more overlap', async () => {
+    let resolveFirst: any;
+    const promiseFirst = new Promise(r => { resolveFirst = r; });
+
+    mockFetchJobRuns.mockReturnValueOnce(promiseFirst);
+
+    const jobNameRef = ref('TestJob');
+    const scope = effectScope();
+
+    await scope.run(async () => {
+      const { loadMoreRuns, isLoadingMore } = useJobRuns(jobNameRef as Ref<string | undefined>);
+
+      const mockEvent1 = { target: { complete: vi.fn() } };
+      const req1 = loadMoreRuns(mockEvent1);
+      expect(isLoadingMore.value).toBe(true);
+
+      const mockEvent2 = { target: { complete: vi.fn() } };
+      const req2 = loadMoreRuns(mockEvent2); // Overlapping call
+
+      // Event complete should be called immediately for overlapping call
+      expect(mockEvent2.target.complete).toHaveBeenCalled();
+
+      // Resolve the first request
+      resolveFirst([{ jobRunId: '1' }]);
+      await req1;
+      await req2;
+
+      expect(isLoadingMore.value).toBe(false);
+      expect(mockEvent1.target.complete).toHaveBeenCalled();
+
+      // Fetch was only called once
       expect(mockFetchJobRuns).toHaveBeenCalledTimes(1);
     });
     scope.stop();

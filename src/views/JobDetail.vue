@@ -666,7 +666,8 @@ const {
   runsHasDataLogs,
   loadRuns,
   loadMoreRuns,
-  clearPinnedRun
+  clearPinnedRun,
+  reset
 } = useJobRuns(jobNameRef);
 
 // Product & Category Context
@@ -859,6 +860,7 @@ const goToLogDetail = (logId: string | number) => {
 
 const loadJob = async () => {
   isLoading.value = true
+  reset()
   try {
     job.value = await jobStore.fetchJobDetail(route.params.jobName as string)
   } catch (err) {

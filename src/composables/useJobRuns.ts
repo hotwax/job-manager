@@ -1,14 +1,41 @@
-import { ref, computed, onScopeDispose } from 'vue';
+import { ref, computed, onScopeDispose, Ref } from 'vue';
 import { useJobStore } from '@/store/jobs';
 import { useUserStore } from '@/store/user';
 import { filterJobRuns } from '@/utils/jobRuns';
 
-export function useJobRuns(jobNameRef: any) {
+export interface JobRun {
+  jobRunId: string;
+  jobName: string;
+  userId: string;
+  hasError: string;
+  startTime: string;
+  endTime: string;
+  runStatus?: string;
+  logs?: any[];
+  messages?: string;
+  [key: string]: any;
+}
+
+export interface FetchJobRunsPayload {
+  pageSize: number;
+  pageIndex: number;
+  orderByField: string;
+  jobRunId?: string;
+}
+
+export interface InfiniteScrollEvent {
+  target: {
+    complete: () => void;
+  };
+}
+
+export function useJobRuns(jobNameRef: Ref<string | undefined>) {
   const jobStore = useJobStore();
   const userStore = useUserStore();
 
-  const runs = ref<any[]>([]);
+  const runs = ref<JobRun[]>([]);
   const isRunsLoading = ref(false);
+  const isLoadingMore = ref(false);
   const hasLoadedRuns = ref(false);
   const hasMoreRuns = ref(true);
   const pageIndex = ref(0);
@@ -29,6 +56,21 @@ export function useJobRuns(jobNameRef: any) {
 
   let currentRequestId = 0;
 
+  const reset = () => {
+    runs.value = [];
+    isRunsLoading.value = false;
+    isLoadingMore.value = false;
+    hasLoadedRuns.value = false;
+    hasMoreRuns.value = true;
+    pageIndex.value = 0;
+    pinnedRunId.value = '';
+    runsQueryString.value = '';
+    runsStatus.value = '';
+    runsUserId.value = '';
+    runsHasDataLogs.value = '';
+    currentRequestId++; // Invalidate pending requests for the old job
+  };
+
   const fetchRuns = async (isLoadMore = false) => {
     const jobName = jobNameRef.value;
     if (!jobName) return;
@@ -41,12 +83,13 @@ export function useJobRuns(jobNameRef: any) {
       hasLoadedRuns.value = false;
     } else {
       pageIndex.value++;
+      isLoadingMore.value = true;
     }
 
     const requestId = ++currentRequestId;
 
     try {
-      const payload = { pageSize: pageSize.value, pageIndex: pageIndex.value, orderByField: "-jobRunId" } as any;
+      const payload: FetchJobRunsPayload = { pageSize: pageSize.value, pageIndex: pageIndex.value, orderByField: "-jobRunId" };
       if (pinnedRunId.value) payload.jobRunId = pinnedRunId.value;
 
       const resp = await jobStore.fetchJobRuns(jobName, payload);
@@ -58,13 +101,13 @@ export function useJobRuns(jobNameRef: any) {
         if (!isLoadMore) {
           runs.value = resp;
         } else if (resp.length > 0) {
-          const existingIds = new Set(runs.value.map((run: any) => run.jobRunId));
-          const uniqueNewRuns = resp.filter((run: any) => !existingIds.has(run.jobRunId));
+          const existingIds = new Set(runs.value.map((run: JobRun) => run.jobRunId));
+          const uniqueNewRuns = resp.filter((run: JobRun) => !existingIds.has(run.jobRunId));
           runs.value.push(...uniqueNewRuns);
         }
 
         hasMoreRuns.value = !pinnedRunId.value && resp.length === pageSize.value;
-        await userStore.resolveUserFullNames(resp.map((run: any) => run.userId));
+        await userStore.resolveUserFullNames(resp.map((run: JobRun) => run.userId));
       } else {
         if (!isLoadMore) runs.value = [];
         hasMoreRuns.value = false;
@@ -78,8 +121,12 @@ export function useJobRuns(jobNameRef: any) {
       if (requestId !== currentRequestId) return;
       if (!isLoadMore) hasLoadedRuns.value = true;
     } finally {
-      if (requestId === currentRequestId && !isLoadMore) {
-        isRunsLoading.value = false;
+      if (requestId === currentRequestId) {
+        if (!isLoadMore) {
+          isRunsLoading.value = false;
+        } else {
+          isLoadingMore.value = false;
+        }
       }
     }
   };
@@ -88,10 +135,20 @@ export function useJobRuns(jobNameRef: any) {
     await fetchRuns(false);
   };
 
-  const loadMoreRuns = async (event?: any) => {
-    await fetchRuns(true);
-    if (event?.target?.complete) {
-      event.target.complete();
+  const loadMoreRuns = async (event?: InfiniteScrollEvent) => {
+    if (isLoadingMore.value) {
+      if (event?.target?.complete) {
+        event.target.complete();
+      }
+      return;
+    }
+
+    try {
+      await fetchRuns(true);
+    } finally {
+      if (event?.target?.complete) {
+        event.target.complete();
+      }
     }
   };
 
@@ -108,6 +165,7 @@ export function useJobRuns(jobNameRef: any) {
     runs,
     filteredRuns,
     isRunsLoading,
+    isLoadingMore,
     hasLoadedRuns,
     hasMoreRuns,
     pinnedRunId,
@@ -118,5 +176,6 @@ export function useJobRuns(jobNameRef: any) {
     loadRuns,
     loadMoreRuns,
     clearPinnedRun,
+    reset,
   };
 }
