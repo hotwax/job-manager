@@ -251,6 +251,20 @@ const MDM_FAILED_STATUSES = ["DmlsCrashed", "DmlsFailed"];
 
 // A file import counts as errored when it crashed outright or carries rejected
 // records, whatever stage it reached.
+// Not every import arrives as an upload. RESTlet-backed configs record the payload at
+// contentLocation and never set fileName, so a row keyed off fileName alone renders blank.
+// Fall back to the basename of the stored path, then the error file, then the script title,
+// so an import always names itself.
+const getLogFileName = (log: any) => {
+  if(log?.fileName) {
+    return log.fileName;
+  }
+
+  const fromLocation = String(log?.contentLocation || "").split("/").pop();
+
+  return fromLocation || log?.errorFileName || log?.scriptTitle || "";
+};
+
 const hasFailedRecords = (log: any) => MDM_FAILED_STATUSES.includes(log?.statusId) || Number(log?.failedRecordCount || 0) > 0;
 
 const getTimeInMillis = (value: any) => {
@@ -277,6 +291,7 @@ export {
   timeTillRun,
   getDuration,
   getFileSize,
+  getLogFileName,
   getTimeInMillis,
   hasFailedRecords,
   MDM_FAILED_STATUSES,
