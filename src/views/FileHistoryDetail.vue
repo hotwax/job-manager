@@ -380,10 +380,9 @@ const loadServiceParameters = async () => {
   areServiceParamsLoading.value = true;
 
   try {
-    // What this log was actually given comes first; the service contract is the wider set of
-    // inputs the service accepts, which is context rather than the answer.
-    const logParams = await mdmStore.fetchDataManagerLogParameters(props.id);
-    logParameters.value = logParams || [];
+    // The log read already carries the parameters it was created with, so there is nothing
+    // further to fetch — an instance without the log master simply supplies none.
+    logParameters.value = log.value?.parameters || [];
 
     if (serviceName) {
       const params = await jobStore.fetchServiceParams(serviceName);
