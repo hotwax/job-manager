@@ -1,6 +1,6 @@
 import { computed, Ref } from 'vue';
 import { DateTime } from 'luxon';
-import { MDM_PENDING_STATUSES, getTimeInMillis, hasFailedRecords, getFileSize, getLogFileName } from '@/utils';
+import { MDM_PENDING_STATUSES, getTimeInMillis, hasFailedRecords, hasSystemMessageError, getFileSize, getLogFileName } from '@/utils';
 import { translate } from '@common';
 import {
   alertCircleOutline,
@@ -309,7 +309,7 @@ export function useDashboardProjections(
       const isOutgoing = msg.isOutgoing === 'Y';
       const isPending = ['SmsgProduced', 'SmsgCreated', 'SmsgSending'].includes(msg.statusId) && !(msg.statusId === 'SmsgProduced' && Number(msg.failCount) > 0);
       const isSuccess = ['SmsgSent', 'SmsgConsumed', 'SmsgConfirmed'].includes(msg.statusId);
-      const isError = msg.statusId === 'SmsgError' || (msg.statusId === 'SmsgProduced' && Number(msg.failCount) > 0);
+      const isError = hasSystemMessageError(msg);
 
       if (isOutgoing) {
         outgoingMessages.push(msg);

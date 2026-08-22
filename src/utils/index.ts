@@ -267,6 +267,12 @@ const getLogFileName = (log: any) => {
 
 const hasFailedRecords = (log: any) => MDM_FAILED_STATUSES.includes(log?.statusId) || Number(log?.failedRecordCount || 0) > 0;
 
+// A message counts as errored when it failed outright, or is still sitting produced with
+// failed delivery attempts behind it. Shared so a dashboard count and the list it links to
+// can never disagree about what "error" means.
+const hasSystemMessageError = (msg: any) =>
+  msg?.statusId === "SmsgError" || (msg?.statusId === "SmsgProduced" && Number(msg?.failCount || 0) > 0);
+
 const getTimeInMillis = (value: any) => {
   if (!value) return 0;
   if (typeof value === "number") return value;
@@ -294,6 +300,7 @@ export {
   getLogFileName,
   getTimeInMillis,
   hasFailedRecords,
+  hasSystemMessageError,
   MDM_FAILED_STATUSES,
   MDM_PENDING_STATUSES
 }
