@@ -28,6 +28,7 @@ import DataDocumentExportHistory from '@/views/DataDocumentExportHistory.vue';
 import DataDocumentFeeds from '@/views/DataDocumentFeeds.vue';
 import DataDocumentFeedDetail from '@/views/DataDocumentFeedDetail.vue';
 
+import ShopifyBulkOperations from '@/views/ShopifyBulkOperations.vue';
 import Pipeline from '@/views/Pipeline.vue';
 import Actions from "@/authorization/actions";
 
@@ -163,6 +164,12 @@ const routes: Array<RouteRecordRaw> = [
     component: SystemMessageRemoteDetail,
     beforeEnter: authGuard,
     props: true
+  },
+  {
+    path: '/shopify-bulk-operations',
+    name: 'ShopifyBulkOperations',
+    component: ShopifyBulkOperations,
+    beforeEnter: authGuard
   },
   {
     path: '/data-documents',
