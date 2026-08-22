@@ -196,10 +196,8 @@
             <ion-card-subtitle>{{ translate("Operational layout of file ingestion flows and message synchronization queues.") }}</ion-card-subtitle>
           </ion-card-header>
           <ion-card-content>
-            <ion-grid class="ion-no-padding">
-              <ion-row>
+            <div class="visualizer-grid">
                 <!-- Column 1: Bulk File Ingestion (MDM) -->
-                <ion-col size="12" size-lg="6">
                   <div class="visualizer-section">
                     <h4>{{ translate("Bulk File Ingestion (MDM)") }}</h4>
                     <div class="visualizer-row">
@@ -222,10 +220,8 @@
                       </ion-item>
                     </div>
                   </div>
-                </ion-col>
 
                 <!-- Column 2: System Message Sync (Inbound/Outbound) -->
-                <ion-col size="12" size-lg="6">
                   <div class="visualizer-section">
                     <h4>{{ translate("Message Synchronization Queue") }}</h4>
                     <div class="visualizer-row">
@@ -248,9 +244,7 @@
                       </ion-item>
                     </div>
                   </div>
-                </ion-col>
-              </ion-row>
-            </ion-grid>
+            </div>
           </ion-card-content>
         </ion-card>
 
@@ -415,7 +409,7 @@
                     <p v-if="getLogRunTimeRelative(log)" class="overline" :title="getLogRunTimeExact(log)">
                       {{ getLogRunTimeLabel(log) }} {{ getLogRunTimeRelative(log) }}
                     </p>
-                    {{ log.fileName }}
+                    {{ getLogFileName(log) }}
                     <p>ID: {{ log.logId }} | {{ translate("Uploaded By") }}: {{ log.createdByUserLogin || "-" }}</p>
                     <p>
                       <span class="size-text">{{ getFileSize(log.fileSize) }}</span>
@@ -542,7 +536,7 @@ import { useJobStore } from "@/store/jobs";
 import { useSystemMessageStore } from "@/store/systemMessage";
 import { useMdmConfigStore } from "@/store/mdmConfig";
 import { useUtilStore } from "@/store/util";
-import { showToast } from "@/utils";
+import { MDM_PENDING_STATUSES, getFileSize, getLogFileName, showToast } from "@/utils";
 import { useDashboardProjections, formatJobResult, getRelativeTimeSpan } from "@/composables/useDashboardProjections";
 
 const jobStore = useJobStore();
@@ -640,7 +634,6 @@ onUnmounted(() => {
 
 
 // Helper to calculate average duration of completed runs in the last day
-
 
 
 
@@ -858,14 +851,26 @@ onIonViewWillLeave(() => {
   color: var(--ion-color-medium);
 }
 
+/* The two flows sit side by side while each still has room for a readable pair, and drop
+   to block flow before that. min(100%, …) keeps the track from overflowing a narrow phone. */
+.visualizer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: var(--spacer-sm);
+}
+
 .visualizer-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--spacer-xs);
 }
 
+/* A real flex-basis rather than flex: 1 (basis 0), which let the queue boxes shrink until
+   their labels broke one word per line. Below the basis the pair wraps and each box takes
+   the full row instead of being squeezed. */
 .visualizer-item {
-  flex: 1;
+  flex: 1 1 180px;
   border: 1px solid var(--ion-color-light);
   border-radius: 8px;
 }
@@ -877,9 +882,15 @@ onIonViewWillLeave(() => {
   padding: 0 var(--spacer-2xs);
 }
 
+/* minmax(0, …) rather than a bare fr: a grid item's default min-width is auto, so the
+   track cannot shrink below its content's min-content width. The diagnostics column
+   carries unbreakable strings (service names like
+   co.hotwax.rule.DecisionRuleServices.run#RuleGroup, file names, message ids) whose
+   min-content ran to 691px, which overflowed the row and left ion-content clipping the
+   activity feed off the right edge. */
 .columns-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--spacer-sm);
 }
 
@@ -889,7 +900,7 @@ onIonViewWillLeave(() => {
 
 @media (min-width: 991px) {
   .columns-grid {
-    grid-template-columns: 3fr 2fr;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
   }
 }
 </style>

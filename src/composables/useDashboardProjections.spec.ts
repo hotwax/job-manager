@@ -60,7 +60,8 @@ describe('useDashboardProjections - projections', () => {
       { jobName: 'draftJob', isDraftJob: true, paused: 'Y' },
       { jobName: 'pausedAndNoSched', paused: 'Y', cronExpression: '' },
       { jobName: 'activeJob', paused: 'N', cronExpression: '* * * * *' },
-      { jobName: 'configErr', paused: 'Y', cronExpression: '', serviceName: '_NA_' }
+      { jobName: 'configErr', paused: 'Y', cronExpression: '', runtimeData: { _ERROR_MESSAGE_: 'Missing configuration' } },
+      { jobName: 'deactivated', paused: 'Y', cronExpression: '', serviceName: '_NA_' }
     ]);
     const jobRunsMap = ref({
       'activeJob': [
@@ -80,10 +81,11 @@ describe('useDashboardProjections - projections', () => {
     );
 
     expect(jobProjections.value.draftJobsCount).toBe(1);
-    expect(jobProjections.value.pausedJobsCount).toBe(2);
-    expect(jobProjections.value.noScheduleJobsCount).toBe(2);
+    expect(jobProjections.value.pausedJobsCount).toBe(3);
+    expect(jobProjections.value.noScheduleJobsCount).toBe(3);
     expect(jobProjections.value.scheduledJobsCount).toBe(1);
     expect(jobProjections.value.configErrorJobs).toHaveLength(1);
+    expect(jobProjections.value.configErrorJobs[0].jobName).toBe('configErr');
   });
 
   it('should handle edge cases for log projections with missing config data', () => {
