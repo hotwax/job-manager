@@ -568,7 +568,8 @@ const {
   jobProjections,
   logProjections,
   messageProjections,
-  activityTimeline
+  activityTimeline,
+  getSystemMessageTypeName
 } = useDashboardProjections(
   computed(() => jobStore.getJobs),
   jobRunsMap,
