@@ -196,10 +196,8 @@
             <ion-card-subtitle>{{ translate("Operational layout of file ingestion flows and message synchronization queues.") }}</ion-card-subtitle>
           </ion-card-header>
           <ion-card-content>
-            <ion-grid class="ion-no-padding">
-              <ion-row>
+            <div class="visualizer-grid">
                 <!-- Column 1: Bulk File Ingestion (MDM) -->
-                <ion-col size="12" size-lg="6">
                   <div class="visualizer-section">
                     <h4>{{ translate("Bulk File Ingestion (MDM)") }}</h4>
                     <div class="visualizer-row">
@@ -222,10 +220,8 @@
                       </ion-item>
                     </div>
                   </div>
-                </ion-col>
 
                 <!-- Column 2: System Message Sync (Inbound/Outbound) -->
-                <ion-col size="12" size-lg="6">
                   <div class="visualizer-section">
                     <h4>{{ translate("Message Synchronization Queue") }}</h4>
                     <div class="visualizer-row">
@@ -248,9 +244,7 @@
                       </ion-item>
                     </div>
                   </div>
-                </ion-col>
-              </ion-row>
-            </ion-grid>
+            </div>
           </ion-card-content>
         </ion-card>
 
@@ -415,7 +409,7 @@
                     <p v-if="getLogRunTimeRelative(log)" class="overline" :title="getLogRunTimeExact(log)">
                       {{ getLogRunTimeLabel(log) }} {{ getLogRunTimeRelative(log) }}
                     </p>
-                    {{ log.fileName }}
+                    {{ getLogFileName(log) }}
                     <p>ID: {{ log.logId }} | {{ translate("Uploaded By") }}: {{ log.createdByUserLogin || "-" }}</p>
                     <p>
                       <span class="size-text">{{ getFileSize(log.fileSize) }}</span>
@@ -542,7 +536,8 @@ import { useJobStore } from "@/store/jobs";
 import { useSystemMessageStore } from "@/store/systemMessage";
 import { useMdmConfigStore } from "@/store/mdmConfig";
 import { useUtilStore } from "@/store/util";
-import { getFileSize, getTimeInMillis, hasFailedRecords, showToast, MDM_PENDING_STATUSES } from "@/utils";
+import { MDM_PENDING_STATUSES, getFileSize, getLogFileName, showToast } from "@/utils";
+import { useDashboardProjections, formatJobResult, getRelativeTimeSpan } from "@/composables/useDashboardProjections";
 
 const jobStore = useJobStore();
 const systemMessageStore = useSystemMessageStore();
@@ -553,11 +548,7 @@ const isLoading = ref(false);
 
 // Job stats
 const jobs = computed(() => jobStore.getJobs);
-const totalJobsCount = computed(() => jobs.value.length);
-const scheduledJobsCount = computed(() => jobs.value.filter((job: any) => job.paused === 'N' && !!job.cronExpression).length);
-const pausedJobsCount = computed(() => jobs.value.filter((job: any) => job.paused === 'Y' && !job.isDraftJob).length);
-const noScheduleJobsCount = computed(() => jobs.value.filter((job: any) => !job.cronExpression && !job.isDraftJob).length);
-const draftJobsCount = computed(() => jobs.value.filter((job: any) => job.isDraftJob).length);
+
 
 // Detailed run-based jobs diagnostics
 const jobRunsMap = ref<Record<string, any[]>>({});
@@ -572,6 +563,62 @@ const lastRefreshedRelative = computed(() => {
 
 let refreshIntervalId: any = null;
 
+
+const {
+  jobProjections,
+  logProjections,
+  messageProjections,
+  activityTimeline
+} = useDashboardProjections(
+  computed(() => jobStore.getJobs),
+  jobRunsMap,
+  computed(() => mdmStore.getLogs),
+  computed(() => mdmStore.getConfigs),
+  computed(() => systemMessageStore.getSystemMessages),
+  computed(() => systemMessageStore.getSystemMessageTypes),
+  (statusId) => utilStore.getStatusItemDesc(statusId)
+);
+
+const totalJobsCount = computed(() => jobProjections.value.totalJobsCount);
+const scheduledJobsCount = computed(() => jobProjections.value.scheduledJobsCount);
+const pausedJobsCount = computed(() => jobProjections.value.pausedJobsCount);
+const noScheduleJobsCount = computed(() => jobProjections.value.noScheduleJobsCount);
+const draftJobsCount = computed(() => jobProjections.value.draftJobsCount);
+
+const stuckJobs = computed(() => jobProjections.value.stuckJobs);
+const slowJobs = computed(() => jobProjections.value.slowJobs);
+const failedRunJobs = computed(() => jobProjections.value.failedRunJobs);
+const configErrorJobs = computed(() => jobProjections.value.configErrorJobs);
+const stuckJobsCount = computed(() => jobProjections.value.stuckJobsCount);
+const slowJobsCount = computed(() => jobProjections.value.slowJobsCount);
+const failedJobsCount = computed(() => jobProjections.value.failedJobsCount);
+
+const highPriorityPendingCount = computed(() => logProjections.value.highPriorityPendingCount);
+const standardPendingCount = computed(() => logProjections.value.standardPendingCount);
+const highPrioritySuccessCount = computed(() => logProjections.value.highPrioritySuccessCount);
+const standardSuccessCount = computed(() => logProjections.value.standardSuccessCount);
+const highPriorityFailedCount = computed(() => logProjections.value.highPriorityFailedCount);
+const standardFailedCount = computed(() => logProjections.value.standardFailedCount);
+const highPriorityAvgTime = computed(() => logProjections.value.highPriorityAvgTime);
+const standardAvgTime = computed(() => logProjections.value.standardAvgTime);
+const erroredLogs = computed(() => logProjections.value.erroredLogs);
+const failedLogsCount = computed(() => logProjections.value.failedLogsCount);
+const pendingLogsCount = computed(() => logProjections.value.pendingLogsCount);
+const highPriorityWindowStart = computed(() => logProjections.value.highPriorityWindowStart);
+const standardWindowStart = computed(() => logProjections.value.standardWindowStart);
+
+const incomingPendingCount = computed(() => messageProjections.value.incomingPendingCount);
+const incomingSuccessCount = computed(() => messageProjections.value.incomingSuccessCount);
+const incomingErrorCount = computed(() => messageProjections.value.incomingErrorCount);
+const outgoingPendingCount = computed(() => messageProjections.value.outgoingPendingCount);
+const outgoingSuccessCount = computed(() => messageProjections.value.outgoingSuccessCount);
+const outgoingErrorCount = computed(() => messageProjections.value.outgoingErrorCount);
+const erroredMessages = computed(() => messageProjections.value.erroredMessages);
+const erroredMessagesCount = computed(() => messageProjections.value.erroredMessagesCount);
+const pendingMessagesCount = computed(() => messageProjections.value.pendingMessagesCount);
+const successMessagesCount = computed(() => messageProjections.value.successMessagesCount);
+const incomingAvgTime = computed(() => messageProjections.value.incomingAvgTime);
+const outgoingAvgTime = computed(() => messageProjections.value.outgoingAvgTime);
 onMounted(() => {
   refreshIntervalId = setInterval(() => {
     now.value = DateTime.now();
@@ -582,140 +629,15 @@ onUnmounted(() => {
   if (refreshIntervalId) clearInterval(refreshIntervalId);
 });
 
-// Helper to calculate run duration in seconds
-const getRunDuration = (run: any) => {
-  if (!run.startTime || !run.endTime) return 0;
-  const startDt = typeof run.startTime === 'number' ? DateTime.fromMillis(run.startTime) : DateTime.fromISO(run.startTime);
-  const endDt = typeof run.endTime === 'number' ? DateTime.fromMillis(run.endTime) : DateTime.fromISO(run.endTime);
-  if (!startDt.isValid || !endDt.isValid) return 0;
-  const diff = endDt.diff(startDt, 'seconds').seconds;
-  return diff > 0 ? diff : 0;
-};
+
+
+
 
 // Helper to calculate average duration of completed runs in the last day
-const getJobLastDayAverageDuration = (jobName: string) => {
-  const runs = jobRunsMap.value[jobName] || [];
-  const completedRuns = runs.filter((run: any) => run.startTime && run.endTime);
-  if (completedRuns.length === 0) return 0;
 
-  const oneDayAgo = DateTime.now().minus({ days: 1 });
-  const lastDayRuns = completedRuns.filter((run: any) => {
-    const end = typeof run.endTime === 'number' ? DateTime.fromMillis(run.endTime) : DateTime.fromISO(run.endTime);
-    return end.isValid && end >= oneDayAgo;
-  });
 
-  const targetRuns = lastDayRuns.length > 0 ? lastDayRuns : completedRuns;
-  const total = targetRuns.reduce((sum, run) => sum + getRunDuration(run), 0);
-  return total / targetRuns.length;
-};
 
-const formatJobResult = (results: any) => {
-  if (!results) return "";
-  const str = typeof results === 'object' ? JSON.stringify(results) : String(results);
-  return str.length > 180 ? str.substring(0, 180) + "..." : str;
-};
 
-// 1. Stuck Executions (active run exceeds 3x average duration or > 2 hours)
-const stuckJobs = computed(() => {
-  const stuckList: any[] = [];
-  const activeJobs = jobs.value.filter((job: any) => job.paused === 'N' && !!job.cronExpression);
-
-  activeJobs.forEach((job: any) => {
-    const runs = jobRunsMap.value[job.jobName] || [];
-    const activeRun = runs.find((run: any) => run.startTime && !run.endTime);
-    if (!activeRun) return;
-
-    const startDt = typeof activeRun.startTime === 'number' ? DateTime.fromMillis(activeRun.startTime) : DateTime.fromISO(activeRun.startTime);
-    if (!startDt.isValid) return;
-
-    const currentDuration = DateTime.now().diff(startDt, 'seconds').seconds;
-    const avgDuration = getJobLastDayAverageDuration(job.jobName);
-
-    const isStuck = (avgDuration > 10 && currentDuration > Math.max(300, avgDuration * 3)) || currentDuration > 7200;
-
-    if (isStuck) {
-      stuckList.push({
-        ...job,
-        activeRunId: activeRun.jobRunId,
-        currentDuration: formatDuration(currentDuration),
-        avgDuration: formatDuration(avgDuration),
-        runMessage: activeRun.messages,
-        runResults: activeRun.results
-      });
-    }
-  });
-  return stuckList;
-});
-
-// 2. Slow Executions (latest completed run duration is > 1.5x average)
-const slowJobs = computed(() => {
-  const slowList: any[] = [];
-  const activeJobs = jobs.value.filter((job: any) => job.paused === 'N' && !!job.cronExpression);
-
-  activeJobs.forEach((job: any) => {
-    if (stuckJobs.value.some((sj: any) => sj.jobName === job.jobName)) return;
-
-    const runs = jobRunsMap.value[job.jobName] || [];
-    const completedRuns = runs.filter((run: any) => run.startTime && run.endTime);
-    if (completedRuns.length === 0) return;
-
-    const latestRun = completedRuns[0];
-    const latestDuration = getRunDuration(latestRun);
-
-    const otherRuns = completedRuns.slice(1);
-    if (otherRuns.length === 0) return;
-
-    const total = otherRuns.reduce((sum, run) => sum + getRunDuration(run), 0);
-    const avgDuration = total / otherRuns.length;
-
-    const isSlow = latestDuration > 60 && avgDuration > 10 && latestDuration > avgDuration * 1.5;
-
-    if (isSlow) {
-      slowList.push({
-        ...job,
-        latestRunId: latestRun.jobRunId,
-        latestDuration: formatDuration(latestDuration),
-        avgDuration: formatDuration(avgDuration),
-        runMessage: latestRun.messages,
-        runResults: latestRun.results
-      });
-    }
-  });
-  return slowList;
-});
-
-// 3. Failed Executions (latest run has error)
-const failedRunJobs = computed(() => {
-  const failedList: any[] = [];
-  const activeJobs = jobs.value.filter((job: any) => job.paused === 'N' && !!job.cronExpression);
-
-  activeJobs.forEach((job: any) => {
-    const runs = jobRunsMap.value[job.jobName] || [];
-    const completedRuns = runs.filter((run: any) => run.startTime && run.endTime);
-    if (completedRuns.length === 0) return;
-
-    const latestRun = completedRuns[0];
-    if (latestRun.hasError === 'Y') {
-      failedList.push({
-        ...job,
-        latestRunId: latestRun.jobRunId,
-        runMessage: latestRun.messages,
-        runResults: latestRun.results,
-        runErrors: latestRun.errors
-      });
-    }
-  });
-  return failedList;
-});
-
-// 4. Configuration/Definition Errors
-const configErrorJobs = computed(() => {
-  return jobs.value.filter((job: any) => job.runtimeData?._ERROR_MESSAGE_ || job.serviceName === '_NA_');
-});
-
-const stuckJobsCount = computed(() => stuckJobs.value.length);
-const slowJobsCount = computed(() => slowJobs.value.length);
-const failedJobsCount = computed(() => failedRunJobs.value.length);
 
 // Every dashboard number is a drill-down: the chip or tile shows a count and the
 // destination list has to answer "which ones?" with the same filter that produced
@@ -748,51 +670,7 @@ const getLogPriority = (log: any) => {
   return config?.priority ? Number(config.priority) : 0;
 };
 
-const highPriorityLogs = computed(() => logs.value.filter((log: any) => getLogPriority(log) > 6));
-const standardLogs = computed(() => logs.value.filter((log: any) => getLogPriority(log) <= 6));
 
-// Queue Depths (Pending / Queued / Running)
-const highPriorityPendingCount = computed(() => highPriorityLogs.value.filter((log: any) => MDM_PENDING_STATUSES.includes(log.statusId)).length);
-const standardPendingCount = computed(() => standardLogs.value.filter((log: any) => MDM_PENDING_STATUSES.includes(log.statusId)).length);
-
-// Ingestion throughput in latest 50
-const highPrioritySuccessCount = computed(() => highPriorityLogs.value.filter((log: any) => log.statusId === 'DmlsFinished').length);
-const standardSuccessCount = computed(() => standardLogs.value.filter((log: any) => log.statusId === 'DmlsFinished').length);
-const highPriorityFailedCount = computed(() => highPriorityLogs.value.filter(hasFailedRecords).length);
-const standardFailedCount = computed(() => standardLogs.value.filter(hasFailedRecords).length);
-
-// Ingestion Average Processing Time (Luxon end date - start date)
-const getAvgProcessingTime = (logsList: any[]) => {
-  const finishedLogs = logsList.filter((log: any) => log.statusId === 'DmlsFinished');
-  if (finishedLogs.length === 0) return 0;
-  const totalSeconds = finishedLogs.reduce((acc, log) => {
-    const start = log.createdDate;
-    const end = log.finishDateTime;
-    if (!start || !end) return acc;
-    const startDt = typeof start === 'number' ? DateTime.fromMillis(start) : DateTime.fromISO(start);
-    const endDt = typeof end === 'number' ? DateTime.fromMillis(end) : DateTime.fromISO(end);
-    if (!startDt.isValid || !endDt.isValid) return acc;
-    const diff = endDt.diff(startDt, 'seconds').seconds;
-    return acc + (diff > 0 ? diff : 0);
-  }, 0);
-  return totalSeconds / finishedLogs.length;
-};
-
-const formatDuration = (seconds: number) => {
-  if (seconds <= 0) return "--";
-  if (seconds < 60) return `${Math.round(seconds)}s`;
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.round(seconds % 60);
-  return `${mins}m ${secs}s`;
-};
-
-const highPriorityAvgTime = computed(() => formatDuration(getAvgProcessingTime(highPriorityLogs.value)));
-const standardAvgTime = computed(() => formatDuration(getAvgProcessingTime(standardLogs.value)));
-
-// Errored Ingestion Logs checklist
-const erroredLogs = computed(() => logs.value.filter(hasFailedRecords));
-const failedLogsCount = computed(() => erroredLogs.value.length);
-const pendingLogsCount = computed(() => logs.value.filter((log: any) => MDM_PENDING_STATUSES.includes(log.statusId)).length);
 
 // Imports report their run window in millis. The finish stamp is the definitive
 // "when did this run", falling back to the start stamp and then the upload stamp
@@ -821,158 +699,30 @@ const getLogRunTimeExact = (log: any) => {
 // System Messages (Incoming vs Outgoing)
 const systemMessages = computed(() => systemMessageStore.getSystemMessages);
 
-const incomingMessages = computed(() => systemMessages.value.filter((msg: any) => msg.isOutgoing !== 'Y'));
-const outgoingMessages = computed(() => systemMessages.value.filter((msg: any) => msg.isOutgoing === 'Y'));
 
-// Incoming Stats
-const incomingPendingCount = computed(() => incomingMessages.value.filter((msg: any) => ['SmsgProduced', 'SmsgCreated', 'SmsgSending'].includes(msg.statusId) && !(msg.statusId === 'SmsgProduced' && Number(msg.failCount) > 0)).length);
-const incomingSuccessCount = computed(() => incomingMessages.value.filter((msg: any) => ['SmsgSent', 'SmsgConsumed', 'SmsgConfirmed'].includes(msg.statusId)).length);
-const incomingErrorCount = computed(() => incomingMessages.value.filter((msg: any) => msg.statusId === 'SmsgError' || (msg.statusId === 'SmsgProduced' && Number(msg.failCount) > 0)).length);
-
-// Outgoing Stats
-const outgoingPendingCount = computed(() => outgoingMessages.value.filter((msg: any) => ['SmsgProduced', 'SmsgCreated', 'SmsgSending'].includes(msg.statusId) && !(msg.statusId === 'SmsgProduced' && Number(msg.failCount) > 0)).length);
-const outgoingSuccessCount = computed(() => outgoingMessages.value.filter((msg: any) => ['SmsgSent', 'SmsgConsumed', 'SmsgConfirmed'].includes(msg.statusId)).length);
-const outgoingErrorCount = computed(() => outgoingMessages.value.filter((msg: any) => msg.statusId === 'SmsgError' || (msg.statusId === 'SmsgProduced' && Number(msg.failCount) > 0)).length);
-
-const erroredMessages = computed(() => systemMessages.value.filter((msg: any) => msg.statusId === 'SmsgError' || (msg.statusId === 'SmsgProduced' && Number(msg.failCount) > 0)));
-const erroredMessagesCount = computed(() => erroredMessages.value.length);
-const pendingMessagesCount = computed(() => systemMessages.value.filter((msg: any) => ['SmsgProduced', 'SmsgCreated', 'SmsgSending'].includes(msg.statusId) && !(msg.statusId === 'SmsgProduced' && Number(msg.failCount) > 0)).length);
-const successMessagesCount = computed(() => systemMessages.value.filter((msg: any) => msg.statusId === 'SmsgSent' || msg.statusId === 'SmsgConsumed' || msg.statusId === 'SmsgConfirmed').length);
-
-// Inbound/Outbound Message Average Processing Time
-const getAvgMessageProcessingTime = (messagesList: any[]) => {
-  const finishedMessages = messagesList.filter((msg: any) => ['SmsgSent', 'SmsgConsumed', 'SmsgConfirmed'].includes(msg.statusId));
-  if (finishedMessages.length === 0) return 0;
-  const totalSeconds = finishedMessages.reduce((acc, msg) => {
-    const start = msg.initDate;
-    const end = msg.processedDate;
-    if (!start || !end) return acc;
-    const startDt = typeof start === 'number' ? DateTime.fromMillis(start) : DateTime.fromISO(start);
-    const endDt = typeof end === 'number' ? DateTime.fromMillis(end) : DateTime.fromISO(end);
-    if (!startDt.isValid || !endDt.isValid) return acc;
-    const diff = endDt.diff(startDt, 'seconds').seconds;
-    return acc + (diff > 0 ? diff : 0);
-  }, 0);
-  return totalSeconds / finishedMessages.length;
-};
- 
-const incomingAvgTime = computed(() => formatDuration(getAvgMessageProcessingTime(incomingMessages.value)));
-const outgoingAvgTime = computed(() => formatDuration(getAvgMessageProcessingTime(outgoingMessages.value)));
 
 // The dashboard only holds the newest slice of logs and messages, so every count on it
 // is really "within this window". getOldestMillis exposes that boundary once: the card
 // subtitle states it, and the drill-down link carries it as a filter.
-const getOldestMillis = (list: any[], timeFieldGetter: (item: any) => any) => {
-  const stamps = list.map(timeFieldGetter).map(getTimeInMillis).filter(Boolean);
-  return stamps.length ? Math.min(...stamps) : 0;
-};
 
-const getRelativeTimeSpan = (list: any[], timeFieldGetter: (item: any) => any) => {
-  const oldest = getOldestMillis(list, timeFieldGetter);
-  return oldest ? (DateTime.fromMillis(oldest).toRelative({ base: now.value }) || "") : "";
-};
 
-const incomingTimeSpan = computed(() => getRelativeTimeSpan(incomingMessages.value, (msg) => msg.initDate));
-const outgoingTimeSpan = computed(() => getRelativeTimeSpan(outgoingMessages.value, (msg) => msg.initDate));
-const highPriorityLogsTimeSpan = computed(() => getRelativeTimeSpan(highPriorityLogs.value, (log) => log.createdDate));
-const highPriorityWindowStart = computed(() => getOldestMillis(highPriorityLogs.value, (log: any) => log.createdDate));
-const standardWindowStart = computed(() => getOldestMillis(standardLogs.value, (log: any) => log.createdDate));
+
+
+const incomingTimeSpan = computed(() => getRelativeTimeSpan(messageProjections.value.incomingMessages, (msg) => msg.initDate, now.value));
+const outgoingTimeSpan = computed(() => getRelativeTimeSpan(messageProjections.value.outgoingMessages, (msg) => msg.initDate, now.value));
+const highPriorityLogsTimeSpan = computed(() => getRelativeTimeSpan(logProjections.value.highPriorityLogs, (log) => log.createdDate, now.value));
 
 const openFailedFileHistory = (priority: string, windowStart: number) => openFileHistory({
   hasError: "Y",
   priority,
   ...(windowStart ? { createdDateFrom: String(windowStart) } : {})
 });
-const standardLogsTimeSpan = computed(() => getRelativeTimeSpan(standardLogs.value, (log) => log.createdDate));
+const standardLogsTimeSpan = computed(() => getRelativeTimeSpan(logProjections.value.standardLogs, (log) => log.createdDate, now.value));
 
-const getSystemMessageTypeName = (typeId: string) => {
-  const type = systemMessageStore.getSystemMessageTypes.find((t: any) => t.systemMessageTypeId === typeId);
-  return type?.description || typeId;
-};
+
 
 // Activity feed chronology
-const activityTimeline = computed(() => {
-  const list: any[] = [];
 
-  // Parse System Messages
-  systemMessages.value.forEach((msg: any) => {
-    const time = msg.lastAttemptDate || msg.initDate;
-    if (!time) return;
-    const date = typeof time === "number" ? DateTime.fromMillis(time) : DateTime.fromISO(time);
-    
-    let icon = documentOutline;
-    let color = "primary";
-    if (msg.statusId === "SmsgError") {
-      icon = alertCircleOutline;
-      color = "danger";
-    } else if (msg.statusId === "SmsgSent" || msg.statusId === "SmsgConsumed") {
-      icon = checkmarkCircleOutline;
-      color = "success";
-    }
-
-    list.push({
-      id: `msg-${msg.systemMessageId}`,
-      type: "message",
-      targetId: msg.systemMessageId,
-      title: `${getSystemMessageTypeName(msg.systemMessageTypeId)} (${msg.isOutgoing === 'Y' ? translate('Outbound') : translate('Inbound')})`,
-      description: `#${msg.systemMessageId} | Remote: ${msg.systemMessageRemoteId || "Internal"} | Status: ${utilStore.getStatusItemDesc(msg.statusId) || msg.statusId}`,
-      date,
-      timeRelative: date.toRelative(),
-      icon,
-      statusColor: color
-    });
-  });
-
-  // Parse Ingestion Logs
-  logs.value.forEach((log: any) => {
-    const time = log.createdDate;
-    if (!time) return;
-    const date = typeof time === "number" ? DateTime.fromMillis(time) : DateTime.fromISO(time);
-
-    const hasErrorRecords = Number(log.failedRecordCount || 0) > 0;
-
-    let icon = cloudUploadOutline;
-    let color = "secondary";
-    let statusText = utilStore.getStatusItemDesc(log.statusId) || log.statusId;
-
-    if (["DmlsFailed", "DmlsCrashed"].includes(log.statusId)) {
-      icon = alertCircleOutline;
-      color = "danger";
-    } else if (log.statusId === "DmlsFinished") {
-      if (hasErrorRecords) {
-        icon = warningOutline;
-        color = "warning";
-        statusText = translate("Finished with errors");
-      } else {
-        icon = checkmarkCircleOutline;
-        color = "success";
-      }
-    }
-
-    const priorityVal = getLogPriority(log);
-    const queueName = priorityVal > 6 ? translate("High-Priority") : translate("Standard");
-
-    let recordStats = "";
-    if (log.totalRecordCount != null) {
-      recordStats = ` | ${translate("Failed")}: ${log.failedRecordCount || 0} / ${translate("Total")}: ${log.totalRecordCount}`;
-    }
-
-    list.push({
-      id: `log-${log.logId}`,
-      type: "log",
-      targetId: log.logId,
-      title: `${log.fileName} (${queueName})`,
-      description: `File processed: ${getFileSize(log.fileSize)}${recordStats} | Status: ${statusText}`,
-      date,
-      timeRelative: date.toRelative(),
-      icon,
-      statusColor: color
-    });
-  });
-
-  // Sort newest first
-  return list.sort((a, b) => b.date.toMillis() - a.date.toMillis()).slice(0, 15);
-});
 
 const handleEventClick = (event: any) => {
   if (event.type === "message") {
@@ -1101,14 +851,26 @@ onIonViewWillLeave(() => {
   color: var(--ion-color-medium);
 }
 
+/* The two flows sit side by side while each still has room for a readable pair, and drop
+   to block flow before that. min(100%, …) keeps the track from overflowing a narrow phone. */
+.visualizer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: var(--spacer-sm);
+}
+
 .visualizer-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--spacer-xs);
 }
 
+/* A real flex-basis rather than flex: 1 (basis 0), which let the queue boxes shrink until
+   their labels broke one word per line. Below the basis the pair wraps and each box takes
+   the full row instead of being squeezed. */
 .visualizer-item {
-  flex: 1;
+  flex: 1 1 180px;
   border: 1px solid var(--ion-color-light);
   border-radius: 8px;
 }
@@ -1120,9 +882,15 @@ onIonViewWillLeave(() => {
   padding: 0 var(--spacer-2xs);
 }
 
+/* minmax(0, …) rather than a bare fr: a grid item's default min-width is auto, so the
+   track cannot shrink below its content's min-content width. The diagnostics column
+   carries unbreakable strings (service names like
+   co.hotwax.rule.DecisionRuleServices.run#RuleGroup, file names, message ids) whose
+   min-content ran to 691px, which overflowed the row and left ion-content clipping the
+   activity feed off the right edge. */
 .columns-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--spacer-sm);
 }
 
@@ -1132,7 +900,7 @@ onIonViewWillLeave(() => {
 
 @media (min-width: 991px) {
   .columns-grid {
-    grid-template-columns: 3fr 2fr;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
   }
 }
 </style>
