@@ -1,6 +1,6 @@
 import { mount, flushPromises } from '@vue/test-utils'
 import FileHistoryDetail from '../FileHistoryDetail.vue'
-import { createTestingPinia } from '@pinia/testing'
+import { createPinia } from 'pinia'
 import { IonicVue } from '@ionic/vue'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { useMdmConfigStore } from '@/store/mdmConfig'
@@ -33,8 +33,11 @@ describe('FileHistoryDetail.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     onIonViewWillEnterCallback = null;
-    pinia = createTestingPinia({ stubActions: false, createSpy: vi.fn });
+    pinia = createPinia();
     mdmStore = useMdmConfigStore(pinia);
+    mdmStore.fetchConfigs = vi.fn();
+    mdmStore.fetchDataManagerFileContent = vi.fn();
+    mdmStore.fetchDataManagerLogById = vi.fn();
   });
 
   const mountComponent = async () => {
@@ -115,10 +118,8 @@ describe('FileHistoryDetail.vue', () => {
   });
 
   it('does not impact original payload if error fetch fails', async () => {
-    let rejected = false;
     const mockFileContent = vi.fn().mockImplementation((configId, contentId) => {
       if (contentId === 'error-content-123') {
-        rejected = true;
         return Promise.resolve(null);
       }
       return Promise.resolve('{"test": "original-json"}');
@@ -154,8 +155,36 @@ describe('FileHistoryDetail.vue', () => {
 
     await flushPromises();
 
-    expect(rejected).toBe(true);
+    expect(mockFileContent).toHaveBeenCalledWith('config123', 'error-content-123');
     expect((wrapper.vm as any).payloads.original.rawText).toBe('{"test": "original-json"}');
+  });
+
+  it('clears a rejected in-flight request so the error payload can be retried', async () => {
+    const mockFileContent = vi.fn()
+      .mockResolvedValueOnce('{"test": "original-json"}')
+      .mockRejectedValueOnce(new Error('temporary failure'))
+      .mockResolvedValueOnce('{"error": "recovered"}');
+
+    mdmStore.fetchDataManagerFileContent = mockFileContent;
+    mdmStore.fetchDataManagerLogById = vi.fn().mockResolvedValue({
+      configId: 'config123',
+      logContentId: 'content-123',
+      fileName: 'test.json',
+      errorLogContentId: 'error-content-123',
+      errorFileName: 'test-error.json',
+      failedRecordCount: 5
+    });
+
+    const wrapper = await mountComponent();
+    await onIonViewWillEnterCallback?.();
+    await flushPromises();
+
+    await expect((wrapper.vm as any).loadErrorPayload()).rejects.toThrow('temporary failure');
+    await expect((wrapper.vm as any).loadErrorPayload()).resolves.toMatchObject({
+      rawText: '{"error": "recovered"}'
+    });
+
+    expect(mockFileContent).toHaveBeenCalledTimes(3);
   });
 
   it('prevents a deferred error payload fetch from overwriting a new log scope', async () => {

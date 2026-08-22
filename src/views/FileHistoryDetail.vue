@@ -344,7 +344,9 @@ const isErrorsView = computed(() => selectedPayload.value === "errors");
 // The service contract is only worth fetching once the user opens the segment.
 watch(selectedPayload, async (view) => {
   if (view === "errors") {
-    loadErrorPayload();
+    // The store normally normalizes transport failures to an empty payload. Keep
+    // the watcher safe if an unexpected rejection still escapes that boundary.
+    await loadErrorPayload().catch(() => undefined);
     return;
   }
   if (view !== "parameters" || haveLoadedServiceParams.value) return;
@@ -467,6 +469,14 @@ async function loadErrorPayload() {
         errors: errorPayload
       };
       return errorPayload;
+    })
+    .catch((error) => {
+      // Do not cache a rejected in-flight request: reopening the segment should
+      // be able to retry after a transient failure.
+      if (generation === currentGeneration) {
+        currentErrorPromise = null;
+      }
+      throw error;
     })
     .finally(() => {
       if (generation === currentGeneration) {
