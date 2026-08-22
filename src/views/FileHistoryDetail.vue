@@ -381,7 +381,7 @@ const loadServiceParameters = async () => {
 
   try {
     // The log read already carries the parameters it was created with, so there is nothing
-    // further to fetch — an instance without the log master simply supplies none.
+    // further to fetch here.
     logParameters.value = log.value?.parameters || [];
 
     if (serviceName) {
