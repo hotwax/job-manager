@@ -349,13 +349,19 @@ export function useDashboardProjections(
     };
   });
 
+  // Shared with the component: the errored-messages list names its rows with this too, so it
+  // cannot stay a local of activityTimeline.
+  const systemMessageTypeNames = computed(() => {
+    const map = new Map<string, string>();
+    systemMessageTypesRef.value.forEach((t: any) => map.set(t.systemMessageTypeId, t.description || t.systemMessageTypeId));
+
+    return map;
+  });
+
+  const getSystemMessageTypeName = (typeId: string) => systemMessageTypeNames.value.get(typeId) || typeId;
+
   const activityTimeline = computed(() => {
     const list: any[] = [];
-    const systemMessageTypes = systemMessageTypesRef.value;
-    const typeMap = new Map<string, string>();
-    systemMessageTypes.forEach((t: any) => typeMap.set(t.systemMessageTypeId, t.description || t.systemMessageTypeId));
-
-    const getSystemMessageTypeName = (typeId: string) => typeMap.get(typeId) || typeId;
 
     systemMessagesRef.value.forEach((msg: any) => {
       const time = msg.lastAttemptDate || msg.initDate;
@@ -446,6 +452,7 @@ export function useDashboardProjections(
     jobProjections,
     logProjections,
     messageProjections,
-    activityTimeline
+    activityTimeline,
+    getSystemMessageTypeName
   };
 }
