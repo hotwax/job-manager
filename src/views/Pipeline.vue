@@ -142,6 +142,10 @@
             </ion-card-header>
             <ion-card-content>
               <div class="kpi-subtext">
+                <ion-chip v-if="incomingErrorCount > 0" outline button color="danger" @click="openSystemMessages({ hasError: 'Y', isOutgoing: 'N' })">
+                  <ion-icon :icon="alertCircleOutline" />
+                  <ion-label>{{ translate("View") }} {{ incomingErrorCount }} {{ translate("Errors") }}</ion-label>
+                </ion-chip>
                 <ion-chip outline button @click="openSystemMessages({ statusId: 'SmsgProduced', isOutgoing: 'N' })">
                   <ion-label>{{ incomingPendingCount }} {{ translate("Queued") }}</ion-label>
                 </ion-chip>
@@ -174,6 +178,10 @@
             </ion-card-header>
             <ion-card-content>
               <div class="kpi-subtext">
+                <ion-chip v-if="outgoingErrorCount > 0" outline button color="danger" @click="openSystemMessages({ hasError: 'Y', isOutgoing: 'Y' })">
+                  <ion-icon :icon="alertCircleOutline" />
+                  <ion-label>{{ translate("View") }} {{ outgoingErrorCount }} {{ translate("Errors") }}</ion-label>
+                </ion-chip>
                 <ion-chip outline button @click="openSystemMessages({ statusId: 'SmsgProduced', isOutgoing: 'Y' })">
                   <ion-label>{{ outgoingPendingCount }} {{ translate("Queued") }}</ion-label>
                 </ion-chip>
