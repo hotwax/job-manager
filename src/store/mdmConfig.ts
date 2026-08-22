@@ -208,33 +208,9 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
           method: "get"
         })
 
-        // An instance whose log master has not shipped yet returns plain log fields with no
-        // nested config, which would strip the detail page of everything the view flattened in.
-        // Fall back to the details service there rather than render a half-empty page.
-        if (resp.data?.logId && resp.data["co.hotwax.datamanager.DataManagerConfig"]) {
-          return this.flattenDataManagerLogMaster(resp.data)
-        }
-
-        return await this.fetchDataManagerLogDetailsById(logId)
+        return resp.data?.logId ? this.flattenDataManagerLogMaster(resp.data) : null
       } catch (err) {
         logger.error(`Failed to fetch log with id ${logId}`, err)
-        return await this.fetchDataManagerLogDetailsById(logId)
-      }
-    },
-    async fetchDataManagerLogDetailsById(logId: string) {
-      try {
-        const resp = await api({
-          url: "admin/dataManager/details",
-          method: "get",
-          params: { logId }
-        })
-
-        if (resp.data?.dataManagerLogs?.length) {
-          return resp.data.dataManagerLogs[0]
-        }
-        return null
-      } catch (err) {
-        logger.error(`Failed to fetch log details for id ${logId}`, err)
         return null
       }
     },
