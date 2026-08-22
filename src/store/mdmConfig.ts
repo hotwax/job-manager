@@ -177,6 +177,26 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
         return null
       }
     },
+    // The values Data Manager was given when this log was created, fixed inputs for that
+    // service run. They arrive as a nested detail on the log's entity master, which Moqui
+    // keys by the full entity name. An instance without the master returns no such array,
+    // and the caller then has nothing to show rather than something wrong.
+    async fetchDataManagerLogParameters(logId: string) {
+      try {
+        const resp = await api({
+          url: `admin/dataManager/logs/${logId}`,
+          method: "get"
+        })
+
+        const data = resp.data || {}
+        const nested = data["co.hotwax.datamanager.DataManagerParameter"] || data.DataManagerParameter
+
+        return Array.isArray(nested) ? nested : null
+      } catch (err) {
+        logger.error(`Failed to fetch data manager parameters for log ${logId}`, err)
+        return null
+      }
+    },
     async fetchDataManagerFileContent(configId: string, logContentId: string) {
       try {
         const resp = await api({

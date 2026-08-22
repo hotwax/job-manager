@@ -1,6 +1,6 @@
 import { computed, Ref } from 'vue';
 import { DateTime } from 'luxon';
-import { MDM_PENDING_STATUSES, getTimeInMillis, hasFailedRecords, getFileSize } from '@/utils';
+import { MDM_PENDING_STATUSES, getTimeInMillis, hasFailedRecords, getFileSize, getLogFileName } from '@/utils';
 import { translate } from '@common';
 import {
   alertCircleOutline,
@@ -136,7 +136,9 @@ export function useDashboardProjections(
         }
       }
 
-      if (job.runtimeData?._ERROR_MESSAGE_ || job.serviceName === '_NA_') {
+      // A missing service marks a deliberately deactivated job. Only runtime-data
+      // errors belong in the dashboard's configuration-error projection.
+      if (job.runtimeData?._ERROR_MESSAGE_) {
         configErrorJobs.push(job);
       }
     });
@@ -428,7 +430,7 @@ export function useDashboardProjections(
         id: `log-${log.logId}`,
         type: "log",
         targetId: log.logId,
-        title: `${log.fileName} (${queueName})`,
+        title: `${getLogFileName(log)} (${queueName})`,
         description: `File processed: ${getFileSize(log.fileSize)}${recordStats} | Status: ${statusText}`,
         date,
         timeRelative: date.toRelative(),
