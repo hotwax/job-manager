@@ -22,13 +22,63 @@ export const normalizeEntityField = (field: any) => {
   };
 };
 
-export const useUtilStore = defineStore("util", {
+type EntityDefinition = {
+  fields: any[];
+  relationships: any[];
+};
+
+type EntityDefinitionFetchState = {
+  status: "none" | "pending" | "success" | "error";
+  error?: string;
+  generation: number;
+};
+
+type EntityDefinitionRequest = {
+  generation: number;
+  promise: Promise<EntityDefinition | undefined>;
+};
+
+const cloneEntityDefinition = (definition: EntityDefinition): EntityDefinition => ({
+  fields: definition.fields.map((field) => (
+    field && typeof field === "object" ? { ...field } : field
+  )),
+  relationships: definition.relationships.map((relationship) => (
+    relationship && typeof relationship === "object"
+      ? {
+        ...relationship,
+        ...(relationship.keyMap && typeof relationship.keyMap === "object"
+          ? { keyMap: { ...relationship.keyMap } }
+          : {}),
+        ...(Array.isArray(relationship.keyMaps)
+          ? { keyMaps: relationship.keyMaps.map((keyMap: any) => keyMap && typeof keyMap === "object" ? { ...keyMap } : keyMap) }
+          : {})
+      }
+      : relationship
+  ))
+});
+
+const normalizeEntityNameKey = (entityName: string) => entityName.trim();
+
+const entityDefinitionRequests = new WeakMap<object, Map<string, EntityDefinitionRequest>>();
+
+const getEntityDefinitionRequests = (store: object) => {
+  let requests = entityDefinitionRequests.get(store);
+  if (!requests) {
+    requests = new Map<string, EntityDefinitionRequest>();
+    entityDefinitionRequests.set(store, requests);
+  }
+  return requests;
+};
+
+const useUtilPiniaStore = defineStore("util", {
   state: () => ({
     statusItems: {} as Record<string, StatusItemAndType>,
     enumerations: [] as any[],
     statuses: [] as any[],
     statusFlowTransitions: [] as any,
     entities: [] as Array<EntityInfo>,
+    entityDefinitions: {} as Record<string, EntityDefinition>,
+    entityDefinitionFetchStates: {} as Record<string, EntityDefinitionFetchState>,
     entityFields: {} as Record<string, any[]>,
     entityRelationships: {} as Record<string, any[]>,
     fetchStatus: {
@@ -57,8 +107,20 @@ export const useUtilStore = defineStore("util", {
     getEntities: (state: any) => state.entities,
     getEnumerations: (state: any) => state.enumerations,
     getStatuses: (state: any) => state.statuses,
-    getEntityFields: (state: any) => (entityName: string) => (state.entityFields[entityName] || []).map(normalizeEntityField),
-    getEntityRelationships: (state: any) => (entityName: string) => state.entityRelationships[entityName] || [],
+    getEntityDefinition: (state: any) => (entityName: string) => state.entityDefinitions[normalizeEntityNameKey(entityName)],
+    getEntityDefinitionFetchState: (state: any) => (entityName: string): EntityDefinitionFetchState => (
+      state.entityDefinitionFetchStates[normalizeEntityNameKey(entityName)] || { status: "none", error: undefined, generation: 0 }
+    ),
+    getEntityFields: (state: any) => (entityName: string) => (
+      state.entityDefinitions[normalizeEntityNameKey(entityName)]?.fields
+      || state.entityFields[normalizeEntityNameKey(entityName)]
+      || []
+    ).map(normalizeEntityField),
+    getEntityRelationships: (state: any) => (entityName: string) => (
+      state.entityDefinitions[normalizeEntityNameKey(entityName)]?.relationships
+      || state.entityRelationships[normalizeEntityNameKey(entityName)]
+      || []
+    ),
     getFetchStatus: (state: any) => state.fetchStatus
   },
   actions: {
@@ -146,62 +208,89 @@ export const useUtilStore = defineStore("util", {
         this.fetchStatus.entities = "error"
       }
     },
-    async fetchEntityFields(entityName: string, force = false) {
-      if (
-        !force &&
-        this.entityFields[entityName]?.length &&
-        this.entityRelationships[entityName]?.length &&
-        typeof this.entityFields[entityName][0] === 'object'
-      ) return;
-      this.fetchStatus.entityFields = 'pending'
+    fetchEntityDefinition(entityName: string, { force = false }: { force?: boolean } = {}) {
+      const normalizedEntityName = normalizeEntityNameKey(entityName);
+      if (!normalizedEntityName) return Promise.resolve(undefined);
 
-      try {
-        const resp = await api({
-          url: `admin/entities/${entityName}/definition`,
-          method: "GET"
-        });
-        if (resp.data?.entityDefinition?.fields) {
-          this.entityFields[entityName] = resp.data.entityDefinition.fields
-            .map(normalizeEntityField)
-            .sort((a: any, b: any) => a.fieldName.localeCompare(b.fieldName));
-          if (resp.data.entityDefinition.relationships) {
-            this.entityRelationships[entityName] = resp.data.entityDefinition.relationships
-              .sort((a: any, b: any) => (a.relationshipName || "").localeCompare(b.relationshipName || ""));
-          }
-          this.fetchStatus.entityFields = 'success'
-        } else {
-          throw new Error("Empty field list");
-        }
-      } catch (error) {
-        logger.error(`Failed to fetch fields for entity ${entityName}`, error);
-        this.fetchStatus.entityFields = 'error'
+      const requests = getEntityDefinitionRequests(this);
+      const inFlight = requests.get(normalizedEntityName);
+      if (!force && inFlight) return inFlight.promise;
+      if (!force && this.entityDefinitions[normalizedEntityName]) {
+        return Promise.resolve(cloneEntityDefinition(this.entityDefinitions[normalizedEntityName]));
       }
-    },
-    async fetchEntityRelationships(entityName: string, force = false) {
-      if (!force && this.entityRelationships[entityName]?.length) return;
-      this.fetchStatus.entityRelationships = 'pending'
 
-      try {
-        const resp = await api({
-          url: `admin/entities/${entityName}/definition`,
-          method: "GET"
-        });
-        if (resp.data?.entityDefinition?.relationships) {
-          this.entityRelationships[entityName] = resp.data.entityDefinition.relationships
-            .sort((a: any, b: any) => (a.relationshipName || "").localeCompare(b.relationshipName || ""));
-          if (resp.data.entityDefinition.fields && !this.entityFields[entityName]?.length) {
-            this.entityFields[entityName] = resp.data.entityDefinition.fields
+      const generation = (this.entityDefinitionFetchStates[normalizedEntityName]?.generation || 0) + 1;
+      this.entityDefinitionFetchStates[normalizedEntityName] = {
+        status: "pending",
+        error: undefined,
+        generation
+      };
+      this.fetchStatus.entityFields = "pending";
+      this.fetchStatus.entityRelationships = "pending";
+
+      let requestPromise: Promise<EntityDefinition | undefined>;
+      requestPromise = (async () => {
+        try {
+          const resp = await api({
+            url: `admin/entities/${encodeURIComponent(normalizedEntityName)}/definition`,
+            method: "GET"
+          });
+          const responseDefinition = resp.data?.entityDefinition;
+          if (!responseDefinition) throw new Error("Empty entity definition");
+
+          const definition: EntityDefinition = {
+            fields: (Array.isArray(responseDefinition.fields) ? responseDefinition.fields : [])
               .map(normalizeEntityField)
-              .sort((a: any, b: any) => a.fieldName.localeCompare(b.fieldName));
+              .sort((left: any, right: any) => left.fieldName.localeCompare(right.fieldName)),
+            relationships: (Array.isArray(responseDefinition.relationships) ? responseDefinition.relationships : [])
+              .map((relationship: any) => ({ ...relationship }))
+              .sort((left: any, right: any) => (
+                (left.relationshipName || "").localeCompare(right.relationshipName || "")
+              ))
+          };
+          const cachedDefinition = cloneEntityDefinition(definition);
+
+          if (this.entityDefinitionFetchStates[normalizedEntityName]?.generation === generation) {
+            this.entityDefinitions[normalizedEntityName] = cachedDefinition;
+            this.entityFields[normalizedEntityName] = cachedDefinition.fields;
+            this.entityRelationships[normalizedEntityName] = cachedDefinition.relationships;
+            this.entityDefinitionFetchStates[normalizedEntityName] = {
+              status: "success",
+              error: undefined,
+              generation
+            };
+            this.fetchStatus.entityFields = "success";
+            this.fetchStatus.entityRelationships = "success";
           }
-          this.fetchStatus.entityRelationships = 'success'
-        } else {
-          throw new Error("Empty relationship list");
+
+          return cloneEntityDefinition(definition);
+        } catch (error) {
+          if (this.entityDefinitionFetchStates[normalizedEntityName]?.generation === generation) {
+            this.entityDefinitionFetchStates[normalizedEntityName] = {
+              status: "error",
+              error: error instanceof Error ? error.message : String(error),
+              generation
+            };
+            this.fetchStatus.entityFields = "error";
+            this.fetchStatus.entityRelationships = "error";
+            logger.error(`Failed to fetch definition for entity ${normalizedEntityName}`, error);
+          }
+          throw error;
+        } finally {
+          if (requests.get(normalizedEntityName)?.promise === requestPromise) {
+            requests.delete(normalizedEntityName);
+          }
         }
-      } catch (error) {
-        logger.error(`Failed to fetch relationships for entity ${entityName}`, error);
-        this.fetchStatus.entityRelationships = 'error'
-      }
+      })();
+
+      requests.set(normalizedEntityName, { generation, promise: requestPromise });
+      return requestPromise;
+    },
+    fetchEntityFields(entityName: string, force = false) {
+      return this.fetchEntityDefinition(entityName, { force });
+    },
+    fetchEntityRelationships(entityName: string, force = false) {
+      return this.fetchEntityDefinition(entityName, { force });
     },
     async fetchEnumerations(force = false) {
       if (this.enumerations.length && !force) return;
@@ -254,5 +343,59 @@ export const useUtilStore = defineStore("util", {
       }
     }
   },
-  persist: true,
+  persist: {
+    pick: [
+      "statusItems",
+      "enumerations",
+      "statuses",
+      "entities",
+      "entityDefinitions",
+      "entityFields",
+      "entityRelationships",
+      "systemInformation"
+    ]
+  },
 });
+
+const wrappedUtilStores = new WeakSet<object>();
+const publicEntityDefinitionRequests = new WeakMap<object, Map<string, Promise<EntityDefinition | undefined>>>();
+
+export const useUtilStore: typeof useUtilPiniaStore = Object.assign(
+  ((...args: Parameters<typeof useUtilPiniaStore>) => {
+    const store = useUtilPiniaStore(...args);
+    if (wrappedUtilStores.has(store)) return store;
+
+    const performFetchEntityDefinition = store.fetchEntityDefinition.bind(store);
+    let requests = publicEntityDefinitionRequests.get(store);
+    if (!requests) {
+      requests = new Map<string, Promise<EntityDefinition | undefined>>();
+      publicEntityDefinitionRequests.set(store, requests);
+    }
+
+    const fetchEntityDefinition: typeof store.fetchEntityDefinition = (entityName, options = {}) => {
+      const normalizedEntityName = normalizeEntityNameKey(entityName);
+      if (!normalizedEntityName) return Promise.resolve(undefined);
+
+      const inFlight = requests.get(normalizedEntityName);
+      if (!options.force && inFlight) return inFlight;
+
+      let sharedRequest: Promise<EntityDefinition | undefined>;
+      sharedRequest = performFetchEntityDefinition(normalizedEntityName, options).finally(() => {
+        if (requests.get(normalizedEntityName) === sharedRequest) requests.delete(normalizedEntityName);
+      });
+      requests.set(normalizedEntityName, sharedRequest);
+      return sharedRequest;
+    };
+
+    store.fetchEntityDefinition = fetchEntityDefinition;
+    store.fetchEntityFields = ((entityName: string, force = false) => (
+      fetchEntityDefinition(entityName, { force })
+    )) as typeof store.fetchEntityFields;
+    store.fetchEntityRelationships = ((entityName: string, force = false) => (
+      fetchEntityDefinition(entityName, { force })
+    )) as typeof store.fetchEntityRelationships;
+    wrappedUtilStores.add(store);
+    return store;
+  }) as typeof useUtilPiniaStore,
+  { $id: useUtilPiniaStore.$id }
+);
