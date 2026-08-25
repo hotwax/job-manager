@@ -166,31 +166,28 @@
             <div v-if="areServiceParamsLoading" class="payload-loading">
               <ion-spinner name="crescent"></ion-spinner>
             </div>
-            <ion-list v-else-if="mergedParameters.length" lines="full">
+            <ion-list v-else-if="serviceParameters.length" lines="full">
               <ion-list-header>
-                <ion-label>{{ translate("Parameters") }}</ion-label>
+                <ion-label>{{ translate("Import Service Parameters") }}</ion-label>
               </ion-list-header>
               <ion-item lines="none">
                 <ion-label class="ion-text-wrap">
-                  <p>{{ translate("Parameters the import service accepts, with the values this log was created with.") }}</p>
+                  <p>{{ translate("Input parameters accepted by the import service. This metadata is read-only.") }}</p>
                 </ion-label>
               </ion-item>
-              <ion-item v-for="parameter in mergedParameters" :key="parameter.name">
+              <ion-item v-for="parameter in serviceParameters" :key="parameter.name">
                 <ion-label class="ion-text-wrap">
                   {{ parameter.name }}
-                  <p v-if="parameter.submitted">{{ parameter.value }}</p>
-                  <p v-else>{{ translate("Not set for this log") }}</p>
                   <p v-if="parameter.type">{{ parameter.type }}</p>
                   <p v-if="parameter.default">{{ translate("Default:") }} {{ parameter.default }}</p>
-                  <p v-if="!parameter.inContract">{{ translate("Not declared by the service") }}</p>
                 </ion-label>
-                <ion-badge v-if="parameter.required" slot="end" color="medium">{{ translate("Required") }}</ion-badge>
+                <ion-badge v-if="parameter.required === 'true'" slot="end" color="medium">{{ translate("Required") }}</ion-badge>
               </ion-item>
             </ion-list>
-            <p v-if="!areServiceParamsLoading && !mergedParameters.length" class="payload-empty">{{ translate("No parameters found for this log.") }}</p>
+            <p v-else class="payload-empty">{{ translate("No input parameters found for this service.") }}</p>
           </div>
 
-          <div v-else-if="payloadLoading || (isErrorsView && errorPayloadLoading)" class="payload-loading">
+          <div v-else-if="payloadLoading" class="payload-loading">
             <ion-spinner name="crescent"></ion-spinner>
           </div>
 
@@ -300,9 +297,6 @@ type ParsedPayload = {
 
 const log = ref<any>(null);
 const payloadLoading = ref(true);
-const errorPayloadLoading = ref(false);
-let currentGeneration = 0;
-let currentErrorPromise: Promise<ParsedPayload> | null = null;
 const selectedPayload = ref<PayloadKey>("original");
 // shallowRef + markRaw: parsed payloads are read-only display data. A deep ref would proxy
 // every object in a large parsed file, tripling memory and slowing every property read.
@@ -314,7 +308,6 @@ const payloadSearch = ref("");
 const serviceParameters = ref<Array<any>>([]);
 const areServiceParamsLoading = ref(false);
 const haveLoadedServiceParams = ref(false);
-const logParameters = ref<Array<any>>([]);
 
 // Per-log import settings that the Execution Details card does not already state.
 const importSettings = computed(() => {
@@ -343,63 +336,25 @@ const payloadTabs = computed(() => {
 });
 
 const isParametersView = computed(() => selectedPayload.value === "parameters");
-const isErrorsView = computed(() => selectedPayload.value === "errors");
 
 // The service contract is only worth fetching once the user opens the segment.
 watch(selectedPayload, async (view) => {
-  if (view === "errors") {
-    // The store normally normalizes transport failures to an empty payload. Keep
-    // the watcher safe if an unexpected rejection still escapes that boundary.
-    await loadErrorPayload().catch(() => undefined);
-    return;
-  }
   if (view !== "parameters" || haveLoadedServiceParams.value) return;
   await loadServiceParameters();
 });
 
-// One list: the service contract is the master set of rows, with the values this log was
-// actually created with overlaid onto the ones that match by name. A submitted parameter the
-// service does not declare is still listed rather than dropped, so nothing is hidden.
-const mergedParameters = computed(() => {
-  const submitted = new Map(logParameters.value.map((parameter: any) => [parameter.parameterName, parameter.parameterValue]));
-  const declared = serviceParameters.value.map((parameter: any) => ({
-    name: parameter.name,
-    type: parameter.type,
-    default: parameter.default,
-    required: parameter.required === "true",
-    submitted: submitted.has(parameter.name),
-    value: submitted.get(parameter.name),
-    inContract: true
-  }));
-  const declaredNames = new Set(serviceParameters.value.map((parameter: any) => parameter.name));
-  const extras = logParameters.value
-    .filter((parameter: any) => !declaredNames.has(parameter.parameterName))
-    .map((parameter: any) => ({
-      name: parameter.parameterName,
-      required: false,
-      submitted: true,
-      value: parameter.parameterValue,
-      inContract: false
-    }));
-
-  return [...declared, ...extras];
-});
-
 const loadServiceParameters = async () => {
   const serviceName = log.value?.importServiceName;
+  if (!serviceName) {
+    haveLoadedServiceParams.value = true;
+    return;
+  }
+
   areServiceParamsLoading.value = true;
-
   try {
-    // The log read already carries the parameters it was created with, so there is nothing
-    // further to fetch here.
-    logParameters.value = log.value?.parameters || [];
-
-    if (serviceName) {
-      const params = await jobStore.fetchServiceParams(serviceName);
-      // Underscore-prefixed entries are framework internals, not operator input.
-      serviceParameters.value = (params || []).filter((param: any) => !param?.name?.startsWith("_"));
-    }
-
+    const params = await jobStore.fetchServiceParams(serviceName);
+    // Underscore-prefixed entries are framework internals, not operator input.
+    serviceParameters.value = (params || []).filter((param: any) => !param?.name?.startsWith("_"));
     haveLoadedServiceParams.value = true;
   } finally {
     areServiceParamsLoading.value = false;
@@ -457,70 +412,26 @@ function createPayload(fileName?: string): ParsedPayload {
 }
 
 async function loadPayloads(logData: any) {
-  const generation = ++currentGeneration;
   payloadLoading.value = true;
   selectedPayload.value = "original";
-  currentErrorPromise = null;
-  errorPayloadLoading.value = false;
-
   payloads.value = {
     original: createPayload(logData.fileName),
     errors: createPayload(logData.errorFileName)
   };
 
   try {
-    const originalPayload = await loadPayload(logData.configId, logData.logContentId, logData.fileName);
-
-    if (generation !== currentGeneration) return;
+    const [originalPayload, errorPayload] = await Promise.all([
+      loadPayload(logData.configId, logData.logContentId, logData.fileName),
+      hasErrorPayload.value ? loadPayload(logData.configId, logData.errorLogContentId, logData.errorFileName) : Promise.resolve(createPayload(logData.errorFileName))
+    ]);
 
     payloads.value = {
-      ...payloads.value,
-      original: originalPayload
+      original: originalPayload,
+      errors: errorPayload
     };
   } finally {
-    if (generation === currentGeneration) {
-      payloadLoading.value = false;
-    }
+    payloadLoading.value = false;
   }
-}
-
-async function loadErrorPayload() {
-  if (!log.value || !hasErrorPayload.value) return;
-
-  const generation = currentGeneration;
-
-  if (currentErrorPromise) {
-    return currentErrorPromise;
-  }
-
-  errorPayloadLoading.value = true;
-
-  const promise = loadPayload(log.value.configId, log.value.errorLogContentId, log.value.errorFileName)
-    .then((errorPayload) => {
-      if (generation !== currentGeneration) return errorPayload;
-
-      payloads.value = {
-        ...payloads.value,
-        errors: errorPayload
-      };
-      return errorPayload;
-    })
-    .catch((error) => {
-      // Do not cache a rejected in-flight request: reopening the segment should
-      // be able to retry after a transient failure.
-      if (generation === currentGeneration) {
-        currentErrorPromise = null;
-      }
-      throw error;
-    })
-    .finally(() => {
-      if (generation === currentGeneration) {
-        errorPayloadLoading.value = false;
-      }
-    });
-
-  currentErrorPromise = promise;
-  return promise;
 }
 
 async function loadPayload(configId?: string, logContentId?: string, fileName?: string) {

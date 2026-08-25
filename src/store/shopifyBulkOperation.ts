@@ -333,7 +333,7 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
         return;
       }
 
-      let probePromise = probePromises.get(this);
+      let probePromise = probePromises.get(this as any);
       if (!probePromise) {
         probePromise = (async () => {
           try {
@@ -354,10 +354,10 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
             this.enrichmentAvailable = false;
           } finally {
             this.enrichmentProbed = true;
-            probePromises.set(this, null);
+            probePromises.set(this as any, null);
           }
         })();
-        probePromises.set(this, probePromise);
+        probePromises.set(this as any, probePromise);
       }
 
       return probePromise;
@@ -383,7 +383,7 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
         return;
       }
 
-      const promises = uniquePending.map(gid => enqueueEnrichment(this, gid));
+      const promises = uniquePending.map(gid => enqueueEnrichment(this as any, gid));
       const results = await Promise.all(promises);
 
       // A miss is cached as null so a Shopify operation with no HotWax record is not looked

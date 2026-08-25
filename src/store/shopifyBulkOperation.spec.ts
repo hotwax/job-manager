@@ -1,4 +1,4 @@
-import type { Mock } from "vitest";
+import { Mock } from 'vitest';
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { setActivePinia, createPinia } from "pinia";
 import { useShopifyBulkOperationStore } from "./shopifyBulkOperation";

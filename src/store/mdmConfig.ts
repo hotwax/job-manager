@@ -160,55 +160,18 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
         this.isFetchingLogs = false;
       }
     },
-    // Reads one log from its entity master, which carries the config, the parameters it was
-    // created with and its content in a single request. Moqui keys nested details by the full
-    // entity name.
-    //
-    // The rest of the app expects the flat shape the DataManagerLogDetails view produced, so
-    // the nested response is flattened back into it: config fields lifted to the top level,
-    // and content split into the plain and error* pairs by content type — the view got that
-    // split by joining DataManagerContent twice.
-    flattenDataManagerLogMaster(log: any) {
-      const config = log["co.hotwax.datamanager.DataManagerConfig"] || {};
-      const contents = log["co.hotwax.datamanager.DataManagerContent"] || [];
-      const parameters = log["co.hotwax.datamanager.DataManagerParameter"] || [];
-
-      const imported = contents.find((content: any) => content.logContentTypeEnumId === "DmcntImported") || {};
-      const errored = contents.find((content: any) => content.logContentTypeEnumId === "DmcntError") || {};
-
-      const flat: any = { ...config, ...log, parameters };
-
-      // The nested keys are an implementation detail of the master; callers read the flat shape.
-      delete flat["co.hotwax.datamanager.DataManagerConfig"];
-      delete flat["co.hotwax.datamanager.DataManagerContent"];
-      delete flat["co.hotwax.datamanager.DataManagerParameter"];
-
-      if (imported.logContentId) {
-        flat.fileName = imported.fileName;
-        flat.fileSize = imported.fileSize;
-        flat.logContentId = imported.logContentId;
-        flat.contentLocation = imported.contentLocation;
-        flat.logContentTypeEnumId = imported.logContentTypeEnumId;
-      }
-
-      if (errored.logContentId) {
-        flat.errorFileName = errored.fileName;
-        flat.errorFileSize = errored.fileSize;
-        flat.errorLogContentId = errored.logContentId;
-        flat.errorFileContentLocation = errored.contentLocation;
-        flat.errorLogContentTypeEnumId = errored.logContentTypeEnumId;
-      }
-
-      return flat;
-    },
     async fetchDataManagerLogById(logId: string) {
       try {
         const resp = await api({
-          url: `admin/dataManager/logs/${logId}`,
-          method: "get"
+          url: "admin/dataManager/details",
+          method: "get",
+          params: { logId }
         })
 
-        return resp.data?.logId ? this.flattenDataManagerLogMaster(resp.data) : null
+        if (resp.data?.dataManagerLogs?.length) {
+          return resp.data.dataManagerLogs[0]
+        }
+        return null
       } catch (err) {
         logger.error(`Failed to fetch log with id ${logId}`, err)
         return null

@@ -123,23 +123,6 @@
                   <ion-icon slot="icon-only" :icon="closeCircleOutline" />
                 </ion-button>
               </div>
-
-              <div class="filter-item">
-                <ion-select
-                  :label="translate('Errors')"
-                  label-placement="stacked"
-                  interface="popover"
-                  :value="selectedHasError"
-                  @ionChange="selectedHasError = $event.detail.value"
-                >
-                  <ion-select-option value="">{{ translate("All") }}</ion-select-option>
-                  <ion-select-option value="Y">{{ translate("With errors") }}</ion-select-option>
-                  <ion-select-option value="N">{{ translate("Without errors") }}</ion-select-option>
-                </ion-select>
-                <ion-button v-if="selectedHasError" fill="clear" class="clear-filter-btn" @click="selectedHasError = ''" :title="translate('Clear')">
-                  <ion-icon slot="icon-only" :icon="closeCircleOutline" />
-                </ion-button>
-              </div>
             </div>
           </ion-card-content>
         </ion-card>
@@ -194,7 +177,6 @@ import {
 } from "@ionic/vue";
 import { closeCircleOutline } from "ionicons/icons";
 import { computed, ref, watch } from "vue";
-import { hasSystemMessageError } from "@/utils";
 import { translate } from "@common";
 import SystemMessageList from "@/components/SystemMessageList.vue";
 import { useSystemMessageStore } from "@/store/systemMessage";
@@ -213,21 +195,10 @@ const selectedTypeId = ref("");
 const selectedParentTypeId = ref("");
 const selectedRemoteId = ref("");
 const selectedIsOutgoing = ref("");
-const selectedHasError = ref("");
 const pageIndex = ref(0);
 const isInitialLoading = ref(true);
 
-// Errors are filtered here rather than in the request: the API has no failCount filter, so
-// "with errors" cannot be expressed as a query parameter. This narrows the page that was
-// fetched, so a count taken over a wider window can exceed what this page shows.
-const messages = computed(() => {
-  const all = store.getSystemMessages;
-  if(!selectedHasError.value) {
-    return all;
-  }
-
-  return all.filter((msg: any) => selectedHasError.value === "Y" ? hasSystemMessageError(msg) : !hasSystemMessageError(msg));
-});
+const messages = computed(() => store.getSystemMessages);
 
 const total = computed(() => store.getSystemMessageTotal);
 const types = computed(() => store.getSystemMessageTypes);
@@ -334,7 +305,6 @@ onIonViewWillEnter(async () => {
   const currentQuery = router.currentRoute.value.query;
   selectedStatusId.value = (currentQuery?.statusId as string) ?? "";
   selectedIsOutgoing.value = (currentQuery?.isOutgoing as string) ?? "";
-  selectedHasError.value = (currentQuery?.hasError as string) ?? "";
 
   await loadMessages();
   isInitialLoading.value = false;
