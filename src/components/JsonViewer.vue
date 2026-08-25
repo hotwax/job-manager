@@ -1,5 +1,5 @@
 <template>
-  <div class="json-viewer">
+  <div class="json-viewer" :style="{ '--jv-row-height': rowHeight }">
     <div class="jv-toolbar">
       <ion-button size="small" fill="clear" @click="expandAll">
         <ion-icon slot="start" :icon="addCircleOutline" />
@@ -16,8 +16,8 @@
 
     <div ref="scroller" class="jv-body" @scroll.passive="onScroll">
       <!-- Sizer reserves the full scroll height; only the rows in view are actually mounted. -->
-      <div class="jv-sizer" :style="{ height: `${rows.length * ROW_HEIGHT}px` }">
-        <div class="jv-window" :style="{ transform: `translateY(${startIndex * ROW_HEIGHT}px)` }">
+      <div class="jv-sizer" :style="{ '--jv-total-height': totalHeight }">
+        <div class="jv-window" :style="{ '--jv-window-offset': windowOffset }">
           <div
             v-for="row in windowRows"
             :key="row.id"
@@ -68,9 +68,12 @@ const props = defineProps<{
   search: string;
 }>();
 
-// Must match .jt-row height in CSS: virtualization maps scroll offset to row index.
+// The single source of truth for row height. The stylesheet reads it back through
+// --jv-row-height, so the scroll maths and the rendered row cannot drift apart.
 const ROW_HEIGHT = 24;
 const OVERSCAN = 8;
+
+const rowHeight = `${ROW_HEIGHT}px`;
 
 const scroller = ref<HTMLElement | null>(null);
 const scrollTop = ref(0);
@@ -92,6 +95,10 @@ const endIndex = computed(() =>
   Math.min(rows.value.length, Math.ceil((scrollTop.value + viewportHeight.value) / ROW_HEIGHT) + OVERSCAN)
 );
 const windowRows = computed(() => rows.value.slice(startIndex.value, endIndex.value));
+
+// Fed to the stylesheet as custom properties rather than as inline declarations.
+const totalHeight = computed(() => `${rows.value.length * ROW_HEIGHT}px`);
+const windowOffset = computed(() => `${startIndex.value * ROW_HEIGHT}px`);
 
 const onScroll = () => {
   const el = scroller.value;
@@ -201,6 +208,8 @@ const highlight = (text: string) => {
 .jv-sizer {
   position: relative;
   min-width: max-content;
+  /* Reserves the full scroll height for every row, mounted or not. */
+  height: var(--jv-total-height, 0);
 }
 
 .jv-window {
@@ -208,6 +217,8 @@ const highlight = (text: string) => {
   top: 0;
   inset-inline-start: 0;
   min-width: 100%;
+  /* Slides the mounted rows to the scroll offset they represent. */
+  transform: translateY(var(--jv-window-offset, 0));
   will-change: transform;
 }
 
@@ -216,7 +227,7 @@ const highlight = (text: string) => {
 .jt-row {
   display: flex;
   align-items: center;
-  height: 24px;
+  height: var(--jv-row-height, 24px);
   white-space: nowrap;
   border-radius: 4px;
 }
