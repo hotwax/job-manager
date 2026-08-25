@@ -170,19 +170,19 @@ const routes: Array<RouteRecordRaw> = [
     component: DataDocumentCatalog,
     beforeEnter: authGuard
   },
-  // {
-  //   path: '/data-document-feeds',
-  //   name: 'DataDocumentFeeds',
-  //   component: DataDocumentFeeds,
-  //   beforeEnter: authGuard
-  // },
-  // {
-  //   path: '/data-document-feeds/:id',
-  //   name: 'DataDocumentFeedDetail',
-  //   component: DataDocumentFeedDetail,
-  //   beforeEnter: authGuard,
-  //   props: true
-  // },
+  {
+    path: '/data-document-feeds',
+    name: 'DataDocumentFeeds',
+    component: DataDocumentFeeds,
+    beforeEnter: authGuard
+  },
+  {
+    path: '/data-document-feeds/:id',
+    name: 'DataDocumentFeedDetail',
+    component: DataDocumentFeedDetail,
+    beforeEnter: authGuard,
+    props: true
+  },
   {
     // Single detail page for a data document (also create via id="new"). Absorbs the former
     // detail / edit / run pages as in-page segments (Fields / Conditions / Preview / Usage /
