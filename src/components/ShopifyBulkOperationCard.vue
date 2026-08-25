@@ -4,7 +4,7 @@
       <ion-icon slot="start" :icon="display.statusIcon" :color="display.statusColor" />
       <ion-label class="ion-text-wrap">
         <p class="overline">
-          #{{ display.shopifyOperationId }}
+          #{{ display.shopifyOperationId }}<span v-if="display.shopName"> | {{ display.shopName }}</span>
         </p>
         <h2>{{ display.title }}</h2>
         <p>{{ display.type }}</p>
@@ -156,6 +156,7 @@ import { type ShopifyBulkOperation } from "@/types/ShopifyBulkOperation";
 export interface OperationDisplayModel {
   id: string;
   shopifyOperationId: string;
+  shopName?: string;
   title: string;
   type: string;
   statusLabel: string;
@@ -219,6 +220,7 @@ const display = computed<OperationDisplayModel>(() => {
   return {
     id: op.id,
     shopifyOperationId: op.shopifyOperationId,
+    shopName: op.shopName,
     title: hotwax?.description || hotwax?.systemMessageTypeId || translate("Bulk operation"),
     type: translate(toTitleCase(type)),
     statusLabel: translate(toTitleCase(status)),

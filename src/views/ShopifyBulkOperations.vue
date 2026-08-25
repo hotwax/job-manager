@@ -53,6 +53,23 @@
             />
 
             <div class="filter-grid">
+              <div class="filter-item" v-if="shops.length > 1">
+                <ion-select
+                  :label="translate('Shop')"
+                  label-placement="stacked"
+                  interface="popover"
+                  :value="selectedShop"
+                  @ion-change="selectedShop = $event.detail.value"
+                >
+                  <ion-select-option value="all">
+                    {{ translate("All shops") }}
+                  </ion-select-option>
+                  <ion-select-option v-for="shop in shops" :key="shop.systemMessageRemoteId" :value="shop.systemMessageRemoteId">
+                    {{ shop.name }}
+                  </ion-select-option>
+                </ion-select>
+              </div>
+
               <div class="filter-item">
                 <ion-select
                   :label="translate('Shopify status')"
@@ -137,11 +154,15 @@
         </ion-card>
 
         <!-- Cursor paging: Shopify returns cursors and has-next/has-previous, never a page count. -->
+        <ion-note v-if="isCombinedView" color="medium" class="stats-scope">
+          {{ translate("Showing the most recent operations from each of") }} {{ combinedShopCount }} {{ translate("shops. Pick a single shop to page through its full history.") }}
+        </ion-note>
+
         <div class="pagination">
-          <ion-button fill="outline" :disabled="!pageInfo.hasPreviousPage || isFetchingOperations" @click="goToPreviousPage">
+          <ion-button fill="outline" :disabled="isCombinedView || !pageInfo.hasPreviousPage || isFetchingOperations" @click="goToPreviousPage">
             {{ translate("Previous") }}
           </ion-button>
-          <ion-button fill="outline" :disabled="!pageInfo.hasNextPage || isFetchingOperations" @click="goToNextPage">
+          <ion-button fill="outline" :disabled="isCombinedView || !pageInfo.hasNextPage || isFetchingOperations" @click="goToNextPage">
             {{ translate("Next") }}
           </ion-button>
         </div>
@@ -254,6 +275,20 @@ const enrichmentAvailable = computed(() => bulkOperationStore.enrichmentAvailabl
 // The shop's system message remote is what the OMS passthrough uses to pick the Shopify
 // credentials, so every request on this page is scoped to the selected product store.
 const systemMessageRemoteId = computed(() => userStore.getSelectedSystemMessageRemoteId);
+const shops = computed(() => bulkOperationStore.shops);
+const selectedShop = ref("all");
+
+// "all" fans out one page per shop; a single shop keeps Shopify's own cursor paging, which is
+// exact. The two cannot be combined, because each shop has its own cursor space.
+const activeRemoteIds = computed(() => {
+  if(selectedShop.value !== "all") {
+    return [selectedShop.value];
+  }
+
+  return shops.value.map((shop: any) => shop.systemMessageRemoteId).filter(Boolean);
+});
+const isCombinedView = computed(() => activeRemoteIds.value.length > 1);
+const combinedShopCount = computed(() => bulkOperationStore.combinedShopCount);
 
 const operations = computed(() => bulkOperationStore.getEnrichedOperations);
 
@@ -312,7 +347,8 @@ const goToSystemMessage = (systemMessageId: string) => {
 };
 
 const buildPayload = (overrides: Record<string, any> = {}) => ({
-  systemMessageRemoteId: systemMessageRemoteId.value,
+  systemMessageRemoteIds: activeRemoteIds.value,
+  systemMessageRemoteId: activeRemoteIds.value.length === 1 ? activeRemoteIds.value[0] : systemMessageRemoteId.value,
   status: selectedStatus.value,
   operationType: selectedType.value,
   createdAfter: createdAfter.value,
@@ -328,6 +364,11 @@ const loadOperations = async () => {
 };
 
 const loadAll = async () => {
+  // The shop list decides which remotes to query, so it has to land first.
+  if(!shops.value.length) {
+    await bulkOperationStore.fetchShops();
+  }
+
   await Promise.all([loadOperations(), bulkOperationStore.fetchStats(buildPayload())]);
 };
 
@@ -344,7 +385,7 @@ const goToPreviousPage = async () => {
 };
 
 // A changed Shopify-side facet invalidates the cursor, so paging restarts from the newest page.
-watch([selectedStatus, selectedType, createdAfter, sort], async () => {
+watch([selectedStatus, selectedType, createdAfter, sort, selectedShop], async () => {
   cursor.value = "";
   direction.value = "";
   await Promise.all([loadOperations(), bulkOperationStore.fetchStats(buildPayload())]);
