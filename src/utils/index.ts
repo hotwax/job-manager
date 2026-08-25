@@ -282,6 +282,21 @@ const getTimeInMillis = (value: any) => {
   return sqlDateTime.isValid ? sqlDateTime.toMillis() : 0;
 };
 
+// The Shopify Admin API app a shop talks through. A shop can be mapped to several
+// SystemMessageRemote rows and only purposeTypeId separates them, so the purpose has to be
+// part of the lookup rather than taking whichever row comes first.
+const SHOP_REMOTE_DEFAULT_APP_PURPOSE = "SsctShopifyDefaultApp";
+
+/**
+ * Reads a shop's default-app remote id out of the shopRemotes detail that the ShopifyShop
+ * master nests into the shops response.
+ *
+ * @param shop - A shop row from the shops endpoint.
+ * @returns The mapped systemMessageRemoteId, or "" when the shop has no default-app mapping.
+ */
+const getShopDefaultAppRemoteId = (shop: any): string =>
+  (shop?.shopRemotes || []).find((remote: any) => remote.purposeTypeId === SHOP_REMOTE_DEFAULT_APP_PURPOSE)?.systemMessageRemoteId || "";
+
 export {
   downloadDataDocumentExport,
   getExportStatus,
@@ -298,6 +313,7 @@ export {
   getDuration,
   getFileSize,
   getLogFileName,
+  getShopDefaultAppRemoteId,
   getTimeInMillis,
   hasFailedRecords,
   hasSystemMessageError,

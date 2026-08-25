@@ -1,6 +1,6 @@
 import { DateTime, Settings } from "luxon";
 import { defineStore } from "pinia";
-import { isAppCompatible, redirectToLegacyApp, showToast } from "@/utils";
+import { getShopDefaultAppRemoteId, isAppCompatible, redirectToLegacyApp, showToast } from "@/utils";
 import { api, commonUtil, cookieHelper, translate } from "@common";
 import logger from "@/logger";
 import { useAuth } from "@common/composables/useAuth";
@@ -245,33 +245,14 @@ export const useUserStore = defineStore("user", {
           },
         });
         const shopifyConfigs = shopifyConfigResp.data
-        shopifyConfigs.length > 0 && (this.currentShopifyConfig = shopifyConfigs[0]);
-        await this.fetchSystemMessageRemoteByShop();
+        if(shopifyConfigs.length > 0) {
+          this.currentShopifyConfig = shopifyConfigs[0];
+          // The shop's remote mappings come back nested on the shop itself, so resolving the
+          // remote costs no extra request.
+          this.selectedSystemMessageRemoteId = getShopDefaultAppRemoteId(shopifyConfigs[0]);
+        }
       } catch (err) {
         logger.error(err);
-      }
-    },
-    async fetchSystemMessageRemoteByShop() {
-      if(!this.currentShopifyConfig.shopId) {
-        return;
-      }
-      try {
-        const response = await api({
-          url: "oms/systemMessageRemotes",
-          method: "GET",
-          params: {
-            internalId: this.currentShopifyConfig.shopId
-          }
-        });
-
-        if(response?.data?.systemMessageRemoteList && response.data.systemMessageRemoteList[0]?.internalId) {
-          this.selectedSystemMessageRemoteId = response.data.systemMessageRemoteList[0].internalId;
-          return;
-        }
-
-        throw new Error("System message remote API did not return an entity payload.");
-      } catch (err) {
-        logger.error("Failed to fetch system message remote by shop", err);
       }
     },
     async setUserTimeZone(tzId: string) {
