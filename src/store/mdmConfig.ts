@@ -188,8 +188,16 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
         // no downloadable content is stored for this log content id.
         const content = resp?.data?.csvData ?? resp?.data
         if (content && typeof content === "object" && !Object.keys(content).length) return null
-        const text = typeof content === "string" ? content : JSON.stringify(content)
-        return text && text.replace(/\s/g, "") !== "{}" ? text : null
+
+        if (typeof content !== "string") {
+          // The HTTP client already parsed this. The text form is still needed for copy and
+          // download, but the parsed value is handed over too so the view does not have to
+          // parse the string we just serialised.
+          return content ? { text: JSON.stringify(content), parsed: content } : null
+        }
+        // Tested with a regex rather than stripping whitespace: replace() would allocate a
+        // second copy of what can be a multi-megabyte payload just to compare it to "{}".
+        return content && !/^\s*\{\s*\}\s*$/.test(content) ? { text: content } : null
       } catch (err) {
         logger.error(`Failed to fetch file content for log content ${logContentId}`, err)
         return null

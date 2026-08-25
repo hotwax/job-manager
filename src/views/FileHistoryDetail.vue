@@ -34,7 +34,7 @@
               <ion-item>
                 <ion-label class="ion-text-wrap">
                   <p>{{ translate("Status") }}</p>
-                  <ion-badge :color="getLogStatusColor(log)" style="display: inline-flex; align-items: center; gap: 4px; margin-top: 4px;">
+                  <ion-badge :color="getLogStatusColor(log)" class="status-badge">
                     <ion-icon v-if="log.statusId === 'DmlsFinished' && failedRecordCount > 0" :icon="warningOutline" />
                     <ion-icon v-else-if="['DmlsFailed', 'DmlsCrashed'].includes(log.statusId)" :icon="alertCircleOutline" />
                     {{ translate(getLogStatusLabel(log)) }}
@@ -156,21 +156,7 @@
 
           <json-viewer v-else-if="contentType === 'json'" :data="parsedJson" :search="payloadSearch" />
 
-          <div v-else-if="contentType === 'csv'" class="csv-wrap">
-            <table class="csv-table">
-              <thead>
-                <tr>
-                  <th v-for="col in csvColumns" :key="col">{{ col }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(row, i) in filteredCsvRows" :key="i">
-                  <td v-for="col in csvColumns" :key="col">{{ row[col] }}</td>
-                </tr>
-              </tbody>
-            </table>
-            <p v-if="!filteredCsvRows.length" class="payload-empty">{{ translate("No matching rows") }}</p>
-          </div>
+          <csv-viewer v-else-if="contentType === 'csv'" :rows="csvRows" :search="payloadSearch" />
 
           <pre v-else-if="contentType === 'text'" class="raw-text">{{ rawText }}</pre>
 
@@ -208,13 +194,14 @@ import {
   IonSpinner,
   onIonViewWillEnter
 } from '@ionic/vue';
-import { computed, ref } from 'vue';
+import { computed, markRaw, ref, shallowRef } from 'vue';
 import router from "@/router";
 import { translate, commonUtil } from '@common';
 import { useMdmConfigStore } from '@/store/mdmConfig';
 import { getFileSize, showToast, getDuration } from '@/utils';
 import { codeWorkingOutline, copyOutline, downloadOutline, warningOutline, alertCircleOutline } from 'ionicons/icons';
 import JsonViewer from '@/components/JsonViewer.vue';
+import CsvViewer from '@/components/CsvViewer.vue';
 import { saveAs } from 'file-saver';
 import { getStatusDesc } from '@/utils/config';
 
@@ -255,7 +242,9 @@ type ParsedPayload = {
 const log = ref<any>(null);
 const payloadLoading = ref(true);
 const selectedPayload = ref<PayloadKey>("original");
-const payloads = ref<Record<PayloadKey, ParsedPayload>>({
+// shallowRef + markRaw: parsed payloads are read-only display data. A deep ref would proxy
+// every object in a large parsed file, tripling memory and slowing every property read.
+const payloads = shallowRef<Record<PayloadKey, ParsedPayload>>({
   original: createPayload(),
   errors: createPayload()
 });
@@ -292,14 +281,6 @@ const getLogStatusColor = (logVal: any) => {
   return commonUtil.getStatusColor(logVal.statusId);
 };
 const showPayloadControls = computed(() => payloadTabs.value.length > 1 || !!contentType.value);
-const csvColumns = computed(() => (csvRows.value.length ? Object.keys(csvRows.value[0]) : []));
-const filteredCsvRows = computed(() => {
-  const q = payloadSearch.value.trim().toLowerCase();
-  if (!q) return csvRows.value;
-  return csvRows.value.filter((row: any) =>
-    Object.values(row).some((value: any) => String(value ?? "").toLowerCase().includes(q))
-  );
-});
 
 onIonViewWillEnter(async () => {
   if (!logId) return;
@@ -358,20 +339,31 @@ async function loadPayload(configId?: string, logContentId?: string, fileName?: 
     return createPayload(fileName);
   }
 
-  return detectAndParse(raw, fileName);
+  return detectAndParse(raw.text, fileName, raw.parsed);
 }
 
-async function detectAndParse(raw: string, fileName?: string): Promise<ParsedPayload> {
-  const trimmed = raw.trim();
-  const looksJson = trimmed.startsWith("{") || trimmed.startsWith("[");
+async function detectAndParse(raw: string, fileName?: string, preParsed?: any): Promise<ParsedPayload> {
   const isCsvName = (fileName || "").toLowerCase().endsWith(".csv");
+  // Only allocate a trimmed copy when there is actually leading whitespace to remove; on a
+  // multi-megabyte payload an unconditional trim() is a wasted full-string copy.
+  const body = /^\s/.test(raw) ? raw.replace(/^\s+/, "") : raw;
 
-  if (looksJson && !isCsvName) {
+  if (!isCsvName && preParsed !== undefined && preParsed !== null) {
+    // Already parsed upstream; parsing the serialised form again would repeat the work.
+    return {
+      ...createPayload(fileName),
+      contentType: "json",
+      parsedJson: markRaw(preParsed),
+      rawText: raw
+    };
+  }
+
+  if (!isCsvName && (body.startsWith("{") || body.startsWith("["))) {
     try {
       return {
         ...createPayload(fileName),
         contentType: "json",
-        parsedJson: JSON.parse(trimmed),
+        parsedJson: markRaw(JSON.parse(body)),
         rawText: raw
       };
     } catch {
@@ -380,12 +372,12 @@ async function detectAndParse(raw: string, fileName?: string): Promise<ParsedPay
   }
 
   try {
-    const rows = (await commonUtil.parseCsv(trimmed as any)) as any[];
+    const rows = (await commonUtil.parseCsv(body as any)) as any[];
     if (rows && rows.length) {
       return {
         ...createPayload(fileName),
         contentType: "csv",
-        csvRows: rows,
+        csvRows: markRaw(rows),
         rawText: raw
       };
     }
@@ -425,6 +417,13 @@ main {
 
 .header-section {
   margin-bottom: var(--spacer-base);
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
 }
 
 .header-section h2 {
@@ -524,31 +523,6 @@ main {
 .payload-empty {
   padding: var(--spacer-base);
   text-align: center;
-}
-
-.csv-wrap {
-  overflow-x: auto;
-  border: 1px solid var(--ion-color-step-150, #e2e2e2);
-  border-radius: 8px;
-  max-height: 70vh;
-}
-
-.csv-table {
-  border-collapse: collapse;
-  width: 100%;
-}
-
-.csv-table th,
-.csv-table td {
-  border: 1px solid var(--ion-color-step-150, #e2e2e2);
-  padding: 6px 10px;
-  text-align: left;
-  white-space: nowrap;
-}
-
-.csv-table th {
-  position: sticky;
-  top: 0;
 }
 
 .raw-text {
