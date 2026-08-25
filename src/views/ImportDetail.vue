@@ -106,6 +106,17 @@
                     {{ config.multiThreading === "Y" ? translate("Yes") : translate("No") }}
                   </ion-label>
                 </ion-item>
+                <!-- Always rendered, unlike the optional fields above: an unset flag is the state
+                     worth seeing, because it silently suppresses every downstream event. -->
+                <ion-item>
+                  <ion-label class="ion-text-wrap">
+                    <p>{{ translate("Data Feed") }}</p>
+                    {{ isDataFeedEnabled ? translate("Enabled") : translate("Disabled") }}
+                  </ion-label>
+                  <ion-badge slot="end" :color="isDataFeedEnabled ? 'success' : 'medium'">
+                    {{ isDataFeedEnabled ? translate("On") : translate("Off") }}
+                  </ion-badge>
+                </ion-item>
                 <ion-item v-if="config.fileNamePattern">
                   <ion-label class="ion-text-wrap">
                     <p>{{ translate("File Name Pattern") }}</p>
@@ -133,6 +144,10 @@
                 </ion-select>
                 <ion-input :label="translate('File Name Pattern')" label-placement="stacked" fill="outline" :value="editForm.fileNamePattern" @ionInput="editForm.fileNamePattern = $event.detail.value || ''" />
                 <ion-input :label="translate('Import Path')" label-placement="stacked" fill="outline" :value="editForm.importPath" @ionInput="editForm.importPath = $event.detail.value || ''" />
+                <ion-select :label="translate('Data Feed')" label-placement="stacked" fill="outline" interface="popover" :value="editForm.enableDataFeed || 'N'" @ionChange="editForm.enableDataFeed = $event.detail.value" :helper-text="translate('When off, this import writes rows without raising Data Document events. Turn on only for imports whose writes must trigger downstream feeds.')">
+                  <ion-select-option value="Y">{{ translate("Enabled") }}</ion-select-option>
+                  <ion-select-option value="N">{{ translate("Disabled") }}</ion-select-option>
+                </ion-select>
               </ion-card-content>
             </ion-card>
 
@@ -193,6 +208,9 @@ const mdmStore = useMdmConfigStore();
 const jobStore = useJobStore();
 
 const config = computed(() => mdmStore.getConfigById(typeId));
+// The column defaults to "N" but existing rows predate it and hold null, so treat anything
+// other than an explicit "Y" as off - the same test isDataFeedEnabled() applies server side.
+const isDataFeedEnabled = computed(() => config.value.enableDataFeed === "Y");
 const executionModes = computed(() => mdmStore.getExecutionModes);
 const displayTitle = computed(() => config.value.description || config.value.scriptTitle || config.value.configId || typeId);
 
@@ -200,7 +218,7 @@ const isEditing = ref(false);
 const isSaving = ref(false);
 // Fields of DataManagerConfig that are safe to update from this screen; the
 // import service and config id stay read-only.
-const editableFields = ["description", "scriptTitle", "priority", "executionModeId", "multiThreading", "fileNamePattern", "importPath"];
+const editableFields = ["description", "scriptTitle", "priority", "executionModeId", "multiThreading", "fileNamePattern", "importPath", "enableDataFeed"];
 const editForm = reactive<Record<string, any>>({});
 
 const serviceParameters = ref<Array<any>>([]);
