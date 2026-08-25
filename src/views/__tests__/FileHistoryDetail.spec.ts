@@ -70,8 +70,8 @@ describe('FileHistoryDetail.vue', () => {
 
   it('only fetches original payload on load and defers error fetch until tab activation', async () => {
     const mockFileContent = vi.fn().mockImplementation((configId, contentId) => {
-      if (contentId === 'error-content-123') return Promise.resolve('{"error": "json"}');
-      return Promise.resolve('{"test": "original-json"}');
+      if (contentId === 'error-content-123') return Promise.resolve({ text: '{"error": "json"}' });
+      return Promise.resolve({ text: '{"test": "original-json"}' });
     });
 
     (mdmStore.fetchDataManagerFileContent as any).mockImplementation(mockFileContent);
@@ -122,7 +122,7 @@ describe('FileHistoryDetail.vue', () => {
       if (contentId === 'error-content-123') {
         return Promise.resolve(null);
       }
-      return Promise.resolve('{"test": "original-json"}');
+      return Promise.resolve({ text: '{"test": "original-json"}' });
     });
 
     (mdmStore.fetchDataManagerFileContent as any).mockImplementation(mockFileContent);
@@ -161,9 +161,9 @@ describe('FileHistoryDetail.vue', () => {
 
   it('clears a rejected in-flight request so the error payload can be retried', async () => {
     const mockFileContent = vi.fn()
-      .mockResolvedValueOnce('{"test": "original-json"}')
+      .mockResolvedValueOnce({ text: '{"test": "original-json"}' })
       .mockRejectedValueOnce(new Error('temporary failure'))
-      .mockResolvedValueOnce('{"error": "recovered"}');
+      .mockResolvedValueOnce({ text: '{"error": "recovered"}' });
 
     mdmStore.fetchDataManagerFileContent = mockFileContent;
     mdmStore.fetchDataManagerLogById = vi.fn().mockResolvedValue({
@@ -192,9 +192,9 @@ describe('FileHistoryDetail.vue', () => {
 
     const mockFileContent = vi.fn().mockImplementation((configId, contentId) => {
       if (contentId === 'error-content-123') return deferredError.promise;
-      if (contentId === 'content-456') return Promise.resolve('{"test": "original-json-2"}');
-      if (contentId === 'error-content-456') return Promise.resolve('error-csv-2');
-      return Promise.resolve('{"test": "original-json-1"}');
+      if (contentId === 'content-456') return Promise.resolve({ text: '{"test": "original-json-2"}' });
+      if (contentId === 'error-content-456') return Promise.resolve({ text: 'error-csv-2' });
+      return Promise.resolve({ text: '{"test": "original-json-1"}' });
     });
 
     (mdmStore.fetchDataManagerFileContent as any).mockImplementation(mockFileContent);
