@@ -5,13 +5,27 @@ const { apiMock } = vi.hoisted(() => ({
   apiMock: vi.fn()
 }));
 
+// useAuth reads commonUtil at module scope, and importing the job store reaches useAuth through the user store,
+// so the mock has to cover it or nothing in this file collects. importOriginal cannot be used here: the real barrel
+// loads Login.vue, which imports useAuth, which imports commonUtil back out of the barrel before it is initialised.
 vi.mock("@common", () => ({
   api: apiMock,
+  commonUtil: {
+    getMaargURL: () => "",
+    getOmsURL: () => "",
+    getToken: () => "",
+    getTokenExpiration: () => "",
+    hasError: () => false,
+    isAppEmbedded: () => false,
+    isMoqui: () => true,
+    showToast: vi.fn()
+  },
   cookieHelper: () => ({
     get: vi.fn(),
     set: vi.fn(),
     remove: vi.fn()
   }),
+  logger: { error: vi.fn() },
   translate: (value: string) => value
 }));
 
@@ -22,6 +36,7 @@ vi.mock("@/logger", () => ({
 }));
 
 import { useJobStore } from "@/store/jobs";
+import { useUserStore } from "@/store/user";
 
 describe("job store detail", () => {
   beforeEach(() => {
@@ -84,154 +99,154 @@ describe("job store detail", () => {
     expect(jobDetail).toEqual({});
   });
 
-  it("aggregates service job run history across configured jobs", async () => {
+  it("fetches one page of run history from the search API", async () => {
     const store = useJobStore();
-    store.jobs = [
-      { jobName: "syncOrders", serviceName: "co.hotwax.SyncOrders" },
-      { jobName: "indexProducts", serviceName: "co.hotwax.IndexProducts" }
-    ];
-
-    apiMock.mockImplementation(({ url }) => {
-      if (url === "admin/serviceJobs/syncOrders/runs") {
-        return Promise.resolve({
-          data: [
-            {
-              jobRunId: "100",
-              startTime: 1710000000000,
-              endTime: 1710000060000,
-              hasError: "N",
-              userId: "system"
-            },
-            {
-              jobRunId: "101",
-              startTime: 1710000100000,
-              endTime: 1710000120000,
-              hasError: "Y",
-              userId: "system",
-              errors: "Failed to process order"
-            }
-          ]
-        });
-      }
-
-      return Promise.resolve({
-        data: [
-          {
-            jobRunId: "200",
-            startTime: 1710000200000,
-            hasError: "N",
-            userId: "admin",
-            messages: "Running rebuild"
-          }
-        ]
-      });
-    });
-
-    await store.fetchJobRunHistory({ pageSize: 2, pageIndex: 0 });
-
-    expect(apiMock).toHaveBeenCalledTimes(2);
-    expect(store.getJobRunHistoryTotal).toBe(3);
-    expect(store.getJobRunHistoryStats).toEqual({
-      total: 3,
-      successful: 1,
-      failed: 1,
-      running: 1,
-      terminated: 0
-    });
-    expect(store.getJobRunHistory.map((run: any) => run.jobRunId)).toEqual(["200", "101"]);
-    expect(store.getJobRunHistory[0]).toEqual(
-      expect.objectContaining({
-        jobName: "indexProducts",
-        serviceName: "co.hotwax.IndexProducts",
-        runStatus: "RUNNING"
-      })
-    );
-  });
-
-  it("filters service job run history by selected job, errors, data logs, user, and query", async () => {
-    const store = useJobStore();
-    store.jobs = [
-      { jobName: "syncOrders", serviceName: "co.hotwax.SyncOrders" },
-      { jobName: "indexProducts", serviceName: "co.hotwax.IndexProducts" }
-    ];
+    store.areServiceProductsFetched = true;
+    store.products = { SERVICE_SYNC_ORDERS: { productId: "SERVICE_SYNC_ORDERS", productName: "Sync Orders" } };
 
     apiMock.mockResolvedValue({
-      data: [
-        {
-          jobRunId: "300",
-          startTime: 1710000300000,
-          endTime: 1710000310000,
-          hasError: "Y",
-          userId: "system",
-          logs: [{ logId: "M100" }],
-          messages: "Order sync failed"
-        },
-        {
-          jobRunId: "301",
-          startTime: 1710000200000,
-          endTime: 1710000210000,
-          hasError: "N",
-          userId: "system",
-          logs: [{ logId: "M101" }],
-          messages: "Order sync succeeded"
-        }
-      ]
+      data: {
+        jobRunList: [
+          { jobRunId: "200", jobName: "indexProducts", status: "RUNNING", userFullName: "Admin User" },
+          { jobRunId: "101", jobName: "syncOrders", status: "FAILED", instanceOfProductId: "SERVICE_SYNC_ORDERS" }
+        ],
+        jobRunCount: 57
+      }
     });
 
+    await store.fetchJobRunHistory({ pageIndex: 1, pageSize: 25 });
+
+    expect(apiMock).toHaveBeenCalledTimes(1);
+    expect(apiMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: "admin/serviceJobs/runs/search",
+        method: "GET",
+        params: expect.objectContaining({ pageIndex: 1, pageSize: 25 })
+      })
+    );
+    // Served in the order the service returned, it did the sorting and the paging
+    expect(store.getJobRunHistory.map((run: any) => run.jobRunId)).toEqual(["200", "101"]);
+    // The service derives the state and returns it as status, the page reads it as runStatus
+    expect(store.getJobRunHistory[0]).toEqual(expect.objectContaining({ runStatus: "RUNNING" }));
+    expect(store.getJobRunHistory[1]).toEqual(
+      expect.objectContaining({ runStatus: "FAILED", productName: "Sync Orders" })
+    );
+    // Total runs is the count of the very search that fetched the page
+    expect(store.getJobRunHistoryTotal).toBe(57);
+    expect(store.getJobRunHistoryStats.total).toBe(57);
+  });
+
+  it("passes every filter to the search API and leaves the ordering to the service", async () => {
+    const store = useJobStore();
+    store.areServiceProductsFetched = true;
+    useUserStore().currentProductStore = { productStoreId: "STORE" };
+
+    apiMock.mockResolvedValue({ data: { jobRunList: [], jobRunCount: 0 } });
+
     await store.fetchJobRunHistory({
+      queryString: "#300",
       jobName: "syncOrders",
-      hasError: "Y",
-      hasDataLogs: "Y",
-      userId: "system",
-      queryString: "failed"
+      username: "admin",
+      status: "FAILED"
     });
 
     expect(apiMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        url: "admin/serviceJobs/syncOrders/runs",
         params: expect.objectContaining({
-          hasError: "Y"
+          // The leading # of a run id copied off a card is not part of the stored id
+          keyword: "300",
+          jobName: "syncOrders",
+          username: "admin",
+          status: "FAILED",
+          productStoreId: "STORE"
         })
       })
     );
-    expect(store.getJobRunHistory).toEqual([
-      expect.objectContaining({
-        jobRunId: "300",
-        jobName: "syncOrders",
-        runStatus: "FAILED"
-      })
-    ]);
-    expect(store.getJobRunHistoryStats.failed).toBe(1);
+
+    const { params } = apiMock.mock.calls[0][0];
+    // The service resolves each job's store itself, so the remote is no longer sent
+    expect(params.systemMessageRemoteId).toBeUndefined();
+    // Ordering is the service default, pinning it here would lose the jobRunId tiebreak that keeps paging stable
+    expect(params.orderByField).toBeUndefined();
   });
 
-  it("paginates client-side without making additional network calls when isRefetch is false", async () => {
+  it("reads each status count from a pageSize one search", async () => {
     const store = useJobStore();
-    store.jobs = [{ jobName: "syncOrders", serviceName: "co.hotwax.SyncOrders" }];
 
-    apiMock.mockResolvedValue({
-      data: Array.from({ length: 30 }, (_, i) => ({
-        jobRunId: String(i + 1),
-        startTime: 1710000000000 + i * 1000,
-        endTime: 1710000005000 + i * 1000,
-        hasError: "N",
-        userId: "system"
-      }))
+    const countByStatus: Record<string, number> = { SUCCESSFUL: 40, FAILED: 12, RUNNING: 5 };
+    apiMock.mockImplementation(({ params }: any) =>
+      Promise.resolve({ data: { jobRunList: [], jobRunCount: countByStatus[params.status] } })
+    );
+
+    await store.fetchJobRunHistoryStats({ jobName: "syncOrders" });
+
+    expect(apiMock).toHaveBeenCalledTimes(3);
+    expect(apiMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: "admin/serviceJobs/runs/search",
+        params: expect.objectContaining({ status: "FAILED", jobName: "syncOrders", pageSize: 1, pageIndex: 0 })
+      })
+    );
+    expect(store.getJobRunHistoryStats).toEqual(
+      expect.objectContaining({ successful: 40, failed: 12, running: 5 })
+    );
+  });
+
+  it("counts only the selected status when a status filter is applied", async () => {
+    const store = useJobStore();
+
+    apiMock.mockResolvedValue({ data: { jobRunList: [], jobRunCount: 12 } });
+
+    await store.fetchJobRunHistoryStats({ status: "FAILED" });
+
+    // The other statuses cannot appear in a result set already narrowed to FAILED, so they need no call
+    expect(apiMock).toHaveBeenCalledTimes(1);
+    expect(store.getJobRunHistoryStats).toEqual(
+      expect.objectContaining({ successful: 0, failed: 12, running: 0 })
+    );
+  });
+
+  it("fetches the SERVICE products in bulk and only once", async () => {
+    const store = useJobStore();
+
+    apiMock.mockImplementation(({ url }: any) => {
+      if (url === "oms/products") {
+        return Promise.resolve({ data: [{ productId: "SERVICE_SYNC_ORDERS", productName: "Sync Orders" }] });
+      }
+      return Promise.resolve({ data: { jobRunList: [], jobRunCount: 0 } });
     });
 
-    // Initial fetch (isRefetch: true)
-    await store.fetchJobRunHistory({ pageSize: 10, pageIndex: 0, isRefetch: true });
-    expect(apiMock).toHaveBeenCalledTimes(1);
-    expect(store.getJobRunHistory.length).toBe(10);
-    expect(store.getJobRunHistoryTotal).toBe(30);
+    await store.fetchJobRunHistory({});
+
+    expect(apiMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: "oms/products",
+        params: expect.objectContaining({ productTypeId: "SERVICE", pageSize: 250, pageIndex: 0 })
+      })
+    );
+    expect(store.getProducts.SERVICE_SYNC_ORDERS.productName).toBe("Sync Orders");
 
     apiMock.mockClear();
+    await store.fetchJobRunHistory({ pageIndex: 1 });
 
-    // Paginate to pageIndex: 1 with isRefetch: false
-    await store.fetchJobRunHistory({ pageSize: 10, pageIndex: 1, isRefetch: false });
+    // Only the run search, the cached products are reused rather than fetched per run
+    expect(apiMock).toHaveBeenCalledTimes(1);
+    expect(apiMock).not.toHaveBeenCalledWith(expect.objectContaining({ url: "oms/products" }));
+  });
 
-    // Verify zero API calls were made and page 2 items were returned
-    expect(apiMock).not.toHaveBeenCalled();
-    expect(store.getJobRunHistory.length).toBe(10);
-    expect(store.getJobRunHistory[0].jobRunId).toBe("20");
+  it("resets the run history when the search API fails", async () => {
+    const store = useJobStore();
+    store.areServiceProductsFetched = true;
+    store.jobRunHistory = [{ jobRunId: "1" }];
+    store.jobRunHistoryTotal = 1;
+
+    apiMock.mockRejectedValue(new Error("offline"));
+
+    await store.fetchJobRunHistory({});
+
+    expect(store.getJobRunHistory).toEqual([]);
+    expect(store.getJobRunHistoryTotal).toBe(0);
+    expect(store.getJobRunHistoryStats).toEqual({ total: 0, successful: 0, failed: 0, running: 0 });
+    expect(store.isLoading).toBe(false);
   });
 });
