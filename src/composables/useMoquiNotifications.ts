@@ -44,9 +44,13 @@ export function useMoquiNotifications(
   function buildWsUrls(): string[] {
     const oms = commonUtil.getOmsURL();
     const token = cookieHelper().get("token") as string;
+    // The loginKey is the UserLoginKey stored in the DB (from resp.data.api_key at login time).
+    // Moqui's ?api_key= WebSocket auth calls loginUserKey() which looks up the hashed key in
+    // the UserLoginKey entity — this works only with the raw UserLoginKey, NOT the JWT token.
+    const loginKey = cookieHelper().get("loginKey") as string;
 
     if (!oms || !token) {
-      console.warn("[useMoquiNotifications] OMS URL or token cookie missing; cannot connect.");
+      console.warn("Notification [Hook: useMoquiNotifications] - Cannot connect; OMS URL or token cookie missing");
       return [];
     }
 
@@ -55,7 +59,14 @@ export function useMoquiNotifications(
       let base = oms.replace(/^https?:\/\//, (match: string) =>
         match.startsWith("https") ? "wss://" : "ws://"
       ).replace(/\/$/, "");
-      const param = `?token=${encodeURIComponent(token)}`;
+
+      // Use the UserLoginKey (loginKey) for ?api_key= when available — this is the
+      // actual DB-backed key that Moqui's loginUserKey() can validate.  Fall back to
+      // ?token= with the JWT if no loginKey cookie is present (e.g., users logged in
+      // before this change was deployed).
+      const param = loginKey
+        ? `?api_key=${encodeURIComponent(loginKey)}`
+        : `?token=${encodeURIComponent(token)}`;
       const urls: string[] = [];
 
       // Candidate 1: Try appending /notws directly to the exact OMS base URL (e.g., /api/notws)
@@ -69,7 +80,7 @@ export function useMoquiNotifications(
 
       return urls;
     } catch (err) {
-      console.error("[useMoquiNotifications] Invalid OMS URL", err);
+      console.error("Configuration [Hook: useMoquiNotifications] - Invalid OMS URL", err);
       return [];
     }
   }
@@ -79,10 +90,8 @@ export function useMoquiNotifications(
     topics.forEach((topic) => {
       try {
         socket.send(`subscribe:${topic}`);
-        socket.send(`subscribe ${topic}`);
-        socket.send(JSON.stringify({ action: "subscribe", topic }));
       } catch (err) {
-        logger.error(`[useMoquiNotifications] Failed to subscribe to topic "${topic}"`, err);
+        logger.error(`Notification [Topic: ${topic}] - Failed to subscribe`, err);
       }
     });
   }
@@ -100,7 +109,6 @@ export function useMoquiNotifications(
     }
 
     const url = urls[urlIndex];
-    console.log(`[useMoquiNotifications] Attempting WebSocket connection (Candidate ${urlIndex + 1}/${urls.length}):`, url);
 
     // Prevent leaking connections if connect() is called multiple times
     if (activeSocket) {
@@ -117,6 +125,11 @@ export function useMoquiNotifications(
         socket.close();
         return;
       }
+
+      // Send the auth message immediately!
+      const token = cookieHelper().get("token") as string;
+      socket.send(`auth:${token}`);
+
       hasConnectedSuccessfully = true;
       isConnected.value = true;
       if (options.onConnectionChange) options.onConnectionChange(true);
@@ -129,7 +142,7 @@ export function useMoquiNotifications(
         const message = JSON.parse(event.data);
         onMessage(message);
       } catch (err) {
-        logger.error("[useMoquiNotifications] Failed to parse message", err);
+        logger.error("Notification [Hook: useMoquiNotifications] - Failed to parse message", err);
       }
     };
 
@@ -141,10 +154,8 @@ export function useMoquiNotifications(
 
       if (event.code !== 1000) {
         if (hasConnectedSuccessfully) {
-          // It worked previously but dropped, so wait the reconnect delay and try again from candidate 0
           reconnectTimer = setTimeout(() => connect(0), options.reconnectDelay || 5000);
         } else {
-          // It never connected, immediately try the next candidate URL
           connect(urlIndex + 1);
         }
       }

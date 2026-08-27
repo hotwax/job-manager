@@ -165,7 +165,7 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
           this.logsCount = 0
         }
       } catch (err) {
-        logger.error("Failed to fetch data manager logs", err)
+        logger.error("Log [Type: data manager] - Failed to fetch", err)
       } finally {
         if(!params.silent) {
           this.isFetchingLogs = false;
@@ -269,7 +269,7 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
         });
         this.dashboardLogs = resp.data?.dataManagerLogs || [];
       } catch (err) {
-        logger.error("Failed to fetch dashboard logs", err);
+        logger.error("Log [Type: dashboard] - Failed to fetch", err);
       } finally {
         this.isFetchingLogs = false;
       }
