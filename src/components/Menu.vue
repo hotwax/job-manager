@@ -30,8 +30,6 @@
       :instance-label="commonUtil.getOmsURL()"
       :product-stores="userProfile?.stores || []"
       :current-product-store-id="currentProductStore.productStoreId"
-      :time-zone="userStore.current?.timeZone"
-      :time-zone-mismatched="!!userStore.current?.timeZone && browserTimeZone !== userStore.current?.timeZone"
       @update:product-store="setProductStore"
     />
   </ion-menu>
@@ -51,8 +49,6 @@ const userStore = useUserStore();
 
 const currentProductStore = computed(() => userStore.getCurrentProductStore)
 const userProfile = computed(() => userStore.getUserProfile)
-
-const browserTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
 
 // Filtering array of app pages, retaining only those elements (pages) that have the necessary permissions for display.
 const getValidMenuItems = (appPages: any) => {
