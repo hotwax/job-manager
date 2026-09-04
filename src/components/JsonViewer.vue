@@ -1,5 +1,5 @@
 <template>
-  <div class="json-viewer" :style="{ '--jv-row-height': rowHeight }">
+  <div class="json-viewer">
     <div class="jv-toolbar">
       <ion-button size="small" fill="clear" @click="expandAll">
         <ion-icon slot="start" :icon="addCircleOutline" />
@@ -16,8 +16,8 @@
 
     <div ref="scroller" class="jv-body" @scroll.passive="onScroll">
       <!-- Sizer reserves the full scroll height; only the rows in view are actually mounted. -->
-      <div class="jv-sizer" :style="{ '--jv-total-height': totalHeight }">
-        <div class="jv-window" :style="{ '--jv-window-offset': windowOffset }">
+      <div class="jv-sizer" :style="{ height: `${rows.length * ROW_HEIGHT}px` }">
+        <div class="jv-window" :style="{ transform: `translateY(${startIndex * ROW_HEIGHT}px)` }">
           <div
             v-for="row in windowRows"
             :key="row.id"
@@ -58,26 +58,20 @@
 <script setup lang="ts">
 import { IonButton, IonIcon } from "@ionic/vue";
 import { addCircleOutline, chevronDownOutline, chevronForwardOutline, removeCircleOutline } from "ionicons/icons";
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { translate } from "@common";
 import { buildJsonSearchIndex } from "@/utils/jsonSearch";
 import { flattenJson, primitiveClass, primitiveText } from "@/utils/jsonRows";
+import { useVirtualWindow } from "@/composables/useVirtualWindow";
 
 const props = defineProps<{
   data: any;
   search: string;
 }>();
 
-// The single source of truth for row height. The stylesheet reads it back through
-// --jv-row-height, so the scroll maths and the rendered row cannot drift apart.
+// Must match .jt-row height in CSS: virtualization maps scroll offset to row index.
 const ROW_HEIGHT = 24;
 const OVERSCAN = 8;
-
-const rowHeight = `${ROW_HEIGHT}px`;
-
-const scroller = ref<HTMLElement | null>(null);
-const scrollTop = ref(0);
-const viewportHeight = ref(0);
 
 // Expansion is stored as a set of paths that differ from `defaultOpen` rather than a set of
 // open paths. That keeps expand/collapse all O(1) instead of enumerating every container.
@@ -90,23 +84,13 @@ const rows = computed(() =>
   flattenJson(props.data, isOpen, props.search ? searchIndex.value : null)
 );
 
-const startIndex = computed(() => Math.max(0, Math.floor(scrollTop.value / ROW_HEIGHT) - OVERSCAN));
-const endIndex = computed(() =>
-  Math.min(rows.value.length, Math.ceil((scrollTop.value + viewportHeight.value) / ROW_HEIGHT) + OVERSCAN)
-);
+const { scroller, startIndex, endIndex, onScroll, scrollToIndex } = useVirtualWindow({
+  rowHeight: ROW_HEIGHT,
+  overscan: OVERSCAN,
+  totalItems: computed(() => rows.value.length)
+});
+
 const windowRows = computed(() => rows.value.slice(startIndex.value, endIndex.value));
-
-// Fed to the stylesheet as custom properties rather than as inline declarations.
-const totalHeight = computed(() => `${rows.value.length * ROW_HEIGHT}px`);
-const windowOffset = computed(() => `${startIndex.value * ROW_HEIGHT}px`);
-
-const onScroll = () => {
-  const el = scroller.value;
-  if (!el) return;
-  scrollTop.value = el.scrollTop;
-  // Free correction in case a resize was missed, e.g. the page was hidden when it mounted.
-  viewportHeight.value = el.clientHeight;
-};
 
 const toggle = (path: string) => {
   const next = new Set(toggled.value);
@@ -127,8 +111,7 @@ watch(
   () => {
     defaultOpen.value = false;
     toggled.value = new Set<string>([""]);
-    scrollTop.value = 0;
-    if (scroller.value) scroller.value.scrollTop = 0;
+    scrollToIndex(0);
   },
   { immediate: true }
 );
@@ -137,21 +120,9 @@ watch(
 watch(
   () => props.search,
   () => {
-    scrollTop.value = 0;
-    if (scroller.value) scroller.value.scrollTop = 0;
+    scrollToIndex(0);
   }
 );
-
-let resizeObserver: ResizeObserver | null = null;
-onMounted(() => {
-  if (!scroller.value) return;
-  viewportHeight.value = scroller.value.clientHeight;
-  resizeObserver = new ResizeObserver(() => {
-    viewportHeight.value = scroller.value?.clientHeight ?? 0;
-  });
-  resizeObserver.observe(scroller.value);
-});
-onBeforeUnmount(() => resizeObserver?.disconnect());
 
 const searchRegExp = computed(() => {
   if (!props.search) return null;
@@ -208,8 +179,6 @@ const highlight = (text: string) => {
 .jv-sizer {
   position: relative;
   min-width: max-content;
-  /* Reserves the full scroll height for every row, mounted or not. */
-  height: var(--jv-total-height, 0);
 }
 
 .jv-window {
@@ -217,8 +186,6 @@ const highlight = (text: string) => {
   top: 0;
   inset-inline-start: 0;
   min-width: 100%;
-  /* Slides the mounted rows to the scroll offset they represent. */
-  transform: translateY(var(--jv-window-offset, 0));
   will-change: transform;
 }
 
@@ -227,7 +194,7 @@ const highlight = (text: string) => {
 .jt-row {
   display: flex;
   align-items: center;
-  height: var(--jv-row-height, 24px);
+  height: 24px;
   white-space: nowrap;
   border-radius: 4px;
 }
