@@ -260,12 +260,12 @@ export const useUserStore = defineStore("user", {
           url: "oms/systemMessageRemotes",
           method: "GET",
           params: {
-            internalId: this.currentShopifyConfig.shopId
+            pageSize: 250
           }
         });
 
-        if(response?.data?.systemMessageRemoteList && response.data.systemMessageRemoteList[0]?.internalId) {
-          this.selectedSystemMessageRemoteId = response.data.systemMessageRemoteList[0].internalId;
+        if(response?.data?.systemMessageRemoteList?.length) {
+          this.selectedSystemMessageRemoteId = response.data.systemMessageRemoteList.find((remote: any) => remote.internalId === this.currentShopifyConfig.shopId)?.systemMessageRemoteId;
           return;
         }
 
