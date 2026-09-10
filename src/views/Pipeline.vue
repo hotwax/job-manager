@@ -5,6 +5,10 @@
         <ion-menu-button slot="start" />
         <ion-title>{{ translate("Dashboard") }}</ion-title>
         <ion-buttons slot="end">
+          <ion-badge :color="isLive ? 'success' : 'medium'" style="display: flex; align-items: center; gap: 4px; padding: 6px 10px;">
+            <ion-icon :icon="isLive ? pulseOutline : cloudOfflineOutline" style="font-size: 14px;" />
+            <span>{{ isLive ? translate("Live") : translate("Offline") }}</span>
+          </ion-badge>
           <ion-button :disabled="isLoading" @click="refreshData">
             <ion-spinner v-if="isLoading" name="crescent" slot="icon-only" />
             <ion-icon v-else slot="icon-only" :icon="syncOutline" />
@@ -512,7 +516,9 @@ import {
   cloudDownloadOutline,
   arrowForwardOutline,
   timeOutline,
-  warningOutline
+  warningOutline,
+  pulseOutline,
+  cloudOfflineOutline
 } from "ionicons/icons";
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { DateTime } from "luxon";
@@ -522,7 +528,12 @@ import { useJobStore } from "@/store/jobs";
 import { useSystemMessageStore } from "@/store/systemMessage";
 import { useMdmConfigStore } from "@/store/mdmConfig";
 import { useUtilStore } from "@/store/util";
-import { getFileSize, showToast } from "@/utils";
+import { getFileSize, showToast, getTimeInMillis } from "@/utils";
+// Note: WebSocket is managed globally in App.vue via useGlobalNotifications.
+// Pipeline.vue only handles the job-run fragment of the global notification
+import { useGlobalNotifications } from "@/composables/useGlobalNotifications";
+
+const { isConnected: isLive } = useGlobalNotifications();
 
 const jobStore = useJobStore();
 const systemMessageStore = useSystemMessageStore();
@@ -530,6 +541,7 @@ const mdmStore = useMdmConfigStore();
 const utilStore = useUtilStore();
 
 const isLoading = ref(false);
+const hasInitiallyLoaded = ref(false);
 
 // Job stats
 const jobs = computed(() => jobStore.getJobs);
@@ -698,7 +710,7 @@ const slowJobsCount = computed(() => slowJobs.value.length);
 const failedJobsCount = computed(() => failedRunJobs.value.length);
 
 // MDM Logs priority grouping (High priority has config.priority > 6)
-const logs = computed(() => mdmStore.getLogs);
+const logs = computed(() => mdmStore.getDashboardLogs);
 
 const getLogPriority = (log: any) => {
   const config = mdmStore.getConfigs.find((c: any) => c.configId === log.configId);
@@ -922,6 +934,7 @@ const cancelDataManagerLog = async (configId: string, logId: string) => {
     await mdmStore.cancelDataManagerLog(configId, logId);
     showToast(translate("Data manager log cancelled."));
     await refreshData();
+
   } catch (error) {
     showToast(translate("Failed to cancel data manager log."));
   }
@@ -930,15 +943,21 @@ const cancelDataManagerLog = async (configId: string, logId: string) => {
 const refreshData = async () => {
   isLoading.value = true;
   try {
-    await Promise.allSettled([
+    const promises: Promise<any>[] = [
       jobStore.fetchJobs(),
       systemMessageStore.fetchSystemMessages({ pageSize: 50 }),
       systemMessageStore.fetchSystemMessageTypes(),
-      mdmStore.fetchDataManagerLogs({ pageSize: 50 }),
       mdmStore.fetchConfigs(),
       utilStore.fetchStatusItemsByType("SystemMessage"),
       utilStore.fetchStatusItemsByType("DataManagerLog")
-    ]);
+    ];
+
+    // Seed dashboardLogs only on first entry — WebSocket (upsertLog) maintains it after that.
+    // dashboardLogs is isolated from this.logs, so FileHistory fetches can never corrupt it.
+    if (!hasInitiallyLoaded.value) {
+      promises.push(mdmStore.fetchDataManagerLogsForDashboard());
+    }
+    await Promise.allSettled(promises);
 
     // Fetch run history for active scheduled jobs in parallel to diagnose stuck/slow run anomalies
     const activeJobs = jobs.value.filter((job: any) => job.paused === 'N' && !!job.cronExpression);
@@ -963,13 +982,43 @@ const refreshData = async () => {
   }
 };
 
+/**
+ * Handler for job run updates dispatched by the global WebSocket handler.
+ * The global handler dispatches a native DOM CustomEvent because jobRunsMap
+ * is component-local state that cannot be accessed from outside this component.
+ */
+function onJobRunUpdate(event: Event) {
+  const doc = (event as CustomEvent).detail;
+  if (!doc?.jobRunId || !doc?.jobName) return;
+
+  const validJobNames = new Set(jobs.value.map((job: any) => job.jobName));
+  if (!validJobNames.has(doc.jobName)) return;
+
+  const existing = jobRunsMap.value[doc.jobName] || [];
+  const idx = existing.findIndex((r: any) => r.jobRunId === doc.jobRunId);
+  let next: any[];
+  if (idx >= 0) {
+    next = [...existing];
+    next[idx] = { ...existing[idx], ...doc };
+  } else {
+    next = [doc, ...existing];
+  }
+  next.sort((a: any, b: any) =>
+    getTimeInMillis(b.startTime || b.lastUpdatedStamp) - getTimeInMillis(a.startTime || a.lastUpdatedStamp)
+  );
+  jobRunsMap.value = { ...jobRunsMap.value, [doc.jobName]: next.slice(0, 15) };
+}
+
 onIonViewWillEnter(async () => {
   emitter.on("productStoreUpdated", refreshData);
+  window.addEventListener("moqui:jobRunUpdate", onJobRunUpdate);
   await refreshData();
+  hasInitiallyLoaded.value = true;
 });
 
 onIonViewWillLeave(() => {
   emitter.off("productStoreUpdated", refreshData);
+  window.removeEventListener("moqui:jobRunUpdate", onJobRunUpdate);
 });
 </script>
 
