@@ -5,15 +5,10 @@ const { apiMock } = vi.hoisted(() => ({
   apiMock: vi.fn()
 }));
 
-vi.mock("@common", () => ({
-  api: apiMock,
-  cookieHelper: () => ({
-    get: vi.fn(),
-    set: vi.fn(),
-    remove: vi.fn()
-  }),
-  translate: (value: string) => value
-}));
+vi.mock("@common", async () => {
+  const { createCommonMock } = await import("@/test/commonMock");
+  return createCommonMock({ api: apiMock });
+});
 
 vi.mock("@/logger", () => ({
   default: {

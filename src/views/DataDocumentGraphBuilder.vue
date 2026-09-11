@@ -7,11 +7,11 @@
         </ion-buttons>
         <ion-title>{{ translate("Graph Builder") }}</ion-title>
         <ion-buttons slot="end">
-          <ion-button @click="saveGraph" :disabled="!graph || graphHasErrors">
+          <ion-button @click="saveGraph" :disabled="!routeGraph || graphStore.isSaving">
             <ion-icon slot="start" :icon="saveOutline" />
             {{ translate("Save") }}
           </ion-button>
-          <ion-button @click="queueExport" :disabled="!graph?.dataDocumentId">
+          <ion-button @click="queueExport" :disabled="!routeGraph?.dataDocumentId || graphStore.isSaving">
             <ion-icon slot="start" :icon="cloudUploadOutline" />
             {{ translate("Export") }}
           </ion-button>
@@ -20,7 +20,12 @@
     </ion-header>
 
     <ion-content>
-      <main v-if="graph" class="graph-builder">
+      <main
+        v-if="routeGraph"
+        class="graph-builder"
+        :inert="graphStore.isSaving ? '' : undefined"
+        :aria-busy="graphStore.isSaving ? 'true' : 'false'"
+      >
         <ion-card>
           <ion-list class="graph-metadata-list">
             <ion-item detail button @click="openEntityModal">
@@ -139,6 +144,7 @@
                   {{ selectedEdge.alias || selectedEdge.relationshipName }}
                   <p>{{ selectedEdge.pathText }}</p>
                   <p>{{ selectedEdge.relationshipType }}</p>
+                  <p v-if="selectedEdge.isAutoReverse">{{ translate("Auto reverse") }}</p>
                 </ion-label>
               </ion-item>
             </ion-list>
@@ -321,7 +327,7 @@
           <div v-else-if="bottomPanel === 'preview'" class="preview-panel">
             <ion-list>
               <ion-item lines="none">
-                <ion-button @click="runPreview" :disabled="!graph?.dataDocumentId || previewStatus === 'loading'">
+                <ion-button @click="runPreview" :disabled="!canRunPreview || previewStatus === 'loading'">
                   <ion-spinner v-if="previewStatus === 'loading'" slot="start" name="crescent" />
                   <ion-icon v-else slot="start" :icon="playOutline" />
                   {{ previewStatus === 'loading' ? translate("Running...") : translate("Preview") }}
@@ -432,7 +438,15 @@
         </section>
       </main>
 
-      <ion-card v-else>
+      <ion-card v-else-if="routeLoadError" data-testid="graph-route-error">
+        <ion-card-content>
+          <ion-text color="danger">{{ translate("Unable to load data document.") }}</ion-text>
+          <p>{{ routeLoadErrorMessage }}</p>
+          <ion-button fill="outline" @click="retryRouteGraph">{{ translate("Retry") }}</ion-button>
+        </ion-card-content>
+      </ion-card>
+
+      <ion-card v-else data-testid="graph-route-loading">
         <ion-card-content>
           <ion-text color="medium">{{ translate("Loading graph builder.") }}</ion-text>
         </ion-card-content>
@@ -509,7 +523,14 @@
           </ion-toolbar>
         </ion-header>
         <ion-content>
-          <div v-if="utilStore.getFetchStatus.entityFields === 'pending'" class="ion-text-center ion-padding">
+          <ion-item v-if="utilStore.getEntityDefinitionFetchState(activeFieldEntityName).status === 'error'" color="danger">
+            <ion-label>
+              {{ translate("Failed to fetch entity metadata.") }}
+              <p>{{ utilStore.getEntityDefinitionFetchState(activeFieldEntityName).error }}</p>
+            </ion-label>
+            <ion-button slot="end" @click="retryGraphFieldDefinition">{{ translate("Retry") }}</ion-button>
+          </ion-item>
+          <div v-if="utilStore.getEntityDefinitionFetchState(activeFieldEntityName).status === 'pending'" class="ion-text-center ion-padding">
             <ion-spinner name="crescent" />
             <p>{{ translate("Fetching fields...") }}</p>
           </div>
@@ -571,7 +592,18 @@
           </ion-toolbar>
         </ion-header>
         <ion-content>
-          <ion-list v-if="relatedFieldStep === 'relationship'" :id="relatedFieldPickerNavigation.listId" role="listbox">
+          <ion-item v-if="relatedFieldStep === 'relationship' && utilStore.getEntityDefinitionFetchState(activeRelationshipEntityName).status === 'error'" color="danger">
+            <ion-label>
+              {{ translate("Failed to fetch entity metadata.") }}
+              <p>{{ utilStore.getEntityDefinitionFetchState(activeRelationshipEntityName).error }}</p>
+            </ion-label>
+            <ion-button slot="end" @click="retryActiveRelationshipDefinition">{{ translate("Retry") }}</ion-button>
+          </ion-item>
+          <div v-if="relatedFieldStep === 'relationship' && utilStore.getEntityDefinitionFetchState(activeRelationshipEntityName).status === 'pending'" class="ion-text-center ion-padding">
+            <ion-spinner name="crescent" />
+            <p>{{ translate("Fetching metadata...") }}</p>
+          </div>
+          <ion-list v-if="relatedFieldStep === 'relationship' && utilStore.getEntityDefinitionFetchState(activeRelationshipEntityName).status !== 'pending'" :id="relatedFieldPickerNavigation.listId" role="listbox">
             <ion-item-divider color="light">
               <ion-label>
                 {{ translate("Select related entity") }}
@@ -629,7 +661,6 @@
                 :label="translate('Target Entity')"
                 label-placement="stacked"
                 :placeholder="translate('Select a relationship first')"
-                @ionInput="fetchRelatedEntityFields"
               />
             </ion-item>
             <ion-item>
@@ -638,21 +669,28 @@
                 <p>{{ relatedRelationshipPath || translate("Enter a relationship path, then choose a field.") }}</p>
               </ion-label>
             </ion-item>
-            <ion-item v-if="selectedRelationship">
+            <ion-item v-if="selectedRelationshipJoinSummary">
               <ion-label>
                 {{ translate("Join") }}
                 <p>{{ selectedRelationshipJoinSummary }}</p>
               </ion-label>
             </ion-item>
+            <ion-item v-if="utilStore.getEntityDefinitionFetchState(relatedEntityName).status === 'error'" color="danger">
+              <ion-label>
+                {{ translate("Failed to fetch entity metadata.") }}
+                <p>{{ utilStore.getEntityDefinitionFetchState(relatedEntityName).error }}</p>
+              </ion-label>
+              <ion-button slot="end" @click="confirmRelatedFieldPath">{{ translate("Retry") }}</ion-button>
+            </ion-item>
             <ion-item lines="none">
               <ion-button fill="clear" @click="relatedFieldStep = 'relationship'">{{ translate("Back") }}</ion-button>
-              <ion-button slot="end" :disabled="!relatedRelationshipPath || !relatedEntityName" @click="confirmRelatedFieldPath">
+              <ion-button slot="end" :disabled="!relatedRelationshipPath || !relatedEntityName.trim()" @click="confirmRelatedFieldPath">
                 {{ translate("Choose fields") }}
               </ion-button>
             </ion-item>
           </ion-list>
 
-          <div v-if="relatedFieldStep === 'fields' && utilStore.getFetchStatus.entityFields === 'pending'" class="ion-text-center ion-padding">
+          <div v-if="relatedFieldStep === 'fields' && utilStore.getEntityDefinitionFetchState(relatedEntityName).status === 'pending'" class="ion-text-center ion-padding">
             <ion-spinner name="crescent" />
             <p>{{ translate("Fetching fields...") }}</p>
           </div>
@@ -725,11 +763,18 @@
         <ion-content>
           <ion-list v-if="activeCondition">
             <ion-item>
-              <ion-input
-                v-model="activeCondition.fieldNameAlias"
+              <ion-select
+                data-testid="condition-field-alias"
+                :value="activeCondition.fieldNameAlias"
                 :label="translate('Field Alias')"
                 label-placement="stacked"
-              />
+                interface="popover"
+                @ionChange="setConditionFieldAlias('fieldNameAlias', $event.detail.value)"
+              >
+                <ion-select-option v-for="field in graph?.fields || []" :key="field.localId || field.fieldSeqId" :value="field.outputName">
+                  {{ field.outputName }}
+                </ion-select-option>
+              </ion-select>
             </ion-item>
             <ion-item>
               <ion-select
@@ -738,31 +783,58 @@
                 label-placement="stacked"
                 interface="popover"
               >
-                <ion-select-option v-for="operator in operators" :key="operator.value" :value="operator.value">
-                  {{ translate(operator.label) }}
+                <ion-select-option v-for="operator in operators" :key="operator.value" :value="operator.value" :data-testid="`persisted-condition-operator-${operator.value}`">
+                  {{ operatorLabel(operator.value) }}
                 </ion-select-option>
               </ion-select>
             </ion-item>
-            <ion-item>
-              <ion-select
-                v-if="activeConditionValueOptions"
-                :value="activeCondition.fieldValue"
-                :label="translate('Value')"
-                :placeholder="activeConditionValueOptions.label || translate('Select value')"
-                label-placement="stacked"
-                interface="popover"
-                :class="{ 'ion-invalid ion-touched': conditionSubmitted && isOperatorValueInvalid }"
-                :error-text="translate('Value is required')"
-                @ionChange="activeCondition.fieldValue = $event.detail.value ?? ''"
-              >
-                <ion-select-option
-                  v-for="option in activeConditionValueOptions.options"
-                  :key="option.value"
-                  :value="option.value"
+            <ion-item v-if="!isNullConditionOperator">
+              <template v-if="activeConditionValueOptions">
+                <ion-radio-group
+                  data-testid="condition-value-mode"
+                  :aria-label="translate('Condition value mode')"
+                  :value="conditionValueMode"
+                  @ionChange="setConditionValueMode($event.detail.value)"
                 >
-                  {{ option.label }}
-                </ion-select-option>
-              </ion-select>
+                  <ion-radio value="suggested" data-testid="condition-value-mode-suggested">
+                    {{ translate("Suggested values") }}
+                  </ion-radio>
+                  <ion-radio value="custom" data-testid="condition-value-mode-custom">
+                    {{ translate("Custom value") }}
+                  </ion-radio>
+                </ion-radio-group>
+                <ion-select
+                  v-if="conditionValueMode === 'suggested'"
+                  data-testid="condition-suggested-value"
+                  :value="activeCondition.fieldValue"
+                  :label="translate('Value')"
+                  :placeholder="activeConditionValueOptions.label || translate('Select value')"
+                  label-placement="stacked"
+                  interface="popover"
+                  :class="{ 'ion-invalid ion-touched': conditionSubmitted && isOperatorValueInvalid }"
+                  :error-text="translate('Value is required')"
+                  @ionChange="activeCondition.fieldValue = $event.detail.value ?? ''"
+                >
+                  <ion-select-option
+                    v-for="option in activeConditionValueOptions.options"
+                    :key="option.value"
+                    :value="option.value"
+                    :data-testid="`condition-value-suggestion-${option.value}`"
+                  >
+                    {{ option.label }}
+                  </ion-select-option>
+                </ion-select>
+                <ion-input
+                  v-else
+                  data-testid="condition-custom-value"
+                  :value="activeCondition.fieldValue"
+                  :label="translate('Custom value')"
+                  label-placement="stacked"
+                  :class="{ 'ion-invalid ion-touched': conditionSubmitted && isOperatorValueInvalid }"
+                  :error-text="translate('Value is required')"
+                  @ionInput="activeCondition.fieldValue = $event.detail.value || ''"
+                />
+              </template>
               <ion-input
                 v-else
                 :value="activeCondition.fieldValue"
@@ -774,11 +846,19 @@
               />
             </ion-item>
             <ion-item>
-              <ion-input
-                v-model="activeCondition.toFieldNameAlias"
+              <ion-select
+                data-testid="condition-to-field-alias"
+                :value="activeCondition.toFieldNameAlias"
                 :label="translate('To Field Alias')"
                 label-placement="stacked"
-              />
+                interface="popover"
+                @ionChange="setConditionFieldAlias('toFieldNameAlias', $event.detail.value)"
+              >
+                <ion-select-option value="">{{ translate("None") }}</ion-select-option>
+                <ion-select-option v-for="field in graph?.fields || []" :key="field.localId || field.fieldSeqId" :value="field.outputName">
+                  {{ field.outputName }}
+                </ion-select-option>
+              </ion-select>
             </ion-item>
             <ion-item>
               <ion-select
@@ -896,10 +976,11 @@ import {
   IonToolbar,
   alertController,
   modalController,
-  onIonViewWillEnter
+  onIonViewWillEnter,
+  onIonViewWillLeave
 } from "@ionic/vue";
 import { addOutline, alertCircleOutline, arrowBackOutline, checkmarkCircleOutline, closeOutline, cloudDownloadOutline, cloudUploadOutline, filterOutline, gitBranchOutline, informationCircleOutline, listOutline, optionsOutline, pauseOutline, playOutline, saveOutline, statsChartOutline, timeOutline, warningOutline } from "ionicons/icons";
-import { computed, ref, watch } from "vue";
+import { computed, onUnmounted, ref, watch } from "vue";
 import router from "../router"
 
 import { commonUtil, translate } from "@common";
@@ -912,7 +993,7 @@ import DataDocumentFormView from "@/views/DataDocumentFormView.vue";
 import { getDateAndTime, showToast } from "@/utils";
 import { useUtilStore } from "@/store/util";
 import type { GraphCondition, GraphEdge, GraphField } from "@/utils/dataDocumentGraph";
-import { DATA_DOCUMENT_FUNCTIONS, getDataDocumentFunctionLabel, isConditionValueMissing } from "@/utils/dataDocumentGraph";
+import { DATA_DOCUMENT_FUNCTIONS, getDataDocumentFunctionLabel, isConditionValueMissing, isPersistedNullConditionOperator, normalizeRelationshipKeyMaps, PERSISTED_CONDITION_OPERATORS } from "@/utils/dataDocumentGraph";
 import { getConditionValueOptionSource } from "@/utils/conditionValueOptions";
 import { getEntityLabel, getEntitySearchText, getEntityValue, groupEntityOptions } from "@/utils/entityOptions";
 import type { EntityOption } from "@/utils/entityOptions";
@@ -929,12 +1010,24 @@ const SEGMENT_VALUES = ["issues", "fields", "conditions", "preview", "usage", "e
 const bottomPanel = ref("issues");
 const pageSize = ref(25);
 
+const loadExportHistory = async (dataDocumentId = graphStore.getGraph?.dataDocumentId) => {
+  if (dataDocumentId) await dataDocumentStore.fetchExportHistory({ dataDocumentId });
+};
+
 // Switch the active segment and reflect it in the URL (?segment=) so the catalog deep-links
 // (Run→preview, History→exports), refresh, and the post-save redirect stay in sync. A
 // query-only replace does not re-run onIonViewWillEnter, so it won't refetch the graph.
-const setSegment = (segment: string) => {
-  bottomPanel.value = SEGMENT_VALUES.includes(segment) ? segment : "issues";
+const setSegment = async (segment: string) => {
+  const nextSegment = SEGMENT_VALUES.includes(segment) ? segment : "issues";
+  const enteringExports = nextSegment === "exports" && bottomPanel.value !== "exports";
+  bottomPanel.value = nextSegment;
   router.replace({ query: { ...router.currentRoute.value.query, segment: bottomPanel.value } });
+  if (enteringExports) {
+    const dataDocumentId = routeDataDocumentId.value === "new"
+      ? graph.value?.dataDocumentId
+      : routeDataDocumentId.value;
+    if (dataDocumentId) await loadExportHistory(dataDocumentId);
+  }
 };
 const entityModal = ref();
 const entitySearchbar = ref();
@@ -963,36 +1056,79 @@ const activeCondition = ref<Record<string, any>>({
   postQuery: "N",
 });
 
-const operators = [
-  { value: "equals", label: "Equals" },
-  { value: "not-equals", label: "Not equals" },
-  { value: "contains", label: "Contains" },
-  { value: "starts-with", label: "Starts with" },
-  { value: "in", label: "In list" },
-  { value: "empty", label: "Is empty" },
-  { value: "not-empty", label: "Is not empty" },
-  { value: "greater", label: "Greater than" },
-  { value: "greater-equals", label: "Greater than or equal" },
-  { value: "less", label: "Less than" },
-  { value: "less-equals", label: "Less than or equal" },
-  { value: "between", label: "Between" }
-];
+const operators = PERSISTED_CONDITION_OPERATORS;
+const operatorLabel = (operator: string) => {
+  switch (operator) {
+    case "equals": return translate("Equals");
+    case "not-equals": return translate("Not equals");
+    case "less": return translate("Less than");
+    case "greater": return translate("Greater than");
+    case "less-equals": return translate("Less than or equal");
+    case "greater-equals": return translate("Greater than or equal");
+    case "in": return translate("In");
+    case "not-in": return translate("Not in");
+    case "not-between": return translate("Not between");
+    case "like": return translate("Like");
+    case "not-like": return translate("Not like");
+    case "is-null": return translate("Is null");
+    case "is-not-null": return translate("Is not null");
+    default: return operator;
+  }
+};
+const BUILDER_ROUTE_NAME = "DataDocumentGraphBuilder";
+const previewTargetOwner = Symbol(BUILDER_ROUTE_NAME);
+const previewTargetActive = ref(true);
 
 const graph = computed(() => graphStore.getGraph);
 // Reactive to the live route so it flips to false in place after the first save replaces
 // /data-documents/new/graph with /data-documents/{id}/graph (same route record).
 const isNew = computed(() => router.currentRoute.value.params.id === "new");
+const routeDataDocumentId = computed(() => String(router.currentRoute.value.params.id || ""));
+const isBuilderRoute = computed(() => router.currentRoute.value.name === BUILDER_ROUTE_NAME);
+const routeLoadError = computed(() => (
+  graphStore.getLoadErrorDataDocumentId === routeDataDocumentId.value
+    ? graphStore.getLoadError
+    : undefined
+));
+const routeGraph = computed(() => {
+  if (!isBuilderRoute.value || !graph.value || graphStore.isLoading || routeLoadError.value) return undefined;
+  if (routeDataDocumentId.value === "new") return graphStore.isPersisted ? undefined : graph.value;
+  return graph.value.dataDocumentId === routeDataDocumentId.value
+    && graphStore.getLoadedDataDocumentId === routeDataDocumentId.value
+    ? graph.value
+    : undefined;
+});
+const routeLoadErrorMessage = computed(() => (
+  routeLoadError.value instanceof Error
+    ? routeLoadError.value.message
+    : String(routeLoadError.value || "")
+));
+const syncPreviewTarget = () => {
+  if (!previewTargetActive.value) return;
+  if (isBuilderRoute.value) {
+    graphStore.activatePreviewTarget(previewTargetOwner, routeDataDocumentId.value);
+    dataDocumentStore.activateDocumentTarget(previewTargetOwner, routeDataDocumentId.value);
+  } else {
+    graphStore.releasePreviewTarget(previewTargetOwner);
+    dataDocumentStore.releaseDocumentTarget(previewTargetOwner);
+  }
+};
+watch([isBuilderRoute, routeDataDocumentId], () => {
+  syncPreviewTarget();
+}, { immediate: true, flush: "sync" });
 const previewRows = computed(() => dataDocumentStore.getPreviewRows);
 // dataDocumentView returns no total — if we got back a full page, the result is capped at
 // pageSize and there are likely more rows (only an export returns the complete set).
 const previewCapped = computed(() => previewRows.value.length >= pageSize.value);
 const previewStatus = computed(() => dataDocumentStore.getPreviewStatus);
 const previewError = computed(() => dataDocumentStore.getPreviewError);
+const canRunPreview = computed(() => graphStore.canPreview
+  && isBuilderRoute.value
+  && routeDataDocumentId.value === graph.value?.dataDocumentId);
 const relatedFeeds = computed(() => dataDocumentStore.getRelatedFeeds);
 const relatedJobs = computed(() => dataDocumentStore.getRelatedJobs);
 const exportHistory = computed(() => dataDocumentStore.getExportHistory);
 const scheduledExports = computed(() => dataDocumentStore.getScheduledExports);
-const graphHasErrors = computed(() => graph.value?.validationIssues.some((issue) => issue.severity === "error"));
 const canvasSize = computed(() => ({
   width: Math.max(980, 360 + (graph.value?.nodes.length || 1) * 220),
   height: Math.max(520, 180 + (graph.value?.nodes.length || 1) * 80)
@@ -1071,7 +1207,6 @@ const activeFieldEntityName = computed(() => selectedNode.value?.entityName || g
 const entityFields = computed(() => activeFieldEntityName.value ? utilStore.getEntityFields(activeFieldEntityName.value) : []);
 const filteredEntityFields = computed(() => {
   const query = fieldQueryString.value.trim().toLowerCase();
-  console.log('entityFields', entityFields.value)
   if (!query) return entityFields.value;
   return entityFields.value.filter((field: any) => field.name.toLowerCase().includes(query));
 });
@@ -1152,8 +1287,9 @@ const relatedFieldPickerNavigation = useKeyboardListNavigation<RelatedFieldPicke
   }
 });
 const selectedRelationshipJoinSummary = computed(() => {
-  const keyMaps = selectedRelationship.value?.keyMaps || [];
-  if (!keyMaps.length) return translate("Join keys unavailable.");
+  const keyMaps = normalizeRelationshipKeyMaps(selectedRelationship.value)
+    .filter((keyMap: any) => keyMap.fieldName && keyMap.relatedFieldName);
+  if (!keyMaps.length) return "";
   return keyMaps.map((keyMap: any) => `${keyMap.fieldName} = ${keyMap.relatedFieldName}`).join(", ");
 });
 const relatedFieldProgress = computed(() => {
@@ -1264,10 +1400,58 @@ const getConditionValueOptions = (condition: any) => {
 };
 
 const activeConditionValueOptions = computed(() => getConditionValueOptions(activeCondition.value));
+const isNullConditionOperator = computed(() => isPersistedNullConditionOperator(activeCondition.value?.operator));
+const conditionValueMode = ref<"suggested" | "custom">("custom");
+
+const setConditionFieldAlias = (property: "fieldNameAlias" | "toFieldNameAlias", value: string) => {
+  const normalizedValue = String(value || "");
+  activeCondition.value[property] = normalizedValue;
+  const field = graph.value?.fields.find((candidate) => candidate.outputName === normalizedValue);
+  const targetProperty = property === "fieldNameAlias" ? "targetId" : "toTargetId";
+  if (field) {
+    activeCondition.value[targetProperty] = field.sourceRecord?.fieldSeqId || field.localId || field.fieldSeqId;
+  } else {
+    delete activeCondition.value[targetProperty];
+  }
+};
+
+const isUnlistedConditionValue = (optionSource: ReturnType<typeof getConditionValueOptions>, fieldValue: any) => {
+  const hasVisibleValue = fieldValue !== "" && fieldValue !== undefined && fieldValue !== null;
+  return hasVisibleValue && !optionSource?.options.some((option) => option.value === fieldValue);
+};
+
+const setConditionValueMode = (mode: string) => {
+  if (mode === "suggested" && isUnlistedConditionValue(activeConditionValueOptions.value, activeCondition.value?.fieldValue)) {
+    conditionValueMode.value = "custom";
+    return;
+  }
+  if (mode === "suggested" || mode === "custom") conditionValueMode.value = mode;
+};
+
+const setConditionValueModeFor = (condition: any) => {
+  const optionSource = getConditionValueOptions(condition);
+  const fieldValue = condition?.fieldValue;
+  const isSuggestedValue = optionSource?.options.some((option) => option.value === fieldValue);
+  conditionValueMode.value = optionSource && (fieldValue === "" || fieldValue === undefined || isSuggestedValue)
+    ? "suggested"
+    : "custom";
+};
+
+watch(() => activeCondition.value?.operator, (operator) => {
+  if (isPersistedNullConditionOperator(operator)) activeCondition.value.fieldValue = undefined;
+});
+
+watch([activeConditionValueOptions, () => activeCondition.value?.fieldValue], ([optionSource, fieldValue]) => {
+  // Lookup data is advisory. If it changes underneath an open condition, never leave an
+  // unlisted value hidden in a select and never overwrite it with a nearby suggestion.
+  if (conditionValueMode.value === "suggested" && isUnlistedConditionValue(optionSource, fieldValue)) {
+    conditionValueMode.value = "custom";
+  }
+});
 
 const isOperatorValueInvalid = computed(() => {
   if (!activeCondition.value?.fieldNameAlias || !activeCondition.value?.operator) return false;
-  return isConditionValueMissing(activeCondition.value.operator, activeCondition.value.fieldValue);
+  return isConditionValueMissing(activeCondition.value.operator, activeCondition.value.fieldValue, activeCondition.value.toFieldNameAlias);
 });
 
 const conditionSubmitted = ref(false);
@@ -1276,6 +1460,7 @@ const openCondition = (condition: any) => {
   // Edit a copy so changes only apply to the graph when the user saves the modal.
   conditionSubmitted.value = false;
   activeCondition.value = { ...blankCondition(), ...condition };
+  setConditionValueModeFor(activeCondition.value);
   conditionModal.value.$el.present();
 };
 
@@ -1313,7 +1498,7 @@ const selectEntity = async (entity: string) => {
           role: "confirm",
           handler: () => {
             updateMetadata("primaryEntityName", entity);
-            utilStore.fetchEntityFields(entity);
+            void utilStore.fetchEntityDefinition(entity).catch(() => undefined);
             selectedTarget.value = { kind: "node", id: "node:root" };
             closeEntityModal();
           }
@@ -1323,7 +1508,7 @@ const selectEntity = async (entity: string) => {
     await alert.present();
   } else {
     updateMetadata("primaryEntityName", entity);
-    utilStore.fetchEntityFields(entity);
+    void utilStore.fetchEntityDefinition(entity).catch(() => undefined);
     selectedTarget.value = { kind: "node", id: "node:root" };
     closeEntityModal();
   }
@@ -1333,14 +1518,28 @@ const closeEntityModal = () => {
   entityModal.value.$el.dismiss();
 };
 
+const retryGraphFieldDefinition = async () => {
+  const entityName = activeFieldEntityName.value.trim();
+  if (!entityName) return;
+  try {
+    await utilStore.fetchEntityDefinition(entityName, { force: true });
+  } catch {
+    // The open modal retains the keyed error and retry action.
+  }
+};
+
 const openGraphFieldModal = async () => {
   fieldQueryString.value = "";
   selectedGraphFieldNames.value = [];
   fieldPickerNavigation.resetNavigation();
-  if(selectedNode.value?.entityName) {
-    await utilStore.fetchEntityFields(selectedNode.value?.entityName);
-  }
   fieldModal.value.$el.present();
+  if(selectedNode.value?.entityName) {
+    try {
+      await utilStore.fetchEntityDefinition(selectedNode.value?.entityName);
+    } catch {
+      return;
+    }
+  }
 };
 
 
@@ -1373,10 +1572,24 @@ const openRelatedFieldModal = async () => {
   relatedRelationshipPath.value = selectedNode.value?.relationshipPath.join(":") || "";
   relatedEntityName.value = "";
   selectedRelationship.value = undefined;
-  if (activeRelationshipEntityName.value) {
-    await utilStore.fetchEntityRelationships(activeRelationshipEntityName.value);
-  }
   relatedFieldModal.value.$el.present();
+  if (activeRelationshipEntityName.value) {
+    try {
+      await utilStore.fetchEntityDefinition(activeRelationshipEntityName.value);
+    } catch {
+      return;
+    }
+  }
+};
+
+const retryActiveRelationshipDefinition = async () => {
+  const entityName = activeRelationshipEntityName.value.trim();
+  if (!entityName) return;
+  try {
+    await utilStore.fetchEntityDefinition(entityName, { force: true });
+  } catch {
+    // The relationship selection step remains open for another retry.
+  }
 };
 
 const selectRelationship = async (relationship: any) => {
@@ -1390,22 +1603,22 @@ const selectRelationship = async (relationship: any) => {
 };
 
 const confirmRelatedFieldPath = async () => {
-  if (relatedEntityName.value) {
-    await utilStore.fetchEntityFields(relatedEntityName.value);
+  const normalizedEntityName = relatedEntityName.value.trim();
+  if (normalizedEntityName) {
+    relatedEntityName.value = normalizedEntityName;
+    try {
+      await utilStore.fetchEntityDefinition(normalizedEntityName, {
+        force: utilStore.getEntityDefinitionFetchState(normalizedEntityName).status === "error"
+      });
+    } catch {
+      return;
+    }
   }
   relatedFieldQueryString.value = "";
   selectedRelatedFieldNames.value = [];
   relatedFieldStep.value = "fields";
   relatedFieldPickerNavigation.resetNavigation();
 };
-
-const fetchRelatedEntityFields = () => {
-  const entityName = relatedEntityName.value.trim();
-  if (entityName) {
-    utilStore.fetchEntityFields(entityName);
-  }
-};
-
 
 const toggleRelatedField = (fieldName: string, checked: boolean) => {
   selectedRelatedFieldNames.value = checked
@@ -1483,6 +1696,7 @@ const openConditionModal = () => {
   conditionSubmitted.value = false;
   // Fresh object (no id) so this is treated as a new condition, with no stale carry-over.
   activeCondition.value = { ...blankCondition(), fieldNameAlias: selectedField.value.outputName };
+  setConditionValueModeFor(activeCondition.value);
   conditionModal.value.$el.present();
 };
 
@@ -1501,6 +1715,7 @@ const closeConditionModal = (save: boolean = false) => {
       return;
     }
     const condition = { ...activeCondition.value };
+    if (isPersistedNullConditionOperator(condition.operator)) delete condition.fieldValue;
     const existingId = condition.conditionSeqId || condition.localId;
     const isExisting = !!existingId && (graph.value?.conditions || []).some((item: any) => (
       item.conditionSeqId === existingId || item.localId === existingId
@@ -1518,11 +1733,9 @@ const closeConditionModal = (save: boolean = false) => {
 
 const buildQuery = () => ({
   selectedFields: selectedFields.value,
-  filters: graph.value?.conditions.map((condition) => ({
-    fieldNameAlias: condition.fieldNameAlias,
-    operator: condition.operator,
-    value: condition.fieldValue
-  })) || [],
+  // The saved DataDocument evaluates its own persisted conditions. Preview
+  // parameters are reserved for explicit runtime filters only.
+  filters: [],
   sort: [],
   distinct: false,
   pageSize: pageSize.value
@@ -1541,7 +1754,8 @@ const saveGraph = async () => {
 };
 
 const runPreview = async () => {
-  await dataDocumentStore.runPreview(graph.value?.dataDocumentId as string, buildQuery());
+  if (!canRunPreview.value) return;
+  await dataDocumentStore.runPreview(buildQuery());
 };
 
 const openScheduleModal = async () => {
@@ -1582,7 +1796,37 @@ const queueExport = async () => {
     // Track status in the background; Recent Exports updates live as it polls.
     dataDocumentStore.pollExportHistory(dataDocumentId);
   } catch(err) {
-    commonUtil.showToast(translate(`Failed to queue data document export for ${graph.value?.dataDocumentId}`))
+    commonUtil.showToast(translate("Failed to queue data document export."))
+  }
+};
+
+const loadRouteGraph = async () => {
+  const currentId = router.currentRoute.value.params.id as string;
+  if (currentId === "new") {
+    graphStore.startNewGraph();
+    return;
+  }
+  try {
+    await graphStore.fetchGraph(currentId);
+  } catch {
+    return;
+  }
+  if (graph.value?.metadata.primaryEntityName) {
+    try {
+      await utilStore.fetchEntityDefinition(graph.value.metadata.primaryEntityName);
+    } catch {
+      // Relationship metadata failures are represented by graph warnings and remain retryable.
+    }
+  }
+  dataDocumentStore.fetchScheduledExports(currentId);
+  if (bottomPanel.value === "exports") await loadExportHistory(currentId);
+};
+
+const retryRouteGraph = async () => {
+  await graphStore.fetchGraph(routeDataDocumentId.value, { force: true }).catch(() => undefined);
+  if (routeGraph.value) {
+    dataDocumentStore.fetchScheduledExports(routeDataDocumentId.value);
+    if (bottomPanel.value === "exports") await loadExportHistory(routeDataDocumentId.value);
   }
 };
 
@@ -1606,6 +1850,9 @@ watch([relatedFieldQueryString, relatedFieldStep, relatedEntityName, activeRelat
 });
 
 onIonViewWillEnter(async () => {
+  previewTargetActive.value = true;
+  syncPreviewTarget();
+  if (!isBuilderRoute.value) return;
   // Deep-link the active segment from ?segment= (catalog Run→preview, History→exports).
   // Done here, not at ref init, because Ionic caches/reuses the page across navigations.
   const segment = router.currentRoute.value.query.segment as string;
@@ -1614,18 +1861,17 @@ onIonViewWillEnter(async () => {
   utilStore.fetchStatuses();
   // Read the LIVE route id (not the captured snapshot) so a cached re-enter after the
   // in-place first-save fetches the real document, never the literal "new".
-  const currentId = router.currentRoute.value.params.id as string;
-  if(currentId === "new") {
-    graphStore.startNewGraph();
-  } else {
-    await graphStore.fetchGraph(currentId);
-    if (graph.value?.metadata.primaryEntityName) {
-      await utilStore.fetchEntityFields(graph.value.metadata.primaryEntityName);
-    }
-    // Surface scheduled email exports for this document in the Preview segment.
-    dataDocumentStore.fetchScheduledExports(currentId);
-  }
+  await loadRouteGraph();
 });
+
+const releasePreviewTarget = () => {
+  previewTargetActive.value = false;
+  graphStore.releasePreviewTarget(previewTargetOwner);
+  dataDocumentStore.releaseDocumentTarget(previewTargetOwner);
+};
+
+onIonViewWillLeave(releasePreviewTarget);
+onUnmounted(releasePreviewTarget);
 </script>
 
 <style scoped>
