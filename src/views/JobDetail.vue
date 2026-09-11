@@ -5,7 +5,7 @@
         <ion-buttons slot="start">
           <ion-back-button default-href="/catalog"></ion-back-button>
         </ion-buttons>
-        <ion-title>{{ job?.jobName || translate('Job Details') }}</ion-title>
+        <ion-title>{{ translate("Job details") }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -60,6 +60,10 @@
               </ion-chip>
               <ion-chip v-if="!jobCategories.length" color="medium" outline>
                 {{ translate("Uncategorized") }}
+              </ion-chip>
+              <ion-chip v-if="job.instanceOfProductId" color="primary" outline button @click="addToCategory()">
+                <ion-icon :icon="addOutline" />
+                <ion-label>{{ translate("Add to category") }}</ion-label>
               </ion-chip>
             </div>
           </div>
@@ -334,10 +338,10 @@
             <ion-card>
               <ion-card-header>
                 <ion-card-title class="header-with-action">
-                  {{ translate("Custom Parameters") }}
-                  <template v-if="requiredParams.length || optionalParams.length">
+                  {{ translate("Parameters") }}
+                  <template v-if="jobParameters.length">
                     <ion-button v-if="!isEditingParameters" fill="clear" @click="toggleEditParameters()">
-                      {{ translate(generateJobCustomParameters(requiredParams, optionalParams).length ? "Edit" : "Add") }}
+                      {{ translate("Edit") }}
                     </ion-button>
                     <div v-else class="action-buttons">
                       <ion-button color="primary" :disabled="isRequiredParametersMissing" @click="saveParameters()">
@@ -351,8 +355,8 @@
                 </ion-card-title>
               </ion-card-header>
               <ion-card-content>
-                <ion-list :lines="isEditingParameters ? 'none' : 'full'" v-if="generateJobCustomParameters(requiredParams, optionalParams).length || (isEditingParameters && editableParametersList.length)">
-                  <ion-item v-for="(param, index) in (isEditingParameters ? editableParametersList : generateJobCustomParameters(requiredParams, optionalParams))" :key="index">
+                <ion-list :lines="isEditingParameters ? 'none' : 'full'" v-if="jobParameters.length">
+                  <ion-item v-for="(param, index) in (isEditingParameters ? editableParametersList : jobParameters)" :key="index">
                     <template v-if="!isEditingParameters">
                       <ion-label>{{ param.name }}</ion-label>
                       <ion-label slot="end">{{ param.value || "-" }}</ion-label>
@@ -369,11 +373,8 @@
                     </div>
                   </ion-item>
                 </ion-list>
-                <div v-else-if="!editableParametersList.length" class="ion-text-center ion-padding">
-                  <p>{{ translate("No parameters available for this job.") }}</p>
-                </div>
                 <div v-else class="ion-text-center ion-padding">
-                  <p>{{ translate("No custom parameters set for this job.") }}</p>
+                  <p>{{ translate("No parameters available for this job.") }}</p>
                 </div>
               </ion-card-content>
             </ion-card>
@@ -381,21 +382,29 @@
 
           <!-- HISTORY TAB -->
           <div v-if="activeTab === 'history'">
-            <div class="filter-toolbar ion-padding-horizontal">
-              <ion-chip :outline="runsFilter !== 'all'" :color="runsFilter === 'all' ? 'primary' : 'medium'" @click="runsFilter = 'all'; updateRunsFilter()">
-                <ion-label>{{ translate("All") }}</ion-label>
-              </ion-chip>
-              <ion-chip :outline="runsFilter !== 'error'" :color="runsFilter === 'error' ? 'primary' : 'medium'" @click="runsFilter = 'error'; updateRunsFilter()">
-                <ion-icon :icon="alertCircleOutline" v-if="runsFilter === 'error'"></ion-icon>
-                <ion-label>{{ translate("Errors") }}</ion-label>
-              </ion-chip>
-            </div>
+            <ion-card>
+              <ion-card-content>
+                <div v-if="pinnedRunId" class="filter-toolbar">
+                  <ion-chip outline color="primary" @click="clearPinnedRun()">
+                    <ion-label>{{ translate("Run") }} #{{ pinnedRunId }}</ion-label>
+                    <ion-icon :icon="closeCircleOutline" />
+                  </ion-chip>
+                </div>
+                <JobRunFilters
+                  v-model:queryString="runsQueryString"
+                  v-model:status="runsStatus"
+                  v-model:userId="runsUserId"
+                  v-model:hasDataLogs="runsHasDataLogs"
+                  :placeholder="translate('Search by run, user, message, or result')"
+                />
+              </ion-card-content>
+            </ion-card>
             <div v-if="isRunsLoading" class="runs-state ion-padding ion-text-center">
               <ion-spinner name="crescent" />
               <p>{{ translate("Loading") }}</p>
             </div>
-            <template v-else-if="runs.length">
-              <ion-card v-for="run in runs" :key="run.jobRunId" class="run-card">
+            <template v-else-if="filteredRuns.length">
+              <ion-card v-for="run in filteredRuns" :key="run.jobRunId">
                 <ion-item lines="none">
                   <ion-icon slot="start" :icon="run.hasError === 'Y' ? closeCircleOutline : checkmarkCircleOutline" :color="run.hasError === 'Y' ? 'danger' : (run.startTime ? 'success' : 'warning')"></ion-icon>
                   <ion-label>
@@ -412,21 +421,21 @@
                       <ion-icon :icon="timeOutline" color="medium"></ion-icon>
                       <ion-label>
                         <p>{{ translate("Duration") }}</p>
-                        <strong>{{ calculateDuration(run.startTime, run.endTime) }}</strong>
+                        {{ calculateDuration(run.startTime, run.endTime) }}
                       </ion-label>
                     </div>
                     <div class="stat-item">
                       <ion-icon :icon="personOutline" color="medium"></ion-icon>
                       <ion-label>
                         <p>{{ translate("User") }}</p>
-                        <strong>{{ getRunUserName(run.userId) }}</strong>
+                        {{ getRunUserName(run.userId) }}
                       </ion-label>
                     </div>
                     <div class="stat-item">
                       <ion-icon :icon="calendarOutline" color="medium"></ion-icon>
                       <ion-label>
                         <p>{{ translate("Completed") }}</p>
-                        <strong>{{ run.endTime ? getDateAndTime(run.endTime) : 'N/A' }}</strong>
+                        {{ run.endTime ? getDateAndTime(run.endTime) : 'N/A' }}
                       </ion-label>
                     </div>
                   </div>
@@ -518,6 +527,9 @@
                 <ion-infinite-scroll-content loading-spinner="crescent"></ion-infinite-scroll-content>
               </ion-infinite-scroll>
             </template>
+            <p v-else-if="hasLoadedRuns && runs.length" class="ion-padding ion-text-center">
+              {{ translate("No runs match the applied filters") }}
+            </p>
             <p v-else-if="hasLoadedRuns" class="ion-padding ion-text-center">
               {{ translate("No run history available") }}
             </p>
@@ -598,7 +610,10 @@ import router from "../router"
 import { useUserStore } from '@/store/user';
 import { translate, commonUtil, logger, emitter } from '@common';
 import { getCronString, getFileSize, getDateAndTime, showToast } from '@/utils';
+import { filterJobRuns } from '@/utils/jobRuns';
+import JobRunFilters from '@/components/JobRunFilters.vue';
 import { 
+  addOutline,
   alertCircleOutline,
   calendarOutline,
   checkmarkCircleOutline,
@@ -625,7 +640,8 @@ const currentProductStore = computed(() => userStore.getCurrentProductStore)
 const products = computed(() => jobStore.getProducts)
 const product = computed(() => products.value[job.value?.instanceOfProductId] || {})
 const userTimeZone = computed(() => userStore.getUserTimeZone);
-const isRequiredParametersMissing = computed(() => requiredParams.value.some((param: any) => !param.value))
+const isRequiredParametersMissing = computed(() => (isEditingParameters.value ? editableParametersList.value : requiredParams.value)
+  .some((param: any) => param.required && !param.value))
 
 let job: any = ref({})
 let runs: any = ref([])
@@ -640,7 +656,21 @@ let optionalParams = ref([]) as any
 let requiredParams = ref([]) as any
 
 const activeTab = ref('overview');
-const runsFilter = ref('all');
+// Set when the dashboard drills in on one run so the user lands on the run behind the
+// number they clicked instead of the whole history. The runs API filters on jobRunId.
+const pinnedRunId = ref('');
+// Same filter vocabulary as the global Run History page, applied to this job's runs.
+const runsQueryString = ref('');
+const runsStatus = ref('');
+const runsUserId = ref('');
+const runsHasDataLogs = ref('');
+
+const filteredRuns = computed(() => filterJobRuns(runs.value, {
+  queryString: runsQueryString.value,
+  status: runsStatus.value,
+  userId: runsUserId.value,
+  hasDataLogs: runsHasDataLogs.value
+}));
 
 // Product & Category Context
 const jobCategories = computed(() => {
@@ -673,11 +703,16 @@ const calculateDuration = (start: string | number | null, end: string | number |
   return `${seconds}s`;
 };
 
+// Every parameter the job's service accepts, required ones first, each carrying whatever
+// value the job currently stores.
+const jobParameters = computed(() => requiredParams.value.concat(optionalParams.value));
+
 const isEditingParameters = ref(false);
 const editableParametersList = ref<any[]>([]);
 
 const toggleEditParameters = () => {
-  editableParametersList.value = requiredParams.value.concat(optionalParams.value)
+  // Edit a copy so cancelling leaves the displayed values untouched.
+  editableParametersList.value = JSON.parse(JSON.stringify(jobParameters.value))
 
   isEditingParameters.value = true;
 };
@@ -697,11 +732,63 @@ const saveParameters = async () => {
 
   await updateJobInfo(payload)
 
+  const refreshed = generateJobCustomOptions(job.value)
+  requiredParams.value = refreshed.requiredParameters
+  optionalParams.value = refreshed.optionalParameters
+
   isEditingParameters.value = false;
 };
 
 const cancelEditParameters = () => {
   isEditingParameters.value = false;
+};
+
+// A job's categories are memberships on the job's product, so only product-backed jobs
+// can be categorised; jobs without one have nothing to attach a membership to.
+const addToCategory = async () => {
+  const assigned = new Set(jobCategories.value.map((category: any) => category.productCategoryId));
+  const available = categories.value.filter((category: any) => category.primaryParentCategoryId === "SYSTEM_JOB" && !assigned.has(category.productCategoryId));
+
+  if(!available.length) {
+    showToast(translate("This job is already in every category."));
+    return;
+  }
+
+  const categoryAlert = await alertController.create({
+    header: translate("Add to category"),
+    inputs: available.map((category: any) => ({
+      type: "radio",
+      label: category.categoryName || category.productCategoryId,
+      value: category.productCategoryId
+    })),
+    buttons: [
+      {
+        text: translate("Cancel"),
+        role: "cancel"
+      },
+      {
+        text: translate("Add"),
+        handler: async (productCategoryId: string) => {
+          if(!productCategoryId) return false;
+
+          try {
+            const resp = await jobStore.addJobToCategory(job.value.instanceOfProductId, productCategoryId)
+            if(commonUtil.hasError(resp)) throw resp;
+
+            // The membership cache short-circuits when populated, so clear it to pick the new row up.
+            jobStore.categoryMembers = []
+            await jobStore.fetchCategoryMembers()
+            showToast(translate("Job added to category"))
+          } catch(err) {
+            logger.error("Failed to add job to category", err)
+            showToast(translate("Failed to add job to category"))
+          }
+          return true;
+        }
+      }
+    ]
+  });
+  await categoryAlert.present();
 };
 
 async function togglePause() {
@@ -814,11 +901,11 @@ const loadRuns = async () => {
   pageSize.value = 20
   try {
     const payload = { pageSize: pageSize.value, pageIndex: pageIndex.value, orderByField: "-jobRunId" } as any
-    if (runsFilter.value === 'error') payload.hasError = 'Y'
+    if (pinnedRunId.value) payload.jobRunId = pinnedRunId.value
 
     const resp = await jobStore.fetchJobRuns(route.params.jobName as string, payload)
     runs.value = Array.isArray(resp) ? resp : []
-    hasMoreRuns.value = Array.isArray(resp) && resp.length === pageSize.value
+    hasMoreRuns.value = !pinnedRunId.value && Array.isArray(resp) && resp.length === pageSize.value
     hasLoadedRuns.value = true
     await userStore.resolveUserFullNames(runs.value.map((run: any) => run.userId));
   } catch (err) {
@@ -839,6 +926,10 @@ onIonViewWillLeave(() => {
 })
 
 const init = async () => {
+  const currentQuery = router.currentRoute.value.query
+  pinnedRunId.value = (currentQuery?.jobRunId as string) || ''
+  if (currentQuery?.tab) activeTab.value = currentQuery.tab as string
+
   await loadJob()
   void loadRuns()
   
@@ -849,10 +940,8 @@ const init = async () => {
   }
 }
 
-const updateRunsFilter = async () => {
-  if (!hasLoadedRuns.value && activeTab.value !== 'history') {
-    return
-  }
+const clearPinnedRun = async () => {
+  pinnedRunId.value = ''
   await loadRuns()
 }
 
@@ -866,7 +955,6 @@ const loadMoreRuns = async (event: any) => {
   pageIndex.value++
   try {
     const payload = { pageSize: pageSize.value, pageIndex: pageIndex.value, orderByField: "-jobRunId" } as any
-    if (runsFilter.value === 'error') payload.hasError = 'Y'
 
     const resp = await jobStore.fetchJobRuns(route.params.jobName as string, payload)
     if (Array.isArray(resp) && resp.length > 0) {
@@ -1058,25 +1146,6 @@ const convertToString = (parameter: any) => {
   }
 }
 
-// preparing the parameters for the job, by checking whether the job has supported making
-// changes in the custom parameters or not
-const generateJobCustomParameters = (requiredParameters: any, optionalParameters: any) => {
-  // preparing the custom parameters those needs to passed with the job
-  const jobCustomParameters = [] as any;
-
-  requiredParameters.map((parameter: any) => {
-    jobCustomParameters.push(parameter)
-  })
-
-  optionalParameters.map((parameter: any) => {
-    // added this check to not show those optional params in the configuration card whose value is left empty in the parameter modal
-    if(parameter.value && parameter.value.toString().trim()) {
-      jobCustomParameters.push(parameter)
-    }
-  })
-  return jobCustomParameters;
-}
-
 const generateJobCustomOptions = (job: any) => {
   let inputParameters = job?.serviceInParameters ? JSON.parse(JSON.stringify(job?.serviceInParameters)) : []
   const optionalParameters: Array<any> = [];
@@ -1148,17 +1217,6 @@ const timeTillJob = (time: any) => {
   padding-bottom: var(--spacer-sm, 8px);
 }
 
-.run-card {
-  margin-bottom: var(--spacer-base, 16px);
-  border: 1px solid var(--ion-color-step-150, #d7d8da);
-  box-shadow: none;
-  transition: box-shadow 0.3s ease;
-}
-
-.run-card:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
 .filter-toolbar {
   display: flex;
   gap: var(--spacer-sm, 8px);
@@ -1177,22 +1235,6 @@ const timeTillJob = (time: any) => {
   display: flex;
   align-items: center;
   gap: var(--spacer-sm, 8px);
-}
-
-.stat-item ion-icon {
-  font-size: 24px;
-}
-
-.stat-item ion-label p {
-  margin: 0;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.stat-item ion-label strong {
-  display: block;
-  font-size: 14px;
 }
 
 .log-list {
