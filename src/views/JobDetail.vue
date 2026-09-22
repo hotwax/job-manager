@@ -597,7 +597,7 @@ import { computed, ref, watch } from 'vue';
 import router from "../router"
 import { useUserStore } from '@/store/user';
 import { translate, commonUtil, logger, emitter } from '@common';
-import { getCronString, getFileSize, getDateAndTime, showToast } from '@/utils';
+import { convertToString, getCronString, getFileSize, getDateAndTime, showToast } from '@/utils';
 import { 
   alertCircleOutline,
   calendarOutline,
@@ -1035,28 +1035,6 @@ async function updateJobInfo(payload: any): Promise<any> {
   }
 }
 
-
-// defined this method as we need to convert values to string for trimming and correctly parse the data
-const convertToString = (parameter: any) => {
-  const value = parameter.value;
-
-  if(!value) {
-    return ''
-  }
-
-  try {
-    if(parameter.type === 'Map' || parameter.type === 'List' || parameter.type === 'Object') {
-      return JSON.stringify(value)
-    } else if(parameter.type === 'String') {
-      return value
-    } else {
-      return '' + value;
-    }
-  } catch {
-    logger.error('Unable to parse the defined value', value)
-    return value;
-  }
-}
 
 // preparing the parameters for the job, by checking whether the job has supported making
 // changes in the custom parameters or not
