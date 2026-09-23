@@ -1046,7 +1046,7 @@ const convertToString = (parameter: any) => {
 
   try {
     if(parameter.type === 'Map' || parameter.type === 'List' || parameter.type === 'Object') {
-      return JSON.stringify(value)
+      return typeof value === 'string' ? value : JSON.stringify(value)
     } else if(parameter.type === 'String') {
       return value
     } else {
