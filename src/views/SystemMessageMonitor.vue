@@ -64,22 +64,12 @@
               </div>
 
               <div class="filter-item">
-                <ion-select
-                  :label="translate('Message Type')"
-                  label-placement="stacked"
-                  interface="popover"
-                  :value="selectedTypeId"
-                  @ionChange="selectedTypeId = $event.detail.value"
-                >
-                  <ion-select-option value="">{{ translate("All") }}</ion-select-option>
-                  <ion-select-option
-                    v-for="type in filteredTypes"
-                    :key="type.systemMessageTypeId"
-                    :value="type.systemMessageTypeId"
-                  >
-                    {{ type.description || type.systemMessageTypeId }}
-                  </ion-select-option>
-                </ion-select>
+                <ion-item id="message-type-filter-trigger" button detail class="filter-modal-trigger">
+                  <ion-label>
+                    <p>{{ translate("Message Type") }}</p>
+                    {{ selectedTypeLabel }}
+                  </ion-label>
+                </ion-item>
                 <ion-button v-if="selectedTypeId" fill="clear" class="clear-filter-btn" @click="selectedTypeId = ''" :title="translate('Clear')">
                   <ion-icon slot="icon-only" :icon="closeCircleOutline" />
                 </ion-button>
@@ -127,6 +117,54 @@
           </ion-card-content>
         </ion-card>
 
+        <ion-modal trigger="message-type-filter-trigger" @willPresent="initializeMessageTypeModal" @didDismiss="clearMessageTypeModal">
+          <ion-header>
+            <ion-toolbar>
+              <ion-buttons slot="start">
+                <ion-button @click="closeMessageTypeModal" :title="translate('Close')">
+                  <ion-icon slot="icon-only" :icon="closeOutline" />
+                </ion-button>
+              </ion-buttons>
+              <ion-title>{{ translate("Select Message Type") }}</ion-title>
+            </ion-toolbar>
+            <ion-toolbar>
+              <ion-searchbar
+                :value="messageTypeQuery"
+                @ionInput="messageTypeQuery = ($event as any).detail.value || ''"
+                :debounce="200"
+                :placeholder="translate('Search by type ID or description')"
+              />
+            </ion-toolbar>
+          </ion-header>
+
+          <ion-content>
+            <ion-list>
+              <ion-radio-group v-model="messageTypeModalSelection">
+                <ion-item>
+                  <ion-radio label-placement="end" justify="start" value="">
+                    <ion-label>{{ translate("All") }}</ion-label>
+                  </ion-radio>
+                </ion-item>
+                <ion-item v-for="type in filteredMessageTypes" :key="type.systemMessageTypeId">
+                  <ion-radio label-placement="end" justify="start" :value="type.systemMessageTypeId">
+                    <ion-label>
+                      {{ type.description || type.systemMessageTypeId }}
+                      <p v-if="type.description">{{ type.systemMessageTypeId }}</p>
+                    </ion-label>
+                  </ion-radio>
+                </ion-item>
+              </ion-radio-group>
+            </ion-list>
+            <p v-if="!filteredMessageTypes.length" class="empty-state">{{ translate("No message types found.") }}</p>
+
+            <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+              <ion-fab-button @click="saveMessageTypeFilter">
+                <ion-icon :icon="checkmarkOutline" />
+              </ion-fab-button>
+            </ion-fab>
+          </ion-content>
+        </ion-modal>
+
         <div class="pagination">
           <ion-button fill="outline" :disabled="pageIndex === 0 || isLoading" @click="goToPreviousPage">
             {{ translate("Previous") }}
@@ -161,21 +199,31 @@
 <script setup lang="ts">
 import {
   IonButton,
+  IonButtons,
   IonCard,
   IonCardContent,
   IonContent,
+  IonFab,
+  IonFabButton,
   IonHeader,
   IonIcon,
+  IonItem,
+  IonLabel,
+  IonList,
   IonMenuButton,
+  IonModal,
   IonPage,
+  IonRadio,
+  IonRadioGroup,
   IonSearchbar,
   IonSelect,
   IonSelectOption,
   IonTitle,
   IonToolbar,
+  modalController,
   onIonViewWillEnter
 } from "@ionic/vue";
-import { closeCircleOutline } from "ionicons/icons";
+import { checkmarkOutline, closeCircleOutline, closeOutline } from "ionicons/icons";
 import { computed, ref, watch } from "vue";
 import { translate } from "@common";
 import SystemMessageList from "@/components/SystemMessageList.vue";
@@ -197,6 +245,8 @@ const selectedRemoteId = ref("");
 const selectedIsOutgoing = ref("");
 const pageIndex = ref(0);
 const isInitialLoading = ref(true);
+const messageTypeQuery = ref("");
+const messageTypeModalSelection = ref("");
 
 const messages = computed(() => store.getSystemMessages);
 
@@ -211,6 +261,23 @@ const isLoading = computed(() => isInitialLoading.value || store.isFetchingMessa
 const filteredTypes = computed(() => {
   if (!selectedParentTypeId.value) return types.value;
   return types.value.filter((type: any) => type.parentTypeId === selectedParentTypeId.value);
+});
+
+const selectedTypeLabel = computed(() => {
+  if (!selectedTypeId.value) return translate("All");
+  const selectedType = types.value.find((type: any) => type.systemMessageTypeId === selectedTypeId.value);
+  return selectedType?.description || selectedType?.systemMessageTypeId || selectedTypeId.value;
+});
+
+const filteredMessageTypes = computed(() => {
+  const query = messageTypeQuery.value.trim().toLowerCase();
+  if (!query) return filteredTypes.value;
+
+  return filteredTypes.value.filter((type: any) => {
+    const description = (type.description || "").toLowerCase();
+    const id = (type.systemMessageTypeId || "").toLowerCase();
+    return description.includes(query) || id.includes(query);
+  });
 });
 
 const loadMessages = async () => {
@@ -257,6 +324,25 @@ const handleQueryInput = (event: CustomEvent) => {
 const handleParentTypeChange = (event: CustomEvent) => {
   selectedParentTypeId.value = event.detail.value;
   selectedTypeId.value = "";
+};
+
+const initializeMessageTypeModal = () => {
+  messageTypeQuery.value = "";
+  messageTypeModalSelection.value = selectedTypeId.value;
+};
+
+const clearMessageTypeModal = () => {
+  messageTypeQuery.value = "";
+  messageTypeModalSelection.value = "";
+};
+
+const closeMessageTypeModal = () => {
+  modalController.dismiss();
+};
+
+const saveMessageTypeFilter = () => {
+  selectedTypeId.value = messageTypeModalSelection.value;
+  closeMessageTypeModal();
 };
 
 const goToPreviousPage = () => {
@@ -327,6 +413,19 @@ onIonViewWillEnter(async () => {
 
 .filter-item ion-select {
   flex: 1;
+}
+
+.filter-modal-trigger {
+  flex: 1;
+  min-width: 0;
+  --padding-start: 0;
+  --inner-padding-end: 0;
+}
+
+.filter-modal-trigger ion-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .clear-filter-btn {
