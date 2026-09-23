@@ -47,7 +47,7 @@ const convertToString = (parameter: any) => {
 
   try {
     if(parameter.type === 'Map' || parameter.type === 'List' || parameter.type === 'Object') {
-      return typeof value === "string" ? value : JSON.stringify(value)
+      return JSON.stringify(value)
     } else if(parameter.type === 'String') {
       return value
     } else {
@@ -254,7 +254,6 @@ const getTimeInMillis = (value: any) => {
 };
 
 export {
-  convertToString,
   downloadDataDocumentExport,
   getExportStatus,
   isExportTerminal,
