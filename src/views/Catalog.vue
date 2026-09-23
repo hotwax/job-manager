@@ -4,12 +4,12 @@
       <ion-toolbar>
         <ion-menu-button slot="start" />
         <ion-title>{{ translate("Catalog") }}</ion-title>
-        <!-- <ion-buttons slot="end">
+        <ion-buttons slot="end">
           <ion-button color="primary" @click="openCreateJobModal()">
             <ion-icon slot="end" :icon="addOutline"></ion-icon>
             {{ translate("Add job") }}
           </ion-button>
-        </ion-buttons> -->
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
 
@@ -119,6 +119,8 @@
 
 <script setup lang="ts">
 import {
+  IonButton,
+  IonButtons,
   IonCard,
   IonCardHeader,
   IonCardTitle,
@@ -140,7 +142,7 @@ import {
 } from '@ionic/vue';
 import { ref, computed } from 'vue';
 import router from '@/router';
-import { ellipseOutline, lockClosedOutline, pauseCircleOutline, playCircleOutline } from 'ionicons/icons';
+import { addOutline, ellipseOutline, lockClosedOutline, pauseCircleOutline, playCircleOutline } from 'ionicons/icons';
 import { emitter, translate } from '@common';
 import CreateJobModal from '@/components/CreateJobModal.vue';
 import { useJobStore } from '@/store/jobs';
@@ -260,15 +262,16 @@ const openCreateJobModal = async () => {
   const modal = await modalController.create({
     component: CreateJobModal,
     componentProps: {
-      categories: categories.value, // Passing all flat categories
       existingJobNames: jobs.value.map((job: any) => job.jobName)
     }
   });
   modal.present();
 
-  const { data, role } = await modal.onDidDismiss();
+  const { role } = await modal.onDidDismiss();
   if (role === 'confirm') {
-    console.log('Job created:', data);
+    // The new job is not in the cached list yet, so pull the catalog again.
+    jobStore.jobs = [];
+    await jobStore.fetchJobs();
   }
 };
 </script>

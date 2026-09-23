@@ -33,19 +33,6 @@
             fill="outline"
             :auto-grow="true"
           ></ion-textarea>
-          <ion-select
-            interface="popover"
-            v-model="jobData.primaryCategory"
-            :label="translate('Primary Category')"
-            label-placement="floating"
-            fill="outline"
-            :required="true"
-            :error-text="translate('Field is required')"
-          >
-            <ion-select-option v-for="category in categories" :key="category.productCategoryId" :value="category.productCategoryId">
-              {{ category.categoryName }}
-            </ion-select-option>
-          </ion-select>
           <ion-input
             v-model="jobData.service"
             :label="translate('Service')"
@@ -96,8 +83,6 @@
                     label-placement="floating"
                     fill="outline"
                     :placeholder="translate('Value')"
-                    :required="true"
-                    :error-text="translate('Field is required')"
                   ></ion-input>
                 </div>
               </ion-item>
@@ -134,7 +119,7 @@
         <ion-button v-if="currentStep < totalSteps" color="primary" @click="nextStep()">
           {{ translate("Next") }}
         </ion-button>
-        <ion-button v-else color="primary" @click="saveJob()">
+        <ion-button v-else color="primary" :disabled="isCreating" @click="saveJob()">
           {{ translate("Create") }}
         </ion-button>
       </ion-buttons>
@@ -159,8 +144,6 @@ import {
   IonList,
   IonListHeader,
   IonProgressBar,
-  IonSelect,
-  IonSelectOption,
   IonTextarea,
   IonTitle,
   IonToolbar,
@@ -168,17 +151,14 @@ import {
 } from '@ionic/vue';
 import { ref, computed } from 'vue';
 import { addOutline, closeOutline, trashOutline } from 'ionicons/icons';
-import { translate } from '@common';
-import { getCronString } from '@/utils';
+import { commonUtil, translate } from '@common';
+import logger from '@/logger';
+import { getCronString, showToast } from '@/utils';
 import { useJobStore } from '@/store/jobs';
 
 const jobStore = useJobStore();
 
 const props = defineProps({
-  categories: {
-    type: Array as any,
-    required: true
-  },
   existingJobNames: {
     type: Array as () => string[],
     default: () => []
@@ -186,6 +166,7 @@ const props = defineProps({
 })
 
 const currentStep = ref(1);
+const isCreating = ref(false);
 const totalSteps = 2;
 const jobForm = ref<any>(null);
 
@@ -215,7 +196,6 @@ const validateForm = () => {
 const jobData = ref({
   name: "",
   description: "",
-  primaryCategory: "",
   service: "",
   cronExpression: "",
   parameters: [{ key: "", value: "" }] as Record<string, string>[]
@@ -227,7 +207,11 @@ const nextStep = async () => {
   if (validateForm()) {
     if (currentStep.value === 1) {
       const params = await jobStore.fetchServiceParams(jobData.value.service)
-      jobData.value.parameters = params;
+      // The service contract names its inputs; step 2 edits them as key/value pairs.
+      jobData.value.parameters = (params || []).map((param: any) => ({
+        key: param.name,
+        value: param.default || ""
+      }));
       currentStep.value++;
     } else if (currentStep.value < totalSteps) {
       currentStep.value++;
@@ -249,9 +233,39 @@ const removeParameter = (index: number) => {
   jobData.value.parameters.splice(index, 1);
 };
 
-const saveJob = () => {
-  if (validateForm()) {
+const saveJob = async () => {
+  if (!validateForm() || isCreating.value) return;
+
+  isCreating.value = true;
+  try {
+    const resp = await jobStore.createJob({
+      jobName: jobData.value.name,
+      description: jobData.value.description,
+      serviceName: jobData.value.service,
+      cronExpression: jobData.value.cronExpression,
+      // Created paused so a new schedule cannot fire before its parameters are reviewed.
+      paused: "Y"
+    });
+    if (commonUtil.hasError(resp)) throw resp;
+
+    const parameters = jobData.value.parameters.filter((param: any) => param.key && String(param.value ?? "").trim());
+    if (parameters.length) {
+      await jobStore.updateJob({
+        jobName: jobData.value.name,
+        serviceJobParameters: parameters.map((param: any) => ({
+          parameterName: param.key,
+          parameterValue: param.value
+        }))
+      });
+    }
+
+    showToast(translate("Job created"));
     modalController.dismiss(jobData.value, 'confirm');
+  } catch (err) {
+    logger.error("Failed to create job", err);
+    showToast(translate("Failed to create job"));
+  } finally {
+    isCreating.value = false;
   }
 };
 </script>

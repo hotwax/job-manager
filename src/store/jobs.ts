@@ -1,17 +1,12 @@
 import logger from "@/logger";
 import { getCronString, getTimeInMillis } from "@/utils";
+import { filterJobRuns, getRunStatus } from "@/utils/jobRuns";
 import { api } from "@common";
+import { DateTime } from "luxon";
 import { defineStore } from "pinia";
 import { useUserStore } from "./user";
 
 const getRunTime = (run: any) => getTimeInMillis(run.startTime || run.lastUpdatedStamp || run.endTime);
-
-const getRunStatus = (run: any) => {
-  if (run.hasError === "Y") return "FAILED";
-  if (run.startTime && !run.endTime) return "RUNNING";
-  if (run.startTime && run.endTime) return "SUCCESSFUL";
-  return "TERMINATED";
-};
 
 const getRunHistoryStats = (runs: Array<any>) => runs.reduce((stats: any, run: any) => {
   stats.total += 1;
@@ -335,7 +330,6 @@ export const useJobStore = defineStore("job", {
 
         const runsPerJob = Number(payload.runsPerJob ?? 25);
         const queryString = (payload.queryString || "").trim().toLowerCase();
-        const normalizedQueryString = queryString.replace(/^#/, "");
         const selectedJobName = payload.jobName || "";
         const selectedUserId = payload.userId || "";
         const selectedStatus = payload.status || "";
@@ -384,44 +378,14 @@ export const useJobStore = defineStore("job", {
           });
         }
 
-        if (queryString) {
-          runs = runs.filter((run: any) => {
-            const searchableRunText = [
-              run.jobRunId,
-              run.jobName,
-              run.serviceName,
-              run.userId,
-              run.messages,
-              run.results,
-              run.errors
-            ].filter(Boolean).join(" ").toLowerCase();
-            return searchableRunText.includes(normalizedQueryString);
-          });
-        }
-
-        if (selectedStatus) {
-          runs = runs.filter((run: any) => run.runStatus === selectedStatus);
-        }
-
-        if (selectedUserId) {
-          runs = runs.filter((run: any) => String(run.userId || "").toLowerCase().includes(String(selectedUserId).toLowerCase()));
-        }
-
-        if (hasErrors === "Y") {
-          runs = runs.filter((run: any) => run.hasError === "Y");
-        }
-
-        if (hasErrors === "N") {
-          runs = runs.filter((run: any) => run.hasError !== "Y");
-        }
-
-        if (hasDataLogs) {
-          runs = runs.filter((run: any) => hasDataLogs === "Y" ? !!run.logs?.length : !run.logs?.length);
-        }
-
-        if (hasMessages) {
-          runs = runs.filter((run: any) => hasMessages === "Y" ? !!run.messages : !run.messages);
-        }
+        runs = filterJobRuns(runs, {
+          queryString,
+          status: selectedStatus,
+          userId: selectedUserId,
+          hasError: hasErrors,
+          hasDataLogs,
+          hasMessages
+        });
 
         runs = runs.sort((first: any, second: any) => getRunTime(second) - getRunTime(first));
 
@@ -446,6 +410,28 @@ export const useJobStore = defineStore("job", {
       } finally {
         this.loading = false;
       }
+    },
+    // ServiceJob create is the plain entity endpoint: it takes ServiceJob fields only,
+    // so parameters and category membership are stored in follow-up calls.
+    async createJob(payload: any) {
+      return await api({
+        url: "admin/serviceJobs",
+        method: "POST",
+        data: payload,
+      });
+    },
+    // A job's category is a membership on the job's product, so categorising a job means
+    // storing a ProductCategoryMember for its instanceOfProductId.
+    async addJobToCategory(productId: string, productCategoryId: string) {
+      return await api({
+        url: `oms/products/${encodeURIComponent(productId)}/categories`,
+        method: "POST",
+        data: {
+          productId,
+          productCategoryId,
+          fromDate: DateTime.now().toMillis()
+        },
+      });
     },
     async cloneMaargJob(payload: any) {
       return await api({

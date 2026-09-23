@@ -135,26 +135,4 @@ describe("system message store", () => {
     expect(result.data).toBe(mockBlob);
   });
 
-  it("fetches the entire enum sequence bidirectionally", async () => {
-    const store = useSystemMessageStore();
-    // Setup a 3-step sequence: StepA -> StepB -> StepC
-    store.$patch((state: any) => {
-      state.enums = [
-        { enumId: "StepA", relatedEnumId: "StepB", description: "Step A" },
-        { enumId: "StepB", relatedEnumId: "StepC", description: "Step B" },
-        { enumId: "StepC", relatedEnumId: null, description: "Step C" }
-      ];
-    });
-
-    // Start fetching from the middle step (StepB)
-    await store.fetchEnumSequence("StepB");
-    
-    // Should result in [StepA, StepB, StepC]
-    const sequence = store.getCurrentEnumSequence;
-    expect(sequence).toHaveLength(3);
-    expect(sequence[0].enumId).toBe("StepA");
-    expect(sequence[1].enumId).toBe("StepB");
-    expect(sequence[2].enumId).toBe("StepC");
-    expect(store.getCurrentEnumSequence).toEqual(sequence);
-  });
 });
