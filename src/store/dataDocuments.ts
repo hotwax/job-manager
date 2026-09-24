@@ -1,6 +1,6 @@
 import { api } from "@common";
 import { DateTime } from "luxon";
-import { defineStore } from "pinia";
+import { defineStore, getActivePinia } from "pinia";
 
 import logger from "@/logger";
 import { buildCustomParametersMap } from "@/utils/dataDocumentGraph";
@@ -183,6 +183,40 @@ const toDataDocumentRunPayload = (dataDocumentId: string, payload: Record<string
   };
 };
 
+export type DataDocumentPreviewRevision = {
+  dataDocumentId: string;
+  savedRevision: string;
+};
+
+type DataDocumentPreviewOwner = DataDocumentPreviewRevision & {
+  requestId: number;
+};
+
+type DataDocumentResourceOwner = {
+  dataDocumentId: string;
+  requestId: number;
+  targetGeneration: number;
+};
+
+const ownsPreviewRequest = (
+  currentOwner: DataDocumentPreviewOwner | undefined,
+  requestOwner: DataDocumentPreviewOwner
+) => currentOwner?.dataDocumentId === requestOwner.dataDocumentId
+  && currentOwner.savedRevision === requestOwner.savedRevision
+  && currentOwner.requestId === requestOwner.requestId;
+
+const ownsResourceRequest = (
+  currentOwner: DataDocumentResourceOwner | undefined,
+  requestOwner: DataDocumentResourceOwner,
+  activeTarget: { dataDocumentId: string; generation: number; hasOwner: boolean }
+) => currentOwner?.dataDocumentId === requestOwner.dataDocumentId
+  && currentOwner.requestId === requestOwner.requestId
+  && currentOwner.targetGeneration === requestOwner.targetGeneration
+  && (!activeTarget.hasOwner || (
+    activeTarget.dataDocumentId === requestOwner.dataDocumentId
+    && activeTarget.generation === requestOwner.targetGeneration
+  ));
+
 export const useDataDocumentStore = defineStore("dataDocuments", {
   state: () => ({
     dataDocuments: [] as any[],
@@ -201,8 +235,28 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
     previewTotal: 0,
     previewStatus: "idle" as "idle" | "loading" | "success" | "error",
     previewError: "",
+    previewOwner: undefined as DataDocumentPreviewOwner | undefined,
+    previewTargetGeneration: undefined as number | undefined,
+    previewRequestId: 0,
     total: 0,
-    loading: false
+    loading: false,
+    detailLoading: false,
+    historyLoading: false,
+    detailError: undefined as unknown,
+    historyError: undefined as unknown,
+    documentTargetOwnerToken: undefined as symbol | undefined,
+    documentTargetDataDocumentId: "",
+    documentTargetGeneration: 0,
+    detailRequestId: 0,
+    detailRequestOwner: undefined as DataDocumentResourceOwner | undefined,
+    historyRequestId: 0,
+    historyRequestOwner: undefined as DataDocumentResourceOwner | undefined,
+    scheduleLoading: false,
+    scheduleError: undefined as unknown,
+    scheduleRequestId: 0,
+    scheduleRequestOwner: undefined as DataDocumentResourceOwner | undefined,
+    exportPollRequestId: 0,
+    exportPollDataDocumentId: ""
   }),
   getters: {
     getDataDocuments: (state) => state.dataDocuments,
@@ -219,13 +273,73 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
     getPreviewTotal: (state) => state.previewTotal,
     getPreviewStatus: (state) => state.previewStatus,
     getPreviewError: (state) => state.previewError,
+    getPreviewOwner: (state) => state.previewOwner,
+    getPreviewTargetGeneration: (state) => state.previewTargetGeneration,
     getTotal: (state) => state.total,
-    isLoading: (state) => state.loading,
+    isLoading: (state) => state.loading || state.detailLoading || state.historyLoading,
+    isDetailLoading: (state) => state.detailLoading,
+    isHistoryLoading: (state) => state.historyLoading,
+    isScheduleLoading: (state) => state.scheduleLoading,
+    getDetailError: (state) => state.detailError,
+    getHistoryError: (state) => state.historyError,
+    getScheduleError: (state) => state.scheduleError,
     getDataFeeds: (state) => normalizeDataFeeds(state.dataDocuments),
     getAvailablePrimaryEntities: (state) => state.dataDocumentPrimaryEntities,
     getAvailableFeeds: (state) => state.dataDocumentRelatedFeeds
   },
   actions: {
+    getDocumentTarget() {
+      return {
+        dataDocumentId: this.documentTargetDataDocumentId,
+        generation: this.documentTargetGeneration,
+        hasOwner: !!this.documentTargetOwnerToken
+      };
+    },
+    activateDocumentTarget(ownerToken: symbol, dataDocumentId: string) {
+      if (this.documentTargetOwnerToken === ownerToken && this.documentTargetDataDocumentId === dataDocumentId) return;
+      this.documentTargetGeneration += 1;
+      this.documentTargetOwnerToken = ownerToken;
+      this.documentTargetDataDocumentId = dataDocumentId;
+      this.detailRequestId += 1;
+      this.detailRequestOwner = undefined;
+      this.detailLoading = false;
+      this.detailError = undefined;
+      this.historyRequestId += 1;
+      this.historyRequestOwner = undefined;
+      this.historyLoading = false;
+      this.historyError = undefined;
+      this.scheduleRequestId += 1;
+      this.scheduleRequestOwner = undefined;
+      this.scheduleLoading = false;
+      this.scheduleError = undefined;
+      this.exportHistory = [];
+      this.scheduledExports = [];
+      this.cancelExportPolling();
+    },
+    releaseDocumentTarget(ownerToken: symbol) {
+      if (this.documentTargetOwnerToken !== ownerToken) return;
+      this.documentTargetGeneration += 1;
+      this.documentTargetOwnerToken = undefined;
+      this.documentTargetDataDocumentId = "";
+      this.detailRequestId += 1;
+      this.detailRequestOwner = undefined;
+      this.detailLoading = false;
+      this.detailError = undefined;
+      this.historyRequestId += 1;
+      this.historyRequestOwner = undefined;
+      this.historyLoading = false;
+      this.historyError = undefined;
+      this.scheduleRequestId += 1;
+      this.scheduleRequestOwner = undefined;
+      this.scheduleLoading = false;
+      this.scheduleError = undefined;
+      this.cancelExportPolling();
+    },
+    cancelExportPolling(dataDocumentId?: string) {
+      if (dataDocumentId && this.exportPollDataDocumentId !== dataDocumentId) return;
+      this.exportPollRequestId += 1;
+      this.exportPollDataDocumentId = "";
+    },
     async fetchDataDocuments(payload: Record<string, any> = {}) {
       this.loading = true;
       try {
@@ -302,28 +416,44 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
 
       return this.currentFeed;
     },
-    async fetchDataDocument(dataDocumentId: string) {
-      this.loading = true;
-      this.currentDocument = undefined;
+    async fetchDataDocument(dataDocumentId: string, _options: { force?: boolean } = {}) {
+      const requestOwner: DataDocumentResourceOwner = {
+        dataDocumentId,
+        requestId: this.detailRequestId + 1,
+        targetGeneration: this.documentTargetGeneration
+      };
+      this.detailRequestId = requestOwner.requestId;
+      this.detailRequestOwner = requestOwner;
+      this.detailLoading = true;
+      this.detailError = undefined;
       try {
         const response = await api({
           url: `moqui/dataDocuments/${dataDocumentId}`,
           method: "GET"
         });
-        this.currentDocument = response.data;
-        this.fields = this.currentDocument?.fields || [];
-        this.conditions = this.currentDocument?.conditions || [];
-        this.relatedFeeds = this.currentDocument?.feeds || [];
-        this.relatedJobs = this.currentDocument?.jobs || [];
+        const document = response.data;
+        if (!document || typeof document !== "object" || Array.isArray(document)) {
+          throw new Error(`Invalid data document detail response for ${dataDocumentId}.`);
+        }
+        if (ownsResourceRequest(this.detailRequestOwner, requestOwner, this.getDocumentTarget())) {
+          this.currentDocument = document;
+          this.fields = document?.fields || [];
+          this.conditions = document?.conditions || [];
+          this.relatedFeeds = document?.feeds || [];
+          this.relatedJobs = document?.jobs || [];
+        }
+        return document;
       } catch (error) {
-        logger.error(`Failed to fetch data document ${dataDocumentId}`, error);
+        if (ownsResourceRequest(this.detailRequestOwner, requestOwner, this.getDocumentTarget())) {
+          logger.error(`Failed to fetch data document ${dataDocumentId}`, error);
+          this.detailError = error;
+        }
+        throw error;
       } finally {
-        this.loading = false;
+        if (ownsResourceRequest(this.detailRequestOwner, requestOwner, this.getDocumentTarget())) {
+          this.detailLoading = false;
+        }
       }
-
-      await this.fetchExportHistory({ dataDocumentId })
-
-      return this.currentDocument;
     },
     async saveDataDocument(payload: Record<string, any>) {
       const isNew = !this.currentDocument?.dataDocumentId || this.currentDocument.dataDocumentId !== payload.dataDocumentId;
@@ -396,22 +526,61 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
         throw error;
       }
     },
-    async runPreview(dataDocumentId: string, query: Record<string, any>) {
+    resetPreview() {
+      this.previewRequestId += 1;
+      this.previewOwner = undefined;
+      this.previewTargetGeneration = undefined;
+      this.previewRows = [];
+      this.previewTotal = 0;
+      this.previewStatus = "idle";
+      this.previewError = "";
+      this.loading = false;
+    },
+    async runPreview(query: Record<string, any>) {
+      if (
+        !query
+        || typeof query !== "object"
+        || Array.isArray(query)
+        || "dataDocumentId" in query
+        || "savedRevision" in query
+        || "requestId" in query
+      ) return;
+      const pinia = getActivePinia();
+      if (!pinia) return;
+      const { useDataDocumentGraphStore } = await import("@/store/dataDocumentGraph");
+      const graphStore = useDataDocumentGraphStore(pinia);
+      const graph = graphStore.getGraph;
+      if (!graphStore.canPreview || !graph?.dataDocumentId) return;
+      const revision: DataDocumentPreviewRevision = {
+        dataDocumentId: graph.dataDocumentId,
+        savedRevision: graphStore.savedRevision
+      };
+      const requestOwner: DataDocumentPreviewOwner = {
+        ...revision,
+        requestId: this.previewRequestId + 1
+      };
+      this.previewRequestId = requestOwner.requestId;
+      this.previewOwner = requestOwner;
+      this.previewTargetGeneration = graphStore.targetOwnerGeneration;
       this.loading = true;
       this.previewStatus = "loading";
+      this.previewRows = [];
+      this.previewTotal = 0;
       this.previewError = "";
       try {
         const response = await api({
           url: API_ENDPOINTS.preview,
           method: "POST",
-          data: toDataDocumentRunPayload(dataDocumentId, query)
+          data: toDataDocumentRunPayload(revision.dataDocumentId, query)
         });
+        if (!ownsPreviewRequest(this.previewOwner, requestOwner)) return;
         const rows = getCollection(response, "rows");
         this.previewRows = rows;
         this.previewTotal = getCount(response, rows);
         this.previewStatus = "success";
       } catch (error: any) {
-        logger.error(`Failed to preview data document ${dataDocumentId}`, error);
+        if (!ownsPreviewRequest(this.previewOwner, requestOwner)) return;
+        logger.error(`Failed to preview data document ${revision.dataDocumentId}`, error);
         this.previewRows = [];
         this.previewTotal = 0;
         this.previewStatus = "error";
@@ -420,7 +589,7 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
           || error?.message
           || "The preview request failed. Please try again.";
       } finally {
-        this.loading = false;
+        if (ownsPreviewRequest(this.previewOwner, requestOwner)) this.loading = false;
       }
     },
     async queueExport(dataDocumentId: string, options: Record<string, any> = {}) {
@@ -454,6 +623,16 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
     // supports a serviceName filter and returns each job's serviceJobParameters, so we filter the
     // export-service jobs down to the ones whose dataDocumentId parameter matches.
     async fetchScheduledExports(dataDocumentId: string) {
+      if (this.documentTargetOwnerToken && this.documentTargetDataDocumentId !== dataDocumentId) return this.scheduledExports;
+      const requestOwner: DataDocumentResourceOwner = {
+        dataDocumentId,
+        requestId: this.scheduleRequestId + 1,
+        targetGeneration: this.documentTargetGeneration
+      };
+      this.scheduleRequestId = requestOwner.requestId;
+      this.scheduleRequestOwner = requestOwner;
+      this.scheduleLoading = true;
+      this.scheduleError = undefined;
       try {
         const response = await api({
           url: API_ENDPOINTS.serviceJobs,
@@ -463,16 +642,26 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
         const jobs = response?.data?.serviceJobList || [];
         const paramValue = (job: any, name: string) =>
           (job.serviceJobParameters || []).find((param: any) => param.parameterName === name)?.parameterValue;
-        this.scheduledExports = jobs
+        const scheduledExports = jobs
           .filter((job: any) => paramValue(job, "dataDocumentId") === dataDocumentId)
           .map((job: any) => ({
             ...job,
             toEmailAddress: paramValue(job, "toEmailAddress"),
             ccAddresses: paramValue(job, "ccAddresses")
           }));
+        if (ownsResourceRequest(this.scheduleRequestOwner, requestOwner, this.getDocumentTarget())) {
+          this.scheduledExports = scheduledExports;
+        }
       } catch (error) {
-        logger.error(`Failed to fetch scheduled exports for ${dataDocumentId}`, error);
-        this.scheduledExports = [];
+        if (ownsResourceRequest(this.scheduleRequestOwner, requestOwner, this.getDocumentTarget())) {
+          logger.error(`Failed to fetch scheduled exports for ${dataDocumentId}`, error);
+          this.scheduledExports = [];
+          this.scheduleError = error;
+        }
+      } finally {
+        if (ownsResourceRequest(this.scheduleRequestOwner, requestOwner, this.getDocumentTarget())) {
+          this.scheduleLoading = false;
+        }
       }
       return this.scheduledExports;
     },
@@ -528,19 +717,45 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
     // state (Ready = SmsgSent, or Failed = SmsgProduced with failCount > 0). Bounded so it
     // never polls forever. The reactive exportHistory updates live as the status changes.
     async pollExportHistory(dataDocumentId: string, options: { attempts?: number; intervalMs?: number } = {}) {
+      // A late continuation from a route that no longer owns the store must not claim the
+      // global poll token: doing so would silently cancel the active document's valid poll.
+      if (this.documentTargetOwnerToken && this.documentTargetDataDocumentId !== dataDocumentId) {
+        return undefined;
+      }
       const attempts = options.attempts ?? 12;
       const intervalMs = options.intervalMs ?? 2500;
+      const pollRequestId = this.exportPollRequestId + 1;
+      const targetGeneration = this.documentTargetGeneration;
+      this.exportPollRequestId = pollRequestId;
+      this.exportPollDataDocumentId = dataDocumentId;
+      const ownsPoll = () => this.exportPollRequestId === pollRequestId
+        && this.exportPollDataDocumentId === dataDocumentId
+        && this.documentTargetGeneration === targetGeneration
+        && (!this.documentTargetOwnerToken || this.documentTargetDataDocumentId === dataDocumentId);
       for (let attempt = 0; attempt < attempts; attempt++) {
         await new Promise((resolve) => setTimeout(resolve, intervalMs));
+        if (!ownsPoll()) return undefined;
         await this.fetchExportHistory({ dataDocumentId });
+        if (!ownsPoll()) return undefined;
         const newest = this.exportHistory[0];
         if (newest && isExportTerminalMessage(newest)) return newest;
       }
       return this.exportHistory[0];
     },
     async fetchExportHistory(payload: Record<string, any> = {}) {
-      this.loading = true;
-      this.exportHistory = [];
+      const dataDocumentId = String(payload.dataDocumentId || "");
+      if (this.documentTargetOwnerToken && dataDocumentId && this.documentTargetDataDocumentId !== dataDocumentId) {
+        return this.exportHistory;
+      }
+      const requestOwner: DataDocumentResourceOwner = {
+        dataDocumentId,
+        requestId: this.historyRequestId + 1,
+        targetGeneration: this.documentTargetGeneration
+      };
+      this.historyRequestId = requestOwner.requestId;
+      this.historyRequestOwner = requestOwner;
+      this.historyLoading = true;
+      this.historyError = undefined;
 
       const params: Record<string, any> = {
         systemMessageTypeId: "ExportDocumentData",
@@ -578,12 +793,21 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
           });
         }
         // admin/systemMessages ignores the orderBy param, so sort newest-first client-side.
-        this.exportHistory = messages.sort((a: any, b: any) => toMillis(b.initDate) - toMillis(a.initDate));
+        const exportHistory = [...messages].sort((a: any, b: any) => toMillis(b.initDate) - toMillis(a.initDate));
+        if (ownsResourceRequest(this.historyRequestOwner, requestOwner, this.getDocumentTarget())) {
+          this.exportHistory = exportHistory;
+        }
       } catch (error) {
-        logger.error("Failed to fetch data document export history", error);
+        if (ownsResourceRequest(this.historyRequestOwner, requestOwner, this.getDocumentTarget())) {
+          logger.error("Failed to fetch data document export history", error);
+          this.historyError = error;
+        }
       } finally {
-        this.loading = false;
+        if (ownsResourceRequest(this.historyRequestOwner, requestOwner, this.getDocumentTarget())) {
+          this.historyLoading = false;
+        }
       }
+      return this.exportHistory;
     },
     async downloadExport(systemMessageId: string) {
       return api({

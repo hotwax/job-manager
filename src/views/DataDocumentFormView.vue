@@ -296,7 +296,7 @@
           </ion-buttons>
           <ion-title>{{ fieldModalTitle }}</ion-title>
           <ion-buttons slot="end">
-            <ion-button @click="utilStore.fetchEntityFields(modalCurrentEntity, true); utilStore.fetchEntityRelationships(modalCurrentEntity, true)">
+            <ion-button @click="retryModalEntityDefinition">
               <ion-icon slot="icon-only" :icon="refreshOutline" />
             </ion-button>
           </ion-buttons>
@@ -315,7 +315,14 @@
         </ion-toolbar>
       </ion-header>
       <ion-content>
-        <div v-if="utilStore.getFetchStatus.entityFields === 'pending' || utilStore.getFetchStatus.entityRelationships === 'pending'" class="ion-text-center ion-padding">
+        <ion-item v-if="utilStore.getEntityDefinitionFetchState(modalCurrentEntity).status === 'error'" color="danger">
+          <ion-label>
+            {{ translate("Failed to fetch entity metadata.") }}
+            <p>{{ utilStore.getEntityDefinitionFetchState(modalCurrentEntity).error }}</p>
+          </ion-label>
+          <ion-button slot="end" @click="retryModalEntityDefinition">{{ translate("Retry") }}</ion-button>
+        </ion-item>
+        <div v-if="utilStore.getEntityDefinitionFetchState(modalCurrentEntity).status === 'pending'" class="ion-text-center ion-padding">
           <ion-spinner name="crescent" />
           <p>{{ translate("Fetching metadata...") }}</p>
         </div>
@@ -695,7 +702,7 @@ utilStore.fetchStatuses();
 
 watch(() => graph.value?.metadata.primaryEntityName, (newEntityName) => {
   if (newEntityName) {
-    utilStore.fetchEntityFields(newEntityName);
+    void utilStore.fetchEntityDefinition(newEntityName).catch(() => undefined);
   }
 }, { immediate: true });
 
@@ -774,7 +781,17 @@ const getFieldIndex = (field: any) => graph.value?.fields.findIndex((item: any) 
   item.fieldSeqId === field.fieldSeqId || item.fieldPath === field.fieldPath
 )) ?? -1;
 
-const openFieldModal = (index: number) => {
+const retryModalEntityDefinition = async () => {
+  const entityName = modalCurrentEntity.value.trim();
+  if (!entityName) return;
+  try {
+    await utilStore.fetchEntityDefinition(entityName, { force: true });
+  } catch {
+    // The keyed error state keeps the retry action visible.
+  }
+};
+
+const openFieldModal = async (index: number) => {
   activeFieldIndex.value = index;
   fieldModalMode.value = "both";
   fieldQueryString.value = "";
@@ -782,14 +799,17 @@ const openFieldModal = (index: number) => {
   const targetField = graph.value?.fields[index];
   modalEntityPath.value = targetField ? toModalPath(getEffectiveRelationshipSegments(targetField.fieldPath)) : [];
   modalBaseDepth.value = modalEntityPath.value.length;
-  if (modalCurrentEntity.value) {
-    utilStore.fetchEntityFields(modalCurrentEntity.value);
-    utilStore.fetchEntityRelationships(modalCurrentEntity.value);
-  }
   fieldModal.value.$el.present();
+  if (modalCurrentEntity.value) {
+    try {
+      await utilStore.fetchEntityDefinition(modalCurrentEntity.value);
+    } catch {
+      return;
+    }
+  }
 };
 
-const openNewFieldModal = (group: any, mode: "field" | "relation" = "field") => {
+const openNewFieldModal = async (group: any, mode: "field" | "relation" = "field") => {
   // Always defer creation until the user actually picks a field.
   // No placeholder is added here — avoids blank ghost entries on cancel.
   activeFieldIndex.value = -1;
@@ -799,19 +819,25 @@ const openNewFieldModal = (group: any, mode: "field" | "relation" = "field") => 
   fieldQueryString.value = "";
   fieldPickerNavigation.resetNavigation();
   modalBaseDepth.value = modalEntityPath.value.length;
-  if (modalCurrentEntity.value) {
-    utilStore.fetchEntityFields(modalCurrentEntity.value);
-    utilStore.fetchEntityRelationships(modalCurrentEntity.value);
-  }
   fieldModal.value.$el.present();
+  if (modalCurrentEntity.value) {
+    try {
+      await utilStore.fetchEntityDefinition(modalCurrentEntity.value);
+    } catch {
+      return;
+    }
+  }
 };
 
-const drillDown = (relation: any) => {
+const drillDown = async (relation: any) => {
+  try {
+    await utilStore.fetchEntityDefinition(relation.relatedEntityName);
+  } catch {
+    return;
+  }
   modalEntityPath.value.push(relation);
   fieldQueryString.value = "";
   fieldPickerNavigation.resetNavigation();
-  utilStore.fetchEntityFields(relation.relatedEntityName);
-  utilStore.fetchEntityRelationships(relation.relatedEntityName);
 };
 
 const navigateUp = () => {

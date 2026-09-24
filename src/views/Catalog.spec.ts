@@ -27,20 +27,10 @@ vi.mock("@/router", () => ({
   }
 }));
 
-// Mock translation and emitter
-vi.mock("@common", () => ({
-  api: vi.fn(),
-  translate: (key: string) => key,
-  emitter: {
-    on: vi.fn(),
-    off: vi.fn()
-  },
-  cookieHelper: () => ({
-    get: vi.fn().mockReturnValue(""),
-    set: vi.fn(),
-    remove: vi.fn()
-  })
-}));
+vi.mock("@common", async () => {
+  const { createCommonMock } = await import("@/test/commonMock");
+  return createCommonMock();
+});
 
 describe("Catalog.vue status filtering", () => {
   beforeEach(() => {

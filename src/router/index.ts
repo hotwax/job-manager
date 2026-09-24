@@ -6,7 +6,6 @@ import FileHistory from "@/views/FileHistory.vue"
 import FileHistoryDetail from "@/views/FileHistoryDetail.vue"
 import { showToast } from '@/utils'
 import { translate } from '@common'
-import { alertController } from '@ionic/vue'
 import 'vue-router'
 import { useAuth } from '@common/composables/useAuth';
 import ImportDetail from '@/views/ImportDetail.vue';
@@ -21,7 +20,7 @@ import SystemMessageRemotes from '@/views/SystemMessageRemotes.vue';
 import SystemMessageRemoteDetail from '@/views/SystemMessageRemoteDetail.vue';
 import Login from '@common/components/Login.vue';
 import { useUserStore } from '@/store/user';
-import { useDataDocumentGraphStore } from '@/store/dataDocumentGraph';
+import { guardUnsavedDataDocumentGraph } from '@/router/dataDocumentGraphLeaveGuard';
 import DataDocumentCatalog from '@/views/DataDocumentCatalog.vue';
 import DataDocumentGraphBuilder from '@/views/DataDocumentGraphBuilder.vue';
 import DataDocumentExportHistory from '@/views/DataDocumentExportHistory.vue';
@@ -214,45 +213,10 @@ const router = createRouter({
 })
 
 
-const DATA_DOCUMENT_BUILDER_ROUTES = ["DataDocumentGraphBuilder"];
-
 // Prompt to save or discard unsaved data-document builder changes before leaving.
 // Lives here (not as an in-component onBeforeRouteLeave) because Ionic's IonRouterOutlet
 // caches pages, so per-component leave guards do not fire reliably on menu navigation.
-router.beforeEach(async (to, from) => {
-  const leavingBuilder = DATA_DOCUMENT_BUILDER_ROUTES.includes(from.name as string);
-  const enteringSameDoc = DATA_DOCUMENT_BUILDER_ROUTES.includes(to.name as string) && to.params.id === from.params.id;
-  if (!leavingBuilder || enteringSameDoc) return true;
-
-  const graphStore = useDataDocumentGraphStore();
-  if (!graphStore.isDirty) return true;
-
-  const alert = await alertController.create({
-    header: translate("Unsaved changes"),
-    message: translate("You have unsaved changes to this data document. Save them before leaving?"),
-    buttons: [
-      { text: translate("Cancel"), role: "cancel" },
-      { text: translate("Discard"), role: "discard" },
-      { text: translate("Save"), role: "save" }
-    ]
-  });
-  await alert.present();
-  const { role } = await alert.onDidDismiss();
-  if (role === "save") {
-    try {
-      await graphStore.saveGraph();
-      return true;
-    } catch (error) {
-      showToast(translate("Failed to save data document graph."));
-      return false;
-    }
-  }
-  if (role === "discard") {
-    graphStore.discardDraft();
-    return true;
-  }
-  return false;
-});
+router.beforeEach(guardUnsavedDataDocumentGraph);
 
 router.beforeEach((to, from) => {
   // Enforce the canonical version URL on every navigation (no-op until the version is resolved, or if
