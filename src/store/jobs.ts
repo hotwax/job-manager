@@ -1,60 +1,40 @@
 import logger from "@/logger";
-import { getCronString, getTimeInMillis } from "@/utils";
+import { getCronString } from "@/utils";
 import { api } from "@common";
 import { defineStore } from "pinia";
 import { useUserStore } from "./user";
 
-const getRunTime = (run: any) => getTimeInMillis(run.startTime || run.lastUpdatedStamp || run.endTime);
-
-const getRunStatus = (run: any) => {
-  if (run.hasError === "Y") return "FAILED";
-  if (run.startTime && !run.endTime) return "RUNNING";
-  if (run.startTime && run.endTime) return "SUCCESSFUL";
-  return "TERMINATED";
-};
-
-const getRunHistoryStats = (runs: Array<any>) => runs.reduce((stats: any, run: any) => {
-  stats.total += 1;
-  const statusKey = (run.runStatus || "").toLowerCase();
-  if (statusKey && stats[statusKey] !== undefined) {
-    stats[statusKey] += 1;
-  }
-  return stats;
-}, {
+const JOB_RUN_STATUSES = ["SUCCESSFUL", "FAILED", "RUNNING"];
+const EMPTY_JOB_RUN_HISTORY_STATS = {
   total: 0,
   successful: 0,
   failed: 0,
-  running: 0,
-  terminated: 0
-});
-
-const parseParameterPayload = (parameters: any) => {
-  if (!parameters) return parameters;
-  if (typeof parameters !== "string") return parameters;
-
-  try {
-    return JSON.parse(parameters);
-  } catch (err) {
-    return parameters;
-  }
+  running: 0
 };
 
-const getProductStoreIdFromParameters = (parameters: any) => {
-  const parsedParameters = parseParameterPayload(parameters);
+// Build the query for search#ServiceJobRuns. Every filter the page offers is a parameter of that service, so the
+// search always runs on the server and only the requested page is transferred.
+const buildJobRunSearchParams = (filters: Record<string, any> = {}) => {
+  // The ordering is left to the service, which pairs -startTime with the jobRunId tiebreak that keeps paging stable
+  const params: Record<string, any> = {
+    pageIndex: Number(filters.pageIndex ?? 0),
+    pageSize: Number(filters.pageSize ?? 25)
+  };
 
-  if (Array.isArray(parsedParameters)) {
-    const productStoreParameter = parsedParameters.find((parameter: any) =>
-      parameter?.parameterName === "productStoreId" || parameter?.productStoreId
-    );
+  // Run ids are rendered as #100, so a query copied from the card should still match the id
+  const keyword = String(filters.queryString || "").trim().replace(/^#/, "");
+  if(keyword) params.keyword = keyword;
+  if(filters.jobName) params.jobName = filters.jobName;
+  // The service matches the username exactly, so a partial one finds nothing
+  if(filters.username) params.username = filters.username;
+  if(filters.status) params.status = filters.status;
 
-    return productStoreParameter?.parameterValue || productStoreParameter?.productStoreId || "";
-  }
+  // The service resolves the store of every job, however the job names it, and leaves out the ones scheduled for
+  // another store. Jobs not specific to any store are kept.
+  const productStoreId = useUserStore().getCurrentProductStore?.productStoreId;
+  if(productStoreId) params.productStoreId = productStoreId;
 
-  if (parsedParameters && typeof parsedParameters === "object") {
-    return parsedParameters.productStoreId || "";
-  }
-
-  return "";
+  return params;
 };
 
 export const useJobStore = defineStore("job", {
@@ -64,16 +44,10 @@ export const useJobStore = defineStore("job", {
     categoryMembers: [] as Array<any>,
     categoryRollups: [] as Array<any>,
     products: {} as any,
+    areServiceProductsFetched: false,
     jobRunHistory: [] as Array<any>,
-    allJobRunHistory: [] as Array<any>,
     jobRunHistoryTotal: 0,
-    jobRunHistoryStats: {
-      total: 0,
-      successful: 0,
-      failed: 0,
-      running: 0,
-      terminated: 0
-    },
+    jobRunHistoryStats: { ...EMPTY_JOB_RUN_HISTORY_STATS },
     loading: false
   }),
   getters: {
@@ -318,133 +292,93 @@ export const useJobStore = defineStore("job", {
       }
       return Array.isArray(jobRuns) ? jobRuns : []
     },
-    async fetchJobRunHistory(payload: Record<string, any> = {}) {
-      const isRefetch = payload.isRefetch ?? true;
-      const pageSize = Number(payload.pageSize ?? 25);
-      const pageIndex = Number(payload.pageIndex ?? 0);
+    // Fetch every SERVICE product in one paged sweep instead of a lookup per instanceOfProductId, so a page of runs
+    // needs no extra product calls at all.
+    async fetchServiceProducts() {
+      if(this.areServiceProductsFetched) return;
+      try {
+        let total = 0
+        let pageIndex = 0
+        do {
+          const resp = await api({
+            url: "oms/products",
+            method: "GET",
+            params: {
+              productTypeId: "SERVICE",
+              pageSize: 250,
+              pageIndex
+            }
+          })
 
-      if (!isRefetch && this.allJobRunHistory.length > 0) {
-        const start = pageIndex * pageSize;
-        this.jobRunHistory = this.allJobRunHistory.slice(start, start + pageSize);
-        return;
+          const respProducts = resp.data || []
+          respProducts.forEach((product: any) => {
+            this.products[product.productId] = product
+          })
+
+          total = respProducts.length
+          pageIndex++
+        } while(total == 250)
+
+        this.areServiceProductsFetched = true
+      } catch(err) {
+        logger.error("Failed to fetch service products", err)
       }
-
+    },
+    async fetchJobRunHistory(payload: Record<string, any> = {}) {
       this.loading = true;
       try {
-        if (!this.jobs.length) await this.fetchJobs();
+        await this.fetchServiceProducts();
 
-        const runsPerJob = Number(payload.runsPerJob ?? 25);
-        const queryString = (payload.queryString || "").trim().toLowerCase();
-        const normalizedQueryString = queryString.replace(/^#/, "");
-        const selectedJobName = payload.jobName || "";
-        const selectedUserId = payload.userId || "";
-        const selectedStatus = payload.status || "";
-        const hasDataLogs = payload.hasDataLogs || "";
-        const hasMessages = payload.hasMessages || "";
-        const hasErrors = payload.hasError || "";
-        const selectedProductStoreId = useUserStore().getCurrentProductStore?.productStoreId || "";
+        const resp = await api({
+          url: "admin/serviceJobs/runs/search",
+          method: "GET",
+          params: buildJobRunSearchParams(payload)
+        })
 
-        let jobsToLoad = selectedJobName
-          ? this.jobs.filter((job: any) => job.jobName === selectedJobName)
-          : this.jobs;
-
-        const productIds = [...new Set(jobsToLoad.map((job: any) => job.instanceOfProductId).filter(Boolean))] as string[];
-        await Promise.all(productIds
-          .filter((productId: string) => !this.products[productId])
-          .map((productId: string) => this.fetchProductDetail(productId))
-        );
-
-        const runResponses = await Promise.allSettled(
-          jobsToLoad.map(async (job: any) => {
-            const params = { pageSize: runsPerJob, pageIndex: 0 } as any;
-            if (hasErrors === "Y") params.hasError = "Y";
-            const runs = await this.fetchJobRuns(job.jobName, params);
-            return runs.map((run: any) => ({
-              ...run,
-              jobName: job.jobName,
-              serviceName: job.serviceName,
-              jobDescription: job.description,
-              systemJobEnumId: job.systemJobEnumId,
-              instanceOfProductId: job.instanceOfProductId,
-              jobProductStoreId: getProductStoreIdFromParameters(job.serviceJobParameters),
-              productName: this.products[job.instanceOfProductId]?.productName,
-              paused: job.paused,
-              cronExpression: job.cronExpression,
-              runStatus: getRunStatus(run)
-            }));
-          })
-        );
-
-        let runs = runResponses.flatMap((result: any) => result.status === "fulfilled" ? result.value : []);
-
-        if (selectedProductStoreId) {
-          runs = runs.filter((run: any) => {
-            const runProductStoreId = getProductStoreIdFromParameters(run.parameters) || run.jobProductStoreId;
-            return !runProductStoreId || runProductStoreId === selectedProductStoreId;
-          });
-        }
-
-        if (queryString) {
-          runs = runs.filter((run: any) => {
-            const searchableRunText = [
-              run.jobRunId,
-              run.jobName,
-              run.serviceName,
-              run.userId,
-              run.messages,
-              run.results,
-              run.errors
-            ].filter(Boolean).join(" ").toLowerCase();
-            return searchableRunText.includes(normalizedQueryString);
-          });
-        }
-
-        if (selectedStatus) {
-          runs = runs.filter((run: any) => run.runStatus === selectedStatus);
-        }
-
-        if (selectedUserId) {
-          runs = runs.filter((run: any) => String(run.userId || "").toLowerCase().includes(String(selectedUserId).toLowerCase()));
-        }
-
-        if (hasErrors === "Y") {
-          runs = runs.filter((run: any) => run.hasError === "Y");
-        }
-
-        if (hasErrors === "N") {
-          runs = runs.filter((run: any) => run.hasError !== "Y");
-        }
-
-        if (hasDataLogs) {
-          runs = runs.filter((run: any) => hasDataLogs === "Y" ? !!run.logs?.length : !run.logs?.length);
-        }
-
-        if (hasMessages) {
-          runs = runs.filter((run: any) => hasMessages === "Y" ? !!run.messages : !run.messages);
-        }
-
-        runs = runs.sort((first: any, second: any) => getRunTime(second) - getRunTime(first));
-
-        this.allJobRunHistory = runs;
-        this.jobRunHistoryTotal = runs.length;
-        this.jobRunHistoryStats = getRunHistoryStats(runs);
-
-        const start = pageIndex * pageSize;
-        this.jobRunHistory = runs.slice(start, start + pageSize);
+        this.jobRunHistory = (resp.data?.jobRunList || []).map((run: any) => ({
+          ...run,
+          // The service derives the status from hasError, startTime and endTime and returns it as status
+          runStatus: run.status,
+          productName: this.products[run.instanceOfProductId]?.productName
+        }))
+        this.jobRunHistoryTotal = resp.data?.jobRunCount || 0
+        // Total runs is the count of the same search that fetched the page, no separate call needed for it
+        this.jobRunHistoryStats.total = this.jobRunHistoryTotal
       } catch(err) {
         logger.error("Failed to fetch job run history", err);
-        this.allJobRunHistory = [];
         this.jobRunHistory = [];
         this.jobRunHistoryTotal = 0;
-        this.jobRunHistoryStats = {
-          total: 0,
-          successful: 0,
-          failed: 0,
-          running: 0,
-          terminated: 0
-        };
+        this.jobRunHistoryStats = { ...EMPTY_JOB_RUN_HISTORY_STATS };
       } finally {
         this.loading = false;
+      }
+    },
+    // Each status count is the count of the same search narrowed to that status, asked for with pageSize 1 so that
+    // the server returns the count without the rows.
+    async fetchJobRunHistoryStats(payload: Record<string, any> = {}) {
+      const selectedStatus = payload.status || "";
+      try {
+        const counts = await Promise.all(JOB_RUN_STATUSES.map(async (status: string) => {
+          // A status filter is already applied, so every other status contributes nothing to the current result set
+          if(selectedStatus && selectedStatus !== status) return 0;
+
+          const resp = await api({
+            url: "admin/serviceJobs/runs/search",
+            method: "GET",
+            params: buildJobRunSearchParams({ ...payload, status, pageIndex: 0, pageSize: 1 })
+          })
+          return resp.data?.jobRunCount || 0
+        }))
+
+        this.jobRunHistoryStats = {
+          ...this.jobRunHistoryStats,
+          successful: counts[0],
+          failed: counts[1],
+          running: counts[2]
+        }
+      } catch(err) {
+        logger.error("Failed to fetch job run history stats", err);
+        this.jobRunHistoryStats = { ...this.jobRunHistoryStats, successful: 0, failed: 0, running: 0 };
       }
     },
     async cloneMaargJob(payload: any) {
