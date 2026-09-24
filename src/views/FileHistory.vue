@@ -579,8 +579,11 @@ watch(pageIndex, () => {
 onIonViewWillEnter(async () => {
   const currentQuery = router.currentRoute.value.query;
   if (currentQuery?.statusId) {
-    await mdmStore.updateAppliedFilters("statusId", (currentQuery.statusId as string).split(","));
+    const statuses = (currentQuery.statusId as string).split(",");
+    selectedStatus.value = statuses;
+    await mdmStore.updateAppliedFilters("statusId", statuses);
   } else {
+    selectedStatus.value = [];
     await mdmStore.updateAppliedFilters("statusId", []);
   }
   selectedPriority.value = currentQuery?.priority ? [(currentQuery.priority as string)] : [];

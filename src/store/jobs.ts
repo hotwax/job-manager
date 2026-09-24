@@ -88,8 +88,8 @@ export const useJobStore = defineStore("job", {
     isLoading: (state: any) => state.loading
   },
   actions: {
-    async fetchJobs() {
-      this.loading = true
+    async fetchJobs(silent = false) {
+      if (!silent) this.loading = true
       try {
         let total = 0
         let pageIndex = 0
@@ -137,7 +137,7 @@ export const useJobStore = defineStore("job", {
       } catch(err) {
         logger.error("Failed to fetch jobs", err)
       } finally {
-        this.loading = false
+        if (!silent) this.loading = false
 
         this.jobs = Object.values(this.jobs.reduce((jobs: any, job: any) => {
           const current = jobs[job.instanceOfProductId];
@@ -466,6 +466,41 @@ export const useJobStore = defineStore("job", {
         url: `admin/serviceJobs/${jobName}/runNow`,
         method: "POST"
       });
+    },
+    /**
+     * Surgically upsert a single ServiceJob from a live WebSocket notification.
+     * Merges the incoming payload into the existing jobs array so the Dashboard
+     * counters (scheduled, paused, no-schedule, draft) re-compute instantly
+     * without requiring a full re-fetch of all jobs.
+     */
+    upsertJob(doc: Record<string, any>) {
+      const jobName = doc.jobName;
+      if (!jobName) return;
+
+      const idx = this.jobs.findIndex((job: any) => job.jobName === jobName);
+      if (idx >= 0) {
+        // Merge the live payload — preserve the computed cronString field
+        const existing = this.jobs[idx];
+        const updated = {
+          ...existing,
+          ...doc,
+          // Re-compute cronString if cronExpression changed
+          cronString: (doc.cronExpression ?? existing.cronExpression)
+            ? getCronString(doc.cronExpression ?? existing.cronExpression)
+            : ""
+        };
+        this.jobs.splice(idx, 1, updated);
+      } else {
+        // It's a brand new clone! The backend WS payload doesn't contain parameters,
+        // but we know that if it was just cloned, it is being configured by the UI
+        // and is no longer a "draft" job.
+        const newJob = {
+          ...doc,
+          isDraftJob: false,
+          cronString: doc.cronExpression ? getCronString(doc.cronExpression) : ""
+        };
+        this.jobs.push(newJob);
+      }
     },
     // async updateJob(job: any) {
     //   if(!job.cronExpression) {
