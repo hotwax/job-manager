@@ -21,7 +21,7 @@
 
     <ion-content>
       <main v-if="graph" class="graph-builder">
-        <DataDocumentMetadata @open-entity-modal="openEntityModal" />
+        <DataDocumentMetadata @open-entity-modal="openEntityModal" @save="saveGraph" />
 
         <section class="graph-workspace">
           <section class="graph-canvas-panel">
