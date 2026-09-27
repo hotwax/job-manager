@@ -21,37 +21,7 @@
 
     <ion-content>
       <main v-if="graph" class="graph-builder">
-        <ion-card>
-          <ion-list class="graph-metadata-list">
-            <ion-item detail button @click="openEntityModal">
-              <ion-label>
-                <p>{{ translate("Primary Entity") }}</p>
-                {{ graph.metadata.primaryEntityName || translate("Select Entity") }}
-              </ion-label>
-            </ion-item>
-            <ion-item>
-              <ion-input
-                :value="graph.metadata.documentName"
-                :label="translate('Name')"
-                label-placement="stacked"
-                @ionInput="updateMetadata('documentName', $event.detail.value || '')"
-              />
-            </ion-item>
-            <ion-item>
-              <ion-input
-                :value="graph.metadata.documentTitle"
-                :label="translate('Title')"
-                label-placement="stacked"
-                @ionInput="updateMetadata('documentTitle', $event.detail.value || '')"
-              />
-            </ion-item>
-            <ion-buttons>
-              <ion-button fill="clear" slot="end" @click="openAdvancedMetadataModal" :aria-label="translate('Advanced Metadata')">
-                <ion-icon slot="icon-only" :icon="optionsOutline" />
-              </ion-button>
-            </ion-buttons>
-          </ion-list>
-        </ion-card>
+        <DataDocumentMetadata @open-entity-modal="openEntityModal" />
 
         <section class="graph-workspace">
           <section class="graph-canvas-panel">
@@ -257,7 +227,7 @@
           <ion-segment scrollable :value="bottomPanel" @ionChange="setSegment(String($event.detail.value || 'issues'))">
             <ion-segment-button value="issues" layout="icon-start">
               <ion-icon :icon="warningOutline" />
-              <ion-label>{{ translate("Issues") }} ({{ graph.validationIssues.length }})</ion-label>
+              <ion-label>{{ translate("Issues") }} ({{ panelIssues.length }})</ion-label>
             </ion-segment-button>
             <ion-segment-button value="fields" layout="icon-start">
               <ion-icon :icon="listOutline" />
@@ -282,13 +252,23 @@
           </ion-segment>
 
           <ion-list v-if="bottomPanel === 'issues'">
-            <ion-item v-for="issue in graph.validationIssues" :key="issue.code + issue.targetId">
+            <ion-item v-for="issue in panelIssues" :key="issue.code + issue.targetId">
               <ion-label>
                 {{ issue.severity }}
                 <p>{{ issue.message }}</p>
               </ion-label>
+              <ion-button
+                v-if="issue.code === 'unsaved_changes'"
+                slot="end"
+                fill="clear"
+                :disabled="graphHasErrors"
+                @click="saveGraph"
+              >
+                <ion-icon slot="start" :icon="saveOutline" />
+                {{ translate("Save") }}
+              </ion-button>
             </ion-item>
-            <ion-item v-if="!graph.validationIssues.length">
+            <ion-item v-if="!panelIssues.length">
               <ion-label>{{ translate("No validation issues.") }}</ion-label>
             </ion-item>
           </ion-list>
@@ -813,48 +793,6 @@
           </ion-toolbar>
         </ion-footer>
       </ion-modal>
-
-      <ion-modal ref="advancedMetadataModal">
-        <ion-header>
-          <ion-toolbar>
-            <ion-buttons slot="start">
-              <ion-button @click="closeAdvancedMetadataModal">
-                <ion-icon slot="icon-only" :icon="closeOutline" />
-              </ion-button>
-            </ion-buttons>
-            <ion-title>{{ translate("Advanced Metadata") }}</ion-title>
-          </ion-toolbar>
-        </ion-header>
-        <ion-content>
-          <ion-list>
-            <ion-item>
-              <ion-input
-                :value="graph.metadata.dataDocumentId"
-                :readonly="!isNew"
-                :label="translate('Data Document ID')"
-                label-placement="stacked"
-                @ionInput="updateMetadata('dataDocumentId', $event.detail.value || '')"
-              />
-            </ion-item>
-            <ion-item>
-              <ion-input
-                :value="graph.metadata.indexName"
-                :label="translate('Index Name')"
-                label-placement="stacked"
-                @ionInput="updateMetadata('indexName', $event.detail.value || '')"
-              />
-            </ion-item>
-            <ion-item>
-              <ion-input
-                :value="graph.metadata.manualDataServiceName"
-                :label="translate('Manual Data Service')"
-                label-placement="stacked"
-                @ionInput="updateMetadata('manualDataServiceName', $event.detail.value || '')"
-              />
-            </ion-item>
-          </ion-list>
-        </ion-content>
-      </ion-modal>
     </ion-content>
   </ion-page>
 </template>
@@ -898,7 +836,7 @@ import {
   modalController,
   onIonViewWillEnter
 } from "@ionic/vue";
-import { addOutline, alertCircleOutline, arrowBackOutline, checkmarkCircleOutline, closeOutline, cloudDownloadOutline, cloudUploadOutline, filterOutline, gitBranchOutline, informationCircleOutline, listOutline, optionsOutline, pauseOutline, playOutline, saveOutline, statsChartOutline, timeOutline, warningOutline } from "ionicons/icons";
+import { addOutline, alertCircleOutline, arrowBackOutline, checkmarkCircleOutline, closeOutline, cloudDownloadOutline, cloudUploadOutline, filterOutline, gitBranchOutline, informationCircleOutline, listOutline, pauseOutline, playOutline, saveOutline, statsChartOutline, timeOutline, warningOutline } from "ionicons/icons";
 import { computed, ref, watch } from "vue";
 import router from "../router"
 
@@ -906,6 +844,7 @@ import { commonUtil, translate } from "@common";
 import { useDataDocumentGraphStore } from "@/store/dataDocumentGraph";
 import { useDataDocumentStore } from "@/store/dataDocuments";
 import DataDocumentExportList from "@/components/DataDocumentExportList.vue";
+import DataDocumentMetadata from "@/components/DataDocumentMetadata.vue";
 import DataDocumentPreviewTable from "@/components/DataDocumentPreviewTable.vue";
 import ScheduleEmailExportModal from "@/components/ScheduleEmailExportModal.vue";
 import DataDocumentFormView from "@/views/DataDocumentFormView.vue";
@@ -944,7 +883,6 @@ const fieldSearchbar = ref();
 const fieldQueryString = ref("");
 const relatedFieldModal = ref();
 const relatedFieldSearchbar = ref();
-const advancedMetadataModal = ref();
 const conditionModal = ref();
 const relatedFieldQueryString = ref("");
 const relatedFieldStep = ref<"relationship" | "confirm" | "fields">("relationship");
@@ -993,6 +931,24 @@ const relatedJobs = computed(() => dataDocumentStore.getRelatedJobs);
 const exportHistory = computed(() => dataDocumentStore.getExportHistory);
 const scheduledExports = computed(() => dataDocumentStore.getScheduledExports);
 const graphHasErrors = computed(() => graph.value?.validationIssues.some((issue) => issue.severity === "error"));
+// An unsaved draft is session state (store.isDirty), not a property of the persisted graph, so
+// it is prepended here rather than taught to projectDataDocumentGraph. It stays a warning: a
+// dirty draft must never block Save the way an "error" issue does.
+const panelIssues = computed(() => {
+  const issues = [...(graph.value?.validationIssues || [])];
+
+  if(graphStore.isDirty) {
+    issues.unshift({
+      code: "unsaved_changes",
+      severity: "warning",
+      message: translate("This data document has unsaved changes. Save them to apply."),
+      targetKind: "document",
+      targetId: graph.value?.dataDocumentId || "new"
+    });
+  }
+
+  return issues;
+});
 const canvasSize = computed(() => ({
   width: Math.max(980, 360 + (graph.value?.nodes.length || 1) * 220),
   height: Math.max(520, 180 + (graph.value?.nodes.length || 1) * 80)
@@ -1433,14 +1389,6 @@ const closeRelatedFieldModal = () => {
   relatedFieldModal.value.$el.dismiss();
 };
 
-const openAdvancedMetadataModal = () => {
-  advancedMetadataModal.value.$el.present();
-};
-
-const closeAdvancedMetadataModal = () => {
-  advancedMetadataModal.value.$el.dismiss();
-};
-
 const updateSelectedField = (patch: Record<string, any>) => {
   if (!selectedField.value) return;
   graphStore.updateField(selectedField.value.fieldSeqId, selectedField.value.fieldPath, patch);
@@ -1638,11 +1586,6 @@ onIonViewWillEnter(async () => {
   max-width: 110px;
   margin-top: var(--spacer-xs);
   margin-bottom: var(--spacer-xs);
-}
-
-.graph-metadata-list {
-  display: grid;
-  grid-template-columns: 1fr auto auto min-content;
 }
 
 .graph-workspace {

@@ -1,38 +1,6 @@
 <template>
   <div v-if="graph" class="dd-form-view">
     <main>
-      <ion-card v-if="!embedded">
-        <ion-list class="graph-metadata-list">
-          <ion-item detail button @click="openEntityModal">
-            <ion-label>
-              {{ translate("Primary Entity") }}
-              <p>{{ graph.metadata.primaryEntityName || translate("Select Entity") }}</p>
-            </ion-label>
-          </ion-item>
-          <ion-item>
-            <ion-input
-              :value="graph.metadata.documentName"
-              :label="translate('Name')"
-              label-placement="stacked"
-              @ionInput="updateMetadata('documentName', $event.detail.value || '')"
-            />
-          </ion-item>
-          <ion-item>
-            <ion-input
-              :value="graph.metadata.documentTitle"
-              :label="translate('Title')"
-              label-placement="stacked"
-              @ionInput="updateMetadata('documentTitle', $event.detail.value || '')"
-            />
-          </ion-item>
-          <ion-buttons>
-            <ion-button fill="clear" @click="openAdvancedMetadataModal" :aria-label="translate('Advanced Metadata')">
-              <ion-icon slot="icon-only" :icon="optionsOutline" />
-            </ion-button>
-          </ion-buttons>
-        </ion-list>
-      </ion-card>
-
       <ion-card v-for="group in fieldGroups" :key="group.entityPath">
         <ion-card-header>
           <ion-card-title>{{ group.entityLabel }}</ion-card-title>
@@ -241,48 +209,6 @@
       </ion-content>
     </ion-modal>
 
-    <ion-modal ref="advancedMetadataModal">
-      <ion-header>
-        <ion-toolbar>
-          <ion-buttons slot="start">
-            <ion-button @click="closeAdvancedMetadataModal">
-              <ion-icon slot="icon-only" :icon="closeOutline" />
-            </ion-button>
-          </ion-buttons>
-          <ion-title>{{ translate("Advanced Metadata") }}</ion-title>
-        </ion-toolbar>
-      </ion-header>
-      <ion-content>
-        <ion-list>
-          <ion-item>
-            <ion-input
-              :value="graph.metadata.dataDocumentId"
-              :readonly="!isNew"
-              :label="translate('Data Document ID')"
-              label-placement="stacked"
-              @ionInput="updateMetadata('dataDocumentId', $event.detail.value || '')"
-            />
-          </ion-item>
-          <ion-item>
-            <ion-input
-              :value="graph.metadata.indexName"
-              :label="translate('Index Name')"
-              label-placement="stacked"
-              @ionInput="updateMetadata('indexName', $event.detail.value || '')"
-            />
-          </ion-item>
-          <ion-item>
-            <ion-input
-              :value="graph.metadata.manualDataServiceName"
-              :label="translate('Manual Data Service')"
-              label-placement="stacked"
-              @ionInput="updateMetadata('manualDataServiceName', $event.detail.value || '')"
-            />
-          </ion-item>
-        </ion-list>
-      </ion-content>
-    </ion-modal>
-
     <ion-modal ref="fieldModal">
       <ion-header>
         <ion-toolbar>
@@ -406,9 +332,8 @@ import {
   IonTitle,
   IonToolbar
 } from "@ionic/vue";
-import { addOutline, arrowBackOutline, chevronForwardOutline, closeOutline, eyeOffOutline, eyeOutline, gitBranchOutline, optionsOutline, refreshOutline, trashOutline } from "ionicons/icons";
+import { addOutline, arrowBackOutline, chevronForwardOutline, closeOutline, eyeOffOutline, eyeOutline, gitBranchOutline, refreshOutline, trashOutline } from "ionicons/icons";
 import { computed, ref, watch } from "vue";
-import router from "@/router";
 
 import { translate } from "@common";
 import { useDataDocumentGraphStore } from "@/store/dataDocumentGraph";
@@ -420,9 +345,6 @@ import type { EntityOption } from "@/utils/entityOptions";
 import { useKeyboardListNavigation } from "@/utils/keyboardListNavigation";
 
 defineProps<{ embedded?: boolean }>();
-// id === "new" drives create mode (mirrors the graph page); unlocks the dataDocumentId field.
-const isNew = computed(() => router.currentRoute.value.params.id === "new");
-
 const operators = [
   { value: "equals", label: "Equals" },
   { value: "not-equals", label: "Not equals" },
@@ -446,7 +368,6 @@ const graph = computed(() => graphStore.getGraph);
 const entityModal = ref();
 const entitySearchbar = ref();
 const entityQueryString = ref("");
-const advancedMetadataModal = ref();
 
 const fieldModal = ref();
 const fieldSearchbar = ref();
@@ -757,19 +678,6 @@ const closeEntityModal = () => {
   entityModal.value.$el.dismiss();
 };
 
-const openEntityModal = () => {
-  entityPickerNavigation.resetNavigation();
-  entityModal.value.$el.present();
-};
-
-const openAdvancedMetadataModal = () => {
-  advancedMetadataModal.value.$el.present();
-};
-
-const closeAdvancedMetadataModal = () => {
-  advancedMetadataModal.value.$el.dismiss();
-};
-
 const getFieldIndex = (field: any) => graph.value?.fields.findIndex((item: any) => (
   item.fieldSeqId === field.fieldSeqId || item.fieldPath === field.fieldPath
 )) ?? -1;
@@ -850,11 +758,6 @@ const closeFieldModal = () => {
 .dd-form-view > main {
   max-width: none;
   padding-inline: 0;
-}
-
-.graph-metadata-list {
-  display: grid;
-  grid-template-columns: 1fr auto auto min-content;
 }
 
 ion-card-header {
