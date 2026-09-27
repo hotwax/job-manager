@@ -1395,12 +1395,39 @@ const saveGraph = async () => {
     if (isNew.value && graph.value?.dataDocumentId) {
       router.replace(`/data-documents/${graph.value.dataDocumentId}/graph?segment=${bottomPanel.value}`);
     }
+
+    return true;
   } catch (error) {
     showToast(translate("Failed to save data document graph."));
+
+    return false;
   }
 };
 
+// runPreview POSTs only the dataDocumentId, so the server previews the saved definition.
+// With a dirty graph that quietly returns rows for the old one, which reads as the preview
+// ignoring the edit rather than as previewing something else.
+const confirmPreviewWithUnsavedChanges = async () => {
+  const alert = await alertController.create({
+    header: translate("Unsaved changes"),
+    message: translate("The preview runs against the saved data document, so your unsaved changes will not show up in the results."),
+    buttons: [
+      { text: translate("Cancel"), role: "cancel" },
+      { text: translate("Preview anyway"), role: "preview" },
+      { text: translate("Save"), role: "save" }
+    ]
+  });
+  await alert.present();
+  const { role } = await alert.onDidDismiss();
+
+  if(role === "save") { return saveGraph(); }
+
+  return role === "preview";
+};
+
 const runPreview = async () => {
+  if(graphStore.isDirty && !(await confirmPreviewWithUnsavedChanges())) { return; }
+
   await dataDocumentStore.runPreview(graph.value?.dataDocumentId as string, buildQuery());
 };
 
