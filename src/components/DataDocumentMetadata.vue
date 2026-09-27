@@ -105,17 +105,13 @@
           @ionInput="updateMetadata('manualDataServiceName', $event.detail.value || '')"
         />
       </ion-list>
+
+      <ion-fab slot="fixed" vertical="bottom" horizontal="end">
+        <ion-fab-button :disabled="hasErrors" :aria-label="translate('Save')" @click="saveFromModal">
+          <ion-icon :icon="saveOutline" />
+        </ion-fab-button>
+      </ion-fab>
     </ion-content>
-    <ion-footer>
-      <ion-toolbar>
-        <ion-buttons slot="end">
-          <ion-button :strong="true" :disabled="hasErrors" @click="saveFromModal">
-            <ion-icon slot="start" :icon="saveOutline" />
-            {{ translate("Save") }}
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-footer>
   </ion-modal>
 </template>
 
@@ -126,7 +122,8 @@ import {
   IonButtons,
   IonCard,
   IonContent,
-  IonFooter,
+  IonFab,
+  IonFabButton,
   IonHeader,
   IonIcon,
   IonInput,
@@ -199,6 +196,11 @@ const saveFromModal = () => {
 .advanced-metadata-fields > ion-input,
 .advanced-metadata-fields > ion-item {
   margin-block-end: var(--spacer-sm);
+}
+
+/* The Save FAB is fixed over the content, so the last field needs room to scroll clear of it. */
+.advanced-metadata-fields {
+  padding-block-end: var(--spacer-2xl);
 }
 
 /* Sits where an outlined control's helper text would, for the one row that is not an input. */
