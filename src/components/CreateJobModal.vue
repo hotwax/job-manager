@@ -249,17 +249,25 @@ const saveJob = async () => {
     if (commonUtil.hasError(resp)) throw resp;
 
     const parameters = jobData.value.parameters.filter((param: any) => param.key && String(param.value ?? "").trim());
+    let parametersSaved = true;
     if (parameters.length) {
-      await jobStore.updateJob({
+      const parametersResp = await jobStore.updateJob({
         jobName: jobData.value.name,
         serviceJobParameters: parameters.map((param: any) => ({
           parameterName: param.key,
           parameterValue: param.value
         }))
       });
+      // The job exists by this point, so a failure here cannot be recovered by retrying
+      // creation. Report what actually failed instead of claiming a clean create, and still
+      // close so the parameters can be set from the job page.
+      if (commonUtil.hasError(parametersResp)) {
+        parametersSaved = false;
+        logger.error("Failed to save the parameters of the created job", parametersResp);
+      }
     }
 
-    showToast(translate("Job created"));
+    showToast(translate(parametersSaved ? "Job created" : "Job created, but its parameters could not be saved"));
     modalController.dismiss(jobData.value, 'confirm');
   } catch (err) {
     logger.error("Failed to create job", err);
