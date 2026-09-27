@@ -117,7 +117,7 @@
           </ion-card-content>
         </ion-card>
 
-        <ion-modal trigger="message-type-filter-trigger" @willPresent="initializeMessageTypeModal" @didDismiss="clearMessageTypeModal">
+        <ion-modal ref="messageTypeModal" trigger="message-type-filter-trigger" @willPresent="initializeMessageTypeModal" @didDismiss="clearMessageTypeModal">
           <ion-header>
             <ion-toolbar>
               <ion-buttons slot="start">
@@ -220,7 +220,6 @@ import {
   IonSelectOption,
   IonTitle,
   IonToolbar,
-  modalController,
   onIonViewWillEnter
 } from "@ionic/vue";
 import { checkmarkOutline, closeCircleOutline, closeOutline } from "ionicons/icons";
@@ -247,6 +246,7 @@ const pageIndex = ref(0);
 const isInitialLoading = ref(true);
 const messageTypeQuery = ref("");
 const messageTypeModalSelection = ref("");
+const messageTypeModal = ref();
 
 const messages = computed(() => store.getSystemMessages);
 
@@ -337,7 +337,7 @@ const clearMessageTypeModal = () => {
 };
 
 const closeMessageTypeModal = () => {
-  modalController.dismiss();
+  messageTypeModal.value?.$el?.dismiss();
 };
 
 const saveMessageTypeFilter = () => {
