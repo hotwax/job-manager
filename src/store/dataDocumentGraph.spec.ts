@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  DATA_DOCUMENT_ID_MAX_LENGTH,
   buildDataDocumentExportPayload,
   buildDataDocumentPreviewPayload,
+  deriveDataDocumentId,
   projectDataDocumentGraph,
   serializeGraphConditions,
   serializeGraphFields
@@ -309,5 +311,40 @@ describe("data document graph projection", () => {
       pageSize: 50,
       format: "json"
     });
+  });
+});
+
+describe("data document id length", () => {
+  // The name that produced the live truncation failure in #1097.
+  const overlongName = "POS Sales Order Items Without Issuance QA 20260824";
+
+  it("accepts an id of exactly the persisted limit", () => {
+    // Trimmed from the overlong id so the boundary case cannot drift from the limit.
+    const dataDocumentId = deriveDataDocumentId(overlongName).slice(0, DATA_DOCUMENT_ID_MAX_LENGTH);
+    expect(dataDocumentId).toHaveLength(DATA_DOCUMENT_ID_MAX_LENGTH);
+
+    const graph = projectDataDocumentGraph({ document: { ...document, dataDocumentId }, fields: [] });
+
+    expect(graph.validationIssues.some((issue) => issue.code === "data_document_id_too_long")).toBe(false);
+  });
+
+  it("reports the actual length when a derived id is past the limit", () => {
+    const dataDocumentId = deriveDataDocumentId(overlongName);
+    expect(dataDocumentId).toHaveLength(43);
+
+    const graph = projectDataDocumentGraph({ document: { ...document, dataDocumentId }, fields: [] });
+    const issue = graph.validationIssues.find((item) => item.code === "data_document_id_too_long");
+
+    expect(issue).toEqual(expect.objectContaining({ severity: "error", targetKind: "document" }));
+    // The message has to name the length and where to fix it, not just that it is too long.
+    expect(issue?.message).toContain("43 characters");
+    expect(issue?.message).toContain("Advanced metadata");
+  });
+
+  it("reports a missing id rather than a length problem when the id is blank", () => {
+    const graph = projectDataDocumentGraph({ document: { ...document, dataDocumentId: "" }, fields: [] });
+
+    expect(graph.validationIssues.some((issue) => issue.code === "missing_document_id")).toBe(true);
+    expect(graph.validationIssues.some((issue) => issue.code === "data_document_id_too_long")).toBe(false);
   });
 });
