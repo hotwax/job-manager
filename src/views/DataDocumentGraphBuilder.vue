@@ -465,67 +465,11 @@
         </ion-content>
       </ion-modal>
 
-      <ion-modal ref="fieldModal">
-        <ion-header>
-          <ion-toolbar>
-            <ion-buttons slot="start">
-              <ion-button @click="closeFieldModal">
-                <ion-icon slot="icon-only" :icon="closeOutline" />
-              </ion-button>
-            </ion-buttons>
-            <ion-title>{{ translate("Select Field") }}</ion-title>
-          </ion-toolbar>
-          <ion-toolbar>
-            <ion-searchbar
-              ref="fieldSearchbar"
-              v-model="fieldQueryString"
-              :placeholder="translate('Search fields')"
-              role="combobox"
-              aria-expanded="true"
-              :aria-controls="fieldPickerNavigation.listId"
-              :aria-activedescendant="fieldPickerNavigation.activeDescendant.value"
-              @keydown="fieldPickerNavigation.handleInputKeydown"
-            />
-          </ion-toolbar>
-        </ion-header>
-        <ion-content class="picker-content">
-          <div v-if="utilStore.getFetchStatus.entityFields === 'pending'" class="ion-text-center ion-padding">
-            <ion-spinner name="crescent" />
-            <p>{{ translate("Fetching fields...") }}</p>
-          </div>
-          <ion-list v-else :id="fieldPickerNavigation.listId" role="listbox">
-            <ion-item
-              v-for="field in filteredEntityFields"
-              :key="field.name"
-              v-bind="fieldPickerNavigation.getItemAttributes(field, getGraphFieldPickerIndex(field))"
-              :ref="(element) => fieldPickerNavigation.setItemRef(getGraphFieldPickerIndex(field), element)"
-              @keydown="fieldPickerNavigation.handleItemKeydown($event, getGraphFieldPickerIndex(field))"
-            >
-              <ion-checkbox
-                :checked="selectedGraphFieldNames.includes(field.name)"
-                @ionChange="toggleGraphField(field.name, $event.detail.checked)"
-              >
-                {{ field.name }}
-              </ion-checkbox>
-            </ion-item>
-            <ion-item v-if="!filteredEntityFields.length">
-              <ion-label class="ion-text-center">
-                <p>{{ translate("No fields found for this entity.") }}</p>
-              </ion-label>
-            </ion-item>
-          </ion-list>
-
-          <ion-fab slot="fixed" vertical="bottom" horizontal="end">
-            <ion-fab-button
-              :disabled="!selectedGraphFieldNames.length"
-              :aria-label="translate('Save')"
-              @click="confirmGraphFieldSelection"
-            >
-              <ion-icon :icon="saveOutline" />
-            </ion-fab-button>
-          </ion-fab>
-        </ion-content>
-      </ion-modal>
+      <DataDocumentFieldPicker
+        v-model:is-open="fieldPickerOpen"
+        :entity-name="activeFieldEntityName"
+        @confirm="addGraphFields"
+      />
 
       <ion-modal ref="relatedFieldModal">
         <ion-header>
@@ -847,6 +791,7 @@ import { commonUtil, translate } from "@common";
 import { useDataDocumentGraphStore } from "@/store/dataDocumentGraph";
 import { useDataDocumentStore } from "@/store/dataDocuments";
 import DataDocumentExportList from "@/components/DataDocumentExportList.vue";
+import DataDocumentFieldPicker from "@/components/DataDocumentFieldPicker.vue";
 import DataDocumentMetadata from "@/components/DataDocumentMetadata.vue";
 import DataDocumentPreviewTable from "@/components/DataDocumentPreviewTable.vue";
 import ScheduleEmailExportModal from "@/components/ScheduleEmailExportModal.vue";
@@ -881,16 +826,13 @@ const setSegment = (segment: string) => {
 const entityModal = ref();
 const entitySearchbar = ref();
 const entityQueryString = ref("");
-const fieldModal = ref();
-const fieldSearchbar = ref();
-const fieldQueryString = ref("");
+const fieldPickerOpen = ref(false);
 const relatedFieldModal = ref();
 const relatedFieldSearchbar = ref();
 const conditionModal = ref();
 const relatedFieldQueryString = ref("");
 const relatedFieldStep = ref<"relationship" | "confirm" | "fields">("relationship");
 // Field pickers are multi-select: collect chosen field names, then add them on an explicit save.
-const selectedGraphFieldNames = ref<string[]>([]);
 const selectedRelatedFieldNames = ref<string[]>([]);
 const relatedRelationshipPath = ref("");
 const relatedEntityName = ref("");
@@ -1027,21 +969,6 @@ const entityPickerNavigation = useKeyboardListNavigation<EntityOption>({
   onSelect: (entity) => selectEntity(getEntityValue(entity))
 });
 const activeFieldEntityName = computed(() => selectedNode.value?.entityName || graph.value?.metadata.primaryEntityName || "");
-const entityFields = computed(() => activeFieldEntityName.value ? utilStore.getEntityFields(activeFieldEntityName.value) : []);
-const filteredEntityFields = computed(() => {
-  const query = fieldQueryString.value.trim().toLowerCase();
-  console.log('entityFields', entityFields.value)
-  if (!query) return entityFields.value;
-  return entityFields.value.filter((field: any) => field.name.toLowerCase().includes(query));
-});
-const getGraphFieldPickerIndex = (field: any) => filteredEntityFields.value.findIndex((item: any) => item.name === field.name);
-const fieldPickerNavigation = useKeyboardListNavigation<any>({
-  items: filteredEntityFields,
-  inputRef: fieldSearchbar,
-  listId: "data-document-graph-field-picker",
-  getItemId: (field) => `data-document-graph-field-option-${getSafeDomId(field.name)}`,
-  onSelect: (field) => toggleGraphField(field.name, !selectedGraphFieldNames.value.includes(field.name))
-});
 const relatedEntityFields = computed(() => relatedEntityName.value ? utilStore.getEntityFields(relatedEntityName.value) : []);
 const activeRelationshipEntityName = computed(() => selectedNode.value?.entityName || graph.value?.metadata.primaryEntityName || "");
 const activeEntityRelationships = computed(() => activeRelationshipEntityName.value ? utilStore.getEntityRelationships(activeRelationshipEntityName.value) : []);
@@ -1292,37 +1219,19 @@ const closeEntityModal = () => {
   entityModal.value.$el.dismiss();
 };
 
-const openGraphFieldModal = async () => {
-  fieldQueryString.value = "";
-  selectedGraphFieldNames.value = [];
-  fieldPickerNavigation.resetNavigation();
-  if(selectedNode.value?.entityName) {
-    await utilStore.fetchEntityFields(selectedNode.value?.entityName);
-  }
-  fieldModal.value.$el.present();
+const openGraphFieldModal = () => {
+  fieldPickerOpen.value = true;
 };
 
-
-const toggleGraphField = (fieldName: string, checked: boolean) => {
-  selectedGraphFieldNames.value = checked
-    ? [...new Set([...selectedGraphFieldNames.value, fieldName])]
-    : selectedGraphFieldNames.value.filter((name) => name !== fieldName);
-};
-
-const confirmGraphFieldSelection = () => {
+const addGraphFields = (fieldNames: string[]) => {
   const nodeId = selectedNode.value?.nodeId || "node:root";
   let addedField;
-  for (const fieldName of selectedGraphFieldNames.value) {
+  for (const fieldName of fieldNames) {
     addedField = graphStore.addField(nodeId, fieldName);
   }
   if (addedField) {
     selectedTarget.value = { kind: "field", id: addedField.fieldSeqId || addedField.fieldPath };
   }
-  closeFieldModal();
-};
-
-const closeFieldModal = () => {
-  fieldModal.value.$el.dismiss();
 };
 
 const openRelatedFieldModal = async () => {
@@ -1548,10 +1457,6 @@ watch(entityQueryString, () => {
   entityPickerNavigation.resetNavigation();
 });
 
-watch([fieldQueryString, activeFieldEntityName], () => {
-  fieldPickerNavigation.resetNavigation();
-});
-
 watch([relatedFieldQueryString, relatedFieldStep, relatedEntityName, activeRelationshipEntityName], () => {
   relatedFieldPickerNavigation.resetNavigation();
 });
@@ -1584,11 +1489,6 @@ onIonViewWillEnter(async () => {
   min-height: 100%;
 }
 
-
-/* The Save FAB is fixed over the list, so the last row needs room to scroll clear of it. */
-.picker-content {
-  --padding-bottom: var(--spacer-2xl);
-}
 
 .preview-rows-input {
   max-width: 110px;

@@ -6,7 +6,7 @@
           <ion-card-title>{{ group.entityLabel }}</ion-card-title>
           <ion-card-subtitle>{{ group.entityPath }}</ion-card-subtitle>
           <ion-buttons>
-            <ion-button fill="clear" @click="openNewFieldModal(group, 'field')">
+            <ion-button fill="clear" @click="openFieldPicker(group)">
               <ion-icon slot="start" :icon="addOutline" />
               {{ translate("Add field") }}
             </ion-button>
@@ -209,6 +209,12 @@
       </ion-content>
     </ion-modal>
 
+    <DataDocumentFieldPicker
+      v-model:is-open="fieldPickerOpen"
+      :entity-name="fieldPickerEntityName"
+      @confirm="addGroupFields"
+    />
+
     <ion-modal ref="fieldModal">
       <ion-header>
         <ion-toolbar>
@@ -336,6 +342,7 @@ import { addOutline, arrowBackOutline, chevronForwardOutline, closeOutline, eyeO
 import { computed, ref, watch } from "vue";
 
 import { translate } from "@common";
+import DataDocumentFieldPicker from "@/components/DataDocumentFieldPicker.vue";
 import { useDataDocumentGraphStore } from "@/store/dataDocumentGraph";
 import { useUtilStore } from "@/store/util";
 import { getConditionValueOptionSource } from "@/utils/conditionValueOptions";
@@ -368,6 +375,16 @@ const graph = computed(() => graphStore.getGraph);
 const entityModal = ref();
 const entitySearchbar = ref();
 const entityQueryString = ref("");
+
+const fieldPickerOpen = ref(false);
+const fieldPickerGroup = ref<any>();
+// Mirrors modalCurrentEntity: a group's entity is its last relationship segment, or the
+// primary entity for the root group.
+const fieldPickerEntityName = computed(() => {
+  const segments: string[] = fieldPickerGroup.value?.relationshipPath || [];
+
+  return segments.length ? segments[segments.length - 1] : graph.value?.metadata.primaryEntityName || "";
+});
 
 const fieldModal = ref();
 const fieldSearchbar = ref();
@@ -712,6 +729,21 @@ const openNewFieldModal = (group: any, mode: "field" | "relation" = "field") => 
     utilStore.fetchEntityRelationships(modalCurrentEntity.value);
   }
   fieldModal.value.$el.present();
+};
+
+// "Add field" on an entity group: pick any number of that entity's fields at once. The path
+// prefix is the group's own relationship path, which is what selectField builds for a pick
+// that has not drilled into a relationship.
+const openFieldPicker = (group: any) => {
+  fieldPickerGroup.value = group;
+  fieldPickerOpen.value = true;
+};
+
+const addGroupFields = (fieldNames: string[]) => {
+  const basePath: string[] = fieldPickerGroup.value?.relationshipPath || [];
+  for(const fieldName of fieldNames) {
+    graphStore.addFieldPath([...basePath, fieldName].join(":"), fieldName);
+  }
 };
 
 const drillDown = (relation: any) => {
