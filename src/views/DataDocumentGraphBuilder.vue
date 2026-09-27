@@ -488,7 +488,7 @@
             />
           </ion-toolbar>
         </ion-header>
-        <ion-content>
+        <ion-content class="picker-content">
           <div v-if="utilStore.getFetchStatus.entityFields === 'pending'" class="ion-text-center ion-padding">
             <ion-spinner name="crescent" />
             <p>{{ translate("Fetching fields...") }}</p>
@@ -514,16 +514,17 @@
               </ion-label>
             </ion-item>
           </ion-list>
+
+          <ion-fab slot="fixed" vertical="bottom" horizontal="end">
+            <ion-fab-button
+              :disabled="!selectedGraphFieldNames.length"
+              :aria-label="translate('Save')"
+              @click="confirmGraphFieldSelection"
+            >
+              <ion-icon :icon="saveOutline" />
+            </ion-fab-button>
+          </ion-fab>
         </ion-content>
-        <ion-footer>
-          <ion-toolbar>
-            <ion-buttons slot="end">
-              <ion-button :strong="true" :disabled="!selectedGraphFieldNames.length" @click="confirmGraphFieldSelection">
-                {{ selectedGraphFieldNames.length ? `${translate("Save")} (${selectedGraphFieldNames.length})` : translate("Save") }}
-              </ion-button>
-            </ion-buttons>
-          </ion-toolbar>
-        </ion-footer>
       </ion-modal>
 
       <ion-modal ref="relatedFieldModal">
@@ -807,6 +808,8 @@ import {
   IonCardContent,
   IonCheckbox,
   IonContent,
+  IonFab,
+  IonFabButton,
   IonFooter,
   IonHeader,
   IonIcon,
@@ -1581,6 +1584,11 @@ onIonViewWillEnter(async () => {
   min-height: 100%;
 }
 
+
+/* The Save FAB is fixed over the list, so the last row needs room to scroll clear of it. */
+.picker-content {
+  --padding-bottom: var(--spacer-2xl);
+}
 
 .preview-rows-input {
   max-width: 110px;
