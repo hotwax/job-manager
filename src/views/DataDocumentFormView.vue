@@ -24,21 +24,12 @@
             class="field-row"
           >
             <div class="field-controls">
-              <ion-chip
-                outline
-                color="primary"
-                class="field-selector"
-                @click="openFieldModal(getFieldIndex(field))"
-              >
-                <ion-label>
-                  {{ field.fieldPath || translate("Select Field") }}
-                </ion-label>
-              </ion-chip>
               <ion-input
                 class="field-alias"
                 :value="field.fieldNameAlias"
-                :label="translate('Alias')"
-                label-placement="floating"
+                :label="field.fieldName || field.fieldPath"
+                :placeholder="translate('Alias')"
+                label-placement="stacked"
                 fill="outline"
                 @ionInput="updateField(field, { fieldNameAlias: $event.detail.value || '' })"
               />
@@ -310,7 +301,6 @@ import {
   IonCardHeader,
   IonCardSubtitle,
   IonCardTitle,
-  IonChip,
   IonContent,
   IonHeader,
   IonIcon,
@@ -693,25 +683,6 @@ const closeEntityModal = () => {
   entityModal.value.$el.dismiss();
 };
 
-const getFieldIndex = (field: any) => graph.value?.fields.findIndex((item: any) => (
-  item.fieldSeqId === field.fieldSeqId || item.fieldPath === field.fieldPath
-)) ?? -1;
-
-const openFieldModal = (index: number) => {
-  activeFieldIndex.value = index;
-  fieldModalMode.value = "both";
-  fieldQueryString.value = "";
-  fieldPickerNavigation.resetNavigation();
-  const targetField = graph.value?.fields[index];
-  modalEntityPath.value = targetField ? toModalPath(getEffectiveRelationshipSegments(targetField.fieldPath)) : [];
-  modalBaseDepth.value = modalEntityPath.value.length;
-  if (modalCurrentEntity.value) {
-    utilStore.fetchEntityFields(modalCurrentEntity.value);
-    utilStore.fetchEntityRelationships(modalCurrentEntity.value);
-  }
-  fieldModal.value.$el.present();
-};
-
 const openNewFieldModal = (group: any, mode: "field" | "relation" = "field") => {
   // Always defer creation until the user actually picks a field.
   // No placeholder is added here — avoids blank ghost entries on cancel.
@@ -830,19 +801,6 @@ ion-card-header ion-buttons {
 
 .field-controls ion-button {
   margin: 0;
-}
-
-.field-selector {
-  flex: 0 0 auto;
-  max-width: 11rem;
-  margin: 0;
-  cursor: pointer;
-}
-
-.field-selector ion-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .field-alias {
