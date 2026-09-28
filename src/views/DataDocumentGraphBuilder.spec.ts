@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
-import { alertController } from "@ionic/vue";
+import { IonButton, alertController } from "@ionic/vue";
 import DataDocumentGraphBuilder from "./DataDocumentGraphBuilder.vue";
 import { useDataDocumentGraphStore } from "@/store/dataDocumentGraph";
 import { useUtilStore } from "@/store/util";
@@ -167,5 +167,67 @@ describe("DataDocumentGraphBuilder.vue - Change Primary Entity confirmation", ()
     // Verify that primaryEntityName was updated to "party.Party" and config reset
     expect(store.getGraph?.metadata.primaryEntityName).toBe("party.Party");
     expect(store.getGraph?.fields).toHaveLength(0);
+  });
+});
+
+describe("DataDocumentGraphBuilder.vue - document id length", () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+    HTMLDivElement.prototype.dismiss = vi.fn();
+    HTMLDivElement.prototype.present = vi.fn();
+  });
+
+  const mountBuilder = () => mount(DataDocumentGraphBuilder, {
+    props: { id: "new" },
+    global: {
+      stubs: {
+        IonModal: { template: "<div><slot /></div>" },
+        IonContent: { template: "<div><slot /></div>" },
+        DataDocumentExportList: true,
+        DataDocumentPreviewTable: true
+      }
+    }
+  });
+
+  // Ionic applies `disabled` on the underlying web component, which jsdom never upgrades, so
+  // the rendered attribute is absent either way. Read the prop the template binds instead.
+  const findSaveButton = (wrapper: ReturnType<typeof mountBuilder>) =>
+    wrapper.findAllComponents(IonButton).find((button) => button.text().includes("Save"));
+
+  const startGraphNamed = (documentName: string) => {
+    const store = useDataDocumentGraphStore();
+    store.startNewGraph();
+    // Separate calls: setting primaryEntityName resets the draft, which would drop a
+    // documentName passed in the same patch before the id is derived from it.
+    store.updateMetadata({ primaryEntityName: "OrderHeader" });
+    store.updateMetadata({ documentName });
+    return store;
+  };
+
+  it("blocks Save and explains the problem while the derived id is past the limit", async () => {
+    // The name that produced the live truncation failure in #1097.
+    const store = startGraphNamed("POS Sales Order Items Without Issuance QA 20260824");
+    expect(store.getGraph?.metadata.dataDocumentId).toHaveLength(43);
+
+    const wrapper = mountBuilder();
+    await wrapper.vm.$nextTick();
+
+    const saveButton = findSaveButton(wrapper);
+    expect(saveButton).toBeDefined();
+    expect(saveButton?.props("disabled")).toBe(true);
+    expect(wrapper.text()).toContain("43 characters");
+  });
+
+  it("leaves Save available once the id is within the limit", async () => {
+    const store = startGraphNamed("POS Sales Order Items QA");
+    expect(store.getGraph?.metadata.dataDocumentId.length).toBeLessThanOrEqual(40);
+
+    const wrapper = mountBuilder();
+    await wrapper.vm.$nextTick();
+
+    const saveButton = findSaveButton(wrapper);
+    expect(saveButton).toBeDefined();
+    expect(saveButton?.props("disabled")).toBe(false);
   });
 });

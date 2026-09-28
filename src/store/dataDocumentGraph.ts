@@ -293,6 +293,10 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
     },
     async saveGraph() {
       if (!this.graph) return;
+      // The parent document is written before any field or condition, so an id the database
+      // will reject has to stop the save before the first request rather than after it.
+      const idTooLong = this.graph.validationIssues.find((issue) => issue.code === "data_document_id_too_long");
+      if (idTooLong) throw new Error(idTooLong.message);
       this.saving = true;
       const dataDocumentStore = useDataDocumentStore();
       // Tracks the document id once the parent is saved, so a mid-loop failure can re-sync

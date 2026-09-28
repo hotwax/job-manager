@@ -836,15 +836,29 @@ const closeScheduleModal = () => {
   isScheduleModalOpen.value = false;
 };
 
+const toRepeatCount = (value: any) => value === "" || value === null || value === undefined ? value : Number(value);
+
 const saveSchedule = async () => {
   if (job.value) {
-    job.value.cronExpression = editScheduleData.value.cronExpression;
-    job.value.repeatCount = Number(editScheduleData.value.repeatCount);
+    const cronExpression = editScheduleData.value.cronExpression;
+    const repeatCount = toRepeatCount(editScheduleData.value.repeatCount);
 
-    const payload = { 
+    const isUnchanged =
+      cronExpression === (job.value.cronExpression || "") &&
+      repeatCount === toRepeatCount(job.value.repeatCount);
+
+    if (isUnchanged) {
+      isScheduleModalOpen.value = false;
+      return;
+    }
+
+    job.value.cronExpression = cronExpression;
+    job.value.repeatCount = repeatCount;
+
+    const payload = {
       jobName: job.value.jobName,
-      cronExpression: job.value.cronExpression,
-      repeatCount: job.value.repeatCount
+      cronExpression,
+      repeatCount
     } as any;
     // TODO: Do not update the template job
     await updateJobInfo(payload).then(() => {
@@ -1120,7 +1134,7 @@ const convertToString = (parameter: any) => {
 
   try {
     if(parameter.type === 'Map' || parameter.type === 'List' || parameter.type === 'Object') {
-      return JSON.stringify(value)
+      return typeof value === 'string' ? value : JSON.stringify(value)
     } else if(parameter.type === 'String') {
       return value
     } else {
