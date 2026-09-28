@@ -42,7 +42,7 @@ function processEnrichmentQueue(store: object) {
         const message = response.data?.systemMessages?.[0];
         return { gid: task.gid, message: message?.remoteMessageId === task.gid ? message : undefined };
       } catch (err) {
-        logger.error(`Failed to resolve the HotWax message for ${task.gid}`, err);
+        logger.error(`Bulk Operation [Shopify Operation ID: ${task.gid}] - Failed to resolve HotWax message`, err);
         return { gid: task.gid, message: undefined };
       } finally {
         limiter.inFlight.delete(task.gid);
@@ -252,7 +252,7 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
           }))
           .filter((shop: any) => shop.systemMessageRemoteId);
       } catch (err) {
-        logger.error("Failed to fetch Shopify shops", err);
+        logger.error("Shop [System: Shopify] - Failed to fetch", err);
         this.shops = [];
       } finally {
         this.isFetchingShops = false;
@@ -324,7 +324,7 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
         };
       } catch (err: any) {
         if (fetchId !== this._fetchOperationsId) return;
-        logger.error("Failed to fetch Shopify bulk operations", err);
+        logger.error("Bulk Operation [System: Shopify] - Failed to fetch", err);
         this.lastError = err?.message || "Failed to load bulk operations from Shopify";
         this.operations = [];
         this.pageInfo = { hasNextPage: false, hasPreviousPage: false, startCursor: "", endCursor: "" };
@@ -373,7 +373,7 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
         }
 
         const failed = settled.filter((result: any) => result.status === "rejected");
-        failed.forEach((result: any) => logger.error("Failed to fetch bulk operations for a shop", result.reason));
+        failed.forEach((result: any) => logger.error("Bulk Operation [System: Shopify] - Failed to fetch for a shop", result.reason));
 
         const dateField = sortKey === "COMPLETED_AT" ? "completedAt" : "createdAt";
         const merged = settled
@@ -400,7 +400,7 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
           return;
         }
 
-        logger.error("Failed to fetch Shopify bulk operations across shops", err);
+        logger.error("Bulk Operation [System: Shopify] - Failed to fetch across shops", err);
         this.lastError = err?.message || "Failed to load bulk operations from Shopify";
         this.operations = [];
       } finally {
@@ -457,7 +457,7 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
         };
       } catch (err) {
         if (fetchId !== this._fetchStatsId) return;
-        logger.error("Failed to fetch Shopify bulk operation stats", err);
+        logger.error("Bulk Operation [System: Shopify] - Failed to fetch stats", err);
         this.stats = { total: 0, inFlight: 0, completed: 0, failed: 0, windowSize: 0, truncated: false };
       }
     },
@@ -508,7 +508,7 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
           return;
         }
 
-        logger.error("Failed to fetch Shopify bulk operation stats across shops", err);
+        logger.error("Bulk Operation [System: Shopify] - Failed to fetch stats across shops", err);
         this.stats = { total: 0, inFlight: 0, completed: 0, failed: 0, windowSize: 0, truncated: false };
       }
     },
@@ -535,7 +535,7 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
               return;
             }
 
-            logger.error("Failed to check whether this instance filters system messages by remote id", err);
+            logger.error("System Message [Context: remote id filter] - Failed to check instance filter setting", err);
             this.enrichmentAvailable = false;
           } finally {
             this.enrichmentProbed = true;
