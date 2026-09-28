@@ -785,17 +785,17 @@ ion-card-header ion-buttons {
 }
 
 .field-row {
-  --inner-padding-top: var(--spacer-sm);
-  --inner-padding-bottom: var(--spacer-sm);
+  --inner-padding-top: var(--spacer-xs);
+  --inner-padding-bottom: var(--spacer-xs);
 }
 
-/* All field controls on one horizontal row, vertically centered: chip | alias | sequence |
-   display | remove. Alias grows; the rest size to content so the row stays compact. */
+/* All field controls on one horizontal row, vertically centered: alias | sequence | display |
+   remove. Alias grows; the rest size to content so the row stays compact. The row's own
+   vertical padding comes from the item above, so it is not repeated here. */
 .field-controls {
   display: flex;
   align-items: center;
   gap: var(--spacer-base);
-  padding: var(--spacer-sm) 0;
   width: 100%;
 }
 
