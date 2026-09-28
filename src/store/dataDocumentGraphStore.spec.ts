@@ -13,6 +13,7 @@ vi.mock("@/logger", () => ({
   }
 }));
 
+import { api } from "@common";
 import { useDataDocumentGraphStore } from "@/store/dataDocumentGraph";
 
 describe("data document graph store", () => {
@@ -65,6 +66,20 @@ describe("data document graph store", () => {
     store.discardDraft();
     expect(store.isDirty).toBe(false);
     expect(store.getGraph).toBeUndefined();
+  });
+
+  it("refuses to save a graph whose derived id is past the persisted limit", async () => {
+    const store = useDataDocumentGraphStore();
+    store.startNewGraph();
+    // The name that produced the live truncation failure in #1097.
+    store.updateMetadata({ documentName: "POS Sales Order Items Without Issuance QA 20260824" });
+
+    expect(store.getGraph?.metadata.dataDocumentId).toHaveLength(43);
+
+    // The parent document is written first, so nothing may reach the API at all.
+    vi.mocked(api).mockClear();
+    await expect(store.saveGraph()).rejects.toThrow(/43 characters/);
+    expect(api).not.toHaveBeenCalled();
   });
 
   it("auto-derives the id from the name until the user sets it manually", () => {

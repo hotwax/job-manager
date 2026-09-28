@@ -26,36 +26,20 @@
       </ion-list>
     </ion-content>
 
-    <ion-footer>
-      <ion-toolbar>
-        <ion-item lines="none">
-          <ion-label class="ion-text-wrap">
-            <p class="overline">{{ commonUtil.getOmsURL() }}</p>
-          </ion-label>
-          <ion-note :color="browserTimeZone === userStore.current?.timeZone ? '' : 'danger'" slot="end">{{ userStore.current?.timeZone }}</ion-note>
-        </ion-item>
-        <!-- showing product stores only when there are multiple options to choose from. -->
-        <ion-item v-if="userProfile.stores?.length > 2" lines="none">
-          <!-- WHY EVENTS ($emit) IS USED WITH ION CHANGE: https://michaelnthiessen.com/pass-function-as-prop/ -->
-          <ion-select interface="popover" :value="currentProductStore.productStoreId" @ionChange="setProductStore($event.target.value)">
-            <ion-select-option v-for="store in (userProfile ? userProfile.stores : [])" :key="store.productStoreId" :value="store.productStoreId" >{{ store.storeName || store.productStoreId }}</ion-select-option>
-          </ion-select>
-        </ion-item>
-        <ion-item v-else lines="none">
-          <ion-label class="ion-text-wrap">
-            {{ currentProductStore.storeName }}
-          </ion-label>
-        </ion-item>
-      </ion-toolbar>
-    </ion-footer>
+    <DxpOmsInstanceFooter
+      :instance-label="commonUtil.getOmsURL()"
+      :product-stores="userProfile?.stores || []"
+      :current-product-store-id="currentProductStore.productStoreId"
+      @update:product-store="setProductStore"
+    />
   </ion-menu>
 </template>
 
 <script setup lang="ts">
-import { IonContent, IonFooter, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenu, IonMenuToggle, IonNote, IonSelect, IonSelectOption, IonTitle, IonToolbar } from "@ionic/vue";
+import { IonContent, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenu, IonMenuToggle, IonTitle, IonToolbar } from "@ionic/vue";
 import { computed } from "vue";
 import { albumsOutline, cloudDownloadOutline, cloudUploadOutline, documentTextOutline, fileTrayStackedOutline, gitNetworkOutline, globeOutline, openOutline, pulseOutline, settingsOutline, timeOutline } from "ionicons/icons";
-import { translate, commonUtil, emitter } from "@common";
+import { translate, commonUtil, DxpOmsInstanceFooter, emitter } from "@common";
 import { useAuth } from "@common/composables/useAuth";
 import router from "../router";
 import { useUserStore } from "@/store/user";
@@ -65,8 +49,6 @@ const userStore = useUserStore();
 
 const currentProductStore = computed(() => userStore.getCurrentProductStore)
 const userProfile = computed(() => userStore.getUserProfile)
-
-const browserTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
 
 // Filtering array of app pages, retaining only those elements (pages) that have the necessary permissions for display.
 const getValidMenuItems = (appPages: any) => {
