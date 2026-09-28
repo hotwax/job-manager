@@ -292,6 +292,15 @@
                 <p v-if="condition.toFieldNameAlias">{{ translate("To Field") }}: {{ condition.toFieldNameAlias }}</p>
                 <p v-if="condition.postQuery">{{ translate("Post Query") }}: {{ condition.postQuery }}</p>
               </ion-label>
+              <ion-button
+                slot="end"
+                fill="clear"
+                color="danger"
+                :aria-label="translate('Remove condition')"
+                @click.stop="removeCondition(condition)"
+              >
+                <ion-icon slot="icon-only" :icon="trashOutline" />
+              </ion-button>
             </ion-item>
             <p class="empty-state" v-if="!graph.conditions.length">
               {{ translate("No conditions") }}
@@ -717,22 +726,16 @@
               </ion-select-option>
             </ion-select>
           </ion-list>
+
+          <ion-fab slot="fixed" vertical="bottom" horizontal="end">
+            <ion-fab-button
+              :aria-label="isEditingCondition ? translate('Save changes') : translate('Add')"
+              @click="closeConditionModal(true)"
+            >
+              <ion-icon :icon="saveOutline" />
+            </ion-fab-button>
+          </ion-fab>
         </ion-content>
-        <ion-footer>
-          <ion-toolbar>
-            <ion-buttons slot="start">
-              <ion-button v-if="isEditingCondition" color="danger" fill="clear" @click="removeActiveCondition">
-                {{ translate("Remove") }}
-              </ion-button>
-            </ion-buttons>
-            <ion-buttons slot="end">
-              <ion-button fill="clear" @click="closeConditionModal()">{{ translate("Cancel") }}</ion-button>
-              <ion-button :strong="true" @click="closeConditionModal(true)">
-                {{ isEditingCondition ? translate("Save changes") : translate("Add") }}
-              </ion-button>
-            </ion-buttons>
-          </ion-toolbar>
-        </ion-footer>
       </ion-modal>
     </ion-content>
   </ion-page>
@@ -779,7 +782,7 @@ import {
   modalController,
   onIonViewWillEnter
 } from "@ionic/vue";
-import { addOutline, alertCircleOutline, arrowBackOutline, checkmarkCircleOutline, closeOutline, cloudDownloadOutline, cloudUploadOutline, filterOutline, gitBranchOutline, informationCircleOutline, listOutline, pauseOutline, playOutline, saveOutline, statsChartOutline, timeOutline, warningOutline } from "ionicons/icons";
+import { addOutline, alertCircleOutline, arrowBackOutline, checkmarkCircleOutline, closeOutline, cloudDownloadOutline, cloudUploadOutline, filterOutline, gitBranchOutline, informationCircleOutline, listOutline, trashOutline, pauseOutline, playOutline, saveOutline, statsChartOutline, timeOutline, warningOutline } from "ionicons/icons";
 import { computed, ref, watch } from "vue";
 import router from "../router"
 
@@ -1342,12 +1345,8 @@ const openConditionModal = () => {
   conditionModal.value.$el.present();
 };
 
-const removeActiveCondition = () => {
-  const conditionId = activeCondition.value?.conditionSeqId || activeCondition.value?.localId;
-  if(conditionId) {
-    graphStore.removeCondition(conditionId);
-  }
-  closeConditionModal();
+const removeCondition = (condition: any) => {
+  graphStore.removeCondition(condition.localId || condition.conditionSeqId || "");
 };
 
 const closeConditionModal = (save: boolean = false) => {
@@ -1517,6 +1516,11 @@ onIonViewWillEnter(async () => {
 .condition-fields > ion-input,
 .condition-fields > ion-select {
   margin-block-end: var(--spacer-sm);
+}
+
+/* The Save FAB is fixed over the content, so the last control needs room to clear it. */
+.condition-fields {
+  padding-block-end: var(--spacer-2xl);
 }
 
 .preview-rows-input {
