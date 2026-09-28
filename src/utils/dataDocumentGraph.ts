@@ -299,6 +299,11 @@ export const buildCustomParametersMap = (
   return map;
 };
 
+// DataDocument.dataDocumentId uses Moqui's `id` dictionary type, which persists as
+// VARCHAR(40). Anything longer is rejected by the database with a raw truncation error, so
+// the boundary is enforced here rather than discovered on save.
+export const DATA_DOCUMENT_ID_MAX_LENGTH = 40;
+
 // Derive a readable PascalCase dataDocumentId from the document name (e.g. "Order Export
 // Report" -> "OrderExportReport"), matching Moqui's data document id convention. Returns ""
 // for an empty name, in which case the backend auto-generates an id on save.
@@ -402,6 +407,13 @@ export const projectDataDocumentGraph = ({
       code: "missing_document_id",
       severity: "error",
       message: "Data document ID is required.",
+      targetKind: "document"
+    });
+  } else if (dataDocumentId.length > DATA_DOCUMENT_ID_MAX_LENGTH) {
+    addValidationIssue(validationIssues, {
+      code: "data_document_id_too_long",
+      severity: "error",
+      message: `Data document ID is ${dataDocumentId.length} characters, past the ${DATA_DOCUMENT_ID_MAX_LENGTH}-character limit. Shorten Name, or edit ID in Advanced metadata.`,
       targetKind: "document"
     });
   }
