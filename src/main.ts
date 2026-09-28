@@ -60,8 +60,5 @@ initialiseConfig({
 })
 
 router.isReady().then(async () => {
-  if (import.meta.env.DEV) {
-    await import('./dev/autoLogin').then(({ tryDevAutoLogin }) => tryDevAutoLogin());
-  }
   app.mount('#app');
 });
