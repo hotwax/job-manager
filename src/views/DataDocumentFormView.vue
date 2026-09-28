@@ -17,50 +17,47 @@
           </ion-buttons>
         </ion-card-header>
         <ion-list>
-          <ion-item
+          <div
             v-for="field in group.fields"
             :key="field.fieldSeqId || field.fieldPath"
-            lines="none"
             class="field-row"
           >
-            <div class="field-controls">
-              <ion-input
-                class="field-alias"
-                :value="field.fieldNameAlias"
-                :label="field.fieldName || field.fieldPath"
-                :placeholder="translate('Alias')"
-                label-placement="stacked"
-                fill="outline"
-                @ionInput="updateField(field, { fieldNameAlias: $event.detail.value || '' })"
-              />
-              <ion-input
-                class="field-sequence"
-                :value="field.sequenceNum"
-                type="number"
-                :label="translate('Sequence')"
-                label-placement="floating"
-                fill="outline"
-                @ionInput="updateField(field, { sequenceNum: Number($event.detail.value || 0) })"
-              />
-              <ion-button
-                fill="clear"
-                :color="isFieldDisplayed(field) ? undefined : 'medium'"
-                :aria-label="isFieldDisplayed(field) ? translate('Hide from output') : translate('Show in output')"
-                @click="updateField(field, { defaultDisplay: isFieldDisplayed(field) ? 'N' : 'Y' })"
-              >
-                <ion-icon slot="icon-only" :icon="isFieldDisplayed(field) ? eyeOutline : eyeOffOutline" />
-              </ion-button>
-              <ion-button
-                class="field-remove-button"
-                fill="clear"
-                color="danger"
-                :aria-label="translate('Remove field')"
-                @click="graphStore.removeField(field.fieldSeqId || field.fieldPath)"
-              >
-                <ion-icon slot="icon-only" :icon="trashOutline" />
-              </ion-button>
-            </div>
-          </ion-item>
+            <ion-input
+              class="field-alias"
+              :value="field.fieldNameAlias"
+              :label="field.fieldName || field.fieldPath"
+              :placeholder="translate('Alias')"
+              label-placement="stacked"
+              fill="outline"
+              @ionInput="updateField(field, { fieldNameAlias: $event.detail.value || '' })"
+            />
+            <ion-input
+              class="field-sequence"
+              :value="field.sequenceNum"
+              type="number"
+              :label="translate('Sequence')"
+              label-placement="floating"
+              fill="outline"
+              @ionInput="updateField(field, { sequenceNum: Number($event.detail.value || 0) })"
+            />
+            <ion-button
+              fill="clear"
+              :color="isFieldDisplayed(field) ? undefined : 'medium'"
+              :aria-label="isFieldDisplayed(field) ? translate('Hide from output') : translate('Show in output')"
+              @click="updateField(field, { defaultDisplay: isFieldDisplayed(field) ? 'N' : 'Y' })"
+            >
+              <ion-icon slot="icon-only" :icon="isFieldDisplayed(field) ? eyeOutline : eyeOffOutline" />
+            </ion-button>
+            <ion-button
+              class="field-remove-button"
+              fill="clear"
+              color="danger"
+              :aria-label="translate('Remove field')"
+              @click="graphStore.removeField(field.fieldSeqId || field.fieldPath)"
+            >
+              <ion-icon slot="icon-only" :icon="trashOutline" />
+            </ion-button>
+          </div>
         </ion-list>
       </ion-card>
 
@@ -784,22 +781,22 @@ ion-card-header ion-buttons {
   --inner-padding-bottom: var(--spacer-sm);
 }
 
-.field-row {
-  --inner-padding-top: var(--spacer-xs);
-  --inner-padding-bottom: var(--spacer-xs);
-}
-
 /* All field controls on one horizontal row, vertically centered: alias | sequence | display |
-   remove. Alias grows; the rest size to content so the row stays compact. The row's own
-   vertical padding comes from the item above, so it is not repeated here. */
-.field-controls {
+   remove. Alias grows; the rest size to content so the row stays compact.
+
+   Not an ion-item: the outlined alias input hangs its label above its own box, and an item
+   clips anything outside its inner wrapper (overflow: hidden), which sliced the label in half
+   once the row padding came down. */
+.field-row {
   display: flex;
   align-items: center;
   gap: var(--spacer-base);
+  padding-block: var(--spacer-xs);
+  padding-inline: var(--spacer-sm);
   width: 100%;
 }
 
-.field-controls ion-button {
+.field-row ion-button {
   margin: 0;
 }
 
@@ -840,7 +837,7 @@ ion-card-header ion-buttons {
 
 @media (max-width: 768px) {
   /* Let the single field row wrap (rather than overflow) on small screens. */
-  .field-controls {
+  .field-row {
     flex-wrap: wrap;
   }
   .condition-controls {
