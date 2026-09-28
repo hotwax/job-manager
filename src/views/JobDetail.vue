@@ -610,7 +610,7 @@ import router from "../router"
 import { useUserStore } from '@/store/user';
 import { translate, commonUtil, logger, emitter } from '@common';
 import { getCronString, getFileSize, getDateAndTime, showToast } from '@/utils';
-import { filterJobRuns } from '@/utils/jobRuns';
+import { useJobRuns } from '@/composables/useJobRuns';
 import JobRunFilters from '@/components/JobRunFilters.vue';
 import { 
   addOutline,
@@ -644,33 +644,31 @@ const isRequiredParametersMissing = computed(() => (isEditingParameters.value ? 
   .some((param: any) => param.required && !param.value))
 
 let job: any = ref({})
-let runs: any = ref([])
+
 const isLoading = ref(true)
-const isRunsLoading = ref(false)
-const hasLoadedRuns = ref(false)
-const pageIndex = ref(0)
-const pageSize = ref(20)
-const hasMoreRuns = ref(true)
 
 let optionalParams = ref([]) as any
 let requiredParams = ref([]) as any
 
 const activeTab = ref('overview');
-// Set when the dashboard drills in on one run so the user lands on the run behind the
-// number they clicked instead of the whole history. The runs API filters on jobRunId.
-const pinnedRunId = ref('');
-// Same filter vocabulary as the global Run History page, applied to this job's runs.
-const runsQueryString = ref('');
-const runsStatus = ref('');
-const runsUserId = ref('');
-const runsHasDataLogs = ref('');
 
-const filteredRuns = computed(() => filterJobRuns(runs.value, {
-  queryString: runsQueryString.value,
-  status: runsStatus.value,
-  userId: runsUserId.value,
-  hasDataLogs: runsHasDataLogs.value
-}));
+const jobNameRef = computed(() => job.value?.jobName);
+const {
+  runs,
+  filteredRuns,
+  isRunsLoading,
+  hasLoadedRuns,
+  hasMoreRuns,
+  pinnedRunId,
+  runsQueryString,
+  runsStatus,
+  runsUserId,
+  runsHasDataLogs,
+  loadRuns,
+  loadMoreRuns,
+  clearPinnedRun,
+  reset
+} = useJobRuns(jobNameRef);
 
 // Product & Category Context
 const jobCategories = computed(() => {
@@ -876,8 +874,7 @@ const goToLogDetail = (logId: string | number) => {
 
 const loadJob = async () => {
   isLoading.value = true
-  runs.value = []
-  hasLoadedRuns.value = false
+  reset()
   try {
     job.value = await jobStore.fetchJobDetail(route.params.jobName as string)
   } catch (err) {
@@ -889,31 +886,6 @@ const loadJob = async () => {
 
 // Show the resolved full name for run users, falling back to the raw user id.
 const getRunUserName = (userId: string) => userStore.getUserFullName(userId) || userId || "N/A";
-
-const loadRuns = async () => {
-  if (!job.value?.jobName) {
-    return
-  }
-
-  isRunsLoading.value = true
-  pageIndex.value = 0
-  hasMoreRuns.value = true
-  pageSize.value = 20
-  try {
-    const payload = { pageSize: pageSize.value, pageIndex: pageIndex.value, orderByField: "-jobRunId" } as any
-    if (pinnedRunId.value) payload.jobRunId = pinnedRunId.value
-
-    const resp = await jobStore.fetchJobRuns(route.params.jobName as string, payload)
-    runs.value = Array.isArray(resp) ? resp : []
-    hasMoreRuns.value = !pinnedRunId.value && Array.isArray(resp) && resp.length === pageSize.value
-    hasLoadedRuns.value = true
-    await userStore.resolveUserFullNames(runs.value.map((run: any) => run.userId));
-  } catch (err) {
-    console.error(err)
-  } finally {
-    isRunsLoading.value = false
-  }
-}
 
 onIonViewWillEnter(async () => {
   emitter.on("productStoreUpdated", init)
@@ -940,36 +912,11 @@ const init = async () => {
   }
 }
 
-const clearPinnedRun = async () => {
-  pinnedRunId.value = ''
-  await loadRuns()
-}
-
 watch(activeTab, async (tab) => {
   if (tab === 'history' && !hasLoadedRuns.value && !isRunsLoading.value) {
     await loadRuns()
   }
 })
-
-const loadMoreRuns = async (event: any) => {
-  pageIndex.value++
-  try {
-    const payload = { pageSize: pageSize.value, pageIndex: pageIndex.value, orderByField: "-jobRunId" } as any
-
-    const resp = await jobStore.fetchJobRuns(route.params.jobName as string, payload)
-    if (Array.isArray(resp) && resp.length > 0) {
-      const existingIds = new Set(runs.value.map((run: any) => run.jobRunId));
-      const uniqueNewRuns = resp.filter((run: any) => !existingIds.has(run.jobRunId));
-      runs.value.push(...uniqueNewRuns)
-      await userStore.resolveUserFullNames(resp.map((run: any) => run.userId));
-    }
-    hasMoreRuns.value = Array.isArray(resp) && resp.length === pageSize.value
-  } catch (err) {
-    console.error(err)
-  } finally {
-    event.target.complete()
-  }
-}
 
 async function cloneJob() {
   const newJobName = `${job.value.jobName.startsWith("template_") ? job.value.jobName.replace("template_", "") : job.value.jobName}_${currentProductStore.value.productStoreId}`
