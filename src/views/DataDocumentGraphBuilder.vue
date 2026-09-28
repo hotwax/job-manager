@@ -647,79 +647,75 @@
             <ion-title>{{ isEditingCondition ? translate("Edit Condition") : translate("Add Condition") }}</ion-title>
           </ion-toolbar>
         </ion-header>
-        <ion-content>
-          <ion-list v-if="activeCondition">
-            <ion-item>
-              <ion-input
-                v-model="activeCondition.fieldNameAlias"
-                :label="translate('Field Alias')"
-                label-placement="stacked"
-              />
-            </ion-item>
-            <ion-item>
-              <ion-select
-                v-model="activeCondition.operator"
-                :label="translate('Operator')"
-                label-placement="stacked"
-                interface="popover"
+        <ion-content class="ion-padding">
+          <ion-list v-if="activeCondition" class="condition-fields">
+            <ion-input
+              v-model="activeCondition.fieldNameAlias"
+              :label="translate('Field Alias')"
+              label-placement="floating"
+              fill="outline"
+            />
+            <ion-select
+              v-model="activeCondition.operator"
+              :label="translate('Operator')"
+              label-placement="floating"
+              fill="outline"
+              interface="popover"
+            >
+              <ion-select-option v-for="operator in operators" :key="operator.value" :value="operator.value">
+                {{ translate(operator.label) }}
+              </ion-select-option>
+            </ion-select>
+            <ion-select
+              v-if="activeConditionValueOptions"
+              :value="activeCondition.fieldValue"
+              :label="translate('Value')"
+              :placeholder="activeConditionValueOptions.label || translate('Select value')"
+              label-placement="floating"
+              fill="outline"
+              interface="popover"
+              :class="{ 'ion-invalid ion-touched': conditionSubmitted && isOperatorValueInvalid }"
+              :error-text="translate('Value is required')"
+              @ionChange="activeCondition.fieldValue = $event.detail.value ?? ''"
+            >
+              <ion-select-option
+                v-for="option in activeConditionValueOptions.options"
+                :key="option.value"
+                :value="option.value"
               >
-                <ion-select-option v-for="operator in operators" :key="operator.value" :value="operator.value">
-                  {{ translate(operator.label) }}
-                </ion-select-option>
-              </ion-select>
-            </ion-item>
-            <ion-item>
-              <ion-select
-                v-if="activeConditionValueOptions"
-                :value="activeCondition.fieldValue"
-                :label="translate('Value')"
-                :placeholder="activeConditionValueOptions.label || translate('Select value')"
-                label-placement="stacked"
-                interface="popover"
-                :class="{ 'ion-invalid ion-touched': conditionSubmitted && isOperatorValueInvalid }"
-                :error-text="translate('Value is required')"
-                @ionChange="activeCondition.fieldValue = $event.detail.value ?? ''"
-              >
-                <ion-select-option
-                  v-for="option in activeConditionValueOptions.options"
-                  :key="option.value"
-                  :value="option.value"
-                >
-                  {{ option.label }}
-                </ion-select-option>
-              </ion-select>
-              <ion-input
-                v-else
-                :value="activeCondition.fieldValue"
-                :label="translate('Value')"
-                label-placement="stacked"
-                :class="{ 'ion-invalid ion-touched': conditionSubmitted && isOperatorValueInvalid }"
-                :error-text="translate('Value is required')"
-                @ionInput="activeCondition.fieldValue = $event.detail.value || ''"
-              />
-            </ion-item>
-            <ion-item>
-              <ion-input
-                v-model="activeCondition.toFieldNameAlias"
-                :label="translate('To Field Alias')"
-                label-placement="stacked"
-              />
-            </ion-item>
-            <ion-item>
-              <ion-select
-                v-model="activeCondition.postQuery"
-                :label="translate('Post Query')"
-                label-placement="stacked"
-                interface="popover"
-              >
-                <ion-select-option value="N">
-                  {{ translate("N") }}
-                </ion-select-option>
-                <ion-select-option value="Y">
-                  {{ translate("Y") }}
-                </ion-select-option>
-              </ion-select>
-            </ion-item>
+                {{ option.label }}
+              </ion-select-option>
+            </ion-select>
+            <ion-input
+              v-else
+              :value="activeCondition.fieldValue"
+              :label="translate('Value')"
+              label-placement="floating"
+              fill="outline"
+              :class="{ 'ion-invalid ion-touched': conditionSubmitted && isOperatorValueInvalid }"
+              :error-text="translate('Value is required')"
+              @ionInput="activeCondition.fieldValue = $event.detail.value || ''"
+            />
+            <ion-input
+              v-model="activeCondition.toFieldNameAlias"
+              :label="translate('To Field Alias')"
+              label-placement="floating"
+              fill="outline"
+            />
+            <ion-select
+              v-model="activeCondition.postQuery"
+              :label="translate('Post Query')"
+              label-placement="floating"
+              fill="outline"
+              interface="popover"
+            >
+              <ion-select-option value="N">
+                {{ translate("N") }}
+              </ion-select-option>
+              <ion-select-option value="Y">
+                {{ translate("Y") }}
+              </ion-select-option>
+            </ion-select>
           </ion-list>
         </ion-content>
         <ion-footer>
@@ -1516,6 +1512,12 @@ onIonViewWillEnter(async () => {
   min-height: 100%;
 }
 
+
+/* Outlined controls stacked in a modal, matching CreateJobModal's .job-detail-fields. */
+.condition-fields > ion-input,
+.condition-fields > ion-select {
+  margin-block-end: var(--spacer-sm);
+}
 
 .preview-rows-input {
   max-width: 110px;
