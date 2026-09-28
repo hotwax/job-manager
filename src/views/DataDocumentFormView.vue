@@ -52,20 +52,12 @@
                 @ionInput="updateField(field, { sequenceNum: Number($event.detail.value || 0) })"
               />
               <ion-button
-                v-if="field.defaultDisplay === 'Y'"
                 fill="clear"
-                :aria-label="translate('Display toggle')"
-                @click="updateField(field, { defaultDisplay: 'N' })"
+                :color="isFieldDisplayed(field) ? undefined : 'medium'"
+                :aria-label="isFieldDisplayed(field) ? translate('Hide from output') : translate('Show in output')"
+                @click="updateField(field, { defaultDisplay: isFieldDisplayed(field) ? 'N' : 'Y' })"
               >
-                <ion-icon slot="icon-only" :icon="eyeOffOutline" />
-              </ion-button>
-              <ion-button
-                v-else
-                fill="clear"
-                :aria-label="translate('Display toggle')"
-                @click="updateField(field, { defaultDisplay: 'Y' })"
-              >
-                <ion-icon slot="icon-only" :icon="eyeOutline" />
+                <ion-icon slot="icon-only" :icon="isFieldDisplayed(field) ? eyeOutline : eyeOffOutline" />
               </ion-button>
               <ion-button
                 class="field-remove-button"
@@ -648,6 +640,12 @@ watch([fieldQueryString, modalCurrentEntity], () => {
 const updateMetadata = (key: string, value: string) => {
   graphStore.updateMetadata({ [key]: value });
 };
+
+// Only an explicit "N" hides a field: Moqui leaves default-display unset when the value is
+// anything else, and its own default is to display. Matches the run payload's selectedFields
+// filter and the graph inspector's Display toggle, so a seeded field with no defaultDisplay
+// reads as shown rather than hidden.
+const isFieldDisplayed = (field: any) => field.defaultDisplay !== "N";
 
 const updateField = (field: any, patch: any) => {
   graphStore.updateField(field.fieldSeqId, field.fieldPath, patch);
