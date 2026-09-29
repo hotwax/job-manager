@@ -165,6 +165,12 @@ const routes: Array<RouteRecordRaw> = [
     props: true
   },
   {
+    path: '/shopify-bulk-operations',
+    name: 'ShopifyBulkOperations',
+    component: () => import('@/views/ShopifyBulkOperations.vue'),
+    beforeEnter: authGuard
+  },
+  {
     path: '/data-documents',
     name: 'DataDocuments',
     component: DataDocumentCatalog,
