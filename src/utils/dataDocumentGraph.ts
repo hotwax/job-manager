@@ -351,7 +351,7 @@ const getRelationshipName = (segment: string) => {
   return hashIndex > -1 ? segment.slice(hashIndex + 1) : segment;
 };
 
-const getLabel = (value: string) => {
+export const getLabel = (value: string) => {
   const relationshipName = getRelationshipName(value);
   const pieces = relationshipName.split(".");
   return pieces[pieces.length - 1] || relationshipName || "Unknown";

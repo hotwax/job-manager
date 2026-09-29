@@ -26,6 +26,13 @@ const NEW_GRAPH_METADATA = {
 const graphSnapshot = (graph?: DataDocumentGraph) =>
   graph ? JSON.stringify(serializeDataDocumentGraph(graph)) : "";
 
+// The owner of a graph that has no document id yet.
+const NEW_GRAPH_OWNER = "new";
+
+// Identifies the load that may still write to the store. Handing the store to another page (or
+// dropping the working copy) bumps it, so a slower earlier response can never land on top of a newer one.
+let loadSeq = 0;
+
 const getCollection = (response: any, fallbackKey?: string) => {
   const data = response?.data;
   if (Array.isArray(data)) return data;
@@ -82,7 +89,16 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
     // True once the user manually edits the id (stops auto-derivation from the name).
     idLocked: false,
     loading: false,
-    saving: false
+    saving: false,
+    // Who the graph above is for: a document id, or "new". A graph is only valid for its owner, so a
+    // page renders it only while status is "ready" for the document it is showing. Not persisted: after
+    // a reload nothing owns the store until a page claims it (fetchGraph / startNewGraph).
+    owner: "",
+    status: "idle" as "idle" | "loading" | "ready" | "error",
+    // The page that last claimed the store. Leaving releases the store only if that page still holds
+    // it: when the id is the same (a saved document reopened under its new id) or another page has
+    // taken over, the leaving page must not clear what the entering page is showing.
+    claimant: undefined as symbol | undefined
   }),
   getters: {
     getGraph: (state) => state.graph,
@@ -92,9 +108,18 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
     isDirty: (state) => !!state.graph && graphSnapshot(state.graph) !== state.baseline
   },
   actions: {
-    startNewGraph() {
+    startNewGraph(claimant?: symbol) {
       // Keep an in-progress, unsaved new draft (e.g. after a page reload) instead of wiping it.
-      if (this.graph && !this.isPersisted && this.isDirty) return;
+      if(this.graph && !this.isPersisted && this.isDirty) {
+        this.claimant = claimant;
+        this.owner = NEW_GRAPH_OWNER;
+        this.status = "ready";
+
+        return;
+      }
+      loadSeq++;
+      useDataDocumentStore().resetDocumentScope();
+      this.claimant = claimant;
       this.relAliases = [];
       this.links = [];
       this.removedFieldSeqIds = [];
@@ -109,6 +134,8 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
         links: []
       });
       this.baseline = graphSnapshot(this.graph);
+      this.owner = NEW_GRAPH_OWNER;
+      this.status = "ready";
     },
     updateMetadata(patch: Record<string, any>) {
       if (!this.graph) return;
@@ -157,15 +184,46 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
         links: this.links
       });
     },
-    async fetchGraph(dataDocumentId: string, options: { force?: boolean } = {}) {
-      // Preserve an in-progress unsaved draft for this same document (reload survival).
-      if (!options.force && this.graph?.dataDocumentId === dataDocumentId && this.isDirty) {
-        return this.graph;
+    async fetchGraph(dataDocumentId: string, options: { force?: boolean; claimant?: symbol } = {}) {
+      if(!options.force) {
+        // Already showing this document (a page for the id a first save just created lands here).
+        if(this.owner === dataDocumentId && this.status === "ready") {
+          this.claimant = options.claimant;
+          useDataDocumentStore().loadRelated(dataDocumentId);
+
+          return this.graph;
+        }
+        // An unsaved draft of this very document survived a reload: keep it rather than replace it
+        // with the server copy.
+        if(this.graph?.dataDocumentId === dataDocumentId && this.isDirty) {
+          this.owner = dataDocumentId;
+          this.status = "ready";
+          this.claimant = options.claimant;
+          useDataDocumentStore().loadRelated(dataDocumentId);
+
+          return this.graph;
+        }
+        // Whatever the store still holds belongs to another document. Drop it before the first request,
+        // so the page can only show loading, an error, or this document, never the previous one.
+        this.discardDraft();
+        this.owner = dataDocumentId;
+        this.status = "loading";
+        this.claimant = options.claimant;
       }
+      const loadId = ++loadSeq;
       this.loading = true;
       const dataDocumentStore = useDataDocumentStore();
       try {
-        await dataDocumentStore.fetchDataDocument(dataDocumentId);
+        await dataDocumentStore.fetchDataDocument(dataDocumentId, { includeRelated: !options.force });
+        // The store was handed to another page while this loaded (the user moved on): leave it alone.
+        if(loadId !== loadSeq) {
+          return this.graph;
+        }
+        // The API answers an id it does not know with an empty 200, not an error. A blank document must
+        // not pass for a loaded one, or a dead link would offer to start a new document.
+        if(!dataDocumentStore.getCurrentDocument?.dataDocumentId) {
+          throw new Error(`Data document ${dataDocumentId} was not found`);
+        }
         this.relAliases = dataDocumentStore.getCurrentDocument?.relAliases || [];
         this.links = dataDocumentStore.getCurrentDocument?.links || [];
         this.removedFieldSeqIds = [];
@@ -180,8 +238,26 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
         this.isPersisted = true;
         this.idLocked = true;
         this.baseline = graphSnapshot(this.graph);
+        this.owner = dataDocumentId;
+        this.status = "ready";
+      } catch (error) {
+        if(loadId !== loadSeq) {
+          return this.graph;
+        }
+        logger.error(`Failed to load data document graph ${dataDocumentId}`, error);
+        // A re-sync after a save keeps the working copy on screen and lets the caller decide.
+        if(options.force) {
+          throw error;
+        }
+        const claimant = this.claimant;
+        this.discardDraft();
+        this.owner = dataDocumentId;
+        this.status = "error";
+        this.claimant = claimant;
       } finally {
-        this.loading = false;
+        if(loadId === loadSeq) {
+          this.loading = false;
+        }
       }
       return this.graph;
     },
@@ -355,9 +431,11 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
         this.saving = false;
       }
     },
-    // Drop the in-progress draft (used when the user chooses "Discard" on the unsaved-changes
-    // prompt). Clearing state lets the next builder visit fetch a clean copy from the server.
+    // Drop the working copy and everything loaded for it: when the user chooses "Discard" on the
+    // unsaved-changes prompt, and whenever the store is handed to another page (fetchGraph, release).
+    // Clearing state lets the next builder visit fetch a clean copy from the server.
     discardDraft() {
+      loadSeq++;
       this.graph = undefined;
       this.baseline = "";
       this.isPersisted = false;
@@ -366,6 +444,19 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
       this.links = [];
       this.removedFieldSeqIds = [];
       this.removedConditionSeqIds = [];
+      this.owner = "";
+      this.status = "idle";
+      this.claimant = undefined;
+      this.loading = false;
+      useDataDocumentStore().resetDocumentScope();
+    },
+    // The page that claimed the store is gone. Clear what it loaded, unless another page has claimed
+    // the store since, or it still holds unsaved work the leave guard let through.
+    release(claimant: symbol) {
+      if(!claimant || this.claimant !== claimant || this.isDirty) {
+        return;
+      }
+      this.discardDraft();
     },
     // NOTE: there is no admin/dataDocuments/{id}/relAliases REST endpoint (returns 404),
     // so relationship aliases are not persisted via this action yet. Kept for when the

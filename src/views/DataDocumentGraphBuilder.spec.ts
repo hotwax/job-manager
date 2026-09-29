@@ -1,9 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
-import { IonButton, alertController } from "@ionic/vue";
+import { IonButton, IonSegment, IonSegmentButton, alertController } from "@ionic/vue";
 import DataDocumentGraphBuilder from "./DataDocumentGraphBuilder.vue";
+import DataDocumentExportList from "@/components/DataDocumentExportList.vue";
+import DataDocumentMetadata from "@/components/DataDocumentMetadata.vue";
+import SkeletonList from "@/components/SkeletonList.vue";
+import router from "@/router";
 import { useDataDocumentGraphStore } from "@/store/dataDocumentGraph";
+import { useDataDocumentStore } from "@/store/dataDocuments";
 import { useUtilStore } from "@/store/util";
 
 // Mock router
@@ -21,9 +26,12 @@ vi.mock("@/router", () => ({
   default: {
     currentRoute: {
       value: {
-        params: { id: "new" }
+        params: { id: "new" },
+        query: {}
       }
-    }
+    },
+    push: vi.fn(),
+    replace: vi.fn()
   }
 }));
 
@@ -229,5 +237,294 @@ describe("DataDocumentGraphBuilder.vue - document id length", () => {
     const saveButton = findSaveButton(wrapper);
     expect(saveButton).toBeDefined();
     expect(saveButton?.props("disabled")).toBe(false);
+  });
+});
+
+describe("DataDocumentGraphBuilder.vue - only renders the document it owns", () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+  });
+
+  const mountBuilder = () => mount(DataDocumentGraphBuilder, {
+    props: { id: "new" },
+    global: {
+      stubs: {
+        IonModal: { template: "<div><slot /></div>" },
+        IonContent: { template: "<div><slot /></div>" },
+        DataDocumentExportList: true,
+        DataDocumentPreviewTable: true
+      }
+    }
+  });
+
+  it("renders the graph once the store is ready for it", async () => {
+    useDataDocumentGraphStore().startNewGraph();
+
+    const wrapper = mountBuilder();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.findComponent(DataDocumentMetadata).exists()).toBe(true);
+    expect(wrapper.find("main").attributes("aria-busy")).toBe("false");
+    expect(wrapper.findAllComponents(SkeletonList)).toHaveLength(0);
+  });
+
+  it("shows the loading shell, not a persisted graph that no page has claimed yet", async () => {
+    const store = useDataDocumentGraphStore();
+    store.startNewGraph();
+    store.updateMetadata({ primaryEntityName: "OrderHeader" });
+    store.updateMetadata({ documentName: "Previous Document" });
+    // A reload restores the persisted graph, but nothing owns it until a page claims it.
+    store.$patch({ owner: "", status: "idle" });
+
+    const wrapper = mountBuilder();
+    await wrapper.vm.$nextTick();
+
+    // The store still holds it, and the page renders none of it.
+    expect(store.getGraph?.metadata.documentName).toBe("Previous Document");
+    expect(wrapper.find("main").attributes("aria-busy")).toBe("true");
+    expect(wrapper.findAll("button.graph-node")).toHaveLength(0);
+    expect(wrapper.text()).not.toContain("OrderHeader");
+    expect(wrapper.findComponent(DataDocumentMetadata).props("summary")).toBeUndefined();
+  });
+
+  it("shows the failure and a Retry that reloads the document named in the URL", async () => {
+    const store = useDataDocumentGraphStore();
+    store.$patch({ owner: "DocA", status: "error" });
+    const fetchGraph = vi.spyOn(store, "fetchGraph").mockResolvedValue(undefined as any);
+    const params = (router as any).currentRoute.value.params;
+    params.id = "DocA";
+
+    try {
+      const wrapper = mountBuilder();
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.text()).toContain("Failed to load this data document.");
+      expect(wrapper.find("main").exists()).toBe(false);
+      expect(wrapper.findComponent(DataDocumentMetadata).exists()).toBe(false);
+      const retry = wrapper.findAllComponents(IonButton).find((button) => button.text() === "Retry");
+      expect(retry).toBeDefined();
+      await retry?.trigger("click");
+      expect(fetchGraph).toHaveBeenCalledWith("DocA", { claimant: expect.any(Symbol) });
+    } finally {
+      params.id = "new";
+    }
+  });
+});
+
+describe("DataDocumentGraphBuilder.vue - fills in as its data arrives", () => {
+  const documentId = "OrderItems";
+  // What the catalog list already knows about the document before the document itself is fetched.
+  const catalogRecord = {
+    dataFeedId: "OrderItemsFeed",
+    dataDocumentId: documentId,
+    documentName: "Order Items",
+    documentTitle: "Order items export",
+    primaryEntityName: "OrderItem"
+  };
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+  });
+
+  // The route is a module-level mock shared with the other suites, so put it back when done.
+  const onDocument = async (id: string, test: () => Promise<void>) => {
+    const params = (router as any).currentRoute.value.params;
+    params.id = id;
+    try {
+      await test();
+    } finally {
+      params.id = "new";
+    }
+  };
+
+  const mountBuilder = () => mount(DataDocumentGraphBuilder, {
+    props: { id: documentId },
+    global: {
+      stubs: {
+        IonModal: { template: "<div><slot /></div>" },
+        IonContent: { template: "<div><slot /></div>" },
+        DataDocumentExportList: true,
+        DataDocumentPreviewTable: true
+      }
+    }
+  });
+
+  const findButton = (wrapper: ReturnType<typeof mountBuilder>, label: string) =>
+    wrapper.findAllComponents(IonButton).find((button) => button.text().includes(label));
+
+  const tabLabel = (wrapper: ReturnType<typeof mountBuilder>, value: string) =>
+    wrapper.findAllComponents(IonSegmentButton).find((tab) => tab.props("value") === value)?.text();
+
+  const openTab = async (wrapper: ReturnType<typeof mountBuilder>, value: string) => {
+    wrapper.findComponent(IonSegment).vm.$emit("ionChange", { detail: { value } });
+    await wrapper.vm.$nextTick();
+  };
+
+  // The store after its load resolved: a graph with a primary entity, ready for this document.
+  const finishLoading = (graphStore: ReturnType<typeof useDataDocumentGraphStore>) => {
+    graphStore.startNewGraph();
+    graphStore.updateMetadata({ primaryEntityName: "OrderItem" });
+    graphStore.updateMetadata({ documentName: "Order Items" });
+    graphStore.$patch({ owner: documentId, status: "ready" });
+  };
+
+  it("shows the page with the catalog's record while the document loads", () => onDocument(documentId, async () => {
+    useDataDocumentStore().dataDocuments = [catalogRecord];
+    useDataDocumentGraphStore().$patch({ owner: documentId, status: "loading" });
+
+    const wrapper = mountBuilder();
+    await wrapper.vm.$nextTick();
+
+    const page = wrapper.find("main");
+    expect(page.attributes("aria-busy")).toBe("true");
+    expect(page.attributes("aria-label")).toBe("Loading graph builder.");
+    // The top card starts from the catalog's own record for this id.
+    expect(wrapper.findComponent(DataDocumentMetadata).props("summary")).toMatchObject({
+      dataDocumentId: documentId,
+      documentName: "Order Items"
+    });
+    // The root node is already there, named by the entity the catalog knows, with no real nodes yet.
+    expect(wrapper.find(".graph-node-ghost").text()).toContain("OrderItem");
+    expect(wrapper.findAll("button.graph-node")).toHaveLength(0);
+    // The inspector and the open tab hold their place instead of rendering empty.
+    expect(wrapper.findAllComponents(SkeletonList)).toHaveLength(2);
+    // Nothing is saved or exported against a document that has not loaded.
+    expect(findButton(wrapper, "Save")?.props("disabled")).toBe(true);
+    expect(findButton(wrapper, "Export")?.props("disabled")).toBe(true);
+  }));
+
+  it("does not borrow another document's catalog record", () => onDocument("SomethingElse", async () => {
+    useDataDocumentStore().dataDocuments = [catalogRecord];
+    useDataDocumentGraphStore().$patch({ owner: "SomethingElse", status: "loading" });
+
+    const wrapper = mountBuilder();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.findComponent(DataDocumentMetadata).props("summary")).toBeUndefined();
+    expect(wrapper.find(".graph-node-ghost").text()).not.toContain("OrderItem");
+    // With nothing known yet the root node is a placeholder for its name and entity too.
+    expect(wrapper.find(".graph-node-ghost").findAll("ion-skeleton-text").length).toBeGreaterThan(0);
+  }));
+
+  it("swaps each placeholder for its data in place once the document is ready", () => onDocument(documentId, async () => {
+    useDataDocumentStore().dataDocuments = [catalogRecord];
+    const graphStore = useDataDocumentGraphStore();
+    graphStore.$patch({ owner: documentId, status: "loading" });
+
+    const wrapper = mountBuilder();
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find("aside").classes()).not.toContain("hydrate");
+
+    finishLoading(graphStore);
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.find("main").attributes("aria-busy")).toBe("false");
+    expect(wrapper.find("main").attributes("aria-label")).toBeUndefined();
+    expect(wrapper.find(".graph-node-ghost").exists()).toBe(false);
+    expect(wrapper.findAll("button.graph-node")).toHaveLength(1);
+    expect(wrapper.findAllComponents(SkeletonList)).toHaveLength(0);
+    // The inspector pops in once, when its data lands, not again on every selection.
+    expect(wrapper.find("aside").classes()).toContain("hydrate");
+    expect(findButton(wrapper, "Save")?.props("disabled")).toBe(false);
+  }));
+
+  it("labels a tab with its count only once the count is known", () => onDocument(documentId, async () => {
+    const graphStore = useDataDocumentGraphStore();
+    const dataDocumentStore = useDataDocumentStore();
+    graphStore.$patch({ owner: documentId, status: "loading" });
+
+    const wrapper = mountBuilder();
+    await wrapper.vm.$nextTick();
+
+    expect(tabLabel(wrapper, "issues")).toBe("Issues");
+    expect(tabLabel(wrapper, "fields")).toBe("Fields");
+    expect(tabLabel(wrapper, "conditions")).toBe("Conditions");
+    expect(tabLabel(wrapper, "exports")).toBe("Recent Exports");
+
+    // The document arrives before its export history does: the graph tabs count, exports does not.
+    finishLoading(graphStore);
+    dataDocumentStore.exportHistoryStatus = "loading";
+    await wrapper.vm.$nextTick();
+    expect(tabLabel(wrapper, "issues")).toMatch(/^Issues \(\d+\)$/);
+    expect(tabLabel(wrapper, "fields")).toBe("Fields (0)");
+    expect(tabLabel(wrapper, "conditions")).toBe("Conditions (0)");
+    expect(tabLabel(wrapper, "exports")).toBe("Recent Exports");
+
+    dataDocumentStore.exportHistory = [{ messageId: "M1" }, { messageId: "M2" }];
+    dataDocumentStore.exportHistoryStatus = "ready";
+    await wrapper.vm.$nextTick();
+    expect(tabLabel(wrapper, "exports")).toBe("Recent Exports (2)");
+  }));
+
+  it("fills the recent exports tab from its own request, whenever that lands", () => onDocument(documentId, async () => {
+    const graphStore = useDataDocumentGraphStore();
+    const dataDocumentStore = useDataDocumentStore();
+    finishLoading(graphStore);
+    dataDocumentStore.exportHistoryStatus = "loading";
+
+    const wrapper = mountBuilder();
+    await openTab(wrapper, "exports");
+
+    // The document is already on screen; only this tab waits.
+    expect(wrapper.findAllComponents(SkeletonList)).toHaveLength(1);
+    expect(wrapper.findComponent(DataDocumentExportList).exists()).toBe(false);
+
+    dataDocumentStore.exportHistory = [{ messageId: "M1", statusId: "SmsgSent" }];
+    dataDocumentStore.exportHistoryStatus = "ready";
+    await wrapper.vm.$nextTick();
+    expect(wrapper.findAllComponents(SkeletonList)).toHaveLength(0);
+    expect(wrapper.findComponent(DataDocumentExportList).props("messages")).toHaveLength(1);
+    expect(wrapper.findComponent(DataDocumentExportList).props("emptyMessage")).toBe("No recent exports.");
+  }));
+
+  it("says so when the recent exports could not be loaded, instead of showing an empty list", () => onDocument(documentId, async () => {
+    const graphStore = useDataDocumentGraphStore();
+    const dataDocumentStore = useDataDocumentStore();
+    finishLoading(graphStore);
+    dataDocumentStore.exportHistoryStatus = "error";
+
+    const wrapper = mountBuilder();
+    await openTab(wrapper, "exports");
+
+    expect(wrapper.findComponent(DataDocumentExportList).props("emptyMessage")).toBe("Could not load recent exports.");
+    expect(tabLabel(wrapper, "exports")).toBe("Recent Exports");
+  }));
+
+  it("asks for a primary entity on a new document instead of showing an empty canvas", async () => {
+    useDataDocumentGraphStore().startNewGraph();
+
+    const wrapper = mountBuilder();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.text()).toContain("Start with a primary entity");
+    expect(wrapper.text()).toContain("Nothing to configure yet");
+    expect(wrapper.find(".graph-canvas").exists()).toBe(false);
+    expect(wrapper.findAllComponents(SkeletonList)).toHaveLength(0);
+
+    // The call to action opens the same entity picker as the top card.
+    const present = vi.fn();
+    (wrapper.findComponent({ ref: "entityModal" }).element as any).present = present;
+    vi.spyOn(useUtilStore(), "fetchEntities").mockResolvedValue(undefined as any);
+    await wrapper.find(".graph-empty-state").findComponent(IonButton).trigger("click");
+    await wrapper.vm.$nextTick();
+    expect(present).toHaveBeenCalled();
+  });
+
+  it("swaps the call to action for the canvas once the primary entity is chosen", async () => {
+    const graphStore = useDataDocumentGraphStore();
+    graphStore.startNewGraph();
+
+    const wrapper = mountBuilder();
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find(".graph-empty-state").exists()).toBe(true);
+
+    graphStore.updateMetadata({ primaryEntityName: "OrderHeader" });
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.find(".graph-empty-state").exists()).toBe(false);
+    expect(wrapper.findAll("button.graph-node")).toHaveLength(1);
+    expect(wrapper.text()).not.toContain("Nothing to configure yet");
   });
 });

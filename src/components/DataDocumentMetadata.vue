@@ -1,14 +1,18 @@
 <template>
-  <ion-card>
+  <ion-card :aria-busy="isPreview">
     <ion-list class="graph-metadata-list">
-      <ion-item detail button @click="$emit('open-entity-modal')">
+      <ion-item detail button :disabled="isPreview" @click="$emit('open-entity-modal')">
         <ion-label>
           <p>{{ translate("Primary Entity") }}</p>
-          {{ metadata.primaryEntityName || translate("Select Entity") }}
+          <ion-skeleton-text v-if="isPreview && !metadata.primaryEntityName" :animated="true" style="width: 60%" />
+          <template v-else>
+            {{ metadata.primaryEntityName || translate("Select Entity") }}
+          </template>
         </ion-label>
       </ion-item>
       <ion-input
         :value="metadata.documentName"
+        :disabled="isPreview"
         :label="translate('Name')"
         label-placement="floating"
         fill="outline"
@@ -16,13 +20,14 @@
       />
       <ion-input
         :value="metadata.documentTitle"
+        :disabled="isPreview"
         :label="translate('Title')"
         label-placement="floating"
         fill="outline"
         @ionInput="updateMetadata('documentTitle', $event.detail.value || '')"
       />
       <ion-buttons>
-        <ion-button slot="end" fill="clear" :aria-label="translate('Advanced Metadata')" @click="openAdvancedMetadataModal">
+        <ion-button slot="end" fill="clear" :disabled="isPreview" :aria-label="translate('Advanced Metadata')" @click="openAdvancedMetadataModal">
           <ion-icon slot="icon-only" :icon="optionsOutline" />
         </ion-button>
       </ion-buttons>
@@ -132,6 +137,7 @@ import {
   IonList,
   IonModal,
   IonNote,
+  IonSkeletonText,
   IonTitle,
   IonToolbar
 } from "@ionic/vue";
@@ -147,18 +153,26 @@ import type { DataDocumentRecord } from "@/utils/dataDocumentGraph";
 // no single root to inherit attributes onto (the dev ide-trace plugin passes some).
 defineOptions({ inheritAttrs: false });
 
+// While the document loads, its catalog record stands in as a read-only preview (name, title and
+// entity), so the card is meaningful before the first byte of the document arrives.
+const props = defineProps<{ summary?: DataDocumentRecord }>();
+
 // The entity picker and the save routine both live with the page that owns the graph, so the
 // card only asks for them.
 const emit = defineEmits<{ (e: "open-entity-modal"): void; (e: "save"): void }>();
 
 const graphStore = useDataDocumentGraphStore();
 
-const metadata = computed<DataDocumentRecord>(() => graphStore.getGraph?.metadata || {});
+// The store can still hold another document's graph (a restored one, or the previous page's) until
+// this page claims it, so only a graph that is ready for this page counts.
+const graph = computed(() => graphStore.status === "ready" ? graphStore.getGraph : undefined);
+const isPreview = computed(() => !graph.value);
+const metadata = computed<DataDocumentRecord>(() => graph.value?.metadata || props.summary || {});
 // Reactive to the live route so it flips to false in place after the first save replaces
 // /data-documents/new/graph with /data-documents/{id}/graph (same route record).
 const isNew = computed(() => router.currentRoute.value.params.id === "new");
 // Mirrors the page toolbar: an error-severity issue blocks the save, a warning does not.
-const hasErrors = computed(() => !!graphStore.getGraph?.validationIssues.some((issue) => issue.severity === "error"));
+const hasErrors = computed(() => !!graph.value?.validationIssues.some((issue) => issue.severity === "error"));
 
 const advancedMetadataModal = ref();
 const showFieldInfo = ref(false);

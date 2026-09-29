@@ -189,6 +189,10 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
     dataDocumentPrimaryEntities: [] as String[],
     dataDocumentRelatedFeeds: [] as String[],
     currentDocument: undefined as any,
+    // The document that currentDocument, fields, conditions, relatedFeeds, relatedJobs,
+    // scheduledExports, exportHistory and the preview below belong to. Opening another document,
+    // or leaving the builder, drops all of it (resetDocumentScope).
+    activeDocumentId: "",
     fields: [] as any[],
     conditions: [] as any[],
     relatedFeeds: [] as any[],
@@ -197,6 +201,10 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
     relatedJobs: [] as any[],
     scheduledExports: [] as any[],
     exportHistory: [] as any[],
+    // Where each background request for the open document stands, so a tab can show a placeholder
+    // until its own data lands instead of an empty list, or a "(0)" that then jumps.
+    scheduledExportsStatus: "idle" as "idle" | "loading" | "ready" | "error",
+    exportHistoryStatus: "idle" as "idle" | "loading" | "ready" | "error",
     previewRows: [] as any[],
     previewTotal: 0,
     previewStatus: "idle" as "idle" | "loading" | "success" | "error",
@@ -214,7 +222,9 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
     getFeedDocuments: (state) => state.feedDocuments,
     getRelatedJobs: (state) => state.relatedJobs,
     getScheduledExports: (state) => state.scheduledExports,
+    getScheduledExportsStatus: (state) => state.scheduledExportsStatus,
     getExportHistory: (state) => state.exportHistory,
+    getExportHistoryStatus: (state) => state.exportHistoryStatus,
     getPreviewRows: (state) => state.previewRows,
     getPreviewTotal: (state) => state.previewTotal,
     getPreviewStatus: (state) => state.previewStatus,
@@ -302,14 +312,60 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
 
       return this.currentFeed;
     },
-    async fetchDataDocument(dataDocumentId: string) {
+    // Everything document-scoped (the document, its fields/conditions/feeds/jobs, its exports and
+    // its preview) belongs to one document, so a page can never render it against another one.
+    resetDocumentScope() {
+      this.activeDocumentId = "";
+      this.currentDocument = undefined;
+      this.fields = [];
+      this.conditions = [];
+      this.relatedFeeds = [];
+      this.relatedJobs = [];
+      this.scheduledExports = [];
+      this.exportHistory = [];
+      this.scheduledExportsStatus = "idle";
+      this.exportHistoryStatus = "idle";
+      this.previewRows = [];
+      this.previewTotal = 0;
+      this.previewStatus = "idle";
+      this.previewError = "";
+    },
+    // Start the requests that only need the document id: its exports and its scheduled exports. Safe to
+    // call from any way into a document (a fresh load, a restored draft, a reopened id); a request that
+    // is already running or done is left alone.
+    loadRelated(dataDocumentId: string) {
+      if(this.activeDocumentId !== dataDocumentId) {
+        this.resetDocumentScope();
+      }
+      this.activeDocumentId = dataDocumentId;
+      if(this.exportHistoryStatus === "idle") {
+        void this.fetchExportHistory({ dataDocumentId }, { documentScoped: true });
+      }
+      if(this.scheduledExportsStatus === "idle") {
+        void this.fetchScheduledExports(dataDocumentId);
+      }
+    },
+    async fetchDataDocument(dataDocumentId: string, options: { includeRelated?: boolean } = {}) {
+      if(this.activeDocumentId !== dataDocumentId) {
+        this.resetDocumentScope();
+      }
+      this.activeDocumentId = dataDocumentId;
       this.loading = true;
       this.currentDocument = undefined;
+      // The exports and scheduled exports only need the id, so they load alongside the document and
+      // each fills its own tab when it lands. A re-sync after a save skips them; nothing there changed.
+      if(options.includeRelated !== false) {
+        this.loadRelated(dataDocumentId);
+      }
       try {
         const response = await api({
           url: `moqui/dataDocuments/${dataDocumentId}`,
           method: "GET"
         });
+        // Another document was opened while this one loaded; its data must not land in the shared state.
+        if(this.activeDocumentId !== dataDocumentId) {
+          return undefined;
+        }
         this.currentDocument = response.data;
         this.fields = this.currentDocument?.fields || [];
         this.conditions = this.currentDocument?.conditions || [];
@@ -317,11 +373,12 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
         this.relatedJobs = this.currentDocument?.jobs || [];
       } catch (error) {
         logger.error(`Failed to fetch data document ${dataDocumentId}`, error);
+        // The caller decides what a failed load looks like; returning normally here used to let the
+        // page carry on with whatever the previous document left behind.
+        throw error;
       } finally {
         this.loading = false;
       }
-
-      await this.fetchExportHistory({ dataDocumentId })
 
       return this.currentDocument;
     },
@@ -397,6 +454,12 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
       }
     },
     async runPreview(dataDocumentId: string, query: Record<string, any>) {
+      // A preview belongs to the document it ran for. If another document became active while it ran,
+      // the result is dropped rather than shown under the wrong one.
+      const isSuperseded = () => !!this.activeDocumentId && this.activeDocumentId !== dataDocumentId;
+      if(isSuperseded()) {
+        return;
+      }
       this.loading = true;
       this.previewStatus = "loading";
       this.previewError = "";
@@ -406,12 +469,18 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
           method: "POST",
           data: toDataDocumentRunPayload(dataDocumentId, query)
         });
+        if(isSuperseded()) {
+          return;
+        }
         const rows = getCollection(response, "rows");
         this.previewRows = rows;
         this.previewTotal = getCount(response, rows);
         this.previewStatus = "success";
       } catch (error: any) {
         logger.error(`Failed to preview data document ${dataDocumentId}`, error);
+        if(isSuperseded()) {
+          return;
+        }
         this.previewRows = [];
         this.previewTotal = 0;
         this.previewStatus = "error";
@@ -454,12 +523,17 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
     // supports a serviceName filter and returns each job's serviceJobParameters, so we filter the
     // export-service jobs down to the ones whose dataDocumentId parameter matches.
     async fetchScheduledExports(dataDocumentId: string) {
+      const isSuperseded = () => !!this.activeDocumentId && this.activeDocumentId !== dataDocumentId;
+      this.scheduledExportsStatus = "loading";
       try {
         const response = await api({
           url: API_ENDPOINTS.serviceJobs,
           method: "GET",
           params: { serviceName: EXPORT_SERVICE_NAME, pageSize: 200 }
         });
+        if(isSuperseded()) {
+          return this.scheduledExports;
+        }
         const jobs = response?.data?.serviceJobList || [];
         const paramValue = (job: any, name: string) =>
           (job.serviceJobParameters || []).find((param: any) => param.parameterName === name)?.parameterValue;
@@ -470,9 +544,13 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
             toEmailAddress: paramValue(job, "toEmailAddress"),
             ccAddresses: paramValue(job, "ccAddresses")
           }));
+        this.scheduledExportsStatus = "ready";
       } catch (error) {
         logger.error(`Failed to fetch scheduled exports for ${dataDocumentId}`, error);
-        this.scheduledExports = [];
+        if(!isSuperseded()) {
+          this.scheduledExports = [];
+          this.scheduledExportsStatus = "error";
+        }
       }
       return this.scheduledExports;
     },
@@ -532,15 +610,27 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
       const intervalMs = options.intervalMs ?? 2500;
       for (let attempt = 0; attempt < attempts; attempt++) {
         await new Promise((resolve) => setTimeout(resolve, intervalMs));
-        await this.fetchExportHistory({ dataDocumentId });
+        // The user moved to another document or left the builder; nobody is watching this list any more.
+        if(this.activeDocumentId !== dataDocumentId) {
+          return undefined;
+        }
+        await this.fetchExportHistory({ dataDocumentId }, { documentScoped: true });
         const newest = this.exportHistory[0];
         if (newest && isExportTerminalMessage(newest)) return newest;
       }
       return this.exportHistory[0];
     },
-    async fetchExportHistory(payload: Record<string, any> = {}) {
+    async fetchExportHistory(payload: Record<string, any> = {}, options: { documentScoped?: boolean } = {}) {
+      // A request made for the document open in the builder (its background load, a poll) must not
+      // land once that document is no longer the active one. The global history page also passes a
+      // dataDocumentId, as a filter, so only callers that opt in are held to this.
+      const isSuperseded = () => !!options.documentScoped && this.activeDocumentId !== payload.dataDocumentId;
+      if(isSuperseded()) {
+        return;
+      }
       this.loading = true;
       this.exportHistory = [];
+      this.exportHistoryStatus = "loading";
 
       const params: Record<string, any> = {
         systemMessageTypeId: "ExportDocumentData",
@@ -557,6 +647,9 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
           method: "GET",
           params
         });
+        if(isSuperseded()) {
+          return;
+        }
         // admin/systemMessages only supports statusId of the history filters, the rest are applied client-side
         let messages = response.data.systemMessages || [];
         if(payload.dataDocumentId) {
@@ -579,8 +672,12 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
         }
         // admin/systemMessages ignores the orderBy param, so sort newest-first client-side.
         this.exportHistory = messages.sort((a: any, b: any) => toMillis(b.initDate) - toMillis(a.initDate));
+        this.exportHistoryStatus = "ready";
       } catch (error) {
         logger.error("Failed to fetch data document export history", error);
+        if(!isSuperseded()) {
+          this.exportHistoryStatus = "error";
+        }
       } finally {
         this.loading = false;
       }

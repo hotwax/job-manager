@@ -70,44 +70,48 @@ describe("data document store", () => {
   });
 
   it("hydrates nested fields, conditions, and feeds from the Moqui detail response", async () => {
-    apiMock
-      .mockResolvedValueOnce({
-        data: {
-          dataDocumentId: "ApiDocument",
-          fields: [{ fieldSeqId: "10", fieldNameAlias: "productId", fieldPath: "Product:productId" }],
-          conditions: [{ conditionSeqId: "10", fieldNameAlias: "productId", operator: "not-empty" }],
-          feeds: [{ dataFeedId: "ProductFeed", dataDocumentId: "ApiDocument" }]
-        }
-      })
-      .mockResolvedValueOnce({
-        data: {
-          systemMessages: [
-            { systemMessageId: "DDX1001", messageText: "datamanager/export/ApiDocument_1.csv" },
-            { systemMessageId: "DDX1002", messageText: "datamanager/export/OtherDocument_1.csv" }
-          ],
-          systemMessagesCount: 2
-        }
-      });
+    // The related requests start alongside the document, so answer by URL rather than by call order.
+    apiMock.mockImplementation(({ url }: { url: string }) => {
+      if(url === "moqui/dataDocuments/ApiDocument") {
+        return Promise.resolve({
+          data: {
+            dataDocumentId: "ApiDocument",
+            fields: [{ fieldSeqId: "10", fieldNameAlias: "productId", fieldPath: "Product:productId" }],
+            conditions: [{ conditionSeqId: "10", fieldNameAlias: "productId", operator: "not-empty" }],
+            feeds: [{ dataFeedId: "ProductFeed", dataDocumentId: "ApiDocument" }]
+          }
+        });
+      }
+      if(url === "admin/systemMessages") {
+        return Promise.resolve({
+          data: {
+            systemMessages: [
+              { systemMessageId: "DDX1001", messageText: "datamanager/export/ApiDocument_1.csv" },
+              { systemMessageId: "DDX1002", messageText: "datamanager/export/OtherDocument_1.csv" }
+            ],
+            systemMessagesCount: 2
+          }
+        });
+      }
+
+      return Promise.resolve({ data: { serviceJobList: [] } });
+    });
 
     const store = useDataDocumentStore();
     await store.fetchDataDocument("ApiDocument");
 
-    expect(apiMock).toHaveBeenCalledTimes(2);
-    expect(apiMock).toHaveBeenNthCalledWith(1,
-      expect.objectContaining({
-        url: "moqui/dataDocuments/ApiDocument",
-        method: "GET"
+    expect(apiMock).toHaveBeenCalledTimes(3);
+    expect(apiMock).toHaveBeenCalledWith(expect.objectContaining({
+      url: "moqui/dataDocuments/ApiDocument",
+      method: "GET"
+    }));
+    expect(apiMock).toHaveBeenCalledWith(expect.objectContaining({
+      url: "admin/systemMessages",
+      method: "GET",
+      params: expect.objectContaining({
+        systemMessageTypeId: "ExportDocumentData"
       })
-    );
-    expect(apiMock).toHaveBeenNthCalledWith(2,
-      expect.objectContaining({
-        url: "admin/systemMessages",
-        method: "GET",
-        params: expect.objectContaining({
-          systemMessageTypeId: "ExportDocumentData"
-        })
-      })
-    );
+    }));
     expect(store.getFields).toEqual([
       expect.objectContaining({
         fieldNameAlias: "productId"
@@ -115,11 +119,12 @@ describe("data document store", () => {
     ]);
     expect(store.getConditions).toHaveLength(1);
     expect(store.getRelatedFeeds).toHaveLength(1);
-    expect(store.getExportHistory).toEqual([
+    // The history loads in the background, so wait for it rather than relying on microtask order.
+    await vi.waitFor(() => expect(store.getExportHistory).toEqual([
       expect.objectContaining({
         systemMessageId: "DDX1001"
       })
-    ]);
+    ]));
   });
 
   it("derives available entity and feed filters from the unfiltered catalog response", async () => {
@@ -553,5 +558,335 @@ describe("data document store", () => {
     expect(data).not.toHaveProperty("customParametersMap");
     expect(data).not.toHaveProperty("filters");
     expect(data).not.toHaveProperty("format");
+  });
+});
+
+describe("data document store - document scope", () => {
+  const detail = (id: string) => ({
+    data: {
+      dataDocumentId: id,
+      fields: [{ fieldSeqId: "10", fieldNameAlias: `${id}Field`, dataDocumentId: id }],
+      conditions: [{ conditionSeqId: "10", fieldNameAlias: `${id}Field` }],
+      feeds: [{ dataFeedId: `${id}Feed`, dataDocumentId: id }],
+      jobs: [{ jobName: `${id}Job` }]
+    }
+  });
+  const noHistory = { data: { systemMessages: [], systemMessagesCount: 0 } };
+  const deferred = <T = any>() => {
+    let resolve!: (value: T) => void;
+    let reject!: (reason?: unknown) => void;
+    const promise = new Promise<T>((res, rej) => { resolve = res; reject = rej; });
+
+    return { promise, resolve, reject };
+  };
+  // Answer each URL from a table so tests do not depend on the order requests are issued in.
+  const respondWith = (routes: Record<string, () => Promise<any>>) => {
+    apiMock.mockImplementation(({ url }: { url: string }) => (routes[url] ? routes[url]() : Promise.resolve(noHistory)));
+  };
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    apiMock.mockReset();
+  });
+
+  it("resolves the document without waiting for the export history", async () => {
+    const history = deferred();
+    respondWith({
+      "moqui/dataDocuments/DocA": () => Promise.resolve(detail("DocA")),
+      "admin/systemMessages": () => history.promise
+    });
+    const store = useDataDocumentStore();
+
+    await store.fetchDataDocument("DocA");
+
+    expect(store.getFields).toHaveLength(1);
+    expect(store.getExportHistory).toEqual([]);
+    history.resolve({ data: { systemMessages: [{ systemMessageId: "DDX1", messageText: "export/DocA_1.csv" }] } });
+    await vi.waitFor(() => expect(store.getExportHistory).toHaveLength(1));
+  });
+
+  it("drops the previous document's data the moment another document is requested", async () => {
+    const docB = deferred();
+    respondWith({
+      "moqui/dataDocuments/DocA": () => Promise.resolve(detail("DocA")),
+      "moqui/dataDocuments/DocB": () => docB.promise
+    });
+    const store = useDataDocumentStore();
+    await store.fetchDataDocument("DocA");
+    store.previewRows = [{ a: 1 }];
+    store.previewTotal = 1;
+    store.previewStatus = "success";
+    store.scheduledExports = [{ jobName: "x" }];
+
+    const loadingB = store.fetchDataDocument("DocB");
+
+    expect(store.getCurrentDocument).toBeUndefined();
+    expect(store.getFields).toEqual([]);
+    expect(store.getConditions).toEqual([]);
+    expect(store.getRelatedFeeds).toEqual([]);
+    expect(store.getRelatedJobs).toEqual([]);
+    expect(store.getScheduledExports).toEqual([]);
+    expect(store.getExportHistory).toEqual([]);
+    expect(store.getPreviewRows).toEqual([]);
+    expect(store.getPreviewStatus).toBe("idle");
+    docB.resolve(detail("DocB"));
+    await loadingB;
+    expect(store.getFields).toEqual([expect.objectContaining({ fieldNameAlias: "DocBField" })]);
+  });
+
+  it("keeps a document's own preview when the same document is fetched again", async () => {
+    respondWith({ "moqui/dataDocuments/DocA": () => Promise.resolve(detail("DocA")) });
+    const store = useDataDocumentStore();
+    await store.fetchDataDocument("DocA");
+    store.previewRows = [{ a: 1 }];
+    store.previewTotal = 1;
+    store.previewStatus = "success";
+
+    await store.fetchDataDocument("DocA");
+
+    expect(store.getPreviewRows).toEqual([{ a: 1 }]);
+    expect(store.getPreviewStatus).toBe("success");
+  });
+
+  it("ignores a slow response for a document that is no longer active", async () => {
+    const docA = deferred();
+    const docB = deferred();
+    respondWith({
+      "moqui/dataDocuments/DocA": () => docA.promise,
+      "moqui/dataDocuments/DocB": () => docB.promise
+    });
+    const store = useDataDocumentStore();
+
+    const loadingA = store.fetchDataDocument("DocA");
+    const loadingB = store.fetchDataDocument("DocB");
+    docB.resolve(detail("DocB"));
+    await loadingB;
+    docA.resolve(detail("DocA"));
+    await loadingA;
+
+    expect(store.getCurrentDocument).toEqual(expect.objectContaining({ dataDocumentId: "DocB" }));
+    expect(store.getFields).toEqual([expect.objectContaining({ fieldNameAlias: "DocBField" })]);
+  });
+
+  it("throws when the document cannot be loaded and leaves nothing of the previous one behind", async () => {
+    respondWith({
+      "moqui/dataDocuments/DocA": () => Promise.resolve(detail("DocA")),
+      "moqui/dataDocuments/DocB": () => Promise.reject(new Error("404"))
+    });
+    const store = useDataDocumentStore();
+    await store.fetchDataDocument("DocA");
+
+    await expect(store.fetchDataDocument("DocB")).rejects.toThrow("404");
+
+    expect(store.getCurrentDocument).toBeUndefined();
+    expect(store.getFields).toEqual([]);
+    expect(store.getConditions).toEqual([]);
+  });
+
+  it("drops a preview that finishes after another document became active", async () => {
+    const preview = deferred();
+    respondWith({
+      "oms/dataDocumentView": () => preview.promise,
+      "moqui/dataDocuments/DocA": () => Promise.resolve(detail("DocA")),
+      "moqui/dataDocuments/DocB": () => Promise.resolve(detail("DocB"))
+    });
+    const store = useDataDocumentStore();
+    await store.fetchDataDocument("DocA");
+    const running = store.runPreview("DocA", { selectedFields: [] });
+
+    await store.fetchDataDocument("DocB");
+    preview.resolve({ data: { rows: [{ a: 1 }] } });
+    await running;
+
+    expect(store.getPreviewRows).toEqual([]);
+    expect(store.getPreviewStatus).toBe("idle");
+  });
+
+  it("stops polling the export history once another document is active", async () => {
+    const store = useDataDocumentStore();
+    store.activeDocumentId = "DocB";
+
+    const newest = await store.pollExportHistory("DocA", { attempts: 3, intervalMs: 1 });
+
+    expect(newest).toBeUndefined();
+    expect(apiMock).not.toHaveBeenCalled();
+  });
+
+  it("never holds the global history page's document filter to the builder's active document", async () => {
+    respondWith({ "admin/systemMessages": () => Promise.resolve({ data: { systemMessages: [{ systemMessageId: "DDX1", messageText: "export/DocB_1.csv" }] } }) });
+    const store = useDataDocumentStore();
+    // A kept unsaved draft leaves DocA active while the user opens the global export history.
+    store.activeDocumentId = "DocA";
+
+    await store.fetchExportHistory({ dataDocumentId: "DocB" });
+
+    expect(store.getExportHistory).toEqual([expect.objectContaining({ systemMessageId: "DDX1" })]);
+  });
+
+  it("drops a document-scoped history response that arrives after another document became active", async () => {
+    const history = deferred();
+    respondWith({ "admin/systemMessages": () => history.promise });
+    const store = useDataDocumentStore();
+    store.activeDocumentId = "DocA";
+
+    const running = store.fetchExportHistory({ dataDocumentId: "DocA" }, { documentScoped: true });
+    store.activeDocumentId = "DocB";
+    history.resolve({ data: { systemMessages: [{ systemMessageId: "DDX1", messageText: "export/DocA_1.csv" }] } });
+    await running;
+
+    expect(store.getExportHistory).toEqual([]);
+  });
+
+  it("drops the background history of a document that was left before it arrived", async () => {
+    const history = deferred();
+    respondWith({
+      "moqui/dataDocuments/DocA": () => Promise.resolve(detail("DocA")),
+      "admin/systemMessages": () => history.promise
+    });
+    const store = useDataDocumentStore();
+
+    await store.fetchDataDocument("DocA");
+    store.resetDocumentScope();
+    history.resolve({ data: { systemMessages: [{ systemMessageId: "DDX1", messageText: "export/DocA_1.csv" }] } });
+    await vi.waitFor(() => expect(apiMock).toHaveBeenCalledWith(expect.objectContaining({ url: "admin/systemMessages" })));
+    await Promise.resolve();
+
+    expect(store.getExportHistory).toEqual([]);
+  });
+
+  it("starts the exports and scheduled exports with the document, not after it", async () => {
+    const doc = deferred();
+    respondWith({ "moqui/dataDocuments/DocA": () => doc.promise });
+    const store = useDataDocumentStore();
+
+    const loading = store.fetchDataDocument("DocA");
+
+    // Nothing has resolved yet, and all three requests are already in flight.
+    expect(apiMock).toHaveBeenCalledWith(expect.objectContaining({ url: "moqui/dataDocuments/DocA" }));
+    expect(apiMock).toHaveBeenCalledWith(expect.objectContaining({ url: "admin/systemMessages" }));
+    expect(apiMock).toHaveBeenCalledWith(expect.objectContaining({ url: "admin/serviceJobs" }));
+    doc.resolve(detail("DocA"));
+    await loading;
+  });
+
+  it("loadRelated starts each request once and leaves a running or finished one alone", () => {
+    respondWith({});
+    const store = useDataDocumentStore();
+
+    store.loadRelated("DocA");
+    store.loadRelated("DocA");
+
+    expect(apiMock.mock.calls.filter(([request]) => request.url === "admin/systemMessages")).toHaveLength(1);
+    expect(apiMock.mock.calls.filter(([request]) => request.url === "admin/serviceJobs")).toHaveLength(1);
+    expect(store.activeDocumentId).toBe("DocA");
+  });
+
+  it("loadRelated for another document drops the previous document's scope first", () => {
+    respondWith({});
+    const store = useDataDocumentStore();
+    store.activeDocumentId = "DocA";
+    store.previewRows = [{ a: 1 }];
+    store.exportHistoryStatus = "ready";
+
+    store.loadRelated("DocB");
+
+    expect(store.getPreviewRows).toEqual([]);
+    expect(store.activeDocumentId).toBe("DocB");
+    expect(store.getExportHistoryStatus).toBe("loading");
+  });
+
+  it("leaves the related requests out of a re-sync", async () => {
+    respondWith({ "moqui/dataDocuments/DocA": () => Promise.resolve(detail("DocA")) });
+    const store = useDataDocumentStore();
+
+    await store.fetchDataDocument("DocA", { includeRelated: false });
+
+    expect(apiMock).toHaveBeenCalledTimes(1);
+    expect(store.getExportHistoryStatus).toBe("idle");
+    expect(store.getScheduledExportsStatus).toBe("idle");
+  });
+
+  it("tracks each background request on its own so a tab can show a placeholder until it lands", async () => {
+    const history = deferred();
+    const jobs = deferred();
+    respondWith({
+      "moqui/dataDocuments/DocA": () => Promise.resolve(detail("DocA")),
+      "admin/systemMessages": () => history.promise,
+      "admin/serviceJobs": () => jobs.promise
+    });
+    const store = useDataDocumentStore();
+
+    await store.fetchDataDocument("DocA");
+    expect(store.getExportHistoryStatus).toBe("loading");
+    expect(store.getScheduledExportsStatus).toBe("loading");
+
+    jobs.resolve({ data: { serviceJobList: [] } });
+    await vi.waitFor(() => expect(store.getScheduledExportsStatus).toBe("ready"));
+    expect(store.getExportHistoryStatus).toBe("loading");
+
+    history.resolve({ data: { systemMessages: [] } });
+    await vi.waitFor(() => expect(store.getExportHistoryStatus).toBe("ready"));
+  });
+
+  it("marks a failed background request as an error without failing the document", async () => {
+    respondWith({
+      "moqui/dataDocuments/DocA": () => Promise.resolve(detail("DocA")),
+      "admin/systemMessages": () => Promise.reject(new Error("boom")),
+      "admin/serviceJobs": () => Promise.reject(new Error("boom"))
+    });
+    const store = useDataDocumentStore();
+
+    await store.fetchDataDocument("DocA");
+
+    await vi.waitFor(() => expect(store.getExportHistoryStatus).toBe("error"));
+    await vi.waitFor(() => expect(store.getScheduledExportsStatus).toBe("error"));
+    expect(store.getFields).toHaveLength(1);
+  });
+
+  it("does not let a superseded background request change another document's status", async () => {
+    const history = deferred();
+    respondWith({
+      "moqui/dataDocuments/DocA": () => Promise.resolve(detail("DocA")),
+      "moqui/dataDocuments/DocB": () => Promise.resolve(detail("DocB")),
+      "admin/systemMessages": () => history.promise
+    });
+    const store = useDataDocumentStore();
+    await store.fetchDataDocument("DocA");
+    respondWith({
+      "moqui/dataDocuments/DocB": () => Promise.resolve(detail("DocB")),
+      "admin/systemMessages": () => Promise.resolve({ data: { systemMessages: [] } })
+    });
+
+    await store.fetchDataDocument("DocB");
+    await vi.waitFor(() => expect(store.getExportHistoryStatus).toBe("ready"));
+    history.resolve({ data: { systemMessages: [{ systemMessageId: "DDX1", messageText: "export/DocA_1.csv" }] } });
+    await Promise.resolve();
+
+    expect(store.getExportHistoryStatus).toBe("ready");
+    expect(store.getExportHistory).toEqual([]);
+  });
+
+  it("resetDocumentScope clears the document's data but keeps the catalog list", () => {
+    const store = useDataDocumentStore();
+    store.dataDocuments = [{ dataDocumentId: "DocA" }];
+    store.total = 1;
+    store.activeDocumentId = "DocA";
+    store.fields = [{ fieldSeqId: "10" }];
+    store.previewRows = [{ a: 1 }];
+    store.previewStatus = "success";
+
+    store.exportHistoryStatus = "ready";
+    store.scheduledExportsStatus = "ready";
+
+    store.resetDocumentScope();
+
+    expect(store.getExportHistoryStatus).toBe("idle");
+    expect(store.getScheduledExportsStatus).toBe("idle");
+    expect(store.activeDocumentId).toBe("");
+    expect(store.getFields).toEqual([]);
+    expect(store.getPreviewRows).toEqual([]);
+    expect(store.getPreviewStatus).toBe("idle");
+    expect(store.getDataDocuments).toEqual([{ dataDocumentId: "DocA" }]);
+    expect(store.getTotal).toBe(1);
   });
 });

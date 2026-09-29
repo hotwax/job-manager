@@ -20,14 +20,14 @@
     </ion-header>
 
     <ion-content>
-      <main v-if="graph" class="graph-builder">
-        <DataDocumentMetadata @open-entity-modal="openEntityModal" @save="saveGraph" />
+      <main v-if="graphStore.status !== 'error'" class="graph-builder" :aria-busy="!graph" :aria-label="graph ? undefined : translate('Loading graph builder.')">
+        <DataDocumentMetadata :summary="summary" @open-entity-modal="openEntityModal" @save="saveGraph" />
 
         <section class="graph-workspace">
           <section class="graph-canvas-panel">
-            <div class="graph-canvas" :style="canvasStyle">
+            <div v-if="graph && hasPrimaryEntity" class="graph-canvas" :style="canvasStyle">
               <svg class="graph-edges" :viewBox="`0 0 ${canvasSize.width} ${canvasSize.height}`" preserveAspectRatio="none">
-                <g v-for="edge in graph.edges" :key="edge.edgeId" @click="selectEdge(edge.edgeId)">
+                <g v-for="edge in graph.edges" :key="edge.edgeId" class="graph-edge" @click="selectEdge(edge.edgeId)">
                   <line
                     :x1="getNodeCenter(edge.fromNodeId).x"
                     :y1="getNodeCenter(edge.fromNodeId).y"
@@ -56,10 +56,36 @@
                 <strong v-if="node.conditionCount">{{ node.conditionCount }} {{ translate("conditions") }}</strong>
               </button>
             </div>
+            <div v-else-if="graph" class="empty-state graph-empty-state hydrate">
+              <ion-icon :icon="gitBranchOutline" color="medium" size="large" />
+              <p><strong>{{ translate("Start with a primary entity") }}</strong></p>
+              <p>{{ translate("Every data document is built from one entity. Choose it to start adding fields and conditions.") }}</p>
+              <ion-button @click="openEntityModal">
+                {{ translate("Select Entity") }}
+              </ion-button>
+            </div>
+            <div v-else class="graph-canvas" :style="canvasStyle" aria-hidden="true">
+              <div class="graph-node primary graph-node-ghost" :style="ghostNodeStyle">
+                <span v-if="ghostLabel">{{ ghostLabel }}</span>
+                <ion-skeleton-text v-else :animated="true" style="width: 70%" />
+                <small v-if="summary?.primaryEntityName">{{ summary.primaryEntityName }}</small>
+                <ion-skeleton-text v-else :animated="true" style="width: 90%" />
+                <ion-skeleton-text :animated="true" style="width: 40%" />
+              </div>
+            </div>
           </section>
 
-          <aside class="graph-inspector">
-            <ion-list v-if="selectedNode">
+          <aside class="graph-inspector" :class="{ hydrate: graph }" :aria-busy="!graph">
+            <SkeletonList v-if="!graph" :rows="4" />
+            <ion-list v-else-if="!hasPrimaryEntity">
+              <ion-item>
+                <ion-label class="ion-text-wrap">
+                  {{ translate("Nothing to configure yet") }}
+                  <p>{{ translate("The inspector shows the selected node, relationship or field once a primary entity is chosen.") }}</p>
+                </ion-label>
+              </ion-item>
+            </ion-list>
+            <ion-list v-else-if="selectedNode">
               <ion-item-divider color="light">
                 <ion-label>{{ translate("Entity") }}</ion-label>
               </ion-item-divider>
@@ -227,15 +253,15 @@
           <ion-segment scrollable :value="bottomPanel" @ionChange="setSegment(String($event.detail.value || 'issues'))">
             <ion-segment-button value="issues" layout="icon-start">
               <ion-icon :icon="warningOutline" />
-              <ion-label>{{ translate("Issues") }} ({{ panelIssues.length }})</ion-label>
+              <ion-label>{{ tabLabel("Issues", graph ? panelIssues.length : undefined) }}</ion-label>
             </ion-segment-button>
             <ion-segment-button value="fields" layout="icon-start">
               <ion-icon :icon="listOutline" />
-              <ion-label>{{ translate("Fields") }} ({{ graph.fields.length }})</ion-label>
+              <ion-label>{{ tabLabel("Fields", graph?.fields.length) }}</ion-label>
             </ion-segment-button>
             <ion-segment-button value="conditions" layout="icon-start">
               <ion-icon :icon="filterOutline" />
-              <ion-label>{{ translate("Conditions") }} ({{ graph.conditions.length }})</ion-label>
+              <ion-label>{{ tabLabel("Conditions", graph?.conditions.length) }}</ion-label>
             </ion-segment-button>
             <ion-segment-button value="preview" layout="icon-start">
               <ion-icon :icon="playOutline" />
@@ -247,11 +273,12 @@
             </ion-segment-button>
             <ion-segment-button value="exports" layout="icon-start">
               <ion-icon :icon="cloudDownloadOutline" />
-              <ion-label>{{ translate("Recent Exports") }} ({{ exportHistory.length }})</ion-label>
+              <ion-label>{{ tabLabel("Recent Exports", exportHistoryStatus === "ready" ? exportHistory.length : undefined) }}</ion-label>
             </ion-segment-button>
           </ion-segment>
 
-          <ion-list v-if="bottomPanel === 'issues'">
+          <SkeletonList v-if="bottomPanelLoading" />
+          <ion-list v-else-if="bottomPanel === 'issues'" class="hydrate">
             <ion-item v-for="issue in panelIssues" :key="issue.code + issue.targetId">
               <ion-label>
                 {{ issue.severity }}
@@ -273,13 +300,13 @@
             </ion-item>
           </ion-list>
 
-          <div v-else-if="bottomPanel === 'fields'" class="fields-form">
+          <div v-else-if="bottomPanel === 'fields'" class="fields-form hydrate">
             <DataDocumentFormView embedded />
           </div>
 
-          <ion-list v-else-if="bottomPanel === 'conditions'">
+          <ion-list v-else-if="bottomPanel === 'conditions'" class="hydrate">
             <ion-item
-              v-for="condition in graph.conditions"
+              v-for="condition in graph?.conditions"
               :key="condition.conditionSeqId || condition.fieldNameAlias"
               button
               @click="openCondition(condition)"
@@ -302,12 +329,12 @@
                 <ion-icon slot="icon-only" :icon="trashOutline" />
               </ion-button>
             </ion-item>
-            <p class="empty-state" v-if="!graph.conditions.length">
+            <p v-if="!graph?.conditions.length" class="empty-state">
               {{ translate("No conditions") }}
             </p>
           </ion-list>
 
-          <div v-else-if="bottomPanel === 'preview'" class="preview-panel">
+          <div v-else-if="bottomPanel === 'preview'" class="preview-panel hydrate">
             <ion-list>
               <ion-item lines="none">
                 <ion-button @click="runPreview" :disabled="!graph?.dataDocumentId || previewStatus === 'loading'">
@@ -362,7 +389,7 @@
                 <ion-icon slot="start" :icon="timeOutline" />
                 {{ translate("Schedule email export") }}
               </ion-button>
-              <ion-list v-if="scheduledExports.length">
+              <ion-list v-if="scheduledExports.length" class="hydrate">
                 <ion-list-header>{{ translate("Scheduled email exports") }}</ion-list-header>
                 <ion-item v-for="job in scheduledExports" :key="job.jobName">
                   <ion-label>
@@ -376,10 +403,11 @@
                   </ion-button>
                 </ion-item>
               </ion-list>
+              <SkeletonList v-else-if="scheduledExportsStatus === 'loading'" :rows="1" />
             </div>
           </div>
 
-          <ion-list v-else-if="bottomPanel === 'usage'">
+          <ion-list v-else-if="bottomPanel === 'usage'" class="hydrate">
             <ion-item-divider color="light">
               <ion-label>{{ translate("Related feeds") }}</ion-label>
             </ion-item-divider>
@@ -411,7 +439,13 @@
                 {{ translate("Exports run the full document (with its conditions) and include up to 10,000 rows.") }}
               </ion-note>
             </ion-item>
-            <DataDocumentExportList :messages="exportHistory" :empty-message="translate('No recent exports.')" />
+            <SkeletonList v-if="exportHistoryStatus === 'loading'" />
+            <DataDocumentExportList
+              v-else
+              class="hydrate"
+              :messages="exportHistory"
+              :empty-message="exportHistoryStatus === 'error' ? translate('Could not load recent exports.') : translate('No recent exports.')"
+            />
             <ion-list>
               <ion-item button @click="router.push('/data-document-export-history')">
                 <ion-label>{{ translate("View export history") }}</ion-label>
@@ -423,7 +457,12 @@
 
       <ion-card v-else>
         <ion-card-content>
-          <ion-text color="medium">{{ translate("Loading graph builder.") }}</ion-text>
+          <ion-text color="danger">
+            {{ translate("Failed to load this data document.") }}
+          </ion-text>
+          <ion-button fill="clear" @click="retryLoad">
+            {{ translate("Retry") }}
+          </ion-button>
         </ion-card-content>
       </ion-card>
 
@@ -772,6 +811,7 @@ import {
   IonSegmentButton,
   IonSelect,
   IonSelectOption,
+  IonSkeletonText,
   IonSpinner,
   IonListHeader,
   IonText,
@@ -780,6 +820,7 @@ import {
   IonToolbar,
   alertController,
   modalController,
+  onIonViewDidLeave,
   onIonViewWillEnter
 } from "@ionic/vue";
 import { addOutline, alertCircleOutline, arrowBackOutline, checkmarkCircleOutline, closeOutline, cloudDownloadOutline, cloudUploadOutline, filterOutline, gitBranchOutline, informationCircleOutline, listOutline, trashOutline, pauseOutline, playOutline, saveOutline, statsChartOutline, timeOutline, warningOutline } from "ionicons/icons";
@@ -794,12 +835,13 @@ import DataDocumentFieldPicker from "@/components/DataDocumentFieldPicker.vue";
 import DataDocumentMetadata from "@/components/DataDocumentMetadata.vue";
 import DataDocumentPreviewTable from "@/components/DataDocumentPreviewTable.vue";
 import ScheduleEmailExportModal from "@/components/ScheduleEmailExportModal.vue";
+import SkeletonList from "@/components/SkeletonList.vue";
 import DataDocumentFormView from "@/views/DataDocumentFormView.vue";
 import { getDateAndTime, showToast } from "@/utils";
 import { useUtilStore } from "@/store/util";
-import type { GraphCondition, GraphEdge, GraphField } from "@/utils/dataDocumentGraph";
-import { DATA_DOCUMENT_FUNCTIONS, getDataDocumentFunctionLabel, isConditionValueMissing } from "@/utils/dataDocumentGraph";
 import { getConditionValueOptionSource } from "@/utils/conditionValueOptions";
+import type { GraphCondition, GraphEdge, GraphField } from "@/utils/dataDocumentGraph";
+import { DATA_DOCUMENT_FUNCTIONS, getDataDocumentFunctionLabel, getLabel, isConditionValueMissing } from "@/utils/dataDocumentGraph";
 import { getEntityLabel, getEntitySearchText, getEntityValue, groupEntityOptions } from "@/utils/entityOptions";
 import type { EntityOption } from "@/utils/entityOptions";
 import { useKeyboardListNavigation } from "@/utils/keyboardListNavigation";
@@ -860,7 +902,18 @@ const operators = [
   { value: "between", label: "Between" }
 ];
 
-const graph = computed(() => graphStore.getGraph);
+// The store holds one graph for whichever document last claimed it, so render it only once it is
+// loaded for the document this page is showing. Until then the page shows loading or an error.
+const graph = computed(() => graphStore.status === "ready" ? graphStore.getGraph : undefined);
+// The document this page is for. Read once here so the first paint has it, then again on every enter.
+const documentKey = ref(String(router.currentRoute.value.params.id ?? ""));
+// What the catalog already knows about this document: enough to preview the top card and the root
+// node while the rest loads. Matched by id, so it can only ever be this document's own record.
+const summary = computed(() => documentKey.value && documentKey.value !== "new"
+  ? dataDocumentStore.getDataDocuments.find((item: any) => item.dataDocumentId === documentKey.value)
+  : undefined);
+const ghostLabel = computed(() => summary.value?.primaryEntityName ? getLabel(summary.value.primaryEntityName) : "");
+const hasPrimaryEntity = computed(() => !!graph.value?.metadata.primaryEntityName);
 // Reactive to the live route so it flips to false in place after the first save replaces
 // /data-documents/new/graph with /data-documents/{id}/graph (same route record).
 const isNew = computed(() => router.currentRoute.value.params.id === "new");
@@ -874,6 +927,13 @@ const relatedFeeds = computed(() => dataDocumentStore.getRelatedFeeds);
 const relatedJobs = computed(() => dataDocumentStore.getRelatedJobs);
 const exportHistory = computed(() => dataDocumentStore.getExportHistory);
 const scheduledExports = computed(() => dataDocumentStore.getScheduledExports);
+const exportHistoryStatus = computed(() => dataDocumentStore.getExportHistoryStatus);
+const scheduledExportsStatus = computed(() => dataDocumentStore.getScheduledExportsStatus);
+// The tabs read from different requests. The graph tabs wait for the document; Preview is static
+// controls, and Recent Exports has a placeholder of its own that waits for its own request.
+const bottomPanelLoading = computed(() => !["preview", "exports"].includes(bottomPanel.value) && !graph.value);
+// A count is only shown once it is known, so it appears in place instead of reading "(0)" first.
+const tabLabel = (label: string, count?: number) => count === undefined ? translate(label) : `${translate(label)} (${count})`;
 const graphHasErrors = computed(() => graph.value?.validationIssues.some((issue) => issue.severity === "error"));
 // An unsaved draft is session state (store.isDirty), not a property of the persisted graph, so
 // it is prepended here rather than taught to projectDataDocumentGraph. It stays a warning: a
@@ -901,11 +961,18 @@ const canvasStyle = computed(() => ({
   width: `${canvasSize.value.width}px`,
   height: `${canvasSize.value.height}px`
 }));
+// Where the root node sits, shared with the placeholder so the real one lands exactly on it.
+const primaryNodePosition = computed(() => ({ x: 40, y: Math.round(canvasSize.value.height / 2) - 48 }));
+const ghostNodeStyle = computed(() => ({
+  transform: `translate(${primaryNodePosition.value.x}px, ${primaryNodePosition.value.y}px)`
+}));
 
 const getNodePosition = (nodeId: string) => {
   const node = graph.value?.nodes.find((item) => item.nodeId === nodeId);
   if (!node) return { x: 40, y: 180 };
-  if (node.isPrimary) return { x: 40, y: Math.round(canvasSize.value.height / 2) - 48 };
+  if(node.isPrimary) {
+    return primaryNodePosition.value;
+  }
   const depth = node.relationshipPath.length;
   const siblingIndex = graph.value?.nodes
     .filter((item) => !item.isPrimary && item.relationshipPath.length === depth)
@@ -1483,6 +1550,40 @@ watch([relatedFieldQueryString, relatedFieldStep, relatedEntityName, activeRelat
   relatedFieldPickerNavigation.resetNavigation();
 });
 
+// Each time this page takes the store it gets a new ticket, and leaving releases the store only if
+// that ticket is still the one it holds. Ionic keeps this page cached after leaving it, and a page
+// entered right after (another document, or the id a first save just created) may already own the store.
+let claimant: symbol | undefined;
+
+const enterDocument = async (key: string) => {
+  claimant = Symbol(key);
+  documentKey.value = key;
+  if(key === "new") {
+    graphStore.startNewGraph(claimant);
+
+    return;
+  }
+  // Start what only needs the id or the catalog's record beside the document request, and let each
+  // region fill in when its own data lands: the document (with its exports and scheduled exports,
+  // started inside the store) and, when the catalog already named the entity, its definition.
+  const loading = graphStore.fetchGraph(key, { claimant });
+  const previewEntity = summary.value?.primaryEntityName;
+  if(previewEntity) {
+    void utilStore.fetchEntityFields(previewEntity);
+  }
+  await loading;
+  // The load failed, or the store was handed to another page while it ran.
+  if(graphStore.status !== "ready" || graphStore.owner !== key) {
+    return;
+  }
+  const entityName = graph.value?.metadata.primaryEntityName;
+  if(entityName && entityName !== previewEntity) {
+    void utilStore.fetchEntityFields(entityName);
+  }
+};
+
+const retryLoad = () => enterDocument(router.currentRoute.value.params.id as string);
+
 onIonViewWillEnter(async () => {
   // Deep-link the active segment from ?segment= (catalog Run→preview, History→exports).
   // Done here, not at ref init, because Ionic caches/reuses the page across navigations.
@@ -1492,16 +1593,12 @@ onIonViewWillEnter(async () => {
   utilStore.fetchStatuses();
   // Read the LIVE route id (not the captured snapshot) so a cached re-enter after the
   // in-place first-save fetches the real document, never the literal "new".
-  const currentId = router.currentRoute.value.params.id as string;
-  if(currentId === "new") {
-    graphStore.startNewGraph();
-  } else {
-    await graphStore.fetchGraph(currentId);
-    if (graph.value?.metadata.primaryEntityName) {
-      await utilStore.fetchEntityFields(graph.value.metadata.primaryEntityName);
-    }
-    // Surface scheduled email exports for this document in the Preview segment.
-    dataDocumentStore.fetchScheduledExports(currentId);
+  await enterDocument(router.currentRoute.value.params.id as string);
+});
+
+onIonViewDidLeave(() => {
+  if(claimant) {
+    graphStore.release(claimant);
   }
 });
 </script>
@@ -1627,6 +1724,59 @@ onIonViewWillEnter(async () => {
 .graph-bottom {
   border-top: 1px solid var(--ion-color-light-shade);
   background: var(--ion-background-color);
+}
+
+/* Regions pop in as their data lands: a short fade and rise. Related nodes and their edges only
+   fade, because an inline transform is what places a node. Off for people who ask for less motion. */
+@keyframes hydrate-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--spacer-2xs));
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hydrate-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.hydrate {
+  animation: hydrate-in 0.24s ease-out backwards;
+}
+
+/* The root node is already on screen as a placeholder and resolves in place. Everything the document
+   adds around it is new to the canvas. */
+.graph-node:not(.primary),
+.graph-edge {
+  animation: hydrate-fade 0.24s ease-out backwards;
+}
+
+/* The placeholder node only marks where the real one will land. */
+.graph-node-ghost {
+  cursor: default;
+  pointer-events: none;
+}
+
+.graph-empty-state {
+  height: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hydrate,
+  .graph-node:not(.primary),
+  .graph-edge {
+    animation: none;
+  }
 }
 
 @media (max-width: 900px) {
