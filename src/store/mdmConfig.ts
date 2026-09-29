@@ -3,12 +3,15 @@ import { getTimeInMillis } from "@/utils";
 import { api } from "@common";
 import { defineStore } from "pinia";
 
+
+
 export const useMdmConfigStore = defineStore("mdmConfig", {
   state: () => ({
     configs: [] as Array<any>,
     executionModes: [] as Array<any>,
     logs: [] as Array<any>,
     logsCount: 0,
+    dashboardLogs: [] as Array<any>,  // Dedicated to Pipeline dashboard — never touched by FileHistory fetches
     isFetchingLogs: false,
     filters: {} as Record<string, any>,
     globalStats: { total: 0, successful: 0, failed: 0, avgProcessingTime: 0 },
@@ -22,6 +25,7 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
     getExecutionModes: (state: any) => state.executionModes,
     getLogs: (state: any) => state.logs,
     getLogsCount: (state: any) => state.logsCount,
+    getDashboardLogs: (state: any) => state.dashboardLogs,
     getAppliedFilters: (state: any) => JSON.parse(JSON.stringify(state.filters)),
     getGlobalStats: (state: any) => state.globalStats,
     getFetchStatus: (state: any) => state.fetchStatus
@@ -107,8 +111,10 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
         return false;
       }
     },
-    async fetchDataManagerLogs(params = { pageSize: 10, pageIndex: 0 }) {
-      this.isFetchingLogs = true;
+    async fetchDataManagerLogs(params: any = { pageSize: 10, pageIndex: 0 }) {
+      if(!params.silent) {
+        this.isFetchingLogs = true;
+      }
       try {
         const payload = {
           ...params
@@ -140,6 +146,10 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
           payload["statusId"] = "DmlsCancelled,DmlsCrashed,DmlsFailed,DmlsFinished,DmlsPending,DmlsQueued,DmlsRunning"
           payload["statusId_op"] = "in"
         }
+        
+        if (!payload.orderByField) {
+          payload["orderByField"] = "-createdDate"
+        }
 
         const resp = await api({
           url: "admin/dataManager/details",
@@ -155,9 +165,11 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
           this.logsCount = 0
         }
       } catch (err) {
-        logger.error("Failed to fetch logs", err)
+        logger.error("Log [Type: data manager] - Failed to fetch", err)
       } finally {
-        this.isFetchingLogs = false;
+        if(!params.silent) {
+          this.isFetchingLogs = false;
+        }
       }
     },
     async fetchDataManagerLogById(logId: string) {
@@ -223,6 +235,44 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
     },
     async updateAppliedFilters(filterType: string, value: any) {
       this.filters[filterType] = value
+    },
+    /**
+     * Upsert a data manager log document received from a live WebSocket notification.
+     * Writes to dashboardLogs (Pipeline-only) so FileHistory's fetches never corrupt the counts.
+     * Caps at 100 to prevent unbounded growth.
+     */
+    upsertLog(doc: Record<string, any>) {
+      const logId = doc.logId || doc.dataManagerLogId || doc.id;
+      if(!logId) return;
+      const normalized = {
+        ...doc,
+        logId,
+        configId: doc.configId || doc.dataManagerConfigId,
+        statusId: doc.statusId || doc.logStatusId || doc.status
+      };
+      const idx = this.dashboardLogs.findIndex((log: any) => (log.logId || log.dataManagerLogId || log.id) == logId);
+      if(idx >= 0) {
+        this.dashboardLogs.splice(idx, 1, { ...this.dashboardLogs[idx], ...normalized });
+      } else {
+        this.dashboardLogs.unshift(normalized);
+        if(this.dashboardLogs.length > 100) this.dashboardLogs.splice(100);
+      }
+    },
+    async fetchDataManagerLogsForDashboard() {
+      // Writes ONLY to dashboardLogs — completely isolated from this.logs used by FileHistory.
+      this.isFetchingLogs = true;
+      try {
+        const resp = await api({
+          url: "admin/dataManager/details",
+          method: "get",
+          params: { pageSize: 50, pageIndex: 0, orderByField: "-createdDate" }
+        });
+        this.dashboardLogs = resp.data?.dataManagerLogs || [];
+      } catch (err) {
+        logger.error("Log [Type: dashboard] - Failed to fetch", err);
+      } finally {
+        this.isFetchingLogs = false;
+      }
     },
     async fetchGlobalStats() {
       const moquiStatuses = "DmlsCancelled,DmlsCrashed,DmlsFailed,DmlsFinished,DmlsPending,DmlsQueued,DmlsRunning"

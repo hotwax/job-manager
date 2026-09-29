@@ -250,6 +250,7 @@ const messageTypeModal = ref();
 
 const messages = computed(() => store.getSystemMessages);
 
+
 const total = computed(() => store.getSystemMessageTotal);
 const types = computed(() => store.getSystemMessageTypes);
 const parentTypes = computed(() => store.getSystemMessageParentTypes);
@@ -304,6 +305,10 @@ const loadMessages = async () => {
 
   if(selectedRemoteId.value) {
     payload["systemMessageRemoteId"] = selectedRemoteId.value
+  }
+
+  if(selectedIsOutgoing.value) {
+    payload["isOutgoing"] = selectedIsOutgoing.value
   }
 
   if(selectedIsOutgoing.value) {
@@ -378,6 +383,9 @@ watch(pageIndex, () => {
   if (!selectedIsOutgoing.value) {
     loadMessages();
   }
+});
+watch(pageIndex, () => {
+  loadMessages();
 });
 
 onIonViewWillEnter(async () => {

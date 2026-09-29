@@ -112,6 +112,32 @@ export const useSystemMessageStore = defineStore("systemMessage", {
         this.loading = false;
       }
     },
+    /**
+     * Upsert a system message document received from a live WebSocket notification.
+     * Merges the sparse update into the existing entry (keyed on systemMessageId),
+     * or prepends if it's new. Caps the list at 50.
+     */
+    upsertSystemMessage(doc: Record<string, any>) {
+      const msgId = doc.systemMessageId || doc.id;
+      if (!msgId) return;
+      const idx = this.systemMessages.findIndex(
+        (msg: any) => (msg.systemMessageId || msg.id) == msgId
+      );
+      const normalized = { ...doc, systemMessageId: msgId };
+      if (idx >= 0) {
+        (this.systemMessages as any[]).splice(idx, 1, { ...this.systemMessages[idx], ...normalized });
+      } else {
+        (this.systemMessages as any[]).unshift(normalized);
+      }
+      
+      // Maintain a larger bounded buffer (e.g., 500) for performance. 
+      // Since the initial fetch is 50, this provides headroom for 450 live updates
+      // before items fall off the bottom and cause dashboard counts to stagnate.
+      if (this.systemMessages.length > 500) {
+        this.systemMessages.splice(500);
+      }
+      this.systemMessageTotal = Math.max(this.systemMessageTotal || 0, this.systemMessages.length);
+    },
     async fetchSystemMessages(payload: Record<string, any> = {}) {
       this.loading = true;
       this.isFetchingMessages = true;
