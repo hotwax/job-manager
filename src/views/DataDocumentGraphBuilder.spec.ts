@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
-import { IonButton, IonSegment, IonSegmentButton, alertController } from "@ionic/vue";
+import { IonButton, IonInput, IonSegment, IonSegmentButton, IonSelect, IonSelectOption, alertController } from "@ionic/vue";
 import DataDocumentGraphBuilder from "./DataDocumentGraphBuilder.vue";
 import DataDocumentExportList from "@/components/DataDocumentExportList.vue";
 import DataDocumentMetadata from "@/components/DataDocumentMetadata.vue";
@@ -526,5 +526,159 @@ describe("DataDocumentGraphBuilder.vue - fills in as its data arrives", () => {
     expect(wrapper.find(".graph-empty-state").exists()).toBe(false);
     expect(wrapper.findAll("button.graph-node")).toHaveLength(1);
     expect(wrapper.text()).not.toContain("Nothing to configure yet");
+  });
+});
+
+describe("DataDocumentGraphBuilder.vue - conditions only use what the backend can run", () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+  });
+
+  const mountBuilder = () => mount(DataDocumentGraphBuilder, {
+    props: { id: "new" },
+    global: {
+      stubs: {
+        IonModal: { template: "<div><slot /></div>" },
+        IonContent: { template: "<div><slot /></div>" },
+        DataDocumentExportList: true,
+        DataDocumentPreviewTable: true
+      }
+    }
+  });
+
+  const valueInput = (wrapper: ReturnType<typeof mountBuilder>) =>
+    wrapper.findAllComponents(IonInput).find((input) => input.props("label") === "Value");
+
+  const operatorSelect = (wrapper: ReturnType<typeof mountBuilder>) =>
+    wrapper.findAllComponents(IonSelect).find((select) => select.props("label") === "Operator");
+  const offeredOperators = (wrapper: ReturnType<typeof mountBuilder>) =>
+    operatorSelect(wrapper)?.findAllComponents(IonSelectOption).map((option) => option.props("value"));
+
+  // An order id is a text field and the order date is a date-time, so the backend can read a list or a
+  // pattern from one and not from the other.
+  const graphWithTypedFields = () => {
+    const store = useDataDocumentGraphStore();
+    store.startNewGraph();
+    store.updateMetadata({ primaryEntityName: "OrderHeader" });
+    store.addFieldPath("orderId");
+    store.addFieldPath("orderDate");
+    const utilStore = useUtilStore();
+    utilStore.entityFields = {
+      OrderHeader: [
+        { name: "orderId", fieldName: "orderId", type: "id" },
+        { name: "orderDate", fieldName: "orderDate", type: "date-time" }
+      ]
+    };
+    utilStore.entityRelationships = { OrderHeader: [{ relationshipName: "OrderItem" }] };
+
+    return store;
+  };
+
+  it("offers only operators the backend can run on the field's type, never the runtime filter ones it rejects", async () => {
+    graphWithTypedFields();
+    const wrapper = mountBuilder();
+    await wrapper.vm.$nextTick();
+
+    (wrapper.vm as any).activeCondition.fieldNameAlias = "orderId";
+    await wrapper.vm.$nextTick();
+    expect(offeredOperators(wrapper)).toEqual(["equals", "not-equals", "like", "in", "is-null", "is-not-null", "greater", "greater-equals", "less", "less-equals"]);
+
+    (wrapper.vm as any).activeCondition.fieldNameAlias = "orderDate";
+    await wrapper.vm.$nextTick();
+    expect(offeredOperators(wrapper)).toEqual(["equals", "not-equals", "is-null", "is-not-null", "greater", "greater-equals", "less", "less-equals"]);
+
+    for(const rejected of ["contains", "starts-with", "empty", "not-empty", "between"]) {
+      expect(offeredOperators(wrapper)).not.toContain(rejected);
+    }
+  });
+
+  it("offers only what works on every type while the field's type is not known", async () => {
+    useDataDocumentGraphStore().startNewGraph();
+    const wrapper = mountBuilder();
+    await wrapper.vm.$nextTick();
+
+    expect(offeredOperators(wrapper)).toEqual(["equals", "not-equals", "is-null", "is-not-null", "greater", "greater-equals", "less", "less-equals"]);
+  });
+
+  it("refuses to save an operator the field cannot take, says why, and saves it once it fits", async () => {
+    const store = graphWithTypedFields();
+    const wrapper = mountBuilder();
+    await wrapper.vm.$nextTick();
+    const dismiss = vi.fn();
+    (wrapper.findComponent({ ref: "conditionModal" }).element as any).dismiss = dismiss;
+
+    Object.assign((wrapper.vm as any).activeCondition, { fieldNameAlias: "orderDate", operator: "like", fieldValue: "2026%" });
+    await wrapper.vm.$nextTick();
+    expect((wrapper.vm as any).isOperatorUnsupported).toBe(true);
+
+    (wrapper.vm as any).closeConditionModal(true);
+    await wrapper.vm.$nextTick();
+
+    expect(dismiss).not.toHaveBeenCalled();
+    expect(store.getGraph?.conditions).toHaveLength(0);
+    expect(operatorSelect(wrapper)?.classes()).toEqual(expect.arrayContaining(["ion-invalid", "ion-touched"]));
+    expect(operatorSelect(wrapper)?.props("errorText")).toBe("This operator does not work for this field");
+
+    Object.assign((wrapper.vm as any).activeCondition, { operator: "greater-equals", fieldValue: "2026-09-28 17:43:01" });
+    await wrapper.vm.$nextTick();
+    expect((wrapper.vm as any).isOperatorUnsupported).toBe(false);
+
+    (wrapper.vm as any).closeConditionModal(true);
+
+    expect(dismiss).toHaveBeenCalled();
+    expect(store.getGraph?.conditions).toEqual([
+      expect.objectContaining({ fieldNameAlias: "orderDate", operator: "greater-equals", fieldValue: "2026-09-28 17:43:01" })
+    ]);
+  });
+
+  it("takes no value for an operator that needs none", async () => {
+    useDataDocumentGraphStore().startNewGraph();
+    const wrapper = mountBuilder();
+    await wrapper.vm.$nextTick();
+    expect(valueInput(wrapper)).toBeDefined();
+
+    (wrapper.vm as any).activeCondition.operator = "is-not-null";
+    await wrapper.vm.$nextTick();
+
+    expect(valueInput(wrapper)).toBeUndefined();
+  });
+
+  it("says how Like takes its value", async () => {
+    useDataDocumentGraphStore().startNewGraph();
+    const wrapper = mountBuilder();
+
+    (wrapper.vm as any).activeCondition.operator = "like";
+    await wrapper.vm.$nextTick();
+
+    expect(valueInput(wrapper)?.props("helperText")).toBe("Use % as a wildcard, e.g. %text%");
+  });
+
+  it("says how In list takes its value, and asks for one", async () => {
+    useDataDocumentGraphStore().startNewGraph();
+    const wrapper = mountBuilder();
+    Object.assign((wrapper.vm as any).activeCondition, { fieldNameAlias: "productStoreId", operator: "in", fieldValue: "" });
+    await wrapper.vm.$nextTick();
+
+    expect(valueInput(wrapper)?.props("helperText")).toBe("Separate values with commas");
+    expect((wrapper.vm as any).isOperatorValueInvalid).toBe(true);
+    expect(valueInput(wrapper)?.props("errorText")).toBe("Value is required");
+
+    (wrapper.vm as any).activeCondition.fieldValue = "STORE,STORE_CA";
+    await wrapper.vm.$nextTick();
+    expect((wrapper.vm as any).isOperatorValueInvalid).toBe(false);
+  });
+
+  it("does not send the document's own conditions to the preview as runtime filters", async () => {
+    const store = useDataDocumentGraphStore();
+    store.startNewGraph();
+    store.updateMetadata({ primaryEntityName: "OrderHeader" });
+    store.addCondition({ fieldNameAlias: "orderId", operator: "equals", fieldValue: "100" });
+
+    const wrapper = mountBuilder();
+    await wrapper.vm.$nextTick();
+
+    expect((wrapper.vm as any).graph.conditions).toHaveLength(1);
+    expect((wrapper.vm as any).buildQuery().filters).toEqual([]);
   });
 });

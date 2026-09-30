@@ -709,13 +709,15 @@
               label-placement="floating"
               fill="outline"
               interface="popover"
+              :class="{ 'ion-invalid ion-touched': conditionSubmitted && isOperatorUnsupported }"
+              :error-text="translate('This operator does not work for this field')"
             >
               <ion-select-option v-for="operator in operators" :key="operator.value" :value="operator.value">
                 {{ translate(operator.label) }}
               </ion-select-option>
             </ion-select>
             <ion-select
-              v-if="activeConditionValueOptions"
+              v-if="conditionNeedsValue && activeConditionValueOptions"
               :value="activeCondition.fieldValue"
               :label="translate('Value')"
               :placeholder="activeConditionValueOptions.label || translate('Select value')"
@@ -735,11 +737,12 @@
               </ion-select-option>
             </ion-select>
             <ion-input
-              v-else
+              v-else-if="conditionNeedsValue"
               :value="activeCondition.fieldValue"
               :label="translate('Value')"
               label-placement="floating"
               fill="outline"
+              :helper-text="conditionOperatorHint"
               :class="{ 'ion-invalid ion-touched': conditionSubmitted && isOperatorValueInvalid }"
               :error-text="translate('Value is required')"
               @ionInput="activeCondition.fieldValue = $event.detail.value || ''"
@@ -841,7 +844,7 @@ import { getDateAndTime, showToast } from "@/utils";
 import { useUtilStore } from "@/store/util";
 import { getConditionValueOptionSource } from "@/utils/conditionValueOptions";
 import type { GraphCondition, GraphEdge, GraphField } from "@/utils/dataDocumentGraph";
-import { DATA_DOCUMENT_FUNCTIONS, getDataDocumentFunctionLabel, getLabel, isConditionValueMissing } from "@/utils/dataDocumentGraph";
+import { DATA_DOCUMENT_FUNCTIONS, conditionOperatorNeedsValue, getConditionOperatorHint, getConditionOperatorsForFieldType, getDataDocumentFunctionLabel, getLabel, isConditionValueMissing, normalizeDataDocumentOperator } from "@/utils/dataDocumentGraph";
 import { getEntityLabel, getEntitySearchText, getEntityValue, groupEntityOptions } from "@/utils/entityOptions";
 import type { EntityOption } from "@/utils/entityOptions";
 import { useKeyboardListNavigation } from "@/utils/keyboardListNavigation";
@@ -886,21 +889,6 @@ const activeCondition = ref<Record<string, any>>({
   toFieldNameAlias: "",
   postQuery: "N",
 });
-
-const operators = [
-  { value: "equals", label: "Equals" },
-  { value: "not-equals", label: "Not equals" },
-  { value: "contains", label: "Contains" },
-  { value: "starts-with", label: "Starts with" },
-  { value: "in", label: "In list" },
-  { value: "empty", label: "Is empty" },
-  { value: "not-empty", label: "Is not empty" },
-  { value: "greater", label: "Greater than" },
-  { value: "greater-equals", label: "Greater than or equal" },
-  { value: "less", label: "Less than" },
-  { value: "less-equals", label: "Less than or equal" },
-  { value: "between", label: "Between" }
-];
 
 // The store holds one graph for whichever document last claimed it, so render it only once it is
 // loaded for the document this page is showing. Until then the page shows loading or an error.
@@ -1217,8 +1205,34 @@ const getConditionValueOptions = (condition: any) => {
 
 const activeConditionValueOptions = computed(() => getConditionValueOptions(activeCondition.value));
 
+// The type of the field a condition is on, from the entity definition the picker already loaded.
+const getConditionFieldType = (condition: any) => {
+  const field = getConditionField(condition);
+  const entityName = getFieldEntityName(field);
+
+  if(!field || !entityName) {
+    return undefined;
+  }
+
+  return utilStore.getEntityFields(entityName).find((entityField: any) => entityField.fieldName === field.fieldName)?.type;
+};
+
+// Only the operators the backend can run on this field's type.
+const operators = computed(() => getConditionOperatorsForFieldType(getConditionFieldType(activeCondition.value)));
+const isOperatorUnsupported = computed(() => (
+  !!activeCondition.value?.operator &&
+  !operators.value.some((operator) => operator.value === normalizeDataDocumentOperator(activeCondition.value.operator))
+));
+
+const conditionNeedsValue = computed(() => conditionOperatorNeedsValue(activeCondition.value?.operator));
+const conditionOperatorHint = computed(() => {
+  const hint = getConditionOperatorHint(activeCondition.value?.operator);
+
+  return hint ? translate(hint) : undefined;
+});
 const isOperatorValueInvalid = computed(() => {
   if (!activeCondition.value?.fieldNameAlias || !activeCondition.value?.operator) return false;
+
   return isConditionValueMissing(activeCondition.value.operator, activeCondition.value.fieldValue);
 });
 
@@ -1419,10 +1433,13 @@ const removeCondition = (condition: any) => {
 const closeConditionModal = (save: boolean = false) => {
   if (save) {
     conditionSubmitted.value = true;
-    if (isOperatorValueInvalid.value) {
+    if(isOperatorValueInvalid.value || isOperatorUnsupported.value) {
       return;
     }
     const condition = { ...activeCondition.value };
+    if(!conditionNeedsValue.value) {
+      condition.fieldValue = "";
+    }
     const existingId = condition.conditionSeqId || condition.localId;
     const isExisting = !!existingId && (graph.value?.conditions || []).some((item: any) => (
       item.conditionSeqId === existingId || item.localId === existingId
@@ -1440,11 +1457,10 @@ const closeConditionModal = (save: boolean = false) => {
 
 const buildQuery = () => ({
   selectedFields: selectedFields.value,
-  filters: graph.value?.conditions.map((condition) => ({
-    fieldNameAlias: condition.fieldNameAlias,
-    operator: condition.operator,
-    value: condition.fieldValue
-  })) || [],
+  // The backend applies the document's own conditions when it runs, so none are sent along as runtime
+  // filters. Sending them too made the preview follow the unsaved graph, and a different operator
+  // vocabulary, instead of the saved document that export and feeds will run.
+  filters: [],
   sort: [],
   distinct: false,
   pageSize: pageSize.value

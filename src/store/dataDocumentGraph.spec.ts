@@ -1,10 +1,18 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  DATA_DOCUMENT_CONDITION_OPERATORS,
   DATA_DOCUMENT_ID_MAX_LENGTH,
   buildDataDocumentExportPayload,
   buildDataDocumentPreviewPayload,
+  conditionOperatorNeedsValue,
   deriveDataDocumentId,
+  getConditionOperatorHint,
+  getConditionOperatorsForFieldType,
+  isConditionValueMissing,
+  isSupportedConditionOperator,
+  normalizeConditionValue,
+  normalizeDataDocumentOperator,
   projectDataDocumentGraph,
   serializeGraphConditions,
   serializeGraphFields,
@@ -398,5 +406,168 @@ describe("field aliases the API keeps", () => {
     expect(toStoredFieldAlias(alias)).toBe(stored);
     // what a field keeps after it is saved is what a condition has to name
     expect(toStoredFieldAlias(alias)).toBe(apiCamelCase(toApiFieldAlias(alias)));
+  });
+});
+
+// The names Moqui's EntityConditionFactoryImpl.stringComparisonOperatorMap accepts, copied from the framework
+// as an independent list. EntityFind.condition() throws "Operator [x] is not a valid field comparison
+// operator" for any other name, which fails the document when it runs.
+const MOQUI_OPERATORS = new Set([
+  "=", "equals", "not-equals", "not-equal", "!=", "<>",
+  "less-than", "less", "<", "greater-than", "greater", ">",
+  "less-than-equal-to", "less-equals", "<=", "greater-than-equal-to", "greater-equals", ">=",
+  "in", "IN", "not-in", "NOT IN", "between", "BETWEEN", "not-between", "NOT BETWEEN",
+  "like", "LIKE", "not-like", "NOT LIKE", "is-null", "IS NULL", "is-not-null", "IS NOT NULL"
+]);
+
+describe("condition operators the backend can run", () => {
+  const offered = DATA_DOCUMENT_CONDITION_OPERATORS.map((operator) => operator.value);
+
+  it("offers only names the backend accepts", () => {
+    expect(offered.filter((value) => !MOQUI_OPERATORS.has(value))).toEqual([]);
+  });
+
+  it.each(["contains", "starts-with", "empty", "not-empty"])("does not offer %s, which the backend rejects when the document runs", (operator) => {
+    expect(offered).not.toContain(operator);
+  });
+
+  it("offers each operator once, with a label", () => {
+    expect(new Set(offered).size).toBe(offered.length);
+    expect(DATA_DOCUMENT_CONDITION_OPERATORS.every((operator) => operator.label.length > 0)).toBe(true);
+  });
+
+  it("does not turn a legacy alias into a name the backend lacks", () => {
+    expect(normalizeDataDocumentOperator("in-list")).toBe("in");
+    expect(normalizeDataDocumentOperator("greater-than")).toBe("greater");
+    expect(normalizeDataDocumentOperator("is-empty")).toBe("is-empty");
+    expect(normalizeDataDocumentOperator("is-not-empty")).toBe("is-not-empty");
+  });
+
+  it("says which operators the backend can run", () => {
+    for(const operator of [undefined, "", "equals", "greater-than", "like", "IS NULL", "is-not-null"]) {
+      expect(isSupportedConditionOperator(operator)).toBe(true);
+    }
+    for(const operator of ["contains", "starts-with", "begins", "empty", "not-empty", "is-empty"]) {
+      expect(isSupportedConditionOperator(operator)).toBe(false);
+    }
+  });
+
+  it("asks for a value only from an operator that takes one", () => {
+    expect(conditionOperatorNeedsValue("equals")).toBe(true);
+    expect(conditionOperatorNeedsValue("in")).toBe(true);
+    expect(conditionOperatorNeedsValue("is-null")).toBe(false);
+    expect(conditionOperatorNeedsValue("is-not-null")).toBe(false);
+    expect(isConditionValueMissing("equals", "")).toBe(true);
+    expect(isConditionValueMissing("equals", "SHIPPING_CHARGES")).toBe(false);
+    expect(isConditionValueMissing("is-null", "")).toBe(false);
+    expect(isConditionValueMissing("is-not-null", undefined)).toBe(false);
+  });
+
+  it("tells how In list and Like take their value", () => {
+    expect(getConditionOperatorHint("in")).toBe("Separate values with commas");
+    expect(getConditionOperatorHint("like")).toBe("Use % as a wildcard, e.g. %text%");
+    expect(getConditionOperatorHint("equals")).toBe("");
+  });
+
+  // The backend converts the whole stored value to the field's type before it reads a list or a pattern
+  // out of it. A comma-separated value only survives that on a text field: on a date-time field the
+  // preview failed with "The value [2026-09-28 17:35:35,2026-09-30 23:59:59] is not a valid date/time".
+  describe("by field type", () => {
+    const offeredFor = (fieldType?: string) => getConditionOperatorsForFieldType(fieldType).map((operator) => operator.value);
+    const onEveryType = ["equals", "not-equals", "is-null", "is-not-null", "greater", "greater-equals", "less", "less-equals"];
+
+    it.each(["id", "id-long", "text-indicator", "text-short", "text-medium", "text-intermediate", "text-long", "text-very-long"])(
+      "offers Like and In list on a %s field",
+      (fieldType) => {
+        expect(offeredFor(fieldType)).toEqual(["equals", "not-equals", "like", "in", "is-null", "is-not-null", "greater", "greater-equals", "less", "less-equals"]);
+      }
+    );
+
+    it.each(["date-time", "date", "time", "number-integer", "number-decimal", "number-float", "currency-amount", "currency-precise", "binary-very-long"])(
+      "offers neither Like nor In list on a %s field, which the backend cannot read them from",
+      (fieldType) => {
+        expect(offeredFor(fieldType)).toEqual(onEveryType);
+      }
+    );
+
+    it("offers only what works on every type until the type is known", () => {
+      expect(offeredFor(undefined)).toEqual(onEveryType);
+      expect(offeredFor("")).toEqual(onEveryType);
+      expect(offeredFor("a-type-nobody-defined")).toEqual(onEveryType);
+    });
+
+    it("never offers Between, which needs two values in one text; a range is two conditions", () => {
+      expect(offered).not.toContain("between");
+      for(const fieldType of [undefined, "id", "text-medium", "date-time", "currency-amount"]) {
+        expect(offeredFor(fieldType)).not.toContain("between");
+      }
+      for(const rangeEnd of ["greater-equals", "less-equals"]) {
+        expect(offeredFor("date-time")).toContain(rangeEnd);
+      }
+    });
+
+    it("only ever narrows the list", () => {
+      for(const fieldType of [undefined, "id", "date-time"]) {
+        expect(offeredFor(fieldType).every((value) => offered.includes(value))).toBe(true);
+      }
+    });
+  });
+
+  // The backend cuts an In list at every comma and keeps the spaces: with "STORE, STORE_CA" a preview
+  // of shipping revenue returned only STORE, because " STORE_CA" matched nothing.
+  describe("the value of a condition", () => {
+    it("stores an In list without spaces around its values", () => {
+      expect(normalizeConditionValue("in", "STORE, STORE_CA")).toBe("STORE,STORE_CA");
+      expect(normalizeConditionValue("in", " STORE ,STORE_CA ,")).toBe("STORE,STORE_CA");
+      expect(normalizeConditionValue("in", "STORE")).toBe("STORE");
+      expect(normalizeConditionValue("in-list", "A, B")).toBe("A,B");
+    });
+
+    it("leaves the value of any other operator as typed", () => {
+      expect(normalizeConditionValue("equals", " a, b ")).toBe(" a, b ");
+      expect(normalizeConditionValue("like", "SHIPPING %")).toBe("SHIPPING %");
+      expect(normalizeConditionValue("in", undefined)).toBeUndefined();
+      expect(normalizeConditionValue(undefined, "a, b")).toBe("a, b");
+    });
+  });
+
+  describe("in a saved document", () => {
+    const graphWith = (conditions: Array<Record<string, any>>) => projectDataDocumentGraph({
+      document: { dataDocumentId: "Doc", documentName: "Doc", primaryEntityName: "org.apache.ofbiz.order.order.OrderHeader" },
+      fields: [{ dataDocumentId: "Doc", fieldSeqId: "01", fieldPath: "orderId", fieldNameAlias: "orderId" }],
+      conditions: conditions.map((condition, index) => ({ dataDocumentId: "Doc", conditionSeqId: `0${index + 1}`, fieldNameAlias: "orderId", ...condition }))
+    });
+    const operatorIssues = (graph: ReturnType<typeof graphWith>) =>
+      graph.validationIssues.filter((issue) => issue.code === "unsupported_condition_operator");
+
+    it("reports a condition whose operator the backend would reject", () => {
+      const issues = operatorIssues(graphWith([{ operator: "contains", fieldValue: "10" }]));
+
+      expect(issues).toHaveLength(1);
+      expect(issues[0]).toEqual(expect.objectContaining({ severity: "error", targetKind: "condition", targetId: "01" }));
+      expect(issues[0].message).toContain("\"orderId\"");
+      expect(issues[0].message).toContain("\"contains\"");
+    });
+
+    it("reports each unsupported operator the old list offered", () => {
+      const graph = graphWith(["contains", "starts-with", "empty", "not-empty"].map((operator) => ({ operator })));
+
+      expect(operatorIssues(graph)).toHaveLength(4);
+    });
+
+    it("stays quiet for every operator that is offered, for a legacy alias, and for no operator", () => {
+      const graph = graphWith([
+        ...offered.map((operator) => ({ operator, fieldValue: "1,2" })),
+        { operator: "in-list", fieldValue: "1,2" },
+        { operator: "greater-than", fieldValue: "1" },
+        { fieldValue: "1" }
+      ]);
+
+      expect(operatorIssues(graph)).toEqual([]);
+    });
+
+    it("leaves a post-query condition alone, since its operator never reaches the query", () => {
+      expect(operatorIssues(graphWith([{ operator: "contains", postQuery: "Y", fieldValue: "10" }]))).toEqual([]);
+    });
   });
 });

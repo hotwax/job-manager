@@ -550,6 +550,21 @@ describe("data document store", () => {
     }));
   });
 
+  it("stores an In list without the spaces the backend would keep as part of a value", async () => {
+    apiMock.mockResolvedValue({ data: {} });
+    const store = useDataDocumentStore();
+
+    await store.saveCondition("ApiDocument", { fieldNameAlias: "productStoreId", operator: "in", fieldValue: "STORE, STORE_CA" });
+    await store.saveCondition("ApiDocument", { fieldNameAlias: "productStoreId", operator: "like", fieldValue: "STORE, %" });
+    await store.saveCondition("ApiDocument", { fieldNameAlias: "productStoreId", operator: "is-not-null" });
+
+    expect(apiMock.mock.calls[0][0].data.fieldValue).toBe("STORE,STORE_CA");
+    // any other operator keeps the value as typed
+    expect(apiMock.mock.calls[1][0].data.fieldValue).toBe("STORE, %");
+    // and a condition with no value does not gain one
+    expect(apiMock.mock.calls[2][0].data).not.toHaveProperty("fieldValue");
+  });
+
   it("deletes fields and conditions through the admin sub-resource endpoints", async () => {
     apiMock.mockResolvedValue({ data: {} });
     const store = useDataDocumentStore();

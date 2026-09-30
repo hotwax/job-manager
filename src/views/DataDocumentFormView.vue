@@ -93,14 +93,16 @@
                 label-placement="floating"
                 fill="outline"
                 interface="popover"
+                :class="{ 'ion-invalid ion-touched': isFormConditionOperatorUnsupported(condition) }"
+                :error-text="translate('This operator does not work for this field')"
                 @ionChange="updateCondition(condition, { operator: $event.detail.value })"
               >
-                <ion-select-option v-for="operator in operators" :key="operator.value" :value="operator.value">
+                <ion-select-option v-for="operator in getConditionOperators(condition)" :key="operator.value" :value="operator.value">
                   {{ translate(operator.label) }}
                 </ion-select-option>
               </ion-select>
               <ion-select
-                v-if="getConditionValueOptions(condition)"
+                v-if="conditionOperatorNeedsValue(condition.operator) && getConditionValueOptions(condition)"
                 :value="condition.fieldValue"
                 :label="translate('Value')"
                 :placeholder="getConditionValueOptions(condition)?.label || translate('Select value')"
@@ -120,11 +122,12 @@
                 </ion-select-option>
               </ion-select>
               <ion-input
-                v-else
+                v-else-if="conditionOperatorNeedsValue(condition.operator)"
                 :value="condition.fieldValue"
                 :label="translate('Value')"
                 label-placement="floating"
                 fill="outline"
+                :helper-text="getFormConditionOperatorHint(condition)"
                 :class="{ 'ion-invalid ion-touched': isFormConditionValueInvalid(condition) }"
                 :error-text="translate('Value is required')"
                 @ionInput="updateCondition(condition, { fieldValue: $event.detail.value || '' })"
@@ -325,26 +328,12 @@ import DataDocumentFieldPicker from "@/components/DataDocumentFieldPicker.vue";
 import { useDataDocumentGraphStore } from "@/store/dataDocumentGraph";
 import { useUtilStore } from "@/store/util";
 import { getConditionValueOptionSource } from "@/utils/conditionValueOptions";
-import { isConditionValueMissing } from "@/utils/dataDocumentGraph";
+import { conditionOperatorNeedsValue, getConditionOperatorHint, getConditionOperatorsForFieldType, isConditionValueMissing, normalizeDataDocumentOperator } from "@/utils/dataDocumentGraph";
 import { getEntityLabel, getEntitySearchText, getEntityValue, groupEntityOptions } from "@/utils/entityOptions";
 import type { EntityOption } from "@/utils/entityOptions";
 import { useKeyboardListNavigation } from "@/utils/keyboardListNavigation";
 
 defineProps<{ embedded?: boolean }>();
-const operators = [
-  { value: "equals", label: "Equals" },
-  { value: "not-equals", label: "Not equals" },
-  { value: "contains", label: "Contains" },
-  { value: "starts-with", label: "Starts with" },
-  { value: "in", label: "In list" },
-  { value: "empty", label: "Is empty" },
-  { value: "not-empty", label: "Is not empty" },
-  { value: "greater", label: "Greater than" },
-  { value: "greater-equals", label: "Greater than or equal" },
-  { value: "less", label: "Less than" },
-  { value: "less-equals", label: "Less than or equal" },
-  { value: "between", label: "Between" }
-];
 
 const graphStore = useDataDocumentGraphStore();
 const utilStore = useUtilStore();
@@ -561,7 +550,14 @@ const getConditionKey = (condition: any, index: number) => condition.localId || 
 
 const isFormConditionValueInvalid = (condition: any) => {
   if (!condition.fieldNameAlias || !condition.operator) return false;
+
   return isConditionValueMissing(condition.operator, condition.fieldValue);
+};
+
+const getFormConditionOperatorHint = (condition: any) => {
+  const hint = getConditionOperatorHint(condition.operator);
+
+  return hint ? translate(hint) : undefined;
 };
 
 const getConditionField = (condition: any) => graph.value?.fields.find((field: any) => (
@@ -606,6 +602,22 @@ const getConditionValueOptions = (condition: any) => {
     statuses: utilStore.getStatuses
   });
 };
+
+// Only the operators the backend can run on the type of the field the condition is on.
+const getConditionOperators = (condition: any) => {
+  const field = getConditionField(condition);
+  const entityName = getFieldEntityName(field);
+  const fieldType = field && entityName
+    ? utilStore.getEntityFields(entityName).find((entityField: any) => entityField.fieldName === field.fieldName)?.type
+    : undefined;
+
+  return getConditionOperatorsForFieldType(fieldType);
+};
+
+const isFormConditionOperatorUnsupported = (condition: any) => (
+  !!condition.operator &&
+  !getConditionOperators(condition).some((operator) => operator.value === normalizeDataDocumentOperator(condition.operator))
+);
 
 utilStore.fetchEnumerations();
 utilStore.fetchStatuses();

@@ -3,7 +3,7 @@ import { DateTime } from "luxon";
 import { defineStore } from "pinia";
 
 import logger from "@/logger";
-import { buildCustomParametersMap, toApiFieldAlias, toStoredFieldAlias } from "@/utils/dataDocumentGraph";
+import { buildCustomParametersMap, normalizeConditionValue, toApiFieldAlias, toStoredFieldAlias } from "@/utils/dataDocumentGraph";
 
 const API_ENDPOINTS = {
   dataDocuments: "moqui/dataDocuments",
@@ -426,6 +426,9 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
         if(payload[key]) {
           payload[key] = toStoredFieldAlias(payload[key]);
         }
+      }
+      if(payload.fieldValue !== undefined) {
+        payload.fieldValue = normalizeConditionValue(payload.operator, payload.fieldValue);
       }
       try {
         const response = await api({
