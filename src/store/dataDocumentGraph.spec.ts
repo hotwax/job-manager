@@ -7,7 +7,9 @@ import {
   deriveDataDocumentId,
   projectDataDocumentGraph,
   serializeGraphConditions,
-  serializeGraphFields
+  serializeGraphFields,
+  toApiFieldAlias,
+  toStoredFieldAlias
 } from "../utils/dataDocumentGraph";
 
 const document = {
@@ -346,5 +348,55 @@ describe("data document id length", () => {
 
     expect(graph.validationIssues.some((issue) => issue.code === "missing_document_id")).toBe(true);
     expect(graph.validationIssues.some((issue) => issue.code === "data_document_id_too_long")).toBe(false);
+  });
+});
+
+// A port of org.moqui.util.StringUtilities.prettyToCamelCase(pretty, false), which the API applies to a
+// field's alias on create and update.
+const apiCamelCase = (pretty: string) => {
+  let upperNext = false;
+  let camelCase = "";
+  for(const char of pretty) {
+    if(/[\p{L}\p{Nd}]/u.test(char)) {
+      camelCase += upperNext ? char.toUpperCase() : char.toLowerCase();
+      upperNext = false;
+    } else {
+      upperNext = true;
+    }
+  }
+
+  return camelCase;
+};
+
+describe("field aliases the API keeps", () => {
+  it("flattens a camelCase alias that is sent as it is, which is why aliases are re-spelled", () => {
+    expect(apiCamelCase("shippingRevenue")).toBe("shippingrevenue");
+    expect(apiCamelCase("orderAdjustmentTypeId")).toBe("orderadjustmenttypeid");
+  });
+
+  it.each(["shippingRevenue", "orderAdjustmentTypeId", "productStoreID", "address2Line", "orderId", "amount", "OrderId", "ORDERID"])(
+    "sends %s in a form the API turns back into itself",
+    (alias) => {
+      expect(apiCamelCase(toApiFieldAlias(alias))).toBe(alias);
+    }
+  );
+
+  it("leaves an alias that already has separators to the API", () => {
+    expect(toApiFieldAlias("ship_rev")).toBe("ship_rev");
+    expect(toApiFieldAlias("ship rev")).toBe("ship rev");
+    expect(toApiFieldAlias("ORDER_ID")).toBe("ORDER_ID");
+  });
+
+  it.each([
+    ["shippingRevenue", "shippingRevenue"],
+    ["orderAdjustmentTypeId", "orderAdjustmentTypeId"],
+    ["order_id", "orderId"],
+    ["ship rev", "shipRev"],
+    ["ORDER_ID", "orderId"],
+    ["", ""]
+  ])("names the alias the API stores for %j as %j", (alias, stored) => {
+    expect(toStoredFieldAlias(alias)).toBe(stored);
+    // what a field keeps after it is saved is what a condition has to name
+    expect(toStoredFieldAlias(alias)).toBe(apiCamelCase(toApiFieldAlias(alias)));
   });
 });

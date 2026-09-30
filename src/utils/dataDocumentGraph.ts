@@ -315,6 +315,33 @@ export const deriveDataDocumentId = (name?: string) =>
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join("");
 
+// The API runs a field's alias through prettyToCamelCase(alias, false) on create and on update
+// (org.moqui.impl.EntityServices): each letter is lowercased unless it follows a character that is
+// neither a letter nor a digit, and those characters are dropped. Conditions are stored as sent, so
+// "shippingRevenue" came back as "shippingrevenue" while its condition still named "shippingRevenue",
+// and the query could not find the alias. Every save of an existing document re-sent all of its
+// aliases the same way. An alias of only letters and digits therefore goes out with a separator before
+// each capital, which the API turns back into the same camelCase. One that already has separators is
+// left to the API, as before.
+export const toApiFieldAlias = (alias: string) =>
+  /^[\p{L}\p{Nd}]*$/u.test(alias) ? alias.replace(/\p{Lu}/gu, "_$&") : alias;
+
+// What the API keeps for an alias, so a condition can name it exactly.
+export const toStoredFieldAlias = (alias: string) => {
+  let upperNext = false;
+  let stored = "";
+  for(const char of toApiFieldAlias(alias)) {
+    if(/[\p{L}\p{Nd}]/u.test(char)) {
+      stored += upperNext ? char.toUpperCase() : char.toLowerCase();
+      upperNext = false;
+    } else {
+      upperNext = true;
+    }
+  }
+
+  return stored;
+};
+
 export const getDataDocumentFunctionLabel = (functionName?: string, short = false) => {
   if (!functionName) return "";
   const fn = DATA_DOCUMENT_FUNCTIONS.find((item) => item.value === functionName);

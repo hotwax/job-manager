@@ -3,7 +3,7 @@ import { DateTime } from "luxon";
 import { defineStore } from "pinia";
 
 import logger from "@/logger";
-import { buildCustomParametersMap } from "@/utils/dataDocumentGraph";
+import { buildCustomParametersMap, toApiFieldAlias, toStoredFieldAlias } from "@/utils/dataDocumentGraph";
 
 const API_ENDPOINTS = {
   dataDocuments: "moqui/dataDocuments",
@@ -400,6 +400,10 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
     async saveField(dataDocumentId: string, field: Record<string, any>) {
       const isNew = !field.fieldSeqId;
       const payload = stripUiFields({ ...field, dataDocumentId });
+      // The API camel-cases an alias on create and update; send it in a form that keeps it as it is.
+      if(payload.fieldNameAlias) {
+        payload.fieldNameAlias = toApiFieldAlias(payload.fieldNameAlias);
+      }
       try {
         const response = await api({
           url: isNew
@@ -417,6 +421,12 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
     async saveCondition(dataDocumentId: string, condition: Record<string, any>) {
       const isNew = !condition.conditionSeqId;
       const payload = stripUiFields({ ...condition, dataDocumentId });
+      // A condition names a field alias exactly, and the API stores field aliases in its own normal form.
+      for(const key of ["fieldNameAlias", "toFieldNameAlias"]) {
+        if(payload[key]) {
+          payload[key] = toStoredFieldAlias(payload[key]);
+        }
+      }
       try {
         const response = await api({
           url: isNew

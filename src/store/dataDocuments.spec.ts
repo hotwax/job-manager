@@ -512,6 +512,44 @@ describe("data document store", () => {
     );
   });
 
+  it("re-spells a field alias so the API's camel-casing keeps it as typed, on create and on update", async () => {
+    apiMock.mockResolvedValue({ data: {} });
+    const store = useDataDocumentStore();
+
+    await store.saveField("ApiDocument", { fieldPath: "amount", fieldNameAlias: "shippingRevenue" });
+    await store.saveField("ApiDocument", { fieldSeqId: "03", fieldPath: "statusId", fieldNameAlias: "orderStatusId" });
+
+    expect(apiMock.mock.calls[0][0].data.fieldNameAlias).toBe("shipping_Revenue");
+    expect(apiMock.mock.calls[1][0].data.fieldNameAlias).toBe("order_Status_Id");
+  });
+
+  it("does not invent an alias for a field that has none", async () => {
+    apiMock.mockResolvedValue({ data: {} });
+    const store = useDataDocumentStore();
+
+    await store.saveField("ApiDocument", { fieldPath: "statusId" });
+
+    expect(apiMock.mock.calls[0][0].data).not.toHaveProperty("fieldNameAlias");
+  });
+
+  it("names the alias the API stores in a condition, including the field it is compared to", async () => {
+    apiMock.mockResolvedValue({ data: {} });
+    const store = useDataDocumentStore();
+
+    await store.saveCondition("ApiDocument", { fieldNameAlias: "orderAdjustmentTypeId", operator: "equals", fieldValue: "SHIPPING_CHARGES" });
+    await store.saveCondition("ApiDocument", { conditionSeqId: "02", fieldNameAlias: "order_id", toFieldNameAlias: "ship date" });
+
+    expect(apiMock.mock.calls[0][0].data).toEqual(expect.objectContaining({
+      fieldNameAlias: "orderAdjustmentTypeId",
+      fieldValue: "SHIPPING_CHARGES"
+    }));
+    expect(apiMock.mock.calls[0][0].data).not.toHaveProperty("toFieldNameAlias");
+    expect(apiMock.mock.calls[1][0].data).toEqual(expect.objectContaining({
+      fieldNameAlias: "orderId",
+      toFieldNameAlias: "shipDate"
+    }));
+  });
+
   it("deletes fields and conditions through the admin sub-resource endpoints", async () => {
     apiMock.mockResolvedValue({ data: {} });
     const store = useDataDocumentStore();
