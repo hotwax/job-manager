@@ -823,7 +823,7 @@ import {
   onIonViewDidLeave,
   onIonViewWillEnter
 } from "@ionic/vue";
-import { addOutline, alertCircleOutline, arrowBackOutline, checkmarkCircleOutline, closeOutline, cloudDownloadOutline, cloudUploadOutline, filterOutline, gitBranchOutline, informationCircleOutline, listOutline, trashOutline, pauseOutline, playOutline, saveOutline, statsChartOutline, timeOutline, warningOutline } from "ionicons/icons";
+import { addOutline, alertCircleOutline, arrowBackOutline, checkmarkCircleOutline, closeOutline, cloudDownloadOutline, cloudUploadOutline, filterOutline, gitBranchOutline, informationCircleOutline, listOutline, pauseOutline, playOutline, saveOutline, statsChartOutline, timeOutline, trashOutline, warningOutline } from "ionicons/icons";
 import { computed, ref, watch } from "vue";
 import router from "../router"
 
@@ -1292,7 +1292,7 @@ const openGraphFieldModal = () => {
 const addGraphFields = (fieldNames: string[]) => {
   const nodeId = selectedNode.value?.nodeId || "node:root";
   let addedField;
-  for (const fieldName of fieldNames) {
+  for(const fieldName of fieldNames) {
     addedField = graphStore.addField(nodeId, fieldName);
   }
   if (addedField) {
