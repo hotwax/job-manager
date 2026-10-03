@@ -29,11 +29,11 @@
       </div>
       <ion-list v-else :id="pickerNavigation.listId" role="listbox">
         <ion-item
-          v-for="field in filteredFields"
+          v-for="(field, index) in filteredFields"
           :key="field.name"
-          v-bind="pickerNavigation.getItemAttributes(field, getPickerIndex(field))"
-          :ref="(element) => pickerNavigation.setItemRef(getPickerIndex(field), element)"
-          @keydown="pickerNavigation.handleItemKeydown($event, getPickerIndex(field))"
+          v-bind="pickerNavigation.getItemAttributes(field, index)"
+          :ref="(element) => pickerNavigation.setItemRef(index, element)"
+          @keydown="pickerNavigation.handleItemKeydown($event, index)"
         >
           <ion-checkbox
             :checked="selectedFieldNames.includes(field.name)"
@@ -108,7 +108,6 @@ const filteredFields = computed(() => {
 
   return entityFields.value.filter((field: any) => field.name.toLowerCase().includes(query));
 });
-const getPickerIndex = (field: any) => filteredFields.value.findIndex((item: any) => item.name === field.name);
 
 const toggleField = (fieldName: string, checked: boolean) => {
   selectedFieldNames.value = checked

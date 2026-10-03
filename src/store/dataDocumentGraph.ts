@@ -1,11 +1,9 @@
-import { api } from "@common";
 import { defineStore } from "pinia";
 
 import logger from "@/logger";
 import { useDataDocumentStore } from "@/store/dataDocuments";
 import {
   DataDocumentGraph,
-  DataDocumentConditionRecord,
   DataDocumentFieldRecord,
   deriveDataDocumentId,
   projectDataDocumentGraph,
@@ -32,27 +30,6 @@ const NEW_GRAPH_OWNER = "new";
 // Identifies the load that may still write to the store. Handing the store to another page (or
 // dropping the working copy) bumps it, so a slower earlier response can never land on top of a newer one.
 let loadSeq = 0;
-
-const getCollection = (response: any, fallbackKey?: string) => {
-  const data = response?.data;
-  if (Array.isArray(data)) return data;
-  if (Array.isArray(data?.data)) return data.data;
-  if (fallbackKey && Array.isArray(data?.[fallbackKey])) return data[fallbackKey];
-  if (Array.isArray(data?.items)) return data.items;
-  if (Array.isArray(data?.list)) return data.list;
-  if (Array.isArray(data?.entityValueList)) return data.entityValueList;
-  return [];
-};
-
-const getEntity = (response: any) => {
-  const data = response?.data;
-  if (Array.isArray(data)) return data[0];
-  if (data?.entity && typeof data.entity === "object") return data.entity;
-  if (data?.item && typeof data.item === "object") return data.item;
-  if (data?.data && !Array.isArray(data.data) && typeof data.data === "object") return data.data;
-  if (data && typeof data === "object") return data;
-  return undefined;
-};
 
 const stripGraphFields = (payload: Record<string, any>) => {
   const { nodeId, fieldName, outputName, isManualPath, targetKind, targetId, localId, isNew, ...apiPayload } = payload;
@@ -458,21 +435,6 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
         return;
       }
       this.discardDraft();
-    },
-    // NOTE: there is no admin/dataDocuments/{id}/relAliases REST endpoint (returns 404),
-    // so relationship aliases are not persisted via this action yet. Kept for when the
-    // backend exposes it; saveGraph no longer invokes it to avoid silent 404s on every save.
-    async saveRelAlias(dataDocumentId: string, relAlias: any) {
-      try {
-        const response = await api({
-          url: `admin/dataDocuments/${encodeURIComponent(dataDocumentId)}/relAliases/${encodeURIComponent(relAlias.relationshipName)}`,
-          method: relAlias.isNew ? "POST" : "PUT",
-          data: relAlias
-        });
-        return getEntity(response) || relAlias;
-      } catch (error) {
-        logger.error(`Failed to save relationship alias for ${dataDocumentId}`, error);
-      }
     }
   },
   // Persist the in-progress draft to localStorage so builder work survives a reload. Only

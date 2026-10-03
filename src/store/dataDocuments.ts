@@ -55,35 +55,6 @@ const toMillis = (time: any) => {
   return dt.isValid ? dt.toMillis() : 0;
 };
 
-const filterDocumentsForCatalog = (documents: any[], payload: Record<string, any> = {}) => {
-  const query = String(payload.queryString || "").trim().toLowerCase();
-  if (!query && !payload.dataFeedId) return documents;
-  return documents.filter((document) => {
-    const feeds = document.feeds || document.relatedFeeds || [];
-    const matchesText = !query ||
-      matchesQuery(document.dataDocumentId, query) ||
-      matchesQuery(document.documentName, query) ||
-      matchesQuery(document.documentTitle, query) ||
-      matchesQuery(document.indexName, query) ||
-      matchesQuery(document.primaryEntityName, query) ||
-      feeds.some((feed: any) => matchesQuery(feed.dataFeedId || feed, query));
-    const matchesFeed = !payload.dataFeedId || feeds.some((feed: any) => (feed.dataFeedId || feed) === payload.dataFeedId);
-    return matchesText && matchesFeed;
-  });
-};
-
-const normalizeDataDocument = (document: any = {}) => {
-  const relatedFeeds = document.relatedFeeds || (document.feeds || []).map((feed: any) => feed.dataFeedId || feed).filter(Boolean);
-  return {
-    ...document,
-    relatedFeeds,
-    fieldCount: document.fieldCount ?? document.fields?.length ?? 0,
-    conditionCount: document.conditionCount ?? document.conditions?.length ?? 0
-  };
-};
-
-const normalizeDataDocuments = (documents: any[]) => documents.map(normalizeDataDocument);
-
 const getFeedId = (feed: any) => feed?.dataFeedId || feed?.feed?.dataFeedId || feed;
 
 const normalizeDataFeeds = (documents: any[]) => {
@@ -143,8 +114,6 @@ const buildFeedFromDocument = (document: any, dataFeedId: string) => {
     }]
   };
 };
-
-const hasDocumentRelations = (document: any, dataDocumentId: string) => document?.dataDocumentId === dataDocumentId;
 
 const stripUiFields = (payload: Record<string, any>) => {
   const { localId, isNew, ...apiPayload } = payload;

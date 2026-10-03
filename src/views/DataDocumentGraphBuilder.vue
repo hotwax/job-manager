@@ -826,7 +826,7 @@ import {
   onIonViewDidLeave,
   onIonViewWillEnter
 } from "@ionic/vue";
-import { addOutline, alertCircleOutline, arrowBackOutline, checkmarkCircleOutline, closeOutline, cloudDownloadOutline, cloudUploadOutline, filterOutline, gitBranchOutline, informationCircleOutline, listOutline, pauseOutline, playOutline, saveOutline, statsChartOutline, timeOutline, trashOutline, warningOutline } from "ionicons/icons";
+import { addOutline, alertCircleOutline, arrowBackOutline, checkmarkCircleOutline, closeOutline, cloudDownloadOutline, cloudUploadOutline, filterOutline, gitBranchOutline, informationCircleOutline, listOutline, pauseOutline, playOutline, saveOutline, timeOutline, trashOutline, warningOutline } from "ionicons/icons";
 import { computed, ref, watch } from "vue";
 import router from "../router"
 
@@ -849,7 +849,6 @@ import { getEntityLabel, getEntitySearchText, getEntityValue, groupEntityOptions
 import type { EntityOption } from "@/utils/entityOptions";
 import { useKeyboardListNavigation } from "@/utils/keyboardListNavigation";
 
-const route = router.currentRoute.value;
 const graphStore = useDataDocumentGraphStore();
 const dataDocumentStore = useDataDocumentStore();
 const utilStore = useUtilStore();
