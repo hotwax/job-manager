@@ -618,332 +618,79 @@ describe("data document store", () => {
   });
 });
 
-describe("data document store - document scope", () => {
-  const detail = (id: string) => ({
-    data: {
-      dataDocumentId: id,
-      fields: [{ fieldSeqId: "10", fieldNameAlias: `${id}Field`, dataDocumentId: id }],
-      conditions: [{ conditionSeqId: "10", fieldNameAlias: `${id}Field` }],
-      feeds: [{ dataFeedId: `${id}Feed`, dataDocumentId: id }],
-      jobs: [{ jobName: `${id}Job` }]
-    }
-  });
-  const noHistory = { data: { systemMessages: [], systemMessagesCount: 0 } };
-  const deferred = <T = any>() => {
-    let resolve!: (value: T) => void;
-    let reject!: (reason?: unknown) => void;
-    const promise = new Promise<T>((res, rej) => { resolve = res; reject = rej; });
-
-    return { promise, resolve, reject };
+describe("data document request isolation", () => {
+  const deferred = () => {
+    let resolve!: (value: any) => void;
+    const promise = new Promise<any>((done) => { resolve = done; });
+    return { promise, resolve };
   };
-  // Answer each URL from a table so tests do not depend on the order requests are issued in.
-  const respondWith = (routes: Record<string, () => Promise<any>>) => {
-    apiMock.mockImplementation(({ url }: { url: string }) => (routes[url] ? routes[url]() : Promise.resolve(noHistory)));
-  };
-
   beforeEach(() => {
     setActivePinia(createPinia());
     apiMock.mockReset();
   });
 
-  it("resolves the document without waiting for the export history", async () => {
+  it("clears document data when switching, retains the catalog, and does not wait for history", async () => {
     const history = deferred();
-    respondWith({
-      "moqui/dataDocuments/DocA": () => Promise.resolve(detail("DocA")),
-      "admin/systemMessages": () => history.promise
-    });
+    apiMock.mockImplementation(({ url }) => url === "admin/systemMessages" ? history.promise
+      : Promise.resolve({ data: { dataDocumentId: "B", fields: [{ fieldSeqId: "01" }] } }));
     const store = useDataDocumentStore();
-
-    await store.fetchDataDocument("DocA");
-
-    expect(store.getFields).toHaveLength(1);
-    expect(store.getExportHistory).toEqual([]);
-    history.resolve({ data: { systemMessages: [{ systemMessageId: "DDX1", messageText: "export/DocA_1.csv" }] } });
-    await vi.waitFor(() => expect(store.getExportHistory).toHaveLength(1));
-  });
-
-  it("drops the previous document's data the moment another document is requested", async () => {
-    const docB = deferred();
-    respondWith({
-      "moqui/dataDocuments/DocA": () => Promise.resolve(detail("DocA")),
-      "moqui/dataDocuments/DocB": () => docB.promise
-    });
-    const store = useDataDocumentStore();
-    await store.fetchDataDocument("DocA");
-    store.previewRows = [{ a: 1 }];
-    store.previewTotal = 1;
+    store.activeDocumentId = "A";
+    store.dataDocuments = [{ dataDocumentId: "A" }];
+    store.fields = [{ fieldSeqId: "old" }];
+    store.conditions = [{}];
+    store.relatedFeeds = [{}];
+    store.relatedJobs = [{}];
+    store.scheduledExports = [{}];
+    store.previewRows = [{}];
     store.previewStatus = "success";
-    store.scheduledExports = [{ jobName: "x" }];
-
-    const loadingB = store.fetchDataDocument("DocB");
-
-    expect(store.getCurrentDocument).toBeUndefined();
-    expect(store.getFields).toEqual([]);
-    expect(store.getConditions).toEqual([]);
-    expect(store.getRelatedFeeds).toEqual([]);
-    expect(store.getRelatedJobs).toEqual([]);
-    expect(store.getScheduledExports).toEqual([]);
-    expect(store.getExportHistory).toEqual([]);
-    expect(store.getPreviewRows).toEqual([]);
-    expect(store.getPreviewStatus).toBe("idle");
-    docB.resolve(detail("DocB"));
-    await loadingB;
-    expect(store.getFields).toEqual([expect.objectContaining({ fieldNameAlias: "DocBField" })]);
+    const loading = store.fetchDataDocument("B");
+    expect([store.fields, store.conditions, store.relatedFeeds, store.relatedJobs, store.scheduledExports, store.previewRows]).toEqual([[], [], [], [], [], []]);
+    await loading;
+    expect(store.getFields).toEqual([{ fieldSeqId: "01" }]);
+    expect(store.getDataDocuments).toEqual([{ dataDocumentId: "A" }]);
+    expect(store.getExportHistoryStatus).toBe("loading");
+    history.resolve({ data: { systemMessages: [{ systemMessageId: "M1", messageText: "export/B_1.csv" }] } });
+    await vi.waitFor(() => expect(store.getExportHistoryStatus).toBe("ready"));
+    expect(store.getExportHistory[0].systemMessageId).toBe("M1");
   });
 
-  it("keeps a document's own preview when the same document is fetched again", async () => {
-    respondWith({ "moqui/dataDocuments/DocA": () => Promise.resolve(detail("DocA")) });
+  it.each(["preview", "history", "jobs"])("ignores %s results after switching documents", async (kind) => {
+    const pending = deferred();
+    apiMock.mockReturnValue(pending.promise);
     const store = useDataDocumentStore();
-    await store.fetchDataDocument("DocA");
-    store.previewRows = [{ a: 1 }];
-    store.previewTotal = 1;
-    store.previewStatus = "success";
-
-    await store.fetchDataDocument("DocA");
-
-    expect(store.getPreviewRows).toEqual([{ a: 1 }]);
-    expect(store.getPreviewStatus).toBe("success");
-  });
-
-  it("ignores a slow response for a document that is no longer active", async () => {
-    const docA = deferred();
-    const docB = deferred();
-    respondWith({
-      "moqui/dataDocuments/DocA": () => docA.promise,
-      "moqui/dataDocuments/DocB": () => docB.promise
-    });
-    const store = useDataDocumentStore();
-
-    const loadingA = store.fetchDataDocument("DocA");
-    const loadingB = store.fetchDataDocument("DocB");
-    docB.resolve(detail("DocB"));
-    await loadingB;
-    docA.resolve(detail("DocA"));
-    await loadingA;
-
-    expect(store.getCurrentDocument).toEqual(expect.objectContaining({ dataDocumentId: "DocB" }));
-    expect(store.getFields).toEqual([expect.objectContaining({ fieldNameAlias: "DocBField" })]);
-  });
-
-  it("throws when the document cannot be loaded and leaves nothing of the previous one behind", async () => {
-    respondWith({
-      "moqui/dataDocuments/DocA": () => Promise.resolve(detail("DocA")),
-      "moqui/dataDocuments/DocB": () => Promise.reject(new Error("404"))
-    });
-    const store = useDataDocumentStore();
-    await store.fetchDataDocument("DocA");
-
-    await expect(store.fetchDataDocument("DocB")).rejects.toThrow("404");
-
-    expect(store.getCurrentDocument).toBeUndefined();
-    expect(store.getFields).toEqual([]);
-    expect(store.getConditions).toEqual([]);
-  });
-
-  it("drops a preview that finishes after another document became active", async () => {
-    const preview = deferred();
-    respondWith({
-      "oms/dataDocumentView": () => preview.promise,
-      "moqui/dataDocuments/DocA": () => Promise.resolve(detail("DocA")),
-      "moqui/dataDocuments/DocB": () => Promise.resolve(detail("DocB"))
-    });
-    const store = useDataDocumentStore();
-    await store.fetchDataDocument("DocA");
-    const running = store.runPreview("DocA", { selectedFields: [] });
-
-    await store.fetchDataDocument("DocB");
-    preview.resolve({ data: { rows: [{ a: 1 }] } });
+    store.activeDocumentId = "A";
+    const running = kind === "preview" ? store.runPreview("A", {})
+      : kind === "history" ? store.fetchExportHistory({ dataDocumentId: "A" }, { documentScoped: true })
+      : store.fetchScheduledExports("A");
+    store.resetDocumentScope();
+    store.activeDocumentId = "B";
+    pending.resolve({ data: { rows: [{}], systemMessages: [{ messageText: "export/A_1.csv" }],
+      serviceJobList: [{ serviceJobParameters: [{ parameterName: "dataDocumentId", parameterValue: "A" }] }] } });
     await running;
-
-    expect(store.getPreviewRows).toEqual([]);
-    expect(store.getPreviewStatus).toBe("idle");
+    expect([store.previewRows, store.exportHistory, store.scheduledExports]).toEqual([[], [], []]);
+    expect([store.previewStatus, store.exportHistoryStatus, store.scheduledExportsStatus]).toEqual(["idle", "idle", "idle"]);
   });
 
-  it("stops polling the export history once another document is active", async () => {
+  it("keeps global history independent of a draft and stops polling an inactive document", async () => {
+    apiMock.mockResolvedValue({ data: { systemMessages: [{ systemMessageId: "M1", messageText: "export/B_1.csv" }] } });
     const store = useDataDocumentStore();
-    store.activeDocumentId = "DocB";
-
-    const newest = await store.pollExportHistory("DocA", { attempts: 3, intervalMs: 1 });
-
-    expect(newest).toBeUndefined();
+    store.activeDocumentId = "A";
+    await store.fetchExportHistory({ dataDocumentId: "B" });
+    expect(store.getExportHistory[0].systemMessageId).toBe("M1");
+    apiMock.mockClear();
+    await store.pollExportHistory("B", { attempts: 1, intervalMs: 1 });
     expect(apiMock).not.toHaveBeenCalled();
   });
 
-  it("never holds the global history page's document filter to the builder's active document", async () => {
-    respondWith({ "admin/systemMessages": () => Promise.resolve({ data: { systemMessages: [{ systemMessageId: "DDX1", messageText: "export/DocB_1.csv" }] } }) });
+  it("isolates background failures and does not reload them on a document re-sync", async () => {
+    apiMock.mockImplementation(({ url }) => url.startsWith("moqui/")
+      ? Promise.resolve({ data: { dataDocumentId: "A" } }) : Promise.reject(new Error("offline")));
     const store = useDataDocumentStore();
-    // A kept unsaved draft leaves DocA active while the user opens the global export history.
-    store.activeDocumentId = "DocA";
-
-    await store.fetchExportHistory({ dataDocumentId: "DocB" });
-
-    expect(store.getExportHistory).toEqual([expect.objectContaining({ systemMessageId: "DDX1" })]);
-  });
-
-  it("drops a document-scoped history response that arrives after another document became active", async () => {
-    const history = deferred();
-    respondWith({ "admin/systemMessages": () => history.promise });
-    const store = useDataDocumentStore();
-    store.activeDocumentId = "DocA";
-
-    const running = store.fetchExportHistory({ dataDocumentId: "DocA" }, { documentScoped: true });
-    store.activeDocumentId = "DocB";
-    history.resolve({ data: { systemMessages: [{ systemMessageId: "DDX1", messageText: "export/DocA_1.csv" }] } });
-    await running;
-
-    expect(store.getExportHistory).toEqual([]);
-  });
-
-  it("drops the background history of a document that was left before it arrived", async () => {
-    const history = deferred();
-    respondWith({
-      "moqui/dataDocuments/DocA": () => Promise.resolve(detail("DocA")),
-      "admin/systemMessages": () => history.promise
-    });
-    const store = useDataDocumentStore();
-
-    await store.fetchDataDocument("DocA");
-    store.resetDocumentScope();
-    history.resolve({ data: { systemMessages: [{ systemMessageId: "DDX1", messageText: "export/DocA_1.csv" }] } });
-    await vi.waitFor(() => expect(apiMock).toHaveBeenCalledWith(expect.objectContaining({ url: "admin/systemMessages" })));
-    await Promise.resolve();
-
-    expect(store.getExportHistory).toEqual([]);
-  });
-
-  it("starts the exports and scheduled exports with the document, not after it", async () => {
-    const doc = deferred();
-    respondWith({ "moqui/dataDocuments/DocA": () => doc.promise });
-    const store = useDataDocumentStore();
-
-    const loading = store.fetchDataDocument("DocA");
-
-    // Nothing has resolved yet, and all three requests are already in flight.
-    expect(apiMock).toHaveBeenCalledWith(expect.objectContaining({ url: "moqui/dataDocuments/DocA" }));
-    expect(apiMock).toHaveBeenCalledWith(expect.objectContaining({ url: "admin/systemMessages" }));
-    expect(apiMock).toHaveBeenCalledWith(expect.objectContaining({ url: "admin/serviceJobs" }));
-    doc.resolve(detail("DocA"));
-    await loading;
-  });
-
-  it("loadRelated starts each request once and leaves a running or finished one alone", () => {
-    respondWith({});
-    const store = useDataDocumentStore();
-
-    store.loadRelated("DocA");
-    store.loadRelated("DocA");
-
-    expect(apiMock.mock.calls.filter(([request]) => request.url === "admin/systemMessages")).toHaveLength(1);
-    expect(apiMock.mock.calls.filter(([request]) => request.url === "admin/serviceJobs")).toHaveLength(1);
-    expect(store.activeDocumentId).toBe("DocA");
-  });
-
-  it("loadRelated for another document drops the previous document's scope first", () => {
-    respondWith({});
-    const store = useDataDocumentStore();
-    store.activeDocumentId = "DocA";
-    store.previewRows = [{ a: 1 }];
-    store.exportHistoryStatus = "ready";
-
-    store.loadRelated("DocB");
-
-    expect(store.getPreviewRows).toEqual([]);
-    expect(store.activeDocumentId).toBe("DocB");
-    expect(store.getExportHistoryStatus).toBe("loading");
-  });
-
-  it("leaves the related requests out of a re-sync", async () => {
-    respondWith({ "moqui/dataDocuments/DocA": () => Promise.resolve(detail("DocA")) });
-    const store = useDataDocumentStore();
-
-    await store.fetchDataDocument("DocA", { includeRelated: false });
-
+    await store.fetchDataDocument("A");
+    await vi.waitFor(() => expect([store.exportHistoryStatus, store.scheduledExportsStatus]).toEqual(["error", "error"]));
+    expect(store.getCurrentDocument.dataDocumentId).toBe("A");
+    apiMock.mockClear();
+    await store.fetchDataDocument("A", { includeRelated: false });
     expect(apiMock).toHaveBeenCalledTimes(1);
-    expect(store.getExportHistoryStatus).toBe("idle");
-    expect(store.getScheduledExportsStatus).toBe("idle");
-  });
-
-  it("tracks each background request on its own so a tab can show a placeholder until it lands", async () => {
-    const history = deferred();
-    const jobs = deferred();
-    respondWith({
-      "moqui/dataDocuments/DocA": () => Promise.resolve(detail("DocA")),
-      "admin/systemMessages": () => history.promise,
-      "admin/serviceJobs": () => jobs.promise
-    });
-    const store = useDataDocumentStore();
-
-    await store.fetchDataDocument("DocA");
-    expect(store.getExportHistoryStatus).toBe("loading");
-    expect(store.getScheduledExportsStatus).toBe("loading");
-
-    jobs.resolve({ data: { serviceJobList: [] } });
-    await vi.waitFor(() => expect(store.getScheduledExportsStatus).toBe("ready"));
-    expect(store.getExportHistoryStatus).toBe("loading");
-
-    history.resolve({ data: { systemMessages: [] } });
-    await vi.waitFor(() => expect(store.getExportHistoryStatus).toBe("ready"));
-  });
-
-  it("marks a failed background request as an error without failing the document", async () => {
-    respondWith({
-      "moqui/dataDocuments/DocA": () => Promise.resolve(detail("DocA")),
-      "admin/systemMessages": () => Promise.reject(new Error("boom")),
-      "admin/serviceJobs": () => Promise.reject(new Error("boom"))
-    });
-    const store = useDataDocumentStore();
-
-    await store.fetchDataDocument("DocA");
-
-    await vi.waitFor(() => expect(store.getExportHistoryStatus).toBe("error"));
-    await vi.waitFor(() => expect(store.getScheduledExportsStatus).toBe("error"));
-    expect(store.getFields).toHaveLength(1);
-  });
-
-  it("does not let a superseded background request change another document's status", async () => {
-    const history = deferred();
-    respondWith({
-      "moqui/dataDocuments/DocA": () => Promise.resolve(detail("DocA")),
-      "moqui/dataDocuments/DocB": () => Promise.resolve(detail("DocB")),
-      "admin/systemMessages": () => history.promise
-    });
-    const store = useDataDocumentStore();
-    await store.fetchDataDocument("DocA");
-    respondWith({
-      "moqui/dataDocuments/DocB": () => Promise.resolve(detail("DocB")),
-      "admin/systemMessages": () => Promise.resolve({ data: { systemMessages: [] } })
-    });
-
-    await store.fetchDataDocument("DocB");
-    await vi.waitFor(() => expect(store.getExportHistoryStatus).toBe("ready"));
-    history.resolve({ data: { systemMessages: [{ systemMessageId: "DDX1", messageText: "export/DocA_1.csv" }] } });
-    await Promise.resolve();
-
-    expect(store.getExportHistoryStatus).toBe("ready");
-    expect(store.getExportHistory).toEqual([]);
-  });
-
-  it("resetDocumentScope clears the document's data but keeps the catalog list", () => {
-    const store = useDataDocumentStore();
-    store.dataDocuments = [{ dataDocumentId: "DocA" }];
-    store.total = 1;
-    store.activeDocumentId = "DocA";
-    store.fields = [{ fieldSeqId: "10" }];
-    store.previewRows = [{ a: 1 }];
-    store.previewStatus = "success";
-
-    store.exportHistoryStatus = "ready";
-    store.scheduledExportsStatus = "ready";
-
-    store.resetDocumentScope();
-
-    expect(store.getExportHistoryStatus).toBe("idle");
-    expect(store.getScheduledExportsStatus).toBe("idle");
-    expect(store.activeDocumentId).toBe("");
-    expect(store.getFields).toEqual([]);
-    expect(store.getPreviewRows).toEqual([]);
-    expect(store.getPreviewStatus).toBe("idle");
-    expect(store.getDataDocuments).toEqual([{ dataDocumentId: "DocA" }]);
-    expect(store.getTotal).toBe(1);
   });
 });

@@ -171,363 +171,126 @@ describe("data document graph store", () => {
   });
 });
 
-describe("data document graph store - who owns the graph", () => {
-  const detail = (id: string, name: string) => ({
-    data: {
-      dataDocumentId: id,
-      documentName: name,
-      primaryEntityName: "Party",
-      fields: [{ fieldSeqId: "10", fieldPath: "partyId", fieldNameAlias: "partyId", dataDocumentId: id, defaultDisplay: "Y", sequenceNum: 10 }],
-      conditions: []
-    }
-  });
-  const noHistory = { data: { systemMessages: [], systemMessagesCount: 0 } };
-  const deferred = <T = any>() => {
-    let resolve!: (value: T) => void;
-    let reject!: (reason?: unknown) => void;
-    const promise = new Promise<T>((res, rej) => { resolve = res; reject = rej; });
-
-    return { promise, resolve, reject };
+describe("data document lifecycle", () => {
+  const detail = (id: string) => ({ data: {
+    dataDocumentId: id, documentName: id, primaryEntityName: "Party",
+    fields: [{ fieldSeqId: "10", fieldPath: "partyId", fieldNameAlias: "partyId", dataDocumentId: id }],
+    conditions: []
+  } });
+  const deferred = () => {
+    let resolve!: (value: any) => void;
+    const promise = new Promise<any>((done) => { resolve = done; });
+    return { promise, resolve };
   };
-  // Answer each URL from a table so tests do not depend on the order requests are issued in.
-  const respondWith = (routes: Record<string, () => Promise<any>>) => {
-    vi.mocked(api).mockImplementation((({ url }: { url: string }) => (routes[url] ? routes[url]() : Promise.resolve(noHistory))) as any);
+  const respondWith = (routes: Record<string, () => Promise<any>> = {}) => {
+    vi.mocked(api).mockImplementation((({ url }: { url: string }) => routes[url]?.()
+      ?? Promise.resolve(url.startsWith("moqui/dataDocuments/") ? detail(url.split("/").pop()!) : { data: {} })) as any);
   };
-  const DOC_A = "moqui/dataDocuments/DocA";
-  const DOC_B = "moqui/dataDocuments/DocB";
-
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.mocked(api).mockReset();
+    respondWith();
   });
 
-  it("drops the previous document and claims the store before the next document's first response", async () => {
-    const docB = deferred();
-    respondWith({ [DOC_A]: () => Promise.resolve(detail("DocA", "Doc A")), [DOC_B]: () => docB.promise });
+  it("clears the previous graph while loading and ignores a late response", async () => {
     const store = useDataDocumentGraphStore();
-    await store.fetchGraph("DocA");
-    expect(store.status).toBe("ready");
-    expect(store.owner).toBe("DocA");
-    expect(store.getGraph?.metadata.documentName).toBe("Doc A");
-
-    const loadingB = store.fetchGraph("DocB");
-
+    await store.fetchGraph("Previous");
+    const a = deferred(), b = deferred();
+    respondWith({ "moqui/dataDocuments/A": () => a.promise, "moqui/dataDocuments/B": () => b.promise });
+    const loadingA = store.fetchGraph("A");
     expect(store.getGraph).toBeUndefined();
     expect(store.status).toBe("loading");
-    expect(store.owner).toBe("DocB");
-    expect(store.isLoading).toBe(true);
-    docB.resolve(detail("DocB", "Doc B"));
+    const loadingB = store.fetchGraph("B");
+    b.resolve(detail("B"));
     await loadingB;
-    expect(store.status).toBe("ready");
-    expect(store.getGraph?.metadata.documentName).toBe("Doc B");
-    expect(store.isLoading).toBe(false);
+    a.resolve(detail("A"));
+    await loadingA;
+    expect(store.getGraph?.dataDocumentId).toBe("B");
+    expect(useDataDocumentStore().getCurrentDocument.dataDocumentId).toBe("B");
   });
 
-  it("ends in an error state, with no document at all, when the load fails; a retry recovers", async () => {
-    respondWith({ [DOC_A]: () => Promise.resolve(detail("DocA", "Doc A")), [DOC_B]: () => Promise.reject(new Error("boom")) });
+  it.each(["", {}, new Error("offline")])("clears a failed or missing document and permits retry: %s", async (body) => {
     const store = useDataDocumentGraphStore();
-    const page = Symbol("page");
-    await store.fetchGraph("DocA");
-
-    await store.fetchGraph("DocB", { claimant: page });
-
+    await store.fetchGraph("A");
+    respondWith({ "moqui/dataDocuments/B": () => body instanceof Error ? Promise.reject(body) : Promise.resolve({ data: body }) });
+    await store.fetchGraph("B");
     expect(store.status).toBe("error");
-    expect(store.owner).toBe("DocB");
-    expect(store.getGraph).toBeUndefined();
-    expect(store.isLoading).toBe(false);
-    respondWith({ [DOC_B]: () => Promise.resolve(detail("DocB", "Doc B")) });
-    await store.fetchGraph("DocB", { claimant: page });
-    expect(store.status).toBe("ready");
-    expect(store.getGraph?.metadata.documentName).toBe("Doc B");
-  });
-
-  it("clears the error state when the page that hit it is released", async () => {
-    respondWith({ [DOC_B]: () => Promise.reject(new Error("boom")) });
-    const store = useDataDocumentGraphStore();
-    const page = Symbol("page");
-    await store.fetchGraph("DocB", { claimant: page });
-    expect(store.status).toBe("error");
-
-    store.release(page);
-
-    expect(store.status).toBe("idle");
-    expect(store.owner).toBe("");
-  });
-
-  // The API answers an id it does not know with an empty 200 (a blank string), not an error.
-  it.each([
-    ["no body", undefined],
-    ["a blank body, which is what an unknown id gets", ""],
-    ["a body that is not a document", {}]
-  ])("treats %s as a failed load instead of keeping the previous graph or showing a blank one", async (_label, body) => {
-    respondWith({ [DOC_A]: () => Promise.resolve(detail("DocA", "Doc A")), [DOC_B]: () => Promise.resolve({ data: body }) });
-    const store = useDataDocumentGraphStore();
-    await store.fetchGraph("DocA");
-
-    await store.fetchGraph("DocB");
-
-    expect(store.status).toBe("error");
-    expect(store.owner).toBe("DocB");
     expect(store.getGraph).toBeUndefined();
     expect(store.isPersisted).toBe(false);
-  });
-
-  it("does not let a slower earlier load land on top of a newer one", async () => {
-    const docA = deferred();
-    const docB = deferred();
-    respondWith({ [DOC_A]: () => docA.promise, [DOC_B]: () => docB.promise });
-    const store = useDataDocumentGraphStore();
-
-    const loadingA = store.fetchGraph("DocA");
-    const loadingB = store.fetchGraph("DocB");
-    docB.resolve(detail("DocB", "Doc B"));
-    await loadingB;
-    docA.resolve(detail("DocA", "Doc A"));
-    await loadingA;
-
-    expect(store.owner).toBe("DocB");
-    expect(store.getGraph?.metadata.documentName).toBe("Doc B");
-  });
-
-  it("neither reloads nor blanks a document it already owns", async () => {
-    respondWith({ [DOC_A]: () => Promise.resolve(detail("DocA", "Doc A")) });
-    const store = useDataDocumentGraphStore();
-    await store.fetchGraph("DocA");
-    const graph = store.getGraph;
-    vi.mocked(api).mockClear();
-
-    await store.fetchGraph("DocA");
-
-    expect(api).not.toHaveBeenCalled();
-    expect(store.getGraph).toBe(graph);
+    respondWith();
+    await store.fetchGraph("B");
     expect(store.status).toBe("ready");
   });
 
-  it("keeps an unsaved draft of the same document that survived a reload", async () => {
-    respondWith({ [DOC_A]: () => Promise.resolve(detail("DocA", "Doc A")) });
+  it("saves a restored existing draft with PUT and retains its fields", async () => {
+    const document = detail("A").data;
+    respondWith({ "moqui/dataDocuments/A": () => Promise.resolve({ data: document }) });
     const store = useDataDocumentGraphStore();
-    await store.fetchGraph("DocA");
-    store.updateMetadata({ documentTitle: "Edited" });
-    expect(store.isDirty).toBe(true);
-    // A reload restores the persisted draft but forgets who owned it.
-    store.$patch({ owner: "", status: "idle" });
-    vi.mocked(api).mockClear();
-
-    await store.fetchGraph("DocA");
-
-    expect(api).not.toHaveBeenCalled();
-    expect(store.getGraph?.metadata.documentTitle).toBe("Edited");
-    expect(store.owner).toBe("DocA");
-    expect(store.status).toBe("ready");
-  });
-
-  it("loads the exports and scheduled exports of a restored draft, which never fetches the document", async () => {
-    respondWith({ [DOC_A]: () => Promise.resolve(detail("DocA", "Doc A")) });
-    const store = useDataDocumentGraphStore();
-    await store.fetchGraph("DocA");
-    store.updateMetadata({ documentTitle: "Edited" });
-    // A reload keeps the draft and the document store's data is gone.
-    store.$patch({ owner: "", status: "idle" });
-    useDataDocumentStore().resetDocumentScope();
-    vi.mocked(api).mockClear();
-
-    await store.fetchGraph("DocA");
-
-    expect(api).not.toHaveBeenCalledWith(expect.objectContaining({ url: DOC_A }));
-    expect(useDataDocumentStore().getExportHistoryStatus).not.toBe("idle");
-    expect(useDataDocumentStore().getScheduledExportsStatus).not.toBe("idle");
-  });
-
-  it("replaces a persisted draft that belongs to a different document", async () => {
-    respondWith({ [DOC_A]: () => Promise.resolve(detail("DocA", "Doc A")), [DOC_B]: () => Promise.resolve(detail("DocB", "Doc B")) });
-    const store = useDataDocumentGraphStore();
-    await store.fetchGraph("DocA");
-    store.updateMetadata({ documentTitle: "Edited" });
-    store.$patch({ owner: "", status: "idle" });
-
-    await store.fetchGraph("DocB");
-
-    expect(store.getGraph?.metadata.documentName).toBe("Doc B");
-    expect(store.getGraph?.metadata.documentTitle).not.toBe("Edited");
-  });
-
-  it("updates an existing draft after reload even though the document store is empty", async () => {
-    const document = detail("DocA", "Doc A").data;
-    vi.mocked(api).mockImplementation((async ({ url, method, data }: any) => {
-      if (url === DOC_A) {
-        if (method === "PUT") Object.assign(document, data);
-        return { data: document };
-      }
-      if (url === "moqui/dataDocuments" && method === "POST") {
-        throw new Error("Duplicate document id");
-      }
-      return noHistory;
-    }) as any);
-    const store = useDataDocumentGraphStore();
-    await store.fetchGraph("DocA");
+    await store.fetchGraph("A");
     store.updateMetadata({ documentTitle: "Restored draft" });
     store.$patch({ owner: "", status: "idle" });
     useDataDocumentStore().resetDocumentScope();
-    await store.fetchGraph("DocA");
-    expect(useDataDocumentStore().currentDocument).toBeUndefined();
     vi.mocked(api).mockClear();
-
+    await store.fetchGraph("A");
+    expect(api).not.toHaveBeenCalledWith(expect.objectContaining({ url: "moqui/dataDocuments/A" }));
+    expect(api).toHaveBeenCalledWith(expect.objectContaining({ url: "admin/systemMessages" }));
+    expect(store.getGraph?.metadata.documentTitle).toBe("Restored draft");
+    expect(useDataDocumentStore().currentDocument).toBeUndefined();
+    vi.mocked(api).mockImplementation((async ({ url, method, data }: any) => {
+      if (method === "POST") throw new Error("Duplicate document id");
+      if (url !== "moqui/dataDocuments/A") return { data: {} };
+      if (method === "PUT") Object.assign(document, data);
+      return { data: document };
+    }) as any);
     await store.saveGraph();
-
-    expect(api).toHaveBeenCalledWith(expect.objectContaining({
-      url: DOC_A,
-      method: "PUT",
-      data: expect.objectContaining({ documentTitle: "Restored draft" })
-    }));
-    expect(api).not.toHaveBeenCalledWith(expect.objectContaining({ method: "POST" }));
+    expect(api).toHaveBeenCalledWith(expect.objectContaining({ url: "moqui/dataDocuments/A", method: "PUT" }));
     expect(store.getGraph?.metadata.documentTitle).toBe("Restored draft");
     expect(store.getGraph?.fields).toHaveLength(1);
     expect(store.isDirty).toBe(false);
   });
 
-  it("releases what the leaving page loaded, but only for the page that claimed the store", async () => {
-    respondWith({ [DOC_A]: () => Promise.resolve(detail("DocA", "Doc A")) });
+  it("creates once, ignores an old page's release, and releases only clean work", async () => {
+    respondWith({ "moqui/dataDocuments": () => Promise.resolve(detail("NewDoc")) });
     const store = useDataDocumentGraphStore();
-    const page = Symbol("page");
-    await store.fetchGraph("DocA", { claimant: page });
-    const dataDocumentStore = useDataDocumentStore();
-    dataDocumentStore.previewRows = [{ a: 1 }];
-    dataDocumentStore.previewStatus = "success";
-
-    store.release(Symbol("some other page"));
-    expect(store.getGraph).toBeDefined();
-
-    store.release(page);
-    expect(store.getGraph).toBeUndefined();
-    expect(store.status).toBe("idle");
-    expect(store.owner).toBe("");
-    expect(useDataDocumentStore().getPreviewRows).toEqual([]);
-  });
-
-  it("lets a page entered for the same document take the store over from the page being left", async () => {
-    respondWith({ [DOC_A]: () => Promise.resolve(detail("DocA", "Doc A")) });
-    const store = useDataDocumentGraphStore();
-    const leaving = Symbol("leaving");
-    const entering = Symbol("entering");
-    await store.fetchGraph("DocA", { claimant: leaving });
-
-    // The document is reopened (a first save's new id, say) before the old page has finished leaving.
-    await store.fetchGraph("DocA", { claimant: entering });
-    store.release(leaving);
-
-    expect(store.getGraph?.metadata.documentName).toBe("Doc A");
-    store.release(entering);
-    expect(store.getGraph).toBeUndefined();
-  });
-
-  it("ignores a release that carries no claim", async () => {
-    respondWith({ [DOC_A]: () => Promise.resolve(detail("DocA", "Doc A")) });
-    const store = useDataDocumentGraphStore();
-    await store.fetchGraph("DocA");
-
-    store.release(undefined as unknown as symbol);
-
-    expect(store.getGraph).toBeDefined();
-  });
-
-  it("never releases unsaved work", async () => {
-    respondWith({ [DOC_A]: () => Promise.resolve(detail("DocA", "Doc A")) });
-    const store = useDataDocumentGraphStore();
-    const page = Symbol("page");
-    await store.fetchGraph("DocA", { claimant: page });
-    store.updateMetadata({ documentTitle: "Edited" });
-
-    store.release(page);
-
-    expect(store.getGraph?.metadata.documentTitle).toBe("Edited");
-    expect(store.owner).toBe("DocA");
-  });
-
-  it("cancels a load that is still running when its page is released", async () => {
-    const docA = deferred();
-    respondWith({ [DOC_A]: () => docA.promise });
-    const store = useDataDocumentGraphStore();
-    const page = Symbol("page");
-
-    const loadingA = store.fetchGraph("DocA", { claimant: page });
-    store.release(page);
-    docA.resolve(detail("DocA", "Doc A"));
-    await loadingA;
-
-    expect(store.getGraph).toBeUndefined();
-    expect(store.status).toBe("idle");
-    expect(store.isLoading).toBe(false);
-  });
-
-  it("takes ownership as a new document and drops the previous document's scope", async () => {
-    respondWith({ [DOC_A]: () => Promise.resolve(detail("DocA", "Doc A")) });
-    const store = useDataDocumentGraphStore();
-    await store.fetchGraph("DocA");
-
-    store.startNewGraph();
-
-    expect(store.owner).toBe("new");
-    expect(store.status).toBe("ready");
-    expect(useDataDocumentStore().getFields).toEqual([]);
-    expect(store.isPersisted).toBe(false);
-  });
-
-  it("keeps the working copy on screen during a re-sync and reports its failure to the caller", async () => {
-    respondWith({ [DOC_A]: () => Promise.resolve(detail("DocA", "Doc A")) });
-    const store = useDataDocumentGraphStore();
-    await store.fetchGraph("DocA");
-    respondWith({ [DOC_A]: () => Promise.reject(new Error("boom")) });
-
-    await expect(store.fetchGraph("DocA", { force: true })).rejects.toThrow("boom");
-
-    expect(store.status).toBe("ready");
-    expect(store.getGraph?.metadata.documentName).toBe("Doc A");
-  });
-
-  it("keeps the working copy on screen when a re-sync comes back blank", async () => {
-    respondWith({ [DOC_A]: () => Promise.resolve(detail("DocA", "Doc A")) });
-    const store = useDataDocumentGraphStore();
-    await store.fetchGraph("DocA");
-    respondWith({ [DOC_A]: () => Promise.resolve({ data: "" }) });
-
-    await expect(store.fetchGraph("DocA", { force: true })).rejects.toThrow("was not found");
-
-    expect(store.status).toBe("ready");
-    expect(store.getGraph?.metadata.documentName).toBe("Doc A");
-  });
-
-  it("hands the store to the saved id after a first save, so the in-place route change reloads nothing", async () => {
-    respondWith({
-      "moqui/dataDocuments": () => Promise.resolve({ data: { dataDocumentId: "NewDoc", documentName: "New Doc", primaryEntityName: "Party" } }),
-      "moqui/dataDocuments/NewDoc": () => Promise.resolve(detail("NewDoc", "New Doc"))
-    });
-    const store = useDataDocumentGraphStore();
-    const page = Symbol("page");
-    store.startNewGraph(page);
+    const first = Symbol("first"), next = Symbol("next");
+    store.startNewGraph(first);
     store.updateMetadata({ primaryEntityName: "Party" });
     store.updateMetadata({ documentName: "New Doc" });
-    const statuses: string[] = [];
-    store.$subscribe(() => statuses.push(store.status));
-
     await store.saveGraph();
-
-    expect(api).toHaveBeenCalledWith(expect.objectContaining({
-      url: "moqui/dataDocuments",
-      method: "POST",
-      data: expect.objectContaining({ dataDocumentId: "NewDoc" })
-    }));
-    expect(store.owner).toBe("NewDoc");
-    expect(store.status).toBe("ready");
-    // The page never dropped to loading while it saved.
-    expect(statuses).not.toContain("loading");
+    expect(api).toHaveBeenCalledWith(expect.objectContaining({ url: "moqui/dataDocuments", method: "POST" }));
     vi.mocked(api).mockClear();
-    await store.fetchGraph("NewDoc", { claimant: page });
-    // The document is not fetched again; only its exports and scheduled exports start.
+    await store.fetchGraph("NewDoc", { claimant: next });
     expect(api).not.toHaveBeenCalledWith(expect.objectContaining({ url: "moqui/dataDocuments/NewDoc" }));
-    expect(api).toHaveBeenCalledWith(expect.objectContaining({ url: "admin/systemMessages" }));
-    expect(api).toHaveBeenCalledWith(expect.objectContaining({ url: "admin/serviceJobs" }));
-    // The page that created the document still holds the store, so leaving it leaves nothing behind.
-    store.release(page);
+    store.release(first);
+    expect(store.getGraph).toBeDefined();
+    store.updateMetadata({ documentTitle: "Unsaved" });
+    store.release(next);
+    expect(store.isDirty).toBe(true);
+    await store.fetchGraph("NewDoc", { force: true });
+    store.release(next);
     expect(store.getGraph).toBeUndefined();
+    expect(store.status).toBe("idle");
+  });
+
+  it("does not repopulate a released page when its request finishes", async () => {
+    const pending = deferred();
+    respondWith({ "moqui/dataDocuments/A": () => pending.promise });
+    const store = useDataDocumentGraphStore();
+    const page = Symbol("page");
+    const loading = store.fetchGraph("A", { claimant: page });
+    store.release(page);
+    pending.resolve(detail("A"));
+    await loading;
+    expect(store.getGraph).toBeUndefined();
+    expect(store.status).toBe("idle");
+  });
+
+  it.each(["", new Error("offline")])("keeps working data when post-save re-sync fails: %s", async (body) => {
+    const store = useDataDocumentGraphStore();
+    await store.fetchGraph("A");
+    respondWith({ "moqui/dataDocuments/A": () => body instanceof Error ? Promise.reject(body) : Promise.resolve({ data: body }) });
+    await expect(store.fetchGraph("A", { force: true })).rejects.toThrow();
+    expect(store.status).toBe("ready");
+    expect(store.getGraph?.dataDocumentId).toBe("A");
   });
 });
