@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
-import { alertController } from "@ionic/vue";
+import { IonSelect, IonSelectOption, alertController } from "@ionic/vue";
 import DataDocumentFormView from "./DataDocumentFormView.vue";
 import { useDataDocumentGraphStore } from "@/store/dataDocumentGraph";
 import { useUtilStore } from "@/store/util";
@@ -143,7 +143,7 @@ describe("DataDocumentFormView.vue - Change Primary Entity confirmation", () => 
     expect(alertController.create).toHaveBeenCalled();
     expect(alertConfig).not.toBeNull();
     expect(alertConfig.header).toBe("Change Primary Entity?");
-    expect(alertConfig.message).toBe("Changing the Primary Entity will affect your current configuration. What would you like to do?");
+    expect(alertConfig.message).toBe("You already have fields and conditions defined. Changing the primary entity will clear the current configuration. Do you wish to proceed?");
 
     // Option 1: Keep Configuration (role: cancel)
     const keepButton = alertConfig.buttons.find((btn: any) => btn.role === "cancel");
@@ -165,5 +165,73 @@ describe("DataDocumentFormView.vue - Change Primary Entity confirmation", () => 
     // Verify that primaryEntityName was updated to "party.Party" and config reset
     expect(store.getGraph?.metadata.primaryEntityName).toBe("party.Party");
     expect(store.getGraph?.fields).toHaveLength(0);
+  });
+});
+
+describe("DataDocumentFormView.vue - condition operators", () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+  });
+
+  // An order id is a text field and the order date is a date-time, so the backend can read a list or a
+  // pattern from one and not from the other.
+  const mountWithConditions = (conditions: Array<Record<string, any>>) => {
+    const store = useDataDocumentGraphStore();
+    store.startNewGraph();
+    store.updateMetadata({ primaryEntityName: "OrderHeader" });
+    store.addFieldPath("orderId");
+    store.addFieldPath("orderDate");
+    conditions.forEach((condition) => store.addCondition(condition));
+    const utilStore = useUtilStore();
+    utilStore.entityFields = {
+      OrderHeader: [
+        { name: "orderId", fieldName: "orderId", type: "id" },
+        { name: "orderDate", fieldName: "orderDate", type: "date-time" }
+      ]
+    };
+    utilStore.entityRelationships = { OrderHeader: [{ relationshipName: "OrderItem" }] };
+
+    // The conditions card is only drawn when the view is not embedded.
+    return mount(DataDocumentFormView, {
+      props: { embedded: false },
+      global: {
+        stubs: {
+          IonModal: { template: "<div><slot /></div>" },
+          IonContent: { template: "<div><slot /></div>" }
+        }
+      }
+    });
+  };
+
+  const operatorSelects = (wrapper: ReturnType<typeof mountWithConditions>) =>
+    wrapper.findAllComponents(IonSelect).filter((select) => select.props("label") === "Operator");
+  const offeredBy = (select: ReturnType<typeof operatorSelects>[number]) =>
+    select.findAllComponents(IonSelectOption).map((option) => option.props("value"));
+
+  it("offers each condition only the operators the backend can run on its field's type", async () => {
+    const wrapper = mountWithConditions([
+      { fieldNameAlias: "orderId", operator: "equals", fieldValue: "100" },
+      { fieldNameAlias: "orderDate", operator: "equals", fieldValue: "2026-09-28 17:43:01" }
+    ]);
+    await wrapper.vm.$nextTick();
+
+    const [orderId, orderDate] = operatorSelects(wrapper);
+    expect(offeredBy(orderId)).toEqual(["equals", "not-equals", "like", "in", "is-null", "is-not-null", "greater", "greater-equals", "less", "less-equals"]);
+    expect(offeredBy(orderDate)).toEqual(["equals", "not-equals", "is-null", "is-not-null", "greater", "greater-equals", "less", "less-equals"]);
+    expect(offeredBy(orderId)).not.toContain("between");
+  });
+
+  it("marks a saved operator its field cannot take, and leaves the others alone", async () => {
+    const wrapper = mountWithConditions([
+      { fieldNameAlias: "orderId", operator: "in", fieldValue: "100,101" },
+      { fieldNameAlias: "orderDate", operator: "like", fieldValue: "2026%" }
+    ]);
+    await wrapper.vm.$nextTick();
+
+    const [orderId, orderDate] = operatorSelects(wrapper);
+    expect(orderId.classes()).not.toContain("ion-invalid");
+    expect(orderDate.classes()).toContain("ion-invalid");
+    expect(orderDate.props("errorText")).toBe("This operator does not work for this field");
   });
 });

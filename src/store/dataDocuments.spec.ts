@@ -70,44 +70,48 @@ describe("data document store", () => {
   });
 
   it("hydrates nested fields, conditions, and feeds from the Moqui detail response", async () => {
-    apiMock
-      .mockResolvedValueOnce({
-        data: {
-          dataDocumentId: "ApiDocument",
-          fields: [{ fieldSeqId: "10", fieldNameAlias: "productId", fieldPath: "Product:productId" }],
-          conditions: [{ conditionSeqId: "10", fieldNameAlias: "productId", operator: "not-empty" }],
-          feeds: [{ dataFeedId: "ProductFeed", dataDocumentId: "ApiDocument" }]
-        }
-      })
-      .mockResolvedValueOnce({
-        data: {
-          systemMessages: [
-            { systemMessageId: "DDX1001", messageText: "datamanager/export/ApiDocument_1.csv" },
-            { systemMessageId: "DDX1002", messageText: "datamanager/export/OtherDocument_1.csv" }
-          ],
-          systemMessagesCount: 2
-        }
-      });
+    // The related requests start alongside the document, so answer by URL rather than by call order.
+    apiMock.mockImplementation(({ url }: { url: string }) => {
+      if(url === "moqui/dataDocuments/ApiDocument") {
+        return Promise.resolve({
+          data: {
+            dataDocumentId: "ApiDocument",
+            fields: [{ fieldSeqId: "10", fieldNameAlias: "productId", fieldPath: "Product:productId" }],
+            conditions: [{ conditionSeqId: "10", fieldNameAlias: "productId", operator: "not-empty" }],
+            feeds: [{ dataFeedId: "ProductFeed", dataDocumentId: "ApiDocument" }]
+          }
+        });
+      }
+      if(url === "admin/systemMessages") {
+        return Promise.resolve({
+          data: {
+            systemMessages: [
+              { systemMessageId: "DDX1001", messageText: "datamanager/export/ApiDocument_1.csv" },
+              { systemMessageId: "DDX1002", messageText: "datamanager/export/OtherDocument_1.csv" }
+            ],
+            systemMessagesCount: 2
+          }
+        });
+      }
+
+      return Promise.resolve({ data: { serviceJobList: [] } });
+    });
 
     const store = useDataDocumentStore();
     await store.fetchDataDocument("ApiDocument");
 
-    expect(apiMock).toHaveBeenCalledTimes(2);
-    expect(apiMock).toHaveBeenNthCalledWith(1,
-      expect.objectContaining({
-        url: "moqui/dataDocuments/ApiDocument",
-        method: "GET"
+    expect(apiMock).toHaveBeenCalledTimes(3);
+    expect(apiMock).toHaveBeenCalledWith(expect.objectContaining({
+      url: "moqui/dataDocuments/ApiDocument",
+      method: "GET"
+    }));
+    expect(apiMock).toHaveBeenCalledWith(expect.objectContaining({
+      url: "admin/systemMessages",
+      method: "GET",
+      params: expect.objectContaining({
+        systemMessageTypeId: "ExportDocumentData"
       })
-    );
-    expect(apiMock).toHaveBeenNthCalledWith(2,
-      expect.objectContaining({
-        url: "admin/systemMessages",
-        method: "GET",
-        params: expect.objectContaining({
-          systemMessageTypeId: "ExportDocumentData"
-        })
-      })
-    );
+    }));
     expect(store.getFields).toEqual([
       expect.objectContaining({
         fieldNameAlias: "productId"
@@ -115,11 +119,12 @@ describe("data document store", () => {
     ]);
     expect(store.getConditions).toHaveLength(1);
     expect(store.getRelatedFeeds).toHaveLength(1);
-    expect(store.getExportHistory).toEqual([
+    // The history loads in the background, so wait for it rather than relying on microtask order.
+    await vi.waitFor(() => expect(store.getExportHistory).toEqual([
       expect.objectContaining({
         systemMessageId: "DDX1001"
       })
-    ]);
+    ]));
   });
 
   it("derives available entity and feed filters from the unfiltered catalog response", async () => {
@@ -378,7 +383,9 @@ describe("data document store", () => {
         url: "admin/dataDocuments/export",
         method: "POST",
         data: expect.objectContaining({
-          dataDocumentId: "ProductFacilityAndInventoryItem"
+          dataDocumentId: "ProductFacilityAndInventoryItem",
+          pageSize: 10000,
+          pageIndex: 0
         })
       })
     );
@@ -507,6 +514,59 @@ describe("data document store", () => {
     );
   });
 
+  it("re-spells a field alias so the API's camel-casing keeps it as typed, on create and on update", async () => {
+    apiMock.mockResolvedValue({ data: {} });
+    const store = useDataDocumentStore();
+
+    await store.saveField("ApiDocument", { fieldPath: "amount", fieldNameAlias: "shippingRevenue" });
+    await store.saveField("ApiDocument", { fieldSeqId: "03", fieldPath: "statusId", fieldNameAlias: "orderStatusId" });
+
+    expect(apiMock.mock.calls[0][0].data.fieldNameAlias).toBe("shipping_Revenue");
+    expect(apiMock.mock.calls[1][0].data.fieldNameAlias).toBe("order_Status_Id");
+  });
+
+  it("does not invent an alias for a field that has none", async () => {
+    apiMock.mockResolvedValue({ data: {} });
+    const store = useDataDocumentStore();
+
+    await store.saveField("ApiDocument", { fieldPath: "statusId" });
+
+    expect(apiMock.mock.calls[0][0].data).not.toHaveProperty("fieldNameAlias");
+  });
+
+  it("names the alias the API stores in a condition, including the field it is compared to", async () => {
+    apiMock.mockResolvedValue({ data: {} });
+    const store = useDataDocumentStore();
+
+    await store.saveCondition("ApiDocument", { fieldNameAlias: "orderAdjustmentTypeId", operator: "equals", fieldValue: "SHIPPING_CHARGES" });
+    await store.saveCondition("ApiDocument", { conditionSeqId: "02", fieldNameAlias: "order_id", toFieldNameAlias: "ship date" });
+
+    expect(apiMock.mock.calls[0][0].data).toEqual(expect.objectContaining({
+      fieldNameAlias: "orderAdjustmentTypeId",
+      fieldValue: "SHIPPING_CHARGES"
+    }));
+    expect(apiMock.mock.calls[0][0].data).not.toHaveProperty("toFieldNameAlias");
+    expect(apiMock.mock.calls[1][0].data).toEqual(expect.objectContaining({
+      fieldNameAlias: "orderId",
+      toFieldNameAlias: "shipDate"
+    }));
+  });
+
+  it("stores an In list without the spaces the backend would keep as part of a value", async () => {
+    apiMock.mockResolvedValue({ data: {} });
+    const store = useDataDocumentStore();
+
+    await store.saveCondition("ApiDocument", { fieldNameAlias: "productStoreId", operator: "in", fieldValue: "STORE, STORE_CA" });
+    await store.saveCondition("ApiDocument", { fieldNameAlias: "productStoreId", operator: "like", fieldValue: "STORE, %" });
+    await store.saveCondition("ApiDocument", { fieldNameAlias: "productStoreId", operator: "is-not-null" });
+
+    expect(apiMock.mock.calls[0][0].data.fieldValue).toBe("STORE,STORE_CA");
+    // any other operator keeps the value as typed
+    expect(apiMock.mock.calls[1][0].data.fieldValue).toBe("STORE, %");
+    // and a condition with no value does not gain one
+    expect(apiMock.mock.calls[2][0].data).not.toHaveProperty("fieldValue");
+  });
+
   it("deletes fields and conditions through the admin sub-resource endpoints", async () => {
     apiMock.mockResolvedValue({ data: {} });
     const store = useDataDocumentStore();
@@ -534,6 +594,7 @@ describe("data document store", () => {
 
     await store.queueExport("ProductDocument", {
       format: "csv",
+      pageIndex: 2,
       query: {
         selectedFields: ["productId"],
         filters: [{ fieldNameAlias: "facilityId", operator: "equals", value: "WH1" }],
@@ -546,12 +607,90 @@ describe("data document store", () => {
     expect(data).toEqual({
       dataDocumentId: "ProductDocument",
       orderByField: "-productId",
-      pageSize: 250
+      pageSize: 250,
+      pageIndex: 2
     });
     // The export service ignores these, so we must not pretend they were applied.
     expect(data).not.toHaveProperty("fieldsToSelect");
     expect(data).not.toHaveProperty("customParametersMap");
     expect(data).not.toHaveProperty("filters");
     expect(data).not.toHaveProperty("format");
+  });
+});
+
+describe("data document request isolation", () => {
+  const deferred = () => {
+    let resolve!: (value: any) => void;
+    const promise = new Promise<any>((done) => { resolve = done; });
+    return { promise, resolve };
+  };
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    apiMock.mockReset();
+  });
+
+  it("clears document data when switching, retains the catalog, and does not wait for history", async () => {
+    const history = deferred();
+    apiMock.mockImplementation(({ url }) => url === "admin/systemMessages" ? history.promise
+      : Promise.resolve({ data: { dataDocumentId: "B", fields: [{ fieldSeqId: "01" }] } }));
+    const store = useDataDocumentStore();
+    store.activeDocumentId = "A";
+    store.dataDocuments = [{ dataDocumentId: "A" }];
+    store.fields = [{ fieldSeqId: "old" }];
+    store.conditions = [{}];
+    store.relatedFeeds = [{}];
+    store.relatedJobs = [{}];
+    store.scheduledExports = [{}];
+    store.previewRows = [{}];
+    store.previewStatus = "success";
+    const loading = store.fetchDataDocument("B");
+    expect([store.fields, store.conditions, store.relatedFeeds, store.relatedJobs, store.scheduledExports, store.previewRows]).toEqual([[], [], [], [], [], []]);
+    await loading;
+    expect(store.getFields).toEqual([{ fieldSeqId: "01" }]);
+    expect(store.getDataDocuments).toEqual([{ dataDocumentId: "A" }]);
+    expect(store.getExportHistoryStatus).toBe("loading");
+    history.resolve({ data: { systemMessages: [{ systemMessageId: "M1", messageText: "export/B_1.csv" }] } });
+    await vi.waitFor(() => expect(store.getExportHistoryStatus).toBe("ready"));
+    expect(store.getExportHistory[0].systemMessageId).toBe("M1");
+  });
+
+  it.each(["preview", "history", "jobs"])("ignores %s results after switching documents", async (kind) => {
+    const pending = deferred();
+    apiMock.mockReturnValue(pending.promise);
+    const store = useDataDocumentStore();
+    store.activeDocumentId = "A";
+    const running = kind === "preview" ? store.runPreview("A", {})
+      : kind === "history" ? store.fetchExportHistory({ dataDocumentId: "A" }, { documentScoped: true })
+      : store.fetchScheduledExports("A");
+    store.resetDocumentScope();
+    store.activeDocumentId = "B";
+    pending.resolve({ data: { rows: [{}], systemMessages: [{ messageText: "export/A_1.csv" }],
+      serviceJobList: [{ serviceJobParameters: [{ parameterName: "dataDocumentId", parameterValue: "A" }] }] } });
+    await running;
+    expect([store.previewRows, store.exportHistory, store.scheduledExports]).toEqual([[], [], []]);
+    expect([store.previewStatus, store.exportHistoryStatus, store.scheduledExportsStatus]).toEqual(["idle", "idle", "idle"]);
+  });
+
+  it("keeps global history independent of a draft and stops polling an inactive document", async () => {
+    apiMock.mockResolvedValue({ data: { systemMessages: [{ systemMessageId: "M1", messageText: "export/B_1.csv" }] } });
+    const store = useDataDocumentStore();
+    store.activeDocumentId = "A";
+    await store.fetchExportHistory({ dataDocumentId: "B" });
+    expect(store.getExportHistory[0].systemMessageId).toBe("M1");
+    apiMock.mockClear();
+    await store.pollExportHistory("B", { attempts: 1, intervalMs: 1 });
+    expect(apiMock).not.toHaveBeenCalled();
+  });
+
+  it("isolates background failures and does not reload them on a document re-sync", async () => {
+    apiMock.mockImplementation(({ url }) => url.startsWith("moqui/")
+      ? Promise.resolve({ data: { dataDocumentId: "A" } }) : Promise.reject(new Error("offline")));
+    const store = useDataDocumentStore();
+    await store.fetchDataDocument("A");
+    await vi.waitFor(() => expect([store.exportHistoryStatus, store.scheduledExportsStatus]).toEqual(["error", "error"]));
+    expect(store.getCurrentDocument.dataDocumentId).toBe("A");
+    apiMock.mockClear();
+    await store.fetchDataDocument("A", { includeRelated: false });
+    expect(apiMock).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,44 +1,12 @@
 <template>
   <div v-if="graph" class="dd-form-view">
     <main>
-      <ion-card v-if="!embedded">
-        <ion-list class="graph-metadata-list">
-          <ion-item detail button @click="openEntityModal">
-            <ion-label>
-              {{ translate("Primary Entity") }}
-              <p>{{ graph.metadata.primaryEntityName || translate("Select Entity") }}</p>
-            </ion-label>
-          </ion-item>
-          <ion-item>
-            <ion-input
-              :value="graph.metadata.documentName"
-              :label="translate('Name')"
-              label-placement="stacked"
-              @ionInput="updateMetadata('documentName', $event.detail.value || '')"
-            />
-          </ion-item>
-          <ion-item>
-            <ion-input
-              :value="graph.metadata.documentTitle"
-              :label="translate('Title')"
-              label-placement="stacked"
-              @ionInput="updateMetadata('documentTitle', $event.detail.value || '')"
-            />
-          </ion-item>
-          <ion-buttons>
-            <ion-button fill="clear" @click="openAdvancedMetadataModal" :aria-label="translate('Advanced Metadata')">
-              <ion-icon slot="icon-only" :icon="optionsOutline" />
-            </ion-button>
-          </ion-buttons>
-        </ion-list>
-      </ion-card>
-
       <ion-card v-for="group in fieldGroups" :key="group.entityPath">
         <ion-card-header>
           <ion-card-title>{{ group.entityLabel }}</ion-card-title>
           <ion-card-subtitle>{{ group.entityPath }}</ion-card-subtitle>
           <ion-buttons>
-            <ion-button fill="clear" @click="openNewFieldModal(group, 'field')">
+            <ion-button fill="clear" @click="openFieldPicker(group)">
               <ion-icon slot="start" :icon="addOutline" />
               {{ translate("Add field") }}
             </ion-button>
@@ -49,67 +17,47 @@
           </ion-buttons>
         </ion-card-header>
         <ion-list>
-          <ion-item
+          <div
             v-for="field in group.fields"
             :key="field.fieldSeqId || field.fieldPath"
-            lines="none"
             class="field-row"
           >
-            <div class="field-controls">
-              <ion-chip
-                outline
-                color="primary"
-                class="field-selector"
-                @click="openFieldModal(getFieldIndex(field))"
-              >
-                <ion-label>
-                  {{ field.fieldPath || translate("Select Field") }}
-                </ion-label>
-              </ion-chip>
-              <ion-input
-                class="field-alias"
-                :value="field.fieldNameAlias"
-                :label="translate('Alias')"
-                label-placement="floating"
-                fill="outline"
-                @ionInput="updateField(field, { fieldNameAlias: $event.detail.value || '' })"
-              />
-              <ion-input
-                class="field-sequence"
-                :value="field.sequenceNum"
-                type="number"
-                :label="translate('Sequence')"
-                label-placement="floating"
-                fill="outline"
-                @ionInput="updateField(field, { sequenceNum: Number($event.detail.value || 0) })"
-              />
-              <ion-button
-                v-if="field.defaultDisplay === 'Y'"
-                fill="clear"
-                :aria-label="translate('Display toggle')"
-                @click="updateField(field, { defaultDisplay: 'N' })"
-              >
-                <ion-icon slot="icon-only" :icon="eyeOffOutline" />
-              </ion-button>
-              <ion-button
-                v-else
-                fill="clear"
-                :aria-label="translate('Display toggle')"
-                @click="updateField(field, { defaultDisplay: 'Y' })"
-              >
-                <ion-icon slot="icon-only" :icon="eyeOutline" />
-              </ion-button>
-              <ion-button
-                class="field-remove-button"
-                fill="clear"
-                color="danger"
-                :aria-label="translate('Remove field')"
-                @click="graphStore.removeField(field.fieldSeqId || field.fieldPath)"
-              >
-                <ion-icon slot="icon-only" :icon="trashOutline" />
-              </ion-button>
-            </div>
-          </ion-item>
+            <ion-input
+              class="field-alias"
+              :value="field.fieldNameAlias"
+              :label="field.fieldName || field.fieldPath"
+              :placeholder="translate('Alias')"
+              label-placement="stacked"
+              fill="outline"
+              @ionInput="updateField(field, { fieldNameAlias: $event.detail.value || '' })"
+            />
+            <ion-input
+              class="field-sequence"
+              :value="field.sequenceNum"
+              type="number"
+              :label="translate('Sequence')"
+              label-placement="floating"
+              fill="outline"
+              @ionInput="updateField(field, { sequenceNum: Number($event.detail.value || 0) })"
+            />
+            <ion-button
+              fill="clear"
+              :color="isFieldDisplayed(field) ? undefined : 'medium'"
+              :aria-label="isFieldDisplayed(field) ? translate('Hide from output') : translate('Show in output')"
+              @click="updateField(field, { defaultDisplay: isFieldDisplayed(field) ? 'N' : 'Y' })"
+            >
+              <ion-icon slot="icon-only" :icon="isFieldDisplayed(field) ? eyeOutline : eyeOffOutline" />
+            </ion-button>
+            <ion-button
+              class="field-remove-button"
+              fill="clear"
+              color="danger"
+              :aria-label="translate('Remove field')"
+              @click="graphStore.removeField(field.fieldSeqId || field.fieldPath)"
+            >
+              <ion-icon slot="icon-only" :icon="trashOutline" />
+            </ion-button>
+          </div>
         </ion-list>
       </ion-card>
 
@@ -145,14 +93,16 @@
                 label-placement="floating"
                 fill="outline"
                 interface="popover"
+                :class="{ 'ion-invalid ion-touched': isFormConditionOperatorUnsupported(condition) }"
+                :error-text="translate('This operator does not work for this field')"
                 @ionChange="updateCondition(condition, { operator: $event.detail.value })"
               >
-                <ion-select-option v-for="operator in operators" :key="operator.value" :value="operator.value">
+                <ion-select-option v-for="operator in getConditionOperators(condition)" :key="operator.value" :value="operator.value">
                   {{ translate(operator.label) }}
                 </ion-select-option>
               </ion-select>
               <ion-select
-                v-if="getConditionValueOptions(condition)"
+                v-if="conditionOperatorNeedsValue(condition.operator) && getConditionValueOptions(condition)"
                 :value="condition.fieldValue"
                 :label="translate('Value')"
                 :placeholder="getConditionValueOptions(condition)?.label || translate('Select value')"
@@ -172,11 +122,12 @@
                 </ion-select-option>
               </ion-select>
               <ion-input
-                v-else
+                v-else-if="conditionOperatorNeedsValue(condition.operator)"
                 :value="condition.fieldValue"
                 :label="translate('Value')"
                 label-placement="floating"
                 fill="outline"
+                :helper-text="getFormConditionOperatorHint(condition)"
                 :class="{ 'ion-invalid ion-touched': isFormConditionValueInvalid(condition) }"
                 :error-text="translate('Value is required')"
                 @ionInput="updateCondition(condition, { fieldValue: $event.detail.value || '' })"
@@ -241,47 +192,11 @@
       </ion-content>
     </ion-modal>
 
-    <ion-modal ref="advancedMetadataModal">
-      <ion-header>
-        <ion-toolbar>
-          <ion-buttons slot="start">
-            <ion-button @click="closeAdvancedMetadataModal">
-              <ion-icon slot="icon-only" :icon="closeOutline" />
-            </ion-button>
-          </ion-buttons>
-          <ion-title>{{ translate("Advanced Metadata") }}</ion-title>
-        </ion-toolbar>
-      </ion-header>
-      <ion-content>
-        <ion-list>
-          <ion-item>
-            <ion-input
-              :value="graph.metadata.dataDocumentId"
-              :readonly="!isNew"
-              :label="translate('Data Document ID')"
-              label-placement="stacked"
-              @ionInput="updateMetadata('dataDocumentId', $event.detail.value || '')"
-            />
-          </ion-item>
-          <ion-item>
-            <ion-input
-              :value="graph.metadata.indexName"
-              :label="translate('Index Name')"
-              label-placement="stacked"
-              @ionInput="updateMetadata('indexName', $event.detail.value || '')"
-            />
-          </ion-item>
-          <ion-item>
-            <ion-input
-              :value="graph.metadata.manualDataServiceName"
-              :label="translate('Manual Data Service')"
-              label-placement="stacked"
-              @ionInput="updateMetadata('manualDataServiceName', $event.detail.value || '')"
-            />
-          </ion-item>
-        </ion-list>
-      </ion-content>
-    </ion-modal>
+    <DataDocumentFieldPicker
+      v-model:is-open="fieldPickerOpen"
+      :entity-name="fieldPickerEntityName"
+      @confirm="addGroupFields"
+    />
 
     <ion-modal ref="fieldModal">
       <ion-header>
@@ -386,7 +301,6 @@ import {
   IonCardHeader,
   IonCardSubtitle,
   IonCardTitle,
-  IonChip,
   IonContent,
   IonHeader,
   IonIcon,
@@ -406,37 +320,20 @@ import {
   IonTitle,
   IonToolbar
 } from "@ionic/vue";
-import { addOutline, arrowBackOutline, chevronForwardOutline, closeOutline, eyeOffOutline, eyeOutline, gitBranchOutline, optionsOutline, refreshOutline, trashOutline } from "ionicons/icons";
+import { addOutline, arrowBackOutline, chevronForwardOutline, closeOutline, eyeOffOutline, eyeOutline, gitBranchOutline, refreshOutline, trashOutline } from "ionicons/icons";
 import { computed, ref, watch } from "vue";
-import router from "@/router";
 
 import { translate } from "@common";
+import DataDocumentFieldPicker from "@/components/DataDocumentFieldPicker.vue";
 import { useDataDocumentGraphStore } from "@/store/dataDocumentGraph";
 import { useUtilStore } from "@/store/util";
 import { getConditionValueOptionSource } from "@/utils/conditionValueOptions";
-import { isConditionValueMissing } from "@/utils/dataDocumentGraph";
+import { conditionOperatorNeedsValue, getConditionOperatorHint, getConditionOperatorsForFieldType, isConditionValueMissing, normalizeDataDocumentOperator } from "@/utils/dataDocumentGraph";
 import { getEntityLabel, getEntitySearchText, getEntityValue, groupEntityOptions } from "@/utils/entityOptions";
 import type { EntityOption } from "@/utils/entityOptions";
 import { useKeyboardListNavigation } from "@/utils/keyboardListNavigation";
 
 defineProps<{ embedded?: boolean }>();
-// id === "new" drives create mode (mirrors the graph page); unlocks the dataDocumentId field.
-const isNew = computed(() => router.currentRoute.value.params.id === "new");
-
-const operators = [
-  { value: "equals", label: "Equals" },
-  { value: "not-equals", label: "Not equals" },
-  { value: "contains", label: "Contains" },
-  { value: "starts-with", label: "Starts with" },
-  { value: "in", label: "In list" },
-  { value: "empty", label: "Is empty" },
-  { value: "not-empty", label: "Is not empty" },
-  { value: "greater", label: "Greater than" },
-  { value: "greater-equals", label: "Greater than or equal" },
-  { value: "less", label: "Less than" },
-  { value: "less-equals", label: "Less than or equal" },
-  { value: "between", label: "Between" }
-];
 
 const graphStore = useDataDocumentGraphStore();
 const utilStore = useUtilStore();
@@ -446,7 +343,16 @@ const graph = computed(() => graphStore.getGraph);
 const entityModal = ref();
 const entitySearchbar = ref();
 const entityQueryString = ref("");
-const advancedMetadataModal = ref();
+
+const fieldPickerOpen = ref(false);
+const fieldPickerGroup = ref<any>();
+// Mirrors modalCurrentEntity: a group's entity is its last relationship segment, or the
+// primary entity for the root group.
+const fieldPickerEntityName = computed(() => {
+  const segments: string[] = fieldPickerGroup.value?.relationshipPath || [];
+
+  return segments.length ? segments[segments.length - 1] : graph.value?.metadata.primaryEntityName || "";
+});
 
 const fieldModal = ref();
 const fieldSearchbar = ref();
@@ -644,7 +550,14 @@ const getConditionKey = (condition: any, index: number) => condition.localId || 
 
 const isFormConditionValueInvalid = (condition: any) => {
   if (!condition.fieldNameAlias || !condition.operator) return false;
+
   return isConditionValueMissing(condition.operator, condition.fieldValue);
+};
+
+const getFormConditionOperatorHint = (condition: any) => {
+  const hint = getConditionOperatorHint(condition.operator);
+
+  return hint ? translate(hint) : undefined;
 };
 
 const getConditionField = (condition: any) => graph.value?.fields.find((field: any) => (
@@ -690,6 +603,22 @@ const getConditionValueOptions = (condition: any) => {
   });
 };
 
+// Only the operators the backend can run on the type of the field the condition is on.
+const getConditionOperators = (condition: any) => {
+  const field = getConditionField(condition);
+  const entityName = getFieldEntityName(field);
+  const fieldType = field && entityName
+    ? utilStore.getEntityFields(entityName).find((entityField: any) => entityField.fieldName === field.fieldName)?.type
+    : undefined;
+
+  return getConditionOperatorsForFieldType(fieldType);
+};
+
+const isFormConditionOperatorUnsupported = (condition: any) => (
+  !!condition.operator &&
+  !getConditionOperators(condition).some((operator) => operator.value === normalizeDataDocumentOperator(condition.operator))
+);
+
 utilStore.fetchEnumerations();
 utilStore.fetchStatuses();
 
@@ -710,6 +639,12 @@ watch([fieldQueryString, modalCurrentEntity], () => {
 const updateMetadata = (key: string, value: string) => {
   graphStore.updateMetadata({ [key]: value });
 };
+
+// Only an explicit "N" hides a field: Moqui leaves default-display unset when the value is
+// anything else, and its own default is to display. Matches the run payload's selectedFields
+// filter and the graph inspector's Display toggle, so a seeded field with no defaultDisplay
+// reads as shown rather than hidden.
+const isFieldDisplayed = (field: any) => field.defaultDisplay !== "N";
 
 const updateField = (field: any, patch: any) => {
   graphStore.updateField(field.fieldSeqId, field.fieldPath, patch);
@@ -757,38 +692,6 @@ const closeEntityModal = () => {
   entityModal.value.$el.dismiss();
 };
 
-const openEntityModal = () => {
-  entityPickerNavigation.resetNavigation();
-  entityModal.value.$el.present();
-};
-
-const openAdvancedMetadataModal = () => {
-  advancedMetadataModal.value.$el.present();
-};
-
-const closeAdvancedMetadataModal = () => {
-  advancedMetadataModal.value.$el.dismiss();
-};
-
-const getFieldIndex = (field: any) => graph.value?.fields.findIndex((item: any) => (
-  item.fieldSeqId === field.fieldSeqId || item.fieldPath === field.fieldPath
-)) ?? -1;
-
-const openFieldModal = (index: number) => {
-  activeFieldIndex.value = index;
-  fieldModalMode.value = "both";
-  fieldQueryString.value = "";
-  fieldPickerNavigation.resetNavigation();
-  const targetField = graph.value?.fields[index];
-  modalEntityPath.value = targetField ? toModalPath(getEffectiveRelationshipSegments(targetField.fieldPath)) : [];
-  modalBaseDepth.value = modalEntityPath.value.length;
-  if (modalCurrentEntity.value) {
-    utilStore.fetchEntityFields(modalCurrentEntity.value);
-    utilStore.fetchEntityRelationships(modalCurrentEntity.value);
-  }
-  fieldModal.value.$el.present();
-};
-
 const openNewFieldModal = (group: any, mode: "field" | "relation" = "field") => {
   // Always defer creation until the user actually picks a field.
   // No placeholder is added here — avoids blank ghost entries on cancel.
@@ -804,6 +707,21 @@ const openNewFieldModal = (group: any, mode: "field" | "relation" = "field") => 
     utilStore.fetchEntityRelationships(modalCurrentEntity.value);
   }
   fieldModal.value.$el.present();
+};
+
+// "Add field" on an entity group: pick any number of that entity's fields at once. The path
+// prefix is the group's own relationship path, which is what selectField builds for a pick
+// that has not drilled into a relationship.
+const openFieldPicker = (group: any) => {
+  fieldPickerGroup.value = group;
+  fieldPickerOpen.value = true;
+};
+
+const addGroupFields = (fieldNames: string[]) => {
+  const basePath: string[] = fieldPickerGroup.value?.relationshipPath || [];
+  for(const fieldName of fieldNames) {
+    graphStore.addFieldPath([...basePath, fieldName].join(":"), fieldName);
+  }
 };
 
 const drillDown = (relation: any) => {
@@ -852,11 +770,6 @@ const closeFieldModal = () => {
   padding-inline: 0;
 }
 
-.graph-metadata-list {
-  display: grid;
-  grid-template-columns: 1fr auto auto min-content;
-}
-
 ion-card-header {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -880,36 +793,23 @@ ion-card-header ion-buttons {
   --inner-padding-bottom: var(--spacer-sm);
 }
 
-.field-row {
-  --inner-padding-top: var(--spacer-sm);
-  --inner-padding-bottom: var(--spacer-sm);
-}
+/* All field controls on one horizontal row, vertically centered: alias | sequence | display |
+   remove. Alias grows; the rest size to content so the row stays compact.
 
-/* All field controls on one horizontal row, vertically centered: chip | alias | sequence |
-   display | remove. Alias grows; the rest size to content so the row stays compact. */
-.field-controls {
+   Not an ion-item: the outlined alias input hangs its label above its own box, and an item
+   clips anything outside its inner wrapper (overflow: hidden), which sliced the label in half
+   once the row padding came down. */
+.field-row {
   display: flex;
   align-items: center;
   gap: var(--spacer-base);
-  padding: var(--spacer-sm) 0;
+  padding-block: var(--spacer-xs);
+  padding-inline: var(--spacer-sm);
   width: 100%;
 }
 
-.field-controls ion-button {
+.field-row ion-button {
   margin: 0;
-}
-
-.field-selector {
-  flex: 0 0 auto;
-  max-width: 11rem;
-  margin: 0;
-  cursor: pointer;
-}
-
-.field-selector ion-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .field-alias {
@@ -949,7 +849,7 @@ ion-card-header ion-buttons {
 
 @media (max-width: 768px) {
   /* Let the single field row wrap (rather than overflow) on small screens. */
-  .field-controls {
+  .field-row {
     flex-wrap: wrap;
   }
   .condition-controls {

@@ -1,9 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
-import { IonButton, alertController } from "@ionic/vue";
+import { IonButton, IonInput, alertController } from "@ionic/vue";
 import DataDocumentGraphBuilder from "./DataDocumentGraphBuilder.vue";
+import router from "@/router";
 import { useDataDocumentGraphStore } from "@/store/dataDocumentGraph";
+import { useDataDocumentStore } from "@/store/dataDocuments";
 import { useUtilStore } from "@/store/util";
 
 // Mock router
@@ -21,9 +23,12 @@ vi.mock("@/router", () => ({
   default: {
     currentRoute: {
       value: {
-        params: { id: "new" }
+        params: { id: "new" },
+        query: {}
       }
-    }
+    },
+    push: vi.fn(),
+    replace: vi.fn()
   }
 }));
 
@@ -145,7 +150,7 @@ describe("DataDocumentGraphBuilder.vue - Change Primary Entity confirmation", ()
     expect(alertController.create).toHaveBeenCalled();
     expect(alertConfig).not.toBeNull();
     expect(alertConfig.header).toBe("Change Primary Entity?");
-    expect(alertConfig.message).toBe("Changing the Primary Entity will affect your current configuration. What would you like to do?");
+    expect(alertConfig.message).toBe("You already have fields and conditions defined. Changing the primary entity will clear the current configuration. Do you wish to proceed?");
 
     // Option 1: Keep Configuration (role: cancel)
     const keepButton = alertConfig.buttons.find((btn: any) => btn.role === "cancel");
@@ -229,5 +234,83 @@ describe("DataDocumentGraphBuilder.vue - document id length", () => {
     const saveButton = findSaveButton(wrapper);
     expect(saveButton).toBeDefined();
     expect(saveButton?.props("disabled")).toBe(false);
+  });
+});
+
+describe("DataDocumentGraphBuilder.vue - regressions", () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+    router.currentRoute.value.params.id = "new";
+  });
+  const mountBuilder = () => mount(DataDocumentGraphBuilder, {
+    props: { id: "new" },
+    global: { stubs: {
+      IonModal: { template: "<div><slot /></div>" },
+      IonContent: { template: "<div><slot /></div>" },
+      DataDocumentExportList: true,
+      DataDocumentPreviewTable: true
+    } }
+  });
+
+  it("hides a restored graph until claimed and retries a failed load for the route's id", async () => {
+    const store = useDataDocumentGraphStore();
+    store.startNewGraph();
+    store.updateMetadata({ primaryEntityName: "OrderHeader", documentName: "Previous Document" });
+    store.$patch({ owner: "", status: "idle" });
+    const wrapper = mountBuilder();
+    expect(wrapper.findAll("button.graph-node")).toHaveLength(0);
+    expect(wrapper.text()).not.toContain("Previous Document");
+    expect(wrapper.find("main").attributes("aria-busy")).toBe("true");
+
+    router.currentRoute.value.params.id = "DocA";
+    store.$patch({ owner: "DocA", status: "error" });
+    const fetch = vi.spyOn(store, "fetchGraph").mockResolvedValue(undefined);
+    await wrapper.vm.$nextTick();
+    expect(wrapper.text()).toContain("Failed to load this data document.");
+    await wrapper.findAllComponents(IonButton).find((button) => button.text() === "Retry")!.trigger("click");
+    expect(fetch).toHaveBeenCalledWith("DocA", { claimant: expect.any(Symbol) });
+    wrapper.unmount();
+  });
+
+  it("blocks a date's text operator, accepts a valid range, and excludes saved conditions from runtime filters", async () => {
+    const store = useDataDocumentGraphStore();
+    store.startNewGraph();
+    store.updateMetadata({ primaryEntityName: "OrderHeader" });
+    store.addFieldPath("orderDate");
+    useUtilStore().entityFields = { OrderHeader: [{ name: "orderDate", type: "date-time" }] };
+    const wrapper = mountBuilder();
+    const vm = wrapper.vm as any;
+    const dismiss = vi.fn();
+    (wrapper.findComponent({ ref: "conditionModal" }).element as any).dismiss = dismiss;
+    Object.assign(vm.activeCondition, { fieldNameAlias: "orderDate", operator: "like", fieldValue: "2026%" });
+    await wrapper.vm.$nextTick();
+    vm.closeConditionModal(true);
+    expect(dismiss).not.toHaveBeenCalled();
+    expect(store.getGraph?.conditions).toHaveLength(0);
+    expect(vm.isOperatorUnsupported).toBe(true);
+
+    Object.assign(vm.activeCondition, { operator: "greater-equals", fieldValue: "2026-09-28 17:43:01" });
+    await wrapper.vm.$nextTick();
+    vm.closeConditionModal(true);
+    expect(dismiss).toHaveBeenCalled();
+    expect(store.getGraph?.conditions).toEqual([expect.objectContaining({ operator: "greater-equals" })]);
+    expect(vm.buildQuery().filters).toEqual([]);
+    wrapper.unmount();
+  });
+
+  it.each([
+    ["in", "", true, true],
+    ["in", "STORE,STORE_CA", false, true],
+    ["is-not-null", "", false, false]
+  ])("validates %s value %j", async (operator, fieldValue, invalid, showInput) => {
+    useDataDocumentGraphStore().startNewGraph();
+    const wrapper = mountBuilder();
+    const vm = wrapper.vm as any;
+    Object.assign(vm.activeCondition, { fieldNameAlias: "productStoreId", operator, fieldValue });
+    await wrapper.vm.$nextTick();
+    expect(vm.isOperatorValueInvalid).toBe(invalid);
+    expect(wrapper.findAllComponents(IonInput).some((input) => input.props("label") === "Value")).toBe(showInput);
+    wrapper.unmount();
   });
 });

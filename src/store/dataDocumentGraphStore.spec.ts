@@ -15,6 +15,7 @@ vi.mock("@/logger", () => ({
 
 import { api } from "@common";
 import { useDataDocumentGraphStore } from "@/store/dataDocumentGraph";
+import { useDataDocumentStore } from "@/store/dataDocuments";
 
 describe("data document graph store", () => {
   beforeEach(() => {
@@ -167,5 +168,129 @@ describe("data document graph store", () => {
     store.updateMetadata({ primaryEntityName: "Party" });
     expect(store.removedFieldSeqIds).toContain("10");
     expect(store.removedConditionSeqIds).toContain("01");
+  });
+});
+
+describe("data document lifecycle", () => {
+  const detail = (id: string) => ({ data: {
+    dataDocumentId: id, documentName: id, primaryEntityName: "Party",
+    fields: [{ fieldSeqId: "10", fieldPath: "partyId", fieldNameAlias: "partyId", dataDocumentId: id }],
+    conditions: []
+  } });
+  const deferred = () => {
+    let resolve!: (value: any) => void;
+    const promise = new Promise<any>((done) => { resolve = done; });
+    return { promise, resolve };
+  };
+  const respondWith = (routes: Record<string, () => Promise<any>> = {}) => {
+    vi.mocked(api).mockImplementation((({ url }: { url: string }) => routes[url]?.()
+      ?? Promise.resolve(url.startsWith("moqui/dataDocuments/") ? detail(url.split("/").pop()!) : { data: {} })) as any);
+  };
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.mocked(api).mockReset();
+    respondWith();
+  });
+
+  it("clears the previous graph while loading and ignores a late response", async () => {
+    const store = useDataDocumentGraphStore();
+    await store.fetchGraph("Previous");
+    const a = deferred(), b = deferred();
+    respondWith({ "moqui/dataDocuments/A": () => a.promise, "moqui/dataDocuments/B": () => b.promise });
+    const loadingA = store.fetchGraph("A");
+    expect(store.getGraph).toBeUndefined();
+    expect(store.status).toBe("loading");
+    const loadingB = store.fetchGraph("B");
+    b.resolve(detail("B"));
+    await loadingB;
+    a.resolve(detail("A"));
+    await loadingA;
+    expect(store.getGraph?.dataDocumentId).toBe("B");
+    expect(useDataDocumentStore().getCurrentDocument.dataDocumentId).toBe("B");
+  });
+
+  it.each(["", {}, new Error("offline")])("clears a failed or missing document and permits retry: %s", async (body) => {
+    const store = useDataDocumentGraphStore();
+    await store.fetchGraph("A");
+    respondWith({ "moqui/dataDocuments/B": () => body instanceof Error ? Promise.reject(body) : Promise.resolve({ data: body }) });
+    await store.fetchGraph("B");
+    expect(store.status).toBe("error");
+    expect(store.getGraph).toBeUndefined();
+    expect(store.isPersisted).toBe(false);
+    respondWith();
+    await store.fetchGraph("B");
+    expect(store.status).toBe("ready");
+  });
+
+  it("saves a restored existing draft with PUT and retains its fields", async () => {
+    const document = detail("A").data;
+    respondWith({ "moqui/dataDocuments/A": () => Promise.resolve({ data: document }) });
+    const store = useDataDocumentGraphStore();
+    await store.fetchGraph("A");
+    store.updateMetadata({ documentTitle: "Restored draft" });
+    store.$patch({ owner: "", status: "idle" });
+    useDataDocumentStore().resetDocumentScope();
+    vi.mocked(api).mockClear();
+    await store.fetchGraph("A");
+    expect(api).not.toHaveBeenCalledWith(expect.objectContaining({ url: "moqui/dataDocuments/A" }));
+    expect(api).toHaveBeenCalledWith(expect.objectContaining({ url: "admin/systemMessages" }));
+    expect(store.getGraph?.metadata.documentTitle).toBe("Restored draft");
+    expect(useDataDocumentStore().currentDocument).toBeUndefined();
+    vi.mocked(api).mockImplementation((async ({ url, method, data }: any) => {
+      if (method === "POST") throw new Error("Duplicate document id");
+      if (url !== "moqui/dataDocuments/A") return { data: {} };
+      if (method === "PUT") Object.assign(document, data);
+      return { data: document };
+    }) as any);
+    await store.saveGraph();
+    expect(api).toHaveBeenCalledWith(expect.objectContaining({ url: "moqui/dataDocuments/A", method: "PUT" }));
+    expect(store.getGraph?.metadata.documentTitle).toBe("Restored draft");
+    expect(store.getGraph?.fields).toHaveLength(1);
+    expect(store.isDirty).toBe(false);
+  });
+
+  it("creates once, ignores an old page's release, and releases only clean work", async () => {
+    respondWith({ "moqui/dataDocuments": () => Promise.resolve(detail("NewDoc")) });
+    const store = useDataDocumentGraphStore();
+    const first = Symbol("first"), next = Symbol("next");
+    store.startNewGraph(first);
+    store.updateMetadata({ primaryEntityName: "Party" });
+    store.updateMetadata({ documentName: "New Doc" });
+    await store.saveGraph();
+    expect(api).toHaveBeenCalledWith(expect.objectContaining({ url: "moqui/dataDocuments", method: "POST" }));
+    vi.mocked(api).mockClear();
+    await store.fetchGraph("NewDoc", { claimant: next });
+    expect(api).not.toHaveBeenCalledWith(expect.objectContaining({ url: "moqui/dataDocuments/NewDoc" }));
+    store.release(first);
+    expect(store.getGraph).toBeDefined();
+    store.updateMetadata({ documentTitle: "Unsaved" });
+    store.release(next);
+    expect(store.isDirty).toBe(true);
+    await store.fetchGraph("NewDoc", { force: true });
+    store.release(next);
+    expect(store.getGraph).toBeUndefined();
+    expect(store.status).toBe("idle");
+  });
+
+  it("does not repopulate a released page when its request finishes", async () => {
+    const pending = deferred();
+    respondWith({ "moqui/dataDocuments/A": () => pending.promise });
+    const store = useDataDocumentGraphStore();
+    const page = Symbol("page");
+    const loading = store.fetchGraph("A", { claimant: page });
+    store.release(page);
+    pending.resolve(detail("A"));
+    await loading;
+    expect(store.getGraph).toBeUndefined();
+    expect(store.status).toBe("idle");
+  });
+
+  it.each(["", new Error("offline")])("keeps working data when post-save re-sync fails: %s", async (body) => {
+    const store = useDataDocumentGraphStore();
+    await store.fetchGraph("A");
+    respondWith({ "moqui/dataDocuments/A": () => body instanceof Error ? Promise.reject(body) : Promise.resolve({ data: body }) });
+    await expect(store.fetchGraph("A", { force: true })).rejects.toThrow();
+    expect(store.status).toBe("ready");
+    expect(store.getGraph?.dataDocumentId).toBe("A");
   });
 });
