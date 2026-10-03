@@ -1798,6 +1798,7 @@ onIonViewDidLeave(() => {
 @media (max-width: 900px) {
   .graph-workspace {
     display: block;
+    height: auto;
   }
 
   .graph-inspector {

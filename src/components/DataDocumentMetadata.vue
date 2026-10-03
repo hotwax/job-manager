@@ -206,6 +206,16 @@ const saveFromModal = () => {
   padding-inline: var(--spacer-sm);
 }
 
+@media (max-width: 900px) {
+  .graph-metadata-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .graph-metadata-list > ion-buttons {
+    justify-self: end;
+  }
+}
+
 /* Outlined controls stacked in a modal, matching CreateJobModal's .job-detail-fields. */
 .advanced-metadata-fields > ion-input,
 .advanced-metadata-fields > ion-item {

@@ -383,7 +383,9 @@ describe("data document store", () => {
         url: "admin/dataDocuments/export",
         method: "POST",
         data: expect.objectContaining({
-          dataDocumentId: "ProductFacilityAndInventoryItem"
+          dataDocumentId: "ProductFacilityAndInventoryItem",
+          pageSize: 10000,
+          pageIndex: 0
         })
       })
     );
@@ -592,6 +594,7 @@ describe("data document store", () => {
 
     await store.queueExport("ProductDocument", {
       format: "csv",
+      pageIndex: 2,
       query: {
         selectedFields: ["productId"],
         filters: [{ fieldNameAlias: "facilityId", operator: "equals", value: "WH1" }],
@@ -604,7 +607,8 @@ describe("data document store", () => {
     expect(data).toEqual({
       dataDocumentId: "ProductDocument",
       orderByField: "-productId",
-      pageSize: 250
+      pageSize: 250,
+      pageIndex: 2
     });
     // The export service ignores these, so we must not pretend they were applied.
     expect(data).not.toHaveProperty("fieldsToSelect");

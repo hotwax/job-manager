@@ -380,7 +380,8 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
       // seqId and would otherwise be POSTed again).
       let savedDataDocumentId = "";
       try {
-        const savedDoc = await dataDocumentStore.saveDataDocument(this.graph.metadata);
+        // This flag survives draft restoration; the document store's fetched copy does not.
+        const savedDoc = await dataDocumentStore.saveDataDocument(this.graph.metadata, { isNew: !this.isPersisted });
         // The backend auto-generates (or normalizes) the id when it is blank — adopt it
         // before saving child fields/conditions so they attach to the right document.
         const dataDocumentId = savedDoc?.dataDocumentId || this.graph.dataDocumentId;

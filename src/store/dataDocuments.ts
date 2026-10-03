@@ -382,8 +382,7 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
 
       return this.currentDocument;
     },
-    async saveDataDocument(payload: Record<string, any>) {
-      const isNew = !this.currentDocument?.dataDocumentId || this.currentDocument.dataDocumentId !== payload.dataDocumentId;
+    async saveDataDocument(payload: Record<string, any>, { isNew }: { isNew: boolean }) {
       try {
         const response = await api({
           url: isNew ? API_ENDPOINTS.dataDocuments : `${API_ENDPOINTS.dataDocuments}/${encodeURIComponent(payload.dataDocumentId)}`,
@@ -507,13 +506,15 @@ export const useDataDocumentStore = defineStore("dataDocuments", {
     },
     async queueExport(dataDocumentId: string, options: Record<string, any> = {}) {
       // The export service (queue#DocumentDataToExport) only honors dataDocumentId,
-      // pageIndex, pageSize (default cap 10000) and orderByField. Field selection and
+      // pageIndex, pageSize and orderByField. Field selection and
       // filters are NOT applied server-side — the CSV is always the full document with
       // its baked-in conditions. We forward only the supported params and drop the rest
       // rather than silently pretending the query applied.
       const query = options.query || {};
       const sort = Array.isArray(query.sort) ? query.sort[0] : undefined;
-      const data: Record<string, any> = { dataDocumentId };
+      // Send the advertised export limit explicitly: omitting pageSize produced
+      // truncated 20-row exports on the live backend.
+      const data: Record<string, any> = { dataDocumentId, pageSize: 10000, pageIndex: 0 };
       if (sort?.fieldNameAlias) {
         data.orderByField = `${sort.direction === "DESC" ? "-" : ""}${sort.fieldNameAlias}`;
       }

@@ -351,6 +351,40 @@ describe("data document graph store - who owns the graph", () => {
     expect(store.getGraph?.metadata.documentTitle).not.toBe("Edited");
   });
 
+  it("updates an existing draft after reload even though the document store is empty", async () => {
+    const document = detail("DocA", "Doc A").data;
+    vi.mocked(api).mockImplementation((async ({ url, method, data }: any) => {
+      if (url === DOC_A) {
+        if (method === "PUT") Object.assign(document, data);
+        return { data: document };
+      }
+      if (url === "moqui/dataDocuments" && method === "POST") {
+        throw new Error("Duplicate document id");
+      }
+      return noHistory;
+    }) as any);
+    const store = useDataDocumentGraphStore();
+    await store.fetchGraph("DocA");
+    store.updateMetadata({ documentTitle: "Restored draft" });
+    store.$patch({ owner: "", status: "idle" });
+    useDataDocumentStore().resetDocumentScope();
+    await store.fetchGraph("DocA");
+    expect(useDataDocumentStore().currentDocument).toBeUndefined();
+    vi.mocked(api).mockClear();
+
+    await store.saveGraph();
+
+    expect(api).toHaveBeenCalledWith(expect.objectContaining({
+      url: DOC_A,
+      method: "PUT",
+      data: expect.objectContaining({ documentTitle: "Restored draft" })
+    }));
+    expect(api).not.toHaveBeenCalledWith(expect.objectContaining({ method: "POST" }));
+    expect(store.getGraph?.metadata.documentTitle).toBe("Restored draft");
+    expect(store.getGraph?.fields).toHaveLength(1);
+    expect(store.isDirty).toBe(false);
+  });
+
   it("releases what the leaving page loaded, but only for the page that claimed the store", async () => {
     respondWith({ [DOC_A]: () => Promise.resolve(detail("DocA", "Doc A")) });
     const store = useDataDocumentGraphStore();
@@ -477,6 +511,11 @@ describe("data document graph store - who owns the graph", () => {
 
     await store.saveGraph();
 
+    expect(api).toHaveBeenCalledWith(expect.objectContaining({
+      url: "moqui/dataDocuments",
+      method: "POST",
+      data: expect.objectContaining({ dataDocumentId: "NewDoc" })
+    }));
     expect(store.owner).toBe("NewDoc");
     expect(store.status).toBe("ready");
     // The page never dropped to loading while it saved.
