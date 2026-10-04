@@ -143,7 +143,7 @@ describe("DataDocumentFormView.vue - Change Primary Entity confirmation", () => 
     expect(alertController.create).toHaveBeenCalled();
     expect(alertConfig).not.toBeNull();
     expect(alertConfig.header).toBe("Change Primary Entity?");
-    expect(alertConfig.message).toBe("Changing the Primary Entity will affect your current configuration. What would you like to do?");
+    expect(alertConfig.message).toBe("You already have fields and conditions defined. Changing the primary entity will clear the current configuration. Do you wish to proceed?");
 
     // Option 1: Keep Configuration (role: cancel)
     const keepButton = alertConfig.buttons.find((btn: any) => btn.role === "cancel");
