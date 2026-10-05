@@ -173,102 +173,116 @@ describe("Shopify Bulk Operation Store", () => {
     expect(store.stats.total).toBe(0); // empty stats correctly maintained
   });
 
-  it("should deduplicate the capability probe in ensureEnrichmentSupported and replace settled promise", async () => {
-    const store = useShopifyBulkOperationStore();
+  describe("HotWax message lookup", () => {
+    const probeResponse = (applied: boolean) => ({ data: { systemMessages: applied ? [] : [{ systemMessageId: "NEWEST" }] } });
 
-    const req = defer<any>();
-    (api as any).mockImplementationOnce(() => req.promise);
+    it("probes once, and picks one request per page when the instance applies remoteMessageIds", async () => {
+      const store = useShopifyBulkOperationStore();
+      const probe = defer<any>();
+      (api as Mock).mockImplementationOnce(() => probe.promise);
 
-    const p1 = store.ensureEnrichmentSupported();
-    const p2 = store.ensureEnrichmentSupported();
+      const first = store.ensureEnrichmentMode();
+      const second = store.ensureEnrichmentMode();
+      expect(api).toHaveBeenCalledTimes(1);
+      expect((api as Mock).mock.calls[0][0].params).toEqual({ remoteMessageIds: "gid://accxui/FilterSupportProbe/none", pageSize: 1 });
 
-    expect(api).toHaveBeenCalledTimes(1);
+      probe.resolve(probeResponse(true));
+      expect(await Promise.all([first, second])).toEqual(["batch", "batch"]);
+      expect(store.enrichmentMode).toBe("batch");
 
-    req.resolve({
-      data: { systemMessages: [] }
+      await store.ensureEnrichmentMode();
+      expect(api).toHaveBeenCalledTimes(1);
     });
 
-    await Promise.all([p1, p2]);
-    expect(store.enrichmentAvailable).toBe(true);
-    expect(store.enrichmentProbed).toBe(true);
+    it("falls back to one request per operation when only remoteMessageId is applied", async () => {
+      const store = useShopifyBulkOperationStore();
+      (api as Mock)
+        .mockResolvedValueOnce(probeResponse(false))
+        .mockResolvedValueOnce(probeResponse(true));
 
-    // Because it is settled, it should return early
-    const p3 = store.ensureEnrichmentSupported();
-    await p3;
-    expect(api).toHaveBeenCalledTimes(1);
-  });
+      expect(await store.ensureEnrichmentMode()).toBe("single");
+      expect((api as Mock).mock.calls[1][0].params).toEqual({ remoteMessageId: "gid://accxui/FilterSupportProbe/none", pageSize: 1 });
+      expect(store.enrichmentAvailable).toBe(true);
+    });
 
-  it("should cap enrichment concurrency globally across multiple fetchEnrichmentFor calls", async () => {
-    const store = useShopifyBulkOperationStore();
+    it("switches enrichment off when the instance applies neither filter", async () => {
+      const store = useShopifyBulkOperationStore();
+      (api as Mock).mockResolvedValue(probeResponse(false));
 
-    store.ensureEnrichmentSupported = vi.fn(() => Promise.resolve());
-    store.enrichmentAvailable = true;
+      expect(await store.ensureEnrichmentMode()).toBe("none");
+      expect(store.enrichmentAvailable).toBe(false);
 
-    const reqs: DeferredPromise<any>[] = [];
-    let activeCalls = 0;
-    let maxActiveCalls = 0;
+      await store.fetchEnrichmentFor([{ id: "gid://shopify/BulkOperation/1" }]);
+      expect(api).toHaveBeenCalledTimes(2);
+    });
 
-    (api as Mock).mockImplementation((opts: any) => {
-      activeCalls++;
-      if (activeCalls > maxActiveCalls) maxActiveCalls = activeCalls;
+    it("does not remember a probe that errored, so the next load tries again", async () => {
+      const store = useShopifyBulkOperationStore();
+      (api as Mock).mockRejectedValueOnce({ response: { status: 500 } });
 
-      const d = defer<any>();
-      d.promise.catch(() => {});
-      (d.promise as any).gid = opts.params.remoteMessageId;
-      reqs.push(d);
+      expect(await store.ensureEnrichmentMode()).toBe("none");
+      expect(store.enrichmentMode).toBe("");
+      expect(store.enrichmentAvailable).toBe(true);
 
-      return d.promise.finally(() => {
-        activeCalls--;
+      (api as Mock).mockResolvedValueOnce(probeResponse(true));
+      expect(await store.ensureEnrichmentMode()).toBe("batch");
+    });
+
+    it("resolves a page in one request, never attaches another operation's message, and refetches on every load", async () => {
+      const store = useShopifyBulkOperationStore();
+      store.enrichmentMode = "batch";
+      const operations = [1, 2, 3].map((id) => ({ id: `gid://shopify/BulkOperation/${id}` }));
+
+      (api as Mock).mockResolvedValueOnce({ data: { systemMessages: [
+        { systemMessageId: "M1", remoteMessageId: "gid://shopify/BulkOperation/1", statusId: "SmsgSent" },
+        { systemMessageId: "OTHER", remoteMessageId: "gid://shopify/BulkOperation/99", statusId: "SmsgSent" }
+      ] } });
+      await store.fetchEnrichmentFor(operations);
+
+      expect(api).toHaveBeenCalledTimes(1);
+      expect((api as Mock).mock.calls[0][0].params).toEqual({
+        remoteMessageIds: "gid://shopify/BulkOperation/1,gid://shopify/BulkOperation/2,gid://shopify/BulkOperation/3",
+        pageSize: 3
       });
+      expect(store.enrichmentIndex["gid://shopify/BulkOperation/1"].statusId).toBe("SmsgSent");
+      expect(store.enrichmentIndex["gid://shopify/BulkOperation/2"]).toBeNull();
+      expect(store.enrichmentIndex["gid://shopify/BulkOperation/99"]).toBeUndefined();
+
+      // The HotWax side moves while the page is open, so a reload asks again.
+      (api as Mock).mockResolvedValueOnce({ data: { systemMessages: [
+        { systemMessageId: "M1", remoteMessageId: "gid://shopify/BulkOperation/1", statusId: "SmsgConsumed" }
+      ] } });
+      await store.fetchEnrichmentFor(operations);
+
+      expect(api).toHaveBeenCalledTimes(2);
+      expect(store.enrichmentIndex["gid://shopify/BulkOperation/1"].statusId).toBe("SmsgConsumed");
     });
 
-    const batch1 = Array.from({ length: 4 }, (_, i) => ({ id: `gid://shopify/BulkOperation/${i}` }));
-    const batch2 = Array.from({ length: 4 }, (_, i) => ({ id: `gid://shopify/BulkOperation/${i + 4}` }));
+    it("asks one operation at a time, at most five in flight, when the instance has no batch filter", async () => {
+      const store = useShopifyBulkOperationStore();
+      store.enrichmentMode = "single";
+      const operations = Array.from({ length: 8 }, (_, id) => ({ id: `gid://shopify/BulkOperation/${id}` }));
 
-    const p1 = store.fetchEnrichmentFor(batch1);
-    const p2 = store.fetchEnrichmentFor(batch2);
-
-    const drainMicrotasks = async (condition: () => boolean, maxIter = 50) => {
-      let iters = 0;
-      while (!condition() && iters < maxIter) {
+      let inFlight = 0;
+      let maxInFlight = 0;
+      (api as Mock).mockImplementation(async ({ params }: any) => {
+        inFlight++;
+        maxInFlight = Math.max(maxInFlight, inFlight);
         await Promise.resolve();
-        iters++;
-      }
-      if (iters >= maxIter) throw new Error("drainMicrotasks timed out waiting for condition");
-    };
+        inFlight--;
+        if(params.remoteMessageId.endsWith("/3")) {
+          throw new Error("network");
+        }
 
-    // Wait for the queue to start and fill up to the max concurrency of 5
-    await drainMicrotasks(() => reqs.length === 5);
+        return { data: { systemMessages: [{ systemMessageId: `M${params.remoteMessageId.split("/").pop()}`, remoteMessageId: params.remoteMessageId }] } };
+      });
 
-    // We should only see 5 requests in flight due to concurrency limit, even across 2 calls
-    expect(reqs.length).toBe(5);
-    expect(activeCalls).toBe(5);
+      await store.fetchEnrichmentFor(operations);
 
-    // Resolve one
-    reqs[0].resolve({ data: { systemMessages: [{ remoteMessageId: "gid://shopify/BulkOperation/0" }] } });
-
-    // Wait for the queue to push the 6th element
-    await drainMicrotasks(() => reqs.length === 6);
-
-    // Now the 6th request should be launched
-    expect(reqs.length).toBe(6);
-
-    // Deterministic drain the rest
-    let resolvedCount = 0;
-    await drainMicrotasks(() => {
-      const currentReqs = reqs.slice(resolvedCount);
-      for (const req of currentReqs) {
-        req.resolve({ data: { systemMessages: [{ remoteMessageId: (req.promise as any).gid }] } });
-        resolvedCount++;
-      }
-      return reqs.length === 8 && resolvedCount === 8;
+      expect(api).toHaveBeenCalledTimes(8);
+      expect(maxInFlight).toBeLessThanOrEqual(5);
+      expect(store.enrichmentIndex["gid://shopify/BulkOperation/0"].systemMessageId).toBe("M0");
+      expect(store.enrichmentIndex["gid://shopify/BulkOperation/3"]).toBeNull();
     });
-
-    await Promise.all([p1, p2]);
-
-    // Total 8 distinct requests made
-    expect(reqs.length).toBe(8);
-    expect(Object.keys(store.enrichmentIndex).length).toBe(8);
-    expect(maxActiveCalls).toBe(5);
   });
 });

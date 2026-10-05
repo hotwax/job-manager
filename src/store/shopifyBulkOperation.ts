@@ -3,83 +3,6 @@ import { defineStore } from "pinia";
 import logger from "@/logger";
 import { getShopDefaultAppRemoteId } from "@/utils";
 
-interface DeferredTask {
-  gid: string;
-  resolve: (value: any) => void;
-  reject: (reason?: any) => void;
-}
-
-const probePromises = new WeakMap<object, Promise<void> | null>();
-const enrichmentLimiters = new WeakMap<object, {
-  activeCount: number;
-  queue: DeferredTask[];
-  inFlight: Map<string, Promise<any>>;
-}>();
-
-const ENRICHMENT_CONCURRENCY_LIMIT = 5;
-
-function getLimiter(store: object) {
-  if (!enrichmentLimiters.has(store)) {
-    enrichmentLimiters.set(store, { activeCount: 0, queue: [], inFlight: new Map() });
-  }
-  return enrichmentLimiters.get(store)!;
-}
-
-function processEnrichmentQueue(store: object) {
-  const limiter = getLimiter(store);
-  while (limiter.activeCount < ENRICHMENT_CONCURRENCY_LIMIT && limiter.queue.length > 0) {
-    const task = limiter.queue.shift();
-    if (!task) break;
-
-    limiter.activeCount++;
-    const p = (async () => {
-      try {
-        const response = await api({
-          url: ENRICHMENT_ENDPOINT,
-          method: "GET",
-          params: { remoteMessageId: task.gid, pageSize: 1 }
-        });
-        const message = response.data?.systemMessages?.[0];
-        return { gid: task.gid, message: message?.remoteMessageId === task.gid ? message : undefined };
-      } catch (err) {
-        logger.error(`Bulk Operation [Shopify Operation ID: ${task.gid}] - Failed to resolve HotWax message`, err);
-        return { gid: task.gid, message: undefined };
-      } finally {
-        limiter.inFlight.delete(task.gid);
-        limiter.activeCount--;
-        Promise.resolve().then(() => processEnrichmentQueue(store));
-      }
-    })();
-
-    p.then(task.resolve).catch(task.reject);
-  }
-}
-
-function enqueueEnrichment(store: object, gid: string): Promise<any> {
-  const limiter = getLimiter(store);
-  if (limiter.inFlight.has(gid)) {
-    return limiter.inFlight.get(gid)!;
-  }
-  const existingTask = limiter.queue.find(t => t.gid === gid);
-  if (existingTask) {
-    // If it's in queue, we just need to return a new promise that resolves when that task resolves
-    return new Promise((resolve, reject) => {
-        const origResolve = existingTask.resolve;
-        const origReject = existingTask.reject;
-        existingTask.resolve = (val) => { origResolve(val); resolve(val); };
-        existingTask.reject = (err) => { origReject(err); reject(err); };
-    });
-  }
-
-  const p = new Promise<any>((resolve, reject) => {
-    limiter.queue.push({ gid, resolve, reject });
-  });
-  limiter.inFlight.set(gid, p);
-
-  processEnrichmentQueue(store);
-  return p;
-}
-
 // Shopify is the source of truth for this page: bulkOperations returns every bulk operation
 // the HotWax app has run against the shop, with the live status, counts and signed result
 // URL. HotWax SystemMessages are joined on afterwards to explain WHY each operation ran.
@@ -125,16 +48,64 @@ export const OPERATIONS_PAGE_SIZE = 25;
 export const STATS_WINDOW_SIZE = 250;
 
 // Resolving a Shopify operation to the HotWax message that requested it is a filter on the
-// system messages list, not a resource of its own.
-//
-// Older instances accept remoteMessageId and silently ignore it, answering with the whole
-// unfiltered set instead of an error. Probing with an id that cannot exist is what separates
-// the two: an instance that honours the filter returns nothing, one that ignores it returns
-// its newest messages. Checking a real response for a matching remoteMessageId is not enough
-// on its own, because for the newest operation the unfiltered first row can be the very
-// message being looked for.
+// system messages list, not a resource of its own, and instances differ in which filters they
+// know. One that does not know a filter strips it and answers with the unfiltered list instead
+// of an error, so probing with an id that cannot exist separates them: an instance that applies
+// the filter returns nothing, one that strips it returns its newest messages.
+//   batch  - remoteMessageIds (hotwax-maarg-util#296): one request resolves a whole page
+//   single - remoteMessageId only (hotwax-maarg-util#222): one request per operation
+//   none   - neither: the page shows Shopify data only
 const ENRICHMENT_ENDPOINT = "admin/systemMessages";
 const ENRICHMENT_PROBE_ID = "gid://accxui/FilterSupportProbe/none";
+// GIDs travel comma separated in the query string, so a batch is capped to keep the URL short.
+const ENRICHMENT_BATCH_SIZE = 50;
+// Without the batch filter each operation is its own request; a few at a time keeps a page
+// from sending all of them at once.
+const ENRICHMENT_SINGLE_CONCURRENCY = 5;
+
+let enrichmentModeProbe: Promise<string> | null = null;
+
+const chunk = <T>(items: T[], size: number): T[][] => {
+  const chunks: T[][] = [];
+  for(let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+
+  return chunks;
+};
+
+const isFilterApplied = async (params: Record<string, any>) => {
+  const response = await api({ url: ENRICHMENT_ENDPOINT, method: "GET", params: { ...params, pageSize: 1 } });
+
+  return !response.data?.systemMessages?.length;
+};
+
+const fetchMessagesByRemoteIds = async (mode: string, gids: string[]) => {
+  if(mode === "batch") {
+    const responses = await Promise.all(chunk(gids, ENRICHMENT_BATCH_SIZE).map((ids) => api({
+      url: ENRICHMENT_ENDPOINT,
+      method: "GET",
+      params: { remoteMessageIds: ids.join(","), pageSize: ids.length }
+    })));
+
+    return responses.flatMap((response: any) => response.data?.systemMessages ?? []);
+  }
+
+  const messages: any[] = [];
+  for(const ids of chunk(gids, ENRICHMENT_SINGLE_CONCURRENCY)) {
+    const responses = await Promise.all(ids.map((gid) => api({
+      url: ENRICHMENT_ENDPOINT,
+      method: "GET",
+      params: { remoteMessageId: gid, pageSize: 1 }
+    }).catch((err: any) => {
+      logger.error(`Bulk Operation [Shopify Operation ID: ${gid}] - Failed to resolve HotWax message`, err);
+      return undefined;
+    })));
+    messages.push(...responses.flatMap((response: any) => response?.data?.systemMessages ?? []));
+  }
+
+  return messages;
+};
 
 export const getShopifyBulkOperationId = (gid: any) =>
   String(gid || "").startsWith(SHOPIFY_BULK_GID_PREFIX) ? String(gid).slice(SHOPIFY_BULK_GID_PREFIX.length) : String(gid || "");
@@ -162,14 +133,14 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
     isFetchingShops: false,
     combinedShopCount: 0,
     enrichmentIndex: {} as Record<string, any>,
-    enrichmentAvailable: true,
-    enrichmentProbed: false,
+    enrichmentMode: "",
     stats: { total: 0, inFlight: 0, completed: 0, failed: 0, windowSize: 0, truncated: false },
     loading: false,
     isFetchingOperations: false,
     lastError: "",
     _fetchOperationsId: 0,
-    _fetchStatsId: 0
+    _fetchStatsId: 0,
+    _fetchEnrichmentId: 0
   }),
   getters: {
     // One row per Shopify operation, with the HotWax message attached when we have it. An
@@ -184,6 +155,8 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
       fileSize: operation.fileSize ? Number(operation.fileSize) : 0,
       hotwaxMessage: state.enrichmentIndex[operation.id] || undefined
     })),
+    // Optimistic until the probe says otherwise, so the HotWax row and facet do not flicker in.
+    enrichmentAvailable: (state: any) => state.enrichmentMode !== "none",
     getPageInfo: (state: any) => state.pageInfo,
     getStats: (state: any) => state.stats,
     isLoading: (state: any) => state.loading
@@ -513,72 +486,88 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
       }
     },
 
-    async ensureEnrichmentSupported() {
-      if (this.enrichmentProbed) {
-        return;
+    // Decided once per session and shared by every caller while the probe is in flight. A probe
+    // that errors is not remembered, so a transient failure does not switch enrichment off for
+    // the rest of the session.
+    async ensureEnrichmentMode(): Promise<string> {
+      if(this.enrichmentMode) {
+        return this.enrichmentMode;
       }
 
-      let probePromise = probePromises.get(this);
-      if (!probePromise) {
-        probePromise = (async () => {
+      if(!enrichmentModeProbe) {
+        enrichmentModeProbe = (async () => {
           try {
-            const response = await api({
-              url: ENRICHMENT_ENDPOINT,
-              method: "GET",
-              params: { remoteMessageId: ENRICHMENT_PROBE_ID, pageSize: 1 }
-            });
+            if(await isFilterApplied({ remoteMessageIds: ENRICHMENT_PROBE_ID })) {
+              return "batch";
+            }
 
-            this.enrichmentAvailable = !response.data?.systemMessages?.length;
+            return await isFilterApplied({ remoteMessageId: ENRICHMENT_PROBE_ID }) ? "single" : "none";
           } catch (err: any) {
-            if (err?.response?.status === 404) {
-              this.enrichmentAvailable = false;
-              return;
+            if(err?.response?.status === 404) {
+              return "none";
             }
 
             logger.error("System Message [Context: remote id filter] - Failed to check instance filter setting", err);
-            this.enrichmentAvailable = false;
-          } finally {
-            this.enrichmentProbed = true;
-            probePromises.set(this, null);
+            return "";
           }
-        })();
-        probePromises.set(this, probePromise);
+        })().then((mode) => {
+          if(mode) {
+            this.enrichmentMode = mode;
+          }
+          enrichmentModeProbe = null;
+
+          return mode || "none";
+        });
       }
 
-      return probePromise;
+      return enrichmentModeProbe;
     },
 
-    // Resolves each Shopify operation to the HotWax message that requested it, keyed by the
-    // GID that HotWax stores as remoteMessageId. Results are cached across pages so paging
-    // back never refetches.
-    async fetchEnrichmentFor(operations: any[], force = false) {
-      await this.ensureEnrichmentSupported();
-
-      if(!this.enrichmentAvailable) {
-        return;
-      }
-
-      const pending = operations
+    // Resolves each Shopify operation to the HotWax message that requested it, keyed by the GID
+    // HotWax stores as remoteMessageId. It runs on every load rather than reusing earlier
+    // answers: the HotWax status is the half of the pairing that moves while the page is open.
+    async fetchEnrichmentFor(operations: any[]) {
+      const gids = [...new Set(operations
         .map((operation: any) => operation?.id)
-        .filter((gid: string) => gid?.startsWith(SHOPIFY_BULK_GID_PREFIX))
-        .filter((gid: string) => force || !(gid in this.enrichmentIndex));
+        .filter((gid: any) => typeof gid === "string" && gid.startsWith(SHOPIFY_BULK_GID_PREFIX)))] as string[];
 
-      const uniquePending = [...new Set(pending)];
-      if(!uniquePending.length) {
+      if(!gids.length) {
         return;
       }
 
-      const promises = uniquePending.map(gid => enqueueEnrichment(this, gid));
-      const results = await Promise.all(promises);
+      const fetchId = ++this._fetchEnrichmentId;
+      const mode = await this.ensureEnrichmentMode();
+      if(mode === "none" || fetchId !== this._fetchEnrichmentId) {
+        return;
+      }
 
-      // A miss is cached as null so a Shopify operation with no HotWax record is not looked
-      // up again on every revisit.
-      results.forEach((result: any) => {
-        // Only update if it wasn't already populated while we were waiting (if force=false)
-        if (force || !(result.gid in this.enrichmentIndex)) {
-          this.enrichmentIndex[result.gid] = result.message ?? null;
+      try {
+        const messages = await fetchMessagesByRemoteIds(mode, gids);
+        if(fetchId !== this._fetchEnrichmentId) {
+          return;
         }
-      });
+
+        // Matched per GID as well as filtered server-side, so a row can never show another
+        // operation's job. HotWax keeps one message per operation; if it ever holds more, the
+        // newest wins, since the list is ordered newest first.
+        const messageByGid: Record<string, any> = {};
+        messages.forEach((message: any) => {
+          if(gids.includes(message.remoteMessageId) && !messageByGid[message.remoteMessageId]) {
+            messageByGid[message.remoteMessageId] = message;
+          }
+        });
+
+        // A miss is stored as null: Shopify ran the operation but no HotWax record for it survives.
+        gids.forEach((gid) => {
+          this.enrichmentIndex[gid] = messageByGid[gid] ?? null;
+        });
+      } catch (err) {
+        if(fetchId !== this._fetchEnrichmentId) {
+          return;
+        }
+
+        logger.error("Bulk Operation [System: Shopify] - Failed to resolve HotWax messages", err);
+      }
     },
 
     clearOperations() {
