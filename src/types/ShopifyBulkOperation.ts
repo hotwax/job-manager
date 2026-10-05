@@ -5,6 +5,7 @@ export interface HotwaxMessage {
   jobRunId?: string;
   statusId: string;
   remoteMessageId?: string;
+  processedDate?: number;
 }
 
 export interface ShopifyBulkOperation {

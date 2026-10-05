@@ -69,9 +69,11 @@
           <p v-if="hotwax.jobRunId">
             {{ translate("Job run") }}: #{{ hotwax.jobRunId }}
           </p>
+          <!-- When HotWax consumed the result, to read against Shopify's Completed time above. -->
+          <p>{{ translate("Processed") }}: {{ formatDate(hotwax.processedDate) }}</p>
         </ion-label>
         <ion-badge slot="end" :color="commonUtil.getStatusColor(hotwax.statusId)">
-          {{ translate(getStatusDesc(hotwax.statusId) || hotwax.statusId) }}
+          {{ utilStore.getStatusItemDesc(hotwax.statusId) }}
         </ion-badge>
       </ion-item>
       <ion-item v-else-if="enrichmentAvailable" lines="none" class="hotwax-link">
@@ -150,9 +152,9 @@ import {
 import { DateTime } from "luxon";
 import { computed } from "vue";
 import { SHOPIFY_OPERATION_TYPE_LABELS, SHOPIFY_STATUS_LABELS } from "@/store/shopifyBulkOperation";
+import { useUtilStore } from "@/store/util";
 import { type ShopifyBulkOperation } from "@/types/ShopifyBulkOperation";
 import { getDuration, getFileSize } from "@/utils";
-import { getStatusDesc } from "@/utils/config";
 
 const props = defineProps<{
   operation: ShopifyBulkOperation;
@@ -193,7 +195,16 @@ const duration = computed(() => {
     : "-";
 });
 
-const formatDate = (value?: string) => (value ? commonUtil.getDateTimeWithOrdinalSuffix(DateTime.fromISO(value).toMillis()) : "-");
+const utilStore = useUtilStore();
+
+// Shopify sends ISO timestamps; HotWax sends epoch millis.
+const formatDate = (value?: string | number) => {
+  if(!value) {
+    return "-";
+  }
+
+  return commonUtil.getDateTimeWithOrdinalSuffix(typeof value === "number" ? value : DateTime.fromISO(value).toMillis());
+};
 </script>
 
 <style scoped>

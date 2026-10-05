@@ -251,10 +251,12 @@ import {
   useShopifyBulkOperationStore
 } from "@/store/shopifyBulkOperation";
 import { useUserStore } from "@/store/user";
+import { useUtilStore } from "@/store/util";
 import { type ShopifyBulkOperation } from "@/types/ShopifyBulkOperation";
 
 const bulkOperationStore = useShopifyBulkOperationStore();
 const userStore = useUserStore();
+const utilStore = useUtilStore();
 
 const queryString = ref("");
 const selectedStatus = ref("");
@@ -378,12 +380,18 @@ const loadOperations = async () => {
 };
 
 const loadAll = async () => {
-  // The shop list decides which remotes to query, so it has to land first.
-  if(!shops.value.length) {
+  // The shop list decides which remotes to query, so it has to land first. It is every shop
+  // on the OMS, fetched once, so a product store with none of its own does not refetch it.
+  if(!bulkOperationStore.shops.length) {
     await bulkOperationStore.fetchShops();
   }
 
-  await Promise.all([loadOperations(), bulkOperationStore.fetchStats(buildPayload())]);
+  // SystemMessage statuses label the HotWax badge on each card; the util store caches them.
+  await Promise.all([
+    loadOperations(),
+    bulkOperationStore.fetchStats(buildPayload()),
+    utilStore.fetchStatusItemsByType("SystemMessage")
+  ]);
 };
 
 const goToNextPage = async () => {
