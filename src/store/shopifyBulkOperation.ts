@@ -568,11 +568,6 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
 
         logger.error("Bulk Operation [System: Shopify] - Failed to resolve HotWax messages", err);
       }
-    },
-
-    clearOperations() {
-      this.operations = [];
-      this.pageInfo = { hasNextPage: false, hasPreviousPage: false, startCursor: "", endCursor: "" };
     }
   }
 });

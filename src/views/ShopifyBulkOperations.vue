@@ -205,7 +205,7 @@
 </template>
 
 <script setup lang="ts">
-import { translate } from "@common";
+import { emitter, translate } from "@common";
 import {
   IonButton,
   IonButtons,
@@ -230,7 +230,8 @@ import {
   IonSpinner,
   IonTitle,
   IonToolbar,
-  onIonViewWillEnter
+  onIonViewWillEnter,
+  onIonViewWillLeave
 } from "@ionic/vue";
 import {
   closeCircleOutline
@@ -272,11 +273,17 @@ const isFetchingOperations = computed(() => bulkOperationStore.isFetchingOperati
 const lastError = computed(() => bulkOperationStore.lastError);
 const enrichmentAvailable = computed(() => bulkOperationStore.enrichmentAvailable);
 
-// The shop's system message remote is what the OMS passthrough uses to pick the Shopify
-// credentials, so every request on this page is scoped to the selected product store.
+// The product store picked in the menu decides which shops the page covers, as it does for
+// the Catalog and JobDetail. A product store can have several shops, so "all" means all of
+// this product store's shops and the shop selector appears only when there is more than one.
+const currentProductStoreId = computed(() => userStore.getCurrentProductStore?.productStoreId);
 const systemMessageRemoteId = computed(() => userStore.getSelectedSystemMessageRemoteId);
-const shops = computed(() => bulkOperationStore.shops);
+const shops = computed(() => bulkOperationStore.shops.filter((shop: any) => shop.productStoreId === currentProductStoreId.value));
 const selectedShop = ref("all");
+
+// The product store the page last started over for, so one changed while the page was out of
+// view still resets the shop and cursor instead of reusing another store's.
+let loadedProductStoreId = "";
 
 // "all" fans out one page per shop; a single shop keeps Shopify's own cursor paging, which is
 // exact. The two cannot be combined, because each shop has its own cursor space.
@@ -285,7 +292,10 @@ const activeRemoteIds = computed(() => {
     return [selectedShop.value];
   }
 
-  return shops.value.map((shop: any) => shop.systemMessageRemoteId).filter(Boolean);
+  // Where the shops response carries no remote mapping, the product store's own remote,
+  // resolved by the user store, still reaches its shop.
+  const remoteIds = shops.value.map((shop: any) => shop.systemMessageRemoteId);
+  return remoteIds.length ? remoteIds : [systemMessageRemoteId.value].filter(Boolean);
 });
 const isCombinedView = computed(() => activeRemoteIds.value.length > 1);
 const combinedShopCount = computed(() => bulkOperationStore.combinedShopCount);
@@ -355,7 +365,7 @@ const goToSystemMessage = (systemMessageId: string) => {
 
 const buildPayload = (overrides: Record<string, any> = {}) => ({
   systemMessageRemoteIds: activeRemoteIds.value,
-  systemMessageRemoteId: activeRemoteIds.value.length === 1 ? activeRemoteIds.value[0] : systemMessageRemoteId.value,
+  systemMessageRemoteId: activeRemoteIds.value.length === 1 ? activeRemoteIds.value[0] : "",
   status: selectedStatus.value,
   operationType: selectedType.value,
   createdAfter: createdAfter.value,
@@ -405,16 +415,36 @@ watch(sort, async () => {
   await loadOperations();
 });
 
-watch(systemMessageRemoteId, async (value) => {
+// Another product store means other shops and another cursor space, so the page starts over.
+// Resetting the shop filter reloads through its watcher; otherwise the reload happens here.
+const startOverForProductStore = async () => {
+  loadedProductStoreId = currentProductStoreId.value;
   cursor.value = "";
   direction.value = "";
-  if(value) {await loadAll();} else {bulkOperationStore.clearOperations();}
-});
+
+  if(selectedShop.value !== "all") {
+    selectedShop.value = "all";
+    return;
+  }
+
+  await loadAll();
+};
 
 onIonViewWillEnter(async () => {
-  cursor.value = "";
-  direction.value = "";
+  emitter.on("productStoreUpdated", startOverForProductStore);
+
+  // Coming back from a HotWax message keeps the page you were on, refreshed; only a product
+  // store changed while you were away starts it over.
+  if(currentProductStoreId.value !== loadedProductStoreId) {
+    await startOverForProductStore();
+    return;
+  }
+
   await loadAll();
+});
+
+onIonViewWillLeave(() => {
+  emitter.off("productStoreUpdated", startOverForProductStore);
 });
 </script>
 
