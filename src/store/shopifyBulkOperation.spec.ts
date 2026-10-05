@@ -4,7 +4,7 @@ import { setActivePinia, createPinia } from "pinia";
 import { useShopifyBulkOperationStore } from "./shopifyBulkOperation";
 import { api } from "@common";
 
-vi.mock("@common", () => ({ api: vi.fn() }));
+vi.mock("@common", () => ({ api: vi.fn(), translate: (key: string) => key }));
 vi.mock("@/logger", () => ({ default: { error: vi.fn() } }));
 
 interface DeferredPromise<T> {

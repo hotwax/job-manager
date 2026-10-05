@@ -1,4 +1,4 @@
-import { api } from "@common";
+import { api, translate } from "@common";
 import { defineStore } from "pinia";
 import logger from "@/logger";
 import { getShopDefaultAppRemoteId } from "@/utils";
@@ -128,6 +128,12 @@ const OPERATION_FIELDS = `
   query
 `;
 
+// Shopify's own error text, such as a missing access scope, is what an admin needs to act on, so
+// it is kept, inside a sentence that can be translated.
+const getLoadError = (err: any) => err?.message
+  ? translate("Failed to load bulk operations from Shopify: {reason}", { reason: err.message })
+  : translate("Failed to load bulk operations from Shopify");
+
 export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", {
   state: () => ({
     operations: [] as any[],
@@ -250,7 +256,7 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
       this.failedRemoteIds = [];
 
       if(!systemMessageRemoteId) {
-        this.lastError = "No Shopify shop is configured for this product store";
+        this.lastError = translate("No Shopify shop is configured for this product store");
         this.operations = [];
         this.pageInfo = { hasNextPage: false, hasPreviousPage: false, startCursor: "", endCursor: "" };
         this.loading = false;
@@ -303,7 +309,7 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
       } catch (err: any) {
         if (fetchId !== this._fetchOperationsId) return;
         logger.error("Bulk Operation [System: Shopify] - Failed to fetch", err);
-        this.lastError = err?.message || "Failed to load bulk operations from Shopify";
+        this.lastError = getLoadError(err);
         this.operations = [];
         this.pageInfo = { hasNextPage: false, hasPreviousPage: false, startCursor: "", endCursor: "" };
       } finally {
@@ -379,7 +385,7 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
         // Some shops failing still shows the rest, but names the missing ones so a partial list
         // is not mistaken for a complete one.
         if(failedRemoteIds.length === remoteIds.length) {
-          this.lastError = "Failed to load bulk operations from Shopify";
+          this.lastError = translate("Failed to load bulk operations from Shopify");
         } else {
           this.failedRemoteIds = failedRemoteIds;
         }
@@ -389,7 +395,7 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
         }
 
         logger.error("Bulk Operation [System: Shopify] - Failed to fetch across shops", err);
-        this.lastError = err?.message || "Failed to load bulk operations from Shopify";
+        this.lastError = getLoadError(err);
         this.operations = [];
       } finally {
         if(fetchId === this._fetchOperationsId) {

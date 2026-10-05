@@ -155,7 +155,7 @@
 
         <!-- Cursor paging: Shopify returns cursors and has-next/has-previous, never a page count. -->
         <ion-note v-if="isCombinedView" color="medium" class="stats-scope">
-          {{ translate("Showing the most recent operations from each of") }} {{ combinedShopCount }} {{ translate("shops. Pick a single shop to page through its full history.") }}
+          {{ translate("Showing the most recent operations from each of {count} shops. Pick a single shop to page through its full history.", { count: combinedShopCount }) }}
         </ion-note>
         <ion-note v-if="failedShopNames.length" color="danger" class="stats-scope">
           {{ translate("Could not load operations from {shops}, so they are missing from this list.", { shops: failedShopNames.join(", ") }) }}
@@ -350,7 +350,7 @@ const statsScope = computed(() => {
 const resultsSummary = computed(() => {
   const count = visibleOperations.value.length;
 
-  return `${count} ${count === 1 ? translate("operation") : translate("operations")}`;
+  return count === 1 ? translate("1 operation") : translate("{count} operations", { count });
 });
 
 const toTitleCase = (value: string) => {
