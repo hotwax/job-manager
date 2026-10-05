@@ -186,6 +186,33 @@ describe("Shopify Bulk Operation Store", () => {
     expect(api).toHaveBeenCalledTimes(3);
   });
 
+  it("shows the shops that loaded and names the ones that failed in the combined view", async () => {
+    const store = useShopifyBulkOperationStore();
+    (api as Mock).mockImplementation(async ({ data }: any) => {
+      if(data.systemMessageRemoteId === "SHOP_B") {
+        throw new Error("throttled");
+      }
+
+      return { data: { response: { bulkOperations: { edges: [
+        { node: { id: `gid://shopify/BulkOperation/${data.systemMessageRemoteId}`, createdAt: "2026-10-01T00:00:00Z" } }
+      ] } } } };
+    });
+
+    await store.fetchOperations({ systemMessageRemoteIds: ["SHOP_A", "SHOP_B", "SHOP_C"] });
+
+    expect(store.operations.map((operation: any) => operation.systemMessageRemoteId)).toEqual(["SHOP_A", "SHOP_C"]);
+    expect(store.failedRemoteIds).toEqual(["SHOP_B"]);
+    expect(store.combinedShopCount).toBe(2);
+    expect(store.lastError).toBe("");
+
+    (api as Mock).mockRejectedValue(new Error("down"));
+    await store.fetchOperations({ systemMessageRemoteIds: ["SHOP_A", "SHOP_B"] });
+
+    expect(store.operations).toEqual([]);
+    expect(store.failedRemoteIds).toEqual([]);
+    expect(store.lastError).not.toBe("");
+  });
+
   describe("HotWax message lookup", () => {
     const probeResponse = (applied: boolean) => ({ data: { systemMessages: applied ? [] : [{ systemMessageId: "NEWEST" }] } });
 

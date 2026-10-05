@@ -157,6 +157,9 @@
         <ion-note v-if="isCombinedView" color="medium" class="stats-scope">
           {{ translate("Showing the most recent operations from each of") }} {{ combinedShopCount }} {{ translate("shops. Pick a single shop to page through its full history.") }}
         </ion-note>
+        <ion-note v-if="failedShopNames.length" color="danger" class="stats-scope">
+          {{ translate("Could not load operations from {shops}, so they are missing from this list.", { shops: failedShopNames.join(", ") }) }}
+        </ion-note>
 
         <div class="pagination">
           <ion-button fill="outline" :disabled="isCombinedView || !pageInfo.hasPreviousPage || isFetchingOperations" @click="goToPreviousPage">
@@ -299,6 +302,8 @@ const activeRemoteIds = computed(() => {
 });
 const isCombinedView = computed(() => activeRemoteIds.value.length > 1);
 const combinedShopCount = computed(() => bulkOperationStore.combinedShopCount);
+const failedShopNames = computed(() => bulkOperationStore.failedRemoteIds.map((remoteId: string) =>
+  bulkOperationStore.shops.find((shop: any) => shop.systemMessageRemoteId === remoteId)?.name || remoteId));
 
 const operations = computed(() => bulkOperationStore.getEnrichedOperations);
 

@@ -135,6 +135,7 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
     shops: [] as any[],
     isFetchingShops: false,
     combinedShopCount: 0,
+    failedRemoteIds: [] as string[],
     enrichmentIndex: {} as Record<string, any>,
     enrichmentMode: "",
     stats: { total: 0, inFlight: 0, completed: 0, failed: 0, windowSize: 0, truncated: false },
@@ -246,6 +247,7 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
       }
 
       const fetchId = ++this._fetchOperationsId;
+      this.failedRemoteIds = [];
 
       if(!systemMessageRemoteId) {
         this.lastError = "No Shopify shop is configured for this product store";
@@ -322,6 +324,7 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
       this.loading = true;
       this.isFetchingOperations = true;
       this.lastError = "";
+      this.failedRemoteIds = [];
 
       const sortKey = SORT_KEYS.includes(payload.sortKey) ? payload.sortKey : "CREATED_AT";
       const reverse = payload.sortReverse === true;
@@ -348,8 +351,15 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
           return;
         }
 
-        const failed = settled.filter((result: any) => result.status === "rejected");
-        failed.forEach((result: any) => logger.error("Bulk Operation [System: Shopify] - Failed to fetch for a shop", result.reason));
+        const failedRemoteIds = remoteIds.filter((remoteId: string, index: number) => {
+          const result = settled[index];
+          if(result.status !== "rejected") {
+            return false;
+          }
+
+          logger.error(`Bulk Operation [System Message Remote ID: ${remoteId}] - Failed to fetch`, result.reason);
+          return true;
+        });
 
         const dateField = sortKey === "COMPLETED_AT" ? "completedAt" : "createdAt";
         const merged = settled
@@ -363,13 +373,15 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
           });
 
         this.operations = merged;
-        this.combinedShopCount = remoteIds.length - failed.length;
+        this.combinedShopCount = remoteIds.length - failedRemoteIds.length;
         this.pageInfo = { hasNextPage: false, hasPreviousPage: false, startCursor: "", endCursor: "" };
 
-        if(failed.length === remoteIds.length) {
+        // Some shops failing still shows the rest, but names the missing ones so a partial list
+        // is not mistaken for a complete one.
+        if(failedRemoteIds.length === remoteIds.length) {
           this.lastError = "Failed to load bulk operations from Shopify";
-        } else if(failed.length) {
-          this.lastError = "";
+        } else {
+          this.failedRemoteIds = failedRemoteIds;
         }
       } catch (err: any) {
         if(fetchId !== this._fetchOperationsId) {
