@@ -1,6 +1,6 @@
 import { mount } from "@vue/test-utils";
 import { describe, expect, it } from "vitest";
-import ShopifyBulkOperationCard from "@/components/ShopifyBulkOperationCard.vue";
+import ShopifyBulkOperationCard from "./ShopifyBulkOperationCard.vue";
 import { type ShopifyBulkOperation } from "@/types/ShopifyBulkOperation";
 
 describe("ShopifyBulkOperationCard.vue", () => {

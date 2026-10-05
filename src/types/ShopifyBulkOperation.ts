@@ -10,6 +10,7 @@ export interface HotwaxMessage {
 export interface ShopifyBulkOperation {
   id: string;
   shopifyOperationId: string;
+  shopName?: string;
   status: string;
   type: string;
   createdAt: string;

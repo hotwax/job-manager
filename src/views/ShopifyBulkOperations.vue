@@ -53,7 +53,7 @@
             />
 
             <div class="filter-grid">
-              <div class="filter-item" v-if="shops.length > 1">
+              <div v-if="shops.length > 1" class="filter-item">
                 <ion-select
                   :label="translate('Shop')"
                   label-placement="stacked"
@@ -82,7 +82,7 @@
                     {{ translate("All") }}
                   </ion-select-option>
                   <ion-select-option v-for="status in shopifyStatuses" :key="status" :value="status">
-                    {{ translate(toTitleCase(status)) }}
+                    {{ translate(shopifyStatusLabels[status]) }}
                   </ion-select-option>
                 </ion-select>
                 <ion-button v-if="selectedStatus" fill="clear" class="clear-filter-btn" :title="translate('Clear')" @click="selectedStatus = ''">
@@ -101,11 +101,8 @@
                   <ion-select-option value="">
                     {{ translate("All") }}
                   </ion-select-option>
-                  <ion-select-option value="QUERY">
-                    {{ translate("Query") }}
-                  </ion-select-option>
-                  <ion-select-option value="MUTATION">
-                    {{ translate("Mutation") }}
+                  <ion-select-option v-for="(label, type) in operationTypeLabels" :key="type" :value="type">
+                    {{ translate(label) }}
                   </ion-select-option>
                 </ion-select>
                 <ion-button v-if="selectedType" fill="clear" class="clear-filter-btn" :title="translate('Clear')" @click="selectedType = ''">
@@ -208,11 +205,12 @@
 </template>
 
 <script setup lang="ts">
-import { emitter, translate } from "@common";
+import { commonUtil, emitter, translate } from "@common";
 import {
   IonButton,
   IonButtons,
   IonCard,
+  IonCardContent,
   IonCardHeader,
   IonCardSubtitle,
   IonCardTitle,
@@ -220,7 +218,6 @@ import {
   IonHeader,
   IonIcon,
   IonInput,
-  IonItem,
   IonLabel,
   IonList,
   IonListHeader,
@@ -240,20 +237,21 @@ import {
   closeCircleOutline
 } from "ionicons/icons";
 import { computed, ref, watch } from "vue";
-import { type ShopifyBulkOperation } from "@/types/ShopifyBulkOperation";
 import AnimatedNumber from "@/components/AnimatedNumber.vue";
-import ShopifyBulkOperationCard from "@/components/ShopifyBulkOperationCard.vue";
 import BulkOperationSortPopover from "@/components/BulkOperationSortPopover.vue";
+import ShopifyBulkOperationCard from "@/components/ShopifyBulkOperationCard.vue";
 import router from "@/router";
 import {
   BULK_OPERATION_SORT_OPTIONS,
   BULK_OPERATION_SORT_QUERY,
   DEFAULT_BULK_OPERATION_SORT,
+  SHOPIFY_OPERATION_TYPE_LABELS,
   SHOPIFY_STATUSES,
+  SHOPIFY_STATUS_LABELS,
   useShopifyBulkOperationStore
 } from "@/store/shopifyBulkOperation";
 import { useUserStore } from "@/store/user";
-import { showToast } from "@/utils";
+import { type ShopifyBulkOperation } from "@/types/ShopifyBulkOperation";
 
 const bulkOperationStore = useShopifyBulkOperationStore();
 const userStore = useUserStore();
@@ -268,6 +266,8 @@ const cursor = ref("");
 const direction = ref("");
 
 const shopifyStatuses = SHOPIFY_STATUSES;
+const shopifyStatusLabels = SHOPIFY_STATUS_LABELS;
+const operationTypeLabels = SHOPIFY_OPERATION_TYPE_LABELS;
 const sortOptions = BULK_OPERATION_SORT_OPTIONS;
 
 const stats = computed(() => bulkOperationStore.getStats);
@@ -298,6 +298,7 @@ const activeRemoteIds = computed(() => {
   // Where the shops response carries no remote mapping, the product store's own remote,
   // resolved by the user store, still reaches its shop.
   const remoteIds = shops.value.map((shop: any) => shop.systemMessageRemoteId);
+
   return remoteIds.length ? remoteIds : [systemMessageRemoteId.value].filter(Boolean);
 });
 const isCombinedView = computed(() => activeRemoteIds.value.length > 1);
@@ -353,16 +354,7 @@ const resultsSummary = computed(() => {
   return count === 1 ? translate("1 operation") : translate("{count} operations", { count });
 });
 
-const toTitleCase = (value: string) => {
-  if(!value) {return "";}
-
-  return value.charAt(0) + value.slice(1).toLowerCase();
-};
-
-const copyValue = async (value: string) => {
-  await navigator.clipboard.writeText(value);
-  showToast(translate("Copied to clipboard"));
-};
+const copyValue = (value: string) => commonUtil.copyToClipboard(value, "Copied to clipboard");
 
 const goToSystemMessage = (systemMessageId: string) => {
   router.push(`/system-messages/${systemMessageId}`);
@@ -429,6 +421,7 @@ const startOverForProductStore = async () => {
 
   if(selectedShop.value !== "all") {
     selectedShop.value = "all";
+
     return;
   }
 
@@ -442,6 +435,7 @@ onIonViewWillEnter(async () => {
   // store changed while you were away starts it over.
   if(currentProductStoreId.value !== loadedProductStoreId) {
     await startOverForProductStore();
+
     return;
   }
 
@@ -478,12 +472,9 @@ onIonViewWillLeave(() => {
 .pagination {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--spacer-sm);
   flex-wrap: wrap;
-}
-
-.pagination {
-  justify-content: flex-end;
   padding: var(--spacer-base);
 }
 

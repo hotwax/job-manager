@@ -6,19 +6,25 @@ import { getShopDefaultAppRemoteId } from "@/utils";
 // Shopify is the source of truth for this page: bulkOperations returns every bulk operation
 // the HotWax app has run against the shop, with the live status, counts and signed result
 // URL. HotWax SystemMessages are joined on afterwards to explain WHY each operation ran.
-export const BULK_QUERY_PARENT_TYPE = "ShopifyBulkQuery";
-export const BULK_IMPORT_PARENT_TYPE = "ShopifyBulkImport";
-export const SHOPIFY_BULK_PARENT_TYPES = [BULK_QUERY_PARENT_TYPE, BULK_IMPORT_PARENT_TYPE];
-
 export const SHOPIFY_BULK_GID_PREFIX = "gid://shopify/BulkOperation/";
 
-// Shopify's own BulkOperationStatus enum. Terminal states stop the poll-for-progress hint.
-export const SHOPIFY_STATUSES = ["CREATED", "RUNNING", "COMPLETED", "FAILED", "CANCELING", "CANCELED"];
+// Shopify's own BulkOperationStatus and BulkOperationType enums, with the label each one shows.
+export const SHOPIFY_STATUS_LABELS: Record<string, string> = {
+  CREATED: "Created",
+  RUNNING: "Running",
+  COMPLETED: "Completed",
+  FAILED: "Failed",
+  CANCELING: "Canceling",
+  CANCELED: "Canceled"
+};
+export const SHOPIFY_OPERATION_TYPE_LABELS: Record<string, string> = {
+  QUERY: "Query",
+  MUTATION: "Mutation"
+};
+export const SHOPIFY_STATUSES = Object.keys(SHOPIFY_STATUS_LABELS);
 export const SHOPIFY_IN_FLIGHT_STATUSES = ["CREATED", "RUNNING", "CANCELING"];
 export const SHOPIFY_FAILED_STATUSES = ["FAILED", "CANCELED"];
 
-// Connection page size. Shopify caps `first` at 250; the stats window uses that ceiling and
-// the list stays small so each page stays a cheap query.
 // BulkOperationsSortKeys is the whole sort surface Shopify exposes for this connection.
 // COMPLETED_AT and CREATED_AT only diverge once operations run long, fail, or are still
 // running (completedAt is null), so both are worth offering.
@@ -43,7 +49,8 @@ export const BULK_OPERATION_SORT_QUERY: Record<string, { sortKey: string; revers
 
 export const DEFAULT_BULK_OPERATION_SORT = "createdNewest";
 
-// The ShopifyShopRemote purpose that identifies a shop's Shopify-facing app credentials.
+// Shopify caps `first` at 250; the stats window uses that ceiling and the list stays small so
+// each page stays a cheap query.
 export const OPERATIONS_PAGE_SIZE = 25;
 export const STATS_WINDOW_SIZE = 250;
 // The tiles always count the newest operations, whatever order the list is sorted in, so
@@ -102,6 +109,7 @@ const fetchMessagesByRemoteIds = async (mode: string, gids: string[]) => {
       params: { remoteMessageId: gid, pageSize: 1 }
     }).catch((err: any) => {
       logger.error(`Bulk Operation [Shopify Operation ID: ${gid}] - Failed to resolve HotWax message`, err);
+
       return undefined;
     })));
     messages.push(...responses.flatMap((response: any) => response?.data?.systemMessages ?? []));
@@ -110,7 +118,7 @@ const fetchMessagesByRemoteIds = async (mode: string, gids: string[]) => {
   return messages;
 };
 
-export const getShopifyBulkOperationId = (gid: any) =>
+const getShopifyBulkOperationId = (gid: any) =>
   String(gid || "").startsWith(SHOPIFY_BULK_GID_PREFIX) ? String(gid).slice(SHOPIFY_BULK_GID_PREFIX.length) : String(gid || "");
 
 const OPERATION_FIELDS = `
@@ -139,13 +147,11 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
     operations: [] as any[],
     pageInfo: { hasNextPage: false, hasPreviousPage: false, startCursor: "", endCursor: "" },
     shops: [] as any[],
-    isFetchingShops: false,
     combinedShopCount: 0,
     failedRemoteIds: [] as string[],
     enrichmentIndex: {} as Record<string, any>,
     enrichmentMode: "",
     stats: { total: 0, inFlight: 0, completed: 0, failed: 0, windowSize: 0, truncated: false },
-    loading: false,
     isFetchingOperations: false,
     lastError: "",
     _fetchOperationsId: 0,
@@ -168,8 +174,7 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
     // Optimistic until the probe says otherwise, so the HotWax row and facet do not flicker in.
     enrichmentAvailable: (state: any) => state.enrichmentMode !== "none",
     getPageInfo: (state: any) => state.pageInfo,
-    getStats: (state: any) => state.stats,
-    isLoading: (state: any) => state.loading
+    getStats: (state: any) => state.stats
   },
   actions: {
     // Every Shopify call goes through the OMS passthrough, which returns the GraphQL data
@@ -209,8 +214,6 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
     // guesswork — on a multi-shop instance the shopId and the remote id are different values,
     // and a shop's remotes differ only by naming convention.
     async fetchShops() {
-      this.isFetchingShops = true;
-
       try {
         // The ShopifyShop master nests each shop's remote mappings as shopRemotes, so the
         // shops list already carries everything needed to reach every shop's Shopify app.
@@ -237,8 +240,6 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
       } catch (err) {
         logger.error("Shop [System: Shopify] - Failed to fetch", err);
         this.shops = [];
-      } finally {
-        this.isFetchingShops = false;
       }
     },
 
@@ -259,12 +260,11 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
         this.lastError = translate("No Shopify shop is configured for this product store");
         this.operations = [];
         this.pageInfo = { hasNextPage: false, hasPreviousPage: false, startCursor: "", endCursor: "" };
-        this.loading = false;
         this.isFetchingOperations = false;
+
         return;
       }
 
-      this.loading = true;
       this.isFetchingOperations = true;
       this.lastError = "";
 
@@ -294,7 +294,7 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
 
       try {
         const data = await this.runShopifyQuery(systemMessageRemoteId, queryText, variables);
-        if (fetchId !== this._fetchOperationsId) return;
+        if(fetchId !== this._fetchOperationsId) {return;}
 
         const connection = data?.bulkOperations;
 
@@ -307,14 +307,13 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
           endCursor: connection?.pageInfo?.endCursor ?? ""
         };
       } catch (err: any) {
-        if (fetchId !== this._fetchOperationsId) return;
+        if(fetchId !== this._fetchOperationsId) {return;}
         logger.error("Bulk Operation [System: Shopify] - Failed to fetch", err);
         this.lastError = getLoadError(err);
         this.operations = [];
         this.pageInfo = { hasNextPage: false, hasPreviousPage: false, startCursor: "", endCursor: "" };
       } finally {
-        if (fetchId === this._fetchOperationsId) {
-          this.loading = false;
+        if(fetchId === this._fetchOperationsId) {
           this.isFetchingOperations = false;
         }
       }
@@ -327,7 +326,6 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
     async fetchOperationsForShops(payload: Record<string, any>, remoteIds: string[]) {
       const fetchId = ++this._fetchOperationsId;
 
-      this.loading = true;
       this.isFetchingOperations = true;
       this.lastError = "";
       this.failedRemoteIds = [];
@@ -364,6 +362,7 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
           }
 
           logger.error(`Bulk Operation [System Message Remote ID: ${remoteId}] - Failed to fetch`, result.reason);
+
           return true;
         });
 
@@ -399,7 +398,6 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
         this.operations = [];
       } finally {
         if(fetchId === this._fetchOperationsId) {
-          this.loading = false;
           this.isFetchingOperations = false;
         }
       }
@@ -419,6 +417,7 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
 
       if(!systemMessageRemoteId) {
         this.stats = { total: 0, inFlight: 0, completed: 0, failed: 0, windowSize: 0, truncated: false };
+
         return;
       }
 
@@ -435,7 +434,7 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
 
       try {
         const data = await this.runShopifyQuery(systemMessageRemoteId, queryText, variables);
-        if (fetchId !== this._fetchStatsId) return;
+        if(fetchId !== this._fetchStatsId) {return;}
 
         const nodes = (data?.bulkOperations?.edges ?? []).map((edge: any) => edge.node);
 
@@ -448,15 +447,12 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
           truncated: data?.bulkOperations?.pageInfo?.hasNextPage ?? false
         };
       } catch (err) {
-        if (fetchId !== this._fetchStatsId) return;
+        if(fetchId !== this._fetchStatsId) {return;}
         logger.error("Bulk Operation [System: Shopify] - Failed to fetch stats", err);
         this.stats = { total: 0, inFlight: 0, completed: 0, failed: 0, windowSize: 0, truncated: false };
       }
     },
 
-    // One-time check that this instance actually applies the remoteMessageId filter. An
-    // instance that ignores it would hand back arbitrary messages, so enrichment is switched
-    // off entirely rather than attaching a wrong job to a row.
     // Each shop reports its own window, so the combined tiles are the sum of those windows and
     // are truncated if any single shop was.
     async fetchStatsForShops(payload: Record<string, any>, remoteIds: string[]) {
@@ -507,9 +503,9 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
     // Decided once per session and shared by every caller while the probe is in flight. A probe
     // that errors is not remembered, so a transient failure does not switch enrichment off for
     // the rest of the session.
-    async ensureEnrichmentMode(): Promise<string> {
+    ensureEnrichmentMode(): Promise<string> {
       if(this.enrichmentMode) {
-        return this.enrichmentMode;
+        return Promise.resolve(this.enrichmentMode);
       }
 
       if(!enrichmentModeProbe) {
@@ -526,6 +522,7 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
             }
 
             logger.error("System Message [Context: remote id filter] - Failed to check instance filter setting", err);
+
             return "";
           }
         })().then((mode) => {

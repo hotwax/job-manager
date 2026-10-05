@@ -1,8 +1,8 @@
-import type { Mock } from "vitest";
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { setActivePinia, createPinia } from "pinia";
-import { useShopifyBulkOperationStore } from "./shopifyBulkOperation";
 import { api } from "@common";
+import { createPinia, setActivePinia } from "pinia";
+import type { Mock } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { useShopifyBulkOperationStore } from "./shopifyBulkOperation";
 
 vi.mock("@common", () => ({ api: vi.fn(), translate: (key: string) => key }));
 vi.mock("@/logger", () => ({ default: { error: vi.fn() } }));
@@ -20,6 +20,7 @@ const defer = <T>(): DeferredPromise<T> => {
     resolve = res;
     reject = rej;
   });
+
   return { promise, resolve, reject };
 };
 
@@ -40,7 +41,7 @@ describe("Shopify Bulk Operation Store", () => {
 
     // Start first request
     const p1 = store.fetchOperations({ systemMessageRemoteId: "1" });
-    expect(store.isLoading).toBe(true);
+    expect(store.isFetchingOperations).toBe(true);
 
     // Start second request before first finishes
     const p2 = store.fetchOperations({ systemMessageRemoteId: "2" });
@@ -60,7 +61,7 @@ describe("Shopify Bulk Operation Store", () => {
     await p2;
     expect(store.operations.length).toBe(1);
     expect(store.operations[0].id).toBe("gid://shopify/BulkOperation/2");
-    expect(store.isLoading).toBe(false);
+    expect(store.isFetchingOperations).toBe(false);
 
     // Resolve first request
     req1.resolve({
@@ -78,7 +79,7 @@ describe("Shopify Bulk Operation Store", () => {
     // Store should not be updated with the old request
     expect(store.operations[0].id).toBe("gid://shopify/BulkOperation/2");
     // Loading should still be false
-    expect(store.isLoading).toBe(false);
+    expect(store.isFetchingOperations).toBe(false);
 
     // Call without systemMessageRemoteId clears state and ignores old responses
     const req3 = defer<any>();
@@ -88,7 +89,7 @@ describe("Shopify Bulk Operation Store", () => {
     // Next call without systemMessageRemoteId
     await store.fetchOperations({});
     expect(store.operations.length).toBe(0);
-    expect(store.isLoading).toBe(false);
+    expect(store.isFetchingOperations).toBe(false);
 
     req3.resolve({
       data: {
@@ -188,14 +189,14 @@ describe("Shopify Bulk Operation Store", () => {
 
   it("shows the shops that loaded and names the ones that failed in the combined view", async () => {
     const store = useShopifyBulkOperationStore();
-    (api as Mock).mockImplementation(async ({ data }: any) => {
+    (api as Mock).mockImplementation(({ data }: any) => {
       if(data.systemMessageRemoteId === "SHOP_B") {
-        throw new Error("throttled");
+        return Promise.reject(new Error("throttled"));
       }
 
-      return { data: { response: { bulkOperations: { edges: [
+      return Promise.resolve({ data: { response: { bulkOperations: { edges: [
         { node: { id: `gid://shopify/BulkOperation/${data.systemMessageRemoteId}`, createdAt: "2026-10-01T00:00:00Z" } }
-      ] } } } };
+      ] } } } });
     });
 
     await store.fetchOperations({ systemMessageRemoteIds: ["SHOP_A", "SHOP_B", "SHOP_C"] });
