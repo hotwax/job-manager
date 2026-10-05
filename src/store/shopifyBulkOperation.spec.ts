@@ -173,6 +173,19 @@ describe("Shopify Bulk Operation Store", () => {
     expect(store.stats.total).toBe(0); // empty stats correctly maintained
   });
 
+  it("counts the newest operations whatever order the list is sorted in", async () => {
+    const store = useShopifyBulkOperationStore();
+    (api as Mock).mockResolvedValue({ data: { response: { bulkOperations: { edges: [], pageInfo: { hasNextPage: false } } } } });
+
+    await store.fetchStats({ systemMessageRemoteId: "SHOP_A", sortKey: "COMPLETED_AT", sortReverse: true });
+    await store.fetchStats({ systemMessageRemoteIds: ["SHOP_A", "SHOP_B"], sortKey: "COMPLETED_AT", sortReverse: true });
+
+    (api as Mock).mock.calls.forEach(([options]: any) => {
+      expect(options.data.variables).toMatchObject({ sortKey: "CREATED_AT", reverse: false });
+    });
+    expect(api).toHaveBeenCalledTimes(3);
+  });
+
   describe("HotWax message lookup", () => {
     const probeResponse = (applied: boolean) => ({ data: { systemMessages: applied ? [] : [{ systemMessageId: "NEWEST" }] } });
 

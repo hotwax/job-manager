@@ -46,6 +46,9 @@ export const DEFAULT_BULK_OPERATION_SORT = "createdNewest";
 // The ShopifyShopRemote purpose that identifies a shop's Shopify-facing app credentials.
 export const OPERATIONS_PAGE_SIZE = 25;
 export const STATS_WINDOW_SIZE = 250;
+// The tiles always count the newest operations, whatever order the list is sorted in, so
+// the window they name stays the same one.
+const STATS_SORT = { sortKey: "CREATED_AT", reverse: false };
 
 // Resolving a Shopify operation to the HotWax message that requested it is a filter on the
 // system messages list, not a resource of its own, and instances differ in which filters they
@@ -402,10 +405,8 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
       }
 
       const shopifyQuery = this.buildShopifyQuery(payload);
-      const variables: Record<string, any> = { first: STATS_WINDOW_SIZE };
+      const variables: Record<string, any> = { first: STATS_WINDOW_SIZE, ...STATS_SORT };
       if(shopifyQuery) {variables.query = shopifyQuery;}
-      variables.sortKey = SORT_KEYS.includes(payload.sortKey) ? payload.sortKey : "CREATED_AT";
-      variables.reverse = payload.sortReverse === true;
 
       const queryText = `query bulkOperationStats($first: Int!, $query: String, $sortKey: BulkOperationsSortKeys, $reverse: Boolean) {
   bulkOperations(first: $first, query: $query, sortKey: $sortKey, reverse: $reverse) {
@@ -442,8 +443,7 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
     // are truncated if any single shop was.
     async fetchStatsForShops(payload: Record<string, any>, remoteIds: string[]) {
       const statsId = ++this._fetchStatsId;
-      const sortKey = SORT_KEYS.includes(payload.sortKey) ? payload.sortKey : "CREATED_AT";
-      const variables: Record<string, any> = { first: STATS_WINDOW_SIZE, sortKey, reverse: payload.sortReverse === true };
+      const variables: Record<string, any> = { first: STATS_WINDOW_SIZE, ...STATS_SORT };
       const shopifyQuery = this.buildShopifyQuery(payload);
       if(shopifyQuery) {variables.query = shopifyQuery;}
 

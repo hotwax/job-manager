@@ -315,13 +315,20 @@ const visibleOperations = computed<ShopifyBulkOperation[]>(() => {
 // when its query-cost budget is low, so the window these tiles counted has to be named
 // rather than implied.
 const statsScope = computed(() => {
-  if(!stats.value.windowSize) {
+  const count = stats.value.windowSize;
+  if(!count) {
     return translate("No operations to summarise");
   }
 
+  if(isCombinedView.value) {
+    return stats.value.truncated
+      ? translate("Counts cover the {count} most recent operations across these shops, not all history", { count })
+      : translate("Counts cover all {count} operations Shopify returned for these shops", { count });
+  }
+
   return stats.value.truncated
-    ? `${translate("Counts cover the")} ${stats.value.windowSize} ${translate("most recent operations, not all history")}`
-    : `${translate("Counts cover all")} ${stats.value.windowSize} ${translate("operations Shopify returned for this shop")}`;
+    ? translate("Counts cover the {count} most recent operations, not all history", { count })
+    : translate("Counts cover all {count} operations Shopify returned for this shop", { count });
 });
 
 // Shopify connections carry no total, so the summary counts what is on this page only.
@@ -384,11 +391,18 @@ const goToPreviousPage = async () => {
   await loadOperations();
 };
 
-// A changed Shopify-side facet invalidates the cursor, so paging restarts from the newest page.
-watch([selectedStatus, selectedType, createdAfter, sort, selectedShop], async () => {
+// A changed Shopify-side facet invalidates the cursor, so paging restarts from the first page.
+watch([selectedStatus, selectedType, createdAfter, selectedShop], async () => {
   cursor.value = "";
   direction.value = "";
   await Promise.all([loadOperations(), bulkOperationStore.fetchStats(buildPayload())]);
+});
+
+// The tiles count the newest operations whatever the sort, so a new sort reloads the list only.
+watch(sort, async () => {
+  cursor.value = "";
+  direction.value = "";
+  await loadOperations();
 });
 
 watch(systemMessageRemoteId, async (value) => {
