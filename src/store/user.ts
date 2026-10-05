@@ -5,6 +5,7 @@ import { api, commonUtil, cookieHelper, translate } from "@common";
 import logger from "@/logger";
 import { useAuth } from "@common/composables/useAuth";
 import { useUtilStore } from "./util";
+import { useShopifyBulkOperationStore } from "./shopifyBulkOperation";
 
 export const useUserStore = defineStore("user", {
   state: () => ({
@@ -346,6 +347,9 @@ export const useUserStore = defineStore("user", {
     async postLogout() {
       this.$reset();
       useUtilStore().$reset();
+      // Logout routes to the login page without reloading, so the next sign-in, possibly to
+      // another OMS, would otherwise inherit this one's shops and HotWax message lookups.
+      useShopifyBulkOperationStore().$reset();
     }
   },
   persist: true,
