@@ -258,6 +258,7 @@
   "Job added to category": "Job added to category",
   "Job catalog": "Job catalog",
   "Job created": "Job created",
+  "Job created, but its parameters could not be saved": "Job created, but its parameters could not be saved",
   "Job Details": "Job Details",
   "Job details": "Job details",
   "Job execution triggered successfully.": "Job execution triggered successfully.",
