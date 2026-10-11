@@ -348,7 +348,7 @@ const visibleOperations = computed<ShopifyBulkOperation[]>(() => operations.valu
 // when its query-cost budget is low, so the window these tiles counted has to be named
 // rather than implied.
 const statsScope = computed(() => {
-  const count = stats.value.windowSize;
+  const count = stats.value.total;
   if(!count) {
     return translate("No operations to summarise");
   }
@@ -379,7 +379,6 @@ const goToSystemMessage = (systemMessageId: string) => {
 
 const buildPayload = (overrides: Record<string, any> = {}) => ({
   systemMessageRemoteIds: activeRemoteIds.value,
-  systemMessageRemoteId: activeRemoteIds.value.length === 1 ? activeRemoteIds.value[0] : "",
   status: selectedStatus.value,
   operationType: selectedType.value,
   createdAfter: createdAfter.value,

@@ -30,7 +30,7 @@ describe("Shopify Bulk Operation Store", () => {
     vi.clearAllMocks();
   });
 
-  it("should implement latest-request-wins for fetchOperations and clear state if missing systemMessageRemoteId", async () => {
+  it("keeps only the latest fetchOperations answer, and clears the list when there is no shop", async () => {
     const store = useShopifyBulkOperationStore();
 
     const req1 = defer<any>();
@@ -40,11 +40,11 @@ describe("Shopify Bulk Operation Store", () => {
     (api as any).mockImplementationOnce(() => req2.promise);
 
     // Start first request
-    const p1 = store.fetchOperations({ systemMessageRemoteId: "1" });
+    const p1 = store.fetchOperations({ systemMessageRemoteIds: ["1"] });
     expect(store.isFetchingOperations).toBe(true);
 
     // Start second request before first finishes
-    const p2 = store.fetchOperations({ systemMessageRemoteId: "2" });
+    const p2 = store.fetchOperations({ systemMessageRemoteIds: ["2"] });
 
     // Resolve second request
     req2.resolve({
@@ -81,12 +81,12 @@ describe("Shopify Bulk Operation Store", () => {
     // Loading should still be false
     expect(store.isFetchingOperations).toBe(false);
 
-    // Call without systemMessageRemoteId clears state and ignores old responses
+    // A call with no shop clears the list and ignores older answers
     const req3 = defer<any>();
     (api as any).mockImplementationOnce(() => req3.promise);
-    const p3 = store.fetchOperations({ systemMessageRemoteId: "3" });
+    const p3 = store.fetchOperations({ systemMessageRemoteIds: ["3"] });
 
-    // Next call without systemMessageRemoteId
+    // The call with no shop
     await store.fetchOperations({});
     expect(store.operations.length).toBe(0);
     expect(store.isFetchingOperations).toBe(false);
@@ -105,7 +105,7 @@ describe("Shopify Bulk Operation Store", () => {
     expect(store.operations.length).toBe(0); // Should remain clear
   });
 
-  it("should implement latest-request-wins for fetchStats and clear state if missing systemMessageRemoteId", async () => {
+  it("keeps only the latest fetchStats answer, and clears the counts when there is no shop", async () => {
     const store = useShopifyBulkOperationStore();
 
     const req1 = defer<any>();
@@ -114,8 +114,8 @@ describe("Shopify Bulk Operation Store", () => {
     (api as any).mockImplementationOnce(() => req1.promise);
     (api as any).mockImplementationOnce(() => req2.promise);
 
-    const p1 = store.fetchStats({ systemMessageRemoteId: "1" });
-    const p2 = store.fetchStats({ systemMessageRemoteId: "2" });
+    const p1 = store.fetchStats({ systemMessageRemoteIds: ["1"] });
+    const p2 = store.fetchStats({ systemMessageRemoteIds: ["2"] });
 
     req2.resolve({
       data: {
@@ -150,10 +150,10 @@ describe("Shopify Bulk Operation Store", () => {
     await p1;
     expect(store.stats.total).toBe(2);
 
-    // Missing remote id
+    // No shop
     const req3 = defer<any>();
     (api as any).mockImplementationOnce(() => req3.promise);
-    const p3 = store.fetchStats({ systemMessageRemoteId: "3" });
+    const p3 = store.fetchStats({ systemMessageRemoteIds: ["3"] });
 
     await store.fetchStats({});
     expect(store.stats.total).toBe(0);
@@ -178,7 +178,7 @@ describe("Shopify Bulk Operation Store", () => {
     const store = useShopifyBulkOperationStore();
     (api as Mock).mockResolvedValue({ data: { response: { bulkOperations: { edges: [], pageInfo: { hasNextPage: false } } } } });
 
-    await store.fetchStats({ systemMessageRemoteId: "SHOP_A", sortKey: "COMPLETED_AT", sortReverse: true });
+    await store.fetchStats({ systemMessageRemoteIds: ["SHOP_A"], sortKey: "COMPLETED_AT", sortReverse: true });
     await store.fetchStats({ systemMessageRemoteIds: ["SHOP_A", "SHOP_B"], sortKey: "COMPLETED_AT", sortReverse: true });
 
     (api as Mock).mock.calls.forEach(([options]: any) => {
@@ -212,6 +212,26 @@ describe("Shopify Bulk Operation Store", () => {
     expect(store.operations).toEqual([]);
     expect(store.failedRemoteIds).toEqual([]);
     expect(store.lastError).not.toBe("");
+  });
+
+  it("pages one shop with its cursors, and gives several shops no cursor and no paging", async () => {
+    const store = useShopifyBulkOperationStore();
+    const pageInfo = { hasNextPage: true, hasPreviousPage: true, startCursor: "s1", endCursor: "e1" };
+    (api as Mock).mockResolvedValue({ data: { response: { bulkOperations: { edges: [], pageInfo } } } });
+    const variablesOf = (call: number) => (api as Mock).mock.calls[call][0].data.variables;
+
+    await store.fetchOperations({ systemMessageRemoteIds: ["SHOP_A"], cursor: "e0", direction: "next" });
+    expect(variablesOf(0)).toMatchObject({ first: 25, after: "e0" });
+    expect(store.pageInfo).toEqual(pageInfo);
+
+    await store.fetchOperations({ systemMessageRemoteIds: ["SHOP_A"], cursor: "s1", direction: "previous" });
+    expect(variablesOf(1)).toMatchObject({ last: 25, before: "s1" });
+    expect(variablesOf(1).first).toBeUndefined();
+
+    await store.fetchOperations({ systemMessageRemoteIds: ["SHOP_A", "SHOP_B"], cursor: "s1", direction: "previous" });
+    expect(variablesOf(2)).toMatchObject({ first: 25, after: null });
+    expect(variablesOf(3)).toMatchObject({ first: 25, after: null });
+    expect(store.pageInfo).toEqual({ hasNextPage: false, hasPreviousPage: false, startCursor: "", endCursor: "" });
   });
 
   describe("operation id search and date range", () => {

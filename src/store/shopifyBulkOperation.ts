@@ -128,20 +128,31 @@ export const parseOperationIds = (text: string): string[] => [...new Set(String(
   .map((token) => getShopifyBulkOperationId(token.replace(/^#/, "")))
   .filter((token) => /^\d+$/.test(token)))];
 
-const OPERATION_FIELDS = `
-  id
-  status
-  errorCode
-  type
-  createdAt
-  completedAt
-  objectCount
-  rootObjectCount
-  fileSize
-  url
-  partialDataUrl
-  query
-`;
+const OPERATION_FIELDS = "id status errorCode type createdAt completedAt objectCount rootObjectCount fileSize url partialDataUrl query";
+
+// One query serves both views: a single shop pages with its cursors, several shops pass none.
+const OPERATIONS_QUERY = `query bulkOperations($first: Int, $last: Int, $after: String, $before: String, $query: String, $sortKey: BulkOperationsSortKeys, $reverse: Boolean) {
+  bulkOperations(first: $first, last: $last, after: $after, before: $before, query: $query, sortKey: $sortKey, reverse: $reverse) {
+    edges { node { ${OPERATION_FIELDS} } }
+    pageInfo { hasNextPage hasPreviousPage startCursor endCursor }
+  }
+}`;
+
+const STATS_QUERY = `query bulkOperationStats($first: Int!, $query: String, $sortKey: BulkOperationsSortKeys, $reverse: Boolean) {
+  bulkOperations(first: $first, query: $query, sortKey: $sortKey, reverse: $reverse) {
+    edges { node { id status } }
+    pageInfo { hasNextPage }
+  }
+}`;
+
+const toPageInfo = (info: any = {}) => ({
+  hasNextPage: !!info.hasNextPage,
+  hasPreviousPage: !!info.hasPreviousPage,
+  startCursor: info.startCursor ?? "",
+  endCursor: info.endCursor ?? ""
+});
+
+const emptyStats = () => ({ total: 0, inFlight: 0, completed: 0, failed: 0, truncated: false });
 
 // Shopify's own error text, such as a missing access scope, is what an admin needs to act on, so
 // it is kept, inside a sentence that can be translated.
@@ -149,16 +160,55 @@ const getLoadError = (err: any) => err?.message
   ? translate("Failed to load bulk operations from Shopify: {reason}", { reason: err.message })
   : translate("Failed to load bulk operations from Shopify");
 
+// Every Shopify call goes through the OMS passthrough, which returns the GraphQL data object
+// directly on `response` (already unwrapped from the usual `data` envelope).
+const runShopifyQuery = async (systemMessageRemoteId: string, queryText: string, variables: Record<string, any>) => {
+  const response = await api({
+    url: "shopify/graphql",
+    method: "POST",
+    data: { systemMessageRemoteId, queryText, variables }
+  });
+
+  const errors = response.data?.response?.errors;
+  if(errors?.length) {
+    throw new Error(errors.map((error: any) => error.message).join("; "));
+  }
+
+  return response.data?.response;
+};
+
+// Runs one query against each shop's remote. One shop failing must not blank the others, so
+// each settles on its own and the failures come back by remote.
+const queryShops = async (remoteIds: string[], queryText: string, variables: Record<string, any>) => {
+  const settled = await Promise.allSettled(remoteIds.map((remoteId) => runShopifyQuery(remoteId, queryText, variables)));
+  const connections: { remoteId: string; connection: any }[] = [];
+  const failed: { remoteId: string; error: any }[] = [];
+
+  settled.forEach((result, index) => {
+    const remoteId = remoteIds[index];
+    if(result.status === "fulfilled") {
+      connections.push({ remoteId, connection: result.value?.bulkOperations });
+    } else {
+      logger.error(`Bulk Operation [System Message Remote ID: ${remoteId}] - Failed to fetch`, result.reason);
+      failed.push({ remoteId, error: result.reason });
+    }
+  });
+
+  return { connections, failed };
+};
+
+const getRemoteIds = (payload: Record<string, any>): string[] => (payload.systemMessageRemoteIds ?? []).filter(Boolean);
+
 export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", {
   state: () => ({
     operations: [] as any[],
-    pageInfo: { hasNextPage: false, hasPreviousPage: false, startCursor: "", endCursor: "" },
+    pageInfo: toPageInfo(),
     shops: [] as any[],
     combinedShopCount: 0,
     failedRemoteIds: [] as string[],
     enrichmentIndex: {} as Record<string, any>,
     enrichmentMode: "",
-    stats: { total: 0, inFlight: 0, completed: 0, failed: 0, windowSize: 0, truncated: false },
+    stats: emptyStats(),
     isFetchingOperations: false,
     lastError: "",
     _fetchOperationsId: 0,
@@ -175,7 +225,6 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
       shopName: (state.shops.find((shop: any) => shop.systemMessageRemoteId === operation.systemMessageRemoteId) || {}).name,
       objectCount: Number(operation.objectCount ?? 0),
       rootObjectCount: Number(operation.rootObjectCount ?? 0),
-      fileSize: operation.fileSize ? Number(operation.fileSize) : 0,
       hotwaxMessage: state.enrichmentIndex[operation.id] || undefined
     })),
     // Optimistic until the probe says otherwise, so the HotWax row and facet do not flicker in.
@@ -184,23 +233,6 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
     getStats: (state: any) => state.stats
   },
   actions: {
-    // Every Shopify call goes through the OMS passthrough, which returns the GraphQL data
-    // object directly on `response` (already unwrapped from the usual `data` envelope).
-    async runShopifyQuery(systemMessageRemoteId: string, queryText: string, variables: Record<string, any>) {
-      const response = await api({
-        url: "shopify/graphql",
-        method: "POST",
-        data: { systemMessageRemoteId, queryText, variables }
-      });
-
-      const errors = response.data?.response?.errors;
-      if(errors?.length) {
-        throw new Error(errors.map((error: any) => error.message).join("; "));
-      }
-
-      return response.data?.response;
-    },
-
     // Shopify filters with its own search syntax rather than query parameters, so the
     // selected facets are composed into a single `query` string.
     buildShopifyQuery(filters: Record<string, any> = {}) {
@@ -221,33 +253,16 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
       return clauses.join(" ");
     },
 
-    // An OMS can be connected to more than one Shopify shop, and a shop's bulk operations are
-    // reachable only through that shop's system message remote.
-    //
-    // ShopifyShopRemote is the mapping that answers which remote to use: a shop can have
-    // several, and only purposeTypeId distinguishes them. Deriving it any other way is
-    // guesswork — on a multi-shop instance the shopId and the remote id are different values,
-    // and a shop's remotes differ only by naming convention.
+    // A shop can be mapped to several remotes and only purposeTypeId says which is its Shopify
+    // app, so the remote comes from the shopRemotes the ShopifyShop master nests on each row.
+    // This is the shops resource Maarg serves; the connector's sob/shopify/shops answers 404 there.
     async fetchShops() {
       try {
-        // The ShopifyShop master nests each shop's remote mappings as shopRemotes, so the
-        // shops list already carries everything needed to reach every shop's Shopify app.
-        //
-        // This is the shops resource the Maarg instance serves; sob/shopify/shops lives in the
-        // Shopify connector and answers 404 there.
-        const resp = await api({
-          url: "oms/shopifyShops/shops",
-          method: "GET",
-          params: { pageSize: 100 }
-        });
+        const resp = await api({ url: "oms/shopifyShops/shops", method: "GET", params: { pageSize: 100 } });
 
-        const rows = Array.isArray(resp.data) ? resp.data : [];
-
-        this.shops = rows
+        this.shops = (Array.isArray(resp.data) ? resp.data : [])
           .map((shop: any) => ({
-            shopId: shop.shopId,
             name: shop.name || shop.myshopifyDomain || shop.shopId,
-            myshopifyDomain: shop.myshopifyDomain,
             productStoreId: shop.productStoreId,
             systemMessageRemoteId: getShopDefaultAppRemoteId(shop)
           }))
@@ -258,159 +273,65 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
       }
     },
 
+    // Each shop has its own cursor space, so one shop pages with Shopify's cursors while several
+    // show the most recent page from each, merged by date, with paging off.
     async fetchOperations(payload: Record<string, any> = {}) {
-      const { systemMessageRemoteId, cursor, direction } = payload;
-      const remoteIds = (payload.systemMessageRemoteIds ?? []).filter(Boolean);
-
-      // More than one shop cannot share a cursor space, so the combined view takes its own
-      // path rather than pretending to page through a single connection.
-      if(remoteIds.length > 1) {
-        return await this.fetchOperationsForShops(payload, remoteIds);
-      }
-
+      const remoteIds = getRemoteIds(payload);
       const fetchId = ++this._fetchOperationsId;
-      this.failedRemoteIds = [];
 
-      if(!systemMessageRemoteId) {
+      this.failedRemoteIds = [];
+      this.lastError = "";
+
+      if(!remoteIds.length) {
         this.lastError = translate("No Shopify shop is configured for this product store");
         this.operations = [];
-        this.pageInfo = { hasNextPage: false, hasPreviousPage: false, startCursor: "", endCursor: "" };
+        this.pageInfo = toPageInfo();
         this.isFetchingOperations = false;
 
         return;
       }
 
       this.isFetchingOperations = true;
-      this.lastError = "";
 
-      // Paging backwards needs `last`/`before`; Shopify rejects mixing them with `first`.
-      const isBackward = direction === "previous" && cursor;
-      const variables: Record<string, any> = isBackward
-        ? { last: OPERATIONS_PAGE_SIZE, before: cursor }
-        : { first: OPERATIONS_PAGE_SIZE, after: cursor || null };
-
-      const shopifyQuery = this.buildShopifyQuery(payload);
-      if(shopifyQuery) {variables.query = shopifyQuery;}
-
-      // Verified against the live shop: reverse:false is newest-first and reverse:true is
-      // oldest-first, the opposite way round from what the field name suggests.
-      variables.sortKey = SORT_KEYS.includes(payload.sortKey) ? payload.sortKey : "CREATED_AT";
-      variables.reverse = payload.sortReverse === true;
-
-      const queryText = `query bulkOperations($first: Int, $last: Int, $after: String, $before: String, $query: String, $sortKey: BulkOperationsSortKeys, $reverse: Boolean) {
-  bulkOperations(first: $first, last: $last, after: $after, before: $before, query: $query, sortKey: $sortKey, reverse: $reverse) {
-    edges {
-      cursor
-      node {${OPERATION_FIELDS}}
-    }
-    pageInfo { hasNextPage hasPreviousPage startCursor endCursor }
-  }
-}`;
-
-      try {
-        const data = await this.runShopifyQuery(systemMessageRemoteId, queryText, variables);
-        if(fetchId !== this._fetchOperationsId) {return;}
-
-        const connection = data?.bulkOperations;
-
-        this.operations = (connection?.edges ?? []).map((edge: any) => ({ ...edge.node, systemMessageRemoteId }));
-        this.combinedShopCount = 1;
-        this.pageInfo = {
-          hasNextPage: connection?.pageInfo?.hasNextPage ?? false,
-          hasPreviousPage: connection?.pageInfo?.hasPreviousPage ?? false,
-          startCursor: connection?.pageInfo?.startCursor ?? "",
-          endCursor: connection?.pageInfo?.endCursor ?? ""
-        };
-      } catch (err: any) {
-        if(fetchId !== this._fetchOperationsId) {return;}
-        logger.error("Bulk Operation [System: Shopify] - Failed to fetch", err);
-        this.lastError = getLoadError(err);
-        this.operations = [];
-        this.pageInfo = { hasNextPage: false, hasPreviousPage: false, startCursor: "", endCursor: "" };
-      } finally {
-        if(fetchId === this._fetchOperationsId) {
-          this.isFetchingOperations = false;
-        }
-      }
-    },
-
-    // One page per shop, merged and ordered here. Shopify has no cross-shop connection, so a
-    // combined view cannot use its cursors: each shop has its own cursor space and there is no
-    // meaningful "next" across them. The view therefore shows the most recent page from each
-    // shop and says so, rather than offering paging it cannot honour.
-    async fetchOperationsForShops(payload: Record<string, any>, remoteIds: string[]) {
-      const fetchId = ++this._fetchOperationsId;
-
-      this.isFetchingOperations = true;
-      this.lastError = "";
-      this.failedRemoteIds = [];
-
+      const isSingleShop = remoteIds.length === 1;
       const sortKey = SORT_KEYS.includes(payload.sortKey) ? payload.sortKey : "CREATED_AT";
       const reverse = payload.sortReverse === true;
-      const variables: Record<string, any> = { first: OPERATIONS_PAGE_SIZE, sortKey, reverse };
+      // Paging backwards needs `last`/`before`; Shopify rejects mixing them with `first`.
+      const isBackward = isSingleShop && payload.direction === "previous" && payload.cursor;
+      const variables: Record<string, any> = isBackward
+        ? { last: OPERATIONS_PAGE_SIZE, before: payload.cursor, sortKey, reverse }
+        : { first: OPERATIONS_PAGE_SIZE, after: (isSingleShop && payload.cursor) || null, sortKey, reverse };
       const shopifyQuery = this.buildShopifyQuery(payload);
       if(shopifyQuery) {variables.query = shopifyQuery;}
 
-      const queryText = `query bulkOperations($first: Int, $query: String, $sortKey: BulkOperationsSortKeys, $reverse: Boolean) {
-  bulkOperations(first: $first, query: $query, sortKey: $sortKey, reverse: $reverse) {
-    edges { node {${OPERATION_FIELDS}} }
-  }
-}`;
-
       try {
-        // One shop failing must not blank the whole view, so each result is settled
-        // independently and the failures are counted rather than thrown.
-        const settled = await Promise.allSettled(remoteIds.map(async (remoteId: string) => {
-          const data = await this.runShopifyQuery(remoteId, queryText, variables);
+        const { connections, failed } = await queryShops(remoteIds, OPERATIONS_QUERY, variables);
+        if(fetchId !== this._fetchOperationsId) {return;}
 
-          return (data?.bulkOperations?.edges ?? []).map((edge: any) => ({ ...edge.node, systemMessageRemoteId: remoteId }));
-        }));
+        if(!connections.length) {
+          this.lastError = getLoadError(failed[0]?.error);
+          this.operations = [];
+          this.pageInfo = toPageInfo();
 
-        if(fetchId !== this._fetchOperationsId) {
           return;
         }
 
-        const failedRemoteIds = remoteIds.filter((remoteId: string, index: number) => {
-          const result = settled[index];
-          if(result.status !== "rejected") {
-            return false;
-          }
+        const operations = connections.flatMap(({ remoteId, connection }) =>
+          (connection?.edges ?? []).map((edge: any) => ({ ...edge.node, systemMessageRemoteId: remoteId })));
 
-          logger.error(`Bulk Operation [System Message Remote ID: ${remoteId}] - Failed to fetch`, result.reason);
-
-          return true;
-        });
-
-        const dateField = sortKey === "COMPLETED_AT" ? "completedAt" : "createdAt";
-        const merged = settled
-          .filter((result: any) => result.status === "fulfilled")
-          .flatMap((result: any) => result.value)
-          .sort((a: any, b: any) => {
-            const left = a[dateField] ? Date.parse(a[dateField]) : 0;
-            const right = b[dateField] ? Date.parse(b[dateField]) : 0;
-
-            return reverse ? left - right : right - left;
-          });
-
-        this.operations = merged;
-        this.combinedShopCount = remoteIds.length - failedRemoteIds.length;
-        this.pageInfo = { hasNextPage: false, hasPreviousPage: false, startCursor: "", endCursor: "" };
-
-        // Some shops failing still shows the rest, but names the missing ones so a partial list
-        // is not mistaken for a complete one.
-        if(failedRemoteIds.length === remoteIds.length) {
-          this.lastError = translate("Failed to load bulk operations from Shopify");
-        } else {
-          this.failedRemoteIds = failedRemoteIds;
-        }
-      } catch (err: any) {
-        if(fetchId !== this._fetchOperationsId) {
-          return;
+        // Shopify already orders one shop's page; merged pages are ordered here by the same key.
+        if(!isSingleShop) {
+          const dateField = sortKey === "COMPLETED_AT" ? "completedAt" : "createdAt";
+          const time = (operation: any) => operation[dateField] ? Date.parse(operation[dateField]) : 0;
+          operations.sort((a: any, b: any) => reverse ? time(a) - time(b) : time(b) - time(a));
         }
 
-        logger.error("Bulk Operation [System: Shopify] - Failed to fetch across shops", err);
-        this.lastError = getLoadError(err);
-        this.operations = [];
+        this.operations = operations;
+        this.pageInfo = isSingleShop ? toPageInfo(connections[0].connection?.pageInfo) : toPageInfo();
+        this.combinedShopCount = connections.length;
+        // Shops that failed while others loaded are named, so a partial list is not mistaken
+        // for a complete one.
+        this.failedRemoteIds = failed.map(({ remoteId }) => remoteId);
       } finally {
         if(fetchId === this._fetchOperationsId) {
           this.isFetchingOperations = false;
@@ -418,101 +339,35 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
       }
     },
 
-    // A Shopify connection has no total count, so the tiles describe a bounded recent window
-    // instead of pretending to summarise all history.
+    // A Shopify connection has no total count, so the tiles count a bounded window of the newest
+    // operations. Several shops sum their windows, truncated if any one was.
     async fetchStats(payload: Record<string, any> = {}) {
-      const { systemMessageRemoteId } = payload;
-      const remoteIds = (payload.systemMessageRemoteIds ?? []).filter(Boolean);
-
-      if(remoteIds.length > 1) {
-        return await this.fetchStatsForShops(payload, remoteIds);
-      }
-
+      const remoteIds = getRemoteIds(payload);
       const fetchId = ++this._fetchStatsId;
 
-      if(!systemMessageRemoteId) {
-        this.stats = { total: 0, inFlight: 0, completed: 0, failed: 0, windowSize: 0, truncated: false };
+      if(!remoteIds.length) {
+        this.stats = emptyStats();
 
         return;
       }
 
-      const shopifyQuery = this.buildShopifyQuery(payload);
-      const variables: Record<string, any> = { first: STATS_WINDOW_SIZE, ...STATS_SORT };
-      if(shopifyQuery) {variables.query = shopifyQuery;}
-
-      const queryText = `query bulkOperationStats($first: Int!, $query: String, $sortKey: BulkOperationsSortKeys, $reverse: Boolean) {
-  bulkOperations(first: $first, query: $query, sortKey: $sortKey, reverse: $reverse) {
-    edges { node { id status } }
-    pageInfo { hasNextPage }
-  }
-}`;
-
-      try {
-        const data = await this.runShopifyQuery(systemMessageRemoteId, queryText, variables);
-        if(fetchId !== this._fetchStatsId) {return;}
-
-        const nodes = (data?.bulkOperations?.edges ?? []).map((edge: any) => edge.node);
-
-        this.stats = {
-          total: nodes.length,
-          inFlight: nodes.filter((node: any) => SHOPIFY_IN_FLIGHT_STATUSES.includes(node.status)).length,
-          completed: nodes.filter((node: any) => node.status === "COMPLETED").length,
-          failed: nodes.filter((node: any) => SHOPIFY_FAILED_STATUSES.includes(node.status)).length,
-          windowSize: nodes.length,
-          truncated: data?.bulkOperations?.pageInfo?.hasNextPage ?? false
-        };
-      } catch (err) {
-        if(fetchId !== this._fetchStatsId) {return;}
-        logger.error("Bulk Operation [System: Shopify] - Failed to fetch stats", err);
-        this.stats = { total: 0, inFlight: 0, completed: 0, failed: 0, windowSize: 0, truncated: false };
-      }
-    },
-
-    // Each shop reports its own window, so the combined tiles are the sum of those windows and
-    // are truncated if any single shop was.
-    async fetchStatsForShops(payload: Record<string, any>, remoteIds: string[]) {
-      const statsId = ++this._fetchStatsId;
       const variables: Record<string, any> = { first: STATS_WINDOW_SIZE, ...STATS_SORT };
       const shopifyQuery = this.buildShopifyQuery(payload);
       if(shopifyQuery) {variables.query = shopifyQuery;}
 
-      const queryText = `query bulkOperationStats($first: Int!, $query: String, $sortKey: BulkOperationsSortKeys, $reverse: Boolean) {
-  bulkOperations(first: $first, query: $query, sortKey: $sortKey, reverse: $reverse) {
-    edges { node { id status } }
-    pageInfo { hasNextPage }
-  }
-}`;
+      const { connections } = await queryShops(remoteIds, STATS_QUERY, variables);
+      if(fetchId !== this._fetchStatsId) {return;}
 
-      try {
-        const settled = await Promise.allSettled(remoteIds.map((remoteId: string) =>
-          this.runShopifyQuery(remoteId, queryText, variables)));
+      const nodes = connections.flatMap(({ connection }) => (connection?.edges ?? []).map((edge: any) => edge.node));
+      const countOf = (statuses: string[]) => nodes.filter((node: any) => statuses.includes(node.status)).length;
 
-        if(statsId !== this._fetchStatsId) {
-          return;
-        }
-
-        const connections = settled
-          .filter((result: any) => result.status === "fulfilled")
-          .map((result: any) => result.value?.bulkOperations)
-          .filter(Boolean);
-        const nodes = connections.flatMap((connection: any) => (connection.edges ?? []).map((edge: any) => edge.node));
-
-        this.stats = {
-          total: nodes.length,
-          inFlight: nodes.filter((node: any) => SHOPIFY_IN_FLIGHT_STATUSES.includes(node.status)).length,
-          completed: nodes.filter((node: any) => node.status === "COMPLETED").length,
-          failed: nodes.filter((node: any) => SHOPIFY_FAILED_STATUSES.includes(node.status)).length,
-          windowSize: nodes.length,
-          truncated: connections.some((connection: any) => connection.pageInfo?.hasNextPage)
-        };
-      } catch (err) {
-        if(statsId !== this._fetchStatsId) {
-          return;
-        }
-
-        logger.error("Bulk Operation [System: Shopify] - Failed to fetch stats across shops", err);
-        this.stats = { total: 0, inFlight: 0, completed: 0, failed: 0, windowSize: 0, truncated: false };
-      }
+      this.stats = {
+        total: nodes.length,
+        inFlight: countOf(SHOPIFY_IN_FLIGHT_STATUSES),
+        completed: countOf(["COMPLETED"]),
+        failed: countOf(SHOPIFY_FAILED_STATUSES),
+        truncated: connections.some(({ connection }) => connection?.pageInfo?.hasNextPage)
+      };
     },
 
     // Decided once per session and shared by every caller while the probe is in flight. A probe

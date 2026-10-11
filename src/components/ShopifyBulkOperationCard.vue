@@ -1,7 +1,7 @@
 <template>
   <ion-card class="operation-card">
     <ion-item lines="none">
-      <ion-icon slot="start" :icon="statusIcon" :color="statusColor" />
+      <ion-icon slot="start" :icon="statusDisplay.icon" :color="statusDisplay.color" />
       <ion-label class="ion-text-wrap">
         <p class="overline">
           #{{ operation.shopifyOperationId }}<span v-if="operation.shopName"> | {{ operation.shopName }}</span>
@@ -9,53 +9,18 @@
         <h2>{{ hotwax?.description || hotwax?.systemMessageTypeId || translate("Bulk operation") }}</h2>
         <p>{{ translate(SHOPIFY_OPERATION_TYPE_LABELS[operation.type] || operation.type) }}</p>
       </ion-label>
-      <ion-badge slot="end" :color="statusColor">
+      <ion-badge slot="end" :color="statusDisplay.color">
         {{ translate(SHOPIFY_STATUS_LABELS[operation.status] || operation.status) }}
       </ion-badge>
     </ion-item>
 
     <ion-card-content>
       <div class="operation-metrics">
-        <ion-item lines="none">
-          <ion-icon slot="start" :icon="playOutline" color="medium" />
+        <ion-item v-for="metric in metrics" :key="metric.label" lines="none">
+          <ion-icon slot="start" :icon="metric.icon" color="medium" />
           <ion-label>
-            <p>{{ translate("Created") }}</p>
-            {{ formatDate(operation.createdAt) }}
-          </ion-label>
-        </ion-item>
-        <ion-item lines="none">
-          <ion-icon slot="start" :icon="checkmarkCircleOutline" color="medium" />
-          <ion-label>
-            <p>{{ translate("Completed") }}</p>
-            {{ formatDate(operation.completedAt) }}
-          </ion-label>
-        </ion-item>
-        <ion-item lines="none">
-          <ion-icon slot="start" :icon="timeOutline" color="medium" />
-          <ion-label>
-            <p>{{ translate("Duration") }}</p>
-            {{ duration }}
-          </ion-label>
-        </ion-item>
-        <ion-item lines="none">
-          <ion-icon slot="start" :icon="layersOutline" color="medium" />
-          <ion-label>
-            <p>{{ translate("Objects") }}</p>
-            {{ (operation.objectCount ?? 0).toLocaleString() }}
-          </ion-label>
-        </ion-item>
-        <ion-item lines="none">
-          <ion-icon slot="start" :icon="gitNetworkOutline" color="medium" />
-          <ion-label>
-            <p>{{ translate("Root objects") }}</p>
-            {{ (operation.rootObjectCount ?? 0).toLocaleString() }}
-          </ion-label>
-        </ion-item>
-        <ion-item lines="none">
-          <ion-icon slot="start" :icon="documentTextOutline" color="medium" />
-          <ion-label>
-            <p>{{ translate("Result size") }}</p>
-            {{ operation.fileSize ? getFileSize(String(operation.fileSize)) : "-" }}
+            <p>{{ metric.label }}</p>
+            {{ metric.value }}
           </ion-label>
         </ion-item>
       </div>
@@ -169,31 +134,14 @@ defineEmits<{
 const hotwax = computed(() => props.operation.hotwaxMessage);
 
 // Shopify statuses are not HotWax status ids, so commonUtil.getStatusColor does not cover them.
-const statusColor = computed(() => {
-  const status = props.operation.status;
-  if(status === "COMPLETED") {return "success";}
-  if(status === "FAILED") {return "danger";}
-  if(status === "CANCELED" || status === "CANCELING") {return "medium";}
+const STATUS_DISPLAY: Record<string, { color: string; icon: string }> = {
+  COMPLETED: { color: "success", icon: checkmarkCircleOutline },
+  FAILED: { color: "danger", icon: alertCircleOutline },
+  CANCELED: { color: "medium", icon: closeCircleOutline },
+  CANCELING: { color: "medium", icon: closeCircleOutline }
+};
 
-  return "primary";
-});
-
-const statusIcon = computed(() => {
-  const status = props.operation.status;
-  if(status === "COMPLETED") {return checkmarkCircleOutline;}
-  if(status === "FAILED") {return alertCircleOutline;}
-  if(status === "CANCELED" || status === "CANCELING") {return closeCircleOutline;}
-
-  return hourglassOutline;
-});
-
-const duration = computed(() => {
-  const { createdAt, completedAt } = props.operation;
-
-  return createdAt && completedAt
-    ? getDuration(DateTime.fromISO(createdAt).toMillis(), DateTime.fromISO(completedAt).toMillis())
-    : "-";
-});
+const statusDisplay = computed(() => STATUS_DISPLAY[props.operation.status] ?? { color: "primary", icon: hourglassOutline });
 
 const utilStore = useUtilStore();
 
@@ -205,6 +153,23 @@ const formatDate = (value?: string | number) => {
 
   return commonUtil.getDateTimeWithOrdinalSuffix(typeof value === "number" ? value : DateTime.fromISO(value).toMillis());
 };
+
+const metrics = computed(() => {
+  const { createdAt, completedAt, objectCount, rootObjectCount, fileSize } = props.operation;
+
+  return [
+    { label: translate("Created"), icon: playOutline, value: formatDate(createdAt) },
+    { label: translate("Completed"), icon: checkmarkCircleOutline, value: formatDate(completedAt) },
+    {
+      label: translate("Duration"),
+      icon: timeOutline,
+      value: createdAt && completedAt ? getDuration(DateTime.fromISO(createdAt).toMillis(), DateTime.fromISO(completedAt).toMillis()) : "-"
+    },
+    { label: translate("Objects"), icon: layersOutline, value: (objectCount ?? 0).toLocaleString() },
+    { label: translate("Root objects"), icon: gitNetworkOutline, value: (rootObjectCount ?? 0).toLocaleString() },
+    { label: translate("Result size"), icon: documentTextOutline, value: fileSize ? getFileSize(String(fileSize)) : "-" }
+  ];
+});
 </script>
 
 <style scoped>
