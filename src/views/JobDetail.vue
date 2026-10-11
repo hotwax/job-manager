@@ -780,7 +780,7 @@ const addToCategory = async () => {
             await jobStore.fetchCategoryMembers()
             showToast(translate("Job added to category"))
           } catch(err) {
-            logger.error("Failed to add job to category", err)
+            logger.error("Job - Failed to add to category", err)
             showToast(translate("Failed to add job to category"))
           }
           return true;

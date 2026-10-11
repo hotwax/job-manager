@@ -270,7 +270,7 @@ const saveJob = async () => {
     showToast(translate(parametersSaved ? "Job created" : "Job created, but its parameters could not be saved"));
     modalController.dismiss(jobData.value, 'confirm');
   } catch (err) {
-    logger.error("Failed to create job", err);
+    logger.error("Job - Failed to create", err);
     showToast(translate("Failed to create job"));
   } finally {
     isCreating.value = false;
