@@ -166,7 +166,7 @@ const setProductStore = async (value: string) => {
   // https://github.com/ionic-team/ionic-framework/discussions/25532
   // https://github.com/ionic-team/ionic-framework/issues/20106
   // https://github.com/ionic-team/ionic-framework/pull/25858
-  if(userStore.current && currentProductStore?.productStoreId !== value) {
+  if(userStore.current && currentProductStore.value?.productStoreId !== value) {
     await userStore.setCurrentProductStore({ "productStoreId": value })
     emitter.emit("productStoreUpdated")
   }
