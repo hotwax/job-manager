@@ -48,9 +48,12 @@
             <ion-searchbar
               :value="queryString"
               :debounce="300"
-              :placeholder="translate('Filter this page by operation ID, job type, or description')"
+              :placeholder="translate('Search by Shopify operation ID')"
               @ion-input="queryString = ($event as any).detail.value || ''"
             />
+            <ion-note v-if="isSearchInvalid" color="danger" class="stats-scope">
+              {{ translate("Enter a Shopify operation ID, like 11339280253092") }}
+            </ion-note>
 
             <div class="filter-grid">
               <div v-if="shops.length > 1" class="filter-item">
@@ -120,6 +123,20 @@
                   @ion-input="createdAfter = ($event as any).detail.value || ''"
                 />
                 <ion-button v-if="createdAfter" fill="clear" class="clear-filter-btn" :title="translate('Clear')" @click="createdAfter = ''">
+                  <ion-icon slot="icon-only" :icon="closeCircleOutline" />
+                </ion-button>
+              </div>
+
+              <div class="filter-item">
+                <ion-input
+                  :value="createdBefore"
+                  type="date"
+                  :label="translate('Created before')"
+                  label-placement="stacked"
+                  fill="outline"
+                  @ion-input="createdBefore = ($event as any).detail.value || ''"
+                />
+                <ion-button v-if="createdBefore" fill="clear" class="clear-filter-btn" :title="translate('Clear')" @click="createdBefore = ''">
                   <ion-icon slot="icon-only" :icon="closeCircleOutline" />
                 </ion-button>
               </div>
@@ -248,6 +265,7 @@ import {
   SHOPIFY_OPERATION_TYPE_LABELS,
   SHOPIFY_STATUSES,
   SHOPIFY_STATUS_LABELS,
+  parseOperationIds,
   useShopifyBulkOperationStore
 } from "@/store/shopifyBulkOperation";
 import { useUserStore } from "@/store/user";
@@ -262,6 +280,7 @@ const queryString = ref("");
 const selectedStatus = ref("");
 const selectedType = ref("");
 const createdAfter = ref("");
+const createdBefore = ref("");
 const linkFilter = ref("");
 const sort = ref(DEFAULT_BULK_OPERATION_SORT);
 const cursor = ref("");
@@ -310,24 +329,20 @@ const failedShopNames = computed(() => bulkOperationStore.failedRemoteIds.map((r
 
 const operations = computed(() => bulkOperationStore.getEnrichedOperations);
 
-// Search and the HotWax-link facet refine the page Shopify already returned. Shopify cannot
-// filter on HotWax fields, so these stay local and the searchbar label says "this page".
-const visibleOperations = computed<ShopifyBulkOperation[]>(() => {
-  const search = queryString.value.trim().toLowerCase();
+// The search bar looks operations up by id in Shopify, across every operation it keeps rather
+// than the page already loaded. Text with no id in it is flagged and left out of the query.
+const operationIds = computed(() => parseOperationIds(queryString.value));
+const operationIdsKey = computed(() => operationIds.value.join(","));
+const isSearchInvalid = computed(() => !!queryString.value.trim() && !operationIds.value.length);
 
-  return operations.value.filter((operation: ShopifyBulkOperation) => {
-    if(enrichmentAvailable.value && linkFilter.value === "linked" && !operation.hotwaxMessage) {return false;}
-    if(enrichmentAvailable.value && linkFilter.value === "unlinked" && operation.hotwaxMessage) {return false;}
-    if(!search) {return true;}
+// The HotWax-link facet refines the page Shopify already returned. Shopify cannot filter on
+// HotWax fields, so it stays local.
+const visibleOperations = computed<ShopifyBulkOperation[]>(() => operations.value.filter((operation: ShopifyBulkOperation) => {
+  if(enrichmentAvailable.value && linkFilter.value === "linked" && !operation.hotwaxMessage) {return false;}
+  if(enrichmentAvailable.value && linkFilter.value === "unlinked" && operation.hotwaxMessage) {return false;}
 
-    return [
-      operation.shopifyOperationId,
-      operation.hotwaxMessage?.systemMessageTypeId,
-      operation.hotwaxMessage?.description,
-      operation.hotwaxMessage?.jobRunId
-    ].some(value => String(value || "").toLowerCase().includes(search));
-  });
-});
+  return true;
+}));
 
 // Shopify never reports a connection total, and it also returns fewer nodes than asked for
 // when its query-cost budget is low, so the window these tiles counted has to be named
@@ -368,6 +383,8 @@ const buildPayload = (overrides: Record<string, any> = {}) => ({
   status: selectedStatus.value,
   operationType: selectedType.value,
   createdAfter: createdAfter.value,
+  createdBefore: createdBefore.value,
+  operationIds: operationIds.value,
   sortKey: (BULK_OPERATION_SORT_QUERY[sort.value] || {}).sortKey,
   sortReverse: (BULK_OPERATION_SORT_QUERY[sort.value] || {}).reverse,
   ...overrides
@@ -407,7 +424,7 @@ const goToPreviousPage = async () => {
 };
 
 // A changed Shopify-side facet invalidates the cursor, so paging restarts from the first page.
-watch([selectedStatus, selectedType, createdAfter, selectedShop], async () => {
+watch([selectedStatus, selectedType, createdAfter, createdBefore, operationIdsKey, selectedShop], async () => {
   cursor.value = "";
   direction.value = "";
   await Promise.all([loadOperations(), bulkOperationStore.fetchStats(buildPayload())]);

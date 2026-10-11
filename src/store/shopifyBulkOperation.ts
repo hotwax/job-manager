@@ -121,6 +121,13 @@ const fetchMessagesByRemoteIds = async (mode: string, gids: string[]) => {
 const getShopifyBulkOperationId = (gid: any) =>
   String(gid || "").startsWith(SHOPIFY_BULK_GID_PREFIX) ? String(gid).slice(SHOPIFY_BULK_GID_PREFIX.length) : String(gid || "");
 
+// Accepts what people paste: the number shown on a card (#11339280253092) or the full
+// gid://shopify/BulkOperation/... id, one or several separated by spaces or commas.
+export const parseOperationIds = (text: string): string[] => [...new Set(String(text || "")
+  .split(/[\s,]+/)
+  .map((token) => getShopifyBulkOperationId(token.replace(/^#/, "")))
+  .filter((token) => /^\d+$/.test(token)))];
+
 const OPERATION_FIELDS = `
   id
   status
@@ -202,6 +209,14 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
       if(filters.status) {clauses.push(`status:${String(filters.status).toLowerCase()}`);}
       if(filters.operationType) {clauses.push(`operation_type:${String(filters.operationType).toLowerCase()}`);}
       if(filters.createdAfter) {clauses.push(`created_at:>${filters.createdAfter}`);}
+      if(filters.createdBefore) {clauses.push(`created_at:<${filters.createdBefore}`);}
+
+      // Several ids are one OR group, so the other clauses still narrow all of them.
+      const ids = filters.operationIds ?? [];
+      if(ids.length) {
+        const idClause = ids.map((id: string) => `id:${id}`).join(" OR ");
+        clauses.push(ids.length > 1 ? `(${idClause})` : idClause);
+      }
 
       return clauses.join(" ");
     },

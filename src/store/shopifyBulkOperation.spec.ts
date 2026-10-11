@@ -2,7 +2,7 @@ import { api } from "@common";
 import { createPinia, setActivePinia } from "pinia";
 import type { Mock } from "vitest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { useShopifyBulkOperationStore } from "./shopifyBulkOperation";
+import { parseOperationIds, useShopifyBulkOperationStore } from "./shopifyBulkOperation";
 
 vi.mock("@common", () => ({ api: vi.fn(), translate: (key: string) => key }));
 vi.mock("@/logger", () => ({ default: { error: vi.fn() } }));
@@ -212,6 +212,29 @@ describe("Shopify Bulk Operation Store", () => {
     expect(store.operations).toEqual([]);
     expect(store.failedRemoteIds).toEqual([]);
     expect(store.lastError).not.toBe("");
+  });
+
+  describe("operation id search and date range", () => {
+    it("reads ids from a bare number, the #number on a card, or a full GID, one or several", () => {
+      expect(parseOperationIds("11339280253092")).toEqual(["11339280253092"]);
+      expect(parseOperationIds("#11339280253092")).toEqual(["11339280253092"]);
+      expect(parseOperationIds("gid://shopify/BulkOperation/11339280253092")).toEqual(["11339280253092"]);
+      expect(parseOperationIds("1, 2 2  gid://shopify/BulkOperation/3")).toEqual(["1", "2", "3"]);
+      expect(parseOperationIds("product sync")).toEqual([]);
+      expect(parseOperationIds("")).toEqual([]);
+    });
+
+    it("sends one id as an id clause, and several as one OR group the other filters still narrow", () => {
+      const store = useShopifyBulkOperationStore();
+
+      expect(store.buildShopifyQuery({ operationIds: ["1"] })).toBe("id:1");
+      expect(store.buildShopifyQuery({
+        status: "COMPLETED",
+        createdAfter: "2026-10-08",
+        createdBefore: "2026-10-09",
+        operationIds: ["1", "2"]
+      })).toBe("status:completed created_at:>2026-10-08 created_at:<2026-10-09 (id:1 OR id:2)");
+    });
   });
 
   describe("HotWax message lookup", () => {
