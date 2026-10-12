@@ -511,6 +511,10 @@ onIonViewWillEnter(async () => {
 }
 
 @media (max-width: 600px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .pagination ion-button {
     width: 100%;
   }
