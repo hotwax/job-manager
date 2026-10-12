@@ -38,7 +38,7 @@
 <script setup lang="ts">
 import { IonContent, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenu, IonMenuToggle, IonTitle, IonToolbar } from "@ionic/vue";
 import { computed } from "vue";
-import { albumsOutline, cloudDownloadOutline, cloudUploadOutline, documentTextOutline, fileTrayStackedOutline, gitNetworkOutline, globeOutline, openOutline, pulseOutline, settingsOutline, timeOutline } from "ionicons/icons";
+import { albumsOutline, cloudDownloadOutline, cloudUploadOutline, documentTextOutline, fileTrayStackedOutline, gitNetworkOutline, globeOutline, layersOutline, openOutline, pulseOutline, settingsOutline, timeOutline } from "ionicons/icons";
 import { translate, commonUtil, DxpOmsInstanceFooter, emitter } from "@common";
 import { useAuth } from "@common/composables/useAuth";
 import router from "../router";
@@ -121,6 +121,16 @@ let appPages = [
     childRoutes: ["/system-message-remotes/"]
   },
   {
+    title: "Shopify"
+  },
+  {
+    title: "Bulk operations",
+    url: "/shopify-bulk-operations",
+    iosIcon: layersOutline,
+    mdIcon: layersOutline,
+    childRoutes: ["/shopify-bulk-operations"]
+  },
+  {
     title: "Data documents"
   },
   {
@@ -166,7 +176,7 @@ const setProductStore = async (value: string) => {
   // https://github.com/ionic-team/ionic-framework/discussions/25532
   // https://github.com/ionic-team/ionic-framework/issues/20106
   // https://github.com/ionic-team/ionic-framework/pull/25858
-  if(userStore.current && currentProductStore?.productStoreId !== value) {
+  if(userStore.current && currentProductStore.value?.productStoreId !== value) {
     await userStore.setCurrentProductStore({ "productStoreId": value })
     emitter.emit("productStoreUpdated")
   }

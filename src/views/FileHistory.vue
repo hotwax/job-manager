@@ -721,6 +721,16 @@ onIonViewWillEnter(async () => {
   border-radius: 8px;
 }
 
+@media (max-width: 600px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .kpi-card:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+}
+
 .detail-item {
   display: flex;
   flex-direction: column;
