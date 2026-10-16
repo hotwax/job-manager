@@ -31,6 +31,8 @@ export const useUserStore = defineStore("user", {
       permissions: 'none'
     } as any,
     selectedSystemMessageRemoteId: "",
+    // Remotes that belong to a Shopify shop. undefined = not resolved yet.
+    shopSystemMessageRemoteIds: undefined as string[] | undefined,
     userFullNames: {} as Record<string, string>
   }),
   getters: {
@@ -44,6 +46,7 @@ export const useUserStore = defineStore("user", {
     getAvailableTimeZones: (state: any) => state.timeZones,
     getFetchStatus: (state: any) => state.fetchStatus,
     getSelectedSystemMessageRemoteId: (state: any) => state.selectedSystemMessageRemoteId,
+    getShopSystemMessageRemoteIds: (state: any) => state.shopSystemMessageRemoteIds,
     getAppVersion: (state: any) => state.appVersion,
     getUserFullName: (state: any) => (userId: string) => state.userFullNames[userId],
     hasPermission: (state: any) => (permissionId: string): boolean => {
@@ -231,8 +234,10 @@ export const useUserStore = defineStore("user", {
     async fetchShopifyConfig(productStoreId: string) {
       this.currentShopifyConfig = {};
       this.selectedSystemMessageRemoteId = ""
+      this.shopSystemMessageRemoteIds = undefined
       if (!productStoreId) {
         logger.warn("No productStoreId provided for fetching shopify config. Setting initial values");
+        await this.fetchSystemMessageRemoteByShop();
         return;
       }
 
@@ -252,21 +257,37 @@ export const useUserStore = defineStore("user", {
         logger.error(err);
       }
     },
+    // A remote whose internalId is a Shopify shop id belongs to that shop. Every other remote
+    // (SFTP, NetSuite, ...) is shared by all product stores, so jobs using it are never store-scoped.
     async fetchSystemMessageRemoteByShop() {
-      if(!this.currentShopifyConfig.shopId) {
-        return;
-      }
       try {
-        const response = await api({
-          url: "oms/systemMessageRemotes",
-          method: "GET",
-          params: {
-            pageSize: 250
-          }
-        });
+        const [response, shopsResp] = await Promise.all([
+          api({
+            url: "oms/systemMessageRemotes",
+            method: "GET",
+            params: {
+              pageSize: 250
+            }
+          }),
+          api({
+            url: "oms/shopifyShops/shops",
+            method: "GET",
+            params: {
+              pageSize: 100
+            }
+          })
+        ]);
 
-        if(response?.data?.systemMessageRemoteList?.length) {
-          this.selectedSystemMessageRemoteId = response.data.systemMessageRemoteList.find((remote: any) => remote.internalId === this.currentShopifyConfig.shopId)?.systemMessageRemoteId;
+        const remotes = response?.data?.systemMessageRemoteList
+        if(remotes?.length) {
+          const shopIds = (Array.isArray(shopsResp?.data) ? shopsResp.data : []).map((shop: any) => shop.shopId)
+          this.shopSystemMessageRemoteIds = remotes
+            .filter((remote: any) => remote.internalId && shopIds.includes(remote.internalId))
+            .map((remote: any) => remote.systemMessageRemoteId)
+
+          if(this.currentShopifyConfig.shopId) {
+            this.selectedSystemMessageRemoteId = remotes.find((remote: any) => remote.internalId === this.currentShopifyConfig.shopId)?.systemMessageRemoteId || "";
+          }
           return;
         }
 

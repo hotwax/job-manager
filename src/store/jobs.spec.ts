@@ -22,6 +22,7 @@ vi.mock("@/logger", () => ({
 }));
 
 import { useJobStore } from "@/store/jobs";
+import { useUserStore } from "@/store/user";
 
 describe("job store detail", () => {
   beforeEach(() => {
@@ -233,5 +234,84 @@ describe("job store detail", () => {
     expect(apiMock).not.toHaveBeenCalled();
     expect(store.getJobRunHistory.length).toBe(10);
     expect(store.getJobRunHistory[0].jobRunId).toBe("20");
+  });
+});
+
+describe("job store remote scoping", () => {
+  const remoteJob = (jobName: string, systemMessageRemoteId: string) => ({
+    jobName,
+    instanceOfProductId: jobName,
+    serviceJobParameters: [{ parameterName: "systemMessageRemoteId", parameterValue: systemMessageRemoteId }]
+  });
+
+  const jobs = [
+    remoteJob("import_NetSuiteInventoryReset", "RemoteSftp"),
+    remoteJob("import_ShopAOrders", "ShopARemote"),
+    remoteJob("import_ShopBOrders", "ShopBRemote")
+  ];
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    apiMock.mockReset();
+    vi.stubEnv("VITE_PRT_STR_DEP_SER_JOB_IDENTIFIER", JSON.stringify(["productStoreIds", "productStoreId", "systemMessageRemoteId"]));
+
+    const userStore = useUserStore();
+    userStore.selectedSystemMessageRemoteId = "ShopARemote";
+    userStore.shopSystemMessageRemoteIds = ["ShopARemote", "ShopBRemote"];
+  });
+
+  it("lists jobs on shared remotes and the selected shop's remote, but not another shop's", async () => {
+    const store = useJobStore();
+    apiMock.mockResolvedValue({ data: { serviceJobList: jobs } });
+
+    await store.fetchJobs();
+
+    expect(store.getJobs.map((job: any) => job.jobName)).toEqual(["import_NetSuiteInventoryReset", "import_ShopAOrders"]);
+  });
+
+  it("hides every remote-scoped job until the shop remotes are known", async () => {
+    const store = useJobStore();
+    useUserStore().shopSystemMessageRemoteIds = undefined;
+    apiMock.mockResolvedValue({ data: { serviceJobList: jobs } });
+
+    await store.fetchJobs();
+
+    expect(store.getJobs.map((job: any) => job.jobName)).toEqual(["import_ShopAOrders"]);
+  });
+
+  it("returns detail for a job on a shared remote and none for another shop's job", async () => {
+    const store = useJobStore();
+
+    apiMock.mockResolvedValueOnce({ data: { jobDetail: jobs[0] } });
+    expect(await store.fetchJobDetail("import_NetSuiteInventoryReset")).toEqual(expect.objectContaining({ jobName: "import_NetSuiteInventoryReset" }));
+
+    apiMock.mockResolvedValueOnce({ data: { jobDetail: jobs[2] } });
+    expect(await store.fetchJobDetail("import_ShopBOrders")).toEqual({});
+  });
+});
+
+describe("user store shop remotes", () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    apiMock.mockReset();
+  });
+
+  it("marks only remotes whose internalId is a Shopify shop as shop remotes", async () => {
+    const userStore = useUserStore();
+    userStore.currentShopifyConfig = { shopId: "SHOP_A" };
+
+    apiMock.mockImplementation(({ url }) => Promise.resolve(url === "oms/systemMessageRemotes"
+      ? { data: { systemMessageRemoteList: [
+        { systemMessageRemoteId: "ShopARemote", internalId: "SHOP_A" },
+        { systemMessageRemoteId: "ShopBRemote", internalId: "SHOP_B" },
+        { systemMessageRemoteId: "RemoteSftp" },
+        { systemMessageRemoteId: "NetSuiteRemote", internalId: "1234" }
+      ] } }
+      : { data: [{ shopId: "SHOP_A" }, { shopId: "SHOP_B" }] }));
+
+    await userStore.fetchSystemMessageRemoteByShop();
+
+    expect(userStore.getSelectedSystemMessageRemoteId).toBe("ShopARemote");
+    expect(userStore.getShopSystemMessageRemoteIds).toEqual(["ShopARemote", "ShopBRemote"]);
   });
 });

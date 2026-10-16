@@ -57,6 +57,23 @@ const getProductStoreIdFromParameters = (parameters: any) => {
   return "";
 };
 
+// Whether a job's filled-in dependency parameter ties it to a store other than the selected one.
+// A systemMessageRemoteId only scopes a job when the remote belongs to a Shopify shop; SFTP and
+// other shared remotes serve every store.
+const isScopedToAnotherStore = (dependency: any) => {
+  const userStore = useUserStore()
+  if(dependency.parameterName !== "systemMessageRemoteId") {
+    return dependency.parameterValue !== userStore.getCurrentProductStore.productStoreId
+  }
+  if(dependency.parameterValue === userStore.getSelectedSystemMessageRemoteId) {
+    return false
+  }
+
+  const shopRemoteIds = userStore.getShopSystemMessageRemoteIds
+  // Until the shop remotes are known, treat every remote as a shop's so another store's job never shows
+  return !shopRemoteIds || shopRemoteIds.includes(dependency.parameterValue)
+};
+
 export const useJobStore = defineStore("job", {
   state: () => ({
     jobs: [] as Array<any>,
@@ -114,10 +131,9 @@ export const useJobStore = defineStore("job", {
             let skipJob = false
             // Check for whether job is productStore dependent or not.
             if(jobProductStoreDep?.parameterName) {
-              const dependentValue = jobProductStoreDep.parameterName === "systemMessageRemoteId" ? useUserStore().getSelectedSystemMessageRemoteId : useUserStore().getCurrentProductStore.productStoreId
               if(!jobProductStoreDep.parameterValue) {
                 job["isDraftJob"] = true
-              } else if(jobProductStoreDep.parameterValue !== dependentValue) {
+              } else if(isScopedToAnotherStore(jobProductStoreDep)) {
                 skipJob = true
               }
             }
@@ -266,16 +282,13 @@ export const useJobStore = defineStore("job", {
 
         // Check for whether job is productStore dependent or not.
         if(jobProductStoreDep?.parameterName) {
-          const dependentValue = jobProductStoreDep.parameterName === "systemMessageRemoteId" ? useUserStore().getSelectedSystemMessageRemoteId : useUserStore().getCurrentProductStore.productStoreId
-          if(jobProductStoreDep.parameterValue === dependentValue) {
-            jobDetails = job
-          } else if(!jobProductStoreDep.parameterValue) {
+          if(!jobProductStoreDep.parameterValue) {
             jobDetails = { ...job, isDraftJob: true }
-          } else {
-            // If we have a parameter to check for dependent jobs, and if the parameterValue is not the one
-            // set in the app, then we will assume that the job is scheduled for some other store and will
-            // not display its details
+          } else if(isScopedToAnotherStore(jobProductStoreDep)) {
+            // The job is scheduled for some other store, so its details are not displayed
             jobDetails = {}
+          } else {
+            jobDetails = job
           }
         } else {
           jobDetails = job
