@@ -190,7 +190,7 @@
             <p v-if="!areServiceParamsLoading && !mergedParameters.length" class="payload-empty">{{ translate("No parameters found for this log.") }}</p>
           </div>
 
-          <div v-else-if="payloadLoading" class="payload-loading">
+          <div v-else-if="payloadLoading || (isErrorsView && errorPayloadLoading)" class="payload-loading">
             <ion-spinner name="crescent"></ion-spinner>
           </div>
 
@@ -287,6 +287,9 @@ type ParsedPayload = {
 
 const log = ref<any>(null);
 const payloadLoading = ref(true);
+const errorPayloadLoading = ref(false);
+let currentGeneration = 0;
+let currentErrorPromise: Promise<ParsedPayload> | null = null;
 const selectedPayload = ref<PayloadKey>("original");
 // shallowRef + markRaw: parsed payloads are read-only display data. A deep ref would proxy
 // every object in a large parsed file, tripling memory and slowing every property read.
@@ -327,9 +330,16 @@ const payloadTabs = computed(() => {
 });
 
 const isParametersView = computed(() => selectedPayload.value === "parameters");
+const isErrorsView = computed(() => selectedPayload.value === "errors");
 
 // The service contract is only worth fetching once the user opens the segment.
 watch(selectedPayload, async (view) => {
+  if (view === "errors") {
+    // The store normally normalizes transport failures to an empty payload. Keep
+    // the watcher safe if an unexpected rejection still escapes that boundary.
+    await loadErrorPayload().catch(() => undefined);
+    return;
+  }
   if (view !== "parameters" || haveLoadedServiceParams.value) return;
   await loadServiceParameters();
 });
@@ -426,26 +436,70 @@ function createPayload(fileName?: string): ParsedPayload {
 }
 
 async function loadPayloads(logData: any) {
+  const generation = ++currentGeneration;
   payloadLoading.value = true;
   selectedPayload.value = "original";
+  currentErrorPromise = null;
+  errorPayloadLoading.value = false;
+
   payloads.value = {
     original: createPayload(logData.fileName),
     errors: createPayload(logData.errorFileName)
   };
 
   try {
-    const [originalPayload, errorPayload] = await Promise.all([
-      loadPayload(logData.configId, logData.logContentId, logData.fileName),
-      hasErrorPayload.value ? loadPayload(logData.configId, logData.errorLogContentId, logData.errorFileName) : Promise.resolve(createPayload(logData.errorFileName))
-    ]);
+    const originalPayload = await loadPayload(logData.configId, logData.logContentId, logData.fileName);
+
+    if (generation !== currentGeneration) return;
 
     payloads.value = {
-      original: originalPayload,
-      errors: errorPayload
+      ...payloads.value,
+      original: originalPayload
     };
   } finally {
-    payloadLoading.value = false;
+    if (generation === currentGeneration) {
+      payloadLoading.value = false;
+    }
   }
+}
+
+async function loadErrorPayload() {
+  if (!log.value || !hasErrorPayload.value) return;
+
+  const generation = currentGeneration;
+
+  if (currentErrorPromise) {
+    return currentErrorPromise;
+  }
+
+  errorPayloadLoading.value = true;
+
+  const promise = loadPayload(log.value.configId, log.value.errorLogContentId, log.value.errorFileName)
+    .then((errorPayload) => {
+      if (generation !== currentGeneration) return errorPayload;
+
+      payloads.value = {
+        ...payloads.value,
+        errors: errorPayload
+      };
+      return errorPayload;
+    })
+    .catch((error) => {
+      // Do not cache a rejected in-flight request: reopening the segment should
+      // be able to retry after a transient failure.
+      if (generation === currentGeneration) {
+        currentErrorPromise = null;
+      }
+      throw error;
+    })
+    .finally(() => {
+      if (generation === currentGeneration) {
+        errorPayloadLoading.value = false;
+      }
+    });
+
+  currentErrorPromise = promise;
+  return promise;
 }
 
 async function loadPayload(configId?: string, logContentId?: string, fileName?: string) {
