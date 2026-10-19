@@ -4,7 +4,7 @@ This document defines the final navigation structure for the Job Manager app. Th
 
 ## Menu Pillars
 
-Dashboard is followed immediately by **System tasks**, before the Jobs divider.
+On OMS 6.5.0 or higher, Dashboard is followed immediately by **System tasks**, before the Jobs divider. Older or unrecognized releases hide the item; direct links return to Dashboard.
 
 ### System Tasks
 - **System tasks**: Review, assign, and resolve system work efforts directly from task cards (`/system-tasks`).
