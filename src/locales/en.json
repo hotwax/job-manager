@@ -689,5 +689,8 @@
   "Unable to resolve task. Please try again.": "Unable to resolve task. Please try again.",
   "Unassigned": "Unassigned",
   "tasks": "tasks",
-  "task": "task"
+  "task": "task",
+  "Search by": "Search by",
+  "Task name": "Task name",
+  "Task ID": "Task ID"
 }

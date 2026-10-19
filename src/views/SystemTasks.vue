@@ -18,6 +18,13 @@
             <ion-searchbar :value="query.search" :debounce="300" :placeholder="translate('Search tasks')" @ionInput="query.search = $event.detail.value || ''; resetPage()" />
             <div class="filter-grid">
               <div class="filter-item">
+                <ion-select v-model="query.searchField" :label="translate('Search by')" label-placement="stacked" interface="popover" @ionChange="resetPage">
+                  <ion-select-option value="workEffortName">{{ translate('Task name') }}</ion-select-option>
+                  <ion-select-option value="workEffortId">{{ translate('Task ID') }}</ion-select-option>
+                  <ion-select-option value="description">{{ translate('Description') }}</ion-select-option>
+                </ion-select>
+              </div>
+              <div class="filter-item">
                 <ion-select v-model="query.status" :label="translate('Status')" label-placement="stacked" interface="popover" @ionChange="resetPage">
                   <ion-select-option value="open">{{ translate('Open') }}</ion-select-option>
                   <ion-select-option value="resolved">{{ translate('Resolved') }}</ion-select-option>
@@ -81,7 +88,7 @@ import SystemTaskAssignmentModal from '@/components/SystemTaskAssignmentModal.vu
 import { fetchSystemTasks, resolveSystemTask } from '@/services/systemTasks';
 import type { SystemTask, SystemTaskQuery } from '@/services/systemTasks';
 
-const query = reactive<SystemTaskQuery>({ status: 'open', search: '', purposeId: '', pageIndex: 0, pageSize: 20 });
+const query = reactive<SystemTaskQuery>({ status: 'open', search: '', searchField: 'workEffortName', purposeId: '', pageIndex: 0, pageSize: 20 });
 const tasks = ref<SystemTask[]>([]);
 const total = ref(0);
 const purposes = ref<{ enumId: string; description: string }[]>([]);
