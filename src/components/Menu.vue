@@ -38,21 +38,25 @@
 <script setup lang="ts">
 import { IonContent, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenu, IonMenuToggle, IonTitle, IonToolbar } from "@ionic/vue";
 import { computed } from "vue";
-import { albumsOutline, cloudDownloadOutline, cloudUploadOutline, documentTextOutline, fileTrayStackedOutline, gitNetworkOutline, globeOutline, layersOutline, openOutline, pulseOutline, settingsOutline, timeOutline } from "ionicons/icons";
+import { checkboxOutline, albumsOutline, cloudDownloadOutline, cloudUploadOutline, documentTextOutline, fileTrayStackedOutline, gitNetworkOutline, globeOutline, layersOutline, openOutline, pulseOutline, settingsOutline, timeOutline } from "ionicons/icons";
 import { translate, commonUtil, DxpOmsInstanceFooter, emitter } from "@common";
 import { useAuth } from "@common/composables/useAuth";
 import router from "../router";
 import { useUserStore } from "@/store/user";
+import { useUtilStore } from "@/store/util";
 
 const { isAuthenticated } = useAuth();
 const userStore = useUserStore();
+const utilStore = useUtilStore();
 
 const currentProductStore = computed(() => userStore.getCurrentProductStore)
 const userProfile = computed(() => userStore.getUserProfile)
 
 // Filtering array of app pages, retaining only those elements (pages) that have the necessary permissions for display.
 const getValidMenuItems = (appPages: any) => {
-  return appPages.filter((appPage: any) => (!appPage.meta || !appPage.meta.permissionId) || userStore.hasPermission(appPage.meta.permissionId));
+  return appPages.filter((appPage: any) =>
+    (appPage.url !== '/system-tasks' || utilStore.supportsSystemTasks)
+    && ((!appPage.meta || !appPage.meta.permissionId) || userStore.hasPermission(appPage.meta.permissionId)));
 }
 
 let appPages = [
@@ -61,6 +65,12 @@ let appPages = [
     url: "/pipeline",
     iosIcon: pulseOutline,
     mdIcon: pulseOutline
+  },
+  {
+    title: "System tasks",
+    url: "/system-tasks",
+    iosIcon: checkboxOutline,
+    mdIcon: checkboxOutline,
   },
   {
     title: "Jobs"

@@ -13,6 +13,8 @@ import ImportDetail from '@/views/ImportDetail.vue';
 import ManualUploads from '@/views/ManualUploads.vue';
 import JobDetail from '@/views/JobDetail.vue';
 import JobRunHistory from "@/views/JobRunHistory.vue";
+import SystemTasks from '@/views/SystemTasks.vue';
+import { systemTasksGuard } from './systemTasksGuard';
 import SystemMessageMonitor from '@/views/SystemMessageMonitor.vue';
 import SystemMessageDetailView from '@/views/SystemMessageDetailView.vue';
 import SystemMessageTypes from '@/views/SystemMessageTypes.vue';
@@ -112,6 +114,12 @@ const routes: Array<RouteRecordRaw> = [
     name: "JobRunHistory",
     component: JobRunHistory,
     beforeEnter: authGuard
+  },
+  {
+    path: '/system-tasks',
+    name: 'SystemTasks',
+    component: SystemTasks,
+    beforeEnter: [authGuard, systemTasksGuard]
   },
   {
     path: '/system-messages',
