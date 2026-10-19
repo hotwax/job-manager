@@ -10,7 +10,7 @@
         <ion-title>{{ translate('Assign task') }}</ion-title>
       </ion-toolbar>
       <ion-toolbar>
-        <ion-searchbar :value="search" :disabled="saving" :debounce="300" :placeholder="translate('Search people')" @ionInput="searchPeople($event.detail.value || '')" />
+        <ion-searchbar :value="search" :disabled="saving" :debounce="300" :placeholder="translate('Search first name')" @ionInput="searchPeople($event.detail.value || '')" />
       </ion-toolbar>
     </ion-header>
 
