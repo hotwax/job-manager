@@ -38,7 +38,7 @@
 <script setup lang="ts">
 import { IonContent, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenu, IonMenuToggle, IonTitle, IonToolbar } from "@ionic/vue";
 import { computed } from "vue";
-import { albumsOutline, cloudDownloadOutline, cloudUploadOutline, documentTextOutline, fileTrayStackedOutline, gitNetworkOutline, globeOutline, layersOutline, openOutline, pulseOutline, settingsOutline, timeOutline } from "ionicons/icons";
+import { checkboxOutline, albumsOutline, cloudDownloadOutline, cloudUploadOutline, documentTextOutline, fileTrayStackedOutline, gitNetworkOutline, globeOutline, layersOutline, openOutline, pulseOutline, settingsOutline, timeOutline } from "ionicons/icons";
 import { translate, commonUtil, DxpOmsInstanceFooter, emitter } from "@common";
 import { useAuth } from "@common/composables/useAuth";
 import router from "../router";
@@ -95,6 +95,12 @@ let appPages = [
     iosIcon: cloudUploadOutline,
     mdIcon: cloudUploadOutline,
     childRoutes: ["/manual-uploads/"]
+  },
+  {
+    title: "System tasks",
+    url: "/system-tasks",
+    iosIcon: checkboxOutline,
+    mdIcon: checkboxOutline,
   },
   {
     title: "System messages"

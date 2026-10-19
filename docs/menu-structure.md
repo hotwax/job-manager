@@ -11,6 +11,9 @@ This document defines the final navigation structure for the Job Manager app. Th
 - **File History**: Audit trail for generated or consumed files.
 - **Manual Uploads**: Entry point for manual import workflows.
 
+### System Tasks
+- **System tasks**: Review, assign, and resolve system work efforts directly from task cards (`/system-tasks`).
+
 ### System Messages
 - **Monitor**: Global inbox of individual system messages across all types and remotes.
 - **Message Types**: Catalog and configuration management for `SystemMessageType`.
