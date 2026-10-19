@@ -4,15 +4,17 @@ This document defines the final navigation structure for the Job Manager app. Th
 
 ## Menu Pillars
 
+Dashboard is followed immediately by **System tasks**, before the Jobs divider.
+
+### System Tasks
+- **System tasks**: Review, assign, and resolve system work efforts directly from task cards (`/system-tasks`).
+
 ### Jobs
 - **Catalog**: Search, filter, create, and inspect scheduled jobs.
 
 ### MDM
 - **File History**: Audit trail for generated or consumed files.
 - **Manual Uploads**: Entry point for manual import workflows.
-
-### System Tasks
-- **System tasks**: Review, assign, and resolve system work efforts directly from task cards (`/system-tasks`).
 
 ### System Messages
 - **Monitor**: Global inbox of individual system messages across all types and remotes.
@@ -28,6 +30,8 @@ System Messages uses plural top-level resource routes.
 
 ```ts
 const appPages = [
+  { title: "Dashboard", url: "/pipeline", iosIcon: pulseOutline, mdIcon: pulseOutline },
+  { title: "System tasks", url: "/system-tasks", iosIcon: checkboxOutline, mdIcon: checkboxOutline },
   { title: "Jobs" },
   { title: "Catalog", url: "/catalog", iosIcon: albumsOutline, mdIcon: albumsOutline, childRoutes: ["/job/"] },
 

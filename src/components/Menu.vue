@@ -63,6 +63,12 @@ let appPages = [
     mdIcon: pulseOutline
   },
   {
+    title: "System tasks",
+    url: "/system-tasks",
+    iosIcon: checkboxOutline,
+    mdIcon: checkboxOutline,
+  },
+  {
     title: "Jobs"
   },
   {
@@ -95,12 +101,6 @@ let appPages = [
     iosIcon: cloudUploadOutline,
     mdIcon: cloudUploadOutline,
     childRoutes: ["/manual-uploads/"]
-  },
-  {
-    title: "System tasks",
-    url: "/system-tasks",
-    iosIcon: checkboxOutline,
-    mdIcon: checkboxOutline,
   },
   {
     title: "System messages"

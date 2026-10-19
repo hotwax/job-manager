@@ -70,12 +70,12 @@
       </ion-header>
       <ion-content>
         <p class="ion-padding-horizontal">{{ assignmentTask?.workEffortName || assignmentTask?.workEffortId }}</p>
-        <ion-searchbar :value="assigneeSearch" :debounce="350" :placeholder="translate('Search people')" @ionInput="searchAssignees($event.detail.value || '')" />
+        <ion-searchbar :disabled="savingAssignment" :value="assigneeSearch" :debounce="350" :placeholder="translate('Search people')" @ionInput="searchAssignees($event.detail.value || '')" />
         <ion-radio-group v-model="selectedPartyId">
           <ion-list>
-            <ion-item><ion-radio value="">{{ translate('Unassigned') }}</ion-radio></ion-item>
+            <ion-item><ion-radio value="" :disabled="savingAssignment">{{ translate('Unassigned') }}</ion-radio></ion-item>
             <ion-item v-for="user in assignmentOptions" :key="user.partyId">
-              <ion-radio :value="user.partyId">{{ user.name }}</ion-radio>
+              <ion-radio :value="user.partyId" :disabled="savingAssignment">{{ user.name }}</ion-radio>
             </ion-item>
           </ion-list>
         </ion-radio-group>
@@ -85,7 +85,7 @@
           <ion-button fill="clear" @click="loadAssignees(false)">{{ translate('Retry') }}</ion-button>
         </div>
         <p v-else-if="!assigneeResults.length" class="ion-padding">{{ translate('No people found') }}</p>
-        <ion-button v-if="hasMoreUsers && !usersError" expand="block" fill="clear" :disabled="usersLoading" @click="loadAssignees(true)">{{ translate('Load more') }}</ion-button>
+        <ion-button v-if="hasMoreUsers && !usersError" expand="block" fill="clear" :disabled="usersLoading || savingAssignment" @click="loadAssignees(true)">{{ translate('Load more') }}</ion-button>
         <p v-if="assignmentError" role="alert" class="ion-padding">{{ translate('Unable to assign task. Please try again.') }}</p>
       </ion-content>
       <ion-footer>
