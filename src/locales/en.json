@@ -656,5 +656,17 @@
   "You already have fields and conditions defined. Changing the primary entity will clear the current configuration. Do you wish to proceed?": "You already have fields and conditions defined. Changing the primary entity will clear the current configuration. Do you wish to proceed?",
   "You do not have permission to access this page": "You do not have permission to access this page",
   "You have unsaved changes to this data document. Save them before leaving?": "You have unsaved changes to this data document. Save them before leaving?",
-  "{count} operations": "{count} operations"
+  "{count} operations": "{count} operations",
+  "Failed to fetch user profile information.": "Failed to fetch user profile information.",
+  "Failed to update time zone.": "Failed to update time zone.",
+  "Failed to update system message.": "Failed to update system message.",
+  "Failed to schedule service.": "Failed to schedule service.",
+  "Failed to update service.": "Failed to update service.",
+  "Failed to update configuration name.": "Failed to update configuration name.",
+  "Failed to download template.": "Failed to download template.",
+  "File upload failed.": "File upload failed.",
+  "Failed to queue data document export.": "Failed to queue data document export.",
+  "Failed to delete remote system.": "Failed to delete remote system.",
+  "Failed to delete message type.": "Failed to delete message type.",
+  "Failed to update configuration.": "Failed to update configuration."
 }

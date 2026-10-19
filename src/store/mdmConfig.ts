@@ -1,6 +1,6 @@
 import logger from "@/logger";
 import { getTimeInMillis } from "@/utils";
-import { api } from "@common";
+import { api, commonUtil } from "@common";
 import { defineStore } from "pinia";
 
 export const useMdmConfigStore = defineStore("mdmConfig", {
@@ -103,8 +103,9 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
         if (config) Object.assign(config, updates);
         return true;
       } catch (err) {
-        logger.error(`Failed to update config with id ${configId}`, err);
-        return false;
+        const serverError = commonUtil.getErrorMessage(err);
+        logger.error(`Failed to update config with id ${configId}`, serverError);
+        throw err;
       }
     },
     async fetchDataManagerLogs(params = { pageSize: 10, pageIndex: 0 }) {

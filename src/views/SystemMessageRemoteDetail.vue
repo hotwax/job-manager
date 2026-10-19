@@ -141,11 +141,12 @@ import {
 import { computed, reactive, ref, watch } from "vue";
 import router from "../router";
 
-import { translate } from "@common";
+import { commonUtil, translate } from "@common";
 
 import SystemMessageList from "@/components/SystemMessageList.vue";
 import { useSystemMessageStore } from "@/store/systemMessage";
 import { showToast } from "@/utils";
+import logger from "@/logger";
 import { useUtilStore } from "@/store/util";
 import { useUserStore } from "@/store/user";
 import { caretBackOutline, caretForwardOutline } from "ionicons/icons";
@@ -243,7 +244,9 @@ const saveRemote = async () => {
 
   const result = await systemMessageStore.saveSystemMessageRemote(payload);
   if (result.error) {
-    await showToast(translate("Failed to save remote system."));
+    const serverError = commonUtil.getErrorMessage(result.error);
+    logger.error("Failed to save remote system", serverError);
+    await showToast(`${translate("Failed to save remote system.")} ${serverError}`);
     return;
   }
 
@@ -257,7 +260,9 @@ const saveRemote = async () => {
 const deleteRemote = async () => {
   const result = await systemMessageStore.deleteSystemMessageRemote(props.id as string);
   if (result.error) {
-    await showToast(translate("This remote system cannot be deleted while messages still reference it."));
+    const serverError = commonUtil.getErrorMessage(result.error);
+    logger.error("Failed to delete remote system", serverError);
+    await showToast(`${translate("Failed to delete remote system.")} ${serverError}`);
     return;
   }
 

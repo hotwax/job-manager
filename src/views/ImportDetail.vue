@@ -190,7 +190,7 @@ import { ref, computed, reactive } from "vue";
 import router from "@/router";
 import { IonPage, IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonBadge, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonInput, IonList, IonRadioGroup, IonRadio, IonItem, IonLabel, IonSelect, IonSelectOption, IonSpinner, onIonViewWillEnter } from "@ionic/vue";
 import { downloadOutline, cloudUploadOutline, createOutline, documentTextOutline, trashOutline, sendOutline, cartOutline, cubeOutline, shapesOutline, peopleOutline, arrowUndoOutline } from "ionicons/icons";
-import { api, translate } from "@common";
+import { api, commonUtil, translate } from "@common";
 import { saveDataFile, showToast } from "@/utils";
 import { useMdmConfigStore } from "@/store/mdmConfig";
 import { useJobStore } from "@/store/jobs";
@@ -262,14 +262,17 @@ const saveConfig = async () => {
     return;
   }
 
-  isSaving.value = true;
-  const isUpdated = await mdmStore.updateConfig(typeId, updates);
-  isSaving.value = false;
-  if (isUpdated) {
+  try {
+    isSaving.value = true;
+    await mdmStore.updateConfig(typeId, updates);
     showToast(translate("Configuration updated"));
     isEditing.value = false;
-  } else {
-    showToast(translate("Failed to update configuration"));
+  } catch (err) {
+    const serverError = commonUtil.getErrorMessage(err);
+    logger.error("Failed to update configuration", serverError);
+    showToast(`${translate("Failed to update configuration.")} ${serverError}`);
+  } finally {
+    isSaving.value = false;
   }
 };
 
@@ -316,8 +319,9 @@ const downloadTemplate = async () => {
     // saveAs(new Blob([resp.data]), `${config.value.description || config.value.configId}.csv`)
     showToast(translate('Template downloaded successfully'));
   } catch(err) {
-    logger.error("Failed to download template", err)
-    showToast(translate("Failed to download template"));
+    const serverError = commonUtil.getErrorMessage(err);
+    logger.error("Failed to download template", serverError);
+    showToast(`${translate("Failed to download template.")} ${serverError}`);
   }
 };
 
@@ -340,8 +344,9 @@ const startImport = async () => {
     // On success, we want to clear the selectedFile data from the page
     removeFile();
   } catch(err) {
-    showToast(translate("File upload failed"));
-    logger.error("File upload failed", err)
+    const serverError = commonUtil.getErrorMessage(err);
+    logger.error("File upload failed", serverError);
+    showToast(`${translate("File upload failed.")} ${serverError}`);
   }
 };
 

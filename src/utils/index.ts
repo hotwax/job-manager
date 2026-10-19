@@ -3,7 +3,7 @@ import { toastController } from '@ionic/vue';
 import Papa from 'papaparse'
 import { DateTime, Duration } from "luxon";
 import logger from "@/logger";
-import { cookieHelper, translate } from "@common";
+import { commonUtil, cookieHelper, translate } from "@common";
 import {Clipboard} from "@capacitor/clipboard";
 import cronstrue from "cronstrue"
 import { useUtilStore } from "@/store/util";
@@ -140,7 +140,9 @@ const downloadDataDocumentExport = async (message: any) => {
     const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
     saveAs(blob, extractExportFilename(message) || `${message.systemMessageId}.csv`);
   } catch (error) {
-    showToast(translate("Failed to download linked file."));
+    const serverError = commonUtil.getErrorMessage(error);
+    logger.error("Failed to download linked file", serverError);
+    showToast(`${translate("Failed to download linked file.")} ${serverError}`);
   }
 }
 
