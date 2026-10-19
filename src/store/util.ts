@@ -42,6 +42,11 @@ export const useUtilStore = defineStore("util", {
     systemInformation: {} as any
   }),
   getters: {
+    supportsSystemTasks: (state) => {
+      const release = state.systemInformation?.instanceInfo?.componentRelease;
+      return !!release && commonUtil.isValidVersion(release)
+        && commonUtil.isVersionGreaterOrEqual('6.5.0', release);
+    },
     getStatusItemsByType: (state: any) => (typeId: string) => state.statusItems[typeId] || [],
     getStatusItemDesc: (state: any) => (statusId: string) => {
       const statusItem = Object.values(state.statusItems).flatMap(item => item).find((statusItem: any) => statusItem.statusId === statusId) as StatusItem
@@ -242,6 +247,8 @@ export const useUtilStore = defineStore("util", {
       }
     },
     async fetchSystemInformation() {
+      // A failed refresh must not retain another instance's supported release.
+      this.systemInformation = {};
       try {
         const resp = await api({
           url: "admin/maarg",

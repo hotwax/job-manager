@@ -4,6 +4,11 @@ This document defines the final navigation structure for the Job Manager app. Th
 
 ## Menu Pillars
 
+On OMS 6.5.0 or higher, Dashboard is followed immediately by **System tasks**, before the Jobs divider. Older or unrecognized releases hide the item; direct links return to Dashboard.
+
+### System Tasks
+- **System tasks**: Review, assign, and resolve system work efforts directly from task cards (`/system-tasks`).
+
 ### Jobs
 - **Catalog**: Search, filter, create, and inspect scheduled jobs.
 
@@ -25,6 +30,8 @@ System Messages uses plural top-level resource routes.
 
 ```ts
 const appPages = [
+  { title: "Dashboard", url: "/pipeline", iosIcon: pulseOutline, mdIcon: pulseOutline },
+  { title: "System tasks", url: "/system-tasks", iosIcon: checkboxOutline, mdIcon: checkboxOutline },
   { title: "Jobs" },
   { title: "Catalog", url: "/catalog", iosIcon: albumsOutline, mdIcon: albumsOutline, childRoutes: ["/job/"] },
 
