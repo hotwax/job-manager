@@ -68,7 +68,6 @@ const formatDate = (value: number | string) => {
 </script>
 
 <style scoped>
-.system-task-card { margin: 0; }
 .task-header { display: flex; align-items: flex-start; gap: var(--spacer-sm, 12px); }
 .task-header > div { flex: 1; min-width: 0; }
 ion-card-title { overflow-wrap: anywhere; }

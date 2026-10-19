@@ -12,51 +12,58 @@
       </ion-toolbar>
     </ion-header>
     <ion-content>
-      <main class="system-tasks-layout">
-        <aside>
-          <ion-card class="filters">
-            <ion-card-header><ion-card-title>{{ translate('Filters') }}</ion-card-title></ion-card-header>
+      <main>
+        <ion-card>
+          <ion-card-content>
             <ion-searchbar :value="query.search" :debounce="350" :placeholder="translate('Search tasks')" @ionInput="searchTasks($event.detail.value || '')" />
-            <ion-list>
-              <ion-item>
-                <ion-select v-model="query.status" :label="translate('Status')" interface="popover" @ionChange="resetPage">
+            <div class="filter-grid">
+              <div class="filter-item">
+                <ion-select v-model="query.status" :label="translate('Status')" label-placement="stacked" interface="popover" @ionChange="resetPage">
                   <ion-select-option value="open">{{ translate('Open') }}</ion-select-option>
                   <ion-select-option value="resolved">{{ translate('Resolved') }}</ion-select-option>
                   <ion-select-option value="all">{{ translate('All') }}</ion-select-option>
                 </ion-select>
-              </ion-item>
-              <ion-item lines="none">
-                <ion-select v-model="query.purposeId" :label="translate('Purpose')" interface="popover" @ionChange="resetPage">
+                <ion-button v-if="query.status !== 'all'" fill="clear" class="clear-filter-btn" :aria-label="translate('Clear')" :title="translate('Clear')" @click="query.status = 'all'; resetPage()">
+                  <ion-icon slot="icon-only" :icon="closeCircleOutline" />
+                </ion-button>
+              </div>
+              <div class="filter-item">
+                <ion-select v-model="query.purposeId" :label="translate('Purpose')" label-placement="stacked" interface="popover" @ionChange="resetPage">
                   <ion-select-option value="">{{ translate('All purposes') }}</ion-select-option>
                   <ion-select-option v-for="purpose in purposes" :key="purpose.enumId" :value="purpose.enumId">{{ purpose.description }}</ion-select-option>
                 </ion-select>
-              </ion-item>
-            </ion-list>
-          </ion-card>
-        </aside>
-        <section class="task-queue" :aria-label="translate('System tasks')" :aria-busy="loading">
-          <div v-if="loading" class="queue-state" role="status"><ion-spinner /><p>{{ translate('Loading tasks…') }}</p></div>
-          <div v-else-if="loadError" class="queue-state" role="alert">
+                <ion-button v-if="query.purposeId" fill="clear" class="clear-filter-btn" :aria-label="translate('Clear')" :title="translate('Clear')" @click="query.purposeId = ''; resetPage()">
+                  <ion-icon slot="icon-only" :icon="closeCircleOutline" />
+                </ion-button>
+              </div>
+            </div>
+          </ion-card-content>
+        </ion-card>
+
+        <nav v-if="!loadError" class="pagination" :aria-label="translate('Task pages')">
+          <ion-button fill="outline" :disabled="loading || query.pageIndex === 0" @click="changePage(-1)">{{ translate('Previous') }}</ion-button>
+          <ion-note color="medium">{{ translate('Page') }} {{ query.pageIndex + 1 }} / {{ Math.max(1, Math.ceil(total / query.pageSize)) }}</ion-note>
+          <ion-button fill="outline" :disabled="loading || (query.pageIndex + 1) * query.pageSize >= total" @click="changePage(1)">{{ translate('Next') }}</ion-button>
+        </nav>
+
+        <section :aria-label="translate('System tasks')" :aria-busy="loading">
+          <div v-if="loading" class="loading-state" role="status"><ion-spinner /><p>{{ translate('Loading tasks…') }}</p></div>
+          <div v-else-if="loadError" class="loading-state" role="alert">
             <p>{{ translate('Unable to load system tasks. Please try again.') }}</p>
             <ion-button fill="outline" @click="loadTasks">{{ translate('Retry') }}</ion-button>
           </div>
           <template v-else>
-            <div class="queue-header"><ion-note>{{ total }} {{ translate(total === 1 ? 'task' : 'tasks') }}</ion-note></div>
-            <div v-if="!tasks.length" class="queue-state">
+            <div class="ion-margin-horizontal"><ion-note>{{ total }} {{ translate(total === 1 ? 'task' : 'tasks') }}</ion-note></div>
+            <div v-if="!tasks.length" class="empty-state">
               <ion-icon :icon="checkmarkCircleOutline" />
               <h2>{{ translate('No system tasks found') }}</h2>
               <p>{{ translate('Tasks matching your filters will appear here.') }}</p>
             </div>
-            <div class="task-cards">
+            <ion-list v-else>
               <SystemTaskCard v-for="task in tasks" :key="task.workEffortId" :task="task" :busy="busyIds.has(task.workEffortId)"
                 @assign="openAssignment(task)" @resolve="confirmResolve(task)" />
-            </div>
+            </ion-list>
           </template>
-          <nav v-if="!loadError && total > query.pageSize" class="pagination" :aria-label="translate('Task pages')">
-            <ion-button fill="outline" :disabled="loading || query.pageIndex === 0" @click="changePage(-1)">{{ translate('Previous') }}</ion-button>
-            <ion-note>{{ translate('Page') }} {{ query.pageIndex + 1 }} / {{ Math.ceil(total / query.pageSize) }}</ion-note>
-            <ion-button fill="outline" :disabled="loading || (query.pageIndex + 1) * query.pageSize >= total" @click="changePage(1)">{{ translate('Next') }}</ion-button>
-          </nav>
         </section>
       </main>
     </ion-content>
@@ -79,7 +86,7 @@
             </ion-item>
           </ion-list>
         </ion-radio-group>
-        <div v-if="usersLoading" class="queue-state" role="status"><ion-spinner /></div>
+        <div v-if="usersLoading" class="loading-state" role="status"><ion-spinner /></div>
         <div v-else-if="usersError" class="ion-padding" role="alert">
           <p>{{ translate('Unable to load people. Please try again.') }}</p>
           <ion-button fill="clear" @click="loadAssignees(false)">{{ translate('Retry') }}</ion-button>
@@ -99,8 +106,8 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue';
-import { IonButton, IonButtons, IonCard, IonCardHeader, IonCardTitle, IonContent, IonFooter, IonHeader, IonIcon, IonItem, IonList, IonMenuButton, IonModal, IonNote, IonPage, IonRadio, IonRadioGroup, IonSearchbar, IonSelect, IonSelectOption, IonSpinner, IonTitle, IonToolbar, alertController, onIonViewWillEnter } from '@ionic/vue';
-import { checkmarkCircleOutline, refreshOutline } from 'ionicons/icons';
+import { IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonFooter, IonHeader, IonIcon, IonItem, IonList, IonMenuButton, IonModal, IonNote, IonPage, IonRadio, IonRadioGroup, IonSearchbar, IonSelect, IonSelectOption, IonSpinner, IonTitle, IonToolbar, alertController, onIonViewWillEnter } from '@ionic/vue';
+import { checkmarkCircleOutline, closeCircleOutline, refreshOutline } from 'ionicons/icons';
 import { translate } from '@common';
 import { showToast } from '@/utils';
 import SystemTaskCard from '@/components/SystemTaskCard.vue';
@@ -242,16 +249,18 @@ async function saveAssignment() {
 </script>
 
 <style scoped>
-.system-tasks-layout { display: grid; grid-template-columns: 280px minmax(0, 760px); gap: 24px; max-width: 1100px; padding: 24px; margin: 0 auto; }
-.filters { margin: 0; }
-.task-queue { min-width: 0; }
-.queue-header { margin-block-end: 16px; }
-.task-cards { display: grid; gap: 24px; }
-.queue-state { text-align: center; padding: 40px 16px; color: var(--ion-color-medium); }
-.queue-state > ion-icon { font-size: 40px; }
-.queue-state h2 { color: var(--ion-text-color); font-size: 20px; }
-.pagination { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-block-start: 24px; }
-@media (max-width: 767px) {
-  .system-tasks-layout { grid-template-columns: minmax(0, 1fr); padding: 16px; gap: 16px; }
+.pagination {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--spacer-sm);
+  flex-wrap: wrap;
+  padding: var(--spacer-base);
+}
+
+.loading-state,
+.empty-state {
+  text-align: center;
+  padding: var(--spacer-lg);
 }
 </style>
