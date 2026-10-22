@@ -915,7 +915,7 @@ const triggerJobRun = async (jobName: string) => {
     await refreshData();
   } catch (error) {
     const serverError = commonUtil.getErrorMessage(error);
-    logger.error("Failed to execute job", serverError);
+    logger.error(error);
     showToast(`${translate("Failed to execute job.")} ${serverError}`);
   }
 };
@@ -927,7 +927,7 @@ const cancelDataManagerLog = async (configId: string, logId: string) => {
     await refreshData();
   } catch (error) {
     const serverError = commonUtil.getErrorMessage(error);
-    logger.error("Failed to cancel data manager log", serverError);
+    logger.error(error);
     showToast(`${translate("Failed to cancel data manager log.")} ${serverError}`);
   }
 };

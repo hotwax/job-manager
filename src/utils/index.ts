@@ -141,8 +141,8 @@ const downloadDataDocumentExport = async (message: any) => {
     saveAs(blob, extractExportFilename(message) || `${message.systemMessageId}.csv`);
   } catch (error) {
     const serverError = commonUtil.getErrorMessage(error);
-    logger.error("Failed to download linked file", serverError);
-    showToast(`${translate("Failed to download linked file.")} ${serverError}`);
+    logger.error(error);
+    showToast(`${translate("Failed to download linked file")}. ${serverError}`);
   }
 }
 

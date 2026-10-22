@@ -331,8 +331,8 @@ export const useSystemMessageStore = defineStore("systemMessage", {
         return { data: { success: true } };
       } catch (err) {
         const serverError = commonUtil.getErrorMessage(err);
-        logger.error("Failed to update system message", serverError);
-        showToast(`${translate("Failed to update system message.")} ${serverError}`);
+        logger.error("Failed to update system message", err);
+        showToast(`${translate("Failed to update system message")}. ${serverError}`);
       } finally {
         this.loading = false;
       }

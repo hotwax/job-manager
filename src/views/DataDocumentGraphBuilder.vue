@@ -1538,7 +1538,7 @@ const saveGraph = async () => {
     }
   } catch (error) {
     const serverError = commonUtil.getErrorMessage(error);
-    logger.error("Failed to save data document graph", serverError);
+    logger.error(error);
     showToast(`${translate("Failed to save data document graph.")} ${serverError}`);
   }
 };
@@ -1564,7 +1564,7 @@ const openScheduleModal = async () => {
     showToast(translate("Email export scheduled."));
   } catch (error) {
     const serverError = commonUtil.getErrorMessage(error);
-    logger.error("Failed to schedule the email export", serverError);
+    logger.error(error);
     showToast(`${translate("Failed to schedule the email export.")} ${serverError}`);
   }
 };
@@ -1576,7 +1576,7 @@ const togglePause = async (job: any) => {
     showToast(job.paused === "Y" ? translate("Schedule resumed.") : translate("Schedule paused."));
   } catch (error) {
     const serverError = commonUtil.getErrorMessage(error);
-    logger.error("Failed to update the schedule", serverError);
+    logger.error(error);
     showToast(`${translate("Failed to update the schedule.")} ${serverError}`);
   }
 };
@@ -1590,8 +1590,8 @@ const queueExport = async () => {
     dataDocumentStore.pollExportHistory(dataDocumentId);
   } catch(err) {
     const serverError = commonUtil.getErrorMessage(err);
-    logger.error("Failed to queue data document export", serverError);
-    commonUtil.showToast(`${translate("Failed to queue data document export.")} ${serverError}`);
+    logger.error(err);
+    commonUtil.showToast(`${translate("Failed to queue data document export")}. ${serverError}`);
   }
 };
 

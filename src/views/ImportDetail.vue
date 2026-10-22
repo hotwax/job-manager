@@ -269,8 +269,8 @@ const saveConfig = async () => {
     isEditing.value = false;
   } catch (err) {
     const serverError = commonUtil.getErrorMessage(err);
-    logger.error("Failed to update configuration", serverError);
-    showToast(`${translate("Failed to update configuration.")} ${serverError}`);
+    logger.error(err);
+    showToast(`${translate("Failed to update configuration")}. ${serverError}`);
   } finally {
     isSaving.value = false;
   }
@@ -320,8 +320,8 @@ const downloadTemplate = async () => {
     showToast(translate('Template downloaded successfully'));
   } catch(err) {
     const serverError = commonUtil.getErrorMessage(err);
-    logger.error("Failed to download template", serverError);
-    showToast(`${translate("Failed to download template.")} ${serverError}`);
+    logger.error("Failed to download template", err);
+    showToast(`${translate("Failed to download template")}. ${serverError}`);
   }
 };
 
@@ -345,8 +345,8 @@ const startImport = async () => {
     removeFile();
   } catch(err) {
     const serverError = commonUtil.getErrorMessage(err);
-    logger.error("File upload failed", serverError);
-    showToast(`${translate("File upload failed.")} ${serverError}`);
+    logger.error("File upload failed", err);
+    showToast(`${translate("File upload failed")}. ${serverError}`);
   }
 };
 

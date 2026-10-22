@@ -245,7 +245,7 @@ const saveRemote = async () => {
   const result = await systemMessageStore.saveSystemMessageRemote(payload);
   if (result.error) {
     const serverError = commonUtil.getErrorMessage(result.error);
-    logger.error("Failed to save remote system", serverError);
+    logger.error(result.error);
     await showToast(`${translate("Failed to save remote system.")} ${serverError}`);
     return;
   }
@@ -261,8 +261,8 @@ const deleteRemote = async () => {
   const result = await systemMessageStore.deleteSystemMessageRemote(props.id as string);
   if (result.error) {
     const serverError = commonUtil.getErrorMessage(result.error);
-    logger.error("Failed to delete remote system", serverError);
-    await showToast(`${translate("Failed to delete remote system.")} ${serverError}`);
+    logger.error(result.error);
+    await showToast(`${translate("Failed to delete remote system")}. ${serverError}`);
     return;
   }
 

@@ -89,8 +89,8 @@ export const useUserStore = defineStore("user", {
         this.fetchStatus.profile = 'success'
       } catch(error: any) {
         const serverError = commonUtil.getErrorMessage(error);
-        logger.error("Failed to fetch user profile information", serverError);
-        showToast(`${translate("Failed to fetch user profile information.")} ${serverError}`);
+        logger.error(error);
+        showToast(`${translate("Failed to fetch user profile information")}. ${serverError}`);
         useAuth().clearAuth();
         this.fetchStatus.profile = 'error';
         return Promise.reject(error);
@@ -323,8 +323,8 @@ export const useUserStore = defineStore("user", {
         return Promise.resolve(tzId)
       } catch(err) {
         const serverError = commonUtil.getErrorMessage(err);
-        logger.error("Failed to update time zone", serverError);
-        showToast(`${translate("Failed to update time zone.")} ${serverError}`);
+        logger.error(err);
+        showToast(`${translate("Failed to update time zone")}. ${serverError}`);
         return Promise.reject('');
       }
     },

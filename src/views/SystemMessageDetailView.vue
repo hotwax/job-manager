@@ -662,7 +662,7 @@ const downloadLinkedFile = async () => {
   const response = await systemMessageStore.downloadSystemMessageFile(message.value.systemMessageId);
   if (response.error || !response.data) {
     const serverError = commonUtil.getErrorMessage(response.error);
-    logger.error("Failed to download linked file", serverError);
+    logger.error(response.error);
     await showToast(`${translate("Failed to download linked file.")} ${serverError}`);
     return;
   }

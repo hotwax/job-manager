@@ -226,7 +226,7 @@ const saveType = async () => {
   const result = await store.saveSystemMessageType(payload);
   if (result.error) {
     const serverError = commonUtil.getErrorMessage(result.error);
-    logger.error("Failed to save message type", serverError);
+    logger.error(result.error);
     await showToast(`${translate("Failed to save message type.")} ${serverError}`);
     return;
   }
@@ -242,8 +242,8 @@ const deleteType = async () => {
   const result = await store.deleteSystemMessageType(props.id);
   if (result.error) {
     const serverError = commonUtil.getErrorMessage(result.error);
-    logger.error("Failed to delete message type", serverError);
-    await showToast(`${translate("Failed to delete message type.")} ${serverError}`);
+    logger.error(result.error);
+    await showToast(`${translate("Failed to delete message type")}. ${serverError}`);
     return;
   }
 

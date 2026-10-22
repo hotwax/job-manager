@@ -966,8 +966,8 @@ async function runNow() {
               }
             } catch(err) {
               const serverError = commonUtil.getErrorMessage(err);
-              logger.error("Failed to schedule service", serverError);
-              showToast(`${translate("Failed to schedule service.")} ${serverError}`);
+              logger.error("Failed to schedule service", err);
+              showToast(`${translate("Failed to schedule service")}. ${serverError}`);
             }
           }
         }
@@ -1029,8 +1029,8 @@ async function updateJobInfo(payload: any): Promise<any> {
     }
   } catch(err) {
     const serverError = commonUtil.getErrorMessage(err);
-    logger.error("Failed to update service", serverError);
-    showToast(`${translate("Failed to update service.")} ${serverError}`);
+    logger.error(err);
+    showToast(`${translate("Failed to update service")}. ${serverError}`);
     return Promise.reject({
       error: err
     });
