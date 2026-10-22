@@ -152,12 +152,9 @@ export const useUserStore = defineStore("user", {
       try {
         let resp;
         do {
-          // Permissions are always sourced from the Moqui/Maarg instance, regardless of
-          // the configured OMS mode (mirrors how fetchUserProfile reads admin/user/profile).
           resp = await api({
             url: "admin/user/permissions",
             method: "get",
-            baseURL: commonUtil.getMaargURL(),
             params: { viewIndex, viewSize }
           }) as any
 
