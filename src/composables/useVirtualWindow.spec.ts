@@ -28,11 +28,11 @@ describe("useVirtualWindow", () => {
   });
 
   function setupTestComponent(options: VirtualWindowOptions) {
-    let scrollerRef: ReturnType<typeof useVirtualWindow>["scroller"] | null = null;
-    let startIndexRef: ReturnType<typeof useVirtualWindow>["startIndex"] | null = null;
-    let endIndexRef: ReturnType<typeof useVirtualWindow>["endIndex"] | null = null;
-    let onScrollFn: ReturnType<typeof useVirtualWindow>["onScroll"] | null = null;
-    let scrollToIndexFn: ReturnType<typeof useVirtualWindow>["scrollToIndex"] | null = null;
+    let scrollerRef!: ReturnType<typeof useVirtualWindow>["scroller"];
+    let startIndexRef!: ReturnType<typeof useVirtualWindow>["startIndex"];
+    let endIndexRef!: ReturnType<typeof useVirtualWindow>["endIndex"];
+    let onScrollFn!: ReturnType<typeof useVirtualWindow>["onScroll"];
+    let scrollToIndexFn!: ReturnType<typeof useVirtualWindow>["scrollToIndex"];
 
     const DummyComponent = defineComponent({
       setup() {
@@ -171,8 +171,8 @@ describe("useVirtualWindow", () => {
   it("manages ResizeObserver lifecycle and reacts to resize", async () => {
     const observeMock = vi.fn();
     const disconnectMock = vi.fn();
-    let resizeCallback: globalThis.ResizeObserverCallback | null = null;
-    let observerInstance: globalThis.ResizeObserver | null = null;
+    let resizeCallback!: globalThis.ResizeObserverCallback;
+    let observerInstance!: globalThis.ResizeObserver;
 
     class SpecificMockResizeObserver implements globalThis.ResizeObserver {
       constructor(callback: globalThis.ResizeObserverCallback) {

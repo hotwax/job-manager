@@ -143,8 +143,6 @@ export function useDashboardProjections(
       }
     });
 
-    const stuckJobNames = new Set<string>();
-
     activeJobs.forEach((job: any) => {
       const runs = jobRunsMap[job.jobName] || [];
       const activeRun = runs.find((run: any) => run.startTime && !run.endTime);
@@ -166,43 +164,40 @@ export function useDashboardProjections(
               runMessage: activeRun.messages,
               runResults: activeRun.results
             });
-            stuckJobNames.add(job.jobName);
           }
         }
       }
 
+      const completedRuns = runs.filter((run: any) => run.startTime && run.endTime);
+      if (completedRuns.length === 0) return;
+
+      const latestRun = completedRuns[0];
+      // A stuck current run does not erase a failure in the latest completed run.
+      if (latestRun.hasError === 'Y') {
+        failedRunJobs.push({
+          ...job,
+          latestRunId: latestRun.jobRunId,
+          runMessage: latestRun.messages,
+          runResults: latestRun.results,
+          runErrors: latestRun.errors
+        });
+      }
+
       if (!isStuck) {
-        const completedRuns = runs.filter((run: any) => run.startTime && run.endTime);
-        if (completedRuns.length > 0) {
-          const latestRun = completedRuns[0];
-          const latestDuration = getRunDuration(latestRun);
-
-          const otherRuns = completedRuns.slice(1);
-          if (otherRuns.length > 0) {
-            const total = otherRuns.reduce((sum: number, run: any) => sum + getRunDuration(run), 0);
-            const avgDuration = total / otherRuns.length;
-
-            const isSlow = latestDuration > 60 && avgDuration > 10 && latestDuration > avgDuration * 1.5;
-
-            if (isSlow) {
-              slowJobs.push({
-                ...job,
-                latestRunId: latestRun.jobRunId,
-                latestDuration: formatDuration(latestDuration),
-                avgDuration: formatDuration(avgDuration),
-                runMessage: latestRun.messages,
-                runResults: latestRun.results
-              });
-            }
-          }
-
-          if (latestRun.hasError === 'Y') {
-            failedRunJobs.push({
+        const latestDuration = getRunDuration(latestRun);
+        const otherRuns = completedRuns.slice(1);
+        if (otherRuns.length > 0) {
+          const total = otherRuns.reduce((sum: number, run: any) => sum + getRunDuration(run), 0);
+          const avgDuration = total / otherRuns.length;
+          const isSlow = latestDuration > 60 && avgDuration > 10 && latestDuration > avgDuration * 1.5;
+          if (isSlow) {
+            slowJobs.push({
               ...job,
               latestRunId: latestRun.jobRunId,
+              latestDuration: formatDuration(latestDuration),
+              avgDuration: formatDuration(avgDuration),
               runMessage: latestRun.messages,
-              runResults: latestRun.results,
-              runErrors: latestRun.errors
+              runResults: latestRun.results
             });
           }
         }
