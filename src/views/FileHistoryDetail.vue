@@ -120,10 +120,10 @@
               <ion-chip v-if="contentType" class="type-chip" outline>{{ contentType.toUpperCase() }}</ion-chip>
             </h3>
             <div class="payload-actions">
-              <ion-button fill="clear" size="small" :disabled="!rawText" @click="copyContent" :title="translate('Copy')">
+              <ion-button v-if="!isParametersView" fill="clear" size="small" :disabled="!rawText" @click="copyContent" :title="translate('Copy')">
                 <ion-icon slot="icon-only" :icon="copyOutline" />
               </ion-button>
-              <ion-button fill="clear" size="small" :disabled="!rawText" @click="downloadContent" :title="translate('Download')">
+              <ion-button v-if="!isParametersView" fill="clear" size="small" :disabled="!rawText" @click="downloadContent" :title="translate('Download')">
                 <ion-icon slot="icon-only" :icon="downloadOutline" />
               </ion-button>
             </div>
@@ -141,7 +141,7 @@
             </ion-segment>
 
             <ion-searchbar
-              v-if="contentType"
+              v-if="contentType && !isParametersView"
               class="payload-search"
               :value="payloadSearch"
               @ionInput="payloadSearch = ($event as any).detail.value || ''"
@@ -150,7 +150,47 @@
             />
           </div>
 
-          <div v-if="payloadLoading" class="payload-loading">
+          <div v-if="isParametersView">
+            <ion-list v-if="importSettings.length" lines="full">
+              <ion-list-header>
+                <ion-label>{{ translate("Import Settings") }}</ion-label>
+              </ion-list-header>
+              <ion-item v-for="setting in importSettings" :key="setting.label">
+                <ion-label class="ion-text-wrap">
+                  <p>{{ setting.label }}</p>
+                  {{ setting.value }}
+                </ion-label>
+              </ion-item>
+            </ion-list>
+
+            <div v-if="areServiceParamsLoading" class="payload-loading">
+              <ion-spinner name="crescent"></ion-spinner>
+            </div>
+            <ion-list v-else-if="mergedParameters.length" lines="full">
+              <ion-list-header>
+                <ion-label>{{ translate("Parameters") }}</ion-label>
+              </ion-list-header>
+              <ion-item lines="none">
+                <ion-label class="ion-text-wrap">
+                  <p>{{ translate("Parameters the import service accepts, with the values this log was created with.") }}</p>
+                </ion-label>
+              </ion-item>
+              <ion-item v-for="parameter in mergedParameters" :key="parameter.name">
+                <ion-label class="ion-text-wrap">
+                  {{ parameter.name }}
+                  <p v-if="parameter.submitted">{{ parameter.value }}</p>
+                  <p v-else>{{ translate("Not set for this log") }}</p>
+                  <p v-if="parameter.type">{{ parameter.type }}</p>
+                  <p v-if="parameter.default">{{ translate("Default:") }} {{ parameter.default }}</p>
+                  <p v-if="!parameter.inContract">{{ translate("Not declared by the service") }}</p>
+                </ion-label>
+                <ion-badge v-if="parameter.required" slot="end" color="medium">{{ translate("Required") }}</ion-badge>
+              </ion-item>
+            </ion-list>
+            <p v-if="!areServiceParamsLoading && !mergedParameters.length" class="payload-empty">{{ translate("No parameters found for this log.") }}</p>
+          </div>
+
+          <div v-else-if="payloadLoading" class="payload-loading">
             <ion-spinner name="crescent"></ion-spinner>
           </div>
 
@@ -186,6 +226,7 @@ import {
   IonCardTitle,
   IonChip,
   IonList,
+  IonListHeader,
   IonItem,
   IonLabel,
   IonSearchbar,
@@ -194,10 +235,11 @@ import {
   IonSpinner,
   onIonViewWillEnter
 } from '@ionic/vue';
-import { computed, markRaw, ref, shallowRef } from 'vue';
+import { computed, markRaw, ref, shallowRef, watch } from 'vue';
 import router from "@/router";
 import { translate, commonUtil } from '@common';
 import { useMdmConfigStore } from '@/store/mdmConfig';
+import { useJobStore } from '@/store/jobs';
 import { getFileSize, showToast, getDuration } from '@/utils';
 import { codeWorkingOutline, copyOutline, downloadOutline, warningOutline, alertCircleOutline } from 'ionicons/icons';
 import JsonViewer from '@/components/JsonViewer.vue';
@@ -213,6 +255,7 @@ const props = defineProps({
 });
 
 const mdmStore = useMdmConfigStore();
+const jobStore = useJobStore();
 const logId = props.id;
 
 const getConfigName = (configId: string) => {
@@ -229,7 +272,10 @@ const goToConfigDetail = (configId: string) => {
   router.push({ name: "ImportDetail", params: { type: configId } });
 };
 
-type PayloadKey = "original" | "errors";
+// "parameters" is a sibling view in the same segment rather than a payload: it renders
+// the import settings this log ran with instead of file content.
+type PayloadKey = "original" | "errors" | "parameters";
+type FilePayloadKey = "original" | "errors";
 type ContentType = "" | "json" | "csv" | "text";
 type ParsedPayload = {
   contentType: ContentType;
@@ -244,13 +290,27 @@ const payloadLoading = ref(true);
 const selectedPayload = ref<PayloadKey>("original");
 // shallowRef + markRaw: parsed payloads are read-only display data. A deep ref would proxy
 // every object in a large parsed file, tripling memory and slowing every property read.
-const payloads = shallowRef<Record<PayloadKey, ParsedPayload>>({
+const payloads = shallowRef<Record<FilePayloadKey, ParsedPayload>>({
   original: createPayload(),
   errors: createPayload()
 });
 const payloadSearch = ref("");
+const serviceParameters = ref<Array<any>>([]);
+const areServiceParamsLoading = ref(false);
+const haveLoadedServiceParams = ref(false);
+const logParameters = ref<Array<any>>([]);
 
-const activePayload = computed(() => payloads.value[selectedPayload.value]);
+// Per-log import settings that the Execution Details card does not already state.
+const importSettings = computed(() => {
+  const logValue = log.value;
+  if (!logValue) return [];
+  return [
+    { label: translate("Import Path"), value: logValue.importPath },
+    { label: translate("Multi Threading"), value: logValue.multiThreading }
+  ].filter((setting: any) => setting.value);
+});
+
+const activePayload = computed(() => payloads.value[selectedPayload.value as FilePayloadKey] || createPayload());
 const contentType = computed(() => activePayload.value.contentType);
 const parsedJson = computed(() => activePayload.value.parsedJson);
 const csvRows = computed(() => activePayload.value.csvRows);
@@ -262,8 +322,66 @@ const payloadTabs = computed(() => {
   if (hasErrorPayload.value) {
     tabs.push({ key: "errors" as PayloadKey, label: `${translate("Errors")} (${failedRecordCount.value})` });
   }
+  tabs.push({ key: "parameters" as PayloadKey, label: translate("Parameters") });
   return tabs;
 });
+
+const isParametersView = computed(() => selectedPayload.value === "parameters");
+
+// The service contract is only worth fetching once the user opens the segment.
+watch(selectedPayload, async (view) => {
+  if (view !== "parameters" || haveLoadedServiceParams.value) return;
+  await loadServiceParameters();
+});
+
+// One list: the service contract is the master set of rows, with the values this log was
+// actually created with overlaid onto the ones that match by name. A submitted parameter the
+// service does not declare is still listed rather than dropped, so nothing is hidden.
+const mergedParameters = computed(() => {
+  const submitted = new Map(logParameters.value.map((parameter: any) => [parameter.parameterName, parameter.parameterValue]));
+  const declared = serviceParameters.value.map((parameter: any) => ({
+    name: parameter.name,
+    type: parameter.type,
+    default: parameter.default,
+    required: parameter.required === "true",
+    submitted: submitted.has(parameter.name),
+    value: submitted.get(parameter.name),
+    inContract: true
+  }));
+  const declaredNames = new Set(serviceParameters.value.map((parameter: any) => parameter.name));
+  const extras = logParameters.value
+    .filter((parameter: any) => !declaredNames.has(parameter.parameterName))
+    .map((parameter: any) => ({
+      name: parameter.parameterName,
+      required: false,
+      submitted: true,
+      value: parameter.parameterValue,
+      inContract: false
+    }));
+
+  return [...declared, ...extras];
+});
+
+const loadServiceParameters = async () => {
+  const serviceName = log.value?.importServiceName;
+  areServiceParamsLoading.value = true;
+
+  try {
+    // The log read already carries the parameters it was created with, so there is nothing
+    // further to fetch here.
+    logParameters.value = log.value?.parameters || [];
+
+    if (serviceName) {
+      const params = await jobStore.fetchServiceParams(serviceName);
+      // Underscore-prefixed entries are framework internals, not operator input.
+      serviceParameters.value = (params || []).filter((param: any) => !param?.name?.startsWith("_"));
+    }
+
+    haveLoadedServiceParams.value = true;
+  } finally {
+    areServiceParamsLoading.value = false;
+  }
+};
 
 const getLogStatusLabel = (logVal: any) => {
   if (!logVal) return "";

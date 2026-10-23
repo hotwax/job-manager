@@ -98,44 +98,6 @@
               </ion-label>
             </ion-item>
 
-            <!-- Bulk Operation Context & Sequence -->
-            <div v-if="isSequenceOperation" class="bulk-context ion-padding">
-              <ion-card v-if="messageType?.parentTypeId === 'ShopifyBulkQuery'" color="light" class="ion-no-margin ion-margin-bottom">
-                <ion-card-header>
-                  <ion-card-title size="small">
-                    <ion-icon :icon="informationCircleOutline" color="primary" style="vertical-align: middle; margin-right: 4px;" />
-                    {{ translate("Bulk Query Lifecycle") }}
-                  </ion-card-title>
-                </ion-card-header>
-                <ion-card-content>
-                  {{ translate("This is an asynchronous operation. Shopify is currently generating the requested data. Once complete, Shopify will send a webhook, triggering the next step to download and process the result file.") }}
-                </ion-card-content>
-              </ion-card>
-
-              <div class="sequence-container">
-                <p class="overline">{{ translate("Operation Sequence") }}</p>
-                <div class="sequence-flow">
-                  <template v-for="(step, index) in currentEnumSequence" :key="step.enumId">
-                    <ion-chip 
-                      :color="getStepStatus(step).color" 
-                      :outline="step.enumId !== message.systemMessageTypeId"
-                      @click="goToStep(step)"
-                      :disabled="!getStepStatus(step).linkedId && step.enumId !== message.systemMessageTypeId"
-                      class="step-chip"
-                    >
-                      <ion-icon :icon="getStepStatus(step).icon"></ion-icon>
-                      <ion-label>{{ step.description || step.enumId }}</ion-label>
-                    </ion-chip>
-                    <ion-icon 
-                      v-if="index !== currentEnumSequence.length - 1" 
-                      :icon="chevronForwardOutline" 
-                      class="separator-icon"
-                    ></ion-icon>
-                  </template>
-                </div>
-              </div>
-            </div>
-
             <ion-list>
               <ion-item lines="none">
                 <ion-icon slot="start" :icon="checkmarkCircleOutline" color="success" />
@@ -404,18 +366,14 @@ import {
   arrowForwardOutline,
   businessOutline,
   chevronDownOutline,
-  chevronForwardOutline,
   chevronUpOutline,
   checkmarkCircleOutline,
   copyOutline,
   documentAttachOutline,
   downloadOutline,
   globeOutline,
-  hourglassOutline,
-  informationCircleOutline,
   linkOutline,
   openOutline,
-  playOutline,
   syncOutline,
   timeOutline,
   warningOutline
@@ -448,20 +406,11 @@ const relatedMessages = computed(() => systemMessageStore.getRelatedMessages);
 const technicalFields = computed(() => systemMessageStore.getTechnicalFields(message.value));
 const statusHistory = computed(() => systemMessageStore.getCurrentSystemMessageStatusHistory)
 
-const currentEnumSequence = computed(() => systemMessageStore.getCurrentEnumSequence);
-const linkedMessages = computed(() => systemMessageStore.getLinkedMessages);
-
 const allowedTransitions = computed(() => utilStore.getAllowedTransitions(message.value));
 const isEditable = computed(() => message.value?.statusId !== "SmsgConsumed");
 const formattedContent = computed(() => formatContent(message.value?.messageText));
 const downloadableFilePath = computed(() => extractDownloadableFilePath(message.value?.messageText));
 const downloadableFileName = computed(() => getFileNameFromPath(downloadableFilePath.value));
-
-const isSequenceOperation = computed(() => 
-  messageType.value?.parentTypeId === 'ShopifyBulkImport' || 
-  messageType.value?.parentTypeId === 'ShopifyBulkQuery' ||
-  currentEnumSequence.value.length > 1
-);
 
 const getLabel = (label: string) => {
   return label.replace(/([a-z])([A-Z])/g, '$1 $2')
@@ -511,50 +460,13 @@ const narrativeSummary = computed(() => {
   const remoteName = remoteSystem.value ? (remoteSystem.value.description || remoteSystem.value.systemMessageRemoteId) : translate("Internal System");
   const typeName = messageType.value.description || messageType.value.systemMessageTypeId;
   const serviceName = message.value.isOutgoing === 'Y' ? messageType.value.sendServiceName : messageType.value.consumeServiceName;
-  const enumeration = systemMessageStore.getEnumInfo(message.value.systemMessageTypeId);
 
   if(message.value.isOutgoing === 'Y') {
-    let summary = `${translate("This outgoing message is being sent to")} ${remoteName}. ${translate("It is generated according to the")} ${typeName} ${translate("configuration using the")} ${serviceName} ${translate("service")}.`;
-    if(isSequenceOperation.value && enumeration) {
-      summary += ` ${translate("This operation is categorized as")} ${enumeration.typeDescription}.`;
-    }
-    return summary;
+    return `${translate("This outgoing message is being sent to")} ${remoteName}. ${translate("It is generated according to the")} ${typeName} ${translate("configuration using the")} ${serviceName} ${translate("service")}.`;
   } else {
-    let summary = `${translate("This incoming message was received from")} ${remoteName}. ${translate("It is processed according to the")} ${typeName} ${translate("configuration using the")} ${serviceName} ${translate("service")}.`;
-    if(isSequenceOperation.value && enumeration) {
-      summary += ` ${translate("This operation is categorized as")} ${enumeration.typeDescription}.`;
-    }
-    return summary;
+    return `${translate("This incoming message was received from")} ${remoteName}. ${translate("It is processed according to the")} ${typeName} ${translate("configuration using the")} ${serviceName} ${translate("service")}.`;
   }
 });
-
-const getStepStatus = (step: any) => {
-  if (!message.value) return { color: 'medium', icon: timeOutline, linkedId: null };
-  
-  // 1. Current step matching type
-  if (step.enumId === message.value.systemMessageTypeId) {
-    return { color: 'primary', icon: playOutline, linkedId: message.value.systemMessageId };
-  }
-
-  // 2. Look in linkedMessages (successors/predecessors)
-  const linked = linkedMessages.value.find((m: any) => m.systemMessageTypeId === step.enumId);
-  if (linked) {
-    if (linked.statusId === 'SmsgConsumed' || linked.statusId === 'SmsgConfirmed') {
-      return { color: 'success', icon: checkmarkCircleOutline, linkedId: linked.systemMessageId };
-    }
-    if (linked.statusId === 'SmsgError') {
-      return { color: 'danger', icon: alertCircleOutline, linkedId: linked.systemMessageId };
-    }
-    return { color: 'warning', icon: hourglassOutline, linkedId: linked.systemMessageId };
-  }
-
-  return { color: 'medium', icon: timeOutline, linkedId: null };
-};
-
-const goToStep = (step: any) => {
-  const status = getStepStatus(step);
-  router.push(`/system-messages/${status.linkedId}`);
-};
 
 const loadMessage = async () => {
   initialLoading.value = true;
@@ -577,10 +489,6 @@ const loadMessage = async () => {
       tasks.push(systemMessageStore.fetchSystemMessageRemoteById(message.value.systemMessageRemoteId));
     }
     await Promise.all(tasks);
-
-    // Fetch Sequence Data
-    await systemMessageStore.fetchEnumSequence(message.value.systemMessageTypeId);
-    await systemMessageStore.fetchAllRelatedMessages(message.value.systemMessageId, message.value.remoteMessageId);
 
     editedText.value = message.value.messageText || "";
   }
@@ -826,32 +734,6 @@ section {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-}
-
-.bulk-context {
-  border-top: 1px solid var(--ion-color-light);
-  background: var(--ion-color-light-tint);
-}
-
-.sequence-container {
-  margin-top: 16px;
-}
-
-.sequence-flow {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 8px;
-}
-
-.step-chip {
-  cursor: pointer;
-}
-
-.separator-icon {
-  font-size: 14px;
-  color: var(--ion-color-medium);
 }
 
 .related-enum {
