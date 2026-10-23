@@ -129,6 +129,11 @@
           </ion-card-content>
         </ion-card>
 
+        <ion-chip v-if="createdDateFrom" outline color="primary" @click="createdDateFrom = ''">
+          <ion-label>{{ translate("Since") }} {{ commonUtil.getDateTimeWithOrdinalSuffix(Number(createdDateFrom)) }}</ion-label>
+          <ion-icon :icon="closeCircleOutline" />
+        </ion-chip>
+
         <div class="pagination">
           <ion-button fill="outline" :disabled="pageIndex === 0 || isFetchingLogs" @click="goToPreviousPage">
             {{ translate("Previous") }}
@@ -283,7 +288,7 @@ import { translate, commonUtil, api } from "@common";
 import { closeOutline, closeCircleOutline, warningOutline, alertCircleOutline } from "ionicons/icons";
 import { computed, ref, watch } from "vue";
 import { useMdmConfigStore } from "@/store/mdmConfig";
-import { getFileSize, getDuration, showToast } from "@/utils";
+import { getFileSize, getDuration, hasFailedRecords, showToast } from "@/utils";
 import logger from "@/logger";
 import AnimatedNumber from "@/components/AnimatedNumber.vue";
 import { getStatusDesc } from '@/utils/config';
@@ -303,6 +308,9 @@ const selectedStatus = ref<string[]>([]);
 const selectedPriority = ref<string[]>([]);
 const selectedConfig = ref<string[]>([]);
 const hasErrorFilter = ref("");
+// Lower bound on createdDate, carried in by dashboard drill-downs that count over a
+// window. The API honours createdDate_from; an _op form is ignored.
+const createdDateFrom = ref("");
 const configQuery = ref("");
 const pageIndex = ref(0);
 
@@ -340,10 +348,7 @@ const filteredLogs = computed(() => {
   }
 
   if (hasErrorFilter.value) {
-    result = result.filter((log: any) => {
-      const hasError = (Number(log.failedRecordCount) || 0) > 0 || ["DmlsFailed", "DmlsCrashed"].includes(log.statusId);
-      return hasErrorFilter.value === "Y" ? hasError : !hasError;
-    });
+    result = result.filter((log: any) => (hasErrorFilter.value === "Y" ? hasFailedRecords(log) : !hasFailedRecords(log)));
   }
 
   return result;
@@ -519,6 +524,7 @@ async function fetchLogs() {
   const filters: Record<string, any> = {};
 
   if (selectedStatus.value.length > 0) filters["statusId"] = selectedStatus.value;
+  if (createdDateFrom.value) filters["createdDate_from"] = createdDateFrom.value;
   // Priority is handled entirely client-side
   if (selectedConfig.value.length > 0) filters["configId"] = selectedConfig.value;
 
@@ -566,7 +572,7 @@ const goToLogDetails = (logId: string) => {
 };
 
 // Filters trigger a fresh fetch from page 0
-watch([queryString, selectedStatus, selectedPriority, selectedConfig, hasErrorFilter], async () => {
+watch([queryString, selectedStatus, selectedPriority, selectedConfig, hasErrorFilter, createdDateFrom], async () => {
   pageIndex.value = 0;
   await fetchLogs();
 });
@@ -577,13 +583,14 @@ watch(pageIndex, () => {
 });
 
 onIonViewWillEnter(async () => {
+  // Drill-downs from the dashboard arrive as query params. They have to land on the
+  // same refs the filter controls use, otherwise fetchLogs rebuilds the payload from
+  // empty refs and the link silently shows an unfiltered list.
   const currentQuery = router.currentRoute.value.query;
-  if (currentQuery?.statusId) {
-    await mdmStore.updateAppliedFilters("statusId", (currentQuery.statusId as string).split(","));
-  } else {
-    await mdmStore.updateAppliedFilters("statusId", []);
-  }
+  selectedStatus.value = currentQuery?.statusId ? (currentQuery.statusId as string).split(",") : [];
   selectedPriority.value = currentQuery?.priority ? [(currentQuery.priority as string)] : [];
+  hasErrorFilter.value = (currentQuery?.hasError as string) || "";
+  createdDateFrom.value = (currentQuery?.createdDateFrom as string) || "";
   await fetchLogs();
   mdmStore.fetchConfigs();
   await utilStore.fetchStatusItemsByType("DataManagerLog");
