@@ -262,7 +262,7 @@ const deleteRemote = async () => {
   if (result.error) {
     const serverError = commonUtil.getErrorMessage(result.error);
     logger.error(result.error);
-    await showToast(`${translate("Failed to delete remote system")}. ${serverError}`);
+    await showToast(`${translate("This remote system cannot be deleted while messages still reference it.")} ${serverError}`);
     return;
   }
 

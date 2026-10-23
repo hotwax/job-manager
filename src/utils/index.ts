@@ -142,7 +142,7 @@ const downloadDataDocumentExport = async (message: any) => {
   } catch (error) {
     const serverError = commonUtil.getErrorMessage(error);
     logger.error(error);
-    showToast(`${translate("Failed to download linked file")}. ${serverError}`);
+    showToast(`${translate("Failed to download linked file.")} ${serverError}`);
   }
 }
 

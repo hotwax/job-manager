@@ -243,7 +243,7 @@ const deleteType = async () => {
   if (result.error) {
     const serverError = commonUtil.getErrorMessage(result.error);
     logger.error(result.error);
-    await showToast(`${translate("Failed to delete message type")}. ${serverError}`);
+    await showToast(`${translate("This message type cannot be deleted while messages still reference it.")} ${serverError}`);
     return;
   }
 
