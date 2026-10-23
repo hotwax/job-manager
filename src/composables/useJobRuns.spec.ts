@@ -28,7 +28,7 @@ function deferred<T>() {
 
 describe('useJobRuns', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     mockFetchJobRuns.mockResolvedValue([]);
     mockResolveUserFullNames.mockResolvedValue(undefined);
   });
@@ -318,4 +318,35 @@ describe('useJobRuns', () => {
     });
     scope.stop();
   });
+
+  it('ignores a user-name completion after the history is reset', async () => {
+    const names = deferred<void>();
+    mockFetchJobRuns.mockResolvedValueOnce([{ jobRunId: 'old' } as JobRun]);
+    mockResolveUserFullNames.mockReturnValueOnce(names.promise);
+    const scope = effectScope();
+    const history = scope.run(() => useJobRuns(ref('OldJob')))!;
+    const pending = history.loadRuns();
+    await vi.waitFor(() => expect(mockResolveUserFullNames).toHaveBeenCalledOnce());
+    expect(history.hasLoadedRuns.value).toBe(false);
+    history.reset();
+    names.resolve();
+    await pending;
+    expect(history.runs.value).toEqual([]);
+    expect(history.hasLoadedRuns.value).toBe(false);
+    scope.stop();
+  });
+
+  it('retries the same page after a failed load-more request', async () => {
+    const firstPage = Array.from({ length: 20 }, (_, i) => ({ jobRunId: String(i) } as JobRun));
+    mockFetchJobRuns.mockResolvedValueOnce(firstPage).mockRejectedValueOnce(new Error('Request failed')).mockResolvedValueOnce([]);
+    const scope = effectScope();
+    const history = scope.run(() => useJobRuns(ref('InventoryImport')))!;
+    await history.loadRuns();
+    await history.loadMoreRuns();
+    expect(history.runs.value).toHaveLength(20);
+    await history.loadMoreRuns();
+    expect(mockFetchJobRuns.mock.calls.map(([, payload]) => payload.pageIndex)).toEqual([0, 1, 1]);
+    scope.stop();
+  });
+
 });

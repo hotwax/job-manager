@@ -16,7 +16,6 @@
     <ion-content>
       <main>
 
-
         <!-- KPI Metrics Grid -->
         <div class="metrics-grid ion-margin-bottom">
           <!-- Jobs Card -->
@@ -142,10 +141,6 @@
             </ion-card-header>
             <ion-card-content>
               <div class="kpi-subtext">
-                <ion-chip v-if="incomingErrorCount > 0" outline button color="danger" @click="openSystemMessages({ hasError: 'Y', isOutgoing: 'N' })">
-                  <ion-icon :icon="alertCircleOutline" />
-                  <ion-label>{{ translate("View") }} {{ incomingErrorCount }} {{ translate("Errors") }}</ion-label>
-                </ion-chip>
                 <ion-chip outline button @click="openSystemMessages({ statusId: 'SmsgProduced', isOutgoing: 'N' })">
                   <ion-label>{{ incomingPendingCount }} {{ translate("Queued") }}</ion-label>
                 </ion-chip>
@@ -178,10 +173,6 @@
             </ion-card-header>
             <ion-card-content>
               <div class="kpi-subtext">
-                <ion-chip v-if="outgoingErrorCount > 0" outline button color="danger" @click="openSystemMessages({ hasError: 'Y', isOutgoing: 'Y' })">
-                  <ion-icon :icon="alertCircleOutline" />
-                  <ion-label>{{ translate("View") }} {{ outgoingErrorCount }} {{ translate("Errors") }}</ion-label>
-                </ion-chip>
                 <ion-chip outline button @click="openSystemMessages({ statusId: 'SmsgProduced', isOutgoing: 'Y' })">
                   <ion-label>{{ outgoingPendingCount }} {{ translate("Queued") }}</ion-label>
                 </ion-chip>
@@ -557,7 +548,6 @@ const isLoading = ref(false);
 // Job stats
 const jobs = computed(() => jobStore.getJobs);
 
-
 // Detailed run-based jobs diagnostics
 const jobRunsMap = ref<Record<string, any[]>>({});
 
@@ -570,7 +560,6 @@ const lastRefreshedRelative = computed(() => {
 });
 
 let refreshIntervalId: any = null;
-
 
 const {
   jobProjections,
@@ -638,16 +627,6 @@ onUnmounted(() => {
   if (refreshIntervalId) clearInterval(refreshIntervalId);
 });
 
-
-
-
-
-// Helper to calculate average duration of completed runs in the last day
-
-
-
-
-
 // Every dashboard number is a drill-down: the chip or tile shows a count and the
 // destination list has to answer "which ones?" with the same filter that produced
 // the count. The status groups and route builders below are the single definition
@@ -679,8 +658,6 @@ const getLogPriority = (log: any) => {
   return config?.priority ? Number(config.priority) : 0;
 };
 
-
-
 // Imports report their run window in millis. The finish stamp is the definitive
 // "when did this run", falling back to the start stamp and then the upload stamp
 // for imports that failed before they began.
@@ -708,14 +685,9 @@ const getLogRunTimeExact = (log: any) => {
 // System Messages (Incoming vs Outgoing)
 const systemMessages = computed(() => systemMessageStore.getSystemMessages);
 
-
-
 // The dashboard only holds the newest slice of logs and messages, so every count on it
 // is really "within this window". getOldestMillis exposes that boundary once: the card
 // subtitle states it, and the drill-down link carries it as a filter.
-
-
-
 
 const incomingTimeSpan = computed(() => getRelativeTimeSpan(messageProjections.value.incomingMessages, (msg) => msg.initDate, now.value));
 const outgoingTimeSpan = computed(() => getRelativeTimeSpan(messageProjections.value.outgoingMessages, (msg) => msg.initDate, now.value));
@@ -727,11 +699,6 @@ const openFailedFileHistory = (priority: string, windowStart: number) => openFil
   ...(windowStart ? { createdDateFrom: String(windowStart) } : {})
 });
 const standardLogsTimeSpan = computed(() => getRelativeTimeSpan(logProjections.value.standardLogs, (log) => log.createdDate, now.value));
-
-
-
-// Activity feed chronology
-
 
 const handleEventClick = (event: any) => {
   if (event.type === "message") {
@@ -808,7 +775,6 @@ onIonViewWillLeave(() => {
 </script>
 
 <style scoped>
-
 
 .metrics-grid {
   display: grid;
