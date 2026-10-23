@@ -115,3 +115,23 @@ describe('useDashboardProjections - projections', () => {
     expect(logProjections.value.failedLogsCount).toBe(1); // log2 has failed records
   });
 });
+
+
+describe('dashboard run diagnostic membership', () => {
+  it.each(['Y', 'N'])('keeps stuck and completed-run failure independent (hasError=%s)', (hasError) => {
+    const now = DateTime.now().toMillis();
+    const { jobProjections } = useDashboardProjections(
+      ref([{ jobName: 'inventoryImport', paused: 'N', cronExpression: '0 0 * * * ?' }]),
+      ref({ inventoryImport: [
+        { jobRunId: 'running', startTime: now - 10800000, endTime: null },
+        { jobRunId: 'completed', startTime: now - 14400000, endTime: now - 14100000, hasError, errors: 'Import failed' },
+        { jobRunId: 'earlier', startTime: now - 18000000, endTime: now - 17970000, hasError: 'N' }
+      ] }),
+      ref([]), ref([]), ref([]), ref([]), (status) => status
+    );
+    expect(jobProjections.value.stuckJobs.map(job => job.activeRunId)).toEqual(['running']);
+    expect(jobProjections.value.slowJobs).toEqual([]);
+    expect(jobProjections.value.failedRunJobs.map(job => job.latestRunId)).toEqual(hasError === 'Y' ? ['completed'] : []);
+    expect(jobProjections.value.failedJobsCount).toBe(hasError === 'Y' ? 1 : 0);
+  });
+});
