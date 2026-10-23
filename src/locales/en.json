@@ -1,5 +1,4 @@
 {
-  "{count} operations": "{count} operations",
   "1 operation": "1 operation",
   "A store represents a company or a unique catalog of products. If your OMS is connected to multiple eCommerce stores sellling different collections of products, you may have multiple Product Stores set up in HotWax Commerce.": "A store represents a company or a unique catalog of products. If your OMS is connected to multiple eCommerce stores sellling different collections of products, you may have multiple Product Stores set up in HotWax Commerce.",
   "Above 6 runs on the priority queue.": "Above 6 runs on the priority queue.",
