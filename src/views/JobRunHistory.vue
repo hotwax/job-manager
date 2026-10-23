@@ -407,11 +407,15 @@ const loadRuns = async (isRefetch = true) => {
 const getRunUserName = (userId: string) => userStore.getUserFullName(userId) || userId || "-";
 
 const goToPreviousPage = () => {
-  pageIndex.value -= 1;
+  if (pageIndex.value > 0) {
+    pageIndex.value -= 1;
+  }
 };
 
 const goToNextPage = () => {
-  pageIndex.value += 1;
+  if (pageIndex.value < pageCount.value - 1) {
+    pageIndex.value += 1;
+  }
 };
 
 const goToJob = (jobName: string) => {
