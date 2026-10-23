@@ -910,6 +910,7 @@ import DataDocumentPreviewTable from "@/components/DataDocumentPreviewTable.vue"
 import ScheduleEmailExportModal from "@/components/ScheduleEmailExportModal.vue";
 import DataDocumentFormView from "@/views/DataDocumentFormView.vue";
 import { getDateAndTime, showToast } from "@/utils";
+import logger from "@/logger";
 import { useUtilStore } from "@/store/util";
 import type { GraphCondition, GraphEdge, GraphField } from "@/utils/dataDocumentGraph";
 import { DATA_DOCUMENT_FUNCTIONS, getDataDocumentFunctionLabel, isConditionValueMissing } from "@/utils/dataDocumentGraph";
@@ -1536,7 +1537,9 @@ const saveGraph = async () => {
       router.replace(`/data-documents/${graph.value.dataDocumentId}/graph?segment=${bottomPanel.value}`);
     }
   } catch (error) {
-    showToast(translate("Failed to save data document graph."));
+    const serverError = commonUtil.getErrorMessage(error);
+    logger.error(error);
+    showToast(`${translate("Failed to save data document graph.")} ${serverError}`);
   }
 };
 
@@ -1560,7 +1563,9 @@ const openScheduleModal = async () => {
     });
     showToast(translate("Email export scheduled."));
   } catch (error) {
-    showToast(translate("Failed to schedule the email export."));
+    const serverError = commonUtil.getErrorMessage(error);
+    logger.error(error);
+    showToast(`${translate("Failed to schedule the email export.")} ${serverError}`);
   }
 };
 
@@ -1570,7 +1575,9 @@ const togglePause = async (job: any) => {
     await dataDocumentStore.setExportSchedulePaused(job.jobName, job.paused !== "Y", dataDocumentId);
     showToast(job.paused === "Y" ? translate("Schedule resumed.") : translate("Schedule paused."));
   } catch (error) {
-    showToast(translate("Failed to update the schedule."));
+    const serverError = commonUtil.getErrorMessage(error);
+    logger.error(error);
+    showToast(`${translate("Failed to update the schedule.")} ${serverError}`);
   }
 };
 
@@ -1582,7 +1589,9 @@ const queueExport = async () => {
     // Track status in the background; Recent Exports updates live as it polls.
     dataDocumentStore.pollExportHistory(dataDocumentId);
   } catch(err) {
-    commonUtil.showToast(translate(`Failed to queue data document export for ${graph.value?.dataDocumentId}`))
+    const serverError = commonUtil.getErrorMessage(err);
+    logger.error(err);
+    commonUtil.showToast(`${translate("Failed to queue data document export")}. ${serverError}`);
   }
 };
 

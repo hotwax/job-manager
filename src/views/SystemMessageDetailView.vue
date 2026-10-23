@@ -426,6 +426,7 @@ import { saveAs } from "file-saver";
 
 import { commonUtil, translate } from "@common";
 import { getDateAndTime, showToast } from "@/utils";
+import logger from "@/logger";
 import { useSystemMessageStore } from "@/store/systemMessage";
 import { useUtilStore } from "@/store/util";
 
@@ -660,7 +661,9 @@ const downloadLinkedFile = async () => {
 
   const response = await systemMessageStore.downloadSystemMessageFile(message.value.systemMessageId);
   if (response.error || !response.data) {
-    await showToast(translate("Failed to download linked file."));
+    const serverError = commonUtil.getErrorMessage(response.error);
+    logger.error(response.error);
+    await showToast(`${translate("Failed to download linked file.")} ${serverError}`);
     return;
   }
 

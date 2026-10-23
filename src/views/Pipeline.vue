@@ -517,12 +517,13 @@ import {
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { DateTime } from "luxon";
 import router from "@/router";
-import { translate, emitter } from "@common";
+import { commonUtil, emitter, translate } from "@common";
 import { useJobStore } from "@/store/jobs";
 import { useSystemMessageStore } from "@/store/systemMessage";
 import { useMdmConfigStore } from "@/store/mdmConfig";
 import { useUtilStore } from "@/store/util";
 import { getFileSize, showToast } from "@/utils";
+import logger from "@/logger";
 
 const jobStore = useJobStore();
 const systemMessageStore = useSystemMessageStore();
@@ -913,7 +914,9 @@ const triggerJobRun = async (jobName: string) => {
     showToast(translate("Job execution triggered successfully."));
     await refreshData();
   } catch (error) {
-    showToast(translate("Failed to execute job."));
+    const serverError = commonUtil.getErrorMessage(error);
+    logger.error(error);
+    showToast(`${translate("Failed to execute job.")} ${serverError}`);
   }
 };
 
@@ -923,7 +926,9 @@ const cancelDataManagerLog = async (configId: string, logId: string) => {
     showToast(translate("Data manager log cancelled."));
     await refreshData();
   } catch (error) {
-    showToast(translate("Failed to cancel data manager log."));
+    const serverError = commonUtil.getErrorMessage(error);
+    logger.error(error);
+    showToast(`${translate("Failed to cancel data manager log.")} ${serverError}`);
   }
 };
 

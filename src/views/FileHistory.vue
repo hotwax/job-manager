@@ -483,8 +483,9 @@ const showAddConfigNameAlert = async (configId: string) => {
             }
             showToast(translate("Configuration name updated successfully"));
           } catch (err) {
+            const serverError = commonUtil.getErrorMessage(err);
             logger.error("Failed to update config name", err);
-            showToast(translate("Failed to update configuration name"));
+            showToast(`${translate("Failed to update configuration name")}. ${serverError}`);
           }
         }
       }

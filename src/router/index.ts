@@ -5,7 +5,7 @@ import Settings from "@/views/Settings.vue"
 import FileHistory from "@/views/FileHistory.vue"
 import FileHistoryDetail from "@/views/FileHistoryDetail.vue"
 import { showToast } from '@/utils'
-import { translate } from '@common'
+import { commonUtil, translate } from '@common'
 import { alertController } from '@ionic/vue'
 import 'vue-router'
 import { useAuth } from '@common/composables/useAuth';
@@ -257,7 +257,8 @@ router.beforeEach(async (to, from) => {
       await graphStore.saveGraph();
       return true;
     } catch (error) {
-      showToast(translate("Failed to save data document graph."));
+      const serverError = commonUtil.getErrorMessage(error);
+      showToast(`${translate("Failed to save data document graph.")} ${serverError}`);
       return false;
     }
   }
