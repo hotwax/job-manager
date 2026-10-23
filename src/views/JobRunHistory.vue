@@ -67,7 +67,7 @@
                 </ion-button>
               </div>
 
-              <div class="filter-item">
+              <div class="filter-item job-filter">
                 <ion-select
                   :label="translate('Job')"
                   label-placement="stacked"
@@ -502,6 +502,10 @@ onIonViewWillEnter(async () => {
 .accordion-content pre {
   overflow: auto;
   white-space: pre-wrap;
+}
+
+.job-filter ion-select {
+  min-width: 0;
 }
 
 .loading-state,
