@@ -1,8 +1,8 @@
-import { mount, flushPromises } from '@vue/test-utils'
+import { mount, flushPromises, enableAutoUnmount } from '@vue/test-utils'
 import FileHistoryDetail from '../FileHistoryDetail.vue'
 import { createPinia } from 'pinia'
 import { IonicVue } from '@ionic/vue'
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { useMdmConfigStore } from '@/store/mdmConfig'
 import { nextTick } from 'vue'
 
@@ -10,38 +10,36 @@ vi.mock('vue-router', () => ({
   useRouter: () => ({ push: vi.fn() }),
   useRoute: () => ({ params: { id: '123' } })
 }))
+vi.mock('@/router', () => ({ default: { push: vi.fn() } }))
 
-vi.mock('@/router', () => ({
-  default: { push: vi.fn() }
+let enterView: () => void | Promise<void>;
+vi.mock('@ionic/vue', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@ionic/vue')>(),
+  onIonViewWillEnter: (callback: () => void | Promise<void>) => { enterView = callback; }
 }))
+enableAutoUnmount(afterEach);
 
-let onIonViewWillEnterCallback: (() => void | Promise<void>) | null = null;
-vi.mock('@ionic/vue', async (importOriginal) => {
-  const actual = await importOriginal() as any;
-  return {
-    ...actual,
-    onIonViewWillEnter: (cb: () => void | Promise<void>) => {
-      onIonViewWillEnterCallback = cb;
-    }
-  }
-})
-
-describe('FileHistoryDetail.vue', () => {
-  let pinia: any;
-  let mdmStore: any;
-
+describe('FileHistoryDetail lazy error payloads', () => {
+  let pinia: ReturnType<typeof createPinia>;
+  let mdmStore: ReturnType<typeof useMdmConfigStore>;
+  const original = '{"test":"original"}';
+  const error = '{"error":"first"}';
+  const log = {
+    configId: 'config123', logContentId: 'content-123', fileName: 'test.json',
+    errorLogContentId: 'error-content-123', errorFileName: 'test-error.json', failedRecordCount: 5
+  };
   beforeEach(() => {
-    vi.clearAllMocks();
-    onIonViewWillEnterCallback = null;
+    vi.resetAllMocks();
+    enterView = () => { throw new Error('View did not register its entry hook'); };
     pinia = createPinia();
     mdmStore = useMdmConfigStore(pinia);
     mdmStore.fetchConfigs = vi.fn();
-    mdmStore.fetchDataManagerFileContent = vi.fn();
-    mdmStore.fetchDataManagerLogById = vi.fn();
+    mdmStore.fetchDataManagerLogById = vi.fn().mockResolvedValue(log);
+    mdmStore.fetchDataManagerFileContent = vi.fn().mockImplementation((_configId, contentId) =>
+      Promise.resolve({ text: contentId === log.errorLogContentId ? error : original })
+    );
   });
-
   const mountComponent = async () => {
-    (mdmStore.fetchConfigs as any).mockResolvedValue();
     const wrapper = mount(FileHistoryDetail, {
       global: {
         plugins: [IonicVue, pinia],
@@ -55,195 +53,111 @@ describe('FileHistoryDetail.vue', () => {
       },
       props: { id: '123' }
     });
-    return wrapper;
-  }
-
+    await enterView();
+    await flushPromises();
+    // Vue Test Utils exposes setup state at runtime; it is private in Vue's public type.
+    return wrapper.vm as unknown as {
+      selectedPayload: 'original' | 'errors' | 'parameters';
+      payloads: Record<'original' | 'errors', { rawText: string }>;
+      errorPayloadLoading: boolean;
+    };
+  };
   function defer<T>() {
-    let resolve!: (value: T | PromiseLike<T>) => void;
-    let reject!: (reason?: any) => void;
-    const promise = new Promise<T>((res, rej) => {
-      resolve = res;
-      reject = rej;
-    });
-    return { promise, resolve, reject };
+    let resolve!: (value: T) => void;
+    const promise = new Promise<T>((res) => { resolve = res; });
+    return { promise, resolve };
   }
 
-  it('only fetches original payload on load and defers error fetch until tab activation', async () => {
-    const mockFileContent = vi.fn().mockImplementation((configId, contentId) => {
-      if (contentId === 'error-content-123') return Promise.resolve({ text: '{"error": "json"}' });
-      return Promise.resolve({ text: '{"test": "original-json"}' });
-    });
-
-    (mdmStore.fetchDataManagerFileContent as any).mockImplementation(mockFileContent);
-    (mdmStore.fetchDataManagerLogById as any).mockReturnValue(Promise.resolve({
-      configId: 'config123',
-      logContentId: 'content-123',
-      fileName: 'test.json',
-      errorLogContentId: 'error-content-123',
-      errorFileName: 'test-error.csv',
-      failedRecordCount: 5
-    }));
-
-    const wrapper = await mountComponent();
-
-    if (onIonViewWillEnterCallback) {
-      await onIonViewWillEnterCallback();
-      await flushPromises();
-    }
-
-    mockFileContent.mockClear();
-    wrapper.vm.selectedPayload = 'errors';
-
-    if (typeof wrapper.vm.loadErrorPayload === 'function') {
-      await wrapper.vm.loadErrorPayload();
-    } else {
-      await mockFileContent('config123', 'error-content-123');
-    }
+  it('fetches only the original on entry and caches errors after selecting their tab', async () => {
+    const view = await mountComponent();
+    expect(mdmStore.fetchDataManagerFileContent).toHaveBeenCalledTimes(1);
+    expect(mdmStore.fetchDataManagerFileContent).toHaveBeenLastCalledWith('config123', 'content-123');
+    expect(view.payloads.original.rawText).toBe(original);
+    expect(view.payloads.errors.rawText).toBe('');
+    view.selectedPayload = 'errors';
     await flushPromises();
-
-    expect(mockFileContent.mock.calls.some((c: any) => c[1] === 'error-content-123')).toBe(true);
-    const callsAfter = mockFileContent.mock.calls.length;
-
-    wrapper.vm.selectedPayload = 'original';
+    expect(mdmStore.fetchDataManagerFileContent).toHaveBeenCalledTimes(2);
+    expect(mdmStore.fetchDataManagerFileContent).toHaveBeenLastCalledWith('config123', 'error-content-123');
+    expect(view.payloads.errors.rawText).toBe(error);
+    view.selectedPayload = 'original';
     await nextTick();
-
-    wrapper.vm.selectedPayload = 'errors';
-    if (typeof wrapper.vm.loadErrorPayload === 'function') {
-      await wrapper.vm.loadErrorPayload();
-    }
-    await nextTick();
+    view.selectedPayload = 'errors';
     await flushPromises();
-
-    expect(mockFileContent.mock.calls.length).toBe(callsAfter);
+    expect(mdmStore.fetchDataManagerFileContent).toHaveBeenCalledTimes(2);
   });
 
-  it('does not impact original payload if error fetch fails', async () => {
-    const mockFileContent = vi.fn().mockImplementation((configId, contentId) => {
-      if (contentId === 'error-content-123') {
-        return Promise.resolve(null);
-      }
-      return Promise.resolve({ text: '{"test": "original-json"}' });
-    });
-
-    (mdmStore.fetchDataManagerFileContent as any).mockImplementation(mockFileContent);
-    (mdmStore.fetchDataManagerLogById as any).mockReturnValue(Promise.resolve({
-      configId: 'config123',
-      logContentId: 'content-123',
-      fileName: 'test.json',
-      errorLogContentId: 'error-content-123',
-      errorFileName: 'test-error.csv',
-      failedRecordCount: 5
-    }));
-
-    const wrapper = await mountComponent();
-
-    if (onIonViewWillEnterCallback) {
-      await onIonViewWillEnterCallback();
-      await flushPromises();
-    }
-
-    expect((wrapper.vm as any).payloads.original.rawText).toBe('{"test": "original-json"}');
-
-    wrapper.vm.selectedPayload = 'errors';
+  it('shares an in-flight error request while preserving the original payload', async () => {
+    const pending = defer<{ text: string }>();
+    vi.mocked(mdmStore.fetchDataManagerFileContent)
+      .mockResolvedValueOnce({ text: original }).mockReturnValueOnce(pending.promise);
+    const view = await mountComponent();
+    view.selectedPayload = 'errors';
     await nextTick();
-
-    if (typeof wrapper.vm.loadErrorPayload === 'function') {
-      await wrapper.vm.loadErrorPayload().catch(() => {});
-    } else {
-      await mockFileContent('config123', 'error-content-123').catch(() => {});
-    }
-
+    expect(view.errorPayloadLoading).toBe(true);
+    view.selectedPayload = 'original';
+    await nextTick();
+    expect(view.payloads.original.rawText).toBe(original);
+    view.selectedPayload = 'errors';
+    await nextTick();
+    expect(mdmStore.fetchDataManagerFileContent).toHaveBeenCalledTimes(2);
+    pending.resolve({ text: error });
     await flushPromises();
-
-    expect(mockFileContent).toHaveBeenCalledWith('config123', 'error-content-123');
-    expect((wrapper.vm as any).payloads.original.rawText).toBe('{"test": "original-json"}');
+    expect(view.payloads.errors.rawText).toBe(error);
+    expect(view.errorPayloadLoading).toBe(false);
   });
 
-  it('clears a rejected in-flight request so the error payload can be retried', async () => {
-    const mockFileContent = vi.fn()
-      .mockResolvedValueOnce({ text: '{"test": "original-json"}' })
+  it('keeps the original intact when the store returns no error content', async () => {
+    vi.mocked(mdmStore.fetchDataManagerFileContent)
+      .mockResolvedValueOnce({ text: original }).mockResolvedValueOnce(null);
+    const view = await mountComponent();
+    view.selectedPayload = 'errors';
+    await flushPromises();
+    expect(mdmStore.fetchDataManagerFileContent).toHaveBeenCalledTimes(2);
+    expect(view.payloads.original.rawText).toBe(original);
+    expect(view.payloads.errors.rawText).toBe('');
+    expect(view.errorPayloadLoading).toBe(false);
+  });
+
+  it('allows reopening errors to retry an unexpected rejected request', async () => {
+    vi.mocked(mdmStore.fetchDataManagerFileContent)
+      .mockResolvedValueOnce({ text: original })
       .mockRejectedValueOnce(new Error('temporary failure'))
-      .mockResolvedValueOnce({ text: '{"error": "recovered"}' });
-
-    mdmStore.fetchDataManagerFileContent = mockFileContent;
-    mdmStore.fetchDataManagerLogById = vi.fn().mockResolvedValue({
-      configId: 'config123',
-      logContentId: 'content-123',
-      fileName: 'test.json',
-      errorLogContentId: 'error-content-123',
-      errorFileName: 'test-error.json',
-      failedRecordCount: 5
-    });
-
-    const wrapper = await mountComponent();
-    await onIonViewWillEnterCallback?.();
+      .mockResolvedValueOnce({ text: error });
+    const view = await mountComponent();
+    view.selectedPayload = 'errors';
     await flushPromises();
-
-    await expect((wrapper.vm as any).loadErrorPayload()).rejects.toThrow('temporary failure');
-    await expect((wrapper.vm as any).loadErrorPayload()).resolves.toMatchObject({
-      rawText: '{"error": "recovered"}'
-    });
-
-    expect(mockFileContent).toHaveBeenCalledTimes(3);
+    expect(view.errorPayloadLoading).toBe(false);
+    view.selectedPayload = 'original';
+    await nextTick();
+    view.selectedPayload = 'errors';
+    await flushPromises();
+    expect(mdmStore.fetchDataManagerFileContent).toHaveBeenCalledTimes(3);
+    expect(view.payloads.errors.rawText).toBe(error);
   });
 
-  it('prevents a deferred error payload fetch from overwriting a new log scope', async () => {
-    const deferredError = defer<string>();
-
-    const mockFileContent = vi.fn().mockImplementation((configId, contentId) => {
-      if (contentId === 'error-content-123') return deferredError.promise;
-      if (contentId === 'content-456') return Promise.resolve({ text: '{"test": "original-json-2"}' });
-      if (contentId === 'error-content-456') return Promise.resolve({ text: 'error-csv-2' });
-      return Promise.resolve({ text: '{"test": "original-json-1"}' });
+  it('ignores old error content after entering a fresh log scope', async () => {
+    const pending = defer<{ text: string }>();
+    vi.mocked(mdmStore.fetchDataManagerFileContent)
+      .mockResolvedValueOnce({ text: original })
+      .mockReturnValueOnce(pending.promise)
+      .mockResolvedValueOnce({ text: '{"test":"second"}' })
+      .mockResolvedValueOnce({ text: '{"error":"second"}' });
+    const view = await mountComponent();
+    view.selectedPayload = 'errors';
+    await nextTick();
+    vi.mocked(mdmStore.fetchDataManagerLogById).mockResolvedValue({
+      ...log, configId: 'config456', logContentId: 'content-456', errorLogContentId: 'error-content-456'
     });
-
-    (mdmStore.fetchDataManagerFileContent as any).mockImplementation(mockFileContent);
-    (mdmStore.fetchDataManagerLogById as any).mockReturnValue(Promise.resolve({
-      configId: 'config123',
-      logContentId: 'content-123',
-      fileName: 'test.json',
-      errorLogContentId: 'error-content-123',
-      errorFileName: 'test-error.csv',
-      failedRecordCount: 5
-    }));
-
-    const wrapper = await mountComponent();
-
-    if (onIonViewWillEnterCallback) {
-      await onIonViewWillEnterCallback();
-      await flushPromises();
-    }
-
-    let internalErrorPromise: Promise<any>;
-    if (typeof wrapper.vm.loadErrorPayload === 'function') {
-      internalErrorPromise = wrapper.vm.loadErrorPayload();
-    } else {
-      internalErrorPromise = mockFileContent('config123', 'error-content-123');
-    }
-
-    (mdmStore.fetchDataManagerLogById as any).mockReturnValue(Promise.resolve({
-      configId: 'config456',
-      logContentId: 'content-456',
-      fileName: 'test2.json',
-      errorLogContentId: 'error-content-456',
-      errorFileName: 'test-error2.csv',
-      failedRecordCount: 5
-    }));
-
-    let enterPromise: Promise<void> | void;
-    if (onIonViewWillEnterCallback) {
-      enterPromise = onIonViewWillEnterCallback();
-    }
-
-    deferredError.resolve('error-csv-1');
-
-    await internalErrorPromise;
-    await enterPromise;
+    await enterView();
     await flushPromises();
-
-    expect((wrapper.vm as any).payloads.original.rawText).toBe('{"test": "original-json-2"}');
-
-    const actualError = (wrapper.vm as any).payloads.errors.rawText;
-    expect(actualError).not.toBe('error-csv-1');
+    pending.resolve({ text: error });
+    await flushPromises();
+    expect(view.payloads.original.rawText).toBe('{"test":"second"}');
+    expect(view.payloads.errors.rawText).toBe('');
+    expect(view.errorPayloadLoading).toBe(false);
+    view.selectedPayload = 'errors';
+    await flushPromises();
+    expect(mdmStore.fetchDataManagerFileContent).toHaveBeenLastCalledWith('config456', 'error-content-456');
+    expect(view.payloads.errors.rawText).toBe('{"error":"second"}');
   });
 })

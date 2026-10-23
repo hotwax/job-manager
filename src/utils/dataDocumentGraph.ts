@@ -178,9 +178,7 @@ const operatorAliases: Record<string, string> = {
   "greater-than-equal-to": "greater-equals",
   "less-than": "less",
   "less-than-equal-to": "less-equals",
-  "in-list": "in",
-  "is-empty": "empty",
-  "is-not-empty": "not-empty"
+  "in-list": "in"
 };
 
 export const normalizeDataDocumentOperator = (operator?: string) => {
@@ -188,10 +186,77 @@ export const normalizeDataDocumentOperator = (operator?: string) => {
   return operatorAliases[normalizedOperator] || normalizedOperator;
 };
 
+// The operators a stored DataDocumentCondition can use. The backend passes the name to
+// EntityFind.condition(), which only knows Moqui's own names (EntityConditionFactoryImpl) and throws
+// "Operator [x] is not a valid field comparison operator" for any other, so a document holding one
+// fails whenever it runs: preview, export and feeds. Contains, Starts with, Is empty and Is not empty
+// were offered here before, but they belong to the runtime filter parameters (RUNTIME_FILTER_OPERATORS),
+// a different mechanism. Offer only what the backend runs.
+//
+// The backend also converts the whole stored value to the field's type before it reads a list or a
+// pattern out of it, so Like and In list (textOnly) only work on a text field. On a date the preview
+// fails ("not a valid date/time") and a number cannot become a list either. Between is left out for the
+// same reason, since it needs two values in one text. A range is two conditions, greater than or equal
+// and less than or equal, which work on every type.
+export const DATA_DOCUMENT_CONDITION_OPERATORS: Array<{ value: string; label: string; needsValue: boolean; textOnly?: boolean; hint?: string }> = [
+  { value: "equals", label: "Equals", needsValue: true },
+  { value: "not-equals", label: "Not equals", needsValue: true },
+  { value: "like", label: "Like", needsValue: true, textOnly: true, hint: "Use % as a wildcard, e.g. %text%" },
+  { value: "in", label: "In list", needsValue: true, textOnly: true, hint: "Separate values with commas" },
+  { value: "is-null", label: "Is null", needsValue: false },
+  { value: "is-not-null", label: "Is not null", needsValue: false },
+  { value: "greater", label: "Greater than", needsValue: true },
+  { value: "greater-equals", label: "Greater than or equal", needsValue: true },
+  { value: "less", label: "Less than", needsValue: true },
+  { value: "less-equals", label: "Less than or equal", needsValue: true }
+];
+
+// Moqui's text field types, the ones its type dictionary maps to a Java String.
+const TEXT_FIELD_TYPES = new Set([
+  "id", "id-long", "text-indicator", "text-short", "text-medium", "text-intermediate", "text-long", "text-very-long"
+]);
+
+// The operators the backend can run on a field of this type. A type that is not known yet gets only the
+// operators that work on every type.
+export const getConditionOperatorsForFieldType = (fieldType?: string) => (
+  DATA_DOCUMENT_CONDITION_OPERATORS.filter((operator) => !operator.textOnly || TEXT_FIELD_TYPES.has(String(fieldType || "")))
+);
+
+// Every name EntityConditionFactoryImpl.stringComparisonOperatorMap accepts, so a condition saved
+// earlier can be judged against what the backend will really do with it.
+const BACKEND_CONDITION_OPERATORS = new Set([
+  "=", "equals", "not-equals", "not-equal", "!=", "<>",
+  "less-than", "less", "<", "greater-than", "greater", ">",
+  "less-than-equal-to", "less-equals", "<=", "greater-than-equal-to", "greater-equals", ">=",
+  "in", "IN", "not-in", "NOT IN", "between", "BETWEEN", "not-between", "NOT BETWEEN",
+  "like", "LIKE", "not-like", "NOT LIKE", "is-null", "IS NULL", "is-not-null", "IS NOT NULL"
+]);
+
+// An empty operator is fine: the backend treats it as equals.
+export const isSupportedConditionOperator = (operator?: string) => !operator || BACKEND_CONDITION_OPERATORS.has(operator);
+
+export const getConditionOperatorHint = (operator?: string) =>
+  DATA_DOCUMENT_CONDITION_OPERATORS.find((item) => item.value === normalizeDataDocumentOperator(operator))?.hint || "";
+
+export const conditionOperatorNeedsValue = (operator?: string) =>
+  DATA_DOCUMENT_CONDITION_OPERATORS.find((item) => item.value === normalizeDataDocumentOperator(operator))?.needsValue !== false;
+
+// The backend cuts an In list value at every comma and keeps the spaces, so "A, B" looks for " B" and
+// quietly leaves it out. Store the list the way the backend reads it.
+export const normalizeConditionValue = (operator: string | undefined, fieldValue: any) => {
+  if(normalizeDataDocumentOperator(operator) !== "in" || typeof fieldValue !== "string") {
+    return fieldValue;
+  }
+
+  return fieldValue.split(",").map((part) => part.trim()).filter(Boolean).join(",");
+};
+
 export const isConditionValueMissing = (operator: string | undefined, fieldValue: any) => {
   if (!operator) return false;
   const op = normalizeDataDocumentOperator(operator);
-  if (op === "empty" || op === "not-empty") return false;
+  if(!conditionOperatorNeedsValue(op)) {
+    return false;
+  }
   const val = fieldValue;
   if (val === undefined || val === null) return true;
   if (typeof val === "string") return val.trim() === "";
@@ -240,9 +305,8 @@ export const RUNTIME_FILTER_OPERATORS = [
 const hasFilterValue = (value: any) => value !== undefined && value !== null && value !== "";
 
 // Encode UI filters into a Moqui search-form-inputs customParametersMap for oms/dataDocumentView.
-// Accepts both the runtime operator set above and the stored DataDocumentCondition operators
-// (greater/less/greater-equals/less-equals/in-list/is-empty/...), so the same encoder serves
-// runtime parameters AND previewing a document's baked-in conditions.
+// This is for runtime parameters only. A document's own conditions are applied by the backend when it
+// runs, so the builder does not send them through here.
 export const buildCustomParametersMap = (
   filters: Array<{ fieldNameAlias?: string; operator?: string; value?: any; toValue?: any }> = []
 ) => {
@@ -315,6 +379,33 @@ export const deriveDataDocumentId = (name?: string) =>
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join("");
 
+// The API runs a field's alias through prettyToCamelCase(alias, false) on create and on update
+// (org.moqui.impl.EntityServices): each letter is lowercased unless it follows a character that is
+// neither a letter nor a digit, and those characters are dropped. Conditions are stored as sent, so
+// "shippingRevenue" came back as "shippingrevenue" while its condition still named "shippingRevenue",
+// and the query could not find the alias. Every save of an existing document re-sent all of its
+// aliases the same way. An alias of only letters and digits therefore goes out with a separator before
+// each capital, which the API turns back into the same camelCase. One that already has separators is
+// left to the API, as before.
+export const toApiFieldAlias = (alias: string) =>
+  /^[\p{L}\p{Nd}]*$/u.test(alias) ? alias.replace(/\p{Lu}/gu, "_$&") : alias;
+
+// What the API keeps for an alias, so a condition can name it exactly.
+export const toStoredFieldAlias = (alias: string) => {
+  let upperNext = false;
+  let stored = "";
+  for(const char of toApiFieldAlias(alias)) {
+    if(/[\p{L}\p{Nd}]/u.test(char)) {
+      stored += upperNext ? char.toUpperCase() : char.toLowerCase();
+      upperNext = false;
+    } else {
+      upperNext = true;
+    }
+  }
+
+  return stored;
+};
+
 export const getDataDocumentFunctionLabel = (functionName?: string, short = false) => {
   if (!functionName) return "";
   const fn = DATA_DOCUMENT_FUNCTIONS.find((item) => item.value === functionName);
@@ -351,7 +442,7 @@ const getRelationshipName = (segment: string) => {
   return hashIndex > -1 ? segment.slice(hashIndex + 1) : segment;
 };
 
-const getLabel = (value: string) => {
+export const getLabel = (value: string) => {
   const relationshipName = getRelationshipName(value);
   const pieces = relationshipName.split(".");
   return pieces[pieces.length - 1] || relationshipName || "Unknown";
@@ -570,6 +661,17 @@ export const projectDataDocumentGraph = ({
         code: "missing_condition_field_alias",
         severity: "error",
         message: `Condition references missing field alias "${fieldNameAlias}".`,
+        targetKind: "condition",
+        targetId: condition.conditionSeqId || condition.localId
+      });
+    }
+    // The backend throws on an operator it does not know, so the document could not run. A post-query
+    // condition never reaches the query, so its operator is not looked at.
+    if(graphCondition.postQuery !== "Y" && !isSupportedConditionOperator(graphCondition.operator)) {
+      addValidationIssue(validationIssues, {
+        code: "unsupported_condition_operator",
+        severity: "error",
+        message: `Condition on "${fieldNameAlias}" uses operator "${graphCondition.operator}", which the backend cannot run.`,
         targetKind: "condition",
         targetId: condition.conditionSeqId || condition.localId
       });

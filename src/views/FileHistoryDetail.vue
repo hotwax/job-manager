@@ -363,6 +363,8 @@ const mergedParameters = computed(() => {
     .filter((parameter: any) => !declaredNames.has(parameter.parameterName))
     .map((parameter: any) => ({
       name: parameter.parameterName,
+      type: undefined,
+      default: undefined,
       required: false,
       submitted: true,
       value: parameter.parameterValue,

@@ -84,14 +84,14 @@ export function useJobRuns(jobNameRef: Ref<string | undefined>) {
       runs.value = [];
       hasLoadedRuns.value = false;
     } else {
-      pageIndex.value++;
       isLoadingMore.value = true;
     }
 
     const requestId = ++currentRequestId;
+    const requestedPageIndex = isLoadMore ? pageIndex.value + 1 : 0;
 
     try {
-      const payload: FetchJobRunsPayload = { pageSize: pageSize.value, pageIndex: pageIndex.value, orderByField: "-jobRunId" };
+      const payload: FetchJobRunsPayload = { pageSize: pageSize.value, pageIndex: requestedPageIndex, orderByField: "-jobRunId" };
       if (pinnedRunId.value) payload.jobRunId = pinnedRunId.value;
 
       const resp = await jobStore.fetchJobRuns(jobName, payload);
@@ -100,6 +100,7 @@ export function useJobRuns(jobNameRef: Ref<string | undefined>) {
       if (requestId !== currentRequestId) return;
 
       if (Array.isArray(resp)) {
+        pageIndex.value = requestedPageIndex;
         if (!isLoadMore) {
           runs.value = resp;
         } else if (resp.length > 0) {
@@ -110,6 +111,7 @@ export function useJobRuns(jobNameRef: Ref<string | undefined>) {
 
         hasMoreRuns.value = !pinnedRunId.value && resp.length === pageSize.value;
         await userStore.resolveUserFullNames(resp.map((run: JobRun) => run.userId));
+        if (requestId !== currentRequestId) return;
       } else {
         if (!isLoadMore) runs.value = [];
         hasMoreRuns.value = false;
