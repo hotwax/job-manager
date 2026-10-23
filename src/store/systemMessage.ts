@@ -27,13 +27,10 @@ export const useSystemMessageStore = defineStore("systemMessage", {
     currentSystemMessage: undefined as Record<string, any> | undefined,
     currentSystemMessageType: undefined as Record<string, any> | undefined,
     currentSystemMessageRemote: undefined as Record<string, any> | undefined,
-    currentEnumSequence: [] as any[],
     relatedMessages: [] as any[],
-    linkedMessages: [] as any[],
     systemMessageTotal: 0,
     loading: false,
     isFetchingMessages: false,
-    enums: [] as any[],
     currentSystemMessageStatusHistory: []
   }),
   getters: {
@@ -54,9 +51,6 @@ export const useSystemMessageStore = defineStore("systemMessage", {
     getCurrentSystemMessage: (state: any) => state.currentSystemMessage,
     getCurrentSystemMessageType: (state: any) => state.currentSystemMessageType,
     getCurrentSystemMessageRemote: (state: any) => state.currentSystemMessageRemote,
-    getEnumInfo: (state: any) => (enumId: string) => state.enums.find((e: any) => e.enumId === enumId),
-    getCurrentEnumSequence: (state: any) => state.currentEnumSequence,
-    getLinkedMessages: (state: any) => state.linkedMessages,
     getSystemMessageTotal: (state: any) => state.systemMessageTotal,
     getRelatedMessages: (state: any) => state.relatedMessages,
     getMessagesForType: (state: any) => (systemMessageTypeId: string) =>
@@ -464,104 +458,8 @@ export const useSystemMessageStore = defineStore("systemMessage", {
       try {
         await useUtilStore().fetchStatusItemsByType("SystemMessage");
         await useUtilStore().fetchStatusFlowTransitions();
-        // User requested fetching enumerations on app load
-        await this.fetchEnumerations()
       } catch (err) {
         logger.error("Failed to fetch system message status metadata", err);
-      } finally {
-        this.loading = false;
-      }
-    },
-    async fetchEnumerations() {
-      this.loading = true;
-      try {
-        const response = await api({
-          url: "admin/enums",
-          method: "GET",
-          params: {
-            pageSize: 500,
-            enumTypeId: "ShopifyMessageTypeEnum"
-          }
-        });
-        if(response.data) {
-          this.enums = response.data;
-        }
-      } catch (err) {
-        logger.error("Failed to fetch enumerations", err);
-      } finally {
-        this.loading = false;
-      }
-    },
-    async fetchEnumSequence(enumId: string) {
-      this.loading = true;
-      try {
-        // 1. Find the root of the sequence by traversing backward
-        let rootEnumId = enumId;
-        const visitedBack = new Set();
-        while (rootEnumId && !visitedBack.has(rootEnumId)) {
-          visitedBack.add(rootEnumId);
-          // Look for an enumeration that has this one as its relatedEnumId
-          const parent = this.enums.find((e: any) => e.relatedEnumId === rootEnumId);
-          if (parent) {
-            rootEnumId = parent.enumId;
-          } else {
-            break;
-          }
-        }
-
-        // 2. Build the forward sequence from the root
-        const sequence = [];
-        let currentEnumId: string = rootEnumId;
-        const visitedForward = new Set();
-
-        while (currentEnumId && !visitedForward.has(currentEnumId)) {
-          visitedForward.add(currentEnumId);
-
-          let enumeration = this.enums.find((e: any) => e.enumId === currentEnumId);
-
-          // If not in local state, try one-off fetch (safeguard)
-          if (!enumeration) {
-            try {
-              const response = await api({
-                url: "admin/enums",
-                method: "GET",
-                params: {
-                  pageSize: 500
-                }
-              });
-              enumeration = getResponseEntity(response);
-              if (enumeration) {
-                this.enums.push(enumeration); // Cache it locally
-              }
-            } catch (err) {
-              logger.error(`Failed to fetch missing enum in sequence: ${currentEnumId}`, err);
-            }
-          }
-
-          if(enumeration) {
-            sequence.push(enumeration);
-            currentEnumId = enumeration.relatedEnumId;
-          } else {
-            break;
-          }
-        }
-        this.currentEnumSequence = sequence;
-      } finally {
-        this.loading = false;
-      }
-    },
-    async fetchAllRelatedMessages(systemMessageId: string, remoteMessageId?: string) {
-      this.loading = true;
-      try {
-        // Query for messages linked by remoteMessageId or parentMessageId
-        // In a real app, this would be a complex query. For mock, we'll scan.
-        const linked = this.relatedMessages.filter((m: any) =>
-          m.remoteMessageId === systemMessageId ||
-          m.parentMessageId === systemMessageId ||
-          (remoteMessageId && m.remoteMessageId === remoteMessageId)
-        );
-        this.linkedMessages = linked;
-        return linked;
       } finally {
         this.loading = false;
       }
