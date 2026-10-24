@@ -22,6 +22,7 @@ import SystemMessageRemotes from '@/views/SystemMessageRemotes.vue';
 import SystemMessageRemoteDetail from '@/views/SystemMessageRemoteDetail.vue';
 import Login from '@common/components/Login.vue';
 import { useUserStore } from '@/store/user';
+import { useUtilStore } from '@/store/util';
 import { useDataDocumentGraphStore } from '@/store/dataDocumentGraph';
 import DataDocumentCatalog from '@/views/DataDocumentCatalog.vue';
 import DataDocumentGraphBuilder from '@/views/DataDocumentGraphBuilder.vue';
@@ -36,6 +37,7 @@ import Actions from "@/authorization/actions";
 declare module 'vue-router' {
   interface RouteMeta {
     permissionId?: string;
+    minimumBackendVersion?: string;
   }
 }
 
@@ -119,7 +121,7 @@ const routes: Array<RouteRecordRaw> = [
     name: 'SystemTasks',
     component: SystemTasks,
     beforeEnter: authGuard,
-    meta: { permissionId: Actions.APP_SYSTEM_TASK_VIEW }
+    meta: { permissionId: Actions.APP_SYSTEM_TASK_VIEW, minimumBackendVersion: "6.5.0" }
   },
   {
     path: '/system-messages',
@@ -284,6 +286,12 @@ router.beforeEach((to, from) => {
     return {
       path: redirectToPath,
     }
+  }
+
+  const minimumVersion = to.meta.minimumBackendVersion;
+  if(minimumVersion && !commonUtil.isVersionGreaterOrEqual(minimumVersion, useUtilStore().systemInformation?.instanceInfo?.componentRelease)) {
+    showToast(translate("This page requires backend version {version} or newer.", { version: minimumVersion }));
+    return { path: "/settings" };
   }
 })
 

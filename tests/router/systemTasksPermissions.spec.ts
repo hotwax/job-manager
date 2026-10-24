@@ -25,10 +25,17 @@ describe("System tasks uses the shared route permission check", () => {
     expect(router.currentRoute.value.path).toBe("/settings");
   });
 
-  it("allows the task permission regardless of backend version and makes no capability request", async () => {
+  it("rejects a direct URL when the shared helper reports an older backend", async () => {
+    useUserStore().permissions = ["WORKEFFORT_TASK_ADMIN"];
+    useUtilStore().systemInformation = { instanceInfo: { componentRelease: "6.4.0" } };
+    await router.push("/system-tasks");
+    expect(router.currentRoute.value.path).toBe("/settings");
+  });
+
+  it.each(["6.5.0", "6.6.0", "v6.5.0-rc.1", "main", undefined])("allows a permitted user for shared-helper version %s without fetching", async (version) => {
     useUserStore().permissions = ["WORKEFFORT_TASK_ADMIN"];
     const utilStore = useUtilStore();
-    utilStore.systemInformation = { instanceInfo: { componentRelease: "6.4.0" } };
+    utilStore.systemInformation = { instanceInfo: { componentRelease: version } };
     utilStore.fetchSystemInformation = vi.fn();
     await router.push("/system-tasks");
     expect(router.currentRoute.value.path).toBe("/system-tasks");

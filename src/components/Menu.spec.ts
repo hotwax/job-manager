@@ -11,11 +11,12 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@common", async () => {
   const { defineComponent } = await import("vue");
+  const { commonUtil } = await import("@common/utils/commonUtil");
 
   return {
     api: vi.fn(),
     translate: (key: string) => key,
-    commonUtil: { getOmsURL: () => "" },
+    commonUtil: { getOmsURL: () => "", isVersionGreaterOrEqual: commonUtil.isVersionGreaterOrEqual },
     cookieHelper: () => ({
       get: vi.fn().mockReturnValue(""),
       set: vi.fn(),
@@ -47,6 +48,7 @@ vi.mock("@common/composables/useAuth", async () => {
 
 vi.mock("@/router", () => ({
   default: {
+    resolve: (path: string) => ({ meta: path === "/system-tasks" ? { minimumBackendVersion: "6.5.0" } : {} }),
     currentRoute: {
       value: { path: "/catalog" }
     }
@@ -102,13 +104,19 @@ describe("Menu.vue product store switch", () => {
     expect(wrapper.text()).not.toContain("System tasks");
   });
 
-  it("does not change menu permissions when backend information is missing or old", async () => {
+  it("uses the shared helper with cached version information and never fetches during navigation", async () => {
     useUserStore().permissions = ["WORKEFFORT_TASK_ADMIN"];
     const utilStore = useUtilStore();
     utilStore.fetchSystemInformation = vi.fn();
     const { wrapper } = mountMenu();
     expect(wrapper.text()).toContain("System tasks");
     utilStore.systemInformation = { instanceInfo: { componentRelease: "6.4.0" } };
+    await flushPromises();
+    expect(wrapper.text()).not.toContain("System tasks");
+    utilStore.systemInformation = { instanceInfo: { componentRelease: "6.5.0" } };
+    await flushPromises();
+    expect(wrapper.text()).toContain("System tasks");
+    utilStore.systemInformation = { instanceInfo: { componentRelease: "main" } };
     await flushPromises();
     expect(wrapper.text()).toContain("System tasks");
     utilStore.systemInformation = {};

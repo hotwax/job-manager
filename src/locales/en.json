@@ -1,4 +1,5 @@
 {
+  "This page requires backend version {version} or newer.": "This page requires backend version {version} or newer.",
   "Run history is unavailable on this server. Contact your administrator.": "Run history is unavailable on this server. Contact your administrator.",
   "Exact job name": "Exact job name",
   "Run ID": "Run ID",
