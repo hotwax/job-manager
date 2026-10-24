@@ -16,8 +16,10 @@ import { loadingController } from '@ionic/vue';
 import emitter from "@/event-bus"
 import { Settings } from 'luxon'
 import router from './router';
-import { FastTravel, translate } from '@common';
+import { FastTravel, translate, commonUtil } from '@common';
 import { useUserStore } from '@/store/user';
+import { useUtilStore } from '@/store/util';
+import { useAuth } from '@common/composables/useAuth';
 
 const loader = ref(null) as any
 
@@ -47,6 +49,12 @@ function dismissLoader() {
 }
 
 onMounted(async () => {
+  // postLogin handles sign-in and instance changes. Restore older sessions here, once at startup.
+  const utilStore = useUtilStore();
+  if(useAuth().isAuthenticated.value && utilStore.systemInformationInstance !== commonUtil.getMaargURL()) {
+    void utilStore.fetchSystemInformation();
+  }
+
   loader.value = await loadingController
     .create({
       message: translate("Click the backdrop to dismiss."),

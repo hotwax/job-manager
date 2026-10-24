@@ -45,10 +45,12 @@ export const useUtilStore = defineStore("util", {
   }),
   getters: {
     supportsSystemTasks: (state) => {
-      if(state.systemInformationInstance !== commonUtil.getMaargURL()) {return false;}
+      if(state.systemInformationInstance !== commonUtil.getMaargURL()) {return null;}
       const release = state.systemInformation?.instanceInfo?.componentRelease;
-      return !!release && commonUtil.isValidVersion(release)
-        && commonUtil.isVersionGreaterOrEqual('6.5.0', release);
+      // Unknown is not unsupported: a failed capability check must not remove navigation.
+      if(!release || !commonUtil.isValidVersion(release)) {return null;}
+
+      return commonUtil.isVersionGreaterOrEqual('6.5.0', release);
     },
     getStatusItemsByType: (state: any) => (typeId: string) => state.statusItems[typeId] || [],
     getStatusItemDesc: (state: any) => (statusId: string) => {
@@ -265,9 +267,8 @@ export const useUtilStore = defineStore("util", {
         this.systemInformation = resp.data
       } catch(error: any) {
         if(fetchId !== this._fetchSystemInformationId || instance !== commonUtil.getMaargURL()) {return;}
-        this.systemInformation = {};
         logger.error("Failed to fetch system information");
-        commonUtil.showToast(translate("App is not compatible with oms version and will not work as expected, please contact administrator"));
+        commonUtil.showToast(translate("Could not check backend capabilities. Please try signing in again."));
       }
     }
   },

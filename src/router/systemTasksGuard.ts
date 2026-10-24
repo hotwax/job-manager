@@ -1,7 +1,6 @@
 import { useUtilStore } from '@/store/util';
 
-export async function systemTasksGuard() {
+export function systemTasksGuard() {
   const utilStore = useUtilStore();
-  await utilStore.fetchSystemInformation();
-  if (!utilStore.supportsSystemTasks) return { path: '/pipeline', replace: true };
+  if (utilStore.supportsSystemTasks === false) return { path: '/pipeline', replace: true };
 }

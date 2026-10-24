@@ -85,16 +85,17 @@ describe("Menu.vue product store switch", () => {
     const wrapper = shallowMount(Menu, { global: { renderStubDefaultSlot: true } });
     const footer = wrapper.findComponent({ name: "DxpOmsInstanceFooter" });
 
-    return { userStore, footer };
+    return { userStore, footer, wrapper };
   };
 
-  it("refreshes compatibility when a restored session belongs to another instance", async () => {
+  it("keeps unknown capabilities visible without fetching from the menu", async () => {
     const utilStore = useUtilStore();
     utilStore.systemInformationInstance = "https://previous-maarg.hotwax.io/rest/s1/";
     utilStore.fetchSystemInformation = vi.fn().mockResolvedValue(undefined);
-    mountMenu();
+    const { wrapper } = mountMenu();
     await flushPromises();
-    expect(utilStore.fetchSystemInformation).toHaveBeenCalledOnce();
+    expect(wrapper.text()).toContain("System tasks");
+    expect(utilStore.fetchSystemInformation).not.toHaveBeenCalled();
   });
 
   it("ignores a change to the store that is already selected", async () => {

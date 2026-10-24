@@ -24,6 +24,7 @@ vi.mock("@/logger", () => ({
 }));
 
 import { useUtilStore } from "@/store/util";
+import { systemTasksGuard } from "@/router/systemTasksGuard";
 
 describe("util store", () => {
   beforeEach(() => {
@@ -45,13 +46,13 @@ describe("util store", () => {
     expect(store.supportsSystemTasks).toBe(true);
   });
 
-  it("clears compatibility after a failed refresh", async () => {
+  it("preserves known support after a failed capability check", async () => {
     const store = useUtilStore();
     store.systemInformationInstance = instanceMock();
     store.systemInformation = { instanceInfo: { componentRelease: "6.5.0" } };
     apiMock.mockRejectedValue(new Error("Unavailable"));
     await store.fetchSystemInformation();
-    expect(store.supportsSystemTasks).toBe(false);
+    expect(store.supportsSystemTasks).toBe(true);
   });
 
   it("does not carry compatibility to another instance or accept an old response", async () => {
@@ -62,13 +63,43 @@ describe("util store", () => {
     apiMock.mockReturnValueOnce(new Promise(resolve => { finishOld = resolve; }));
     const oldRequest = store.fetchSystemInformation();
     instanceMock.mockReturnValue("https://other-maarg.hotwax.io/rest/s1/");
-    expect(store.supportsSystemTasks).toBe(false);
+    expect(store.supportsSystemTasks).toBeNull();
     apiMock.mockResolvedValueOnce({ data: { instanceInfo: { componentRelease: "6.4.0" } } });
     await store.fetchSystemInformation();
     finishOld({ data: { instanceInfo: { componentRelease: "6.5.0" } } });
     await oldRequest;
     expect(store.systemInformation.instanceInfo.componentRelease).toBe("6.4.0");
     expect(store.supportsSystemTasks).toBe(false);
+  });
+
+  it("leaves capability unknown when the first check for a new instance fails", async () => {
+    const store = useUtilStore();
+    store.systemInformationInstance = "https://previous-maarg.hotwax.io/rest/s1/";
+    store.systemInformation = { instanceInfo: { componentRelease: "6.4.0" } };
+    apiMock.mockRejectedValue(new Error("Unavailable"));
+    await store.fetchSystemInformation();
+    expect(store.systemInformation).toEqual({});
+    expect(store.supportsSystemTasks).toBeNull();
+  });
+
+  it("retains confirmed non-support on request failure", async () => {
+    const store = useUtilStore();
+    store.systemInformationInstance = instanceMock();
+    store.systemInformation = { instanceInfo: { componentRelease: "6.4.0" } };
+    apiMock.mockRejectedValue(new Error("Unavailable"));
+    await store.fetchSystemInformation();
+    expect(store.supportsSystemTasks).toBe(false);
+  });
+
+  it("reads cached capabilities on navigation without making a request", () => {
+    const store = useUtilStore();
+    expect(systemTasksGuard()).toBeUndefined();
+    store.systemInformationInstance = instanceMock();
+    store.systemInformation = { instanceInfo: { componentRelease: "6.5.0" } };
+    expect(systemTasksGuard()).toBeUndefined();
+    store.systemInformation = { instanceInfo: { componentRelease: "6.4.0" } };
+    expect(systemTasksGuard()).toEqual({ path: "/pipeline", replace: true });
+    expect(apiMock).not.toHaveBeenCalled();
   });
 
   it("normalizes entity fields and relationships from the admin definition endpoint", async () => {
