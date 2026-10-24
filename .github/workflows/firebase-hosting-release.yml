@@ -1,12 +1,5 @@
 name: Deploy to Firebase Hosting on release
 'on':
-  workflow_dispatch:
-    inputs:
-      retainedRefs:
-        description: 'Optional retained refs (JSON array); blank uses automatic stable-release retention'
-        default: ''
-        required: false
-        type: string
   push:
     tags:
       - '*'
@@ -17,7 +10,6 @@ jobs:
       config-path: .github/labeler.yml
       app: hotwax/job-manager
       appDir: job-manager
-      retainedRefs: ${{ inputs.retainedRefs || '' }}
       accxuiVersion: f88b3acd00b89f9d2d2f8c8f86019b7f1998acd8 # verified backend persistence across tabs
     secrets:
       envPAT: ${{ secrets.envPAT }}
