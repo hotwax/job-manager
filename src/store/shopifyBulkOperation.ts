@@ -87,7 +87,9 @@ const chunk = <T>(items: T[], size: number): T[][] => {
 const isFilterApplied = async (params: Record<string, any>) => {
   const response = await api({ url: ENRICHMENT_ENDPOINT, method: "GET", params: { ...params, pageSize: 1 } });
 
-  return !response.data?.systemMessages?.length;
+  if(!Array.isArray(response.data?.systemMessages)) {throw new Error("Invalid system messages response");}
+
+  return response.data.systemMessages.length === 0;
 };
 
 const fetchMessagesByRemoteIds = async (mode: string, gids: string[]) => {
@@ -98,7 +100,11 @@ const fetchMessagesByRemoteIds = async (mode: string, gids: string[]) => {
       params: { remoteMessageIds: ids.join(","), pageSize: ids.length }
     })));
 
-    return responses.flatMap((response: any) => response.data?.systemMessages ?? []);
+    return responses.flatMap((response: any) => {
+      if(!Array.isArray(response.data?.systemMessages)) {throw new Error("Invalid system messages response");}
+
+      return response.data.systemMessages;
+    });
   }
 
   const messages: any[] = [];
@@ -107,12 +113,12 @@ const fetchMessagesByRemoteIds = async (mode: string, gids: string[]) => {
       url: ENRICHMENT_ENDPOINT,
       method: "GET",
       params: { remoteMessageId: gid, pageSize: 1 }
-    }).catch((err: any) => {
-      logger.error(`Bulk Operation [Shopify Operation ID: ${gid}] - Failed to resolve HotWax message`, err);
-
-      return undefined;
     })));
-    messages.push(...responses.flatMap((response: any) => response?.data?.systemMessages ?? []));
+    messages.push(...responses.flatMap((response: any) => {
+      if(!Array.isArray(response.data?.systemMessages)) {throw new Error("Invalid system messages response");}
+
+      return response.data.systemMessages;
+    }));
   }
 
   return messages;
@@ -156,8 +162,13 @@ const emptyStats = () => ({ total: 0, inFlight: 0, completed: 0, failed: 0, trun
 
 // Shopify's own error text, such as a missing access scope, is what an admin needs to act on, so
 // it is kept, inside a sentence that can be translated.
-const getLoadError = (err: any) => err?.message
-  ? translate("Failed to load bulk operations from Shopify: {reason}", { reason: err.message })
+const getShopError = (err: any): string => {
+  const errors = err?.response?.data?.errors;
+
+  return typeof errors === "string" && errors.trim() ? errors.trim() : err?.message || translate("Failed to load bulk operations from Shopify");
+};
+const getLoadError = (err: any) => err
+  ? translate("Failed to load bulk operations from Shopify: {reason}", { reason: getShopError(err) })
   : translate("Failed to load bulk operations from Shopify");
 
 // Every Shopify call goes through the OMS passthrough, which returns the GraphQL data object
@@ -206,10 +217,13 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
     shops: [] as any[],
     combinedShopCount: 0,
     failedRemoteIds: [] as string[],
+    failedRemoteErrors: {} as Record<string, string>,
     enrichmentIndex: {} as Record<string, any>,
     enrichmentMode: "",
     stats: emptyStats(),
     isFetchingOperations: false,
+    isFetchingEnrichment: false,
+    enrichmentError: "",
     lastError: "",
     _fetchOperationsId: 0,
     _fetchStatsId: 0,
@@ -278,8 +292,13 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
     async fetchOperations(payload: Record<string, any> = {}) {
       const remoteIds = getRemoteIds(payload);
       const fetchId = ++this._fetchOperationsId;
+      ++this._fetchEnrichmentId;
+      this.enrichmentIndex = {};
+      this.enrichmentError = "";
+      this.isFetchingEnrichment = false;
 
       this.failedRemoteIds = [];
+      this.failedRemoteErrors = {};
       this.lastError = "";
 
       if(!remoteIds.length) {
@@ -332,6 +351,7 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
         // Shops that failed while others loaded are named, so a partial list is not mistaken
         // for a complete one.
         this.failedRemoteIds = failed.map(({ remoteId }) => remoteId);
+        this.failedRemoteErrors = Object.fromEntries(failed.map(({ remoteId, error }) => [remoteId, getShopError(error)]));
       } finally {
         if(fetchId === this._fetchOperationsId) {
           this.isFetchingOperations = false;
@@ -401,7 +421,7 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
           }
           enrichmentModeProbe = null;
 
-          return mode || "none";
+          return mode;
         });
       }
 
@@ -412,6 +432,9 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
     // HotWax stores as remoteMessageId. It runs on every load rather than reusing earlier
     // answers: the HotWax status is the half of the pairing that moves while the page is open.
     async fetchEnrichmentFor(operations: any[]) {
+      const fetchId = ++this._fetchEnrichmentId;
+      this.enrichmentError = "";
+      this.isFetchingEnrichment = false;
       const gids = [...new Set(operations
         .map((operation: any) => operation?.id)
         .filter((gid: any) => typeof gid === "string" && gid.startsWith(SHOPIFY_BULK_GID_PREFIX)))] as string[];
@@ -420,13 +443,12 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
         return;
       }
 
-      const fetchId = ++this._fetchEnrichmentId;
-      const mode = await this.ensureEnrichmentMode();
-      if(mode === "none" || fetchId !== this._fetchEnrichmentId) {
-        return;
-      }
-
+      this.isFetchingEnrichment = true;
+      gids.forEach((gid) => { delete this.enrichmentIndex[gid]; });
       try {
+        const mode = await this.ensureEnrichmentMode();
+        if(mode === "none" || fetchId !== this._fetchEnrichmentId) {return;}
+        if(!mode) {throw new Error("Unable to check HotWax filter support");}
         const messages = await fetchMessagesByRemoteIds(mode, gids);
         if(fetchId !== this._fetchEnrichmentId) {
           return;
@@ -451,7 +473,10 @@ export const useShopifyBulkOperationStore = defineStore("shopifyBulkOperation", 
           return;
         }
 
+        this.enrichmentError = translate("Could not check HotWax links. Retry before filtering linked or unlinked operations.");
         logger.error("Bulk Operation [System: Shopify] - Failed to resolve HotWax messages", err);
+      } finally {
+        if(fetchId === this._fetchEnrichmentId) {this.isFetchingEnrichment = false;}
       }
     }
   }

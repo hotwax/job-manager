@@ -145,8 +145,28 @@ describe("job store detail", () => {
     expect(store.getJobRunHistory).toEqual([
       expect.objectContaining({ jobRunId: "300", jobName: "syncOrders", runStatus: "FAILED" })
     ]);
-    expect(store.getJobRunHistoryStats).toEqual({ total: 1, failed: 1, successful: 0, running: 0, terminated: 0 });
+    expect(store.getJobRunHistoryStats).toEqual({ total: 1, failed: 1, successful: null, running: null, terminated: null });
     expect(store.jobRunStatsLoaded).toBe(true);
+    expect(store.jobRunStatsError).toBe("");
+  });
+
+  it.each(["SUCCESSFUL", "RUNNING", "TERMINATED"])("does not send the unavailable %s filter to the backend", async (status) => {
+    const store = useJobStore();
+    expect(await store.fetchJobRunHistory({ status })).toBe(false);
+    expect(apiMock).not.toHaveBeenCalled();
+    expect(store.jobRunHistoryLoading).toBe(false);
+    expect(store.jobRunHistoryError).toBeTruthy();
+  });
+
+  it("requests only the Failed count for All history and leaves unavailable counts unknown", async () => {
+    const store = useJobStore();
+    store.jobRunHistoryTotal = 30;
+    apiMock.mockResolvedValue({ data: [], headers: { "x-total-count": "7" } });
+    await store.fetchJobRunHistoryStats();
+    expect(apiMock).toHaveBeenCalledTimes(1);
+    expect(apiMock).toHaveBeenCalledWith({ url: "admin/serviceJobs/runs", method: "GET",
+      params: { pageIndex: 0, pageSize: 1, orderByField: "-lastUpdatedStamp,-jobRunId", hasError: "Y" } });
+    expect(store.getJobRunHistoryStats).toEqual({ total: 30, failed: 7, successful: null, running: null, terminated: null });
     expect(store.jobRunStatsError).toBe("");
   });
 

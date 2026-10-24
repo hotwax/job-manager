@@ -21,20 +21,8 @@
           </ion-card>
           <ion-card>
             <ion-card-header>
-              <ion-card-subtitle>{{ translate("Successful") }}</ion-card-subtitle>
-              <ion-card-title><span v-if="isLoading || historyError || statsLoading || statsError">—</span><AnimatedNumber v-else :value="stats.successful" /></ion-card-title>
-            </ion-card-header>
-          </ion-card>
-          <ion-card>
-            <ion-card-header>
               <ion-card-subtitle>{{ translate("Failed") }}</ion-card-subtitle>
               <ion-card-title><span v-if="isLoading || historyError || statsLoading || statsError">—</span><AnimatedNumber v-else :value="stats.failed" /></ion-card-title>
-            </ion-card-header>
-          </ion-card>
-          <ion-card v-for="status in [{ key: 'running', label: 'Running' }, { key: 'terminated', label: 'Terminated' }]" :key="status.key">
-            <ion-card-header>
-              <ion-card-subtitle>{{ translate(status.label) }}</ion-card-subtitle>
-              <ion-card-title><span v-if="isLoading || historyError || statsLoading || statsError">—</span><AnimatedNumber v-else :value="stats[status.key]" /></ion-card-title>
             </ion-card-header>
           </ion-card>
         </div>
@@ -46,6 +34,7 @@
               v-model:status="selectedStatus"
               v-model:userId="selectedUserId"
               :show-data-logs="false"
+              :status-options="historyStatusOptions"
               :placeholder="translate(searchField === 'jobRunId' ? 'Exact run ID' : 'Search selected field')"
               :user-placeholder="translate('Exact user ID')"
             >
@@ -64,6 +53,7 @@
                 </div>
               </template>
             </JobRunFilters>
+            <p><ion-note>{{ translate("Successful, Running and Terminated filters and counts are temporarily unavailable. All runs remain visible under All.") }}</ion-note></p>
           </ion-card-content>
         </ion-card>
 
@@ -238,6 +228,12 @@ import { useUserStore } from "@/store/user";
 import { getDateAndTime, getTimeInMillis } from "@/utils";
 
 const PAGE_SIZE = 25;
+const historyStatusOptions = [
+  { value: "RUNNING", label: "Running", disabled: true },
+  { value: "SUCCESSFUL", label: "Successful", disabled: true },
+  { value: "FAILED", label: "Failed" },
+  { value: "TERMINATED", label: "Terminated", disabled: true }
+];
 
 const jobStore = useJobStore();
 const userStore = useUserStore();
@@ -401,7 +397,7 @@ onIonViewWillEnter(async () => {
   isActive = true;
   const route = router.currentRoute.value;
   if (route.query.queryString) queryString.value = route.query.queryString as string;
-  if (["SUCCESSFUL", "FAILED", "RUNNING", "TERMINATED"].includes(String(route.query.status))) selectedStatus.value = route.query.status as string;
+  selectedStatus.value = route.query.status === "FAILED" ? "FAILED" : "";
   if (route.query.jobName) selectedJobName.value = route.query.jobName as string;
   if (route.query.userId) selectedUserId.value = route.query.userId as string;
 

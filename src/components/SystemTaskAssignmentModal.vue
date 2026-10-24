@@ -50,9 +50,11 @@ import { computed, ref, watch } from 'vue';
 import { IonButton, IonButtons, IonContent, IonFab, IonFabButton, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonModal, IonRadio, IonRadioGroup, IonSearchbar, IonSpinner, IonTitle, IonToolbar } from '@ionic/vue';
 import { closeOutline, saveOutline } from 'ionicons/icons';
 import { translate } from '@common';
-import { assignSystemTask, fetchTaskAssignees } from '@/services/systemTasks';
+import { fetchTaskAssignees } from '@/services/systemTasks';
+import { useSystemTaskAssignment } from '@/composables/useSystemTaskAssignment';
 import type { SystemTask, TaskAssignee } from '@/services/systemTasks';
 
+const { assignSystemTask } = useSystemTaskAssignment();
 const props = defineProps<{ task?: SystemTask }>();
 const emit = defineEmits<{ (event: 'close'): void; (event: 'saved'): void }>();
 const search = ref('');

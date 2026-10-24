@@ -3,6 +3,7 @@ import { createPinia, setActivePinia } from "pinia";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import Menu from "./Menu.vue";
 import { useUserStore } from "@/store/user";
+import { useUtilStore } from "@/store/util";
 
 const mocks = vi.hoisted(() => ({
   emit: vi.fn()
@@ -10,11 +11,12 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@common", async () => {
   const { defineComponent } = await import("vue");
+  const { commonUtil } = await import("@common/utils/commonUtil");
 
   return {
     api: vi.fn(),
     translate: (key: string) => key,
-    commonUtil: { getOmsURL: () => "" },
+    commonUtil: { getOmsURL: () => "", isVersionGreaterOrEqual: commonUtil.isVersionGreaterOrEqual },
     cookieHelper: () => ({
       get: vi.fn().mockReturnValue(""),
       set: vi.fn(),
@@ -46,6 +48,7 @@ vi.mock("@common/composables/useAuth", async () => {
 
 vi.mock("@/router", () => ({
   default: {
+    resolve: (path: string) => ({ meta: path === "/system-tasks" ? { minimumBackendVersion: "6.5.0" } : {} }),
     currentRoute: {
       value: { path: "/catalog" }
     }
@@ -84,8 +87,43 @@ describe("Menu.vue product store switch", () => {
     const wrapper = shallowMount(Menu, { global: { renderStubDefaultSlot: true } });
     const footer = wrapper.findComponent({ name: "DxpOmsInstanceFooter" });
 
-    return { userStore, footer };
+    return { userStore, footer, wrapper };
   };
+
+  it("shows System tasks only with the published task permission", async () => {
+    const { userStore, wrapper } = mountMenu();
+    expect(wrapper.text()).not.toContain("System tasks");
+    userStore.permissions = ["COMMON_ADMIN"];
+    await flushPromises();
+    expect(wrapper.text()).not.toContain("System tasks");
+    userStore.permissions = ["WORKEFFORT_TASK_ADMIN"];
+    await flushPromises();
+    expect(wrapper.text()).toContain("System tasks");
+    userStore.permissions = [];
+    await flushPromises();
+    expect(wrapper.text()).not.toContain("System tasks");
+  });
+
+  it("uses the shared helper with cached version information and never fetches during navigation", async () => {
+    useUserStore().permissions = ["WORKEFFORT_TASK_ADMIN"];
+    const utilStore = useUtilStore();
+    utilStore.fetchSystemInformation = vi.fn();
+    const { wrapper } = mountMenu();
+    expect(wrapper.text()).toContain("System tasks");
+    utilStore.systemInformation = { instanceInfo: { componentRelease: "6.4.0" } };
+    await flushPromises();
+    expect(wrapper.text()).not.toContain("System tasks");
+    utilStore.systemInformation = { instanceInfo: { componentRelease: "6.5.0" } };
+    await flushPromises();
+    expect(wrapper.text()).toContain("System tasks");
+    utilStore.systemInformation = { instanceInfo: { componentRelease: "main" } };
+    await flushPromises();
+    expect(wrapper.text()).toContain("System tasks");
+    utilStore.systemInformation = {};
+    await flushPromises();
+    expect(wrapper.text()).toContain("System tasks");
+    expect(utilStore.fetchSystemInformation).not.toHaveBeenCalled();
+  });
 
   it("ignores a change to the store that is already selected", async () => {
     const { userStore, footer } = mountMenu();
