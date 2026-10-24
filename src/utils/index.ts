@@ -246,6 +246,35 @@ const redirectToLegacyApp = () => {
   window.location.href = link.replace("{oms}", oms).replace("{token}", token).replace("{expirationTime}", expirationTime).replace("{omsRedirectionUrl}", maarg)
 }
 
+// Data manager log status groups, shared so a dashboard count and the list it
+// drills into cannot disagree about what the count meant.
+const MDM_PENDING_STATUSES = ["DmlsPending", "DmlsQueued", "DmlsRunning"];
+const MDM_FAILED_STATUSES = ["DmlsCrashed", "DmlsFailed"];
+
+// A file import counts as errored when it crashed outright or carries rejected
+// records, whatever stage it reached.
+// Not every import arrives as an upload. RESTlet-backed configs record the payload at
+// contentLocation and never set fileName, so a row keyed off fileName alone renders blank.
+// Fall back to the basename of the stored path, then the error file, then the script title,
+// so an import always names itself.
+const getLogFileName = (log: any) => {
+  if(log?.fileName) {
+    return log.fileName;
+  }
+
+  const fromLocation = String(log?.contentLocation || "").split("/").pop();
+
+  return fromLocation || log?.errorFileName || log?.scriptTitle || "";
+};
+
+const hasFailedRecords = (log: any) => MDM_FAILED_STATUSES.includes(log?.statusId) || Number(log?.failedRecordCount || 0) > 0;
+
+// A message counts as errored when it failed outright, or is still sitting produced with
+// failed delivery attempts behind it. Shared so a dashboard count and the list it links to
+// can never disagree about what "error" means.
+const hasSystemMessageError = (msg: any) =>
+  msg?.statusId === "SmsgError" || (msg?.statusId === "SmsgProduced" && Number(msg?.failCount || 0) > 0);
+
 const getTimeInMillis = (value: any) => {
   if (!value) return 0;
   if (typeof value === "number") return value;
@@ -285,6 +314,11 @@ export {
   timeTillRun,
   getDuration,
   getFileSize,
+  getLogFileName,
   getShopDefaultAppRemoteId,
-  getTimeInMillis
+  getTimeInMillis,
+  hasFailedRecords,
+  hasSystemMessageError,
+  MDM_FAILED_STATUSES,
+  MDM_PENDING_STATUSES
 }
