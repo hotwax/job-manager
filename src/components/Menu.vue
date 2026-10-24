@@ -76,18 +76,18 @@ let appPages = [
     title: "Jobs"
   },
   {
-    title: "Catalog",
-    url: "/catalog",
-    iosIcon: albumsOutline,
-    mdIcon: albumsOutline,
-    childRoutes: ["/job/"]
-  },
-  {
     title: "Run history",
     url: "/job-run-history",
     iosIcon: timeOutline,
     mdIcon: timeOutline,
     childRoutes: ["/job-run-history"]
+  },
+  {
+    title: "Catalog",
+    url: "/catalog",
+    iosIcon: albumsOutline,
+    mdIcon: albumsOutline,
+    childRoutes: ["/job/"]
   },
   {
     title: "MDM"
@@ -112,8 +112,8 @@ let appPages = [
   {
     title: "Message history",
     url: "/system-messages",
-    iosIcon: pulseOutline,
-    mdIcon: pulseOutline,
+    iosIcon: timeOutline,
+    mdIcon: timeOutline,
     childRoutes: ["/system-messages/"]
   },
   {
