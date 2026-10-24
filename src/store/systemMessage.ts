@@ -1,4 +1,4 @@
-import { api, translate } from "@common";
+import { api, commonUtil, translate } from "@common";
 import { defineStore } from "pinia";
 import { getDateAndTime, showToast } from "@/utils";
 import logger from "@/logger";
@@ -324,8 +324,9 @@ export const useSystemMessageStore = defineStore("systemMessage", {
         showToast(translate("System message updated successfully"))
         return { data: { success: true } };
       } catch (err) {
-        showToast(translate("Failed to update system message"))
+        const serverError = commonUtil.getErrorMessage(err);
         logger.error("Failed to update system message", err);
+        showToast(`${translate("Failed to update system message")}. ${serverError}`);
       } finally {
         this.loading = false;
       }

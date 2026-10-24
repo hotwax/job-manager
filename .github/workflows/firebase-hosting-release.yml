@@ -10,7 +10,7 @@ jobs:
       config-path: .github/labeler.yml
       app: hotwax/job-manager
       appDir: job-manager
-      accxuiVersion: v1.9.0
+      accxuiVersion: 088adf3c77320f3583f4036bb355efc474feb4db # getErrorMessage, merged via accxui#218
     secrets:
       envPAT: ${{ secrets.envPAT }}
       HOTWAX_PUBLIC_SECRET: ${{ secrets.HOTWAX_PUBLIC_SECRET }}

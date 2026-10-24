@@ -191,6 +191,7 @@
   "Failed to load bulk operations from Shopify": "Failed to load bulk operations from Shopify",
   "Failed to load bulk operations from Shopify: {reason}": "Failed to load bulk operations from Shopify: {reason}",
   "Failed to load this data document.": "Failed to load this data document.",
+  "Failed to queue data document export": "Failed to queue data document export",
   "Failed to save data document graph.": "Failed to save data document graph.",
   "Failed to save message type.": "Failed to save message type.",
   "Failed to save remote system.": "Failed to save remote system.",

@@ -104,7 +104,7 @@ export const useMdmConfigStore = defineStore("mdmConfig", {
         return true;
       } catch (err) {
         logger.error(`Failed to update config with id ${configId}`, err);
-        return false;
+        throw err;
       }
     },
     async fetchDataManagerLogs(params = { pageSize: 10, pageIndex: 0 }) {

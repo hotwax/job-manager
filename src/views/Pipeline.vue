@@ -537,6 +537,7 @@ import { useMdmConfigStore } from "@/store/mdmConfig";
 import { useUtilStore } from "@/store/util";
 import { MDM_PENDING_STATUSES, getFileSize, getLogFileName, showToast } from "@/utils";
 import { useDashboardProjections, formatJobResult, getRelativeTimeSpan } from "@/composables/useDashboardProjections";
+import logger from "@/logger";
 
 const jobStore = useJobStore();
 const systemMessageStore = useSystemMessageStore();
@@ -714,7 +715,9 @@ const triggerJobRun = async (jobName: string) => {
     showToast(translate("Job execution triggered successfully."));
     await refreshData();
   } catch (error) {
-    showToast(translate("Failed to execute job."));
+    const serverError = commonUtil.getErrorMessage(error);
+    logger.error(error);
+    showToast(`${translate("Failed to execute job.")} ${serverError}`);
   }
 };
 
@@ -724,7 +727,9 @@ const cancelDataManagerLog = async (configId: string, logId: string) => {
     showToast(translate("Data manager log cancelled."));
     await refreshData();
   } catch (error) {
-    showToast(translate("Failed to cancel data manager log."));
+    const serverError = commonUtil.getErrorMessage(error);
+    logger.error(error);
+    showToast(`${translate("Failed to cancel data manager log.")} ${serverError}`);
   }
 };
 

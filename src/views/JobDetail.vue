@@ -1000,8 +1000,9 @@ async function runNow() {
                 throw resp.data
               }
             } catch(err) {
-              showToast(translate("Failed to schedule service"))
-              logger.error(err)
+              const serverError = commonUtil.getErrorMessage(err);
+              logger.error("Failed to schedule service", err);
+              showToast(`${translate("Failed to schedule service")}. ${serverError}`);
             }
           }
         }
@@ -1062,11 +1063,12 @@ async function updateJobInfo(payload: any): Promise<any> {
       throw resp.data
     }
   } catch(err) {
-    showToast(translate("Failed to update service"))
-    logger.error(err)
+    const serverError = commonUtil.getErrorMessage(err);
+    logger.error(err);
+    showToast(`${translate("Failed to update service")}. ${serverError}`);
     return Promise.reject({
       error: err
-    })
+    });
   }
 }
 
