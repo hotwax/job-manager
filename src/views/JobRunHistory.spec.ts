@@ -25,8 +25,6 @@ enableAutoUnmount(afterEach);
 
 const openHistory = async () => {
   const store = useJobStore();
-  store.areServiceProductsFetched = true;
-  store.fetchJobs = vi.fn();
   const wrapper = mount(JobRunHistory, {
     global: { stubs: { AnimatedNumber: { props: ["value"], template: "<span>{{ value }}</span>" } } }
   });
@@ -47,9 +45,9 @@ describe("run history failure presentation", () => {
     const { wrapper } = await openHistory();
     expect(wrapper.get("[data-testid=\"run-history-error\"]").text()).toContain("unavailable on this server");
     expect(wrapper.text()).not.toContain("No service job runs found");
-    expect(wrapper.findAll("ion-card-title").map(title => title.text())).toEqual(["—", "—", "—", "—"]);
+    expect(wrapper.findAll("ion-card-title").map(title => title.text())).toEqual(["—", "—", "—"]);
     expect(apiMock).toHaveBeenCalledTimes(1);
-    apiMock.mockResolvedValue({ data: { jobRunList: [], jobRunCount: 0 } });
+    apiMock.mockResolvedValue({ data: [], headers: { "x-total-count": "0" } });
     wrapper.findAllComponents(IonButton).find(button => button.text() === "Retry")!.vm.$emit("click");
     await flushPromises();
     expect(wrapper.find("[data-testid=\"run-history-error\"]").exists()).toBe(false);
@@ -59,15 +57,15 @@ describe("run history failure presentation", () => {
   it("keeps loaded rows visible and marks failed status counts as unavailable", async () => {
     apiMock.mockImplementation(({ params }: any) => params.pageSize === 1
       ? Promise.reject(new Error("count unavailable"))
-      : Promise.resolve({ data: { jobRunList: [{ jobRunId: "501", jobName: "sync", status: "FAILED" }], jobRunCount: 1 } }));
+      : Promise.resolve({ data: [{ jobRunId: "501", jobName: "sync", hasError: "Y" }], headers: { "x-total-count": "1" } }));
     const { wrapper } = await openHistory();
     expect(wrapper.text()).toContain("#501");
     expect(wrapper.get("[data-testid=\"run-history-counts-error\"]").text()).toContain("Unable to load run counts");
-    expect(wrapper.findAll("ion-card-title").map(title => title.text())).toEqual(["1", "—", "—", "—"]);
+    expect(wrapper.findAll("ion-card-title").map(title => title.text())).toEqual(["1", "—", "—"]);
   });
 
   it("fetches each page from the server and resets filters without duplicate page requests", async () => {
-    apiMock.mockResolvedValue({ data: { jobRunList: [], jobRunCount: 57 } });
+    apiMock.mockResolvedValue({ data: [], headers: { "x-total-count": "57" } });
     const { wrapper } = await openHistory();
     apiMock.mockClear();
     wrapper.findAllComponents(IonButton).find(button => button.text() === "Next")!.vm.$emit("click");
@@ -79,12 +77,13 @@ describe("run history failure presentation", () => {
     await flushPromises();
     const pageCalls = apiMock.mock.calls.filter(([arg]) => arg.params.pageSize === 25);
     expect(pageCalls).toHaveLength(1);
-    expect(pageCalls[0][0].params).toMatchObject({ pageIndex: 0, status: "FAILED" });
+    expect(pageCalls[0][0].params).toMatchObject({ pageIndex: 0, hasError: "Y" });
     expect(wrapper.text()).toContain("Page 1 / 3");
   });
 
-  it("keeps data-log filters available for the unchanged job-detail consumer", () => {
+  it("keeps all statuses and data-log filters available for job detail", () => {
     const wrapper = mount(JobRunFilters);
     expect(wrapper.text()).toContain("Has data logs");
+    for(const status of ["Running", "Successful", "Failed", "Terminated"]) expect(wrapper.text()).toContain(status);
   });
 });
