@@ -42,21 +42,18 @@ import { checkboxOutline, albumsOutline, cloudDownloadOutline, cloudUploadOutlin
 import { translate, commonUtil, DxpOmsInstanceFooter, emitter } from "@common";
 import { useAuth } from "@common/composables/useAuth";
 import router from "../router";
+import Actions from "@/authorization/actions";
 import { useUserStore } from "@/store/user";
-import { useUtilStore } from "@/store/util";
 
 const { isAuthenticated } = useAuth();
 const userStore = useUserStore();
-const utilStore = useUtilStore();
 
 const currentProductStore = computed(() => userStore.getCurrentProductStore)
 const userProfile = computed(() => userStore.getUserProfile)
 
 // Filtering array of app pages, retaining only those elements (pages) that have the necessary permissions for display.
 const getValidMenuItems = (appPages: any) => {
-  return appPages.filter((appPage: any) =>
-    (appPage.url !== '/system-tasks' || utilStore.supportsSystemTasks !== false)
-    && ((!appPage.meta || !appPage.meta.permissionId) || userStore.hasPermission(appPage.meta.permissionId)));
+  return appPages.filter((appPage: any) => (!appPage.meta || !appPage.meta.permissionId) || userStore.hasPermission(appPage.meta.permissionId));
 }
 
 let appPages = [
@@ -69,6 +66,7 @@ let appPages = [
   {
     title: "System tasks",
     url: "/system-tasks",
+    meta: { permissionId: Actions.APP_SYSTEM_TASK_VIEW },
     iosIcon: checkboxOutline,
     mdIcon: checkboxOutline,
   },

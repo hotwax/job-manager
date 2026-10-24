@@ -39,19 +39,9 @@ export const useUtilStore = defineStore("util", {
       enumerations: 'none',
       statuses: 'none'
     } as any,
-    systemInformation: {} as any,
-    systemInformationInstance: "",
-    _fetchSystemInformationId: 0
+    systemInformation: {} as any
   }),
   getters: {
-    supportsSystemTasks: (state) => {
-      if(state.systemInformationInstance !== commonUtil.getMaargURL()) {return null;}
-      const release = state.systemInformation?.instanceInfo?.componentRelease;
-      // Unknown is not unsupported: a failed capability check must not remove navigation.
-      if(!release || !commonUtil.isValidVersion(release)) {return null;}
-
-      return commonUtil.isVersionGreaterOrEqual('6.5.0', release);
-    },
     getStatusItemsByType: (state: any) => (typeId: string) => state.statusItems[typeId] || [],
     getStatusItemDesc: (state: any) => (statusId: string) => {
       const statusItem = Object.values(state.statusItems).flatMap(item => item).find((statusItem: any) => statusItem.statusId === statusId) as StatusItem
@@ -252,23 +242,17 @@ export const useUtilStore = defineStore("util", {
       }
     },
     async fetchSystemInformation() {
-      const instance = commonUtil.getMaargURL();
-      const fetchId = ++this._fetchSystemInformationId;
-      // Keep this instance's menu stable while refreshing. Never reuse another instance's
-      // compatibility information, or let an older request overwrite a newer result.
-      if(this.systemInformationInstance !== instance) {this.systemInformation = {};}
-      this.systemInformationInstance = instance;
+      // A failed refresh must not retain another instance's supported release.
+      this.systemInformation = {};
       try {
         const resp = await api({
           url: "admin/maarg",
           method: "GET"
         });
-        if(fetchId !== this._fetchSystemInformationId || instance !== commonUtil.getMaargURL()) {return;}
         this.systemInformation = resp.data
       } catch(error: any) {
-        if(fetchId !== this._fetchSystemInformationId || instance !== commonUtil.getMaargURL()) {return;}
         logger.error("Failed to fetch system information");
-        commonUtil.showToast(translate("Could not check backend capabilities. Please try signing in again."));
+        commonUtil.showToast(translate("App is not compatible with oms version and will not work as expected, please contact administrator"));
       }
     }
   },

@@ -15,7 +15,7 @@ vi.mock("@common", async () => {
   return {
     api: vi.fn(),
     translate: (key: string) => key,
-    commonUtil: { getOmsURL: () => "", getMaargURL: () => "" },
+    commonUtil: { getOmsURL: () => "" },
     cookieHelper: () => ({
       get: vi.fn().mockReturnValue(""),
       set: vi.fn(),
@@ -88,11 +88,30 @@ describe("Menu.vue product store switch", () => {
     return { userStore, footer, wrapper };
   };
 
-  it("keeps unknown capabilities visible without fetching from the menu", async () => {
+  it("shows System tasks only with the published task permission", async () => {
+    const { userStore, wrapper } = mountMenu();
+    expect(wrapper.text()).not.toContain("System tasks");
+    userStore.permissions = ["COMMON_ADMIN"];
+    await flushPromises();
+    expect(wrapper.text()).not.toContain("System tasks");
+    userStore.permissions = ["WORKEFFORT_TASK_ADMIN"];
+    await flushPromises();
+    expect(wrapper.text()).toContain("System tasks");
+    userStore.permissions = [];
+    await flushPromises();
+    expect(wrapper.text()).not.toContain("System tasks");
+  });
+
+  it("does not change menu permissions when backend information is missing or old", async () => {
+    useUserStore().permissions = ["WORKEFFORT_TASK_ADMIN"];
     const utilStore = useUtilStore();
-    utilStore.systemInformationInstance = "https://previous-maarg.hotwax.io/rest/s1/";
-    utilStore.fetchSystemInformation = vi.fn().mockResolvedValue(undefined);
+    utilStore.fetchSystemInformation = vi.fn();
     const { wrapper } = mountMenu();
+    expect(wrapper.text()).toContain("System tasks");
+    utilStore.systemInformation = { instanceInfo: { componentRelease: "6.4.0" } };
+    await flushPromises();
+    expect(wrapper.text()).toContain("System tasks");
+    utilStore.systemInformation = {};
     await flushPromises();
     expect(wrapper.text()).toContain("System tasks");
     expect(utilStore.fetchSystemInformation).not.toHaveBeenCalled();

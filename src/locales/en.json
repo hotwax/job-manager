@@ -772,6 +772,5 @@
   "Without errors": "Without errors",
   "Could not check HotWax links. Retry before filtering linked or unlinked operations.": "Could not check HotWax links. Retry before filtering linked or unlinked operations.",
   "HotWax link filters the current page only. Use Next to check older operations. Summary counts include all link types.": "HotWax link filters the current page only. Use Next to check older operations. Summary counts include all link types.",
-  "Could not check backend capabilities. Please try signing in again.": "Could not check backend capabilities. Please try signing in again.",
   "Could not load operations from {shop}: {reason}": "Could not load operations from {shop}: {reason}"
 }
