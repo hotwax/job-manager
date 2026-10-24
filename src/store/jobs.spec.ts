@@ -127,15 +127,15 @@ describe("job store detail", () => {
     });
   });
 
-  it("reads error and non-error counts from headers with identical base filters", async () => {
+  it("reads all status counts from headers with identical base filters", async () => {
     apiMock.mockImplementation(({ params }: any) => Promise.resolve({ data: [], headers: {
-      "x-total-count": params.hasError_not ? "45" : "12"
+      "x-total-count": !params.hasError_not ? "12" : !params.startTime_not ? "3" : params.endTime_not ? "40" : "2"
     } }));
     const store = useJobStore();
     await store.fetchJobRunHistoryStats({ jobName: "syncOrders" });
-    expect(apiMock).toHaveBeenCalledTimes(2);
+    expect(apiMock).toHaveBeenCalledTimes(4);
     for(const [request] of apiMock.mock.calls) expect(request.params).toMatchObject({ jobName: "syncOrders", pageSize: 1, pageIndex: 0 });
-    expect(store.getJobRunHistoryStats).toMatchObject({ failed: 12, withoutErrors: 45 });
+    expect(store.getJobRunHistoryStats).toMatchObject({ successful: 40, failed: 12, running: 2, terminated: 3 });
   });
 
   it("counts only the selected error group", async () => {
@@ -143,7 +143,7 @@ describe("job store detail", () => {
     const store = useJobStore();
     await store.fetchJobRunHistoryStats({ status: "FAILED" });
     expect(apiMock).toHaveBeenCalledTimes(1);
-    expect(store.getJobRunHistoryStats).toMatchObject({ failed: 12, withoutErrors: 0 });
+    expect(store.getJobRunHistoryStats).toMatchObject({ successful: 0, failed: 12, running: 0, terminated: 0 });
   });
 
   it("disables next on the last partial page", async () => {
@@ -353,9 +353,9 @@ describe("run history failure and request ownership", () => {
     const old = store.fetchJobRunHistoryStats({ status: "FAILED" });
     store.invalidateJobRunHistoryStats();
     apiMock.mockResolvedValue({ data: [], headers: { "x-total-count": "7" } });
-    await store.fetchJobRunHistoryStats({ status: "NO_ERROR" });
+    await store.fetchJobRunHistoryStats({ status: "SUCCESSFUL" });
     resolveOld({ data: [], headers: { "x-total-count": "90" } });
     await old;
-    expect(store.getJobRunHistoryStats).toEqual({ total: null, withoutErrors: 7, failed: 0 });
+    expect(store.getJobRunHistoryStats).toEqual({ total: null, successful: 7, failed: 0, running: 0, terminated: 0 });
   });
 });

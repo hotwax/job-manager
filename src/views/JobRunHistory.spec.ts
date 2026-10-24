@@ -6,7 +6,7 @@ import JobRunFilters from "@/components/JobRunFilters.vue";
 import { useJobStore } from "@/store/jobs";
 import JobRunHistory from "./JobRunHistory.vue";
 
-const { apiMock, lifecycle } = vi.hoisted(() => ({ apiMock: vi.fn(), lifecycle: {} as any }));
+const { apiMock, lifecycle, resolveNames, getName } = vi.hoisted(() => ({ apiMock: vi.fn(), lifecycle: {} as any, resolveNames: vi.fn(), getName: vi.fn() }));
 vi.mock("@ionic/vue", async () => ({
   ...await vi.importActual<any>("@ionic/vue"),
   onIonViewWillEnter: (callback: any) => { lifecycle.enter = callback; },
@@ -17,7 +17,7 @@ vi.mock("@common", () => ({
   translate: (key: string) => key,
   commonUtil: { hasError: () => false, getStatusColor: () => "medium" }
 }));
-vi.mock("@/store/user", () => ({ useUserStore: () => ({ getCurrentProductStore: { productStoreId: "STORE" } }) }));
+vi.mock("@/store/user", () => ({ useUserStore: () => ({ getCurrentProductStore: { productStoreId: "STORE" }, resolveUserFullNames: resolveNames, getUserFullName: getName }) }));
 vi.mock("@/utils", () => ({ getCronString: vi.fn(), getDateAndTime: () => "date", getTimeInMillis: () => 0 }));
 vi.mock("@/router", () => ({ default: { currentRoute: { value: { query: {} } }, push: vi.fn() } }));
 vi.mock("@/logger", () => ({ default: { error: vi.fn() } }));
@@ -38,6 +38,8 @@ describe("run history failure presentation", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     apiMock.mockReset();
+    resolveNames.mockReset().mockResolvedValue(undefined);
+    getName.mockReset();
   });
 
   it("shows an actionable unavailable error without empty history or zero counts, then retries", async () => {
@@ -45,7 +47,7 @@ describe("run history failure presentation", () => {
     const { wrapper } = await openHistory();
     expect(wrapper.get("[data-testid=\"run-history-error\"]").text()).toContain("unavailable on this server");
     expect(wrapper.text()).not.toContain("No service job runs found");
-    expect(wrapper.findAll("ion-card-title").map(title => title.text())).toEqual(["—", "—", "—"]);
+    expect(wrapper.findAll("ion-card-title").map(title => title.text())).toEqual(["—", "—", "—", "—", "—"]);
     expect(apiMock).toHaveBeenCalledTimes(1);
     apiMock.mockResolvedValue({ data: [], headers: { "x-total-count": "0" } });
     wrapper.findAllComponents(IonButton).find(button => button.text() === "Retry")!.vm.$emit("click");
@@ -61,7 +63,7 @@ describe("run history failure presentation", () => {
     const { wrapper } = await openHistory();
     expect(wrapper.text()).toContain("#501");
     expect(wrapper.get("[data-testid=\"run-history-counts-error\"]").text()).toContain("Unable to load run counts");
-    expect(wrapper.findAll("ion-card-title").map(title => title.text())).toEqual(["1", "—", "—"]);
+    expect(wrapper.findAll("ion-card-title").map(title => title.text())).toEqual(["1", "—", "—", "—", "—"]);
   });
 
   it("fetches each page from the server and resets filters without duplicate page requests", async () => {
@@ -81,9 +83,30 @@ describe("run history failure presentation", () => {
     expect(wrapper.text()).toContain("Page 1 / 3");
   });
 
+  it("shows resolved user names and cached job metadata without loading another job catalog", async () => {
+    const store = useJobStore();
+    store.jobs = [{ jobName: "cached", serviceName: "example.Sync", instanceOfProductId: "SYNC" }];
+    store.products = { SYNC: { productName: "Sync catalog" } };
+    getName.mockImplementation((id: string) => id === "u1" ? "Release Tester" : "");
+    apiMock.mockResolvedValue({ data: [
+      { jobRunId: "1", jobName: "cached", userId: "u1", startTime: 1, endTime: 2 },
+      { jobRunId: "2", jobName: "uncached", userId: "u2", hasError: "Y" }
+    ], headers: { "x-total-count": "2" } });
+    const { wrapper } = await openHistory();
+    expect(resolveNames).toHaveBeenCalledWith(["u1", "u2"]);
+    expect(wrapper.text()).toContain("Release Tester");
+    expect(wrapper.text()).toContain("u2");
+    expect(wrapper.text()).toContain("example.Sync");
+    expect(wrapper.text()).toContain("Sync catalog");
+    expect(wrapper.text()).toContain("uncached");
+    expect(apiMock.mock.calls.every(([request]) => request.url === "admin/serviceJobs/runs")).toBe(true);
+  });
+
   it("keeps all statuses and data-log filters available for job detail", () => {
     const wrapper = mount(JobRunFilters);
     expect(wrapper.text()).toContain("Has data logs");
-    for(const status of ["Running", "Successful", "Failed", "Terminated"]) expect(wrapper.text()).toContain(status);
+    for(const status of ["Running", "Successful", "Failed", "Terminated"]) {
+      expect(wrapper.text()).toContain(status);
+    }
   });
 });

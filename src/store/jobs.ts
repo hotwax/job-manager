@@ -7,11 +7,13 @@ import { DateTime } from "luxon";
 import { defineStore } from "pinia";
 import { useUserStore } from "./user";
 
-const JOB_RUN_STATUSES = ["FAILED", "NO_ERROR"];
+const JOB_RUN_STATUSES = ["SUCCESSFUL", "FAILED", "RUNNING", "TERMINATED"];
 const EMPTY_JOB_RUN_HISTORY_STATS = {
   total: null as number | null,
   failed: 0,
-  withoutErrors: 0
+  successful: 0,
+  running: 0,
+  terminated: 0
 };
 
 // Whether a job's filled-in dependency parameter ties it to a store other than the selected one.
@@ -356,7 +358,7 @@ export const useJobStore = defineStore("job", {
         if(requestId !== this.jobRunStatsRequestId) return;
         this.jobRunHistoryStats = {
           ...this.jobRunHistoryStats,
-          failed: counts[0], withoutErrors: counts[1]
+          successful: counts[0], failed: counts[1], running: counts[2], terminated: counts[3]
         };
         this.jobRunStatsLoaded = true;
       } catch(err) {

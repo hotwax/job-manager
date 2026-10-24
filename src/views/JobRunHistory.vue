@@ -21,14 +21,20 @@
           </ion-card>
           <ion-card>
             <ion-card-header>
-              <ion-card-subtitle>{{ translate("Without errors") }}</ion-card-subtitle>
-              <ion-card-title><span v-if="isLoading || historyError || statsLoading || statsError">—</span><AnimatedNumber v-else :value="stats.withoutErrors" /></ion-card-title>
+              <ion-card-subtitle>{{ translate("Successful") }}</ion-card-subtitle>
+              <ion-card-title><span v-if="isLoading || historyError || statsLoading || statsError">—</span><AnimatedNumber v-else :value="stats.successful" /></ion-card-title>
             </ion-card-header>
           </ion-card>
           <ion-card>
             <ion-card-header>
               <ion-card-subtitle>{{ translate("Failed") }}</ion-card-subtitle>
               <ion-card-title><span v-if="isLoading || historyError || statsLoading || statsError">—</span><AnimatedNumber v-else :value="stats.failed" /></ion-card-title>
+            </ion-card-header>
+          </ion-card>
+          <ion-card v-for="status in [{ key: 'running', label: 'Running' }, { key: 'terminated', label: 'Terminated' }]" :key="status.key">
+            <ion-card-header>
+              <ion-card-subtitle>{{ translate(status.label) }}</ion-card-subtitle>
+              <ion-card-title><span v-if="isLoading || historyError || statsLoading || statsError">—</span><AnimatedNumber v-else :value="stats[status.key]" /></ion-card-title>
             </ion-card-header>
           </ion-card>
         </div>
@@ -40,8 +46,6 @@
               v-model:status="selectedStatus"
               v-model:userId="selectedUserId"
               :show-data-logs="false"
-              status-label="Errors"
-              :status-options="[{ value: 'FAILED', label: 'Failed' }, { value: 'NO_ERROR', label: 'Without errors' }]"
               :placeholder="translate(searchField === 'jobRunId' ? 'Exact run ID' : 'Search selected field')"
               :user-placeholder="translate('Exact user ID')"
             >
@@ -133,6 +137,7 @@
                   <ion-label>
                     <p>{{ translate("User") }}</p>
                     {{ getRunUserName(run) }}
+                    <p v-if="run.userId && getRunUserName(run) !== run.userId">{{ run.userId }}</p>
                   </ion-label>
                 </ion-item>
               </div>
@@ -229,11 +234,13 @@ import AnimatedNumber from "@/components/AnimatedNumber.vue";
 import JobRunFilters from "@/components/JobRunFilters.vue";
 import router from "@/router";
 import { useJobStore } from "@/store/jobs";
+import { useUserStore } from "@/store/user";
 import { getDateAndTime, getTimeInMillis } from "@/utils";
 
 const PAGE_SIZE = 25;
 
 const jobStore = useJobStore();
+const userStore = useUserStore();
 
 const queryString = ref("");
 const selectedStatus = ref("");
@@ -242,7 +249,17 @@ const selectedUserId = ref("");
 const searchField = ref("jobRunId");
 const pageIndex = ref(0);
 
-const runs = computed(() => jobStore.getJobRunHistory);
+// Enrich only for display. Cached jobs may be store-scoped or absent for historical runs.
+const cachedJobs = computed(() => new Map(jobStore.getJobs.map((job: any) => [job.jobName, job])));
+const runs = computed(() => jobStore.getJobRunHistory.map((run: any) => {
+  const job = cachedJobs.value.get(run.jobName) as any;
+  return {
+    ...run,
+    serviceName: job?.serviceName,
+    instanceOfProductId: job?.instanceOfProductId,
+    productName: jobStore.getProducts[job?.instanceOfProductId]?.productName
+  };
+}));
 const total = computed(() => jobStore.getJobRunHistoryTotal);
 const stats = computed(() => jobStore.getJobRunHistoryStats);
 const hasMore = computed(() => jobStore.jobRunHistoryHasMore);
@@ -328,13 +345,17 @@ const loadRuns = async (refreshStats = false) => {
   const payload = getSearchPayload();
   if(refreshStats) jobStore.invalidateJobRunHistoryStats();
   const loaded = await jobStore.fetchJobRunHistory(payload);
+  if(loaded && requestId === currentLoad) {
+    // Resolve only the current page; the user store caches and deduplicates IDs.
+    void userStore.resolveUserFullNames(runs.value.map((run: any) => run.userId).filter(Boolean));
+  }
   if(loaded && requestId === currentLoad && refreshStats) {
     await jobStore.fetchJobRunHistoryStats(payload);
   }
 };
 
 // The entity list supplies the initiating user ID.
-const getRunUserName = (run: any) => firstNonBlank(run.userFullName, run.username, run.userId) || "-";
+const getRunUserName = (run: any) => firstNonBlank(userStore.getUserFullName(run.userId), run.userId) || "-";
 
 const goToPreviousPage = () => {
   if (pageIndex.value > 0) {
@@ -380,7 +401,7 @@ onIonViewWillEnter(async () => {
   isActive = true;
   const route = router.currentRoute.value;
   if (route.query.queryString) queryString.value = route.query.queryString as string;
-  if (["FAILED", "NO_ERROR"].includes(String(route.query.status))) selectedStatus.value = route.query.status as string;
+  if (["SUCCESSFUL", "FAILED", "RUNNING", "TERMINATED"].includes(String(route.query.status))) selectedStatus.value = route.query.status as string;
   if (route.query.jobName) selectedJobName.value = route.query.jobName as string;
   if (route.query.userId) selectedUserId.value = route.query.userId as string;
 
