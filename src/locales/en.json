@@ -1,4 +1,5 @@
 {
+  "This page requires backend version {version} or newer.": "This page requires backend version {version} or newer.",
   "Run history is unavailable on this server. Contact your administrator.": "Run history is unavailable on this server. Contact your administrator.",
   "Exact job name": "Exact job name",
   "Run ID": "Run ID",
@@ -769,5 +770,8 @@
   "Task name": "Task name",
   "Task ID": "Task ID",
   "Search first name": "Search first name",
-  "Without errors": "Without errors"
+  "Could not check HotWax links. Retry before filtering linked or unlinked operations.": "Could not check HotWax links. Retry before filtering linked or unlinked operations.",
+  "HotWax link filters the current page only. Use Next to check older operations. Summary counts include all link types.": "HotWax link filters the current page only. Use Next to check older operations. Summary counts include all link types.",
+  "Could not load operations from {shop}: {reason}": "Could not load operations from {shop}: {reason}",
+  "Successful, Running and Terminated filters and counts are temporarily unavailable. All runs remain visible under All.": "Successful, Running and Terminated filters and counts are temporarily unavailable. All runs remain visible under All."
 }

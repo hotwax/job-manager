@@ -16,7 +16,7 @@
         @ionChange="$emit('update:status', $event.detail.value)"
       >
         <ion-select-option value="">{{ translate("All") }}</ion-select-option>
-        <ion-select-option v-for="option in statusOptions" :key="option.value" :value="option.value">{{ translate(option.label) }}</ion-select-option>
+        <ion-select-option v-for="option in statusOptions" :key="option.value" :value="option.value" :disabled="option.disabled">{{ translate(option.label) }}</ion-select-option>
       </ion-select>
       <ion-button v-if="status" fill="clear" class="clear-filter-btn" @click="$emit('update:status', '')" :title="translate('Clear')">
         <ion-icon slot="icon-only" :icon="closeCircleOutline" />
@@ -77,7 +77,7 @@ const props = defineProps({
   queryString: { type: String, default: "" },
   status: { type: String, default: "" },
   statusLabel: { type: String, default: "Status" },
-  statusOptions: { type: Array as () => Array<{ value: string; label: string }>, default: () => [
+  statusOptions: { type: Array as () => Array<{ value: string; label: string; disabled?: boolean }>, default: () => [
     { value: "RUNNING", label: "Running" },
     { value: "SUCCESSFUL", label: "Successful" },
     { value: "FAILED", label: "Failed" },

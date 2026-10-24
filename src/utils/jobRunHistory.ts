@@ -27,18 +27,9 @@ export const buildJobRunHistoryParams = (filters: Record<string, any> = {}) => {
   if(filters.status === "FAILED") {
     params.hasError = "Y";
   }
-  if(["RUNNING", "SUCCESSFUL", "TERMINATED"].includes(filters.status)) {
-    // Requires type-aware empty predicates in Moqui; negated equals includes NULL error flags.
-    params.hasError = "Y";
-    params.hasError_not = "Y";
-    params.startTime_op = "empty";
-    if(filters.status !== "TERMINATED") {
-      params.startTime_not = "Y";
-      params.endTime_op = "empty";
-      if(filters.status === "SUCCESSFUL") {
-        params.endTime_not = "Y";
-      }
-    }
+  // Re-enable only after Moqui #78 is deployed and verified on supported backends.
+  if(filters.status && filters.status !== "FAILED") {
+    throw new Error("This run status filter is temporarily unavailable.");
   }
 
   return params;

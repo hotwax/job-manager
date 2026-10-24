@@ -42,11 +42,6 @@ export const useUtilStore = defineStore("util", {
     systemInformation: {} as any
   }),
   getters: {
-    supportsSystemTasks: (state) => {
-      const release = state.systemInformation?.instanceInfo?.componentRelease;
-      return !!release && commonUtil.isValidVersion(release)
-        && commonUtil.isVersionGreaterOrEqual('6.5.0', release);
-    },
     getStatusItemsByType: (state: any) => (typeId: string) => state.statusItems[typeId] || [],
     getStatusItemDesc: (state: any) => (statusId: string) => {
       const statusItem = Object.values(state.statusItems).flatMap(item => item).find((statusItem: any) => statusItem.statusId === statusId) as StatusItem

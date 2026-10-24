@@ -146,6 +146,7 @@
                   :label="translate('HotWax link')"
                   label-placement="stacked"
                   interface="popover"
+                  :disabled="isFetchingOperations || isFetchingEnrichment || !!enrichmentError"
                   :value="linkFilter"
                   @ion-change="linkFilter = $event.detail.value"
                 >
@@ -171,26 +172,36 @@
         <ion-note v-if="isCombinedView" color="medium" class="stats-scope">
           {{ translate("Showing the most recent operations from each of {count} shops. Pick a single shop to page through its full history.", { count: combinedShopCount }) }}
         </ion-note>
-        <ion-note v-if="failedShopNames.length" color="danger" class="stats-scope">
-          {{ translate("Could not load operations from {shops}, so they are missing from this list.", { shops: failedShopNames.join(", ") }) }}
+        <ion-note v-for="failure in failedShops" :key="failure.remoteId" color="danger" class="stats-scope">
+          {{ translate("Could not load operations from {shop}: {reason}", failure) }}
+        </ion-note>
+
+        <ion-note v-if="enrichmentError" color="danger" class="stats-scope">
+          {{ enrichmentError }}
+          <ion-button fill="clear" @click="loadOperations">
+            {{ translate("Retry") }}
+          </ion-button>
+        </ion-note>
+        <ion-note v-if="linkFilter" class="stats-scope">
+          {{ translate("HotWax link filters the current page only. Use Next to check older operations. Summary counts include all link types.") }}
         </ion-note>
 
         <div class="pagination">
-          <ion-button fill="outline" :disabled="isCombinedView || !pageInfo.hasPreviousPage || isFetchingOperations" @click="goToPreviousPage">
+          <ion-button fill="outline" :disabled="isCombinedView || !pageInfo.hasPreviousPage || isFetchingOperations || isFetchingEnrichment" @click="goToPreviousPage">
             {{ translate("Previous") }}
           </ion-button>
-          <ion-button fill="outline" :disabled="isCombinedView || !pageInfo.hasNextPage || isFetchingOperations" @click="goToNextPage">
+          <ion-button fill="outline" :disabled="isCombinedView || !pageInfo.hasNextPage || isFetchingOperations || isFetchingEnrichment" @click="goToNextPage">
             {{ translate("Next") }}
           </ion-button>
         </div>
 
-        <div v-if="isFetchingOperations" class="loading-state">
+        <div v-if="isFetchingOperations || isFetchingEnrichment" class="loading-state">
           <ion-spinner name="crescent" />
           <p>{{ translate("Loading") }}</p>
         </div>
 
-        <div v-else-if="lastError" class="empty-state">
-          <p>{{ lastError }}</p>
+        <div v-else-if="lastError || (linkFilter && enrichmentError)" class="empty-state">
+          <p>{{ lastError || enrichmentError }}</p>
         </div>
 
         <ion-list v-else-if="visibleOperations.length">
@@ -207,7 +218,7 @@
             v-for="operation in visibleOperations"
             :key="operation.id"
             :operation="operation"
-            :enrichment-available="enrichmentAvailable"
+            :enrichment-available="enrichmentAvailable && !enrichmentError"
             @view-system-message="goToSystemMessage"
             @copy-id="copyValue"
           />
@@ -294,6 +305,8 @@ const sortOptions = BULK_OPERATION_SORT_OPTIONS;
 const stats = computed(() => bulkOperationStore.getStats);
 const pageInfo = computed(() => bulkOperationStore.getPageInfo);
 const isFetchingOperations = computed(() => bulkOperationStore.isFetchingOperations);
+const isFetchingEnrichment = computed(() => bulkOperationStore.isFetchingEnrichment);
+const enrichmentError = computed(() => bulkOperationStore.enrichmentError);
 const lastError = computed(() => bulkOperationStore.lastError);
 const enrichmentAvailable = computed(() => bulkOperationStore.enrichmentAvailable);
 
@@ -324,8 +337,11 @@ const activeRemoteIds = computed(() => {
 });
 const isCombinedView = computed(() => activeRemoteIds.value.length > 1);
 const combinedShopCount = computed(() => bulkOperationStore.combinedShopCount);
-const failedShopNames = computed(() => bulkOperationStore.failedRemoteIds.map((remoteId: string) =>
-  bulkOperationStore.shops.find((shop: any) => shop.systemMessageRemoteId === remoteId)?.name || remoteId));
+const failedShops = computed(() => bulkOperationStore.failedRemoteIds.map((remoteId: string) => ({
+  remoteId,
+  shop: bulkOperationStore.shops.find((shop: any) => shop.systemMessageRemoteId === remoteId)?.name || remoteId,
+  reason: bulkOperationStore.failedRemoteErrors[remoteId]
+})));
 
 const operations = computed(() => bulkOperationStore.getEnrichedOperations);
 

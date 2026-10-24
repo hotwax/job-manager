@@ -7,13 +7,12 @@ import { DateTime } from "luxon";
 import { defineStore } from "pinia";
 import { useUserStore } from "./user";
 
-const JOB_RUN_STATUSES = ["SUCCESSFUL", "FAILED", "RUNNING", "TERMINATED"];
 const EMPTY_JOB_RUN_HISTORY_STATS = {
   total: null as number | null,
   failed: 0,
-  successful: 0,
-  running: 0,
-  terminated: 0
+  successful: null,
+  running: null,
+  terminated: null
 };
 
 // Whether a job's filled-in dependency parameter ties it to a store other than the selected one.
@@ -305,7 +304,6 @@ export const useJobStore = defineStore("job", {
     },
     async fetchJobRunHistory(payload: Record<string, any> = {}) {
       const requestId = ++this.jobRunHistoryRequestId;
-      const params = buildJobRunHistoryParams(payload);
       this.jobRunHistoryLoading = true;
       this.jobRunHistoryError = "";
       this.jobRunHistory = [];
@@ -313,6 +311,7 @@ export const useJobStore = defineStore("job", {
       this.jobRunHistoryHasMore = false;
       this.jobRunHistoryStats.total = 0;
       try {
+        const params = buildJobRunHistoryParams(payload);
         const resp = await api({ url: "admin/serviceJobs/runs", method: "GET", params });
         if(requestId !== this.jobRunHistoryRequestId) return false;
         if(commonUtil.hasError(resp) || !Array.isArray(resp.data)) {
@@ -338,28 +337,21 @@ export const useJobStore = defineStore("job", {
     },
     async fetchJobRunHistoryStats(payload: Record<string, any> = {}) {
       const requestId = ++this.jobRunStatsRequestId;
-      const selectedStatus = payload.status || "";
       this.jobRunStatsLoading = true;
       this.jobRunStatsError = "";
       try {
-        const counts = await Promise.all(JOB_RUN_STATUSES.map(async (status: string) => {
-          if(selectedStatus && selectedStatus !== status) return 0;
-          const resp = await api({
-            url: "admin/serviceJobs/runs",
-            method: "GET",
-            params: buildJobRunHistoryParams({ ...payload, status, pageIndex: 0, pageSize: 1 })
-          });
-          const count = readJobRunTotal(resp.headers);
-          if(commonUtil.hasError(resp) || !Array.isArray(resp.data) || count === null) {
-            throw new Error("Invalid job run count response");
-          }
-          return count;
-        }));
+        // Only Failed has a safe server predicate until Moqui #78 is deployed.
+        const resp = await api({
+          url: "admin/serviceJobs/runs",
+          method: "GET",
+          params: buildJobRunHistoryParams({ ...payload, status: "FAILED", pageIndex: 0, pageSize: 1 })
+        });
+        const count = readJobRunTotal(resp.headers);
+        if(commonUtil.hasError(resp) || !Array.isArray(resp.data) || count === null) {
+          throw new Error("Invalid job run count response");
+        }
         if(requestId !== this.jobRunStatsRequestId) return;
-        this.jobRunHistoryStats = {
-          ...this.jobRunHistoryStats,
-          successful: counts[0], failed: counts[1], running: counts[2], terminated: counts[3]
-        };
+        this.jobRunHistoryStats = { ...EMPTY_JOB_RUN_HISTORY_STATS, total: this.jobRunHistoryTotal, failed: count };
         this.jobRunStatsLoaded = true;
       } catch(err) {
         if(requestId !== this.jobRunStatsRequestId) return;

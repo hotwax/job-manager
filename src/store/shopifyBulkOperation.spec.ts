@@ -191,7 +191,7 @@ describe("Shopify Bulk Operation Store", () => {
     const store = useShopifyBulkOperationStore();
     (api as Mock).mockImplementation(({ data }: any) => {
       if(data.systemMessageRemoteId === "SHOP_B") {
-        return Promise.reject(new Error("throttled"));
+        return Promise.reject({ response: { data: { errors: "No Access is enabled for Shopify with systemMessageRemoteId, SHOP_B.\n" } } });
       }
 
       return Promise.resolve({ data: { response: { bulkOperations: { edges: [
@@ -203,6 +203,7 @@ describe("Shopify Bulk Operation Store", () => {
 
     expect(store.operations.map((operation: any) => operation.systemMessageRemoteId)).toEqual(["SHOP_A", "SHOP_C"]);
     expect(store.failedRemoteIds).toEqual(["SHOP_B"]);
+    expect(store.failedRemoteErrors.SHOP_B).toBe("No Access is enabled for Shopify with systemMessageRemoteId, SHOP_B.");
     expect(store.combinedShopCount).toBe(2);
     expect(store.lastError).toBe("");
 
@@ -304,12 +305,32 @@ describe("Shopify Bulk Operation Store", () => {
       const store = useShopifyBulkOperationStore();
       (api as Mock).mockRejectedValueOnce({ response: { status: 500 } });
 
-      expect(await store.ensureEnrichmentMode()).toBe("none");
+      expect(await store.ensureEnrichmentMode()).toBe("");
       expect(store.enrichmentMode).toBe("");
       expect(store.enrichmentAvailable).toBe(true);
 
       (api as Mock).mockResolvedValueOnce(probeResponse(true));
       expect(await store.ensureEnrichmentMode()).toBe("batch");
+    });
+
+    it("keeps lookup failures unknown and clears the error after retry", async () => {
+      const store = useShopifyBulkOperationStore();
+      store.enrichmentMode = "batch";
+      const gid = "gid://shopify/BulkOperation/1";
+      store.enrichmentIndex[gid] = null;
+      const pending = defer<any>();
+      (api as Mock).mockReturnValueOnce(pending.promise);
+      const request = store.fetchEnrichmentFor([{ id: gid }]);
+      expect(store.isFetchingEnrichment).toBe(true);
+      pending.resolve({ data: {} });
+      await request;
+      expect(store.enrichmentIndex[gid]).toBeUndefined();
+      expect(store.enrichmentError).toContain("Could not check HotWax links");
+      expect(store.isFetchingEnrichment).toBe(false);
+      (api as Mock).mockResolvedValueOnce({ data: { systemMessages: [] } });
+      await store.fetchEnrichmentFor([{ id: gid }]);
+      expect(store.enrichmentIndex[gid]).toBeNull();
+      expect(store.enrichmentError).toBe("");
     });
 
     it("resolves a page in one request, never attaches another operation's message, and refetches on every load", async () => {
@@ -342,7 +363,7 @@ describe("Shopify Bulk Operation Store", () => {
       expect(store.enrichmentIndex["gid://shopify/BulkOperation/1"].statusId).toBe("SmsgConsumed");
     });
 
-    it("asks one operation at a time, at most five in flight, when the instance has no batch filter", async () => {
+    it("does not label failed single-operation lookups as unlinked", async () => {
       const store = useShopifyBulkOperationStore();
       store.enrichmentMode = "single";
       const operations = Array.from({ length: 8 }, (_, id) => ({ id: `gid://shopify/BulkOperation/${id}` }));
@@ -363,10 +384,11 @@ describe("Shopify Bulk Operation Store", () => {
 
       await store.fetchEnrichmentFor(operations);
 
-      expect(api).toHaveBeenCalledTimes(8);
+      expect(api).toHaveBeenCalledTimes(5);
       expect(maxInFlight).toBeLessThanOrEqual(5);
-      expect(store.enrichmentIndex["gid://shopify/BulkOperation/0"].systemMessageId).toBe("M0");
-      expect(store.enrichmentIndex["gid://shopify/BulkOperation/3"]).toBeNull();
+      expect(store.enrichmentIndex["gid://shopify/BulkOperation/3"]).toBeUndefined();
+      expect(store.enrichmentError).toContain("Could not check HotWax links");
+      expect(store.isFetchingEnrichment).toBe(false);
     });
   });
 });
