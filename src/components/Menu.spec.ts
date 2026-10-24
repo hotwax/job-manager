@@ -14,7 +14,7 @@ vi.mock("@common", async () => {
   return {
     api: vi.fn(),
     translate: (key: string) => key,
-    commonUtil: { getOmsURL: () => "" },
+    commonUtil: { getOmsURL: () => "", getMaargURL: () => "" },
     cookieHelper: () => ({
       get: vi.fn().mockReturnValue(""),
       set: vi.fn(),
