@@ -52,7 +52,7 @@
           <ion-card-content>
             {{ translate('This is the name of the OMS you are connected to right now. Make sure that you are connected to the right instance before proceeding.') }}
           </ion-card-content>
-          <ion-button v-if="!commonUtil.isMoqui()" :standalone-hidden="!hasPermission(Actions.APP_PWA_STANDALONE_ACCESS)" @click="commonUtil.goToOms()" fill="clear" :disabled="!hasPermission(Actions.APP_COMMERCE_VIEW)">
+          <ion-button v-if="!isMoquiOmsRef" :standalone-hidden="!hasPermission(Actions.APP_PWA_STANDALONE_ACCESS)" @click="commonUtil.goToOms()" fill="clear" :disabled="!hasPermission(Actions.APP_COMMERCE_VIEW)">
             {{ translate('Go to OMS') }}
             <ion-icon slot="end" :icon="openOutline" />
           </ion-button>
@@ -213,7 +213,7 @@
 
 <script setup lang="ts">
 import { cookieHelper, commonUtil, translate } from "@common";
-import { useAuth } from "@common/composables/useAuth";
+import { useAuth, isMoquiOmsRef } from "@common/composables/useAuth";
 import { IonAvatar, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonContent, IonHeader, IonIcon, IonItem, IonMenuButton, IonPage, IonSelect, IonSelectOption, IonTitle, IonToolbar, IonModal, IonFab, IonFabButton, IonRadioGroup, IonSpinner, IonList, IonListHeader, IonRadio, IonSearchbar, IonLabel } from "@ionic/vue";
 import { closeOutline, openOutline, saveOutline, checkmarkCircle, closeCircle, syncOutline } from "ionicons/icons";
 import { DateTime } from "luxon";
