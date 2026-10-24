@@ -1,6 +1,7 @@
 import logger from "@/logger";
 import { getCronString } from "@/utils";
-import { api } from "@common";
+import { api, commonUtil } from "@common";
+import { DateTime } from "luxon";
 import { defineStore } from "pinia";
 import { useUserStore } from "./user";
 
@@ -29,8 +30,7 @@ const buildJobRunSearchParams = (filters: Record<string, any> = {}) => {
   if(filters.username) params.username = filters.username;
   if(filters.status) params.status = filters.status;
 
-  // The service resolves the store of every job, however the job names it, and leaves out the ones scheduled for
-  // another store. Jobs not specific to any store are kept.
+  // Apply the selected product-store scope to both page and count requests.
   const productStoreId = useUserStore().getCurrentProductStore?.productStoreId;
   if(productStoreId) params.productStoreId = productStoreId;
 
@@ -64,6 +64,13 @@ export const useJobStore = defineStore("job", {
     areServiceProductsFetched: false,
     jobRunHistory: [] as Array<any>,
     jobRunHistoryTotal: 0,
+    jobRunHistoryLoading: false,
+    jobRunHistoryError: "",
+    jobRunHistoryRequestId: 0,
+    jobRunStatsLoading: false,
+    jobRunStatsLoaded: false,
+    jobRunStatsError: "",
+    jobRunStatsRequestId: 0,
     jobRunHistoryStats: { ...EMPTY_JOB_RUN_HISTORY_STATS },
     loading: false
   }),
@@ -334,65 +341,111 @@ export const useJobStore = defineStore("job", {
 
         this.areServiceProductsFetched = true
       } catch(err) {
-        logger.error("Failed to fetch service products", err)
+        logger.error("Product [Type: service] - Failed to fetch", err)
       }
+    },
+    invalidateJobRunHistoryStats() {
+      this.jobRunStatsRequestId++;
+      this.jobRunStatsLoading = false;
+      this.jobRunStatsLoaded = false;
+      this.jobRunStatsError = "";
+      this.jobRunHistoryStats = { ...EMPTY_JOB_RUN_HISTORY_STATS, total: this.jobRunHistoryTotal };
+    },
+    cancelJobRunHistory() {
+      this.jobRunHistoryRequestId++;
+      this.jobRunHistoryLoading = false;
+      this.invalidateJobRunHistoryStats();
     },
     async fetchJobRunHistory(payload: Record<string, any> = {}) {
-      this.loading = true;
+      const requestId = ++this.jobRunHistoryRequestId;
+      const params = buildJobRunSearchParams(payload);
+      this.jobRunHistoryLoading = true;
+      this.jobRunHistoryError = "";
+      this.jobRunHistory = [];
+      this.jobRunHistoryTotal = 0;
+      this.jobRunHistoryStats.total = 0;
       try {
         await this.fetchServiceProducts();
-
-        const resp = await api({
-          url: "admin/serviceJobs/runs/search",
-          method: "GET",
-          params: buildJobRunSearchParams(payload)
-        })
-
-        this.jobRunHistory = (resp.data?.jobRunList || []).map((run: any) => ({
+        if(requestId !== this.jobRunHistoryRequestId) return false;
+        const resp = await api({ url: "admin/serviceJobs/runs/search", method: "GET", params });
+        if(requestId !== this.jobRunHistoryRequestId) return false;
+        if(commonUtil.hasError(resp) || !Array.isArray(resp.data?.jobRunList) ||
+          !Number.isInteger(resp.data?.jobRunCount) || resp.data.jobRunCount < 0) {
+          throw new Error("Invalid job run search response");
+        }
+        this.jobRunHistory = resp.data.jobRunList.map((run: any) => ({
           ...run,
-          // The service derives the status from hasError, startTime and endTime and returns it as status
           runStatus: run.status,
           productName: this.products[run.instanceOfProductId]?.productName
-        }))
-        this.jobRunHistoryTotal = resp.data?.jobRunCount || 0
-        // Total runs is the count of the same search that fetched the page, no separate call needed for it
-        this.jobRunHistoryStats.total = this.jobRunHistoryTotal
-      } catch(err) {
-        logger.error("Failed to fetch job run history", err);
-        this.jobRunHistory = [];
-        this.jobRunHistoryTotal = 0;
-        this.jobRunHistoryStats = { ...EMPTY_JOB_RUN_HISTORY_STATS };
+        }));
+        this.jobRunHistoryTotal = resp.data.jobRunCount;
+        this.jobRunHistoryStats.total = this.jobRunHistoryTotal;
+        return true;
+      } catch(err: any) {
+        if(requestId !== this.jobRunHistoryRequestId) return false;
+        logger.error("Job - Failed to fetch run history", err);
+        this.jobRunHistoryError = err?.response?.status === 404
+          ? "Run history search is unavailable on this server. Contact your administrator."
+          : "Unable to load run history. Try again.";
+        return false;
       } finally {
-        this.loading = false;
+        if(requestId === this.jobRunHistoryRequestId) this.jobRunHistoryLoading = false;
       }
     },
-    // Each status count is the count of the same search narrowed to that status, asked for with pageSize 1 so that
-    // the server returns the count without the rows.
     async fetchJobRunHistoryStats(payload: Record<string, any> = {}) {
+      const requestId = ++this.jobRunStatsRequestId;
+      const params = buildJobRunSearchParams(payload);
       const selectedStatus = payload.status || "";
+      this.jobRunStatsLoading = true;
+      this.jobRunStatsError = "";
       try {
         const counts = await Promise.all(JOB_RUN_STATUSES.map(async (status: string) => {
-          // A status filter is already applied, so every other status contributes nothing to the current result set
           if(selectedStatus && selectedStatus !== status) return 0;
-
           const resp = await api({
             url: "admin/serviceJobs/runs/search",
             method: "GET",
-            params: buildJobRunSearchParams({ ...payload, status, pageIndex: 0, pageSize: 1 })
-          })
-          return resp.data?.jobRunCount || 0
-        }))
-
+            params: { ...params, status, pageIndex: 0, pageSize: 1 }
+          });
+          if(commonUtil.hasError(resp) || !Number.isInteger(resp.data?.jobRunCount) || resp.data.jobRunCount < 0) {
+            throw new Error("Invalid job run count response");
+          }
+          return resp.data.jobRunCount;
+        }));
+        if(requestId !== this.jobRunStatsRequestId) return;
         this.jobRunHistoryStats = {
           ...this.jobRunHistoryStats,
-          successful: counts[0],
-          failed: counts[1],
-          running: counts[2]
-        }
+          successful: counts[0], failed: counts[1], running: counts[2]
+        };
+        this.jobRunStatsLoaded = true;
       } catch(err) {
-        logger.error("Failed to fetch job run history stats", err);
-        this.jobRunHistoryStats = { ...this.jobRunHistoryStats, successful: 0, failed: 0, running: 0 };
+        if(requestId !== this.jobRunStatsRequestId) return;
+        logger.error("Job - Failed to fetch run history stats", err);
+        this.jobRunStatsError = "Unable to load run counts. Try again.";
+      } finally {
+        if(requestId === this.jobRunStatsRequestId) this.jobRunStatsLoading = false;
       }
+    },
+    // ServiceJob create is the plain entity endpoint: it takes ServiceJob fields only,
+    // so parameters and category membership are stored in follow-up calls.
+    async createJob(payload: any) {
+      return await api({
+        url: "admin/serviceJobs",
+        method: "POST",
+        data: payload,
+      });
+    },
+    // A job's category is a membership on the job's product, so categorising a job means
+    // storing a ProductCategoryMember for its instanceOfProductId.
+    async addJobToCategory(productId: string, productCategoryId: string) {
+      return await api({
+        url: `oms/products/${encodeURIComponent(productId)}/categories`,
+        method: "POST",
+        data: {
+          productId,
+          productCategoryId,
+          fromDate: DateTime.now().toMillis()
+        },
+      });
     },
     async cloneMaargJob(payload: any) {
       return await api({

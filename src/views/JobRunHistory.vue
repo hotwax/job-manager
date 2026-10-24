@@ -15,59 +15,41 @@
           <ion-card>
             <ion-card-header>
               <ion-card-subtitle>{{ translate("Total runs") }}</ion-card-subtitle>
-              <ion-card-title><AnimatedNumber :value="stats.total" /></ion-card-title>
+              <ion-card-title><span v-if="isLoading || historyError">—</span><AnimatedNumber v-else :value="stats.total" /></ion-card-title>
             </ion-card-header>
           </ion-card>
           <ion-card>
             <ion-card-header>
               <ion-card-subtitle>{{ translate("Successful") }}</ion-card-subtitle>
-              <ion-card-title><AnimatedNumber :value="stats.successful" /></ion-card-title>
+              <ion-card-title><span v-if="isLoading || historyError || statsLoading || statsError">—</span><AnimatedNumber v-else :value="stats.successful" /></ion-card-title>
             </ion-card-header>
           </ion-card>
           <ion-card>
             <ion-card-header>
               <ion-card-subtitle>{{ translate("Failed") }}</ion-card-subtitle>
-              <ion-card-title><AnimatedNumber :value="stats.failed" /></ion-card-title>
+              <ion-card-title><span v-if="isLoading || historyError || statsLoading || statsError">—</span><AnimatedNumber v-else :value="stats.failed" /></ion-card-title>
             </ion-card-header>
           </ion-card>
           <ion-card>
             <ion-card-header>
               <ion-card-subtitle>{{ translate("Running") }}</ion-card-subtitle>
-              <ion-card-title><AnimatedNumber :value="stats.running" /></ion-card-title>
+              <ion-card-title><span v-if="isLoading || historyError || statsLoading || statsError">—</span><AnimatedNumber v-else :value="stats.running" /></ion-card-title>
             </ion-card-header>
           </ion-card>
         </div>
 
         <ion-card>
           <ion-card-content>
-            <ion-searchbar
-              :value="queryString"
-              @ionInput="handleQueryInput"
-              :debounce="300"
+            <JobRunFilters
+              v-model:queryString="queryString"
+              v-model:status="selectedStatus"
+              v-model:userId="selectedUsername"
+              :show-data-logs="false"
               :placeholder="translate('Search by run id, job, service, or user')"
-            />
-
-            <div class="filter-grid">
-              <div class="filter-item">
-                <ion-select
-                  :label="translate('Status')"
-                  label-placement="stacked"
-                  interface="popover"
-                  :value="selectedStatus"
-                  @ionChange="selectedStatus = $event.detail.value"
-                >
-                  <ion-select-option value="">{{ translate("All") }}</ion-select-option>
-                  <ion-select-option value="RUNNING">{{ translate("Running") }}</ion-select-option>
-                  <ion-select-option value="SUCCESSFUL">{{ translate("Successful") }}</ion-select-option>
-                  <ion-select-option value="FAILED">{{ translate("Failed") }}</ion-select-option>
-                  <ion-select-option value="TERMINATED">{{ translate("Terminated") }}</ion-select-option>
-                </ion-select>
-                <ion-button v-if="selectedStatus" fill="clear" class="clear-filter-btn" @click="selectedStatus = ''" :title="translate('Clear')">
-                  <ion-icon slot="icon-only" :icon="closeCircleOutline" />
-                </ion-button>
-              </div>
-
-              <div class="filter-item">
+              :user-placeholder="translate('Exact username')"
+            >
+              <template #scope>
+              <div class="filter-item job-filter">
                 <ion-select
                   :label="translate('Job')"
                   label-placement="stacked"
@@ -84,26 +66,17 @@
                   <ion-icon slot="icon-only" :icon="closeCircleOutline" />
                 </ion-button>
               </div>
-
-              <div class="filter-item">
-                <ion-input
-                  :value="selectedUsername"
-                  :label="translate('User')"
-                  label-placement="stacked"
-                  fill="outline"
-                  :placeholder="translate('Any user')"
-                  :debounce="300"
-                  @ionInput="selectedUsername = $event.detail.value || ''"
-                />
-                <ion-button v-if="selectedUsername" fill="clear" class="clear-filter-btn" @click="selectedUsername = ''" :title="translate('Clear')">
-                  <ion-icon slot="icon-only" :icon="closeCircleOutline" />
-                </ion-button>
-              </div>
-            </div>
+              </template>
+            </JobRunFilters>
           </ion-card-content>
         </ion-card>
 
-        <div class="pagination">
+        <ion-item v-if="statsError && !historyError && !isLoading" lines="none" data-testid="run-history-counts-error">
+          <ion-label>{{ translate(statsError) }}</ion-label>
+          <ion-button slot="end" @click="loadRuns(true)">{{ translate("Retry") }}</ion-button>
+        </ion-item>
+
+        <div v-if="!historyError" class="pagination">
           <ion-button fill="outline" :disabled="pageIndex === 0 || isLoading" @click="goToPreviousPage">
             {{ translate("Previous") }}
           </ion-button>
@@ -117,6 +90,13 @@
           <ion-spinner name="crescent" />
           <p>{{ translate("Loading") }}</p>
         </div>
+
+        <ion-card v-else-if="historyError" data-testid="run-history-error" role="alert">
+          <ion-card-content>
+            <p>{{ translate(historyError) }}</p>
+            <ion-button @click="loadRuns(true)">{{ translate("Retry") }}</ion-button>
+          </ion-card-content>
+        </ion-card>
 
         <ion-list v-else-if="runs.length">
           <ion-card v-for="run in runs" :key="`${run.jobName}-${run.jobRunId}`" class="run-card" button @click="goToJob(run.jobName)">
@@ -228,19 +208,18 @@ import {
   IonContent,
   IonHeader,
   IonIcon,
-  IonInput,
   IonItem,
   IonLabel,
   IonList,
   IonMenuButton,
   IonNote,
   IonPage,
-  IonSearchbar,
   IonSelect,
   IonSelectOption,
   IonSpinner,
   IonTitle,
   IonToolbar,
+  onIonViewDidLeave,
   onIonViewWillEnter
 } from "@ionic/vue";
 import {
@@ -251,16 +230,16 @@ import {
   playOutline,
   timeOutline
 } from "ionicons/icons";
-import { computed, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { commonUtil, translate } from "@common";
 import AnimatedNumber from "@/components/AnimatedNumber.vue";
+import JobRunFilters from "@/components/JobRunFilters.vue";
 import router from "@/router";
 import { useJobStore } from "@/store/jobs";
 import { getDateAndTime, getTimeInMillis } from "@/utils";
 
 const PAGE_SIZE = 25;
 
-const route = router.currentRoute.value;
 const jobStore = useJobStore();
 
 const queryString = ref("");
@@ -273,15 +252,17 @@ const runs = computed(() => jobStore.getJobRunHistory);
 const total = computed(() => jobStore.getJobRunHistoryTotal);
 const stats = computed(() => jobStore.getJobRunHistoryStats);
 const jobs = computed(() => jobStore.getJobs);
-const isLoading = computed(() => jobStore.isLoading);
+const isLoading = computed(() => isInitializing.value || jobStore.jobRunHistoryLoading);
+const historyError = computed(() => jobStore.jobRunHistoryError);
+const statsLoading = computed(() => !jobStore.jobRunStatsLoaded || jobStore.jobRunStatsLoading);
+const statsError = computed(() => jobStore.jobRunStatsError);
 const pageCount = computed(() => Math.max(Math.ceil(total.value / PAGE_SIZE), 1));
 
 const jobOptions = computed(() => {
   return [...jobs.value].sort((first: any, second: any) => first.jobName.localeCompare(second.jobName));
 });
 
-// Picks the first candidate with visible text. A stored value can be blank rather than null, and a blank string is
-// truthy, so it would win a plain || chain and then render as nothing.
+// Ignore whitespace-only labels when selecting a display name.
 const firstNonBlank = (...values: Array<any>) =>
   values.map((value: any) => String(value ?? "").trim()).find((value: string) => value) || "";
 
@@ -334,9 +315,6 @@ const getStatusIcon = (run: any) => {
   return alertCircleOutline;
 };
 
-const handleQueryInput = (event: CustomEvent) => {
-  queryString.value = (event as any).detail.value || "";
-};
 
 // The search service takes every filter, so a page change only refetches that page and the status counts stay put.
 const getSearchPayload = () => {
@@ -353,19 +331,30 @@ const getSearchPayload = () => {
   return payload;
 };
 
-const loadRuns = () => jobStore.fetchJobRunHistory(getSearchPayload());
-
-const loadStats = () => jobStore.fetchJobRunHistoryStats(getSearchPayload());
+let currentLoad = 0;
+const loadRuns = async (refreshStats = false) => {
+  const requestId = ++currentLoad;
+  const payload = getSearchPayload();
+  if(refreshStats) jobStore.invalidateJobRunHistoryStats();
+  const loaded = await jobStore.fetchJobRunHistory(payload);
+  if(loaded && requestId === currentLoad && refreshStats) {
+    await jobStore.fetchJobRunHistoryStats(payload);
+  }
+};
 
 // The search service joins the user account, so the full name comes with the run itself.
 const getRunUserName = (run: any) => firstNonBlank(run.userFullName, run.username, run.userId) || "-";
 
 const goToPreviousPage = () => {
-  pageIndex.value -= 1;
+  if (pageIndex.value > 0) {
+    pageIndex.value -= 1;
+  }
 };
 
 const goToNextPage = () => {
-  pageIndex.value += 1;
+  if (pageIndex.value < pageCount.value - 1) {
+    pageIndex.value += 1;
+  }
 };
 
 const goToJob = (jobName: string) => {
@@ -373,15 +362,18 @@ const goToJob = (jobName: string) => {
 };
 
 let isFilterResetting = false;
+const isInitializing = ref(true);
+let isActive = false;
 
 // A filter change goes back to the first page and invalidates the status counts, a page change needs neither
 watch([queryString, selectedStatus, selectedJobName, selectedUsername], async () => {
+  if(isInitializing.value) return;
   if (pageIndex.value !== 0) {
     // The page reset triggers the pageIndex watcher, which must not fire a second fetch for the same filters
     isFilterResetting = true;
     pageIndex.value = 0;
   }
-  await Promise.all([loadRuns(), loadStats()]);
+  await loadRuns(true);
 });
 
 watch(pageIndex, async () => {
@@ -393,14 +385,25 @@ watch(pageIndex, async () => {
 });
 
 onIonViewWillEnter(async () => {
+  isInitializing.value = true;
+  isActive = true;
+  const route = router.currentRoute.value;
   if (route.query.queryString) queryString.value = route.query.queryString as string;
   if (route.query.status) selectedStatus.value = route.query.status as string;
   if (route.query.jobName) selectedJobName.value = route.query.jobName as string;
   if (route.query.username) selectedUsername.value = route.query.username as string;
 
-  // Only needed to populate the Job filter options
+  // Only needed to populate the Job filter options. Flush route filters before enabling their watcher.
+  await nextTick();
   await jobStore.fetchJobs();
-  await Promise.all([loadRuns(), loadStats()]);
+  if(!isActive) return;
+  isInitializing.value = false;
+  await loadRuns(true);
+});
+onIonViewDidLeave(() => {
+  isActive = false;
+  currentLoad++;
+  jobStore.cancelJobRunHistory();
 });
 </script>
 
@@ -421,7 +424,10 @@ onIonViewWillEnter(async () => {
   margin: 0;
 }
 
-.pagination {
+.pagination,
+.run-summary,
+.run-actions,
+.log-actions {
   display: flex;
   align-items: center;
   gap: var(--spacer-sm);
@@ -442,6 +448,11 @@ onIonViewWillEnter(async () => {
   --inner-padding-end: 0;
 }
 
+.run-summary,
+.run-actions {
+  margin-block-start: var(--spacer-base);
+}
+
 .accordion-content {
   padding: var(--spacer-base);
 }
@@ -449,6 +460,10 @@ onIonViewWillEnter(async () => {
 .accordion-content pre {
   overflow: auto;
   white-space: pre-wrap;
+}
+
+.job-filter ion-select {
+  min-width: 0;
 }
 
 .loading-state,

@@ -138,11 +138,12 @@ import {
 import { computed, reactive, ref, watch } from "vue";
 import router from "../router";
 
-import { translate } from "@common";
+import { commonUtil, translate } from "@common";
 
 import SystemMessageList from "@/components/SystemMessageList.vue";
 import { useSystemMessageStore } from "@/store/systemMessage";
 import { showToast } from "@/utils";
+import logger from "@/logger";
 import { useUtilStore } from "@/store/util";
 import { useUserStore } from "@/store/user";
 import { caretBackOutline, caretForwardOutline } from "ionicons/icons";
@@ -224,7 +225,9 @@ const saveType = async () => {
 
   const result = await store.saveSystemMessageType(payload);
   if (result.error) {
-    await showToast(translate("Failed to save message type."));
+    const serverError = commonUtil.getErrorMessage(result.error);
+    logger.error(result.error);
+    await showToast(`${translate("Failed to save message type.")} ${serverError}`);
     return;
   }
 
@@ -238,7 +241,9 @@ const saveType = async () => {
 const deleteType = async () => {
   const result = await store.deleteSystemMessageType(props.id);
   if (result.error) {
-    await showToast(translate("This message type cannot be deleted while messages still reference it."));
+    const serverError = commonUtil.getErrorMessage(result.error);
+    logger.error(result.error);
+    await showToast(`${translate("This message type cannot be deleted while messages still reference it.")} ${serverError}`);
     return;
   }
 

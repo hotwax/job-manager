@@ -5,9 +5,13 @@ import {
   buildDataDocumentExportPayload,
   buildDataDocumentPreviewPayload,
   deriveDataDocumentId,
+  getConditionOperatorsForFieldType,
+  normalizeDataDocumentOperator,
   projectDataDocumentGraph,
   serializeGraphConditions,
-  serializeGraphFields
+  serializeGraphFields,
+  toApiFieldAlias,
+  toStoredFieldAlias
 } from "../utils/dataDocumentGraph";
 
 const document = {
@@ -312,6 +316,33 @@ describe("data document graph projection", () => {
       format: "json"
     });
   });
+
+  it("stably sorts without changing duplicate or non-standard sequence numbers on projection", () => {
+    const graph = projectDataDocumentGraph({
+      document,
+      fields: [
+        { dataDocumentId: "PicklistRole", fieldSeqId: "1", fieldPath: "statusId", sequenceNum: 25 },
+        { dataDocumentId: "PicklistRole", fieldSeqId: "2", fieldPath: "picklistId", sequenceNum: 10 },
+        { dataDocumentId: "PicklistRole", fieldSeqId: "3", fieldPath: "description", sequenceNum: 10 }
+      ]
+    });
+
+    // fieldSeqId '2' (10) and '3' (10) should sort before '1' (25)
+    // Stable sort should keep '2' before '3'
+    // Projection must preserve the backend values, including duplicates.
+    expect(graph.fields).toHaveLength(3);
+    expect(graph.fields[0].fieldSeqId).toBe("2");
+    expect(graph.fields[0].sequenceNum).toBe(10);
+    expect(graph.fields[0].sourceRecord?.sequenceNum).toBe(10);
+
+    expect(graph.fields[1].fieldSeqId).toBe("3");
+    expect(graph.fields[1].sequenceNum).toBe(10);
+    expect(graph.fields[1].sourceRecord?.sequenceNum).toBe(10);
+
+    expect(graph.fields[2].fieldSeqId).toBe("1");
+    expect(graph.fields[2].sequenceNum).toBe(25);
+    expect(graph.fields[2].sourceRecord?.sequenceNum).toBe(25);
+  });
 });
 
 describe("data document id length", () => {
@@ -346,5 +377,46 @@ describe("data document id length", () => {
 
     expect(graph.validationIssues.some((issue) => issue.code === "missing_document_id")).toBe(true);
     expect(graph.validationIssues.some((issue) => issue.code === "data_document_id_too_long")).toBe(false);
+  });
+});
+
+describe("backend condition and alias contracts", () => {
+  it.each([
+    ["shippingRevenue", "shipping_Revenue", "shippingRevenue"],
+    ["productStoreID", "product_Store_I_D", "productStoreID"],
+    ["OrderId", "_Order_Id", "OrderId"],
+    ["order_id", "order_id", "orderId"],
+    ["ship rev", "ship rev", "shipRev"],
+    ["", "", ""]
+  ])("preserves the API alias contract for %s", (alias, sent, stored) => {
+    expect(toApiFieldAlias(alias)).toBe(sent);
+    expect(toStoredFieldAlias(alias)).toBe(stored);
+  });
+
+  it.each(["id", "text-medium", "date-time", "number-decimal", undefined])(
+    "limits operators to those the backend can run on %s", (type) => {
+      const scalar = ["equals", "not-equals", "is-null", "is-not-null", "greater", "greater-equals", "less", "less-equals"];
+      const expected = type === "id" || type === "text-medium" ? [...scalar, "like", "in"] : scalar;
+      expect(getConditionOperatorsForFieldType(type).map(({ value }) => value).sort()).toEqual(expected.sort());
+    }
+  );
+
+  it.each([
+    ["contains", undefined, true],
+    ["starts-with", undefined, true],
+    ["empty", undefined, true],
+    ["not-empty", undefined, true],
+    ["in-list", undefined, false],
+    ["greater-than", undefined, false],
+    ["is-not-null", undefined, false],
+    [undefined, undefined, false],
+    ["contains", "Y", false]
+  ])("validates saved operator %s with postQuery=%s", (operator, postQuery, invalid) => {
+    const graph = projectDataDocumentGraph({
+      document,
+      fields: [{ fieldSeqId: "01", fieldPath: "roleTypeId", fieldNameAlias: "roleTypeId" }],
+      conditions: [{ conditionSeqId: "01", fieldNameAlias: "roleTypeId", operator, postQuery, fieldValue: "1" }]
+    });
+    expect(graph.validationIssues.some(({ code }) => code === "unsupported_condition_operator")).toBe(invalid);
   });
 });

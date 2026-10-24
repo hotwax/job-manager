@@ -15,7 +15,7 @@ vi.mock("@common", () => ({
     getOmsURL: () => "",
     getToken: () => "",
     getTokenExpiration: () => "",
-    hasError: () => false,
+    hasError: (resp: any) => !!resp?.data?.errors,
     isAppEmbedded: () => false,
     isMoqui: () => true,
     showToast: vi.fn()
@@ -327,5 +327,109 @@ describe("user store shop remotes", () => {
 
     expect(userStore.getSelectedSystemMessageRemoteId).toBe("ShopARemote");
     expect(userStore.getShopSystemMessageRemoteIds).toEqual(["ShopARemote", "ShopBRemote"]);
+  });
+});
+
+
+describe("run history failure and request ownership", () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    apiMock.mockReset();
+    useJobStore().areServiceProductsFetched = true;
+  });
+
+  it("distinguishes an unavailable API from a successful empty result and recovers on retry", async () => {
+    const store = useJobStore();
+    apiMock.mockRejectedValueOnce({ response: { status: 404 } });
+    expect(await store.fetchJobRunHistory()).toBe(false);
+    expect(store.jobRunHistoryError).toContain("unavailable on this server");
+    expect(store.jobRunHistoryLoading).toBe(false);
+    apiMock.mockResolvedValueOnce({ data: { jobRunList: [], jobRunCount: 0 } });
+    expect(await store.fetchJobRunHistory()).toBe(true);
+    expect(store.jobRunHistoryError).toBe("");
+    expect(store.getJobRunHistoryTotal).toBe(0);
+  });
+
+  it.each([
+    { data: { errors: "Denied", jobRunList: [], jobRunCount: 0 } },
+    { data: {} },
+    { data: { jobRunList: [], jobRunCount: -1 } },
+    { data: { jobRunList: "invalid", jobRunCount: 1 } }
+  ])("rejects error or malformed success envelopes instead of showing empty results", async response => {
+    apiMock.mockResolvedValue(response);
+    const store = useJobStore();
+    expect(await store.fetchJobRunHistory()).toBe(false);
+    expect(store.jobRunHistoryError).toBe("Unable to load run history. Try again.");
+  });
+
+  it.each([false, true])("ignores a stale list completion, including failures (%s)", async staleFailure => {
+    const store = useJobStore();
+    const pending: any[] = [];
+    apiMock.mockImplementation(() => new Promise((resolve, reject) => pending.push({ resolve, reject })));
+    const first = store.fetchJobRunHistory({ queryString: "old" });
+    await vi.waitFor(() => expect(pending).toHaveLength(1));
+    const second = store.fetchJobRunHistory({ queryString: "new" });
+    await vi.waitFor(() => expect(pending).toHaveLength(2));
+    pending[1].resolve({ data: { jobRunList: [{ jobRunId: "new", status: "FAILED" }], jobRunCount: 1 } });
+    await second;
+    if(staleFailure) pending[0].reject(new Error("old failure"));
+    else pending[0].resolve({ data: { jobRunList: [{ jobRunId: "old" }], jobRunCount: 99 } });
+    await first;
+    expect(store.getJobRunHistory.map((run: any) => run.jobRunId)).toEqual(["new"]);
+    expect(store.getJobRunHistoryTotal).toBe(1);
+    expect(store.jobRunHistoryError).toBe("");
+    expect(store.jobRunHistoryLoading).toBe(false);
+  });
+
+  it("does not let a stale failure clear the loading state of a newer request", async () => {
+    const store = useJobStore();
+    let rejectOld: any;
+    let resolveNew: any;
+    apiMock.mockImplementationOnce(() => new Promise((_resolve, reject) => { rejectOld = reject; }))
+      .mockImplementationOnce(() => new Promise(resolve => { resolveNew = resolve; }));
+    const old = store.fetchJobRunHistory();
+    await vi.waitFor(() => expect(rejectOld).toBeTypeOf("function"));
+    const recent = store.fetchJobRunHistory();
+    await vi.waitFor(() => expect(resolveNew).toBeTypeOf("function"));
+    rejectOld(new Error("old"));
+    await old;
+    expect(store.jobRunHistoryLoading).toBe(true);
+    resolveNew({ data: { jobRunList: [], jobRunCount: 0 } });
+    await recent;
+    expect(store.jobRunHistoryLoading).toBe(false);
+  });
+
+  it("keeps history loading independent of job-list loading", async () => {
+    const store = useJobStore();
+    store.loading = true;
+    apiMock.mockResolvedValue({ data: { jobRunList: [], jobRunCount: 0 } });
+    await store.fetchJobRunHistory();
+    expect(store.loading).toBe(true);
+    expect(store.jobRunHistoryLoading).toBe(false);
+  });
+
+  it("reports unavailable counts while retaining a successfully loaded page", async () => {
+    const store = useJobStore();
+    store.jobRunHistory = [{ jobRunId: "ok" }];
+    store.jobRunHistoryStats.total = 22;
+    apiMock.mockRejectedValue(new Error("offline"));
+    await store.fetchJobRunHistoryStats();
+    expect(store.jobRunStatsError).toBe("Unable to load run counts. Try again.");
+    expect(store.getJobRunHistory).toEqual([{ jobRunId: "ok" }]);
+    expect(store.getJobRunHistoryStats.total).toBe(22);
+    expect(store.jobRunStatsLoading).toBe(false);
+  });
+
+  it("invalidates pending counts when the filters change", async () => {
+    const store = useJobStore();
+    let resolveOld: any;
+    apiMock.mockImplementationOnce(() => new Promise(resolve => { resolveOld = resolve; }));
+    const old = store.fetchJobRunHistoryStats({ status: "FAILED" });
+    store.invalidateJobRunHistoryStats();
+    apiMock.mockResolvedValue({ data: { jobRunCount: 7 } });
+    await store.fetchJobRunHistoryStats({ status: "SUCCESSFUL" });
+    resolveOld({ data: { jobRunCount: 90 } });
+    await old;
+    expect(store.getJobRunHistoryStats).toEqual({ total: 0, successful: 7, failed: 0, running: 0 });
   });
 });

@@ -88,11 +88,12 @@ export const useUserStore = defineStore("user", {
         this.oms = cookieHelper().get("oms") || '';
         this.fetchStatus.profile = 'success'
       } catch(error: any) {
-        showToast(translate("Failed to fetch user profile information"));
-        console.error("error", error);
+        const serverError = commonUtil.getErrorMessage(error);
+        logger.error(error);
+        showToast(`${translate("Failed to fetch user profile information")}. ${serverError}`);
         useAuth().clearAuth();
-        this.fetchStatus.profile = 'error'
-        return Promise.reject(new Error(error));
+        this.fetchStatus.profile = 'error';
+        return Promise.reject(error);
       }
     },
     async fetchProductStores() {
@@ -318,9 +319,10 @@ export const useUserStore = defineStore("user", {
         showToast(translate("Time zone updated successfully"));
         return Promise.resolve(tzId)
       } catch(err) {
-        console.error('Error', err)
-        showToast(translate("Failed to update time zone"));
-        return Promise.reject('')
+        const serverError = commonUtil.getErrorMessage(err);
+        logger.error(err);
+        showToast(`${translate("Failed to update time zone")}. ${serverError}`);
+        return Promise.reject('');
       }
     },
     async fetchAvailableTimeZones() {
