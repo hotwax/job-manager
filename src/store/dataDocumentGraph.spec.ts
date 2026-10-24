@@ -316,6 +316,33 @@ describe("data document graph projection", () => {
       format: "json"
     });
   });
+
+  it("stably sorts without changing duplicate or non-standard sequence numbers on projection", () => {
+    const graph = projectDataDocumentGraph({
+      document,
+      fields: [
+        { dataDocumentId: "PicklistRole", fieldSeqId: "1", fieldPath: "statusId", sequenceNum: 25 },
+        { dataDocumentId: "PicklistRole", fieldSeqId: "2", fieldPath: "picklistId", sequenceNum: 10 },
+        { dataDocumentId: "PicklistRole", fieldSeqId: "3", fieldPath: "description", sequenceNum: 10 }
+      ]
+    });
+
+    // fieldSeqId '2' (10) and '3' (10) should sort before '1' (25)
+    // Stable sort should keep '2' before '3'
+    // Projection must preserve the backend values, including duplicates.
+    expect(graph.fields).toHaveLength(3);
+    expect(graph.fields[0].fieldSeqId).toBe("2");
+    expect(graph.fields[0].sequenceNum).toBe(10);
+    expect(graph.fields[0].sourceRecord?.sequenceNum).toBe(10);
+
+    expect(graph.fields[1].fieldSeqId).toBe("3");
+    expect(graph.fields[1].sequenceNum).toBe(10);
+    expect(graph.fields[1].sourceRecord?.sequenceNum).toBe(10);
+
+    expect(graph.fields[2].fieldSeqId).toBe("1");
+    expect(graph.fields[2].sequenceNum).toBe(25);
+    expect(graph.fields[2].sourceRecord?.sequenceNum).toBe(25);
+  });
 });
 
 describe("data document id length", () => {

@@ -255,6 +255,43 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
         links: this.links
       });
     },
+    reorderFields(oldIndex: number, newIndex: number) {
+      if (!this.graph || oldIndex === newIndex) return;
+      const fields = this.graph.fields;
+      if (!Number.isInteger(oldIndex) || !Number.isInteger(newIndex) ||
+          oldIndex < 0 || newIndex < 0 || oldIndex >= fields.length || newIndex >= fields.length) return;
+      const nodeId = fields[oldIndex].nodeId;
+      if (fields[newIndex].nodeId !== nodeId) return;
+
+      // Each reorder control contains one entity. Preserve the other entities' sequence slots.
+      const group = fields.filter(field => field.nodeId === nodeId);
+      const slots = group.map(field => field.sequenceNum);
+      const otherSequences = new Set(fields.filter(field => field.nodeId !== nodeId).map(field => Number(field.sequenceNum)));
+      const reuseSlots = slots.every(value => value !== undefined && value !== null && value !== "" && Number.isFinite(Number(value))) &&
+        new Set(slots.map(Number)).size === slots.length && slots.every(value => !otherSequences.has(Number(value)));
+      const from = group.indexOf(fields[oldIndex]);
+      const to = group.indexOf(fields[newIndex]);
+      group.splice(to, 0, group.splice(from, 1)[0]);
+      let nextSequence = 10;
+      const reordered = group.map((field, index) => {
+        while (otherSequences.has(nextSequence)) nextSequence += 10;
+        const sequenceNum = reuseSlots ? slots[index] : nextSequence;
+        nextSequence += 10;
+        return { ...field, sequenceNum };
+      });
+      let groupIndex = 0;
+      this.graph = projectDataDocumentGraph({
+        document: this.graph.metadata,
+        fields: serializeGraphFields({
+          dataDocumentId: this.graph.dataDocumentId,
+          fields: fields.map(field => field.nodeId === nodeId ? reordered[groupIndex++] : field)
+        }),
+        conditions: serializeGraphConditions(this.graph),
+        relAliases: this.relAliases,
+        links: this.links
+      });
+      return !reuseSlots;
+    },
     addField(nodeId: string, fieldName = "newField") {
       if (!this.graph) return;
       const node = this.graph.nodes.find((item) => item.nodeId === nodeId);
@@ -269,12 +306,13 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
         dataDocumentId: this.graph.dataDocumentId,
         // Empty until the server assigns one on save; mirrors how new conditions work.
         fieldSeqId: "",
+        localId: crypto.randomUUID(),
         fieldPath,
         fieldNameAlias: alias || (fieldPath ? fieldName : ""),
         defaultDisplay: "Y",
         sortable: "N",
         functionName: "",
-        sequenceNum: (this.graph.fields.length + 1) * 10,
+        sequenceNum: Math.max(0, ...this.graph.fields.map(field => Number(field.sequenceNum)).filter(Number.isFinite)) + 10,
         isNew: true
       };
       this.graph = projectDataDocumentGraph({
@@ -284,7 +322,7 @@ export const useDataDocumentGraphStore = defineStore("dataDocumentGraph", {
         relAliases: this.relAliases,
         links: this.links
       });
-      return field;
+      return this.graph.fields.find(item => item.localId === field.localId);
     },
     removeField(fieldSeqIdOrPath: string) {
       if (!this.graph) return;

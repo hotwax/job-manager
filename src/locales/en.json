@@ -1,4 +1,6 @@
 {
+  "Reorder field": "Reorder field",
+  "Duplicate or missing sequence numbers were adjusted for the reordered entity.": "Duplicate or missing sequence numbers were adjusted for the reordered entity.",
   "1 operation": "1 operation",
   "A service called to add extra data to each document. It must implement add#ManualDocumentData.": "A service called to add extra data to each document. It must implement add#ManualDocumentData.",
   "A store represents a company or a unique catalog of products. If your OMS is connected to multiple eCommerce stores sellling different collections of products, you may have multiple Product Stores set up in HotWax Commerce.": "A store represents a company or a unique catalog of products. If your OMS is connected to multiple eCommerce stores sellling different collections of products, you may have multiple Product Stores set up in HotWax Commerce.",

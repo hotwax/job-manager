@@ -17,47 +17,50 @@
           </ion-buttons>
         </ion-card-header>
         <ion-list>
-          <div
-            v-for="field in group.fields"
-            :key="field.fieldSeqId || field.fieldPath"
-            class="field-row"
-          >
-            <ion-input
-              class="field-alias"
-              :value="field.fieldNameAlias"
-              :label="field.fieldName || field.fieldPath"
-              :placeholder="translate('Alias')"
-              label-placement="stacked"
-              fill="outline"
-              @ionInput="updateField(field, { fieldNameAlias: $event.detail.value || '' })"
-            />
-            <ion-input
-              class="field-sequence"
-              :value="field.sequenceNum"
-              type="number"
-              :label="translate('Sequence')"
-              label-placement="floating"
-              fill="outline"
-              @ionInput="updateField(field, { sequenceNum: Number($event.detail.value || 0) })"
-            />
-            <ion-button
-              fill="clear"
-              :color="isFieldDisplayed(field) ? undefined : 'medium'"
-              :aria-label="isFieldDisplayed(field) ? translate('Hide from output') : translate('Show in output')"
-              @click="updateField(field, { defaultDisplay: isFieldDisplayed(field) ? 'N' : 'Y' })"
+          <ion-reorder-group :disabled="false" data-testid="field-reorder-group" @ionItemReorder="handleReorder(group, $event)">
+            <div
+              v-for="field in group.fields"
+              :key="field.localId || field.fieldSeqId || field.fieldPath"
+              class="field-row"
             >
-              <ion-icon slot="icon-only" :icon="isFieldDisplayed(field) ? eyeOutline : eyeOffOutline" />
-            </ion-button>
-            <ion-button
-              class="field-remove-button"
-              fill="clear"
-              color="danger"
-              :aria-label="translate('Remove field')"
-              @click="graphStore.removeField(field.fieldSeqId || field.fieldPath)"
-            >
-              <ion-icon slot="icon-only" :icon="trashOutline" />
-            </ion-button>
-          </div>
+              <ion-input
+                class="field-alias"
+                :value="field.fieldNameAlias"
+                :label="field.fieldName || field.fieldPath"
+                :placeholder="translate('Alias')"
+                label-placement="stacked"
+                fill="outline"
+                @ionInput="updateField(field, { fieldNameAlias: $event.detail.value || '' })"
+              />
+              <ion-input
+                class="field-sequence"
+                :value="field.sequenceNum"
+                type="number"
+                :label="translate('Sequence')"
+                label-placement="floating"
+                fill="outline"
+                readonly
+              />
+              <ion-button
+                fill="clear"
+                :color="isFieldDisplayed(field) ? undefined : 'medium'"
+                :aria-label="isFieldDisplayed(field) ? translate('Hide from output') : translate('Show in output')"
+                @click="updateField(field, { defaultDisplay: isFieldDisplayed(field) ? 'N' : 'Y' })"
+              >
+                <ion-icon slot="icon-only" :icon="isFieldDisplayed(field) ? eyeOutline : eyeOffOutline" />
+              </ion-button>
+              <ion-button
+                class="field-remove-button"
+                fill="clear"
+                color="danger"
+                :aria-label="translate('Remove field')"
+                @click="graphStore.removeField(field.fieldSeqId || field.fieldPath)"
+              >
+                <ion-icon slot="icon-only" :icon="trashOutline" />
+              </ion-button>
+              <ion-reorder :aria-label="translate('Reorder field')" data-testid="field-reorder-handle" />
+            </div>
+          </ion-reorder-group>
         </ion-list>
       </ion-card>
 
@@ -313,6 +316,8 @@ import {
   IonModal,
   IonRadio,
   IonRadioGroup,
+  IonReorder,
+  IonReorderGroup,
   IonSearchbar,
   IonSelect,
   IonSelectOption,
@@ -323,7 +328,8 @@ import {
 import { addOutline, arrowBackOutline, chevronForwardOutline, closeOutline, eyeOffOutline, eyeOutline, gitBranchOutline, refreshOutline, trashOutline } from "ionicons/icons";
 import { computed, ref, watch } from "vue";
 
-import { translate } from "@common";
+import { commonUtil, translate } from "@common";
+import type { GraphField } from "@/utils/dataDocumentGraph";
 import DataDocumentFieldPicker from "@/components/DataDocumentFieldPicker.vue";
 import { useDataDocumentGraphStore } from "@/store/dataDocumentGraph";
 import { useUtilStore } from "@/store/util";
@@ -648,6 +654,18 @@ const isFieldDisplayed = (field: any) => field.defaultDisplay !== "N";
 
 const updateField = (field: any, patch: any) => {
   graphStore.updateField(field.fieldSeqId, field.fieldPath, patch);
+};
+
+const handleReorder = (group: { fields: GraphField[] }, event: CustomEvent) => {
+  const { from, to, complete } = event.detail;
+  const fields = graph.value?.fields || [];
+  const oldIndex = fields.indexOf(group.fields[from]);
+  const newIndex = fields.indexOf(group.fields[to]);
+  // Vue renders the reordered data. Ionic must not also move the DOM nodes.
+  complete(false);
+  if (graphStore.reorderFields(oldIndex, newIndex)) {
+    commonUtil.showToast(translate("Duplicate or missing sequence numbers were adjusted for the reordered entity."));
+  }
 };
 
 const updateCondition = (condition: any, patch: any) => {
