@@ -9,17 +9,14 @@
   <div class="filter-grid">
     <div class="filter-item">
       <ion-select
-        :label="translate('Status')"
+        :label="translate(statusLabel)"
         label-placement="stacked"
         interface="popover"
         :value="status"
         @ionChange="$emit('update:status', $event.detail.value)"
       >
         <ion-select-option value="">{{ translate("All") }}</ion-select-option>
-        <ion-select-option value="RUNNING">{{ translate("Running") }}</ion-select-option>
-        <ion-select-option value="SUCCESSFUL">{{ translate("Successful") }}</ion-select-option>
-        <ion-select-option value="FAILED">{{ translate("Failed") }}</ion-select-option>
-        <ion-select-option value="TERMINATED">{{ translate("Terminated") }}</ion-select-option>
+        <ion-select-option v-for="option in statusOptions" :key="option.value" :value="option.value">{{ translate(option.label) }}</ion-select-option>
       </ion-select>
       <ion-button v-if="status" fill="clear" class="clear-filter-btn" @click="$emit('update:status', '')" :title="translate('Clear')">
         <ion-icon slot="icon-only" :icon="closeCircleOutline" />
@@ -35,7 +32,7 @@
         :label="translate('User')"
         label-placement="stacked"
         fill="outline"
-        :placeholder="translate('Any user')"
+        :placeholder="userPlaceholder || translate('Any user')"
         :debounce="300"
         @ionInput="$emit('update:userId', ($event as any).detail.value || '')"
       />
@@ -44,7 +41,7 @@
       </ion-button>
     </div>
 
-    <div class="filter-item">
+    <div v-if="showDataLogs" class="filter-item">
       <ion-select
         :label="translate('Data logs')"
         label-placement="stacked"
@@ -79,9 +76,18 @@ import { translate } from "@common";
 const props = defineProps({
   queryString: { type: String, default: "" },
   status: { type: String, default: "" },
+  statusLabel: { type: String, default: "Status" },
+  statusOptions: { type: Array as () => Array<{ value: string; label: string }>, default: () => [
+    { value: "RUNNING", label: "Running" },
+    { value: "SUCCESSFUL", label: "Successful" },
+    { value: "FAILED", label: "Failed" },
+    { value: "TERMINATED", label: "Terminated" }
+  ] },
   userId: { type: String, default: "" },
   hasDataLogs: { type: String, default: "" },
-  placeholder: { type: String, default: "" }
+  placeholder: { type: String, default: "" },
+  userPlaceholder: { type: String, default: "" },
+  showDataLogs: { type: Boolean, default: true }
 });
 
 defineEmits(["update:queryString", "update:status", "update:userId", "update:hasDataLogs"]);

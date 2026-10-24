@@ -11,29 +11,30 @@
 
     <ion-content>
       <main>
+        <p>{{ translate("History includes all stores. Newest activity first.") }}</p>
         <div class="kpi-grid">
           <ion-card>
             <ion-card-header>
               <ion-card-subtitle>{{ translate("Total runs") }}</ion-card-subtitle>
-              <ion-card-title><AnimatedNumber :value="stats.total" /></ion-card-title>
+              <ion-card-title><span v-if="isLoading || historyError || total === null">—</span><AnimatedNumber v-else :value="stats.total" /></ion-card-title>
             </ion-card-header>
           </ion-card>
           <ion-card>
             <ion-card-header>
               <ion-card-subtitle>{{ translate("Successful") }}</ion-card-subtitle>
-              <ion-card-title><AnimatedNumber :value="stats.successful" /></ion-card-title>
+              <ion-card-title><span v-if="isLoading || historyError || statsLoading || statsError">—</span><AnimatedNumber v-else :value="stats.successful" /></ion-card-title>
             </ion-card-header>
           </ion-card>
           <ion-card>
             <ion-card-header>
               <ion-card-subtitle>{{ translate("Failed") }}</ion-card-subtitle>
-              <ion-card-title><AnimatedNumber :value="stats.failed" /></ion-card-title>
+              <ion-card-title><span v-if="isLoading || historyError || statsLoading || statsError">—</span><AnimatedNumber v-else :value="stats.failed" /></ion-card-title>
             </ion-card-header>
           </ion-card>
-          <ion-card>
+          <ion-card v-for="status in [{ key: 'running', label: 'Running' }, { key: 'terminated', label: 'Terminated' }]" :key="status.key">
             <ion-card-header>
-              <ion-card-subtitle>{{ translate("Running") }}</ion-card-subtitle>
-              <ion-card-title><AnimatedNumber :value="stats.running" /></ion-card-title>
+              <ion-card-subtitle>{{ translate(status.label) }}</ion-card-subtitle>
+              <ion-card-title><span v-if="isLoading || historyError || statsLoading || statsError">—</span><AnimatedNumber v-else :value="stats[status.key]" /></ion-card-title>
             </ion-card-header>
           </ion-card>
         </div>
@@ -44,37 +45,39 @@
               v-model:queryString="queryString"
               v-model:status="selectedStatus"
               v-model:userId="selectedUserId"
-              v-model:hasDataLogs="hasDataLogs"
+              :show-data-logs="false"
+              :placeholder="translate(searchField === 'jobRunId' ? 'Exact run ID' : 'Search selected field')"
+              :user-placeholder="translate('Exact user ID')"
             >
               <template #scope>
-              <div class="filter-item job-filter">
-                <ion-select
-                  :label="translate('Job')"
-                  label-placement="stacked"
-                  interface="popover"
-                  :value="selectedJobName"
-                  @ionChange="selectedJobName = $event.detail.value"
-                >
-                  <ion-select-option value="">{{ translate("All") }}</ion-select-option>
-                  <ion-select-option v-for="job in jobOptions" :key="job.jobName" :value="job.jobName">
-                    {{ job.jobName }}
-                  </ion-select-option>
-                </ion-select>
-                <ion-button v-if="selectedJobName" fill="clear" class="clear-filter-btn" @click="selectedJobName = ''" :title="translate('Clear')">
-                  <ion-icon slot="icon-only" :icon="closeCircleOutline" />
-                </ion-button>
-              </div>
+                <div class="filter-item">
+                  <ion-select :label="translate('Search field')" label-placement="stacked" interface="popover" :value="searchField" @ionChange="searchField = $event.detail.value">
+                    <ion-select-option value="jobRunId">{{ translate("Run ID") }}</ion-select-option>
+                    <ion-select-option value="messages">{{ translate("Message") }}</ion-select-option>
+                    <ion-select-option value="results">{{ translate("Results") }}</ion-select-option>
+                    <ion-select-option value="errors">{{ translate("Errors") }}</ion-select-option>
+                  </ion-select>
+                </div>
+                <div class="filter-item job-filter">
+                  <ion-input :label="translate('Job')" label-placement="stacked" fill="outline" :placeholder="translate('Exact job name')" :value="selectedJobName" :debounce="300" @ionInput="selectedJobName = $event.detail.value || ''" />
+                  <ion-button v-if="selectedJobName" fill="clear" class="clear-filter-btn" @click="selectedJobName = ''" :title="translate('Clear')"><ion-icon slot="icon-only" :icon="closeCircleOutline" /></ion-button>
+                </div>
               </template>
             </JobRunFilters>
           </ion-card-content>
         </ion-card>
 
-        <div class="pagination">
+        <ion-item v-if="statsError && !historyError && !isLoading" lines="none" data-testid="run-history-counts-error">
+          <ion-label>{{ translate(statsError) }}</ion-label>
+          <ion-button slot="end" @click="loadRuns(true)">{{ translate("Retry") }}</ion-button>
+        </ion-item>
+
+        <div v-if="!historyError" class="pagination">
           <ion-button fill="outline" :disabled="pageIndex === 0 || isLoading" @click="goToPreviousPage">
             {{ translate("Previous") }}
           </ion-button>
-          <ion-note color="medium">{{ translate("Page") }} {{ pageIndex + 1 }} / {{ pageCount }}</ion-note>
-          <ion-button fill="outline" :disabled="pageIndex >= pageCount - 1 || isLoading" @click="goToNextPage">
+          <ion-note color="medium">{{ translate("Page") }} {{ pageIndex + 1 }}<template v-if="total !== null"> / {{ pageCount }}</template></ion-note>
+          <ion-button fill="outline" :disabled="!hasMore || isLoading" @click="goToNextPage">
             {{ translate("Next") }}
           </ion-button>
         </div>
@@ -84,6 +87,13 @@
           <p>{{ translate("Loading") }}</p>
         </div>
 
+        <ion-card v-else-if="historyError" data-testid="run-history-error" role="alert">
+          <ion-card-content>
+            <p>{{ translate(historyError) }}</p>
+            <ion-button @click="loadRuns(true)">{{ translate("Retry") }}</ion-button>
+          </ion-card-content>
+        </ion-card>
+
         <ion-list v-else-if="runs.length">
           <ion-card v-for="run in runs" :key="`${run.jobName}-${run.jobRunId}`" class="run-card" button @click="goToJob(run.jobName)">
             <ion-item lines="none">
@@ -91,7 +101,7 @@
               <ion-label class="ion-text-wrap">
                 <p class="overline">#{{ run.jobRunId }}</p>
                 <h2>{{ run.jobName }}</h2>
-                <p>{{ run.serviceName || translate("Service unavailable") }}</p>
+                <p v-if="run.serviceName">{{ run.serviceName }}</p>
                 <p v-if="getRunProductLabel(run)">{{ translate("Product") }}: {{ getRunProductLabel(run) }}</p>
               </ion-label>
               <ion-badge slot="end" :color="commonUtil.getStatusColor(run.runStatus)">
@@ -105,7 +115,7 @@
                   <ion-icon slot="start" :icon="playOutline" color="medium" />
                   <ion-label>
                     <p>{{ translate("Started") }}</p>
-                    {{ getRunDate(run.startTime || run.lastUpdatedStamp) }}
+                    {{ getRunDate(run.startTime) }}
                   </ion-label>
                 </ion-item>
                 <ion-item lines="none">
@@ -126,44 +136,19 @@
                   <ion-icon slot="start" :icon="personOutline" color="medium" />
                   <ion-label>
                     <p>{{ translate("User") }}</p>
-                    {{ getRunUserName(run.userId) }}
+                    {{ getRunUserName(run) }}
+                    <p v-if="run.userId && getRunUserName(run) !== run.userId">{{ run.userId }}</p>
                   </ion-label>
                 </ion-item>
               </div>
 
-              <div class="run-summary">
-                <ion-chip v-if="run.logs?.length" outline>
-                  <ion-icon :icon="documentTextOutline" />
-                  <ion-label>{{ run.logs.length }} {{ translate("data logs") }}</ion-label>
-                </ion-chip>
-              </div>
-
-              <ion-accordion-group v-if="run.messages || hasResults(run) || run.errors || run.parameters || run.logs?.length" @click.stop>
+              <ion-accordion-group v-if="run.messages || hasResults(run) || run.errors || run.parameters" @click.stop>
                 <ion-accordion v-if="run.messages" value="message">
                   <ion-item slot="header">
                     <ion-label>{{ translate("Message") }}</ion-label>
                   </ion-item>
                   <div slot="content" class="accordion-content">
                     <p>{{ run.messages }}</p>
-                  </div>
-                </ion-accordion>
-
-                <ion-accordion v-if="run.logs?.length" value="logs">
-                  <ion-item slot="header">
-                    <ion-label>{{ translate("Linked data logs") }}</ion-label>
-                  </ion-item>
-                  <div slot="content" class="accordion-content">
-                    <div class="log-actions">
-                      <ion-button
-                        v-for="log in run.logs"
-                        :key="log.logId"
-                        size="small"
-                        fill="outline"
-                        @click="goToLog(log.logId)"
-                      >
-                        {{ log.logId }}
-                      </ion-button>
-                    </div>
                   </div>
                 </ion-accordion>
 
@@ -217,7 +202,6 @@ import {
   IonCardHeader,
   IonCardSubtitle,
   IonCardTitle,
-  IonChip,
   IonContent,
   IonHeader,
   IonIcon,
@@ -228,24 +212,23 @@ import {
   IonMenuButton,
   IonNote,
   IonPage,
-  IonSearchbar,
   IonSelect,
   IonSelectOption,
   IonSpinner,
   IonTitle,
   IonToolbar,
+  onIonViewDidLeave,
   onIonViewWillEnter
 } from "@ionic/vue";
 import {
   alertCircleOutline,
   checkmarkCircleOutline,
   closeCircleOutline,
-  documentTextOutline,
   personOutline,
   playOutline,
   timeOutline
 } from "ionicons/icons";
-import { computed, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { commonUtil, translate } from "@common";
 import AnimatedNumber from "@/components/AnimatedNumber.vue";
 import JobRunFilters from "@/components/JobRunFilters.vue";
@@ -255,32 +238,42 @@ import { useUserStore } from "@/store/user";
 import { getDateAndTime, getTimeInMillis } from "@/utils";
 
 const PAGE_SIZE = 25;
-const RUNS_PER_JOB = 25;
 
-const route = router.currentRoute.value;
 const jobStore = useJobStore();
+const userStore = useUserStore();
 
 const queryString = ref("");
 const selectedStatus = ref("");
 const selectedJobName = ref("");
 const selectedUserId = ref("");
-const hasDataLogs = ref("");
+const searchField = ref("jobRunId");
 const pageIndex = ref(0);
 
-const userStore = useUserStore();
-
-const runs = computed(() => jobStore.getJobRunHistory);
+// Enrich only for display. Cached jobs may be store-scoped or absent for historical runs.
+const cachedJobs = computed(() => new Map(jobStore.getJobs.map((job: any) => [job.jobName, job])));
+const runs = computed(() => jobStore.getJobRunHistory.map((run: any) => {
+  const job = cachedJobs.value.get(run.jobName) as any;
+  return {
+    ...run,
+    serviceName: job?.serviceName,
+    instanceOfProductId: job?.instanceOfProductId,
+    productName: jobStore.getProducts[job?.instanceOfProductId]?.productName
+  };
+}));
 const total = computed(() => jobStore.getJobRunHistoryTotal);
 const stats = computed(() => jobStore.getJobRunHistoryStats);
-const jobs = computed(() => jobStore.getJobs);
-const isLoading = computed(() => jobStore.isLoading);
-const pageCount = computed(() => Math.max(Math.ceil(total.value / PAGE_SIZE), 1));
+const hasMore = computed(() => jobStore.jobRunHistoryHasMore);
+const isLoading = computed(() => isInitializing.value || jobStore.jobRunHistoryLoading);
+const historyError = computed(() => jobStore.jobRunHistoryError);
+const statsLoading = computed(() => !jobStore.jobRunStatsLoaded || jobStore.jobRunStatsLoading);
+const statsError = computed(() => jobStore.jobRunStatsError);
+const pageCount = computed(() => Math.max(Math.ceil((total.value || 0) / PAGE_SIZE), 1));
 
-const jobOptions = computed(() => {
-  return [...jobs.value].sort((first: any, second: any) => first.jobName.localeCompare(second.jobName));
-});
+// Ignore whitespace-only labels when selecting a display name.
+const firstNonBlank = (...values: Array<any>) =>
+  values.map((value: any) => String(value ?? "").trim()).find((value: string) => value) || "";
 
-const getRunProductLabel = (run: any) => run.productName || run.instanceOfProductId || "";
+const getRunProductLabel = (run: any) => firstNonBlank(run.productName, run.instanceOfProductId);
 
 const formatDuration = (milliseconds: number) => {
   if (!milliseconds || milliseconds < 0) return "-";
@@ -330,28 +323,39 @@ const getStatusIcon = (run: any) => {
 };
 
 
-let isFilterResetting = false;
-
-const loadRuns = async (isRefetch = true) => {
+// Filters are applied by the entity-list endpoint before paging.
+const getSearchPayload = () => {
   const payload = {
     pageIndex: pageIndex.value,
-    pageSize: PAGE_SIZE,
-    runsPerJob: RUNS_PER_JOB,
-    isRefetch
+    pageSize: PAGE_SIZE
   } as Record<string, any>;
 
   if (queryString.value.trim()) payload.queryString = queryString.value.trim();
   if (selectedStatus.value) payload.status = selectedStatus.value;
   if (selectedJobName.value) payload.jobName = selectedJobName.value;
   if (selectedUserId.value.trim()) payload.userId = selectedUserId.value.trim();
-  if (hasDataLogs.value) payload.hasDataLogs = hasDataLogs.value;
+  payload.searchField = searchField.value;
 
-  await jobStore.fetchJobRunHistory(payload);
-  await userStore.resolveUserFullNames(runs.value.map((run: any) => run.userId));
+  return payload;
 };
 
-// Show the resolved full name in run cards, falling back to the raw user id.
-const getRunUserName = (userId: string) => userStore.getUserFullName(userId) || userId || "-";
+let currentLoad = 0;
+const loadRuns = async (refreshStats = false) => {
+  const requestId = ++currentLoad;
+  const payload = getSearchPayload();
+  if(refreshStats) jobStore.invalidateJobRunHistoryStats();
+  const loaded = await jobStore.fetchJobRunHistory(payload);
+  if(loaded && requestId === currentLoad) {
+    // Resolve only the current page; the user store caches and deduplicates IDs.
+    void userStore.resolveUserFullNames(runs.value.map((run: any) => run.userId).filter(Boolean));
+  }
+  if(loaded && requestId === currentLoad && refreshStats) {
+    await jobStore.fetchJobRunHistoryStats(payload);
+  }
+};
+
+// The entity list supplies the initiating user ID.
+const getRunUserName = (run: any) => firstNonBlank(userStore.getUserFullName(run.userId), run.userId) || "-";
 
 const goToPreviousPage = () => {
   if (pageIndex.value > 0) {
@@ -360,7 +364,7 @@ const goToPreviousPage = () => {
 };
 
 const goToNextPage = () => {
-  if (pageIndex.value < pageCount.value - 1) {
+  if (hasMore.value && !isLoading.value) {
     pageIndex.value += 1;
   }
 };
@@ -369,12 +373,15 @@ const goToJob = (jobName: string) => {
   router.push({ name: "JobDetail", params: { jobName } });
 };
 
-const goToLog = (logId: string | number) => {
-  router.push({ name: "FileHistoryDetail", params: { id: logId } });
-};
+let isFilterResetting = false;
+const isInitializing = ref(true);
+let isActive = false;
 
-watch([queryString, selectedStatus, selectedJobName, selectedUserId, hasDataLogs], async () => {
+// A filter change goes back to the first page and invalidates the status counts, a page change needs neither
+watch([queryString, selectedStatus, selectedJobName, selectedUserId, searchField], async () => {
+  if(isInitializing.value) return;
   if (pageIndex.value !== 0) {
+    // The page reset triggers the pageIndex watcher, which must not fire a second fetch for the same filters
     isFilterResetting = true;
     pageIndex.value = 0;
   }
@@ -386,17 +393,28 @@ watch(pageIndex, async () => {
     isFilterResetting = false;
     return;
   }
-  await loadRuns(false);
+  await loadRuns();
 });
 
 onIonViewWillEnter(async () => {
+  isInitializing.value = true;
+  isActive = true;
+  const route = router.currentRoute.value;
   if (route.query.queryString) queryString.value = route.query.queryString as string;
-  if (route.query.status) selectedStatus.value = route.query.status as string;
+  if (["SUCCESSFUL", "FAILED", "RUNNING", "TERMINATED"].includes(String(route.query.status))) selectedStatus.value = route.query.status as string;
   if (route.query.jobName) selectedJobName.value = route.query.jobName as string;
   if (route.query.userId) selectedUserId.value = route.query.userId as string;
 
-  await jobStore.fetchJobs();
+  // Flush route filters before enabling their watcher.
+  await nextTick();
+  if(!isActive) return;
+  isInitializing.value = false;
   await loadRuns(true);
+});
+onIonViewDidLeave(() => {
+  isActive = false;
+  currentLoad++;
+  jobStore.cancelJobRunHistory();
 });
 </script>
 

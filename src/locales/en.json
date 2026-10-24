@@ -1,4 +1,14 @@
 {
+  "Run history is unavailable on this server. Contact your administrator.": "Run history is unavailable on this server. Contact your administrator.",
+  "Exact job name": "Exact job name",
+  "Run ID": "Run ID",
+  "Search field": "Search field",
+  "Exact user ID": "Exact user ID",
+  "Search selected field": "Search selected field",
+  "Exact run ID": "Exact run ID",
+  "History includes all stores. Newest activity first.": "History includes all stores. Newest activity first.",
+  "Unable to load run counts. Try again.": "Unable to load run counts. Try again.",
+  "Unable to load run history. Try again.": "Unable to load run history. Try again.",
   "Reorder field": "Reorder field",
   "Duplicate or missing sequence numbers were adjusted for the reordered entity.": "Duplicate or missing sequence numbers were adjusted for the reordered entity.",
   "1 operation": "1 operation",
@@ -758,5 +768,6 @@
   "Search by": "Search by",
   "Task name": "Task name",
   "Task ID": "Task ID",
-  "Search first name": "Search first name"
+  "Search first name": "Search first name",
+  "Without errors": "Without errors"
 }

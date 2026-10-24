@@ -1,55 +1,19 @@
 import logger from "@/logger";
-import { getCronString, getTimeInMillis } from "@/utils";
-import { filterJobRuns, getRunStatus } from "@/utils/jobRuns";
-import { api } from "@common";
+import { getCronString } from "@/utils";
+import { getRunStatus } from "@/utils/jobRuns";
+import { buildJobRunHistoryParams, readJobRunTotal } from "@/utils/jobRunHistory";
+import { api, commonUtil } from "@common";
 import { DateTime } from "luxon";
 import { defineStore } from "pinia";
 import { useUserStore } from "./user";
 
-const getRunTime = (run: any) => getTimeInMillis(run.startTime || run.lastUpdatedStamp || run.endTime);
-
-const getRunHistoryStats = (runs: Array<any>) => runs.reduce((stats: any, run: any) => {
-  stats.total += 1;
-  const statusKey = (run.runStatus || "").toLowerCase();
-  if (statusKey && stats[statusKey] !== undefined) {
-    stats[statusKey] += 1;
-  }
-  return stats;
-}, {
-  total: 0,
-  successful: 0,
+const JOB_RUN_STATUSES = ["SUCCESSFUL", "FAILED", "RUNNING", "TERMINATED"];
+const EMPTY_JOB_RUN_HISTORY_STATS = {
+  total: null as number | null,
   failed: 0,
+  successful: 0,
   running: 0,
   terminated: 0
-});
-
-const parseParameterPayload = (parameters: any) => {
-  if (!parameters) return parameters;
-  if (typeof parameters !== "string") return parameters;
-
-  try {
-    return JSON.parse(parameters);
-  } catch (err) {
-    return parameters;
-  }
-};
-
-const getProductStoreIdFromParameters = (parameters: any) => {
-  const parsedParameters = parseParameterPayload(parameters);
-
-  if (Array.isArray(parsedParameters)) {
-    const productStoreParameter = parsedParameters.find((parameter: any) =>
-      parameter?.parameterName === "productStoreId" || parameter?.productStoreId
-    );
-
-    return productStoreParameter?.parameterValue || productStoreParameter?.productStoreId || "";
-  }
-
-  if (parsedParameters && typeof parsedParameters === "object") {
-    return parsedParameters.productStoreId || "";
-  }
-
-  return "";
 };
 
 // Whether a job's filled-in dependency parameter ties it to a store other than the selected one.
@@ -77,15 +41,16 @@ export const useJobStore = defineStore("job", {
     categoryRollups: [] as Array<any>,
     products: {} as any,
     jobRunHistory: [] as Array<any>,
-    allJobRunHistory: [] as Array<any>,
-    jobRunHistoryTotal: 0,
-    jobRunHistoryStats: {
-      total: 0,
-      successful: 0,
-      failed: 0,
-      running: 0,
-      terminated: 0
-    },
+    jobRunHistoryTotal: null as number | null,
+    jobRunHistoryHasMore: false,
+    jobRunHistoryLoading: false,
+    jobRunHistoryError: "",
+    jobRunHistoryRequestId: 0,
+    jobRunStatsLoading: false,
+    jobRunStatsLoaded: false,
+    jobRunStatsError: "",
+    jobRunStatsRequestId: 0,
+    jobRunHistoryStats: { ...EMPTY_JOB_RUN_HISTORY_STATS },
     loading: false
   }),
   getters: {
@@ -326,102 +291,82 @@ export const useJobStore = defineStore("job", {
       }
       return Array.isArray(jobRuns) ? jobRuns : []
     },
+    invalidateJobRunHistoryStats() {
+      this.jobRunStatsRequestId++;
+      this.jobRunStatsLoading = false;
+      this.jobRunStatsLoaded = false;
+      this.jobRunStatsError = "";
+      this.jobRunHistoryStats = { ...EMPTY_JOB_RUN_HISTORY_STATS, total: this.jobRunHistoryTotal };
+    },
+    cancelJobRunHistory() {
+      this.jobRunHistoryRequestId++;
+      this.jobRunHistoryLoading = false;
+      this.invalidateJobRunHistoryStats();
+    },
     async fetchJobRunHistory(payload: Record<string, any> = {}) {
-      const isRefetch = payload.isRefetch ?? true;
-      const pageSize = Number(payload.pageSize ?? 25);
-      const pageIndex = Number(payload.pageIndex ?? 0);
-
-      if (!isRefetch && this.allJobRunHistory.length > 0) {
-        const start = pageIndex * pageSize;
-        this.jobRunHistory = this.allJobRunHistory.slice(start, start + pageSize);
-        return;
-      }
-
-      this.loading = true;
+      const requestId = ++this.jobRunHistoryRequestId;
+      const params = buildJobRunHistoryParams(payload);
+      this.jobRunHistoryLoading = true;
+      this.jobRunHistoryError = "";
+      this.jobRunHistory = [];
+      this.jobRunHistoryTotal = null;
+      this.jobRunHistoryHasMore = false;
+      this.jobRunHistoryStats.total = 0;
       try {
-        if (!this.jobs.length) await this.fetchJobs();
-
-        const runsPerJob = Number(payload.runsPerJob ?? 25);
-        const queryString = (payload.queryString || "").trim().toLowerCase();
-        const selectedJobName = payload.jobName || "";
-        const selectedUserId = payload.userId || "";
-        const selectedStatus = payload.status || "";
-        const hasDataLogs = payload.hasDataLogs || "";
-        const hasMessages = payload.hasMessages || "";
-        const hasErrors = payload.hasError || "";
-        const selectedProductStoreId = useUserStore().getCurrentProductStore?.productStoreId || "";
-
-        let jobsToLoad = selectedJobName
-          ? this.jobs.filter((job: any) => job.jobName === selectedJobName)
-          : this.jobs;
-
-        const productIds = [...new Set(jobsToLoad.map((job: any) => job.instanceOfProductId).filter(Boolean))] as string[];
-        await Promise.all(productIds
-          .filter((productId: string) => !this.products[productId])
-          .map((productId: string) => this.fetchProductDetail(productId))
-        );
-
-        const runResponses = await Promise.allSettled(
-          jobsToLoad.map(async (job: any) => {
-            const params = { pageSize: runsPerJob, pageIndex: 0 } as any;
-            if (hasErrors === "Y") params.hasError = "Y";
-            const runs = await this.fetchJobRuns(job.jobName, params);
-            return runs.map((run: any) => ({
-              ...run,
-              jobName: job.jobName,
-              serviceName: job.serviceName,
-              jobDescription: job.description,
-              systemJobEnumId: job.systemJobEnumId,
-              instanceOfProductId: job.instanceOfProductId,
-              jobProductStoreId: getProductStoreIdFromParameters(job.serviceJobParameters),
-              productName: this.products[job.instanceOfProductId]?.productName,
-              paused: job.paused,
-              cronExpression: job.cronExpression,
-              runStatus: getRunStatus(run)
-            }));
-          })
-        );
-
-        let runs = runResponses.flatMap((result: any) => result.status === "fulfilled" ? result.value : []);
-
-        if (selectedProductStoreId) {
-          runs = runs.filter((run: any) => {
-            const runProductStoreId = getProductStoreIdFromParameters(run.parameters) || run.jobProductStoreId;
-            return !runProductStoreId || runProductStoreId === selectedProductStoreId;
-          });
+        const resp = await api({ url: "admin/serviceJobs/runs", method: "GET", params });
+        if(requestId !== this.jobRunHistoryRequestId) return false;
+        if(commonUtil.hasError(resp) || !Array.isArray(resp.data)) {
+          throw new Error("Invalid job run list response");
         }
-
-        runs = filterJobRuns(runs, {
-          queryString,
-          status: selectedStatus,
-          userId: selectedUserId,
-          hasError: hasErrors,
-          hasDataLogs,
-          hasMessages
-        });
-
-        runs = runs.sort((first: any, second: any) => getRunTime(second) - getRunTime(first));
-
-        this.allJobRunHistory = runs;
-        this.jobRunHistoryTotal = runs.length;
-        this.jobRunHistoryStats = getRunHistoryStats(runs);
-
-        const start = pageIndex * pageSize;
-        this.jobRunHistory = runs.slice(start, start + pageSize);
-      } catch(err) {
-        logger.error("Failed to fetch job run history", err);
-        this.allJobRunHistory = [];
-        this.jobRunHistory = [];
-        this.jobRunHistoryTotal = 0;
-        this.jobRunHistoryStats = {
-          total: 0,
-          successful: 0,
-          failed: 0,
-          running: 0,
-          terminated: 0
-        };
+        this.jobRunHistory = resp.data.map((run: any) => ({ ...run, runStatus: getRunStatus(run) }));
+        this.jobRunHistoryTotal = readJobRunTotal(resp.headers);
+        this.jobRunHistoryHasMore = this.jobRunHistoryTotal === null
+          ? resp.data.length === params.pageSize
+          : (params.pageIndex + 1) * params.pageSize < this.jobRunHistoryTotal;
+        this.jobRunHistoryStats.total = this.jobRunHistoryTotal;
+        return true;
+      } catch(err: any) {
+        if(requestId !== this.jobRunHistoryRequestId) return false;
+        logger.error("Job - Failed to fetch run history", err);
+        this.jobRunHistoryError = err?.response?.status === 404
+          ? "Run history is unavailable on this server. Contact your administrator."
+          : "Unable to load run history. Try again.";
+        return false;
       } finally {
-        this.loading = false;
+        if(requestId === this.jobRunHistoryRequestId) this.jobRunHistoryLoading = false;
+      }
+    },
+    async fetchJobRunHistoryStats(payload: Record<string, any> = {}) {
+      const requestId = ++this.jobRunStatsRequestId;
+      const selectedStatus = payload.status || "";
+      this.jobRunStatsLoading = true;
+      this.jobRunStatsError = "";
+      try {
+        const counts = await Promise.all(JOB_RUN_STATUSES.map(async (status: string) => {
+          if(selectedStatus && selectedStatus !== status) return 0;
+          const resp = await api({
+            url: "admin/serviceJobs/runs",
+            method: "GET",
+            params: buildJobRunHistoryParams({ ...payload, status, pageIndex: 0, pageSize: 1 })
+          });
+          const count = readJobRunTotal(resp.headers);
+          if(commonUtil.hasError(resp) || !Array.isArray(resp.data) || count === null) {
+            throw new Error("Invalid job run count response");
+          }
+          return count;
+        }));
+        if(requestId !== this.jobRunStatsRequestId) return;
+        this.jobRunHistoryStats = {
+          ...this.jobRunHistoryStats,
+          successful: counts[0], failed: counts[1], running: counts[2], terminated: counts[3]
+        };
+        this.jobRunStatsLoaded = true;
+      } catch(err) {
+        if(requestId !== this.jobRunStatsRequestId) return;
+        logger.error("Job - Failed to fetch run history stats", err);
+        this.jobRunStatsError = "Unable to load run counts. Try again.";
+      } finally {
+        if(requestId === this.jobRunStatsRequestId) this.jobRunStatsLoading = false;
       }
     },
     // ServiceJob create is the plain entity endpoint: it takes ServiceJob fields only,
