@@ -324,7 +324,7 @@ const refreshAll = async () => {
 }
 
 const appInfo = (import.meta.env.VITE_APP_VERSION_INFO ? JSON.parse(import.meta.env.VITE_APP_VERSION_INFO) : {}) as any;
-const appVersion = appInfo.branch ? (appInfo.branch + "-" + appInfo.revision) : appInfo.tag;
+const appVersion = appInfo.branch ? (appInfo.branch + "-" + appInfo.revision) : (appInfo.tag || `v${appInfo.version}`);
 const getDateTime = (time: any) => time ? DateTime.fromMillis(time).setZone(userStore.current.timeZone).toLocaleString(DateTime.DATETIME_MED) : DateTime.now();
 
 const refreshApp = () => {

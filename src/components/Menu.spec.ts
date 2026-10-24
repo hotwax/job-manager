@@ -3,6 +3,7 @@ import { createPinia, setActivePinia } from "pinia";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import Menu from "./Menu.vue";
 import { useUserStore } from "@/store/user";
+import { useUtilStore } from "@/store/util";
 
 const mocks = vi.hoisted(() => ({
   emit: vi.fn()
@@ -86,6 +87,15 @@ describe("Menu.vue product store switch", () => {
 
     return { userStore, footer };
   };
+
+  it("refreshes compatibility when a restored session belongs to another instance", async () => {
+    const utilStore = useUtilStore();
+    utilStore.systemInformationInstance = "https://previous-maarg.hotwax.io/rest/s1/";
+    utilStore.fetchSystemInformation = vi.fn().mockResolvedValue(undefined);
+    mountMenu();
+    await flushPromises();
+    expect(utilStore.fetchSystemInformation).toHaveBeenCalledOnce();
+  });
 
   it("ignores a change to the store that is already selected", async () => {
     const { userStore, footer } = mountMenu();

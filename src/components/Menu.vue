@@ -37,7 +37,7 @@
 
 <script setup lang="ts">
 import { IonContent, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenu, IonMenuToggle, IonTitle, IonToolbar } from "@ionic/vue";
-import { computed } from "vue";
+import { computed, onMounted } from "vue";
 import { checkboxOutline, albumsOutline, cloudDownloadOutline, cloudUploadOutline, documentTextOutline, fileTrayStackedOutline, gitNetworkOutline, globeOutline, layersOutline, openOutline, pulseOutline, settingsOutline, timeOutline } from "ionicons/icons";
 import { translate, commonUtil, DxpOmsInstanceFooter, emitter } from "@common";
 import { useAuth } from "@common/composables/useAuth";
@@ -48,6 +48,13 @@ import { useUtilStore } from "@/store/util";
 const { isAuthenticated } = useAuth();
 const userStore = useUserStore();
 const utilStore = useUtilStore();
+
+onMounted(() => {
+  // A restored session can predate the instance-scoped compatibility cache.
+  if(isAuthenticated.value && utilStore.systemInformationInstance !== commonUtil.getMaargURL()) {
+    utilStore.fetchSystemInformation();
+  }
+});
 
 const currentProductStore = computed(() => userStore.getCurrentProductStore)
 const userProfile = computed(() => userStore.getUserProfile)
