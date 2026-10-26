@@ -3,14 +3,20 @@ name: Deploy to Firebase Hosting on release
   push:
     tags:
       - '*'
+permissions:
+  contents: write
+  issues: write
+  actions: read
 jobs:
   call-workflow-in-another-repo:
-    uses: hotwax/accxui/.github/workflows/common-firebase-hosting-release.yml@main
+    uses: hotwax/accxui/.github/workflows/common-firebase-hosting-release.yml@0ec5646232d3f60897b5340c0ec3579764883de2
     with:
       config-path: .github/labeler.yml
       app: hotwax/job-manager
       appDir: job-manager
       accxuiVersion: v1.11.0
+      publishHostingInventory: true
+      hostingToolsRef: 0ec5646232d3f60897b5340c0ec3579764883de2
     secrets:
       envPAT: ${{ secrets.envPAT }}
       HOTWAX_PUBLIC_SECRET: ${{ secrets.HOTWAX_PUBLIC_SECRET }}
