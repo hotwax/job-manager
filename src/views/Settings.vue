@@ -4,6 +4,12 @@
       <ion-toolbar>
         <ion-menu-button slot="start" />
         <ion-title>{{ translate("Settings") }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button fill="clear" @click="openLogs()">
+            <ion-icon slot="start" :icon="documentTextOutline" />
+            {{ translate("View logs") }}
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
     
@@ -212,10 +218,10 @@
 </template>
 
 <script setup lang="ts">
-import { cookieHelper, commonUtil, translate } from "@common";
+import { cookieHelper, commonUtil, translate, DxpLogsModal } from "@common";
 import { useAuth, isMoquiOmsRef } from "@common/composables/useAuth";
-import { IonAvatar, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonContent, IonHeader, IonIcon, IonItem, IonMenuButton, IonPage, IonSelect, IonSelectOption, IonTitle, IonToolbar, IonModal, IonFab, IonFabButton, IonRadioGroup, IonSpinner, IonList, IonListHeader, IonRadio, IonSearchbar, IonLabel } from "@ionic/vue";
-import { closeOutline, openOutline, saveOutline, checkmarkCircle, closeCircle, syncOutline } from "ionicons/icons";
+import { IonAvatar, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonContent, IonHeader, IonIcon, IonItem, IonMenuButton, IonPage, IonSelect, IonSelectOption, IonTitle, IonToolbar, IonModal, IonFab, IonFabButton, IonRadioGroup, IonSpinner, IonList, IonListHeader, IonRadio, IonSearchbar, IonLabel, modalController } from "@ionic/vue";
+import { closeOutline, openOutline, saveOutline, checkmarkCircle, closeCircle, syncOutline, documentTextOutline } from "ionicons/icons";
 import { DateTime } from "luxon";
 import { computed, onBeforeMount, ref } from "vue";
 
@@ -431,6 +437,13 @@ function clearSearch() {
   queryString.value = ''
   filteredTimeZones.value = []
   isLoading.value = true
+}
+
+async function openLogs() {
+  const logsModal = await modalController.create({
+    component: DxpLogsModal
+  });
+  return logsModal.present();
 }
 
 
