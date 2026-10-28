@@ -9,14 +9,14 @@ permissions:
   actions: read
 jobs:
   call-workflow-in-another-repo:
-    uses: hotwax/accxui/.github/workflows/common-firebase-hosting-release.yml@0ec5646232d3f60897b5340c0ec3579764883de2
+    uses: hotwax/accxui/.github/workflows/common-firebase-hosting-release.yml@92be102c572348a905bc9efe2d231b83acf620d9
     with:
       config-path: .github/labeler.yml
       app: hotwax/job-manager
       appDir: job-manager
       accxuiVersion: v1.11.0
       publishHostingInventory: true
-      hostingToolsRef: 0ec5646232d3f60897b5340c0ec3579764883de2
+      hostingToolsRef: 92be102c572348a905bc9efe2d231b83acf620d9
     secrets:
       envPAT: ${{ secrets.envPAT }}
-      HOTWAX_PUBLIC_SECRET: ${{ secrets.HOTWAX_PUBLIC_SECRET }}
+      UAT_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.UAT_FIREBASE_SERVICE_ACCOUNT }}
