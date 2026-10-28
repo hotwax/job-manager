@@ -4,9 +4,10 @@ name: Deploy to Firebase Hosting on merge
     branches:
       - main
       - JUNE-15
+      - codex/app-hosting-actions
 jobs:
   call-workflow-in-another-repo:
-    uses: hotwax/accxui/.github/workflows/common-firebase-hosting-merge.yml@main
+    uses: hotwax/accxui/.github/workflows/common-firebase-hosting-merge.yml@codex/app-hosting-actions
     with:
       config-path: .github/labeler.yml
       app: hotwax/job-manager
