@@ -6,8 +6,10 @@
   "action": "replace",
   "version": "v3.5.0,v3.4.2",
   "actor": "ravilodhi",
-  "status": "running",
+  "status": "failed",
   "createdAt": "2026-10-29T10:48:27.409Z",
   "steps": [],
-  "runUrl": "https://github.com/hotwax/job-manager/actions/runs/40860406952"
+  "runUrl": "https://github.com/hotwax/job-manager/actions/runs/40860406952",
+  "error": "Live Hosting changed; review a new plan",
+  "finishedAt": "2026-10-29T10:48:34.310Z"
 }
