@@ -35,7 +35,7 @@ permissions:
 jobs:
   hosting:
     if: inputs.environment == 'uat'
-    uses: hotwax/accxui/.github/workflows/common-app-hosting.yml@92be102c572348a905bc9efe2d231b83acf620d9
+    uses: hotwax/accxui/.github/workflows/common-app-hosting.yml@cd8d14e65c670b06fc68d9d1c4fd2e3443a69775
     with:
       operation: ${{ inputs.operation }}
       environment: uat
@@ -44,5 +44,5 @@ jobs:
       version: ${{ inputs.version }}
       plan_sha: ${{ inputs.plan_sha }}
       confirmation: ${{ inputs.confirmation }}
-      tools_ref: 92be102c572348a905bc9efe2d231b83acf620d9
+      tools_ref: cd8d14e65c670b06fc68d9d1c4fd2e3443a69775
     secrets: inherit
