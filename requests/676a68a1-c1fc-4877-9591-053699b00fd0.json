@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "676a68a1-c1fc-4877-9591-053699b00fd0",
+  "operation": "plan",
+  "environment": "uat",
+  "action": "default",
+  "version": "v3.5.0",
+  "actor": "ravilodhi",
+  "status": "running",
+  "createdAt": "2026-10-29T12:35:20.408Z",
+  "steps": [],
+  "runUrl": "https://github.com/hotwax/job-manager/actions/runs/40874418253"
+}
