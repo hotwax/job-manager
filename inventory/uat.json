@@ -1,0 +1,20 @@
+{
+  "available": true,
+  "target": {
+    "project": "hotwax-digital-commerce",
+    "site": "job-manager-uat",
+    "environment": "uat",
+    "origin": "https://job-manager-uat.web.app"
+  },
+  "versions": [
+    "v3.5.0",
+    "v3.4.2"
+  ],
+  "defaultVersion": "v3.5.0",
+  "configuredEnvironment": "AppEnvUAT",
+  "defaultSource": "Hosting manifest",
+  "checkedAt": "2026-10-29T10:47:02.169Z",
+  "deployedAt": "2026-10-24T16:24:19.680Z",
+  "release": "sites/job-manager-uat/channels/live/releases/1792859059680000",
+  "fileCount": 144
+}
