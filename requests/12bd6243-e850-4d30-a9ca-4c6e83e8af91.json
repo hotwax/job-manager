@@ -6,8 +6,100 @@
   "action": "replace",
   "version": "v3.5.0,v3.4.2",
   "actor": "ravilodhi",
-  "status": "running",
+  "status": "completed",
   "createdAt": "2026-10-29T10:55:21.266Z",
   "steps": [],
-  "runUrl": "https://github.com/hotwax/job-manager/actions/runs/40861292615"
+  "runUrl": "https://github.com/hotwax/job-manager/actions/runs/40861292615",
+  "plan": {
+    "schemaVersion": 1,
+    "id": "12bd6243-e850-4d30-a9ca-4c6e83e8af91",
+    "repo": "hotwax/job-manager",
+    "actor": "ravilodhi",
+    "toolsSha": "bdd40fddddd9c2d28b90baaf0dfa225cf1c3f485",
+    "action": "replace",
+    "environment": "uat",
+    "version": "v3.5.0,v3.4.2",
+    "targetDefault": "v3.5.0",
+    "build": [
+      "v3.5.0",
+      "v3.4.2"
+    ],
+    "added": [],
+    "replaced": [
+      "v3.5.0",
+      "v3.4.2"
+    ],
+    "removed": [],
+    "retained": [
+      "v3.5.0",
+      "v3.4.2"
+    ],
+    "previousDefault": "v3.5.0",
+    "nextDefault": "v3.5.0",
+    "rootChanges": true,
+    "confirmation": null,
+    "app": {
+      "id": "job-manager",
+      "repo": "hotwax/job-manager",
+      "name": "job-manager"
+    },
+    "target": {
+      "project": "hotwax-digital-commerce",
+      "site": "job-manager-uat",
+      "environment": "uat",
+      "origin": "https://job-manager-uat.web.app"
+    },
+    "baseFingerprint": "05e8c02220026fd01be013e30bace7f3771352524538375b93dd83a5a0299472",
+    "baseRelease": "sites/job-manager-uat/channels/live/releases/1792859059680000",
+    "sources": [
+      {
+        "version": "v3.5.0",
+        "appCommit": "50c703203571a0251a2f5a220a114ae3d3aeb437",
+        "frameworkCommit": "28a931242fad13def670e778e619ad2a5ac7adff",
+        "frameworkPin": "v1.11.0",
+        "appId": "JOB_MANAGER",
+        "config": {
+          "appId": "JOB_MANAGER",
+          "environmentTypeId": "AppEnvDev",
+          "buildVersion": ""
+        }
+      },
+      {
+        "version": "v3.4.2",
+        "appCommit": "205f34482eed65c1977170be2cd5326e09d96cb5",
+        "frameworkCommit": "13f9c2f19c5bd4ca2549df46a15668cb853b1c1b",
+        "frameworkPin": "v1.6.0",
+        "appId": "JOB_MANAGER",
+        "config": {
+          "appId": "JOB_MANAGER",
+          "environmentTypeId": "AppEnvDev",
+          "buildVersion": ""
+        }
+      }
+    ],
+    "sourceCommits": [
+      {
+        "version": "v3.5.0",
+        "appCommit": "50c703203571a0251a2f5a220a114ae3d3aeb437",
+        "frameworkCommit": "28a931242fad13def670e778e619ad2a5ac7adff",
+        "frameworkPin": "v1.11.0",
+        "appId": "JOB_MANAGER"
+      },
+      {
+        "version": "v3.4.2",
+        "appCommit": "205f34482eed65c1977170be2cd5326e09d96cb5",
+        "frameworkCommit": "13f9c2f19c5bd4ca2549df46a15668cb853b1c1b",
+        "frameworkPin": "v1.6.0",
+        "appId": "JOB_MANAGER"
+      }
+    ],
+    "createdAt": "2026-10-29T10:55:28.051Z",
+    "expiresAt": "2026-10-29T11:55:28.051Z",
+    "writable": true,
+    "warnings": [
+      "Users of the main URL receive v3.5.0. The site afterwards serves only v3.5.0, v3.4.2."
+    ],
+    "planSha": "3e2dbfff57c17e52ef549ac68f458a8d21bdcf39"
+  },
+  "finishedAt": "2026-10-29T10:55:31.077Z"
 }
