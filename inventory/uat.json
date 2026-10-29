@@ -10,11 +10,10 @@
     "v3.5.0",
     "v3.4.2"
   ],
-  "defaultVersion": null,
-  "configuredEnvironment": null,
-  "defaultSource": null,
-  "defaultError": "Public file differs from the active Hosting snapshot. Refresh before proceeding.",
-  "checkedAt": "2026-10-29T12:25:48.014Z",
+  "defaultVersion": "v3.4.2",
+  "configuredEnvironment": "AppEnvUAT",
+  "defaultSource": "Hosting manifest",
+  "checkedAt": "2026-10-29T12:28:27.341Z",
   "deployedAt": "2026-10-29T12:25:45.832Z",
   "release": "sites/job-manager-uat/channels/live/releases/1793276745832000",
   "fileCount": 193
