@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "id": "63b89fec-bc0b-4add-a8c4-c4744b6e1daa",
+  "repo": "hotwax/job-manager",
+  "actor": "ravilodhi",
+  "toolsSha": "3fde5fa8bc43455b813519cc638d66a4edf17a0c",
+  "action": "default",
+  "environment": "uat",
+  "version": "v3.4.2",
+  "targetDefault": null,
+  "build": [
+    "v3.4.2"
+  ],
+  "added": [],
+  "replaced": [],
+  "removed": [],
+  "retained": [
+    "v3.5.0",
+    "v3.4.2"
+  ],
+  "previousDefault": "v3.5.0",
+  "nextDefault": "v3.4.2",
+  "rootChanges": true,
+  "confirmation": null,
+  "app": {
+    "id": "job-manager",
+    "repo": "hotwax/job-manager",
+    "name": "job-manager"
+  },
+  "target": {
+    "project": "hotwax-digital-commerce",
+    "site": "job-manager-uat",
+    "environment": "uat",
+    "origin": "https://job-manager-uat.web.app"
+  },
+  "baseFingerprint": "f1e44a598e981db276169b12ebf00f36c930a5704e2b55bb1dea660d5d83eb01",
+  "baseRelease": "sites/job-manager-uat/channels/live/releases/1793273557890000",
+  "sources": [
+    {
+      "version": "v3.4.2",
+      "appCommit": "205f34482eed65c1977170be2cd5326e09d96cb5",
+      "frameworkCommit": "13f9c2f19c5bd4ca2549df46a15668cb853b1c1b",
+      "frameworkPin": "v1.6.0",
+      "appId": "JOB_MANAGER",
+      "config": {
+        "appId": "JOB_MANAGER",
+        "environmentTypeId": "AppEnvDev",
+        "buildVersion": ""
+      }
+    }
+  ],
+  "sourceCommits": [
+    {
+      "version": "v3.4.2",
+      "appCommit": "205f34482eed65c1977170be2cd5326e09d96cb5",
+      "frameworkCommit": "13f9c2f19c5bd4ca2549df46a15668cb853b1c1b",
+      "frameworkPin": "v1.6.0",
+      "appId": "JOB_MANAGER"
+    }
+  ],
+  "createdAt": "2026-10-29T12:22:53.346Z",
+  "expiresAt": "2026-10-29T13:22:53.346Z",
+  "writable": true,
+  "warnings": [
+    "Users of the main URL receive this rebuilt Default. Pinned releases remain hosted."
+  ]
+}
