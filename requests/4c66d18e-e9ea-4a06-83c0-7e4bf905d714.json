@@ -6,8 +6,56 @@
   "action": "default",
   "version": "v3.5.0",
   "actor": "ravilodhi",
-  "status": "running",
+  "status": "completed",
   "createdAt": "2026-10-29T12:58:19.973Z",
-  "steps": [],
-  "runUrl": "https://github.com/hotwax/job-manager/actions/runs/40877665844"
+  "steps": [
+    {
+      "message": "Checking out v3.5.0 as Default",
+      "at": "2026-10-29T12:58:25.121Z"
+    },
+    {
+      "message": "Installing pinned dependencies for v3.5.0",
+      "at": "2026-10-29T12:58:26.672Z"
+    },
+    {
+      "message": "Building v3.5.0 Default",
+      "at": "2026-10-29T12:58:33.166Z"
+    },
+    {
+      "message": "Uploading 50 built files",
+      "at": "2026-10-29T12:59:02.819Z"
+    },
+    {
+      "message": "Publishing verified Firebase deployment",
+      "at": "2026-10-29T12:59:14.502Z"
+    }
+  ],
+  "runUrl": "https://github.com/hotwax/job-manager/actions/runs/40877665844",
+  "deployment": {
+    "release": "sites/job-manager-uat/channels/live/releases/1793278754189000",
+    "version": "sites/job-manager-uat/versions/a31728c04410d0f7",
+    "previousVersion": "sites/job-manager-uat/versions/6d0212317b958952",
+    "files": 209
+  },
+  "hosting": {
+    "available": true,
+    "target": {
+      "project": "hotwax-digital-commerce",
+      "site": "job-manager-uat",
+      "environment": "uat",
+      "origin": "https://job-manager-uat.web.app"
+    },
+    "versions": [
+      "v3.5.0",
+      "v3.4.2"
+    ],
+    "defaultVersion": "v3.5.0",
+    "configuredEnvironment": "AppEnvUAT",
+    "defaultSource": "Hosting manifest",
+    "checkedAt": "2026-10-29T12:59:16.130Z",
+    "deployedAt": "2026-10-29T12:59:14.189Z",
+    "release": "sites/job-manager-uat/channels/live/releases/1793278754189000",
+    "fileCount": 209
+  },
+  "finishedAt": "2026-10-29T12:59:17.404Z"
 }
