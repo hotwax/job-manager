@@ -6,8 +6,77 @@
   "action": "default",
   "version": "v3.5.0",
   "actor": "ravilodhi",
-  "status": "running",
+  "status": "completed",
   "createdAt": "2026-10-29T12:42:36.931Z",
   "steps": [],
-  "runUrl": "https://github.com/hotwax/job-manager/actions/runs/40875436410"
+  "runUrl": "https://github.com/hotwax/job-manager/actions/runs/40875436410",
+  "plan": {
+    "schemaVersion": 1,
+    "id": "ad3430fd-0c2e-4345-9baa-2de6e543fc13",
+    "repo": "hotwax/job-manager",
+    "actor": "ravilodhi",
+    "toolsSha": "3fde5fa8bc43455b813519cc638d66a4edf17a0c",
+    "action": "default",
+    "environment": "uat",
+    "version": "v3.5.0",
+    "targetDefault": null,
+    "build": [
+      "v3.5.0"
+    ],
+    "added": [],
+    "replaced": [],
+    "removed": [],
+    "retained": [
+      "v3.5.0",
+      "v3.4.2"
+    ],
+    "previousDefault": "v3.4.2",
+    "nextDefault": "v3.5.0",
+    "rootChanges": true,
+    "confirmation": null,
+    "app": {
+      "id": "job-manager",
+      "repo": "hotwax/job-manager",
+      "name": "job-manager"
+    },
+    "target": {
+      "project": "hotwax-digital-commerce",
+      "site": "job-manager-uat",
+      "environment": "uat",
+      "origin": "https://job-manager-uat.web.app"
+    },
+    "baseFingerprint": "ebcb9bed6ba10473c3fa8624613b36a6db7c040b9979a238eeda905dcec1bdc3",
+    "baseRelease": "sites/job-manager-uat/channels/live/releases/1793276745832000",
+    "sources": [
+      {
+        "version": "v3.5.0",
+        "appCommit": "50c703203571a0251a2f5a220a114ae3d3aeb437",
+        "frameworkCommit": "28a931242fad13def670e778e619ad2a5ac7adff",
+        "frameworkPin": "v1.11.0",
+        "appId": "JOB_MANAGER",
+        "config": {
+          "appId": "JOB_MANAGER",
+          "environmentTypeId": "AppEnvDev",
+          "buildVersion": ""
+        }
+      }
+    ],
+    "sourceCommits": [
+      {
+        "version": "v3.5.0",
+        "appCommit": "50c703203571a0251a2f5a220a114ae3d3aeb437",
+        "frameworkCommit": "28a931242fad13def670e778e619ad2a5ac7adff",
+        "frameworkPin": "v1.11.0",
+        "appId": "JOB_MANAGER"
+      }
+    ],
+    "createdAt": "2026-10-29T12:42:42.308Z",
+    "expiresAt": "2026-10-29T13:42:42.309Z",
+    "writable": true,
+    "warnings": [
+      "Users of the main URL receive this rebuilt Default. Pinned releases remain hosted."
+    ],
+    "planSha": "7fddf5600d59e31232933cbbdb010e8c8ff8d29a"
+  },
+  "finishedAt": "2026-10-29T12:42:45.190Z"
 }
