@@ -6,8 +6,80 @@
   "action": "replace",
   "version": "v3.5.0,v3.4.2",
   "actor": "ravilodhi",
-  "status": "running",
+  "status": "completed",
   "createdAt": "2026-10-29T11:06:13.905Z",
-  "steps": [],
-  "runUrl": "https://github.com/hotwax/job-manager/actions/runs/40862710348"
+  "steps": [
+    {
+      "message": "Checking out v3.5.0",
+      "at": "2026-10-29T11:06:20.522Z"
+    },
+    {
+      "message": "Installing pinned dependencies for v3.5.0",
+      "at": "2026-10-29T11:06:22.682Z"
+    },
+    {
+      "message": "Building v3.5.0 version URL",
+      "at": "2026-10-29T11:06:28.654Z"
+    },
+    {
+      "message": "Checking out v3.4.2",
+      "at": "2026-10-29T11:06:54.075Z"
+    },
+    {
+      "message": "Installing pinned dependencies for v3.4.2",
+      "at": "2026-10-29T11:06:56.189Z"
+    },
+    {
+      "message": "Building v3.4.2 version URL",
+      "at": "2026-10-29T11:06:59.007Z"
+    },
+    {
+      "message": "Checking out v3.5.0 as Default",
+      "at": "2026-10-29T11:07:23.162Z"
+    },
+    {
+      "message": "Installing pinned dependencies for v3.5.0",
+      "at": "2026-10-29T11:07:25.411Z"
+    },
+    {
+      "message": "Building v3.5.0 Default",
+      "at": "2026-10-29T11:07:28.196Z"
+    },
+    {
+      "message": "Uploading 143 built files",
+      "at": "2026-10-29T11:07:56.125Z"
+    },
+    {
+      "message": "Publishing verified Firebase deployment",
+      "at": "2026-10-29T11:08:37.501Z"
+    }
+  ],
+  "runUrl": "https://github.com/hotwax/job-manager/actions/runs/40862710348",
+  "deployment": {
+    "release": "sites/job-manager-uat/channels/live/releases/1793272117197000",
+    "version": "sites/job-manager-uat/versions/9af55f8b088835db",
+    "previousVersion": "sites/job-manager-uat/versions/c657976ccaca38a6",
+    "files": 161
+  },
+  "hosting": {
+    "available": true,
+    "target": {
+      "project": "hotwax-digital-commerce",
+      "site": "job-manager-uat",
+      "environment": "uat",
+      "origin": "https://job-manager-uat.web.app"
+    },
+    "versions": [
+      "v3.5.0",
+      "v3.4.2"
+    ],
+    "defaultVersion": "v3.5.0",
+    "configuredEnvironment": "AppEnvUAT",
+    "defaultSource": "Hosting manifest",
+    "checkedAt": "2026-10-29T11:08:39.165Z",
+    "deployedAt": "2026-10-29T11:08:37.197Z",
+    "release": "sites/job-manager-uat/channels/live/releases/1793272117197000",
+    "fileCount": 161
+  },
+  "finishedAt": "2026-10-29T11:08:40.711Z"
 }
