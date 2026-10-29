@@ -18,10 +18,13 @@ on:
         required: true
         type: string
       action:
-        description: publish, default, remove or rebuild (blank for inventory)
+        description: publish, default, remove, rebuild or replace (blank for inventory)
         type: string
       version:
-        description: Published vX.Y.Z version (blank for rebuild)
+        description: Published vX.Y.Z version; comma-separated list for publish and replace (blank for rebuild)
+        type: string
+      default_version:
+        description: Default (root) version for replace; must be one of the listed versions
         type: string
       plan_sha:
         description: Reviewed plan Git blob SHA (execute only)
@@ -35,14 +38,15 @@ permissions:
 jobs:
   hosting:
     if: inputs.environment == 'uat'
-    uses: hotwax/accxui/.github/workflows/common-app-hosting.yml@7e3a71d3e6a3fc61241e3584c572c621f7a32ca6
+    uses: hotwax/accxui/.github/workflows/common-app-hosting.yml@d547df78c41a579f34d39c2c095a91135f94f7f2
     with:
       operation: ${{ inputs.operation }}
       environment: uat
       request_id: ${{ inputs.request_id }}
       action: ${{ inputs.action }}
       version: ${{ inputs.version }}
+      default_version: ${{ inputs.default_version }}
       plan_sha: ${{ inputs.plan_sha }}
       confirmation: ${{ inputs.confirmation }}
-      tools_ref: 7e3a71d3e6a3fc61241e3584c572c621f7a32ca6
+      tools_ref: d547df78c41a579f34d39c2c095a91135f94f7f2
     secrets: inherit
