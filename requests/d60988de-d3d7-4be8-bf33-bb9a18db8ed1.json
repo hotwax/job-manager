@@ -6,8 +6,29 @@
   "action": "",
   "version": null,
   "actor": "ravilodhi",
-  "status": "running",
+  "status": "completed",
   "createdAt": "2026-10-29T13:04:22.070Z",
   "steps": [],
-  "runUrl": "https://github.com/hotwax/job-manager/actions/runs/40878556916"
+  "runUrl": "https://github.com/hotwax/job-manager/actions/runs/40878556916",
+  "hosting": {
+    "available": true,
+    "target": {
+      "project": "hotwax-digital-commerce",
+      "site": "job-manager-uat",
+      "environment": "uat",
+      "origin": "https://job-manager-uat.web.app"
+    },
+    "versions": [
+      "v3.5.0",
+      "v3.4.2"
+    ],
+    "defaultVersion": "v3.5.0",
+    "configuredEnvironment": "AppEnvUAT",
+    "defaultSource": "Hosting manifest",
+    "checkedAt": "2026-10-29T13:04:26.325Z",
+    "deployedAt": "2026-10-29T12:59:14.189Z",
+    "release": "sites/job-manager-uat/channels/live/releases/1793278754189000",
+    "fileCount": 209
+  },
+  "finishedAt": "2026-10-29T13:04:27.880Z"
 }
