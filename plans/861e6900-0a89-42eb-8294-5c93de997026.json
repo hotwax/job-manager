@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "id": "861e6900-0a89-42eb-8294-5c93de997026",
+  "repo": "hotwax/job-manager",
+  "actor": "ravilodhi",
+  "toolsSha": "4ea70d8e2f043809227399f55f8cb6f24fe429c9",
+  "action": "replace",
+  "environment": "uat",
+  "version": "v3.5.0,v3.4.2",
+  "targetDefault": "v3.5.0",
+  "build": [
+    "v3.5.0",
+    "v3.4.2"
+  ],
+  "added": [],
+  "replaced": [
+    "v3.5.0",
+    "v3.4.2"
+  ],
+  "removed": [],
+  "retained": [
+    "v3.5.0",
+    "v3.4.2"
+  ],
+  "previousDefault": "v3.5.0",
+  "nextDefault": "v3.5.0",
+  "rootChanges": true,
+  "confirmation": null,
+  "app": {
+    "id": "job-manager",
+    "repo": "hotwax/job-manager",
+    "name": "job-manager"
+  },
+  "target": {
+    "project": "hotwax-digital-commerce",
+    "site": "job-manager-uat",
+    "environment": "uat",
+    "origin": "https://job-manager-uat.web.app"
+  },
+  "baseFingerprint": "721a583afef592fc2eccedd783ba52953459f00dff5c1750e37658551f606fcd",
+  "baseRelease": "sites/job-manager-uat/channels/live/releases/1792859059680000",
+  "sources": [
+    {
+      "version": "v3.5.0",
+      "appCommit": "50c703203571a0251a2f5a220a114ae3d3aeb437",
+      "frameworkCommit": "28a931242fad13def670e778e619ad2a5ac7adff",
+      "frameworkPin": "v1.11.0",
+      "appId": "JOB_MANAGER",
+      "config": {
+        "appId": "JOB_MANAGER",
+        "environmentTypeId": "AppEnvDev",
+        "buildVersion": ""
+      }
+    },
+    {
+      "version": "v3.4.2",
+      "appCommit": "205f34482eed65c1977170be2cd5326e09d96cb5",
+      "frameworkCommit": "13f9c2f19c5bd4ca2549df46a15668cb853b1c1b",
+      "frameworkPin": "v1.6.0",
+      "appId": "JOB_MANAGER",
+      "config": {
+        "appId": "JOB_MANAGER",
+        "environmentTypeId": "AppEnvDev",
+        "buildVersion": ""
+      }
+    }
+  ],
+  "sourceCommits": [
+    {
+      "version": "v3.5.0",
+      "appCommit": "50c703203571a0251a2f5a220a114ae3d3aeb437",
+      "frameworkCommit": "28a931242fad13def670e778e619ad2a5ac7adff",
+      "frameworkPin": "v1.11.0",
+      "appId": "JOB_MANAGER"
+    },
+    {
+      "version": "v3.4.2",
+      "appCommit": "205f34482eed65c1977170be2cd5326e09d96cb5",
+      "frameworkCommit": "13f9c2f19c5bd4ca2549df46a15668cb853b1c1b",
+      "frameworkPin": "v1.6.0",
+      "appId": "JOB_MANAGER"
+    }
+  ],
+  "createdAt": "2026-10-29T10:47:05.896Z",
+  "expiresAt": "2026-10-29T11:47:05.896Z",
+  "writable": true,
+  "warnings": [
+    "Users of the main URL receive v3.5.0. The site afterwards serves only v3.5.0, v3.4.2."
+  ]
+}
