@@ -12,7 +12,7 @@ on:
         description: Hosting environment
         required: true
         type: choice
-        options: [uat]
+        options: [uat, prod]
       request_id:
         description: Unique request UUID from Release Management
         required: true
@@ -37,16 +37,16 @@ permissions:
   actions: read
 jobs:
   hosting:
-    if: inputs.environment == 'uat'
-    uses: hotwax/accxui/.github/workflows/common-app-hosting.yml@d547df78c41a579f34d39c2c095a91135f94f7f2
+    # Production also needs APP_HOSTING_PROD_ENABLED=true; the shared workflow refuses it otherwise.
+    uses: hotwax/accxui/.github/workflows/common-app-hosting.yml@main
     with:
       operation: ${{ inputs.operation }}
-      environment: uat
+      environment: ${{ inputs.environment }}
       request_id: ${{ inputs.request_id }}
       action: ${{ inputs.action }}
       version: ${{ inputs.version }}
       default_version: ${{ inputs.default_version }}
       plan_sha: ${{ inputs.plan_sha }}
       confirmation: ${{ inputs.confirmation }}
-      tools_ref: d547df78c41a579f34d39c2c095a91135f94f7f2
+      tools_ref: main
     secrets: inherit
