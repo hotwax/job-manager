@@ -13,7 +13,7 @@
   "defaultVersion": "v3.5.0",
   "configuredEnvironment": "AppEnvUAT",
   "defaultSource": "Hosting manifest",
-  "checkedAt": "2026-10-29T11:17:38.612Z",
+  "checkedAt": "2026-10-29T11:29:32.053Z",
   "deployedAt": "2026-10-29T11:08:37.197Z",
   "release": "sites/job-manager-uat/channels/live/releases/1793272117197000",
   "fileCount": 161
