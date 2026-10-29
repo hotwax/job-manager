@@ -6,8 +6,47 @@
   "action": "replace",
   "version": "v3.5.0,v3.4.2",
   "actor": "ravilodhi",
-  "status": "running",
+  "status": "failed",
   "createdAt": "2026-10-29T10:56:41.147Z",
-  "steps": [],
-  "runUrl": "https://github.com/hotwax/job-manager/actions/runs/40861456759"
+  "steps": [
+    {
+      "message": "Checking out v3.5.0",
+      "at": "2026-10-29T10:56:49.511Z"
+    },
+    {
+      "message": "Installing pinned dependencies for v3.5.0",
+      "at": "2026-10-29T10:56:51.795Z"
+    },
+    {
+      "message": "Building v3.5.0 version URL",
+      "at": "2026-10-29T10:56:57.969Z"
+    },
+    {
+      "message": "Checking out v3.4.2",
+      "at": "2026-10-29T10:57:23.793Z"
+    },
+    {
+      "message": "Installing pinned dependencies for v3.4.2",
+      "at": "2026-10-29T10:57:26.108Z"
+    },
+    {
+      "message": "Building v3.4.2 version URL",
+      "at": "2026-10-29T10:57:29.025Z"
+    },
+    {
+      "message": "Checking out v3.5.0 as Default",
+      "at": "2026-10-29T10:57:53.439Z"
+    },
+    {
+      "message": "Installing pinned dependencies for v3.5.0",
+      "at": "2026-10-29T10:57:55.609Z"
+    },
+    {
+      "message": "Building v3.5.0 Default",
+      "at": "2026-10-29T10:57:58.419Z"
+    }
+  ],
+  "runUrl": "https://github.com/hotwax/job-manager/actions/runs/40861456759",
+  "error": "Unsafe artifact path.",
+  "finishedAt": "2026-10-29T10:58:26.643Z"
 }
