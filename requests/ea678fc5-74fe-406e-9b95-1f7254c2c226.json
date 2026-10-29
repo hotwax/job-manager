@@ -6,8 +6,27 @@
   "action": "default",
   "version": "v3.5.0",
   "actor": "ravilodhi",
-  "status": "running",
+  "status": "failed",
   "createdAt": "2026-10-29T12:45:36.703Z",
-  "steps": [],
-  "runUrl": "https://github.com/hotwax/job-manager/actions/runs/40875858181"
+  "steps": [
+    {
+      "message": "Checking out v3.5.0 as Default",
+      "at": "2026-10-29T12:45:41.976Z"
+    },
+    {
+      "message": "Installing pinned dependencies for v3.5.0",
+      "at": "2026-10-29T12:45:43.837Z"
+    },
+    {
+      "message": "Building v3.5.0 Default",
+      "at": "2026-10-29T12:45:50.760Z"
+    },
+    {
+      "message": "Uploading 50 built files",
+      "at": "2026-10-29T12:46:21.042Z"
+    }
+  ],
+  "runUrl": "https://github.com/hotwax/job-manager/actions/runs/40875858181",
+  "error": "Firebase upload failed (HTTP 500)",
+  "finishedAt": "2026-10-29T12:51:27.574Z"
 }
