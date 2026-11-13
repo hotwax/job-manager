@@ -36,6 +36,7 @@
 </template>
 
 <script setup lang="ts">
+const localUiFixtures = import.meta.env.DEV && import.meta.env.MODE === "mock";
 import { IonContent, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenu, IonMenuToggle, IonTitle, IonToolbar } from "@ionic/vue";
 import { computed } from "vue";
 import { checkboxOutline, albumsOutline, cloudDownloadOutline, cloudUploadOutline, documentTextOutline, fileTrayStackedOutline, gitNetworkOutline, globeOutline, layersOutline, openOutline, pulseOutline, settingsOutline, timeOutline } from "ionicons/icons";

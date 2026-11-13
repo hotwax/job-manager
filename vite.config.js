@@ -1,5 +1,6 @@
 /// <reference types="vitest" />
 
+import { localMockPlugin } from '../../common/vite/localMockPlugin'
 import legacy from '@vitejs/plugin-legacy'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
@@ -12,7 +13,8 @@ import pkg from './package.json'
 import manifest from './manifest.json'
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, command }) => {
+  if (mode === 'mock' && command !== 'serve') throw new Error('Mock mode is local development only.');
   const env = loadEnv(mode, process.cwd(), '')
   const appBuild = JSON.parse(env.VITE_APP_VERSION_CONFIG).buildVersion
   return {
@@ -22,7 +24,7 @@ export default defineConfig(({ mode }) => {
     outDir: appBuild ? `dist/${appBuild}` : 'dist'
   },
   plugins: [
-    commonEnvPlugin(),
+    ...(command === 'serve' && mode === 'mock' ? [localMockPlugin(__dirname)] : [commonEnvPlugin()]),
     ideTraceVue(),
     vue(),
     legacy(),
@@ -38,6 +40,7 @@ export default defineConfig(({ mode }) => {
   define: {
     'import.meta.env.VITE_APP_VERSION_INFO': JSON.stringify(JSON.stringify(versionInfoUtil.getVersionInfo(pkg.version)))
   },
+  optimizeDeps: { entries: ['index.html'] },
   resolve: {
     dedupe: ['vue', 'vue-router', '@ionic/vue', '@ionic/vue-router', 'pinia', 'vue-i18n'],
     alias: {

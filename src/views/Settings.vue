@@ -5,7 +5,7 @@
         <ion-menu-button slot="start" />
         <ion-title>{{ translate("Settings") }}</ion-title>
         <ion-buttons slot="end">
-          <ion-button fill="clear" @click="openLogs()">
+          <ion-button fill="clear" v-if="DxpLogsModal" @click="openLogs()">
             <ion-icon slot="start" :icon="documentTextOutline" />
             {{ translate("View logs") }}
           </ion-button>
@@ -218,7 +218,9 @@
 </template>
 
 <script setup lang="ts">
-import { cookieHelper, commonUtil, translate, DxpLogsModal } from "@common";
+import * as sharedComponents from "@common";
+const DxpLogsModal = (sharedComponents as any).DxpLogsModal;
+import { cookieHelper, commonUtil, translate } from "@common";
 import { useAuth, isMoquiOmsRef } from "@common/composables/useAuth";
 import { IonAvatar, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonContent, IonHeader, IonIcon, IonItem, IonMenuButton, IonPage, IonSelect, IonSelectOption, IonTitle, IonToolbar, IonModal, IonFab, IonFabButton, IonRadioGroup, IonSpinner, IonList, IonListHeader, IonRadio, IonSearchbar, IonLabel, modalController } from "@ionic/vue";
 import { closeOutline, openOutline, saveOutline, checkmarkCircle, closeCircle, syncOutline, documentTextOutline } from "ionicons/icons";

@@ -191,6 +191,7 @@
             </ion-list>
           </ion-card>
 
+          <EdiIncomingOrder v-if="localUiMock && message?.systemMessageRemoteId" :remote-id="message.systemMessageRemoteId" :message-text="message.messageText || ''" />
           <!-- Technical Analysis -->
           <ion-card class="message">
             <ion-card-header>
@@ -331,6 +332,8 @@
 </template>
 
 <script setup lang="ts">
+import EdiIncomingOrder from "@/components/edi/EdiIncomingOrder.vue";
+const localUiMock = import.meta.env.DEV && import.meta.env.MODE === "mock";
 import {
   IonBackButton,
   IonBadge,

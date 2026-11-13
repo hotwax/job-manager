@@ -45,7 +45,6 @@ const app = createApp(App)
   })
   .use(i18n)
   .use(pinia)
-  .use(router)
 
 initialiseConfig({
   postLogin: useUserStore().postLogin,
@@ -58,6 +57,11 @@ initialiseConfig({
   set current(val) { useUserStore().current = val },
   router: router
 })
+
+if (import.meta.env.DEV && import.meta.env.MODE === 'mock') {
+  await (await import('./mocks/bootstrap')).installFixtures();
+}
+app.use(router)
 
 router.isReady().then(async () => {
   app.mount('#app');

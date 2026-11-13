@@ -1,3 +1,4 @@
+import { useEdiOrderMappingStore } from '@/store/ediOrderMapping';
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { RouteRecordRaw } from 'vue-router';
 import Catalog from "@/views/Catalog.vue";
@@ -50,7 +51,7 @@ const authGuard = async () => {
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
-    redirect: '/pipeline'
+    redirect: import.meta.env.DEV && import.meta.env.MODE === 'mock' ? '/system-message-remotes' : '/pipeline'
   },
   {
     path: '/pipeline',
@@ -229,6 +230,17 @@ const router = createRouter({
   routes
 })
 
+
+router.beforeEach(async (to, from) => {
+  if(!(import.meta.env.DEV && import.meta.env.MODE === 'mock') || to.path === from.path || !from.path.startsWith('/system-message-remotes/')) return true;
+  const mappings = useEdiOrderMappingStore();
+  if(!mappings.unsavedRemoteId) return true;
+  const alert = await alertController.create({header:translate('Unsaved mapping changes'),message:translate('Save your mapping draft before leaving, or discard these changes.'),buttons:[{text:translate('Stay'),role:'cancel'},{text:translate('Discard'),role:'discard'}]});
+  await alert.present();
+  const {role}=await alert.onDidDismiss();
+  if(role !== 'discard') return false;
+  mappings.unsavedRemoteId=''; mappings.discardVersion++; return true;
+});
 
 const DATA_DOCUMENT_BUILDER_ROUTES = ["DataDocumentGraphBuilder"];
 

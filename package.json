@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test:e2e": "cypress run",
     "test:unit": "vitest",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "dev:mock": "vite --mode mock --host 127.0.0.1"
   },
   "dependencies": {
     "@capacitor/android": "catalog:",

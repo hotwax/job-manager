@@ -16,7 +16,7 @@
             <h1>{{ form.systemMessageRemoteId.value || translate("New Remote System") }}</h1>
             <p>{{ form.description.value || translate("Configure remote system connectivity and inspect related messages.") }}</p>
           </div>
-          <div class="header-actions">
+          <div class="header-actions" v-show="!localUiMock || isCreateMode || detailTab === 'configuration'">
             <ion-button v-if="hasPermission(Actions.APP_SYSTEM_MESSAGE_UPDATE)" fill="outline" @click="saveRemote">{{ translate("Save") }}</ion-button>
             <ion-button
               v-if="!isCreateMode && hasPermission(Actions.APP_SYSTEM_MESSAGE_UPDATE)"
@@ -29,7 +29,12 @@
           </div>
         </div>
 
-        <ion-card>
+        <ion-segment v-if="localUiMock && !isCreateMode" v-model="detailTab" class="ion-margin-bottom">
+          <ion-segment-button value="configuration"><ion-label>{{ translate('Configuration') }}</ion-label></ion-segment-button>
+          <ion-segment-button value="mapping"><ion-label>{{ translate('EDI order mapping') }}</ion-label></ion-segment-button>
+          <ion-segment-button value="messages"><ion-label>{{ translate('Related Messages') }}</ion-label></ion-segment-button>
+        </ion-segment>
+        <ion-card v-show="!localUiMock || isCreateMode || detailTab === 'configuration'">
           <ion-card-header>
             <ion-card-title>{{ translate("Configuration") }}</ion-card-title>
           </ion-card-header>
@@ -61,7 +66,9 @@
           </ion-card-content>
         </ion-card>
 
-        <section class="related-section" v-if="!isCreateMode">
+        <EdiOrderMapping v-show="detailTab === 'mapping'" v-if="localUiMock && !isCreateMode" :remote-id="String(props.id)" />
+
+        <section class="related-section" v-if="!isCreateMode" v-show="!localUiMock || detailTab === 'messages'">
           <ion-card>
             <ion-card-header>
               <ion-card-title>{{ translate("Related Messages") }}</ion-card-title>
@@ -117,6 +124,7 @@
 
 <script setup lang="ts">
 import {
+  IonSegment, IonSegmentButton, IonLabel,
   IonBackButton,
   IonButton,
   IonButtons,
@@ -151,6 +159,10 @@ import { useUtilStore } from "@/store/util";
 import { useUserStore } from "@/store/user";
 import { caretBackOutline, caretForwardOutline } from "ionicons/icons";
 import Actions from "@/authorization/actions";
+
+import EdiOrderMapping from '@/components/edi/EdiOrderMapping.vue';
+const detailTab = ref('configuration');
+const localUiMock = import.meta.env.DEV && import.meta.env.MODE === 'mock';
 
 // Type based declaration
 const props = defineProps<{ id?: string }>();
