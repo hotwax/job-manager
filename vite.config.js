@@ -19,7 +19,30 @@ export default defineConfig(({ mode }) => {
   // A version build (buildVersion vX.Y.Z in VITE_APP_VERSION_CONFIG) is self-contained under /vX.Y.Z/; an empty buildVersion is the root bootstrap.
   base: appBuild ? `/${appBuild}/` : '/',
   build: {
-    outDir: appBuild ? `dist/${appBuild}` : 'dist'
+    outDir: appBuild ? `dist/${appBuild}` : 'dist',
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('@ionic') || id.includes('ionicons')) {
+              return 'vendor-ionic'
+            }
+            if (id.includes('vue') || id.includes('pinia')) {
+              return 'vendor-vue'
+            }
+            if (id.includes('dexie') || id.includes('idb')) {
+              return 'vendor-db'
+            }
+            if (id.includes('luxon')) {
+              return 'vendor-luxon'
+            }
+          }
+          if (id.includes('/common/')) {
+            return 'common'
+          }
+        }
+      }
+    }
   },
   plugins: [
     commonEnvPlugin(),
@@ -47,7 +70,8 @@ export default defineConfig(({ mode }) => {
   },
   test: {
     globals: true,
-    environment: 'jsdom'
+    environment: 'jsdom',
+    exclude: ['**/node_modules/**', '**/.claude/**']
   }
   }
 })
