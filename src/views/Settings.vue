@@ -33,10 +33,6 @@
             {{ translate("Go to Launchpad") }}
             <ion-icon slot="end" :icon="openOutline" />
           </ion-button>
-          <ion-button fill="outline" @click="redirectToLegacyApp()">
-            {{ translate("Go to Legacy App") }}
-            <ion-icon slot="end" :icon="openOutline" />
-          </ion-button>
           <!-- Commenting this code as we currently do not have reset password functionality -->
           <!-- <ion-button fill="outline" color="medium">{{ translate("Reset password") }}</ion-button> -->
         </ion-card>
@@ -229,7 +225,6 @@ import Image from "@/components/Image.vue";
 import { useMdmConfigStore } from "@/store/mdmConfig";
 import { useUserStore } from "@/store/user";
 import { useUtilStore } from "@/store/util";
-import { redirectToLegacyApp } from "@/utils";
 import Actions from "@/authorization/actions";
 
 const userStore = useUserStore();
