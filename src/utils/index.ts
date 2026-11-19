@@ -3,11 +3,9 @@ import { toastController } from '@ionic/vue';
 import Papa from 'papaparse'
 import { DateTime, Duration } from "luxon";
 import logger from "@/logger";
-import { commonUtil, cookieHelper, translate } from "@common";
+import { commonUtil, translate } from "@common";
 import {Clipboard} from "@capacitor/clipboard";
 import cronstrue from "cronstrue"
-import { useUtilStore } from "@/store/util";
-import { useUserStore } from "@/store/user";
 import { useDataDocumentStore } from "@/store/dataDocuments";
 
 const showToast = async (message: string) => {
@@ -210,42 +208,6 @@ const getDuration = (start: number, end: number) => {
   return `${minutes}m ${seconds}s`;
 }
 
-const isAppCompatible = () => {
-  const currentVersion = useUtilStore().systemInformation?.instanceInfo?.componentRelease;
-  const requiredVersion = import.meta.env.VITE_MAARG_COMPATIBLE_VERSION;
-  
-  // If no compatibility requirement is configured or current version is not available, allow access by default
-  if(!requiredVersion || !currentVersion) return true;
-  
-  const currentParts = currentVersion.split('.');
-  const requiredParts = requiredVersion.split('.');
-
-  // In all the cases the release will have a version split in 3 parts, and if instance is on some
-  // custom branch then in that case it will have a single part and thus assuming
-  // its on custom branch and allow accessing new app
-  if(currentParts.length < 3) return true;
-
-  // There might be cases when the version in api has a `v` prefixed with it
-  currentParts[0] = currentParts[0].replace("v", "")
-  
-  for(let i = 0; i < 3; i++) {
-    const part1 = Number(currentParts[i]) || 0;
-    const part2 = Number(requiredParts[i]) || 0;
-    if(part1 >= part2) return true;
-    if(part1 < part2) return false;
-  }
-  return false;
-}
-
-const redirectToLegacyApp = () => {
-  const oms = useUserStore().oms
-  const token = cookieHelper().get("token")!
-  const expirationTime = cookieHelper().get("expirationTime")!
-  const maarg = decodeURIComponent(cookieHelper().get("maarg")!)
-  const link = import.meta.env.VITE_LEGACY_APP_URL
-  window.location.href = link.replace("{oms}", oms).replace("{token}", token).replace("{expirationTime}", expirationTime).replace("{omsRedirectionUrl}", maarg)
-}
-
 // Data manager log status groups, shared so a dashboard count and the list it
 // drills into cannot disagree about what the count meant.
 const MDM_PENDING_STATUSES = ["DmlsPending", "DmlsQueued", "DmlsRunning"];
@@ -307,8 +269,6 @@ export {
   getDateAndTime,
   handleDateTimeInput,
   hasJobDataError,
-  isAppCompatible,
-  redirectToLegacyApp,
   showToast,
   saveDataFile,
   timeTillRun,

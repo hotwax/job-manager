@@ -56,8 +56,6 @@ vi.mock("@/router", () => ({
 }));
 
 vi.mock("@/utils", () => ({
-  isAppCompatible: vi.fn(),
-  redirectToLegacyApp: vi.fn(),
   showToast: vi.fn()
 }));
 
