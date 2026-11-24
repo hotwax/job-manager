@@ -84,6 +84,7 @@ describe('useDashboardProjections - projections', () => {
     expect(jobProjections.value.pausedJobsCount).toBe(3);
     expect(jobProjections.value.noScheduleJobsCount).toBe(3);
     expect(jobProjections.value.scheduledJobsCount).toBe(1);
+    expect(jobProjections.value.activeJobs).toHaveLength(1);
     expect(jobProjections.value.configErrorJobs).toHaveLength(1);
     expect(jobProjections.value.configErrorJobs[0].jobName).toBe('configErr');
   });
