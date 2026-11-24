@@ -38,7 +38,7 @@
               :aria-label="cellLabel(hour, slot)"
               :title="cellLabel(hour, slot)"
               :data-testid="`job-schedule-heatmap-cell-${hour}-${slot}`"
-              @click="selected = { hour, slot }"
+              @click="toggleSelected(hour, slot)"
             />
           </div>
         </div>
@@ -198,6 +198,10 @@ const selectedEntries = computed(() => {
 
 const isNow = (hour: number, slot: number) => hour === nowHour.value && slot === nowSlot.value;
 const isSelected = (hour: number, slot: number) => selected.value?.hour === hour && selected.value?.slot === slot;
+// Selecting the selected interval again clears it, which collapses the job list
+const toggleSelected = (hour: number, slot: number) => {
+  selected.value = isSelected(hour, slot) ? null : { hour, slot };
+};
 
 const jobsLabel = (jobs: number) => jobs === 1 ? translate("{count} job", { count: jobs }) : translate("{count} jobs", { count: jobs });
 const runsLabel = (runs: number) => runs === 1 ? translate("{count} run", { count: runs }) : translate("{count} runs", { count: runs });
