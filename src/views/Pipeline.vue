@@ -188,6 +188,9 @@
           </ion-card>
         </div>
 
+        <!-- Job schedule heatmap -->
+        <JobScheduleHeatmap class="ion-margin-bottom" :jobs="jobProjections.activeJobs" :now="now" />
+
         <!-- Operational Queues Visualizer -->
         <ion-card class="ion-margin-bottom">
           <ion-card-header>
@@ -531,6 +534,7 @@ import { ref, computed, onMounted, onUnmounted } from "vue";
 import { DateTime } from "luxon";
 import router from "@/router";
 import { translate, emitter, commonUtil } from "@common";
+import JobScheduleHeatmap from "@/components/JobScheduleHeatmap.vue";
 import { useJobStore } from "@/store/jobs";
 import { useSystemMessageStore } from "@/store/systemMessage";
 import { useMdmConfigStore } from "@/store/mdmConfig";

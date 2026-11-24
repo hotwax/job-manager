@@ -207,6 +207,7 @@ export function useDashboardProjections(
     return {
       totalJobsCount,
       scheduledJobsCount,
+      activeJobs,
       pausedJobsCount,
       noScheduleJobsCount,
       draftJobsCount,
