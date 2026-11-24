@@ -16,12 +16,15 @@ import { loadingController } from '@ionic/vue';
 import emitter from "@/event-bus"
 import { Settings } from 'luxon'
 import router from './router';
-import { FastTravel, translate } from '@common';
+import { FastTravel, translate, useSessionChangeAlert } from '@common';
 import { useUserStore } from '@/store/user';
 
 const loader = ref(null) as any
 
 const userStore = useUserStore();
+
+// A login in another tab or app replaced the shared session cookies: ask the user to reload.
+useSessionChangeAlert();
 const userProfile = computed(() => userStore.getUserProfile)
 
 async function presentLoader(options = { message: '', backdropDismiss: true }) {
